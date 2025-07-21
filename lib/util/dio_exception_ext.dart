@@ -1,5 +1,4 @@
 import 'package:autonomy_flutter/model/ff_account.dart';
-import 'package:autonomy_flutter/util/constants.dart';
 import 'package:dio/dio.dart';
 
 extension DioExceptionExt on DioException {
@@ -15,11 +14,6 @@ extension DioExceptionExt on DioException {
   int get statusCode => response?.statusCode ?? 0;
 
   int? get ffErrorCode => response?.data['error']['code'] as int?;
-
-  bool get isBranchError => requestOptions.baseUrl.contains('branch.io');
-
-  FeralfileError get branchError =>
-      FeralfileError(StatusCode.badRequest.value, 'Branch.io error');
 
   bool get isAlreadySetReferralCode {
     if (response?.data is Map) {

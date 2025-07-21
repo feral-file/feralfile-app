@@ -33,8 +33,6 @@ abstract class DeeplinkService {
 
   void handleDeeplink(String? link, {Duration delay, Function? onFinished});
 
-  // void handleBranchDeeplinkData(Map<dynamic, dynamic> data);
-
   Future<void> handleReferralCode(String referralCode);
 }
 
@@ -235,28 +233,6 @@ class DeeplinkServiceImpl extends DeeplinkService {
       unawaited(_navigationService.showLinkArtistFailed(e));
     }
   }
-
-  // Future<bool> _handleBranchDeeplink(String link, {Function? onFinish}) async {
-  //   log.info('[DeeplinkService] _handleBranchDeeplink');
-  //   final callingBranchDeepLinkPrefix = Constants.branchDeepLinks
-  //       .firstWhereOrNull((prefix) => link.startsWith(prefix));
-  //   if (callingBranchDeepLinkPrefix != null) {
-  //     try {
-  //       final response =
-  //           await _branchApi.getParams(Environment.branchKey, link);
-  //       await handleBranchDeeplinkData(
-  //           response['data'] as Map<dynamic, dynamic>,
-  //           onFinish: onFinish);
-  //     } catch (e, s) {
-  //       unawaited(Sentry.captureException('Branch deeplink error: $e',
-  //           stackTrace: s));
-  //       log.info('[DeeplinkService] _handleBranchDeeplink error $e');
-  //       await _navigationService.showCannotResolveBranchLink();
-  //     }
-  //     return true;
-  //   }
-  //   return false;
-  // }
 
   @override
   Future<void> handleReferralCode(String referralCode) async {
