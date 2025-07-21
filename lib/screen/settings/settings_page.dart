@@ -10,8 +10,6 @@ import 'dart:async';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/screen/bloc/subscription/subscription_bloc.dart';
-import 'package:autonomy_flutter/screen/bloc/subscription/subscription_state.dart';
 import 'package:autonomy_flutter/screen/device_setting/bluetooth_connected_device_config.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
@@ -31,8 +29,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:sentry/sentry.dart';
 
@@ -173,39 +169,6 @@ class _SettingsPageState extends State<SettingsPage>
                       await Navigator.of(context)
                           .pushNamed(AppRouter.hiddenArtworksPage);
                     },
-                  ),
-                  addOnlyDivider(),
-                  BlocBuilder<SubscriptionBloc, SubscriptionState>(
-                    builder: (context, state) => _settingItem(
-                      titleBuilder: (context) {
-                        final theme = Theme.of(context);
-                        return RichText(
-                          text: TextSpan(
-                            style: theme.textTheme.ppMori400Black16,
-                            children: [
-                              TextSpan(
-                                text: 'membership'.tr(),
-                              ),
-                              const TextSpan(text: ' '),
-                              TextSpan(
-                                text: state.isSubscribed
-                                    ? 'Premium'
-                                    : 'Essential',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      icon:
-                          SvgPicture.asset('assets/images/icon_membership.svg'),
-                      onTap: () async {
-                        await Navigator.of(context)
-                            .pushNamed(AppRouter.subscriptionPage);
-                      },
-                    ),
                   ),
                   addOnlyDivider(),
                   _settingItem(

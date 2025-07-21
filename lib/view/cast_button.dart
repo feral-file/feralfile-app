@@ -12,10 +12,6 @@ import 'package:autonomy_flutter/service/iap_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/util/subscription_detail_ext.dart';
-import 'package:autonomy_flutter/util/ui_helper.dart';
-import 'package:autonomy_flutter/view/membership_card.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -47,7 +43,6 @@ class FFCastButton extends StatefulWidget {
 class FFCastButtonState extends State<FFCastButton>
     with AfterLayoutMixin<FFCastButton> {
   late CanvasDeviceBloc _canvasDeviceBloc;
-  final _upgradesBloc = injector.get<UpgradesBloc>();
   bool _isProcessing = false;
 
   @override
@@ -55,7 +50,6 @@ class FFCastButtonState extends State<FFCastButton>
     super.initState();
     _canvasDeviceBloc = injector.get<CanvasDeviceBloc>();
     injector<SubscriptionBloc>().add(GetSubscriptionEvent());
-    _upgradesBloc.add(UpgradeQueryInfoEvent());
   }
 
   @override
@@ -147,76 +141,10 @@ class FFCastButtonState extends State<FFCastButton>
   }
 
   Future<void> onTap(BuildContext context, bool isSubscribed) async {
-    if (!widget.shouldCheckSubscription || isSubscribed) {
-      // if (injector<CanvasDeviceBloc>().state.devices.length == 1) {
-      //   final device = injector<CanvasDeviceBloc>().state.devices.first;
-      //   await widget.onDeviceSelected?.call(device);
-      //   return;
-      // }
-      // await injector<NavigationService>().showStreamAction(
-      //   widget.displayKey,
-      //   widget.onDeviceSelected,
-      // );
-
-      final device = BluetoothDeviceManager().castingBluetoothDevice;
-      if (device != null) {
-        await widget.onDeviceSelected?.call(device);
-      }
-    } else {
-      await _showUpgradeDialog(context);
+    final device = BluetoothDeviceManager().castingBluetoothDevice;
+    if (device != null) {
+      await widget.onDeviceSelected?.call(device);
     }
-  }
-
-  Future<void> _showUpgradeDialog(BuildContext context) async {
-    await UIHelper.showDialog(
-      context,
-      'see_more_art'.tr(),
-      BlocProvider.value(
-        value: _upgradesBloc,
-        child: BlocConsumer<UpgradesBloc, UpgradeState>(
-          bloc: _upgradesBloc,
-          listenWhen: (previous, current) =>
-              previous.activeSubscriptionDetails.firstOrNull?.status !=
-              current.activeSubscriptionDetails.firstOrNull?.status,
-          listener: (context, upgradeState) {
-            final status =
-                upgradeState.activeSubscriptionDetails.firstOrNull?.status;
-            log.info('Cast button: upgradeState: $status');
-            if (status == IAPProductStatus.completed) {
-              injector<SubscriptionBloc>().add(GetSubscriptionEvent());
-              Navigator.pop(context);
-              Future.delayed(const Duration(milliseconds: 300),
-                  UIHelper.showUpgradedNotification);
-            }
-          },
-          builder: (context, upgradeState) {
-            final subscriptionDetail =
-                upgradeState.activeSubscriptionDetails.firstOrNull;
-            final price = subscriptionDetail?.price ?? r'$200/year';
-            return MembershipCard(
-              type: MembershipCardType.essential,
-              price: price,
-              isProcessing: upgradeState.isProcessing ||
-                  subscriptionDetail?.status == IAPProductStatus.pending,
-              isEnable: subscriptionDetail != null,
-              onTap: (_) {
-                _onPressSubscribe(subscriptionDetails: subscriptionDetail!);
-              },
-              buttonText: 'upgrade'.tr(),
-            );
-          },
-        ),
-      ),
-      withCloseIcon: true,
-      spacing: 20,
-      padding: const EdgeInsets.fromLTRB(14, 20, 14, 40),
-    );
-  }
-
-  void _onPressSubscribe({required SubscriptionDetails subscriptionDetails}) {
-    final ids = [subscriptionDetails.productDetails.id];
-    log.info('Cast button: upgrade purchase: ${ids.first}');
-    _upgradesBloc.add(UpgradePurchaseEvent(ids));
   }
 }
 

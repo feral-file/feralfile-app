@@ -79,10 +79,6 @@ abstract class ConfigurationService {
 
   bool isDoneOnboarding();
 
-  DateTime? getLastTimeAskForSubscription();
-
-  Future<void> setLastTimeAskForSubscription(DateTime date);
-
   List<String> getTempStorageHiddenTokenIDs({Network? network});
 
   Future<void> updateTempStorageHiddenTokenIDs(
@@ -377,20 +373,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
   @override
   String? getReadReleaseNotesVersion() =>
       _preferences.getString(KEY_READ_RELEASE_NOTES_VERSION);
-
-  @override
-  DateTime? getLastTimeAskForSubscription() {
-    final d = _preferences.getInt(KEY_LAST_TIME_ASK_SUBSCRIPTION);
-    return d != null ? DateTime.fromMillisecondsSinceEpoch(d) : null;
-  }
-
-  @override
-  Future<void> setLastTimeAskForSubscription(DateTime date) async {
-    await _preferences.setInt(
-      KEY_LAST_TIME_ASK_SUBSCRIPTION,
-      date.millisecondsSinceEpoch,
-    );
-  }
 
   @override
   Future<void> reload() => _preferences.reload();

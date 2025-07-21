@@ -78,8 +78,6 @@ import 'package:autonomy_flutter/screen/settings/hidden_artworks/hidden_artworks
 import 'package:autonomy_flutter/screen/settings/preferences/preferences_bloc.dart';
 import 'package:autonomy_flutter/screen/settings/preferences/preferences_page.dart';
 import 'package:autonomy_flutter/screen/settings/settings_page.dart';
-import 'package:autonomy_flutter/screen/settings/subscription/subscription_page.dart';
-import 'package:autonomy_flutter/screen/settings/subscription/upgrade_bloc.dart';
 import 'package:autonomy_flutter/screen/wallet/wallet_page.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -124,7 +122,6 @@ class AppRouter {
   static const githubDocPage = 'github_doc_page';
   static const preferencesPage = 'preferences_page';
   static const walletPage = 'wallet_page';
-  static const subscriptionPage = 'subscription_page';
   static const dataManagementPage = 'data_management_page';
   static const keyboardControlPage = 'keyboard_control_page';
   static const touchPadPage = 'touch_pad_page';
@@ -570,22 +567,6 @@ class AppRouter {
           ),
         );
 
-      case subscriptionPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => MultiBlocProvider(
-            providers: [
-              BlocProvider(
-                create: (_) => UpgradesBloc(
-                  injector(),
-                  injector(),
-                ),
-              ),
-            ],
-            child: const SubscriptionPage(),
-          ),
-        );
-
       case dataManagementPage:
         return CupertinoPageRoute(
           settings: settings,
@@ -768,7 +749,7 @@ class AppRouter {
               BlocProvider.value(value: identityBloc),
               BlocProvider(create: (_) => royaltyBloc),
             ],
-            child: NowDisplayingPage(),
+            child: const NowDisplayingPage(),
           ),
         );
 

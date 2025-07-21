@@ -92,7 +92,6 @@ jobs:
           SENTRY_AUTH: ${{ secrets.SENTRY_AUTH }}
           APPCENTER_API_TOKEN: ${{ secrets.APPCENTER_API_TOKEN }}
           APP_VERSION: ${{ github.event.inputs.version }}
-          BRANCH_KEY: ${{ secrets.BRANCH_KEY }}
           RELEASE_NOTES: ${{ github.event.inputs.message }}
 
         run: |

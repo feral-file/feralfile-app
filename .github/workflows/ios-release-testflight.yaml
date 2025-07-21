@@ -93,7 +93,6 @@ jobs:
           TESTFLIGHT_ISSUER_ID: ${{ secrets.TESTFLIGHT_ISSUER_ID }}
           TESTFLIGHT_API_TOKEN: ${{ secrets.TESTFLIGHT_API_TOKEN }}
           APP_VERSION: ${{ github.event.inputs.version }}
-          BRANCH_KEY: ${{ secrets.BRANCH_KEY }}
           RELEASE_NOTES: ${{ github.event.inputs.message }}
 
         run: |

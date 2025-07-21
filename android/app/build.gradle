@@ -54,18 +54,6 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
-def branchKey = localProperties["branch.key"] ?: environment["BRANCH_KEY"]
-if (branchKey == null) {
-    throw new GradleException("Branch key not found.")
-}
-
-def branchKeyTest = localProperties["branch.keyTest"] ?: environment["BRANCH_KEY_TEST"]
-if (branchKeyTest == null) {
-    throw new GradleException("Branch test key not found.")
-}
-
-def branchTestMode = localProperties["branch.testMode"] ?: environment["BRANCH_IS_TEST"] ?: false
-
 def signature_hash = localProperties["signature.hash"] ?: environment["SIGNATURE_HASH"]
 
 def signature_hash_inhouse = localProperties["signature.hashInhouse"] ?: environment["SIGNATURE_HASH_INHOUSE"]
@@ -107,9 +95,6 @@ android {
         versionName flutterVersionName
 
         manifestPlaceholders = [
-                branchKey     : branchKey,
-                branchKeyTest : branchKeyTest,
-                branchTestMode: branchTestMode
         ]
     }
 

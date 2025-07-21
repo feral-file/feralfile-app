@@ -20,7 +20,6 @@ import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/canvas_notification_manager.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
-import 'package:autonomy_flutter/service/iap_service.dart';
 import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/shared.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
@@ -65,8 +64,6 @@ class ForgetExistBloc extends AuBloc<ForgetExistEvent, ForgetExistState> {
       injector<CanvasDeviceBloc>().clear();
       await BluetoothDeviceManager().resetDevice();
       await CanvasNotificationManager().disconnectAll();
-      injector<IAPService>().clearReceipt();
-      unawaited(injector<IAPService>().reset());
 
       await FileLogger.clear();
       await SentryBreadcrumbLogger.clear();

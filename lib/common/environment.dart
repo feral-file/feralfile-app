@@ -58,7 +58,6 @@ class Environment {
     const secretKeys = [
       'CHAT_SERVER_HMAC_KEY',
       'METRIC_SECRET_KEY',
-      'BRANCH_KEY',
       'AU_CLAIM_SECRET_KEY',
       'FERAL_FILE_SECRET_KEY_TESTNET',
       'FERAL_FILE_SECRET_KEY_MAINNET',
@@ -197,8 +196,6 @@ class Environment {
 
   static String get metricSecretKey =>
       _readKey('METRIC_SECRET_KEY', '', isSecret: true);
-
-  static String get branchKey => _readKey('BRANCH_KEY', '', isSecret: true);
 
   static String get auClaimSecretKey =>
       _readKey('AU_CLAIM_SECRET_KEY', '', isSecret: true);

@@ -8,7 +8,6 @@
 // ignore_for_file: cascade_invocations
 
 import 'package:autonomy_flutter/common/environment.dart';
-import 'package:autonomy_flutter/gateway/branch_api.dart';
 import 'package:autonomy_flutter/gateway/currency_exchange_api.dart';
 import 'package:autonomy_flutter/gateway/customer_support_api.dart';
 import 'package:autonomy_flutter/gateway/feralfile_api.dart';
@@ -39,7 +38,6 @@ import 'package:autonomy_flutter/screen/playlists/edit_playlist/edit_playlist_bl
 import 'package:autonomy_flutter/screen/playlists/view_playlist/view_playlist_bloc.dart';
 import 'package:autonomy_flutter/screen/predefined_collection/predefined_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/settings/crypto/wallet_detail/wallet_detail_bloc.dart';
-import 'package:autonomy_flutter/screen/settings/subscription/upgrade_bloc.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/announcement/announcement_service.dart';
 import 'package:autonomy_flutter/service/announcement/announcement_store.dart';
@@ -57,7 +55,6 @@ import 'package:autonomy_flutter/service/domain_service.dart';
 import 'package:autonomy_flutter/service/ethereum_service.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
 import 'package:autonomy_flutter/service/home_widget_service.dart';
-import 'package:autonomy_flutter/service/iap_service.dart';
 import 'package:autonomy_flutter/service/keychain_service.dart';
 import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
@@ -231,7 +228,6 @@ Future<void> setupInjector() async {
       ? Environment.tzktTestnetURL
       : Environment.tzktMainnetURL;
   injector.registerLazySingleton(() => TZKTApi(dio, baseUrl: tzktUrl));
-  injector.registerLazySingleton(() => BranchApi(dio));
   injector.registerLazySingleton(
     () => PubdocAPI(dio, baseUrl: Environment.pubdocURL),
   );
@@ -278,10 +274,6 @@ Future<void> setupInjector() async {
       injector(),
       injector(),
     ),
-  );
-
-  injector.registerLazySingleton<IAPService>(
-    () => IAPServiceImpl(injector(), injector()),
   );
 
   injector.registerLazySingleton(
@@ -423,7 +415,7 @@ Future<void> setupInjector() async {
     () => CanvasDeviceBloc(injector()),
   );
   injector.registerLazySingleton<SubscriptionBloc>(
-    () => SubscriptionBloc(injector()),
+    SubscriptionBloc.new,
   );
   injector.registerLazySingleton<DailyWorkBloc>(
     () => DailyWorkBloc(injector(), injector()),
@@ -446,10 +438,6 @@ Future<void> setupInjector() async {
 
   injector.registerLazySingleton<AnnouncementService>(
     () => AnnouncementServiceImpl(injector(), injector(), injector()),
-  );
-
-  injector.registerLazySingleton<UpgradesBloc>(
-    () => UpgradesBloc(injector(), injector()),
   );
 
   injector.registerLazySingleton<AccountSettingsClient>(

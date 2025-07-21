@@ -12,9 +12,6 @@ import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/ff_account.dart';
-import 'package:autonomy_flutter/model/play_list_model.dart';
-import 'package:autonomy_flutter/model/playlist_activation.dart';
-import 'package:autonomy_flutter/screen/activation/playlist_activation/playlist_activation_page.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/check_bluetooth_state.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
@@ -23,7 +20,6 @@ import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/dio_exception_ext.dart';
-import 'package:autonomy_flutter/util/gift_handler.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
@@ -261,77 +257,6 @@ class DeeplinkServiceImpl extends DeeplinkService {
   //   }
   //   return false;
   // }
-
-  // TODO: handle onFinish is only for feralfile_display.
-  // Please handle for other cases if needed
-  Future<void> handleBranchDeeplinkData(
-    Map<dynamic, dynamic> data, {
-    Function? onFinish,
-  }) async {
-    final navigatePath = data['navigation_route'];
-    if (navigatePath != null) {
-      await _navigationService.navigatePath(navigatePath as String);
-    }
-    log.info('[DeeplinkService] handleBranchDeeplinkData $data');
-    log.info('source: ${data['source']}');
-    final source = data['source'];
-    switch (source) {
-      case 'gift_membership':
-        final giftCode = data['gift_code'] as String;
-        await GiftHandler.handleGiftMembership(giftCode);
-
-      case 'referral_code':
-        final referralCode = data['referralCode'];
-        log.info('[DeeplinkService] referralCode: $referralCode');
-        await handleReferralCode(referralCode as String);
-
-      case 'playlist_activation':
-        try {
-          log.info('[DeeplinkService] playlist_activation');
-          unawaited(
-            injector<ConfigurationService>().setDidShowLiveWithArt(true),
-          );
-          final expiredAt = int.tryParse(data['expired_at'] as String);
-          log.info('[DeeplinkService] expiredAt: $expiredAt');
-          if (expiredAt != null) {
-            final expiredAtDate =
-                DateTime.fromMillisecondsSinceEpoch(expiredAt);
-            if (expiredAtDate.isBefore(DateTime.now())) {
-              log.info('[DeeplinkService] playlist_activation expired');
-              unawaited(_navigationService.showPlaylistActivationExpired());
-              break;
-            }
-          }
-          log.info('[DeeplinkService] playlist_activation not expired');
-          final playlistJson = (data['playlist'] as Map<dynamic, dynamic>)
-              .map((key, value) => MapEntry(key.toString(), value));
-
-          final playlist = PlayListModel.fromJson(playlistJson)
-              .copyWith(source: PlayListSource.activation);
-          final activationName = data['activation_name'];
-          final activationSource = data['activation_source'];
-          final thumbnailURL = data['activation_thumbnail'];
-          final activation = PlaylistActivation(
-            playListModel: playlist,
-            name: activationName as String,
-            source: activationSource as String,
-            thumbnailURL: thumbnailURL as String,
-          );
-          log.info('[DeeplinkService] playlist_activation $activation');
-          await _navigationService.navigateTo(
-            AppRouter.playlistActivationPage,
-            arguments: PlaylistActivationPagePayload(
-              activation: activation,
-            ),
-          );
-        } catch (e) {
-          log.info('[DeeplinkService] playlist_activation error $e');
-        }
-      default:
-        log.info('[DeeplinkService] source not found');
-    }
-    _deepLinkHandlingMap.remove(data['~referring_link']);
-  }
 
   @override
   Future<void> handleReferralCode(String referralCode) async {
