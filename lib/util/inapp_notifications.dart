@@ -24,7 +24,7 @@ import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:flutter_vibrate/flutter_vibrate.dart';
+// import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:overlay_support/overlay_support.dart';
 // ignore: implementation_imports
 import 'package:overlay_support/src/overlay_state_finder.dart';
@@ -428,7 +428,7 @@ Future<void> showInAppNotifications(
 
   configurationService.showingNotification.value = true;
 
-  Vibrate.feedback(FeedbackType.warning);
+  // Vibrate.feedback(FeedbackType.warning);
   if (additionalData.notificationType == NotificationType.announcement) {
     await showPopupOverlayNotification(
       context,
@@ -468,7 +468,7 @@ void showSimpleNotificationToast({
   Widget? rightBottomWidget,
   bool autoDismiss = true,
   List<InlineSpan>? addOnTextSpan,
-  FeedbackType? vibrateFeedbackType,
+  // FeedbackType? vibrateFeedbackType,
 }) {
   showSimpleNotification(
     _SimpleNotificationToast(
@@ -489,7 +489,7 @@ void showSimpleNotificationToast({
     slideDismissDirection: DismissDirection.up,
   );
 
-  Vibrate.feedback(vibrateFeedbackType ?? FeedbackType.light);
+  // Vibrate.feedback(vibrateFeedbackType ?? FeedbackType.light);
 }
 
 void hideOverlay(Key key) {

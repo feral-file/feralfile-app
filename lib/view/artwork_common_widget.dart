@@ -525,7 +525,7 @@ Widget debugInfoWidget(BuildContext context, AssetToken? token) {
 
       TextButton buildInfo(String text, String value) => TextButton(
             onPressed: () async {
-              Vibrate.feedback(FeedbackType.light);
+              // Vibrate.feedback(FeedbackType.light);
               final uri = Uri.tryParse(value);
               if (uri != null && await canLaunchUrl(uri)) {
                 await launchUrl(uri, mode: LaunchMode.inAppWebView);

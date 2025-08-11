@@ -54,7 +54,7 @@ class FileLogger(context: Context) {
         if (_fileLogger.length() <= MAX_FILE_SIZE) return
 
         val tempFile = File(_fileLogger.parent, "app.log.temp")
-        val linesToKeep = ArrayDeque<String>()
+        val linesToKeep = kotlin.collections.ArrayDeque<String>()
         var currentSize = 0L
 
         // Read the log file line by line and keep only the lines that fit within the size limit
@@ -64,7 +64,7 @@ class FileLogger(context: Context) {
                 val lineSize = line!!.toByteArray().size.toLong()
 
                 // Add the line and update the size
-                linesToKeep.addLast(line!!)
+                linesToKeep.add(line!!)
                 currentSize += lineSize
 
                 // Remove oldest lines if size exceeds MAX_FILE_SIZE

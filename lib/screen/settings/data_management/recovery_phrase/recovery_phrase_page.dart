@@ -13,6 +13,7 @@ import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
 import 'package:autonomy_flutter/service/channel_service.dart';
 import 'package:autonomy_flutter/service/local_auth_service.dart';
+import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/util/secure_screen_channel.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
@@ -22,7 +23,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:open_settings/open_settings.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class RecoveryPhrasePage extends StatefulWidget {
@@ -400,7 +400,8 @@ class _RecoveryPhrasePageState extends State<RecoveryPhrasePage> {
           child: Platform.isAndroid
               ? OutlineButton(
                   text: 'open_device_setting'.tr(),
-                  onTap: () => unawaited(OpenSettings.openAddAccountSetting()),
+                  onTap: () => unawaited(
+                      injector<NavigationService>().openAccountSettings()),
                   color: AppColor.white,
                   borderColor: AppColor.primaryBlack,
                   textColor: AppColor.primaryBlack,

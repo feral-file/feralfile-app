@@ -13,7 +13,6 @@ import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/util/inapp_notifications.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter_app_badger/flutter_app_badger.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:synchronized/synchronized.dart';
 
@@ -188,11 +187,11 @@ class AnnouncementServiceImpl implements AnnouncementService {
       log.info('[_updateBadger] Notification permission is not granted');
       return;
     }
-    if (count > 0) {
-      unawaited(FlutterAppBadger.updateBadgeCount(count));
-    } else {
-      unawaited(FlutterAppBadger.removeBadge());
-    }
+    // if (count > 0) {
+    //   unawaited(FlutterAppBadger.updateBadgeCount(count));
+    // } else {
+    //   unawaited(FlutterAppBadger.removeBadge());
+    // }
   }
 
   Future<void> _saveAnnouncement(AnnouncementLocal announcement) async {

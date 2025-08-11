@@ -38,8 +38,10 @@ class _FeralFileSeriesPageState extends State<FeralFileSeriesPage> {
   final _canvasDeviceBloc = injector.get<CanvasDeviceBloc>();
   static const _padding = 14.0;
   static const _axisSpacing = 5.0;
-  final PagingController<int, Artwork> _pagingController =
-      PagingController(firstPageKey: 0);
+
+  PagingState<int, Artwork> _pageState = PagingState<int, Artwork>();
+
+  // PagingController(firstPageKey: 0);
   static const _pageSize = 300;
 
   @override
@@ -48,9 +50,9 @@ class _FeralFileSeriesPageState extends State<FeralFileSeriesPage> {
     _feralFileSeriesBloc = context.read<FeralFileSeriesBloc>();
     _feralFileSeriesBloc.add(FeralFileSeriesGetSeriesEvent(
         widget.payload.seriesId, widget.payload.exhibitionId));
-    _pagingController.addPageRequestListener((pageKey) async {
-      await _fetchPage(context, pageKey);
-    });
+    // _pagingController.addPageRequestListener((pageKey) async {
+    //   await _fetchPage(context, pageKey);
+    // });
   }
 
   Future<void> _fetchPage(BuildContext context, int pageKey) async {
@@ -62,12 +64,14 @@ class _FeralFileSeriesPageState extends State<FeralFileSeriesPage> {
           limit: _pageSize);
       final isLastPage = !(newItems.paging?.shouldLoadMore ?? false);
       if (isLastPage) {
-        _pagingController.appendLastPage(newItems.result);
+        // _pagingController.appendLastPage(newItems.result);
+        // return newItems.result;
       } else {
         final nextPageKey = pageKey + _pageSize;
         if (context.mounted) {
           // make sure the page is not disposed
-          _pagingController.appendPage(newItems.result, nextPageKey);
+          // _pagingController.appendPage(newItems.result, nextPageKey);
+          // return newItems.result;
         }
       }
     } catch (error) {
@@ -76,9 +80,44 @@ class _FeralFileSeriesPageState extends State<FeralFileSeriesPage> {
     }
   }
 
+  Future<void> _fetchNextPage() async {
+    if (_pageState.isLoading) return;
+
+    setState(() {
+      _pageState = _pageState.copyWith(isLoading: true, error: null);
+    });
+
+    try {
+      final newKey = (_pageState.keys?.last ?? 0) + 1;
+      final newItems = await injector<FeralFileService>().getSeriesArtworks(
+          widget.payload.seriesId, widget.payload.exhibitionId,
+          offset: newKey,
+          // ignore: avoid_redundant_argument_values
+          limit: _pageSize);
+      final isLastPage = !(newItems.paging?.shouldLoadMore ?? false);
+
+      setState(() {
+        _pageState = _pageState.copyWith(
+          pages: [...?_pageState.pages, newItems.result],
+          keys: [...?_pageState.keys, newKey],
+          hasNextPage: !isLastPage,
+          isLoading: false,
+        );
+      });
+    } catch (error) {
+      log.info('Error fetching series page: $error');
+      unawaited(Sentry.captureException(error));
+      setState(() {
+        _pageState = _pageState.copyWith(
+          error: error,
+          isLoading: false,
+        );
+      });
+    }
+  }
+
   @override
   void dispose() {
-    _pagingController.dispose();
     super.dispose();
   }
 
@@ -129,7 +168,8 @@ class _FeralFileSeriesPageState extends State<FeralFileSeriesPage> {
       child: CustomScrollView(
         slivers: [
           PagedSliverGrid<int, Artwork>(
-            pagingController: _pagingController,
+            state: _pageState,
+            fetchNextPage: _fetchNextPage,
             showNewPageErrorIndicatorAsGridChild: false,
             showNewPageProgressIndicatorAsGridChild: false,
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

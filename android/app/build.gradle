@@ -71,14 +71,11 @@ def signature_hash = localProperties["signature.hash"] ?: environment["SIGNATURE
 def signature_hash_inhouse = localProperties["signature.hashInhouse"] ?: environment["SIGNATURE_HASH_INHOUSE"]
 
 android {
-    compileSdkVersion 34
+    compileSdkVersion 35
     flavorDimensions 'env'
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
-    }
-    defaultConfig {
-        resConfigs 'en', 'US'
     }
 
     signingConfigs {
@@ -100,10 +97,12 @@ android {
     }
 
     defaultConfig {
+        resourceConfigurations += ['en', 'US']
+
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "com.bitmark.autonomy_client"
         minSdkVersion 29
-        targetSdkVersion 34
+        targetSdkVersion 35
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
 
