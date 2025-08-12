@@ -19,7 +19,6 @@ import 'package:autonomy_flutter/model/identity.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/deeplink_service.dart';
-import 'package:autonomy_flutter/service/home_widget_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/util/au_file_service.dart';
 import 'package:autonomy_flutter/util/custom_route_observer.dart';
@@ -31,7 +30,6 @@ import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:floor/floor.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -41,32 +39,6 @@ import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:system_date_time_format/system_date_time_format.dart';
-import 'package:workmanager/workmanager.dart';
-
-const dailyWidgetTaskUniqueName =
-    'feralfile.workmanager.iOSBackgroundAppRefresh';
-const dailyWidgetTaskName = 'updateDailyWidgetData';
-const dailyWidgetTaskTag = 'updateDailyWidgetDataTag';
-
-@pragma('vm:entry-point')
-Future<void> callbackDispatcher() async {
-  Workmanager().executeTask((task, inputData) async {
-    try {
-      if (task == dailyWidgetTaskUniqueName || task == dailyWidgetTaskName) {
-        await dotenv.load();
-        await setupHomeWidgetInjector();
-        await injector<HomeWidgetService>().updateDailyTokensToHomeWidget();
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('callbackDispatcher error: $e');
-      }
-      throw Exception(e);
-    }
-
-    return Future.value(true);
-  });
-}
 
 ValueNotifier<bool> shouldShowNowDisplaying = ValueNotifier<bool>(false);
 ValueNotifier<bool> shouldShowNowDisplayingOnDisconnect =
@@ -172,29 +144,6 @@ void _registerHiveAdapter() {
     ..registerAdapter(IndexerIdentityAdapter());
 }
 
-Future<void> _setupWorkManager() async {
-  try {
-    await Workmanager().initialize(callbackDispatcher);
-    Workmanager()
-        .cancelByTag(dailyWidgetTaskTag)
-        .catchError((Object e) => log.info('Error in cancelTaskByTag: $e'));
-    await _startBackgroundUpdate();
-  } catch (e) {
-    log.info('Error in _setupWorkManager: $e');
-  }
-}
-
-Future<void> _startBackgroundUpdate() async {
-  await Workmanager().registerPeriodicTask(
-    dailyWidgetTaskUniqueName,
-    dailyWidgetTaskName,
-    tag: dailyWidgetTaskTag,
-    frequency: const Duration(hours: 4),
-    existingWorkPolicy: ExistingWorkPolicy.replace,
-    constraints: Constraints(networkType: NetworkType.connected),
-  );
-}
-
 Future<void> _setupApp() async {
   try {
     await setupLogger();
@@ -203,7 +152,6 @@ Future<void> _setupApp() async {
     Sentry.captureException(e);
   }
   await setupInjector();
-  unawaited(_setupWorkManager());
   unawaited(injector<DeeplinkService>().setup());
   runApp(
     SDTFScope(
