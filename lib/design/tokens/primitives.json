@@ -1,0 +1,116 @@
+{
+  "primitives": {
+    "colors": {
+      "inactive": {
+        "$type": "color",
+        "$value": "#999999"
+      },
+      "grey": {
+        "$type": "color",
+        "$value": "#a0a0a0"
+      },
+      "lightGrey": {
+        "$type": "color",
+        "$value": "#e3e3e3"
+      },
+      "white": {
+        "$type": "color",
+        "$value": "#ffffff"
+      },
+      "black": {
+        "$type": "color",
+        "$value": "#000000"
+      },
+      "darkGrey": {
+        "$type": "color",
+        "$value": "#2e2e2e"
+      },
+      "error": {
+        "$type": "color",
+        "$value": "#d10000"
+      },
+      "lightBlue": {
+        "$type": "color",
+        "$value": "#b9e5ff"
+      },
+      "highlight": {
+        "$type": "color",
+        "$value": "#ecff0c"
+      }
+    },
+    "fontFamilies": {
+      "ppMori": {
+        "$type": "text",
+        "$value": "PP Mori"
+      },
+      "ibmFlexMono": {
+        "$type": "text",
+        "$value": "IBMPlexMono"
+      }
+    },
+    "fontWeights": {
+      "bold": {
+        "$type": "text",
+        "$value": "Bold"
+      },
+      "regular": {
+        "$type": "text",
+        "$value": "Regular"
+      }
+    },
+    "fontSizes": {
+      "h1": {
+        "$type": "dimension",
+        "$value": "36px"
+      },
+      "h2": {
+        "$type": "dimension",
+        "$value": "24px"
+      },
+      "h3": {
+        "$type": "dimension",
+        "$value": "18px"
+      },
+      "title": {
+        "$type": "dimension",
+        "$value": "16px"
+      },
+      "body": {
+        "$type": "dimension",
+        "$value": "14px"
+      },
+      "small": {
+        "$type": "dimension",
+        "$value": "12px"
+      }
+    },
+    "letterSpacings": {
+      "0": {
+        "$type": "dimension",
+        "$value": "0px"
+      }
+    },
+    "paragraphSpacings": {
+      "0": {
+        "$type": "dimension",
+        "$value": "8px"
+      },
+      "1": {
+        "$type": "dimension",
+        "$value": "24px"
+      }
+    },
+    "paragraphIndents": {
+      "0": {
+        "$type": "dimension",
+        "$value": "0px"
+      }
+    },
+    "spacing": {
+      "mainPaddingHorizontal": {
+        "$type": "dimension",
+        "$value": "12px"
+      }
+    }
+  }
+}
