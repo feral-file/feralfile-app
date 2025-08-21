@@ -1,0 +1,36 @@
+{
+  "backButton": {
+    "color": {
+      "$type": "color",
+      "$value": "{colors.grey}"
+    },
+    "height": {
+      "$type": "dimension",
+      "$value": "47px"
+    },
+    "radius": {
+      "$type": "dimension",
+      "$value": "90px"
+    },
+    "gap": {
+      "$type": "dimension",
+      "$value": "20px"
+    },
+    "iconSize": {
+      "$type": "dimension",
+      "$value": "12px"
+    },
+    "fontSize": {
+      "$type": "dimension",
+      "$value": "{Small.fontSize}"
+    },
+    "padding": {
+      "$type": "dimension",
+      "$value": "{spacing.mainPaddingHorizontal}"
+    },
+    "strokeWeight": {
+      "$type": "dimension",
+      "$value": "1px"
+    }
+  }
+}

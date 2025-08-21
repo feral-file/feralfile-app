@@ -1,0 +1,57 @@
+name: Parse Style Tokens
+
+on:
+  workflow_call:
+
+jobs:
+  build-tokens:
+    name: Generate And Push Tokens
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm i @tokens-studio/sd-transforms@1.3.0 mathjs@14.5.0 style-dictionary@4.4.0
+
+      - name: Set up Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Rebase on latest main
+        run: |
+          git fetch origin main
+          if ! git rebase origin/main; then
+            echo "❌ Rebase failed, aborting"
+            git rebase --abort
+            exit 1
+          fi
+      - name: Build tokens by style dictionary
+        run: |
+          echo "Building design tokens..."
+          if ! node style-dictionary-build.mjs; then
+            echo "❌ Token build failed!"
+            exit 1
+          fi
+      - name: Check for changes and push tokens
+        run: |
+          git add lib/design/build/
+          if git diff --cached --quiet; then
+            echo "✅ No changes to build tokens"
+          else
+            echo "Built tokens changed, committing..."
+            git commit -m "chore: auto-generate design tokens"
+            git push --force-with-lease origin HEAD:${{ github.head_ref }}
+            echo "✅ Built tokens committed and pushed"
+          fi
