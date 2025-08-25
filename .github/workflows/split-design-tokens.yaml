@@ -30,10 +30,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Rebase on latest main
+      - name: Rebase on latest feat/build-components
         run: |
-          git fetch origin main
-          if ! git rebase origin/main; then
+          git fetch origin feat/build-components
+          if ! git rebase origin/feat/build-components; then
             echo "❌ Rebase failed, aborting"
             git rebase --abort
             exit 1
