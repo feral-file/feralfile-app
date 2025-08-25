@@ -8,9 +8,9 @@ on:
 jobs:
   call-split-tokens:
     if: github.head_ref == 'feat/design-tokens'
-    uses: bitmark-inc/feralfile-app/.github/workflows/split-design-tokens.yaml@main
+    uses: bitmark-inc/feralfile-app/.github/workflows/split-design-tokens.yaml@feat/build-components
 
   call-build-tokens:
     if: github.head_ref == 'feat/design-tokens'
     needs: call-split-tokens
-    uses: bitmark-inc/feralfile-app/.github/workflows/parse-style-tokens.yaml@main
+    uses: bitmark-inc/feralfile-app/.github/workflows/parse-style-tokens.yaml@feat/build-components
