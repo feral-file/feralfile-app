@@ -40,7 +40,7 @@ import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/artist_display_setting.dart';
 import 'package:autonomy_flutter/view/how_to_install_daily_widget_build.dart';
-import 'package:autonomy_flutter/view/now_display_setting.dart';
+import 'package:autonomy_flutter/view/now_displaying/now_display_setting.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/stream_device_view.dart';
 import 'package:easy_localization/easy_localization.dart';
