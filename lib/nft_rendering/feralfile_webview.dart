@@ -2,7 +2,9 @@
 
 import 'dart:async';
 
+import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_rendering/webview_controller_ext.dart';
+import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/view/loading.dart';
 import 'package:flutter/foundation.dart';
@@ -86,11 +88,14 @@ class FeralFileWebviewState extends State<FeralFileWebview> {
             ),
           ),
           Positioned.fill(
-            child: Container(
-              child: AnimatedOpacity(
-                opacity: _loadingProgress < 1.0 ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                child: _buildLoadingWidget(),
+            child: IgnorePointer(
+              ignoring: _loadingProgress >= 1.0,
+              child: Container(
+                child: AnimatedOpacity(
+                  opacity: _loadingProgress < 1.0 ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 300),
+                  child: _buildLoadingWidget(),
+                ),
               ),
             ),
           )
@@ -149,6 +154,7 @@ class FeralFileWebviewState extends State<FeralFileWebview> {
             });
           },
           onPageStarted: (url) async {
+            log.info('Page started loading: $url');
             setState(() {
               _loadingProgress = 0.0;
             });
@@ -176,6 +182,38 @@ class FeralFileWebviewState extends State<FeralFileWebview> {
             log.info('HttpError: $error');
             widget.onHttpError?.call(webViewController, error);
           },
+          onNavigationRequest: (request) async {
+            log.info('Navigation request to: ${request.url}');
+            // Check if the URL is external (different domain) or if it's a specific type of link
+            final currentUrl = widget.uri.toString();
+            final requestUrl = request.url;
+
+            // Always allow the initial page load (handle trailing slash differences)
+            if (requestUrl == currentUrl ||
+                _normalizeUrl(requestUrl) == _normalizeUrl(currentUrl)) {
+              return NavigationDecision.navigate;
+            }
+
+            // If it's the same domain, allow navigation within WebView
+            if (requestUrl.startsWith(currentUrl) ||
+                requestUrl.startsWith('data:') ||
+                requestUrl.startsWith('javascript:')) {
+              return NavigationDecision.navigate;
+            }
+
+            // For external links, open in browser
+            try {
+              final uri = Uri.parse(requestUrl);
+              await injector<NavigationService>().openUrl(uri);
+              log.info('Opened URL in browser: $requestUrl');
+            } catch (e) {
+              log.info('Error opening URL: $requestUrl, error: $e');
+            }
+            return NavigationDecision.prevent;
+          },
+          onUrlChange: (url) {
+            log.info('Url changed: $url');
+          },
         ),
       );
     if (webViewController.platform is AndroidWebViewController) {
@@ -184,5 +222,19 @@ class FeralFileWebviewState extends State<FeralFileWebview> {
           .setMediaPlaybackRequiresUserGesture(false));
     }
     return webViewController;
+  }
+
+  /// Normalize URL to handle trailing slash differences
+  String _normalizeUrl(String url) {
+    // Remove trailing slash before query parameters
+    if (url.contains('?')) {
+      final parts = url.split('?');
+      final path = parts[0].endsWith('/')
+          ? parts[0].substring(0, parts[0].length - 1)
+          : parts[0];
+      return '$path?${parts[1]}';
+    }
+    // Remove trailing slash if no query parameters
+    return url.endsWith('/') ? url.substring(0, url.length - 1) : url;
   }
 }
