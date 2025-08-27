@@ -32,6 +32,7 @@ class NowPlayingBarTokens {
     static const bottomThumbProgressBarWidth = 61.78;
     static const bottomThumbWidth = 65.78;
     static const cornerRadius = 5;
+    static const height = 57;
     static const paddingBottom = 8;
     static const paddingLeft = 10;
     static const paddingRight = 15;
