@@ -130,9 +130,9 @@
       "$type": "dimension",
       "$value": "5px"
     },
-    "gap": {
+    "height": {
       "$type": "dimension",
-      "$value": "5px"
+      "$value": "57px"
     }
   }
 }
