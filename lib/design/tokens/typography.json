@@ -24,6 +24,10 @@
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
+      },
+      "lineHeight": {
+        "$type": "dimension",
+        "$value": "39.6px"
       }
     },
     "H2": {
@@ -50,6 +54,10 @@
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
+      },
+      "lineHeight": {
+        "$type": "dimension",
+        "$value": "26.4px"
       }
     },
     "H3": {
@@ -76,6 +84,10 @@
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
+      },
+      "lineHeight": {
+        "$type": "dimension",
+        "$value": "19.8px"
       }
     },
     "Title": {
@@ -102,6 +114,10 @@
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
+      },
+      "lineHeight": {
+        "$type": "dimension",
+        "$value": "22.4px"
       }
     },
     "Body": {
@@ -128,6 +144,10 @@
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
+      },
+      "lineHeight": {
+        "$type": "dimension",
+        "$value": "19.6px"
       }
     },
     "Small": {
@@ -154,6 +174,10 @@
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
+      },
+      "lineHeight": {
+        "$type": "dimension",
+        "$value": "16.8px"
       }
     },
     "Mono": {
@@ -180,6 +204,10 @@
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
+      },
+      "lineHeight": {
+        "$type": "dimension",
+        "$value": "19.6px"
       }
     }
   }

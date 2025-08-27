@@ -113,40 +113,6 @@
       }
     }
   },
-  "backButton/base": {
-    "color": {
-      "$type": "color",
-      "$value": "{colors.grey}"
-    },
-    "height": {
-      "$type": "dimension",
-      "$value": "47px"
-    },
-    "radius": {
-      "$type": "dimension",
-      "$value": "90px"
-    },
-    "gap": {
-      "$type": "dimension",
-      "$value": "20px"
-    },
-    "iconSize": {
-      "$type": "dimension",
-      "$value": "12px"
-    },
-    "fontSize": {
-      "$type": "dimension",
-      "$value": "{Small.fontSize}"
-    },
-    "padding": {
-      "$type": "dimension",
-      "$value": "{spacing.mainPaddingHorizontal}"
-    },
-    "strokeWeight": {
-      "$type": "dimension",
-      "$value": "1px"
-    }
-  },
   "typography/base": {
     "H1": {
       "fontFamily": {
@@ -172,6 +138,10 @@
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
+      },
+      "lineHeight": {
+        "$type": "dimension",
+        "$value": "39.6px"
       }
     },
     "H2": {
@@ -198,6 +168,10 @@
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
+      },
+      "lineHeight": {
+        "$type": "dimension",
+        "$value": "26.4px"
       }
     },
     "H3": {
@@ -224,6 +198,10 @@
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
+      },
+      "lineHeight": {
+        "$type": "dimension",
+        "$value": "19.8px"
       }
     },
     "Title": {
@@ -250,6 +228,10 @@
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
+      },
+      "lineHeight": {
+        "$type": "dimension",
+        "$value": "22.4px"
       }
     },
     "Body": {
@@ -276,6 +258,10 @@
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
+      },
+      "lineHeight": {
+        "$type": "dimension",
+        "$value": "19.6px"
       }
     },
     "Small": {
@@ -302,6 +288,10 @@
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
+      },
+      "lineHeight": {
+        "$type": "dimension",
+        "$value": "16.8px"
       }
     },
     "Mono": {
@@ -328,15 +318,155 @@
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
+      },
+      "lineHeight": {
+        "$type": "dimension",
+        "$value": "19.6px"
       }
+    }
+  },
+  "NowPlayingBar/base": {
+    "bgColor": {
+      "$type": "color",
+      "$value": "{colors.black}"
+    },
+    "bottom": {
+      "thumb": {
+        "progressBar": {
+          "bgColor": {
+            "$type": "color",
+            "$value": "{colors.black}"
+          },
+          "progressColor": {
+            "$type": "color",
+            "$value": "{colors.white}"
+          },
+          "barBgColor": {
+            "$type": "color",
+            "$value": "{colors.darkGrey}"
+          },
+          "width": {
+            "$type": "dimension",
+            "$value": "61.78px"
+          },
+          "paddingHorizontal": {
+            "$type": "dimension",
+            "$value": "3px"
+          },
+          "paddingTop": {
+            "$type": "dimension",
+            "$value": "3px"
+          },
+          "paddingBottom": {
+            "$type": "dimension",
+            "$value": "2px"
+          },
+          "cornerRadius": {
+            "$type": "dimension",
+            "$value": "40px"
+          },
+          "strokeWidth": {
+            "$type": "dimension",
+            "$value": "1px"
+          }
+        },
+        "width": {
+          "$type": "dimension",
+          "$value": "65.78px"
+        },
+        "height": {
+          "$type": "dimension",
+          "$value": "37px"
+        },
+        "image": {
+          "width": {
+            "$type": "dimension",
+            "$value": "{bottom.thumb.width}"
+          },
+          "height": {
+            "$type": "dimension",
+            "$value": "{bottom.thumb.height}"
+          }
+        }
+      },
+      "text": {
+        "color": {
+          "$type": "color",
+          "$value": "#ffffff"
+        },
+        "device": {
+          "fontWeight": {
+            "$type": "text",
+            "$value": "{fontWeights.bold}"
+          },
+          "fontSize": {
+            "$type": "dimension",
+            "$value": "6px"
+          }
+        },
+        "artwork": {
+          "gap": {
+            "$type": "dimension",
+            "$value": "-3px"
+          }
+        }
+      },
+      "gap": {
+        "$type": "dimension",
+        "$value": "10px"
+      }
+    },
+    "top": {
+      "line": {
+        "color": {
+          "$type": "color",
+          "$value": "{colors.lightGrey}"
+        },
+        "width": {
+          "$type": "dimension",
+          "$value": "30px"
+        },
+        "strokeWeight": {
+          "$type": "dimension",
+          "$value": "2px"
+        },
+        "height": {
+          "$type": "dimension",
+          "$value": "0px"
+        }
+      }
+    },
+    "paddingTop": {
+      "$type": "dimension",
+      "$value": "5px"
+    },
+    "paddingRight": {
+      "$type": "dimension",
+      "$value": "15px"
+    },
+    "paddingBottom": {
+      "$type": "dimension",
+      "$value": "8px"
+    },
+    "paddingLeft": {
+      "$type": "dimension",
+      "$value": "10px"
+    },
+    "cornerRadius": {
+      "$type": "dimension",
+      "$value": "5px"
+    },
+    "gap": {
+      "$type": "dimension",
+      "$value": "5px"
     }
   },
   "$themes": [],
   "$metadata": {
     "tokenSetOrder": [
       "primitives/base",
-      "backButton/base",
-      "typography/base"
+      "typography/base",
+      "NowPlayingBar/base"
     ]
   }
 }
