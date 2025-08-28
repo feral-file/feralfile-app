@@ -330,96 +330,6 @@
       "$type": "color",
       "$value": "{colors.black}"
     },
-    "bottom": {
-      "thumb": {
-        "progressBar": {
-          "bgColor": {
-            "$type": "color",
-            "$value": "{colors.black}"
-          },
-          "progressColor": {
-            "$type": "color",
-            "$value": "{colors.white}"
-          },
-          "barBgColor": {
-            "$type": "color",
-            "$value": "{colors.darkGrey}"
-          },
-          "width": {
-            "$type": "dimension",
-            "$value": "61.78px"
-          },
-          "paddingHorizontal": {
-            "$type": "dimension",
-            "$value": "3px"
-          },
-          "paddingTop": {
-            "$type": "dimension",
-            "$value": "3px"
-          },
-          "paddingBottom": {
-            "$type": "dimension",
-            "$value": "2px"
-          },
-          "cornerRadius": {
-            "$type": "dimension",
-            "$value": "40px"
-          },
-          "strokeWidth": {
-            "$type": "dimension",
-            "$value": "1px"
-          }
-        },
-        "width": {
-          "$type": "dimension",
-          "$value": "65.78px"
-        },
-        "height": {
-          "$type": "dimension",
-          "$value": "37px"
-        },
-        "image": {
-          "width": {
-            "$type": "dimension",
-            "$value": "{bottom.thumb.width}"
-          },
-          "height": {
-            "$type": "dimension",
-            "$value": "{bottom.thumb.height}"
-          }
-        }
-      },
-      "text": {
-        "color": {
-          "$type": "color",
-          "$value": "#ffffff"
-        },
-        "device": {
-          "fontWeight": {
-            "$type": "text",
-            "$value": "{fontWeights.bold}"
-          },
-          "fontSize": {
-            "$type": "dimension",
-            "$value": "6px"
-          },
-          "lineHeight": {
-            "$type": "dimension",
-            "$value": "8.4px"
-          }
-        },
-        "artwork": {
-          "gap": {
-            "$type": "dimension",
-            "$value": "-3px"
-          }
-        }
-      },
-      "gap": {
-        "$type": "dimension",
-        "$value": "10px"
-      }
-    },
     "top": {
       "line": {
         "color": {
@@ -444,29 +354,149 @@
         }
       }
     },
+    "bottom": {
+      "deviceNav": {
+        "activeColor": {
+          "$type": "color",
+          "$value": "{colors.white}"
+        },
+        "inactiveColor 2": {
+          "$type": "color",
+          "$value": "{colors.grey}"
+        },
+        "gap": {
+          "$type": "dimension",
+          "$value": "10px"
+        }
+      },
+      "verticalGap": {
+        "$type": "dimension",
+        "$value": "20px"
+      },
+      "displayItemList": {
+        "gap": {
+          "$type": "dimension",
+          "$value": "20px"
+        }
+      }
+    },
     "paddingTop": {
       "$type": "dimension",
       "$value": "5px"
     },
-    "paddingRight": {
+    "paddingHorizontal": {
       "$type": "dimension",
-      "$value": "15px"
+      "$value": "10px"
     },
     "paddingBottom": {
       "$type": "dimension",
       "$value": "8px"
     },
-    "paddingLeft": {
-      "$type": "dimension",
-      "$value": "10px"
-    },
     "cornerRadius": {
       "$type": "dimension",
       "$value": "5px"
     },
-    "height": {
+    "collapseHeight": {
       "$type": "dimension",
       "$value": "57px"
+    },
+    "expandedHeight": {
+      "$type": "dimension",
+      "$value": "316px"
+    }
+  },
+  "DisplayItem/base": {
+    "thumb": {
+      "progressBar": {
+        "bgColor": {
+          "$type": "color",
+          "$value": "{colors.black}"
+        },
+        "barBgColor": {
+          "$type": "color",
+          "$value": "{colors.darkGrey}"
+        },
+        "progressColor": {
+          "$type": "color",
+          "$value": "{colors.white}"
+        },
+        "width": {
+          "$type": "dimension",
+          "$value": "61.78px"
+        },
+        "paddingHorizontal": {
+          "$type": "dimension",
+          "$value": "3px"
+        },
+        "paddingTop": {
+          "$type": "dimension",
+          "$value": "3px"
+        },
+        "paddingBottom": {
+          "$type": "dimension",
+          "$value": "2px"
+        },
+        "cornerRadius": {
+          "$type": "dimension",
+          "$value": "40px"
+        },
+        "strokeWeight": {
+          "$type": "dimension",
+          "$value": "1px"
+        }
+      },
+      "image": {
+        "width": {
+          "$type": "dimension",
+          "$value": "{thumb.width}"
+        },
+        "height": {
+          "$type": "dimension",
+          "$value": "{thumb.height}"
+        }
+      },
+      "width": {
+        "$type": "dimension",
+        "$value": "65.78px"
+      },
+      "height": {
+        "$type": "dimension",
+        "$value": "37px"
+      }
+    },
+    "text": {
+      "color": {
+        "$type": "color",
+        "$value": "#ffffff"
+      },
+      "device": {
+        "fontWeight": {
+          "$type": "text",
+          "$value": "{fontWeights.bold}"
+        },
+        "fontSize": {
+          "$type": "dimension",
+          "$value": "6px"
+        },
+        "lineHeight": {
+          "$type": "dimension",
+          "$value": "8.4px"
+        }
+      },
+      "artwork": {
+        "gap": {
+          "$type": "dimension",
+          "$value": "-3px"
+        }
+      }
+    },
+    "gap": {
+      "$type": "dimension",
+      "$value": "12px"
+    },
+    "inactiveOpacity": {
+      "$type": "dimension",
+      "$value": "50px"
     }
   },
   "$themes": [],
@@ -474,7 +504,8 @@
     "tokenSetOrder": [
       "primitives/base",
       "typography/base",
-      "NowPlayingBar/base"
+      "NowPlayingBar/base",
+      "DisplayItem/base"
     ]
   }
 }
