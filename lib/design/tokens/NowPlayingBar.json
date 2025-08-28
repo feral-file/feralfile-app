@@ -76,6 +76,10 @@
           "fontSize": {
             "$type": "dimension",
             "$value": "6px"
+          },
+          "lineHeight": {
+            "$type": "dimension",
+            "$value": "8.4px"
           }
         },
         "artwork": {
@@ -107,6 +111,10 @@
         "height": {
           "$type": "dimension",
           "$value": "0px"
+        },
+        "positionTop": {
+          "$type": "dimension",
+          "$value": "30px"
         }
       }
     },

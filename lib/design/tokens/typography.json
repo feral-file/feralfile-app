@@ -17,10 +17,6 @@
         "$type": "dimension",
         "$value": "{letterSpacings.0}"
       },
-      "paragrahpSpacing": {
-        "$type": "dimension",
-        "$value": "{paragraphSpacings.1}"
-      },
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
@@ -28,6 +24,10 @@
       "lineHeight": {
         "$type": "dimension",
         "$value": "39.6px"
+      },
+      "paragraphSpacing": {
+        "$type": "dimension",
+        "$value": "{paragraphSpacings.1}"
       }
     },
     "H2": {
@@ -47,10 +47,6 @@
         "$type": "dimension",
         "$value": "{letterSpacings.0}"
       },
-      "paragrahpSpacing": {
-        "$type": "dimension",
-        "$value": "{paragraphSpacings.1}"
-      },
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
@@ -58,6 +54,10 @@
       "lineHeight": {
         "$type": "dimension",
         "$value": "26.4px"
+      },
+      "paragraphSpacing": {
+        "$type": "dimension",
+        "$value": "{paragraphSpacings.1}"
       }
     },
     "H3": {
@@ -77,10 +77,6 @@
         "$type": "dimension",
         "$value": "{letterSpacings.0}"
       },
-      "paragrahpSpacing": {
-        "$type": "dimension",
-        "$value": "{paragraphSpacings.1}"
-      },
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
@@ -88,6 +84,10 @@
       "lineHeight": {
         "$type": "dimension",
         "$value": "19.8px"
+      },
+      "paragraphSpacing": {
+        "$type": "dimension",
+        "$value": "{paragraphSpacings.1}"
       }
     },
     "Title": {
@@ -107,10 +107,6 @@
         "$type": "dimension",
         "$value": "{letterSpacings.0}"
       },
-      "paragrahpSpacing": {
-        "$type": "dimension",
-        "$value": "{paragraphSpacings.0}"
-      },
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
@@ -118,6 +114,10 @@
       "lineHeight": {
         "$type": "dimension",
         "$value": "22.4px"
+      },
+      "paragraphSpacing": {
+        "$type": "dimension",
+        "$value": "{paragraphSpacings.0}"
       }
     },
     "Body": {
@@ -137,10 +137,6 @@
         "$type": "dimension",
         "$value": "{letterSpacings.0}"
       },
-      "paragrahpSpacing": {
-        "$type": "dimension",
-        "$value": "{paragraphSpacings.0}"
-      },
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
@@ -148,6 +144,10 @@
       "lineHeight": {
         "$type": "dimension",
         "$value": "19.6px"
+      },
+      "paragraphSpacing": {
+        "$type": "dimension",
+        "$value": "{paragraphSpacings.0}"
       }
     },
     "Small": {
@@ -167,10 +167,6 @@
         "$type": "dimension",
         "$value": "{letterSpacings.0}"
       },
-      "paragrahpSpacing": {
-        "$type": "dimension",
-        "$value": "{paragraphSpacings.0}"
-      },
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
@@ -178,6 +174,10 @@
       "lineHeight": {
         "$type": "dimension",
         "$value": "16.8px"
+      },
+      "paragraphSpacing": {
+        "$type": "dimension",
+        "$value": "{paragraphSpacings.0}"
       }
     },
     "Mono": {
@@ -197,10 +197,6 @@
         "$type": "dimension",
         "$value": "{letterSpacings.0}"
       },
-      "paragrahpSpacing": {
-        "$type": "dimension",
-        "$value": "{paragraphSpacings.0}"
-      },
       "paragraphIndent": {
         "$type": "dimension",
         "$value": "{paragraphIndents.0}"
@@ -208,6 +204,10 @@
       "lineHeight": {
         "$type": "dimension",
         "$value": "19.6px"
+      },
+      "paragraphSpacing": {
+        "$type": "dimension",
+        "$value": "{paragraphSpacings.0}"
       }
     }
   }
