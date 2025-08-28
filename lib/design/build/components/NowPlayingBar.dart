@@ -18,6 +18,7 @@ class NowPlayingBarTokens {
     static const bottomTextColor = Color(0xFFFFFFFF);
     static const bottomTextDeviceFontSize = 6;
     static const bottomTextDeviceFontWeight = "Bold";
+    static const bottomTextDeviceLineHeight = 8.4;
     static const bottomThumbHeight = 37;
     static const bottomThumbImageHeight = 37;
     static const bottomThumbImageWidth = 65.78;
@@ -39,6 +40,7 @@ class NowPlayingBarTokens {
     static const paddingTop = 5;
     static const topLineColor = Color(0xFFE3E3E3);
     static const topLineHeight = 0;
+    static const topLinePositionTop = 30;
     static const topLineStrokeWeight = 2;
     static const topLineWidth = 30;
 }
