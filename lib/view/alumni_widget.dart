@@ -2,12 +2,13 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/model/ff_alumni.dart';
 import 'package:autonomy_flutter/screen/alumni_details/alumni_details_page.dart';
+import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/feralfile_alumni_ext.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/url_hepler.dart';
 import 'package:autonomy_flutter/view/feralfile_cache_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:url_launcher/url_launcher.dart';

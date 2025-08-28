@@ -1,5 +1,5 @@
+import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/view/loading.dart';
-import 'package:feralfile_app_theme/style/colors.dart';
 import 'package:flutter/material.dart';
 
 class LoadMoreIndicator extends StatelessWidget {

@@ -4,14 +4,14 @@
 //  Use of this source code is governed by the BSD-2-Clause Plus Patent License
 //  that can be found in the LICENSE file.
 //
+import 'package:autonomy_flutter/nft_collection/models/predefined_collection_model.dart';
 import 'package:autonomy_flutter/screen/predefined_collection/predefined_collection_screen.dart';
+import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/medium_category_ext.dart';
 import 'package:autonomy_flutter/util/predefined_collection_ext.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
-import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:autonomy_flutter/nft_collection/models/predefined_collection_model.dart';
 
 class PredefinedCollectionIcon extends StatelessWidget {
   final PredefinedCollectionModel predefinedCollection;
