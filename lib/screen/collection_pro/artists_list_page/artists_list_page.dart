@@ -7,7 +7,9 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:autonomy_flutter/nft_collection/models/predefined_collection_model.dart';
 import 'package:autonomy_flutter/screen/predefined_collection/predefined_collection_screen.dart';
+import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
@@ -15,9 +17,7 @@ import 'package:autonomy_flutter/view/header.dart';
 import 'package:autonomy_flutter/view/paging_bar.dart';
 import 'package:autonomy_flutter/view/predefined_collection/predefined_collection_item.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:autonomy_flutter/nft_collection/models/predefined_collection_model.dart';
 
 class ArtistsListPage extends StatefulWidget {
   final ArtistsListPagePayload payload;
