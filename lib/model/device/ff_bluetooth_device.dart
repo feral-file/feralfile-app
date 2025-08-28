@@ -4,8 +4,6 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/graphql/account_settings/setting_object.dart';
 import 'package:autonomy_flutter/model/device/base_device.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
-import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 enum DeviceReleaseBranch {
@@ -52,13 +50,10 @@ class FFBluetoothDevice extends BluetoothDevice
     required String deviceId,
     required String branchName,
   }) {
-    final savedDevice = BluetoothDeviceManager.pairedDevices.firstWhereOrNull(
-      (e) => e.remoteID == device.remoteId.str,
-    );
     return FFBluetoothDevice(
       name: deviceId,
       remoteID: device.remoteId.str,
-      topicId: topicId ?? savedDevice?.topicId ?? '',
+      topicId: topicId ?? '',
       deviceId: deviceId,
       branchName: branchName,
     );
