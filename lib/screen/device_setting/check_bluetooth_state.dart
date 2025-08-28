@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
-import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/bluetooth_connect/bluetooth_connect_bloc.dart';
@@ -250,6 +249,32 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
 
     BluetoothDevice? resultDevice;
 
+    if (topicId != null &&
+        topicId.isNotEmpty &&
+        isConnectedToInternet == true) {
+      final ffDevice = FFBluetoothDevice(
+          name: deviceName ?? 'FF1',
+          remoteID: 'remoteID',
+          topicId: topicId,
+          deviceId: deviceName ?? 'FF1',
+          branchName: branchName);
+      // add device to canvas
+      await BluetoothDeviceManager().addDevice(ffDevice);
+
+      // Hide QR code on device
+      unawaited(
+          injector<CanvasClientServiceV2>().showPairingQRCode(ffDevice, false));
+
+      await injector<NavigationService>().showThePortalIsSet(ffDevice, null);
+
+      unawaited(injector<NavigationService>().navigateTo(
+        AppRouter.bluetoothConnectedDeviceConfig,
+        arguments: BluetoothConnectedDeviceConfigPayload(
+          isFromOnboarding: true,
+        ),
+      ));
+    }
+
     log.info('Starting scan for device: $deviceName');
     await injector<FFBluetoothService>().startScan(
       timeout: const Duration(seconds: 30),
@@ -311,8 +336,6 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
           ),
         ));
       } else {
-        Pair<String, bool>? res;
-
         if (topicId != null && topicId.isNotEmpty) {
           // add device to canvas
           final device = resultDevice!.toFFBluetoothDevice(
@@ -332,25 +355,6 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
             branchName: branchName,
           ),
         );
-
-        res = r == null ? null : r as Pair<String, bool>;
-        // if (res != null) {
-        //   final ffDevice = resultDevice!.toFFBluetoothDevice(
-        //     topicId: res.first,
-        //     deviceId: resultDevice!.advName,
-        //     branchName: branchName,
-        //   );
-        //   await BluetoothDeviceManager().addDevice(ffDevice);
-        // }
-        //
-        // if (res is Pair<String, bool>) {
-        //   unawaited(injector<NavigationService>().navigateTo(
-        //     AppRouter.bluetoothConnectedDeviceConfig,
-        //     arguments: BluetoothConnectedDeviceConfigPayload(
-        //       isFromOnboarding: res.second,
-        //     ),
-        //   ));
-        // }
       }
 
       log.info(
