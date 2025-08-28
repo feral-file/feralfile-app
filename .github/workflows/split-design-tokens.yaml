@@ -45,7 +45,12 @@ jobs:
           for key in $(jq -r '.["$metadata"].tokenSetOrder[]' lib/design/app.tokens.json); do
             clean_key=$(echo $key | cut -d'/' -f1)
             echo "Exporting $key -> $clean_key ..."
-            jq "{ \"$clean_key\": .[\"$key\"] }" lib/design/app.tokens.json > "lib/design/tokens/${clean_key}.json"
+            new_key="${clean_key}Tokens"
+            # Convert PascalCase/CamelCase to snake_case for filename
+            snake_case=$(echo "$clean_key" | sed -E 's/([A-Z])/_\1/g' | sed 's/^_//' | tr '[:upper:]' '[:lower:]')
+            out_file="lib/design/tokens/${snake_case}_tokens.json"
+            jq "{ \"$new_key\": .[\"$key\"] }" lib/design/app.tokens.json > "$out_file"
+            echo "  -> Wrote $out_file"
           done
 
       - name: Commit split design tokens
