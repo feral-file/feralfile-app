@@ -1,0 +1,12 @@
+{
+  "BackButton": {
+    "bgColor": {
+      "$type": "color",
+      "$value": "{colors.white}"
+    },
+    "padding": {
+      "$type": "dimension",
+      "$value": "20px"
+    }
+  }
+}
