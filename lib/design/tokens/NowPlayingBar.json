@@ -41,6 +41,10 @@
         "gap": {
           "$type": "dimension",
           "$value": "10px"
+        },
+        "inactiveColor": {
+          "$type": "color",
+          "$value": "{colors.grey}"
         }
       },
       "verticalGap": {
