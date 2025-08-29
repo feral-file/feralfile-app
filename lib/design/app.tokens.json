@@ -521,6 +521,16 @@
       "$value": "20px"
     }
   },
+  "CommandDot/base": {
+    "size": {
+      "$type": "dimension",
+      "$value": "22px"
+    },
+    "cornerRadius": {
+      "$type": "dimension",
+      "$value": "40px"
+    }
+  },
   "$themes": [],
   "$metadata": {
     "tokenSetOrder": [
@@ -528,7 +538,8 @@
       "typography/base",
       "NowPlayingBar/base",
       "DisplayItem/base",
-      "BackButton/base"
+      "BackButton/base",
+      "CommandDot/base"
     ]
   }
 }
