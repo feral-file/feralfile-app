@@ -20,11 +20,15 @@
         },
         "height": {
           "$type": "dimension",
-          "$value": "0px"
+          "$value": "2px"
         },
         "positionTop": {
           "$type": "dimension",
           "$value": "30px"
+        },
+        "cornerRadius": {
+          "$type": "dimension",
+          "$value": "2px"
         }
       }
     },
