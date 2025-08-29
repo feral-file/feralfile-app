@@ -1497,7 +1497,7 @@ class BluetoothConnectedDeviceConfigState
   }
 
   void _showOption(BuildContext context, CanvasDeviceState state) {
-    final isDeviceAlive = selectedDevice!.isAlive;
+    final isDeviceAlive = selectedDevice.isAlive;
 
     final options = [
       if (isDeviceAlive)

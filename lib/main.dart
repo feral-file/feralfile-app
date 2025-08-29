@@ -30,7 +30,6 @@ import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/now_displaying_manager.dart';
 import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
 import 'package:autonomy_flutter/view/now_displaying/now_displaying_bar.dart';
-import 'package:autonomy_flutter/view/now_displaying/now_displaying_view.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:floor/floor.dart';
@@ -306,26 +305,6 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
         isNowDisplayingBarExpanded.value && nowDisplayingShowing.value;
   }
 
-  void _handleScrollUpdate(ScrollNotification notification) {
-    if (notification.metrics.axis != Axis.vertical) {
-      return;
-    }
-    if (notification is ScrollUpdateNotification) {
-      final currentScroll = notification.metrics.pixels;
-      final scrollDelta = currentScroll - _lastScrollPosition;
-
-      if (scrollDelta > 10) {
-        nowDisplayingVisibility.value = false;
-        isNowDisplayingBarExpanded.value = false;
-      } else if (scrollDelta < -10) {
-        nowDisplayingVisibility.value = true;
-      }
-
-      _lastScrollPosition = currentScroll;
-    }
-    return;
-  }
-
   @override
   void dispose() {
     shouldShowNowDisplaying.removeListener(_updateAnimationBasedOnDisplayState);
@@ -377,7 +356,7 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                             behavior: HitTestBehavior.translucent,
                             onTap: () {
                               if (_isVisible) {
-                                isNowDisplayingBarExpanded.value = false;
+                                DraggableSheetController.collapseSheet();
                               }
                             },
                             child: AnimatedContainer(
