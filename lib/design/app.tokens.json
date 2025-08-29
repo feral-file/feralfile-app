@@ -110,6 +110,10 @@
       "mainPaddingHorizontal": {
         "$type": "dimension",
         "$value": "12px"
+      },
+      "mainPaddingVertical": {
+        "$type": "dimension",
+        "$value": "40px"
       }
     }
   },
@@ -367,6 +371,10 @@
         "gap": {
           "$type": "dimension",
           "$value": "10px"
+        },
+        "inactiveColor": {
+          "$type": "color",
+          "$value": "{colors.grey}"
         }
       },
       "verticalGap": {
@@ -499,13 +507,24 @@
       "$value": "50px"
     }
   },
+  "BackButton/base": {
+    "bgColor": {
+      "$type": "color",
+      "$value": "{colors.white}"
+    },
+    "padding": {
+      "$type": "dimension",
+      "$value": "20px"
+    }
+  },
   "$themes": [],
   "$metadata": {
     "tokenSetOrder": [
       "primitives/base",
       "typography/base",
       "NowPlayingBar/base",
-      "DisplayItem/base"
+      "DisplayItem/base",
+      "BackButton/base"
     ]
   }
 }
