@@ -1,6 +1,5 @@
 import 'package:autonomy_flutter/model/device/base_device.dart';
 import 'package:autonomy_flutter/nft_collection/models/models.dart';
-import 'package:autonomy_flutter/screen/dailies_work/dailies_work_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 
 abstract class NowDisplayingObjectBase {
@@ -9,18 +8,6 @@ abstract class NowDisplayingObjectBase {
   final BaseDevice connectedDevice;
 
   List<AssetToken> get assetTokens;
-}
-
-class NowDisplayingObject extends NowDisplayingObjectBase {
-  NowDisplayingObject({
-    required super.connectedDevice,
-    required this.dailiesWorkState,
-  });
-
-  final DailiesWorkState dailiesWorkState;
-
-  @override
-  List<AssetToken> get assetTokens => dailiesWorkState.assetTokens;
 }
 
 class DP1NowDisplayingObject extends NowDisplayingObjectBase {

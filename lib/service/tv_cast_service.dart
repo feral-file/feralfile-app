@@ -36,6 +36,8 @@ abstract class TvCastService {
 
   Future<PreviousArtworkReply> previousArtwork(PreviousArtworkRequest request);
 
+  Future<MoveToArtworkReply> moveToArtwork(MoveToArtworkRequest request);
+
   Future<UpdateDurationReply> updateDuration(UpdateDurationRequest request);
 
   Future<KeyboardEventReply> keyboardEvent(KeyboardEventRequest request);
@@ -163,6 +165,12 @@ abstract class BaseTvCastService implements TvCastService {
   ) async {
     final result = await _sendData(_getBody(request));
     return PreviousArtworkReply.fromJson(result);
+  }
+
+  @override
+  Future<MoveToArtworkReply> moveToArtwork(MoveToArtworkRequest request) async {
+    final result = await _sendData(_getBody(request));
+    return MoveToArtworkReply.fromJson(result);
   }
 
   @override
