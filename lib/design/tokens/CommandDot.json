@@ -1,0 +1,12 @@
+{
+  "CommandDot": {
+    "size": {
+      "$type": "dimension",
+      "$value": "22px"
+    },
+    "cornerRadius": {
+      "$type": "dimension",
+      "$value": "40px"
+    }
+  }
+}
