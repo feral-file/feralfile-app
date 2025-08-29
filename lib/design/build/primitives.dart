@@ -36,4 +36,5 @@ class PrimitivesTokens {
     static const paragraphSpacings0 = 8;
     static const paragraphSpacings1 = 24;
     static const spacingMainPaddingHorizontal = 12;
+    static const spacingMainPaddingVertical = 40;
 }
