@@ -110,6 +110,10 @@
       "mainPaddingHorizontal": {
         "$type": "dimension",
         "$value": "12px"
+      },
+      "mainPaddingVertical": {
+        "$type": "dimension",
+        "$value": "40px"
       }
     }
   }
