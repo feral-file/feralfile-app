@@ -237,11 +237,11 @@ extension AssetTokenExtension on AssetToken {
 
   bool get canInteract {
     final supportInteractMedium = [
-      RenderingType.svg,
       RenderingType.audio,
       RenderingType.video,
       RenderingType.pdf,
       RenderingType.modelViewer,
+      RenderingType.webview,
     ];
     return supportInteractMedium.contains(getMimeType);
   }
