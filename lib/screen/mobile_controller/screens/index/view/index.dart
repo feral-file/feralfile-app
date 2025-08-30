@@ -64,15 +64,18 @@ class _ListDirectoryPageState extends State<ListDirectoryPage>
                     // Handle back button tap
                     UIHelper.showCenterMenu(context, options: _defaultOptions);
                   },
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                        right: 15, top: 16, left: 15, bottom: 16),
-                    child: SvgPicture.asset(
-                      'assets/images/icon_drawer.svg',
-                      width: 22,
-                      colorFilter: const ColorFilter.mode(
-                        AppColor.white,
-                        BlendMode.srcIn,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                          right: 15, top: 16, left: 15, bottom: 16),
+                      child: SvgPicture.asset(
+                        'assets/images/icon_drawer.svg',
+                        width: 22,
+                        colorFilter: const ColorFilter.mode(
+                          AppColor.white,
+                          BlendMode.srcIn,
+                        ),
                       ),
                     ),
                   ),
