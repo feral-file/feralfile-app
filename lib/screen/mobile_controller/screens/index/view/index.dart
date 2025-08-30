@@ -65,7 +65,8 @@ class _ListDirectoryPageState extends State<ListDirectoryPage>
                     UIHelper.showCenterMenu(context, options: _defaultOptions);
                   },
                   child: Padding(
-                    padding: const EdgeInsets.only(right: 15, top: 16),
+                    padding: const EdgeInsets.only(
+                        right: 15, top: 16, left: 15, bottom: 16),
                     child: SvgPicture.asset(
                       'assets/images/icon_drawer.svg',
                       width: 22,
