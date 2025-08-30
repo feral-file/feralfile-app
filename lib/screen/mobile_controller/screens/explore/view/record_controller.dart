@@ -146,14 +146,18 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                   // Handle back button tap
                   injector<NavigationService>().goBack();
                 },
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 15, top: 16),
-                  child: SvgPicture.asset(
-                    'assets/images/close.svg',
-                    width: 22,
-                    colorFilter: const ColorFilter.mode(
-                      AppColor.white,
-                      BlendMode.srcIn,
+                child: Container(
+                  color: Colors.transparent,
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                        right: 15, top: 16, left: 15, bottom: 16),
+                    child: SvgPicture.asset(
+                      'assets/images/close.svg',
+                      width: 22,
+                      colorFilter: const ColorFilter.mode(
+                        AppColor.white,
+                        BlendMode.srcIn,
+                      ),
                     ),
                   ),
                 ),
