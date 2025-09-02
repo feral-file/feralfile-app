@@ -76,7 +76,7 @@ class _DeviceSubNavState extends State<DeviceSubNav> {
                       color: selectedDevice?.deviceId ==
                               pairedDevices[index].deviceId
                           ? NowPlayingBarTokens.bottomDeviceNavActiveColor
-                          : NowPlayingBarTokens.bottomDeviceNavInactiveColor2,
+                          : NowPlayingBarTokens.bottomDeviceNavInactiveColor,
                     ),
                   ),
                   onTap: () async {
