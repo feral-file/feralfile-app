@@ -535,6 +535,40 @@
       }
     }
   },
+  "LLMTextInput/base": {
+    "LLMTextInput": {
+      "LLM": {
+        "bgColor": {
+          "$type": "color",
+          "$value": "{primitives.colors.black}"
+        },
+        "textColor": {
+          "$type": "color",
+          "$value": "{primitives.colors.white}"
+        },
+        "paddingLeft": {
+          "$type": "dimension",
+          "$value": "14px"
+        },
+        "cornerRadius": {
+          "$type": "dimension",
+          "$value": "50px"
+        },
+        "paddingRight": {
+          "$type": "dimension",
+          "$value": "10px"
+        },
+        "paddingVertical": {
+          "$type": "dimension",
+          "$value": "8px"
+        }
+      },
+      "padding": {
+        "$type": "dimension",
+        "$value": "10px"
+      }
+    }
+  },
   "$themes": [],
   "$metadata": {
     "tokenSetOrder": [
@@ -542,7 +576,8 @@
       "typography/base",
       "NowPlayingBar/base",
       "DisplayItem/base",
-      "CommandDot/base"
+      "CommandDot/base",
+      "LLMTextInput/base"
     ]
   }
 }
