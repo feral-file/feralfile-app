@@ -46,6 +46,24 @@ StyleDictionary.registerTransform({
   },
 });
 
+StyleDictionary.registerTransform({
+  name: "dart/custom-name",
+  type: "name",
+  transitive: true,
+  transform: (token) => {
+    const parentKey = token.path[0];
+
+    if (token.name.toLowerCase().startsWith(parentKey.toLowerCase())) {
+      const parentKeyCamelCase =
+        parentKey.charAt(0).toLowerCase() + parentKey.slice(1);
+      token.name = token.name.replace(parentKeyCamelCase, "");
+      token.name = token.name.charAt(0).toLowerCase() + token.name.slice(1);
+    }
+
+    return token.name;
+  },
+});
+
 const tokensDir = "lib/design/tokens";
 let files = [];
 
@@ -75,6 +93,7 @@ const sd = new StyleDictionary({
         "asset/flutter/literal",
         "dart/size/number",
         "dart/none/null",
+        "dart/custom-name",
       ],
     },
   },
