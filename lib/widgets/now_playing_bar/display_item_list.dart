@@ -51,9 +51,16 @@ class _DisplayItemListState extends State<DisplayItemList> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
-        final maxExtent = _scrollController.position.maxScrollExtent;
-        final target = scrollPosition.clamp(0.0, maxExtent);
-        _scrollController.jumpTo(target);
+        // Wait for content to be laid out
+        Future.delayed(const Duration(milliseconds: 50), () {
+          if (_scrollController.hasClients) {
+            final maxExtent = _scrollController.position.maxScrollExtent;
+            final target = scrollPosition.clamp(0.0, maxExtent);
+            _scrollController.jumpTo(
+              target,
+            );
+          }
+        });
       }
     });
   }
