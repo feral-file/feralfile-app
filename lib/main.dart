@@ -13,6 +13,7 @@ import 'dart:ui';
 
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/build/components/NowPlayingBar.dart';
 import 'package:autonomy_flutter/model/announcement/announcement_adapter.dart';
 import 'package:autonomy_flutter/model/draft_customer_support.dart';
 import 'package:autonomy_flutter/model/identity.dart';
@@ -31,6 +32,7 @@ import 'package:autonomy_flutter/util/now_displaying_manager.dart';
 import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
 import 'package:autonomy_flutter/view/now_displaying/now_displaying_bar.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
+import 'package:autonomy_flutter/widgets/llm_text_input/llm_text_input.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:floor/floor.dart';
 import 'package:flutter/material.dart';
@@ -367,6 +369,23 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                         )
                       : const SizedBox();
                 },
+              ),
+              Visibility(
+                visible: _isVisible,
+                child: ValueListenableBuilder(
+                  valueListenable: isNowDisplayingBarExpanded,
+                  builder: (context, bottomSheetHeight, child) {
+                    final paddingBottom = MediaQuery.of(context).padding.bottom;
+                    return Positioned(
+                      bottom: paddingBottom +
+                          UIConstants.nowDisplayingBarBottomPadding +
+                          NowPlayingBarTokens.collapseHeight,
+                      left: 0,
+                      right: 0,
+                      child: const LLMTextInput(),
+                    );
+                  },
+                ),
               ),
               Visibility(
                 visible: _isVisible,

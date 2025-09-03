@@ -1,5 +1,4 @@
 import 'package:autonomy_flutter/design/build/components/CommandDot.dart';
-import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -12,16 +11,17 @@ class CommandDot extends StatelessWidget {
       width: CommandDotTokens.size.toDouble(),
       height: CommandDotTokens.size.toDouble(),
       decoration: BoxDecoration(
-        color: PrimitivesTokens.colorsLightBlue,
-        borderRadius: BorderRadius.circular(40),
+        color: CommandDotTokens.bgColor,
+        borderRadius:
+            BorderRadius.circular(CommandDotTokens.cornerRadius.toDouble()),
       ),
       child: Center(
         child: SvgPicture.asset(
           'assets/images/talk_icon.svg',
-          width: 9.82,
-          height: 12,
+          width: CommandDotTokens.iconWidth,
+          height: CommandDotTokens.iconHeight.toDouble(),
           colorFilter: const ColorFilter.mode(
-            PrimitivesTokens.colorsBlack,
+            CommandDotTokens.iconColor,
             BlendMode.srcIn,
           ),
         ),
