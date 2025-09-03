@@ -54,9 +54,8 @@ StyleDictionary.registerTransform({
     const parentKey = token.path[0];
 
     if (token.name.toLowerCase().startsWith(parentKey.toLowerCase())) {
-      const parentKeyCamelCase =
-        parentKey.charAt(0).toLowerCase() + parentKey.slice(1);
-      token.name = token.name.replace(parentKeyCamelCase, "");
+      const regex = new RegExp(parentKey, "i");
+      token.name = token.name.replace(regex, "");
       token.name = token.name.charAt(0).toLowerCase() + token.name.slice(1);
     }
 
