@@ -12,6 +12,9 @@ import 'dart:ui';
 class LLMTextInputTokens {
     LLMTextInputTokens._();
 
+    static const llmTextInputLlmActiveCornerRadius = 13;
+    static const llmTextInputLlmActiveGap = 30;
+    static const llmTextInputLlmActivePadding = 10;
     static const llmTextInputLlmBgColor = Color(0xFF000000);
     static const llmTextInputLlmCornerRadius = 50;
     static const llmTextInputLlmPaddingLeft = 14;
