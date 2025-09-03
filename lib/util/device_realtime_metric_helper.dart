@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/device/base_device.dart';
+import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -60,10 +61,20 @@ class DeviceRealtimeMetricHelper {
         StreamController<DeviceRealtimeMetrics>.broadcast();
     _deviceRealtimeMetricsControllers[device.deviceId] = controller;
 
+    _deviceTimers[device.deviceId]?.cancel();
     // Simulate periodic metrics updates
     final timer = Timer.periodic(const Duration(seconds: 5), (timer) async {
-      final metrics = await injector<CanvasClientServiceV2>()
-          .getDeviceRealtimeMetrics(device);
+      DeviceRealtimeMetrics? metrics;
+      if (injector<CanvasDeviceBloc>().state.isDeviceAlive(device)) {
+        metrics = await injector<CanvasClientServiceV2>()
+            .getDeviceRealtimeMetrics(device);
+      } else {
+        log.info(
+            '[DeviceRealtimeMetricHelper][startMetrics] Timer: Device ${device.name} is not alive');
+      }
+      if (metrics == null) {
+        return;
+      }
       if (controller.isClosed) {
         timer.cancel();
         return;

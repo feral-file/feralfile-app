@@ -36,6 +36,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 enum ScreenOrientation {
@@ -128,6 +129,8 @@ class BluetoothConnectedDeviceConfigState
 
   StreamSubscription<DeviceRealtimeMetrics>? _metricsStreamSubscription;
 
+  StreamSubscription<FGBGType>? _fgbgSubscription;
+
   bool _isShowingQRCode = false;
 
   double _minPerformanceValue = 0;
@@ -155,6 +158,16 @@ class BluetoothConnectedDeviceConfigState
       return;
     }
     _enableMetricsStreaming();
+    _fgbgSubscription =
+        FGBGEvents.instance.stream.listen(_handleForeBackground);
+  }
+
+  void _handleForeBackground(FGBGType event) {
+    if (event == FGBGType.foreground) {
+      _enableMetricsStreaming();
+    } else {
+      _stopMetricsStreaming();
+    }
   }
 
   void _bluetoothDeviceStatusListener() {
@@ -183,6 +196,7 @@ class BluetoothConnectedDeviceConfigState
     WidgetsBinding.instance.removeObserver(this);
     routeObserver.unsubscribe(this);
     _stopMetricsStreaming();
+    _fgbgSubscription?.cancel();
     super.dispose();
   }
 
