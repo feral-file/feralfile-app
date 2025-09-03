@@ -25,6 +25,20 @@
         "paddingVertical": {
           "$type": "dimension",
           "$value": "8px"
+        },
+        "active": {
+          "cornerRadius": {
+            "$type": "dimension",
+            "$value": "13px"
+          },
+          "padding": {
+            "$type": "dimension",
+            "$value": "10px"
+          },
+          "gap": {
+            "$type": "dimension",
+            "$value": "30px"
+          }
         }
       },
       "padding": {
