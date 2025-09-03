@@ -561,11 +561,41 @@
         "paddingVertical": {
           "$type": "dimension",
           "$value": "8px"
+        },
+        "active": {
+          "cornerRadius": {
+            "$type": "dimension",
+            "$value": "13px"
+          },
+          "padding": {
+            "$type": "dimension",
+            "$value": "10px"
+          },
+          "gap": {
+            "$type": "dimension",
+            "$value": "30px"
+          }
         }
       },
       "padding": {
         "$type": "dimension",
         "$value": "10px"
+      }
+    }
+  },
+  "SendButton/base": {
+    "SendButton": {
+      "bgColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.white}"
+      },
+      "iconColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.black}"
+      },
+      "size": {
+        "$type": "dimension",
+        "$value": "22px"
       }
     }
   },
@@ -577,7 +607,8 @@
       "NowPlayingBar/base",
       "DisplayItem/base",
       "CommandDot/base",
-      "LLMTextInput/base"
+      "LLMTextInput/base",
+      "SendButton/base"
     ]
   }
 }
