@@ -12,14 +12,14 @@ import 'dart:ui';
 class LLMTextInputTokens {
     LLMTextInputTokens._();
 
-    static const llmTextInputLlmActiveCornerRadius = 13;
-    static const llmTextInputLlmActiveGap = 30;
-    static const llmTextInputLlmActivePadding = 10;
-    static const llmTextInputLlmBgColor = Color(0xFF000000);
-    static const llmTextInputLlmCornerRadius = 50;
-    static const llmTextInputLlmPaddingLeft = 14;
-    static const llmTextInputLlmPaddingRight = 10;
-    static const llmTextInputLlmPaddingVertical = 8;
-    static const llmTextInputLlmTextColor = Color(0xFFFFFFFF);
-    static const llmTextInputPadding = 10;
+    static const llmActiveCornerRadius = 13;
+    static const llmActiveGap = 30;
+    static const llmActivePadding = 10;
+    static const llmBgColor = Color(0xFF000000);
+    static const llmCornerRadius = 50;
+    static const llmPaddingLeft = 14;
+    static const llmPaddingRight = 10;
+    static const llmPaddingVertical = 8;
+    static const llmTextColor = Color(0xFFFFFFFF);
+    static const padding = 10;
 }

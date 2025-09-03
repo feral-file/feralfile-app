@@ -1,5 +1,8 @@
+import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/build/components/LLMTextInput.dart';
 import 'package:autonomy_flutter/design/build/typography.dart';
+import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/widgets/llm_text_input/command_dot.dart';
 import 'package:flutter/material.dart';
 
@@ -12,20 +15,20 @@ class LLMTextInput extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(
-        LLMTextInputTokens.llmTextInputPadding.toDouble(),
+        LLMTextInputTokens.padding.toDouble(),
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: LLMTextInputTokens.llmTextInputLlmBgColor,
+          color: LLMTextInputTokens.llmBgColor,
           borderRadius: BorderRadius.circular(
-            LLMTextInputTokens.llmTextInputLlmCornerRadius.toDouble(),
+            LLMTextInputTokens.llmCornerRadius.toDouble(),
           ),
         ),
         padding: EdgeInsets.fromLTRB(
-          LLMTextInputTokens.llmTextInputLlmPaddingLeft.toDouble(),
-          LLMTextInputTokens.llmTextInputLlmPaddingVertical.toDouble(),
-          LLMTextInputTokens.llmTextInputLlmPaddingRight.toDouble(),
-          LLMTextInputTokens.llmTextInputLlmPaddingVertical.toDouble(),
+          LLMTextInputTokens.llmPaddingLeft.toDouble(),
+          LLMTextInputTokens.llmPaddingVertical.toDouble(),
+          LLMTextInputTokens.llmPaddingRight.toDouble(),
+          LLMTextInputTokens.llmPaddingVertical.toDouble(),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -33,7 +36,7 @@ class LLMTextInput extends StatelessWidget {
             Text(
               placeholder,
               style: TextStyle(
-                color: LLMTextInputTokens.llmTextInputLlmTextColor,
+                color: LLMTextInputTokens.llmTextColor,
                 fontFamily: TypographyTokens.smallFontFamily,
                 fontSize: TypographyTokens.smallFontSize.toDouble(),
                 fontWeight: FontWeight.w400,
@@ -42,7 +45,14 @@ class LLMTextInput extends StatelessWidget {
                 letterSpacing: TypographyTokens.smallLetterSpacing.toDouble(),
               ),
             ),
-            const CommandDot(),
+            GestureDetector(
+              onTap: () {
+                injector<NavigationService>().popToRouteOrPush(
+                  AppRouter.voiceCommandPage,
+                );
+              },
+              child: const CommandDot(),
+            ),
           ],
         ),
       ),
