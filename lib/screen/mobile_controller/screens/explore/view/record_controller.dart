@@ -19,6 +19,7 @@ import 'package:autonomy_flutter/view/ai_chat_view_widget.dart';
 import 'package:autonomy_flutter/view/now_displaying/now_displaying_bar.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
+import 'package:autonomy_flutter/widgets/llm_text_input/llm_text_input.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -29,8 +30,16 @@ import 'package:uuid/uuid.dart';
 
 ValueNotifier<bool> chatModeNotifier = ValueNotifier<bool>(false);
 
+class RecordControllerScreenPayload {
+  RecordControllerScreenPayload({
+    this.isListening = true,
+  });
+  final bool isListening;
+}
+
 class RecordControllerScreen extends StatefulWidget {
-  const RecordControllerScreen({super.key});
+  const RecordControllerScreen({super.key, required this.payload});
+  final RecordControllerScreenPayload payload;
 
   @override
   State<RecordControllerScreen> createState() => _RecordControllerScreenState();
@@ -58,9 +67,11 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
 
   @override
   void afterFirstLayout(BuildContext context) {
-    recordBloc.add(
-      StartRecordingEvent(),
-    );
+    if (widget.payload.isListening) {
+      recordBloc.add(
+        StartRecordingEvent(),
+      );
+    }
   }
 
   @override
@@ -88,6 +99,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
       bottom: false,
       child: Scaffold(
         backgroundColor: AppColor.auGreyBackground,
+        resizeToAvoidBottomInset: false,
         body: _buildBody(context),
       ),
     );
@@ -116,13 +128,16 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
               }
             },
             builder: (context, state) {
-              return IndexedStack(index: chatModeView ? 0 : 1, children: [
-                _aiChatThreadView(
-                  context,
-                  state is RecordSuccessState ? state : null,
-                ),
-                _recordView(context, state)
-              ]);
+              return IndexedStack(
+                index: chatModeView ? 0 : 1,
+                children: [
+                  _aiChatThreadView(
+                    context,
+                    state is RecordSuccessState ? state : null,
+                  ),
+                  _recordView(context, state)
+                ],
+              );
             },
           ),
         );
@@ -131,101 +146,117 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
   }
 
   Widget _recordView(BuildContext context, RecordState state) {
-    return Column(
+    return Stack(
       children: [
-        SizedBox(
-          height: MediaQuery.of(context).padding.top,
-        ),
-        SizedBox(
-          height: UIConstants.topControlsBarHeight,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  // Handle back button tap
-                  injector<NavigationService>().goBack();
-                },
-                child: Container(
-                  color: Colors.transparent,
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                        right: 15, top: 16, left: 15, bottom: 16),
-                    child: SvgPicture.asset(
-                      'assets/images/close.svg',
-                      width: 22,
-                      colorFilter: const ColorFilter.mode(
-                        AppColor.white,
-                        BlendMode.srcIn,
+        Column(
+          children: [
+            SizedBox(
+              height: MediaQuery.of(context).padding.top,
+            ),
+            SizedBox(
+              height: UIConstants.topControlsBarHeight,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      // Handle back button tap
+                      injector<NavigationService>().goBack();
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 15, top: 16),
+                      child: SvgPicture.asset(
+                        'assets/images/close.svg',
+                        width: 22,
+                        colorFilter: const ColorFilter.mode(
+                          AppColor.white,
+                          BlendMode.srcIn,
+                        ),
                       ),
                     ),
                   ),
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 6,
+              child: Center(
+                child: Column(
+                  children: [
+                    // const SizedBox(height: 60),
+                    Center(
+                      child: GestureDetector(
+                        onTap: state is RecordProcessingState
+                            ? null
+                            : () {
+                                context.read<RecordBloc>().add(
+                                      state is RecordRecordingState
+                                          ? StopRecordingEvent()
+                                          : StartRecordingEvent(),
+                                    );
+                              },
+                        child: _askAnythingWidget(
+                          context,
+                          state,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Padding(
+                      padding: ResponsiveLayout.pageHorizontalEdgeInsets,
+                      child: Column(
+                        children: [
+                          Builder(
+                            builder: (context) {
+                              if (state is RecordSuccessState &&
+                                  state.lastDP1Call!.items.isEmpty) {
+                                return _errorWidget(
+                                  context,
+                                  AudioException(state.response),
+                                );
+                              }
+                              if (state is RecordErrorState) {
+                                if (state.error
+                                    is AudioPermissionDeniedException) {
+                                  return _noPermissionWidget(context);
+                                } else if (state.error is AudioException) {
+                                  return _errorWidget(
+                                    context,
+                                    state.error as AudioException,
+                                  );
+                                }
+                              }
+                              return const SizedBox.shrink();
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-        Expanded(
-          flex: 6,
-          child: Center(
-            child: Column(
-              children: [
-                // const SizedBox(height: 60),
-                Center(
-                  child: GestureDetector(
-                    onTap: state is RecordProcessingState
-                        ? null
-                        : () {
-                            context.read<RecordBloc>().add(
-                                  state is RecordRecordingState
-                                      ? StopRecordingEvent()
-                                      : StartRecordingEvent(),
-                                );
-                          },
-                    child: _askAnythingWidget(
-                      context,
-                      state,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: ResponsiveLayout.pageHorizontalEdgeInsets,
-                  child: Column(
-                    children: [
-                      Builder(
-                        builder: (context) {
-                          if (state is RecordSuccessState &&
-                              state.lastDP1Call!.items.isEmpty) {
-                            return _errorWidget(
-                              context,
-                              AudioException(state.response),
-                            );
-                          }
-                          if (state is RecordErrorState) {
-                            if (state.error is AudioPermissionDeniedException) {
-                              return _noPermissionWidget(context);
-                            } else if (state.error is AudioException) {
-                              return _errorWidget(
-                                context,
-                                state.error as AudioException,
-                              );
-                            }
-                          }
-                          return const SizedBox.shrink();
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ],
             ),
-          ),
+            Expanded(
+              flex: 4,
+              child: _historyChat(context),
+            ),
+          ],
         ),
-        Expanded(
-          flex: 4,
-          child: _historyChat(context),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: MediaQuery.of(context).padding.bottom +
+              MediaQuery.of(context).viewInsets.bottom,
+          child: LLMTextInput(
+            active: true,
+            autoFocus: !widget.payload.isListening,
+            onSend: (text) {
+              context.read<RecordBloc>().add(
+                    SubmitTextEvent(text),
+                  );
+            },
+          ),
         ),
       ],
     );

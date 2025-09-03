@@ -73,11 +73,17 @@ class RecordBloc extends AuBloc<RecordEvent, RecordState> {
     StopRecordingEvent event,
     Emitter<RecordState> emit,
   ) async {
+    if (state is! RecordRecordingState) {
+      return;
+    }
+
     final file = await audioService.stopRecording();
     if (file == null) {
-      emit(RecordErrorState(
-          error:
-              AudioRecordNoSpeechException())); // Emit RecordNoSpeechState if no audio was recorded
+      emit(
+        RecordErrorState(
+          error: AudioRecordNoSpeechException(),
+        ),
+      ); // Emit RecordNoSpeechState if no audio was recorded
       return;
     }
     emit(
