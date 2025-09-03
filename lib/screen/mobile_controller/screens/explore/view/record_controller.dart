@@ -1,5 +1,6 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
@@ -13,19 +14,15 @@ import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/view/ai_chat_thread_view.dart';
 import 'package:autonomy_flutter/view/ai_chat_view_widget.dart';
 import 'package:autonomy_flutter/view/now_displaying/now_displaying_bar.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
-import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/llm_text_input/llm_text_input.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_svg/svg.dart';
-import 'package:multi_value_listenable_builder/multi_value_listenable_builder.dart';
 import 'package:uuid/uuid.dart';
 
 ValueNotifier<bool> chatModeNotifier = ValueNotifier<bool>(false);
@@ -57,6 +54,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
   final ConfigurationService configurationService =
       injector<ConfigurationService>();
   late RecordBloc recordBloc;
+  String? transcribedText;
 
   @override
   void initState() {
@@ -113,6 +111,23 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
           value: recordBloc,
           child: BlocConsumer<RecordBloc, RecordState>(
             listener: (context, state) {
+              // Update transcribedText when transcription is complete
+              if (state is RecordProcessingState &&
+                  state.status == RecordProcessingStatus.transcribed &&
+                  state.transcription != null &&
+                  state.transcription!.isNotEmpty) {
+                setState(() {
+                  transcribedText = state.transcription;
+                });
+              }
+
+              // Reset transcribedText when starting new recording
+              if (state is RecordRecordingState) {
+                setState(() {
+                  transcribedText = null;
+                });
+              }
+
               if (state is RecordSuccessState) {
                 final dp1Playlist = state.lastDP1Call;
                 if (dp1Playlist == null || dp1Playlist.items.isEmpty) {
@@ -165,10 +180,10 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                       injector<NavigationService>().goBack();
                     },
                     child: Padding(
-                      padding: const EdgeInsets.only(right: 15, top: 16),
+                      padding: const EdgeInsets.all(15),
                       child: SvgPicture.asset(
                         'assets/images/close.svg',
-                        width: 22,
+                        width: 18.03,
                         colorFilter: const ColorFilter.mode(
                           AppColor.white,
                           BlendMode.srcIn,
@@ -180,67 +195,32 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
               ),
             ),
             Expanded(
-              flex: 6,
-              child: Center(
-                child: Column(
-                  children: [
-                    // const SizedBox(height: 60),
-                    Center(
-                      child: GestureDetector(
-                        onTap: state is RecordProcessingState
-                            ? null
-                            : () {
-                                context.read<RecordBloc>().add(
-                                      state is RecordRecordingState
-                                          ? StopRecordingEvent()
-                                          : StartRecordingEvent(),
-                                    );
-                              },
-                        child: _askAnythingWidget(
-                          context,
-                          state,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Padding(
-                      padding: ResponsiveLayout.pageHorizontalEdgeInsets,
-                      child: Column(
-                        children: [
-                          Builder(
-                            builder: (context) {
-                              if (state is RecordSuccessState &&
-                                  state.lastDP1Call!.items.isEmpty) {
-                                return _errorWidget(
-                                  context,
-                                  AudioException(state.response),
-                                );
-                              }
-                              if (state is RecordErrorState) {
-                                if (state.error
-                                    is AudioPermissionDeniedException) {
-                                  return _noPermissionWidget(context);
-                                } else if (state.error is AudioException) {
-                                  return _errorWidget(
-                                    context,
-                                    state.error as AudioException,
+              child: Column(
+                children: [
+                  Center(
+                    child: GestureDetector(
+                      onTap: state is RecordProcessingState
+                          ? null
+                          : () {
+                              context.read<RecordBloc>().add(
+                                    state is RecordRecordingState
+                                        ? StopRecordingEvent()
+                                        : StartRecordingEvent(),
                                   );
-                                }
-                              }
-                              return const SizedBox.shrink();
                             },
-                          ),
-                        ],
-                      ),
+                      child: _recordButton(state),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 105.52),
+                  _recordTranscribedText(context, state),
+                  _recordStatus(context, state),
+                ],
               ),
             ),
-            Expanded(
-              flex: 4,
-              child: _historyChat(context),
-            ),
+            // Expanded(
+            //   flex: 4,
+            //   child: _historyChat(context),
+            // ),
           ],
         ),
         Positioned(
@@ -250,6 +230,8 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
               MediaQuery.of(context).viewInsets.bottom,
           child: LLMTextInput(
             active: true,
+            enabled: !(state is RecordProcessingState ||
+                state is RecordRecordingState),
             autoFocus: !widget.payload.isListening,
             onSend: (text) {
               context.read<RecordBloc>().add(
@@ -305,121 +287,91 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
     );
   }
 
-  Widget _askAnythingWidget(BuildContext context, RecordState state) {
+  Widget _recordButton(RecordState state) {
     final isRecording = state is RecordRecordingState;
     final isProcessing = state is RecordProcessingState;
-    final text = isRecording
-        ? MessageConstants.recordingText
-        : isProcessing
-            ? state.status.message
-            : MessageConstants.askAnythingText;
     log.info(
-      'RecordControllerScreen: _askAnythingWidget: isRecording: $isRecording, isProcessing: $isProcessing, text: $text---',
+      'RecordControllerScreen: _recordButton: isRecording: $isRecording, isProcessing: $isProcessing',
     );
     return ColoredBox(
       color: Colors.transparent,
       child: AnimatedContainer(
         duration: UIConstants.animationDuration,
-        width: isRecording
-            ? UIConstants.recordButtonSizeActive
-            : UIConstants.recordButtonSize,
-        height: isRecording
-            ? UIConstants.recordButtonSizeActive
-            : UIConstants.recordButtonSize,
+        width: UIConstants.recordButtonSize,
+        height: UIConstants.recordButtonSize,
         decoration: BoxDecoration(
-          color: AppColor.feralFileLightBlue,
+          color: PrimitivesTokens.colorsLightBlue,
           shape: BoxShape.circle,
           boxShadow: isRecording
               ? [
                   BoxShadow(
-                    color: AppColor.feralFileLightBlue.withOpacity(0.7),
-                    blurRadius: 50,
-                    spreadRadius: 20,
+                    color: PrimitivesTokens.colorsLightBlue.withOpacity(0.4),
+                    spreadRadius: UIConstants.recordButtonSpreadRadius,
                   ),
                 ]
               : [],
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          text.toUpperCase(),
-          style: Theme.of(context).textTheme.ppMori400Black12,
-          textAlign: TextAlign.center,
         ),
       ),
     );
   }
 
-  Widget _historyChat(BuildContext context) {
-    var messages = configurationService.getRecordedMessages();
-    if (kDebugMode && messages.isEmpty) {
-      messages = UIConstants.sampleHistoryAsks;
-    }
-
-    return Stack(
-      children: [
-        ListView.builder(
-          padding: EdgeInsets.zero,
-          itemCount: messages.length + 1,
-          itemBuilder: (context, index) {
-            if (index == messages.length) {
-              return const SizedBox(height: 100);
-            }
-
-            final theme = Theme.of(context);
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: ResponsiveLayout.paddingAll,
-                  child: Text(
-                    messages[index],
-                    style: theme.textTheme.ppMori400Grey12,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                addDivider(color: AppColor.primaryBlack, height: 1),
-              ],
-            );
-          },
-        ),
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: MultiValueListenableBuilder(
-            valueListenables: [
-              nowDisplayingShowing,
-            ],
-            builder: (context, values, _) {
-              return values.every((value) => value as bool)
-                  ? Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      child: IgnorePointer(
-                        child: Container(
-                          height: 160,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              stops: const [0.0, 0.37, 0.37],
-                              colors: [
-                                AppColor.auGreyBackground.withAlpha(0),
-                                AppColor.auGreyBackground,
-                                AppColor.auGreyBackground,
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    )
-                  : Container();
-            },
+  Widget _recordTranscribedText(BuildContext context, RecordState state) {
+    if (transcribedText != null && transcribedText!.isNotEmpty) {
+      return Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          border: Border(
+            bottom: BorderSide(),
           ),
         ),
-      ],
+        child: _recordMessage(context, transcribedText!),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  Widget _recordStatus(BuildContext context, RecordState state) {
+    switch (state.runtimeType) {
+      case RecordRecordingState:
+        return _recordProcessingStatus(
+          MessageConstants.recordingText,
+        );
+      case RecordProcessingState:
+        return _recordProcessingStatus(
+          (state as RecordProcessingState).status.message,
+        );
+      case RecordSuccessState:
+        if (state.lastDP1Call!.items.isEmpty) {
+          return _recordErrorStatus(
+            AudioException((state as RecordSuccessState).response).message,
+          );
+        }
+      case RecordErrorState:
+        {
+          if ((state as RecordErrorState).error
+              is AudioPermissionDeniedException) {
+            return _noPermissionWidget(context);
+          } else if (state.error is AudioException) {
+            return _recordErrorStatus(
+              (state.error as AudioException).message,
+            );
+          }
+        }
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  Widget _recordMessage(BuildContext context, String message) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      child: Text(
+        message,
+        style: Theme.of(context).textTheme.small,
+        maxLines: 3,
+        overflow: TextOverflow.ellipsis,
+      ),
     );
   }
 
@@ -428,7 +380,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
       children: [
         Text(
           AudioExceptionType.permissionDenied.message,
-          style: Theme.of(context).textTheme.ppMori400White12,
+          style: Theme.of(context).textTheme.small,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 20),
@@ -442,17 +394,170 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
     );
   }
 
-  Widget _errorWidget(BuildContext context, AudioException error) {
-    return Center(
-      child: Text(
-        error.message,
-        maxLines: 3,
-        overflow: TextOverflow.ellipsis,
-        style: Theme.of(context).textTheme.ppMori400White12,
+  Widget _recordProcessingStatus(String processingMessage) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          Container(
+            width: 18,
+            height: 18,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: PrimitivesTokens.colorsLightBlue,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Row(
+              children: [
+                Text(
+                  processingMessage,
+                  style: Theme.of(context).textTheme.small,
+                ),
+                _AnimatedDots(),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
+  Widget _recordErrorStatus(String errorMessage) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      child: Text(
+        errorMessage,
+        style: Theme.of(context).textTheme.small.copyWith(
+              color: PrimitivesTokens.colorsError,
+            ),
+        textAlign: TextAlign.left,
+      ),
+    );
+  }
+
+  // Widget _historyChat(BuildContext context) {
+  //   var messages = configurationService.getRecordedMessages();
+  //   if (kDebugMode && messages.isEmpty) {
+  //     messages = UIConstants.sampleHistoryAsks;
+  //   }
+
+  //   return Stack(
+  //     children: [
+  //       ListView.builder(
+  //         padding: EdgeInsets.zero,
+  //         itemCount: messages.length + 1,
+  //         itemBuilder: (context, index) {
+  //           if (index == messages.length) {
+  //             return const SizedBox(height: 100);
+  //           }
+
+  //           final theme = Theme.of(context);
+  //           return Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               Padding(
+  //                 padding: ResponsiveLayout.paddingAll,
+  //                 child: Text(
+  //                   messages[index],
+  //                   style: theme.textTheme.ppMori400Grey12,
+  //                   maxLines: 3,
+  //                   overflow: TextOverflow.ellipsis,
+  //                 ),
+  //               ),
+  //               addDivider(color: AppColor.primaryBlack, height: 1),
+  //             ],
+  //           );
+  //         },
+  //       ),
+  //       Positioned(
+  //         bottom: 0,
+  //         left: 0,
+  //         right: 0,
+  //         child: MultiValueListenableBuilder(
+  //           valueListenables: [
+  //             nowDisplayingShowing,
+  //           ],
+  //           builder: (context, values, _) {
+  //             return values.every((value) => value as bool)
+  //                 ? Positioned(
+  //                     bottom: 0,
+  //                     left: 0,
+  //                     right: 0,
+  //                     child: IgnorePointer(
+  //                       child: Container(
+  //                         height: 160,
+  //                         decoration: BoxDecoration(
+  //                           gradient: LinearGradient(
+  //                             begin: Alignment.topCenter,
+  //                             end: Alignment.bottomCenter,
+  //                             stops: const [0.0, 0.37, 0.37],
+  //                             colors: [
+  //                               AppColor.auGreyBackground.withAlpha(0),
+  //                               AppColor.auGreyBackground,
+  //                               AppColor.auGreyBackground,
+  //                             ],
+  //                           ),
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   )
+  //                 : Container();
+  //           },
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
+
   @override
   bool get wantKeepAlive => true;
+}
+
+class _AnimatedDots extends StatefulWidget {
+  @override
+  _AnimatedDotsState createState() => _AnimatedDotsState();
+}
+
+class _AnimatedDotsState extends State<_AnimatedDots>
+    with TickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<int> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    _animation = IntTween(begin: 0, end: 3).animate(_animationController);
+    _animationController.repeat();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        final buffer = StringBuffer();
+        for (var i = 0; i < _animation.value; i++) {
+          buffer.write('.');
+        }
+        return Text(
+          buffer.toString(),
+          style: Theme.of(context).textTheme.small,
+        );
+      },
+    );
+  }
 }

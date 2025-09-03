@@ -1,6 +1,7 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/build/components/LLMTextInput.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/view/record_controller.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
@@ -11,15 +12,17 @@ import 'package:flutter/material.dart';
 class LLMTextInput extends StatefulWidget {
   const LLMTextInput({
     super.key,
-    this.placeholder = 'Ask anything',
+    this.placeholder = MessageConstants.askAnythingText,
     this.onSend,
     this.autoFocus = false,
     this.active = false,
+    this.enabled = true,
   });
 
   final String placeholder;
   final bool autoFocus;
   final bool active;
+  final bool enabled;
   final void Function(String)? onSend;
 
   @override
@@ -53,17 +56,19 @@ class _LLMTextInputState extends State<LLMTextInput> {
         decoration: BoxDecoration(
           color: LLMTextInputTokens.llmBgColor,
           borderRadius: BorderRadius.circular(
-            widget.active
+            _focusNode.hasFocus
                 ? LLMTextInputTokens.llmActiveCornerRadius.toDouble()
                 : LLMTextInputTokens.llmCornerRadius.toDouble(),
           ),
         ),
-        padding: EdgeInsets.fromLTRB(
-          LLMTextInputTokens.llmPaddingLeft.toDouble(),
-          LLMTextInputTokens.llmPaddingVertical.toDouble(),
-          LLMTextInputTokens.llmPaddingRight.toDouble(),
-          LLMTextInputTokens.llmPaddingVertical.toDouble(),
-        ),
+        padding: widget.active
+            ? EdgeInsets.all(LLMTextInputTokens.llmActivePadding.toDouble())
+            : EdgeInsets.fromLTRB(
+                LLMTextInputTokens.llmPaddingLeft.toDouble(),
+                LLMTextInputTokens.llmPaddingVertical.toDouble(),
+                LLMTextInputTokens.llmPaddingRight.toDouble(),
+                LLMTextInputTokens.llmPaddingVertical.toDouble(),
+              ),
         child: Row(
           children: [
             Expanded(
@@ -71,6 +76,7 @@ class _LLMTextInputState extends State<LLMTextInput> {
                   ? TextField(
                       controller: _textController,
                       focusNode: _focusNode,
+                      enabled: widget.enabled,
                       style: Theme.of(context).textTheme.small,
                       minLines: 1,
                       maxLines: 3,
