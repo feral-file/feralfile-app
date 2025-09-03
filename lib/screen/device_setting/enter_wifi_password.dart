@@ -53,11 +53,16 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
 
   late final TextEditingController passwordController;
 
+  bool _isProcessing = false;
+
+  late FocusNode _passwordFocusNode;
+
   @override
   void initState() {
     super.initState();
     _password = kDebugMode ? r'btmrkrckt@)@$' : '';
     passwordController = TextEditingController(text: _password);
+    _passwordFocusNode = FocusNode();
   }
 
   @override
@@ -73,6 +78,7 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
         ),
       );
     });
+    _passwordFocusNode.requestFocus();
   }
 
   @override
@@ -113,9 +119,11 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                         ),
                         PasswordTextField(
                           controller: passwordController,
+                          focusNode: _passwordFocusNode,
                           style: Theme.of(context).textTheme.ppMori400White14,
                           hintText: 'password'.tr(),
                           defaultObscure: false,
+                          isEnabled: !_isProcessing,
                           onChanged: (value) {
                             setState(() {
                               _password = value;
@@ -137,6 +145,9 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                     final ssid = widget.payload.wifiAccessPoint.ssid;
                     final password = passwordController.text.trim();
                     final bleDevice = widget.payload.device;
+                    setState(() {
+                      _isProcessing = true;
+                    });
                     try {
                       // Check if the device is connected
                       if (!bleDevice.isConnected) {
@@ -220,6 +231,13 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                           '${e.toString()}',
                         ),
                       );
+                    } finally {
+                      if (!mounted) {
+                        return;
+                      }
+                      setState(() {
+                        _isProcessing = false;
+                      });
                     }
                   },
                   color: AppColor.white,
@@ -246,6 +264,8 @@ class PasswordTextField extends StatefulWidget {
     this.onChanged,
     this.onSubmitted,
     this.onVisibilityChanged,
+    this.isEnabled = true,
+    this.focusNode,
   });
 
   final TextEditingController controller;
@@ -255,6 +275,8 @@ class PasswordTextField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
   final ValueChanged<bool>? onVisibilityChanged;
+  final bool isEnabled;
+  final FocusNode? focusNode;
 
   @override
   State<PasswordTextField> createState() => _PasswordTextFieldState();
@@ -273,6 +295,7 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
   Widget build(BuildContext context) {
     const backgroundColor = AppColor.auGreyBackground;
     return TextField(
+      focusNode: widget.focusNode,
       autocorrect: false,
       enableSuggestions: false,
       controller: widget.controller,
@@ -280,6 +303,7 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
       onSubmitted: widget.onSubmitted,
       obscureText: _isObscure,
       style: widget.style,
+      enabled: widget.isEnabled,
       decoration: InputDecoration(
         // border radius 10
         hintText: widget.hintText,
