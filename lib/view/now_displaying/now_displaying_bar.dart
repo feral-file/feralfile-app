@@ -4,12 +4,13 @@ import 'package:autonomy_flutter/model/error/now_displaying_error.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/util/now_displaying_manager.dart';
 import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
-import 'package:autonomy_flutter/view/now_displaying/now_displaying_status_view.dart';
 import 'package:autonomy_flutter/widgets/now_playing_bar/collapsed_now_playing_bar.dart';
 import 'package:autonomy_flutter/widgets/now_playing_bar/expanded_now_playing_bar.dart';
+import 'package:autonomy_flutter/widgets/now_playing_bar/status_bar.dart';
 import 'package:flutter/material.dart';
 
-final double kNowDisplayingHeight = NowPlayingBarTokens.collapseHeight.toDouble();
+final double kNowDisplayingHeight =
+    NowPlayingBarTokens.collapseHeight.toDouble();
 
 class NowDisplayingBar extends StatefulWidget {
   const NowDisplayingBar({super.key});
@@ -96,7 +97,7 @@ class _NowDisplayingBarState extends State<NowDisplayingBar>
     final device = (status as DeviceDisconnected).device;
     final deviceName =
         device.name.isNotEmpty == true ? device.name : 'Portal (FF-X1)';
-    return NowDisplayingStatusView(
+    return NowPlayingStatusBar(
       status: 'Device $deviceName is offline or disconnected.',
     );
   }
@@ -108,7 +109,7 @@ class _NowDisplayingBarState extends State<NowDisplayingBar>
     final device = (status as ConnectionLost).device;
     final deviceName =
         device.name.isNotEmpty == true ? device.name : 'Portal (FF-X1)';
-    return NowDisplayingStatusView(
+    return NowPlayingStatusBar(
       status: 'Connection to $deviceName lost.',
     );
   }
@@ -120,19 +121,19 @@ class _NowDisplayingBarState extends State<NowDisplayingBar>
     final error = (nowDisplayingStatus as NowDisplayingError).error;
 
     if (error is CheckCastingStatusException) {
-      return NowDisplayingStatusView(
+      return NowPlayingStatusBar(
         status: error.error.message,
       );
     }
 
-    return NowDisplayingStatusView(
+    return NowPlayingStatusBar(
       status: error.toString(),
     );
   }
 
   // there no device setuped
   Widget _noDeviceView(BuildContext context) {
-    return const NowDisplayingStatusView(
+    return const NowPlayingStatusBar(
       status:
           'Pair an FF1 to display your collection and curated art on any screen.',
     );
