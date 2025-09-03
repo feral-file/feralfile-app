@@ -23,6 +23,7 @@ import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/app_theme.dart';
+
 import 'package:autonomy_flutter/util/au_file_service.dart';
 import 'package:autonomy_flutter/util/custom_route_observer.dart';
 import 'package:autonomy_flutter/util/device.dart';
@@ -248,7 +249,7 @@ class AutonomyAppScaffold extends StatefulWidget {
 class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  bool _isVisible = true;
+  bool _isVisible = false;
   double _lastScrollPosition = 0;
   late final ValueNotifier<bool> _shouldShowOverlay;
 
@@ -348,44 +349,39 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
               : null,
           child: Stack(
             children: [
-              widget.child,
-              ValueListenableBuilder<bool>(
-                valueListenable: _shouldShowOverlay,
-                builder: (context, shouldShowOverlay, child) {
-                  return shouldShowOverlay
-                      ? Positioned.fill(
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.translucent,
-                            onTap: () {
-                              if (_isVisible) {
-                                DraggableSheetController.collapseSheet();
+              Overlay(
+                initialEntries: [
+                  OverlayEntry(
+                    builder: (context) => Stack(
+                      children: [
+                        widget.child,
+                        if (_isVisible)
+                          ValueListenableBuilder(
+                            valueListenable: isNowDisplayingBarExpanded,
+                            builder: (context, bottomSheetHeight, child) {
+                              if (isNowDisplayingBarExpanded.value) {
+                                return const SizedBox.shrink();
                               }
+
+                              final paddingBottom =
+                                  MediaQuery.of(context).padding.bottom;
+                              return Positioned(
+                                bottom: paddingBottom +
+                                    UIConstants.nowDisplayingBarBottomPadding +
+                                    NowPlayingBarTokens.collapseHeight,
+                                left: 0,
+                                right: 0,
+                                child: const Material(
+                                  color: Colors.transparent,
+                                  child: LLMTextInput(),
+                                ),
+                              );
                             },
-                            child: AnimatedContainer(
-                              color: AppColor.primaryBlack.withAlpha(51),
-                              duration: const Duration(milliseconds: 150),
-                            ), // Transparent area
                           ),
-                        )
-                      : const SizedBox();
-                },
-              ),
-              Visibility(
-                visible: _isVisible,
-                child: ValueListenableBuilder(
-                  valueListenable: isNowDisplayingBarExpanded,
-                  builder: (context, bottomSheetHeight, child) {
-                    final paddingBottom = MediaQuery.of(context).padding.bottom;
-                    return Positioned(
-                      bottom: paddingBottom +
-                          UIConstants.nowDisplayingBarBottomPadding +
-                          NowPlayingBarTokens.collapseHeight,
-                      left: 0,
-                      right: 0,
-                      child: const LLMTextInput(),
-                    );
-                  },
-                ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               Visibility(
                 visible: _isVisible,
