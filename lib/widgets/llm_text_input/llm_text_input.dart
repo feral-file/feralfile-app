@@ -114,7 +114,7 @@ class _LLMTextInputState extends State<LLMTextInput> {
             ),
             if (widget.active) ...[
               SizedBox(width: LLMTextInputTokens.llmActiveGap.toDouble()),
-              GestureDetector(
+              SendButton(
                 onTap: () {
                   if (_textController.text.isNotEmpty) {
                     final text = _textController.text;
@@ -122,17 +122,15 @@ class _LLMTextInputState extends State<LLMTextInput> {
                     _textController.clear();
                   }
                 },
-                child: const SendButton(),
               ),
             ] else ...[
-              GestureDetector(
+              CommandDot(
                 onTap: () {
                   injector<NavigationService>().popToRouteOrPush(
                     AppRouter.voiceCommandPage,
                     arguments: RecordControllerScreenPayload(),
                   );
                 },
-                child: const CommandDot(),
               ),
             ],
           ],
