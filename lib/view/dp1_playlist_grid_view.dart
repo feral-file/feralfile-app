@@ -9,6 +9,7 @@ import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
+import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -18,13 +19,11 @@ class PlaylistAssetGridView extends StatefulWidget {
     super.key,
     this.header,
     this.backgroundColor = AppColor.auGreyBackground,
-    this.padding = EdgeInsets.zero,
   });
 
   final DP1Call playlist;
   final Widget? header;
   final Color backgroundColor;
-  final EdgeInsets padding;
 
   @override
   State<PlaylistAssetGridView> createState() => _PlaylistAssetGridViewState();
@@ -72,60 +71,53 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: widget.backgroundColor,
-      padding: widget.padding.copyWith(top: 0, bottom: 0),
-      // top and bottom will be added by the custom scroll view
-      child: BlocConsumer<PlaylistDetailsBloc, PlaylistDetailsState>(
-        bloc: _playlistDetailsBloc,
-        listener: (context, state) {
-          if (state is! PlaylistDetailsLoadingMoreState) {
-            _isLoadingMore = false;
-          }
-        },
-        builder: (context, state) {
-          return CustomScrollView(
-            controller: _scrollController,
-            shrinkWrap: true,
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
+    return BlocConsumer<PlaylistDetailsBloc, PlaylistDetailsState>(
+      bloc: _playlistDetailsBloc,
+      listener: (context, state) {
+        if (state is! PlaylistDetailsLoadingMoreState) {
+          _isLoadingMore = false;
+        }
+      },
+      builder: (context, state) {
+        return CustomScrollView(
+          controller: _scrollController,
+          shrinkWrap: true,
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            if (widget.header != null) ...[
               SliverToBoxAdapter(
-                  child: SizedBox(
-                height: widget.padding.top,
-              )),
-              if (widget.header != null) ...[
-                SliverToBoxAdapter(
-                  child: widget.header!,
+                child: widget.header!,
+              ),
+              const SliverToBoxAdapter(
+                child: SizedBox(
+                  height: UIConstants.detailPageHeaderPadding,
                 ),
-                const SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: UIConstants.detailPageHeaderPadding,
-                  ),
-                ),
-              ],
-              if (state is PlaylistDetailsInitialState ||
-                  state is PlaylistDetailsLoadingState)
-                SliverToBoxAdapter(
-                  child: _loadingView(context),
-                )
-              else if (state.assetTokens.isEmpty)
-                SliverToBoxAdapter(
-                  child: _emptyView(context),
-                )
-              else
-                UIHelper.assetTokenSliverGrid(
-                    context, state.assetTokens, widget.playlist.title),
-              if (state is PlaylistDetailsLoadingMoreState)
-                const SliverToBoxAdapter(
-                    child: LoadMoreIndicator(
-                  isLoadingMore: true,
-                )),
-              SliverToBoxAdapter(
-                  child: SizedBox(height: widget.padding.bottom)),
+              ),
             ],
-          );
-        },
-      ),
+            if (state is PlaylistDetailsInitialState ||
+                state is PlaylistDetailsLoadingState)
+              SliverToBoxAdapter(
+                child: _loadingView(context),
+              )
+            else if (state.assetTokens.isEmpty)
+              SliverToBoxAdapter(
+                child: _emptyView(context),
+              )
+            else
+              UIHelper.assetTokenSliverGrid(
+                  context, state.assetTokens, widget.playlist.title),
+            if (state is PlaylistDetailsLoadingMoreState)
+              const SliverToBoxAdapter(
+                child: LoadMoreIndicator(
+                  isLoadingMore: true,
+                ),
+              ),
+            const SliverToBoxAdapter(
+              child: BottomSpacing(),
+            ),
+          ],
+        );
+      },
     );
   }
 

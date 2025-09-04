@@ -18,6 +18,7 @@ import 'package:autonomy_flutter/view/ai_chat_thread_view.dart';
 import 'package:autonomy_flutter/view/ai_chat_view_widget.dart';
 import 'package:autonomy_flutter/view/now_displaying/now_displaying_bar.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
+import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:autonomy_flutter/widgets/llm_text_input/llm_text_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -217,10 +218,6 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                 ],
               ),
             ),
-            // Expanded(
-            //   flex: 4,
-            //   child: _historyChat(context),
-            // ),
           ],
         ),
         Positioned(
@@ -271,18 +268,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
         AiChatThreadView(
           initialMessages: [],
         ),
-        ValueListenableBuilder(
-          valueListenable: nowDisplayingShowing,
-          builder: (context, value, child) {
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              height: MediaQuery.of(context).padding.bottom +
-                  UIConstants.nowDisplayingBarBottomPadding +
-                  (value ? (kNowDisplayingHeight + 8) : 0),
-            );
-          },
-        )
+        const BottomSpacing(),
       ],
     );
   }

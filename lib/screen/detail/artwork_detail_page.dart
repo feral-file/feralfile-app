@@ -45,11 +45,11 @@ import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:autonomy_flutter/view/cast_button.dart';
 import 'package:autonomy_flutter/view/loading.dart';
-import 'package:autonomy_flutter/view/now_displaying/now_displaying_bar.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/view/webview_controller_text_field.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
+import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:backdrop/backdrop.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -281,8 +281,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                           actions: [
                             IconButton(
                               padding: EdgeInsets.zero,
-                              onPressed: () async =>
-                                  _showArtworkOptionsDialog(
+                              onPressed: () async => _showArtworkOptionsDialog(
                                 context,
                                 assetToken,
                                 canvasState,
@@ -340,9 +339,9 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                         height: UIConstants.detailPageHeaderPadding,
                       ),
                       if (!_isFullScreen)
-                        Column(
+                        const Column(
                           children: [
-                            const Padding(
+                            Padding(
                               padding: EdgeInsets.symmetric(vertical: 8),
                               child: ArtworkDetailsHeader(
                                 title: 'I',
@@ -350,7 +349,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                                 color: Colors.transparent,
                               ),
                             ),
-                            _nowDisplayingSpace(context),
+                            BottomSpacing(),
                           ],
                         ),
                     ],
@@ -458,18 +457,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
     _webViewController = webViewController;
   }
 
-  Widget _nowDisplayingSpace(BuildContext context) => ValueListenableBuilder(
-        valueListenable: nowDisplayingShowing,
-        builder: (context, isNowDisplayingShowing, child) {
-          final value = isNowDisplayingShowing || _isInfoExpand;
-          return Container(
-            height: MediaQuery.of(context).padding.bottom +
-                (value ? UIConstants.nowDisplayingBarBottomPadding : 0) +
-                (value ? kNowDisplayingHeight : 0),
-          );
-        },
-      );
-
   Widget _infoHeader(
     BuildContext context,
     AssetToken asset,
@@ -502,7 +489,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
             ],
           ),
         ),
-        if (!_isInfoExpand) _nowDisplayingSpace(context),
+        if (!_isInfoExpand) const BottomSpacing(),
       ],
     );
   }

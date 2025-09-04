@@ -383,6 +383,27 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                   ),
                 ],
               ),
+              ValueListenableBuilder<bool>(
+                valueListenable: _shouldShowOverlay,
+                builder: (context, shouldShowOverlay, child) {
+                  return shouldShowOverlay
+                      ? Positioned.fill(
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.translucent,
+                            onTap: () {
+                              if (_isVisible) {
+                                DraggableSheetController.collapseSheet();
+                              }
+                            },
+                            child: AnimatedContainer(
+                              color: Colors.transparent,
+                              duration: const Duration(milliseconds: 150),
+                            ), // Transparent area
+                          ),
+                        )
+                      : const SizedBox();
+                },
+              ),
               Visibility(
                 visible: _isVisible,
                 replacement: const SizedBox.shrink(),
@@ -394,7 +415,6 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                       duration: const Duration(milliseconds: 150),
                       bottom: bottomSheetHeight > 0
                           ? bottomSheetHeight +
-                              paddingBottom +
                               UIConstants.nowDisplayingBarBottomPadding
                           : paddingBottom +
                               UIConstants.nowDisplayingBarBottomPadding,

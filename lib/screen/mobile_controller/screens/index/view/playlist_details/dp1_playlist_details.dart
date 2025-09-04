@@ -88,7 +88,6 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen> {
               ],
             ),
             playlist: playlist,
-            padding: const EdgeInsets.only(bottom: 120),
           ),
         ),
       ],
