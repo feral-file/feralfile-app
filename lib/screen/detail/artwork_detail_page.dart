@@ -27,7 +27,6 @@ import 'package:autonomy_flutter/screen/detail/preview/keyboard_control_page.dar
 import 'package:autonomy_flutter/screen/detail/preview_detail/preview_detail_widget.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/detail_page_appbar.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
@@ -50,6 +49,7 @@ import 'package:autonomy_flutter/view/now_displaying/now_displaying_bar.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/view/webview_controller_text_field.dart';
+import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:backdrop/backdrop.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -276,29 +276,27 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                   frontLayerElevation: _isFullScreen ? 0 : 1,
                   appBar: _isFullScreen
                       ? null
-                      : DetailPageAppBar(
-                          title: widget.payload.backTitle ?? '',
+                      : CustomAppBar(
+                          backTitle: widget.payload.backTitle ?? '',
                           actions: [
-                            Padding(
-                              padding: const EdgeInsets.only(left: 5),
-                              child: IconButton(
-                                onPressed: () async =>
-                                    _showArtworkOptionsDialog(
-                                  context,
-                                  assetToken,
-                                  canvasState,
-                                ),
-                                constraints: const BoxConstraints(
-                                  maxWidth: 44,
-                                  maxHeight: 44,
-                                  minWidth: 44,
-                                  minHeight: 44,
-                                ),
-                                icon: SvgPicture.asset(
-                                  'assets/images/more_circle.svg',
-                                  width: 22,
-                                  height: 22,
-                                ),
+                            IconButton(
+                              padding: EdgeInsets.zero,
+                              onPressed: () async =>
+                                  _showArtworkOptionsDialog(
+                                context,
+                                assetToken,
+                                canvasState,
+                              ),
+                              constraints: const BoxConstraints(
+                                maxWidth: 44,
+                                maxHeight: 44,
+                                minWidth: 44,
+                                minHeight: 44,
+                              ),
+                              icon: SvgPicture.asset(
+                                'assets/images/more_circle.svg',
+                                width: 22,
+                                height: 22,
                               ),
                             ),
                             FFCastButton(

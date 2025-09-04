@@ -9,6 +9,7 @@ import 'package:autonomy_flutter/service/dp1_playlist_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/view/cast_button.dart';
 import 'package:autonomy_flutter/view/dp1_playlist_grid_view.dart';
+import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -41,8 +42,8 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen> {
       bloc: _canvasDeviceBloc,
       builder: (context, state) {
         return Scaffold(
-          appBar: DetailPageAppBar(
-            title: widget.payload.backTitle ?? 'Playlists',
+          appBar: CustomAppBar(
+            backTitle: widget.payload.backTitle ?? 'Playlists',
             actions: [
               FFCastButton(
                 displayKey: widget.payload.playlist.id,

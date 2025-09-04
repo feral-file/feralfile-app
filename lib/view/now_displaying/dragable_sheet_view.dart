@@ -35,7 +35,7 @@ class _TwoStopDraggableSheetState extends State<TwoStopDraggableSheet> {
 
   void _snapSheet() {
     final midSize = (widget.minSize + widget.maxSize) / 2;
-    if (_controller.size > midSize) {
+    if (_controller.size > widget.minSize * 2) {
       isNowDisplayingBarExpanded.value = true;
     } else {
       isNowDisplayingBarExpanded.value = false;

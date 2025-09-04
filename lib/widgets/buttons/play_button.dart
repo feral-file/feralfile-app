@@ -42,6 +42,8 @@ class PlayButton extends StatelessWidget {
             SizedBox(width: PlayButtonTokens.gap.toDouble()),
             SvgPicture.asset(
               'assets/images/play_icon.svg',
+              width: PlayButtonTokens.iconWidth,
+              height: PlayButtonTokens.iconHeight.toDouble(),
               colorFilter: const ColorFilter.mode(
                 PlayButtonTokens.color,
                 BlendMode.srcIn,

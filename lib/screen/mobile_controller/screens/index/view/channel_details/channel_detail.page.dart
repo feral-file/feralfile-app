@@ -9,6 +9,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_list_view.dart';
 import 'package:autonomy_flutter/service/dp1_playlist_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -69,8 +70,8 @@ class _ChannelDetailPageState extends State<ChannelDetailPage>
 
     return Scaffold(
       backgroundColor: AppColor.auGreyBackground,
-      appBar: DetailPageAppBar(
-        title: widget.payload.backTitle,
+      appBar: CustomAppBar(
+        backTitle: widget.payload.backTitle,
       ),
       body: SafeArea(
         child: Column(
