@@ -24,6 +24,14 @@
       "cornerRadius": {
         "$type": "dimension",
         "$value": "40px"
+      },
+      "iconWidth": {
+        "$type": "dimension",
+        "$value": "13.33px"
+      },
+      "iconHeight": {
+        "$type": "dimension",
+        "$value": "12px"
       }
     }
   }

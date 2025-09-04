@@ -8,6 +8,14 @@
       "gap": {
         "$type": "dimension",
         "$value": "12px"
+      },
+      "iconWidth": {
+        "$type": "dimension",
+        "$value": "14.67px"
+      },
+      "iconHeight": {
+        "$type": "dimension",
+        "$value": "12px"
       }
     }
   }
