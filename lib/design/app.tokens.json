@@ -627,6 +627,30 @@
       }
     }
   },
+  "BackButton/base": {
+    "BackButton": {
+      "color": {
+        "$type": "color",
+        "$value": "{primitives.colors.grey}"
+      },
+      "gap": {
+        "$type": "dimension",
+        "$value": "12px"
+      }
+    }
+  },
+  "Header/base": {
+    "Header": {
+      "paddingHorizontal": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "paddingVertical": {
+        "$type": "dimension",
+        "$value": "20px"
+      }
+    }
+  },
   "$themes": [],
   "$metadata": {
     "tokenSetOrder": [
@@ -637,7 +661,9 @@
       "CommandDot/base",
       "LLMTextInput/base",
       "SendButton/base",
-      "PlayButton/base"
+      "PlayButton/base",
+      "BackButton/base",
+      "Header/base"
     ]
   }
 }
