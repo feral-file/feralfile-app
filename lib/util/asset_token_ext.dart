@@ -236,14 +236,12 @@ extension AssetTokenExtension on AssetToken {
   }
 
   bool get canInteract {
-    final supportInteractMedium = [
-      RenderingType.audio,
-      RenderingType.video,
-      RenderingType.pdf,
-      RenderingType.modelViewer,
-      RenderingType.webview,
+    final notSupportInteractMedium = [
+      RenderingType.image,
+      RenderingType.svg,
+      RenderingType.gif,
     ];
-    return supportInteractMedium.contains(getMimeType);
+    return !notSupportInteractMedium.contains(getMimeType);
   }
 
   String? getGalleryThumbnailUrl({bool usingThumbnailID = true}) {
