@@ -1,0 +1,14 @@
+{
+  "BackButton": {
+    "BackButton": {
+      "color": {
+        "$type": "color",
+        "$value": "{primitives.colors.grey}"
+      },
+      "gap": {
+        "$type": "dimension",
+        "$value": "12px"
+      }
+    }
+  }
+}
