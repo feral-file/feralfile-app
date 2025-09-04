@@ -624,6 +624,14 @@
       "cornerRadius": {
         "$type": "dimension",
         "$value": "40px"
+      },
+      "iconWidth": {
+        "$type": "dimension",
+        "$value": "13.33px"
+      },
+      "iconHeight": {
+        "$type": "dimension",
+        "$value": "12px"
       }
     }
   },
@@ -634,6 +642,14 @@
         "$value": "{primitives.colors.grey}"
       },
       "gap": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "iconWidth": {
+        "$type": "dimension",
+        "$value": "14.67px"
+      },
+      "iconHeight": {
         "$type": "dimension",
         "$value": "12px"
       }
