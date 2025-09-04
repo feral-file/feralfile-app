@@ -599,6 +599,34 @@
       }
     }
   },
+  "PlayButton/base": {
+    "PlayButton": {
+      "bgColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.lightBlue}"
+      },
+      "color": {
+        "$type": "color",
+        "$value": "{primitives.colors.black}"
+      },
+      "paddingHorizontal": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "paddingVertical": {
+        "$type": "dimension",
+        "$value": "6px"
+      },
+      "gap": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "cornerRadius": {
+        "$type": "dimension",
+        "$value": "40px"
+      }
+    }
+  },
   "$themes": [],
   "$metadata": {
     "tokenSetOrder": [
@@ -608,7 +636,8 @@
       "DisplayItem/base",
       "CommandDot/base",
       "LLMTextInput/base",
-      "SendButton/base"
+      "SendButton/base",
+      "PlayButton/base"
     ]
   }
 }
