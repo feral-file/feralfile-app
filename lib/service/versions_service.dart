@@ -108,6 +108,26 @@ class VersionServiceImpl implements VersionService {
     return compatibility;
   }
 
+  /// Find the latest version in branchData that is older than deviceVersion
+  String? _findLatestCompatibleVersion(
+      Map<String, dynamic> branchData, String deviceVersion) {
+    String? latestVersion;
+
+    for (final version in branchData.keys) {
+      // Skip if version is not older than deviceVersion
+      if (compareVersion(version, deviceVersion) >= 0) {
+        continue;
+      }
+
+      // If this is the first valid version or it's newer than current latest
+      if (latestVersion == null || compareVersion(version, latestVersion) > 0) {
+        latestVersion = version;
+      }
+    }
+
+    return latestVersion;
+  }
+
   Future<VersionCompatibilityResult> _checkDeviceVersionCompatibility(
     String branchName,
     String deviceVersion,
@@ -137,15 +157,25 @@ class VersionServiceImpl implements VersionService {
       }
 
       // Find version info by device version
-      final versionInfo = branchData[deviceVersion];
+      var versionInfo = branchData[deviceVersion];
       if (versionInfo == null) {
         log.info(
-          'No compatibility data found for device version: $deviceVersion',
+          'No compatibility data found for device version: $deviceVersion, trying to find latest compatible version',
         );
-        return VersionCompatibilityResult.unknown;
+        // Find the latest version that is older than deviceVersion
+        final latestCompatibleVersion = _findLatestCompatibleVersion(
+            branchData as Map<String, dynamic>, deviceVersion);
+        if (latestCompatibleVersion == null) {
+          log.info(
+              'No compatible version found for device version: $deviceVersion');
+          return VersionCompatibilityResult.unknown;
+        }
+        versionInfo = branchData[latestCompatibleVersion];
+        log.info(
+            'Using compatibility data from version: $latestCompatibleVersion');
+      } else {
+        log.info('Found compatibility data for device version: $deviceVersion');
       }
-
-      log.info('Found compatibility data for device version: $deviceVersion');
 
       // Determine platform and get min/max versions
       String? minVersion;
