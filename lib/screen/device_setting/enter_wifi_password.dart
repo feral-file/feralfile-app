@@ -154,8 +154,6 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                         await injector<FFBluetoothService>()
                             .connectToDevice(bleDevice);
                       }
-                      throw DeviceUpdatingError();
-
                       final topicId = await injector<FFBluetoothService>()
                           .sendWifiCredentials(
                         device: bleDevice,
