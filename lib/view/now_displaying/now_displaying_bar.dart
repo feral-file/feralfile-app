@@ -34,6 +34,9 @@ class _NowDisplayingBarState extends State<NowDisplayingBar>
           setState(
             () {
               nowDisplayingStatus = status;
+              if (status is! NowDisplayingSuccess) {
+                isNowDisplayingBarExpanded.value = false;
+              }
             },
           );
         }
