@@ -216,7 +216,7 @@ class BluetoothDevicePortalPageState extends State<BluetoothDevicePortalPage>
     final payload = SendWifiCredentialsPagePayload(
       wifiAccessPoint: accessPoint,
       device: device,
-      onSubmitted: (String? topicId) async {
+      onSubmitted: (String? topicId, Object? error) async {
         final res = topicId != null ? Pair(topicId, true) : null;
         if (res != null) {
           final ffDevice = device.toFFBluetoothDevice(
@@ -234,6 +234,10 @@ class BluetoothDevicePortalPageState extends State<BluetoothDevicePortalPage>
               isFromOnboarding: true,
             ),
           ));
+        } else if (error != null) {
+          injector<NavigationService>()
+            ..popUntil(AppRouter.bluetoothDevicePortalPage)
+            ..goBack(result: error);
         }
       },
     );

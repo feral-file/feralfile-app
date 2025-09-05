@@ -31,7 +31,7 @@ class SendWifiCredentialsPagePayload {
 
   final WifiPoint wifiAccessPoint;
   final BluetoothDevice device;
-  final FutureOr<void> Function(String? topicId)? onSubmitted;
+  final FutureOr<void> Function(String? topicId, Object? error)? onSubmitted;
 }
 
 class SendWifiCredentialsPage extends StatefulWidget {
@@ -154,6 +154,8 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                         await injector<FFBluetoothService>()
                             .connectToDevice(bleDevice);
                       }
+                      throw DeviceUpdatingError();
+
                       final topicId = await injector<FFBluetoothService>()
                           .sendWifiCredentials(
                         device: bleDevice,
@@ -163,7 +165,7 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                       if (topicId == null) {
                         throw FailedToConnectToWifiException(ssid, bleDevice);
                       }
-                      await widget.payload.onSubmitted?.call(topicId);
+                      await widget.payload.onSubmitted?.call(topicId, null);
                     } on FailedToConnectToWifiException catch (e) {
                       log.info('Failed to connect to wifi: $e');
                       unawaited(
@@ -201,22 +203,34 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                               injector<NavigationService>().goBack();
                             },
                           ).then((_) {
-                            widget.payload.onSubmitted?.call(null);
+                            widget.payload.onSubmitted?.call(null, e);
                           }),
                         );
                         return;
+                      } else if (e is DeviceUpdatingError) {
+                        unawaited(
+                          UIHelper.showInfoDialog(
+                            context,
+                            e.title,
+                            e.message,
+                            closeButton: 'Go Back',
+                            onClose: () {
+                              injector<NavigationService>().goBack();
+                              widget.payload.onSubmitted?.call(null, e);
+                            },
+                          ).then(
+                            (_) {
+                              widget.payload.onSubmitted?.call(null, e);
+                            },
+                          ),
+                        );
+                      } else {
+                        unawaited(UIHelper.showInfoDialog(
+                          context,
+                          e.title,
+                          e.message,
+                        ));
                       }
-                      unawaited(UIHelper.showInfoDialog(
-                        context,
-                        e.title,
-                        e.message,
-                      ).then((_) {
-                        if (e is DeviceUpdatingError) {
-                          widget.payload.onSubmitted?.call(
-                            null,
-                          );
-                        }
-                      }));
                     } catch (e) {
                       log.info('Failed to send wifi credentials: $e');
                       unawaited(
@@ -229,7 +243,9 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                           context,
                           'Send wifi credentials failed',
                           '${e.toString()}',
-                        ),
+                        ).then((_) {
+                          widget.payload.onSubmitted?.call(null, e);
+                        }),
                       );
                     } finally {
                       if (!mounted) {

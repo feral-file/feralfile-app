@@ -324,7 +324,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
             device,
           );
         }
-        final r = await injector<NavigationService>().navigateTo(
+        await injector<NavigationService>().navigateTo(
           AppRouter.bluetoothDevicePortalPage,
           arguments: BluetoothDevicePortalPagePayload(
             device: resultDevice!,
@@ -332,25 +332,6 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
             branchName: branchName,
           ),
         );
-
-        res = r == null ? null : r as Pair<String, bool>;
-        // if (res != null) {
-        //   final ffDevice = resultDevice!.toFFBluetoothDevice(
-        //     topicId: res.first,
-        //     deviceId: resultDevice!.advName,
-        //     branchName: branchName,
-        //   );
-        //   await BluetoothDeviceManager().addDevice(ffDevice);
-        // }
-        //
-        // if (res is Pair<String, bool>) {
-        //   unawaited(injector<NavigationService>().navigateTo(
-        //     AppRouter.bluetoothConnectedDeviceConfig,
-        //     arguments: BluetoothConnectedDeviceConfigPayload(
-        //       isFromOnboarding: res.second,
-        //     ),
-        //   ));
-        // }
       }
 
       log.info(
