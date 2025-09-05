@@ -966,7 +966,7 @@ class NavigationService {
             artistName: artistName,
             tokenId: tokenId,
           ),
-          title: 'device_settings'.tr(),
+          title: 'FF1 Settings',
           name: UIHelper.artDisplaySettingModal,
           isRoundCorner: false,
         ),

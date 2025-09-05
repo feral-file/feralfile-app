@@ -13,6 +13,7 @@ import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 
 class NowDisplaySettingView extends StatefulWidget {
@@ -43,6 +44,17 @@ class _NowDisplaySettingViewState extends State<NowDisplaySettingView> {
     }
 
     connectedDevice = BluetoothDeviceManager().castingBluetoothDevice;
+    BluetoothDeviceManager().castingDeviceStatus.addListener(() {
+      final deviceStatus =
+          injector<CanvasDeviceBloc>().state.statusOf(connectedDevice!);
+      if (deviceStatus != null &&
+          deviceStatus.deviceSettings?.scaling != null &&
+          deviceStatus.deviceSettings!.scaling != selectedFitment) {
+        setState(() {
+          selectedFitment = deviceStatus.deviceSettings!.scaling!;
+        });
+      }
+    });
   }
 
   void initDisplaySettings() {
@@ -225,40 +237,57 @@ class _NowDisplaySettingViewState extends State<NowDisplaySettingView> {
     final shouldShowArtistPreferenceNote = widget.tokenConfiguration != null;
     final itemCount =
         _settingOptions().length + (shouldShowArtistPreferenceNote ? 1 : 0);
+    return BlocConsumer<CanvasDeviceBloc, CanvasDeviceState>(
+      bloc: injector<CanvasDeviceBloc>(),
+      listener: (context, state) {
+        final selectedDevice = BluetoothDeviceManager().castingBluetoothDevice!;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemBuilder: (BuildContext context, int index) {
-            if (index == 0 && shouldShowArtistPreferenceNote) {
-              return _artistPreferenceNote();
-            }
+        if (state.statusOf(selectedDevice) != null &&
+            state.statusOf(selectedDevice)!.deviceSettings?.scaling != null &&
+            state.statusOf(selectedDevice)!.deviceSettings?.scaling !=
+                selectedFitment) {
+          setState(() {
+            selectedFitment =
+                state.statusOf(selectedDevice)!.deviceSettings!.scaling!;
+          });
+        }
+      },
+      builder: (context, state) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemBuilder: (BuildContext context, int index) {
+                if (index == 0 && shouldShowArtistPreferenceNote) {
+                  return _artistPreferenceNote();
+                }
 
-            final option = _settingOptions()[
-                index - (shouldShowArtistPreferenceNote ? 1 : 0)];
-            if (option.builder != null) {
-              return option.builder!.call(context, option);
-            }
-            return DrawerItem(
-              item: option,
-              color: AppColor.white,
-            );
-          },
-          itemCount: itemCount,
-          separatorBuilder: (context, index) =>
-              (index == 0 && shouldShowArtistPreferenceNote ||
-                      index == itemCount - 1)
-                  ? const SizedBox()
-                  : const Divider(
-                      height: 1,
-                      thickness: 1,
-                      color: AppColor.primaryBlack,
-                    ),
-        ),
-      ],
+                final option = _settingOptions()[
+                    index - (shouldShowArtistPreferenceNote ? 1 : 0)];
+                if (option.builder != null) {
+                  return option.builder!.call(context, option);
+                }
+                return DrawerItem(
+                  item: option,
+                  color: AppColor.white,
+                );
+              },
+              itemCount: itemCount,
+              separatorBuilder: (context, index) =>
+                  (index == 0 && shouldShowArtistPreferenceNote ||
+                          index == itemCount - 1)
+                      ? const SizedBox()
+                      : const Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: AppColor.primaryBlack,
+                        ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
