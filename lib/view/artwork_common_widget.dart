@@ -692,7 +692,7 @@ class _SectionExpandedWidgetState extends State<SectionExpandedWidget> {
                         Text(
                           widget.header ?? '',
                           style: widget.headerStyle ??
-                              theme.textTheme.ppMori400White16,
+                              theme.textTheme.ppMori400White14,
                         ),
                         const Spacer(),
                         if (_isExpanded)
@@ -1109,7 +1109,7 @@ class MetaDataItem extends StatelessWidget {
           flex: 2,
           child: Text(
             title,
-            style: titleStyle ?? theme.textTheme.ppMori400Grey14,
+            style: titleStyle ?? theme.textTheme.ppMori400Grey12,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
@@ -1123,8 +1123,8 @@ class MetaDataItem extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               maxLines: 3,
               style: onValueTap != null
-                  ? linkStyle ?? theme.textTheme.ppMori400FFYellow14
-                  : valueStyle ?? theme.textTheme.ppMori400White14,
+                  ? linkStyle ?? theme.textTheme.ppMori400FFYellow12
+                  : valueStyle ?? theme.textTheme.ppMori400White12,
             ),
           ),
         ),
@@ -1174,7 +1174,7 @@ class ProvenanceItem extends StatelessWidget {
             onTap: onNameTap,
             child: Text(
               title,
-              style: theme.textTheme.ppMori400White14,
+              style: theme.textTheme.ppMori400White12,
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
             ),
@@ -1186,7 +1186,7 @@ class ProvenanceItem extends StatelessWidget {
             value,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
-            style: theme.textTheme.ppMori400White14,
+            style: theme.textTheme.ppMori400White12,
           ),
         ),
         Expanded(
@@ -1207,7 +1207,7 @@ class ProvenanceItem extends StatelessWidget {
                   child: Text(
                     'view'.tr(),
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.ppMori400FFYellow14,
+                    style: theme.textTheme.ppMori400FFYellow12,
                   ),
                 ),
               ),

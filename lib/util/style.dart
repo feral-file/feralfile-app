@@ -109,15 +109,12 @@ MarkdownStyleSheet markDownStyle(BuildContext context, Color textColor) {
 
 MarkdownStyleSheet markDownRightStyle(BuildContext context) {
   final theme = Theme.of(context);
-  final bodyText2 = theme.textTheme.ppMori400White14;
+  final bodyText2 = theme.textTheme.ppMori400White12;
   return MarkdownStyleSheet(
-    a: const TextStyle(
-      fontFamily: AppTheme.ppMori,
+    a: bodyText2.copyWith(
       color: AppColor.feralFileHighlight,
-      fontWeight: FontWeight.w400,
-      fontSize: 14,
     ),
-    p: theme.textTheme.ppMori400White14,
+    p: bodyText2,
     pPadding: EdgeInsets.zero,
     code: bodyText2.copyWith(backgroundColor: Colors.transparent),
     h1: theme.textTheme.ppMori400White16,
@@ -133,7 +130,7 @@ MarkdownStyleSheet markDownRightStyle(BuildContext context) {
     h6: theme.textTheme.ppMori400White16,
     h6Padding: EdgeInsets.zero,
     em: const TextStyle(fontStyle: FontStyle.normal, color: Colors.white),
-    strong: theme.textTheme.ppMori400White14,
+    strong: bodyText2,
     del: const TextStyle(
       decoration: TextDecoration.lineThrough,
       color: Colors.white,

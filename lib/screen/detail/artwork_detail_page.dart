@@ -582,7 +582,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                           child: HtmlWidget(
                             customStylesBuilder: auHtmlStyle,
                             asset.description ?? '',
-                            textStyle: theme.textTheme.ppMori400White14,
+                            textStyle: theme.textTheme.ppMori400White12,
                             onTapUrl: (url) async {
                               await launchUrl(
                                 Uri.parse(url),

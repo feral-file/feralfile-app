@@ -218,7 +218,7 @@ class AssetToken {
 
   String? get artists => asset?.artists;
 
-  String? get assetID => asset?.artistID;
+  String? get assetID => asset?.assetID;
 
   String? get title => asset?.title;
 

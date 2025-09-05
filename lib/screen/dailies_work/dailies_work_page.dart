@@ -684,7 +684,7 @@ class DailyDetails extends StatelessWidget {
               child: HtmlWidget(
                 customStylesBuilder: auHtmlStyle,
                 assetToken.description ?? '',
-                textStyle: theme.textTheme.ppMori400White14,
+                textStyle: theme.textTheme.ppMori400White12,
                 onTapUrl: (url) async {
                   await launchUrl(
                     Uri.parse(url),
@@ -706,9 +706,9 @@ class DailyDetails extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 child: ImportantNoteView(
                   title: 'daily_note'.tr(),
-                  titleStyle: theme.textTheme.ppMori400White14,
+                  titleStyle: theme.textTheme.ppMori400White12,
                   note: state.currentDailyToken!.dailyNote!,
-                  noteStyle: theme.textTheme.ppMori400White14,
+                  noteStyle: theme.textTheme.ppMori400White12,
                   backgroundColor: AppColor.auGreyBackground,
                 ),
               ),

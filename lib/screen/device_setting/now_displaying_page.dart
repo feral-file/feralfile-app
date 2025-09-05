@@ -314,7 +314,7 @@ class _TokenNowDisplayingState extends State<TokenNowDisplaying> {
             child: HtmlWidget(
               customStylesBuilder: auHtmlStyle,
               assetToken.description ?? '',
-              textStyle: theme.textTheme.ppMori400White14,
+              textStyle: theme.textTheme.ppMori400White12,
               onTapUrl: (url) async {
                 await launchUrl(
                   Uri.parse(url),
