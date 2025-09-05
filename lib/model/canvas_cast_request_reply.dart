@@ -19,6 +19,7 @@ enum CastCommand {
   resumeCasting,
   nextArtwork,
   previousArtwork,
+  moveToArtwork,
   updateDuration,
   castExhibition,
   connect,
@@ -53,6 +54,8 @@ enum CastCommand {
         return CastCommand.nextArtwork;
       case 'previousArtwork':
         return CastCommand.previousArtwork;
+      case 'moveToArtwork':
+        return CastCommand.moveToArtwork;
       case 'updateDuration':
         return CastCommand.updateDuration;
       case 'castExhibition':
@@ -106,6 +109,8 @@ enum CastCommand {
         return CastCommand.nextArtwork;
       case const (PreviousArtworkRequest):
         return CastCommand.previousArtwork;
+      case const (MoveToArtworkRequest):
+        return CastCommand.moveToArtwork;
       case const (UpdateDurationRequest):
         return CastCommand.updateDuration;
       case const (CastExhibitionRequest):
@@ -632,6 +637,21 @@ class PreviousArtworkReply extends ReplyWithOK {
 
   factory PreviousArtworkReply.fromJson(Map<String, dynamic> json) =>
       PreviousArtworkReply(ok: json['ok'] as bool);
+}
+
+class MoveToArtworkRequest implements FF1Request {
+  MoveToArtworkRequest({required this.index});
+  int index;
+
+  @override
+  Map<String, dynamic> toJson() => {'index': index};
+}
+
+class MoveToArtworkReply extends ReplyWithOK {
+  MoveToArtworkReply({required super.ok});
+
+  factory MoveToArtworkReply.fromJson(Map<String, dynamic> json) =>
+      MoveToArtworkReply(ok: json['ok'] as bool);
 }
 
 // Class representing UpdateDurationRequest message

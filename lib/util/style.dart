@@ -5,10 +5,12 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/theme/app_theme.dart';
+import 'package:autonomy_flutter/theme/extensions/color_extension.dart';
+import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:feralfile_app_theme/extensions/theme_extension/moma_sans.dart';
-import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -174,7 +176,7 @@ MarkdownStyleSheet markDownRightStyle(BuildContext context) {
 
 MarkdownStyleSheet markDownPostcardRightStyle(BuildContext context) {
   final theme = Theme.of(context);
-  final baseStyle = theme.textTheme.moMASans400Black12;
+  final baseStyle = theme.textTheme.ppMori400Black12;
   final bodyText2 = theme.textTheme.ppMori400Black14;
   return MarkdownStyleSheet(
     a: baseStyle.copyWith(

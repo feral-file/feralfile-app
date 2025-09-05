@@ -1,0 +1,84 @@
+{
+  "NowPlayingBar": {
+    "NowPlayingBar": {
+      "bgColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.black}"
+      },
+      "top": {
+        "line": {
+          "color": {
+            "$type": "color",
+            "$value": "{primitives.colors.lightGrey}"
+          },
+          "width": {
+            "$type": "dimension",
+            "$value": "30px"
+          },
+          "strokeWeight": {
+            "$type": "dimension",
+            "$value": "2px"
+          },
+          "height": {
+            "$type": "dimension",
+            "$value": "2px"
+          },
+          "cornerRadius": {
+            "$type": "dimension",
+            "$value": "2px"
+          }
+        }
+      },
+      "bottom": {
+        "deviceNav": {
+          "activeColor": {
+            "$type": "color",
+            "$value": "{primitives.colors.white}"
+          },
+          "inactiveColor": {
+            "$type": "color",
+            "$value": "{primitives.colors.grey}"
+          },
+          "gap": {
+            "$type": "dimension",
+            "$value": "10px"
+          }
+        },
+        "verticalGap": {
+          "$type": "dimension",
+          "$value": "20px"
+        },
+        "displayItemList": {
+          "gap": {
+            "$type": "dimension",
+            "$value": "20px"
+          }
+        }
+      },
+      "paddingTop": {
+        "$type": "dimension",
+        "$value": "5px"
+      },
+      "paddingHorizontal": {
+        "$type": "dimension",
+        "$value": "10px"
+      },
+      "paddingBottom": {
+        "$type": "dimension",
+        "$value": "8px"
+      },
+      "cornerRadius": {
+        "$type": "dimension",
+        "$value": "5px"
+      },
+      "collapseHeight": {
+        "$type": "dimension",
+        "$value": "57px"
+      },
+      "expandedHeight": {
+        "$type": "dimension",
+        "$value": "316px"
+      }
+    }
+  }
+}

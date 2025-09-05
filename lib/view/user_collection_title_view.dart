@@ -1,10 +1,10 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/ff_alumni.dart';
-import 'package:autonomy_flutter/service/navigation_service.dart';
-import 'package:autonomy_flutter/util/feralfile_alumni_ext.dart';
-import 'package:feralfile_app_theme/feral_file_app_theme.dart';
-import 'package:flutter/material.dart';
 import 'package:autonomy_flutter/nft_collection/models/user_collection.dart';
+import 'package:autonomy_flutter/service/navigation_service.dart';
+import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/util/feralfile_alumni_ext.dart';
+import 'package:flutter/material.dart';
 
 class IndexerCollectionTitleView extends StatelessWidget {
   const IndexerCollectionTitleView(

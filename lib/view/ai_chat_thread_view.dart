@@ -1,9 +1,9 @@
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/bloc/record_controller_bloc.dart';
+import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/view/ai_chat_view_widget.dart';
 import 'package:autonomy_flutter/view/dp1_response_visual_view.dart';
 import 'package:autonomy_flutter/view/keep_alive_widget.dart';
-import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;

@@ -767,6 +767,7 @@ class AppRouter {
         );
 
       case voiceCommandPage:
+        final payload = settings.arguments as RecordControllerScreenPayload;
         return CupertinoPageRoute(
           settings: settings,
           builder: (context) => MultiBlocProvider(
@@ -775,7 +776,9 @@ class AppRouter {
                 value: injector<RecordBloc>(),
               ),
             ],
-            child: const RecordControllerScreen(),
+            child: RecordControllerScreen(
+              payload: payload,
+            ),
           ),
         );
 

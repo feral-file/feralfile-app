@@ -1,0 +1,216 @@
+{
+  "typography": {
+    "typography": {
+      "H1": {
+        "fontFamily": {
+          "$type": "text",
+          "$value": "{primitives.fontFamilies.ppMori}"
+        },
+        "fontWeight": {
+          "$type": "text",
+          "$value": "{primitives.fontWeights.bold}"
+        },
+        "fontSize": {
+          "$type": "dimension",
+          "$value": "{primitives.fontSizes.h1}"
+        },
+        "letterSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.letterSpacings.0}"
+        },
+        "paragraphSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphSpacings.1}"
+        },
+        "paragraphIndent": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphIndents.0}"
+        },
+        "lineHeight": {
+          "$type": "dimension",
+          "$value": "39.6px"
+        }
+      },
+      "H2": {
+        "fontFamily": {
+          "$type": "text",
+          "$value": "{primitives.fontFamilies.ppMori}"
+        },
+        "fontWeight": {
+          "$type": "text",
+          "$value": "{primitives.fontWeights.bold}"
+        },
+        "fontSize": {
+          "$type": "dimension",
+          "$value": "{primitives.fontSizes.h2}"
+        },
+        "letterSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.letterSpacings.0}"
+        },
+        "paragraphSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphSpacings.1}"
+        },
+        "paragraphIndent": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphIndents.0}"
+        },
+        "lineHeight": {
+          "$type": "dimension",
+          "$value": "26.4px"
+        }
+      },
+      "H3": {
+        "fontFamily": {
+          "$type": "text",
+          "$value": "{primitives.fontFamilies.ppMori}"
+        },
+        "fontWeight": {
+          "$type": "text",
+          "$value": "{primitives.fontWeights.bold}"
+        },
+        "fontSize": {
+          "$type": "dimension",
+          "$value": "{primitives.fontSizes.h3}"
+        },
+        "letterSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.letterSpacings.0}"
+        },
+        "paragraphSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphSpacings.1}"
+        },
+        "paragraphIndent": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphIndents.0}"
+        },
+        "lineHeight": {
+          "$type": "dimension",
+          "$value": "19.8px"
+        }
+      },
+      "Title": {
+        "fontFamily": {
+          "$type": "text",
+          "$value": "{primitives.fontFamilies.ppMori}"
+        },
+        "fontWeight": {
+          "$type": "text",
+          "$value": "{primitives.fontWeights.regular}"
+        },
+        "fontSize": {
+          "$type": "dimension",
+          "$value": "{primitives.fontSizes.title}"
+        },
+        "letterSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.letterSpacings.0}"
+        },
+        "paragraphSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphSpacings.0}"
+        },
+        "paragraphIndent": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphIndents.0}"
+        },
+        "lineHeight": {
+          "$type": "dimension",
+          "$value": "22.4px"
+        }
+      },
+      "Body": {
+        "fontFamily": {
+          "$type": "text",
+          "$value": "{primitives.fontFamilies.ppMori}"
+        },
+        "fontWeight": {
+          "$type": "text",
+          "$value": "{primitives.fontWeights.regular}"
+        },
+        "fontSize": {
+          "$type": "dimension",
+          "$value": "{primitives.fontSizes.body}"
+        },
+        "letterSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.letterSpacings.0}"
+        },
+        "paragraphSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphSpacings.0}"
+        },
+        "paragraphIndent": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphIndents.0}"
+        },
+        "lineHeight": {
+          "$type": "dimension",
+          "$value": "19.6px"
+        }
+      },
+      "Small": {
+        "fontFamily": {
+          "$type": "text",
+          "$value": "{primitives.fontFamilies.ppMori}"
+        },
+        "fontWeight": {
+          "$type": "text",
+          "$value": "{primitives.fontWeights.regular}"
+        },
+        "fontSize": {
+          "$type": "dimension",
+          "$value": "{primitives.fontSizes.small}"
+        },
+        "letterSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.letterSpacings.0}"
+        },
+        "paragraphSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphSpacings.0}"
+        },
+        "paragraphIndent": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphIndents.0}"
+        },
+        "lineHeight": {
+          "$type": "dimension",
+          "$value": "16.8px"
+        }
+      },
+      "Mono": {
+        "fontFamily": {
+          "$type": "text",
+          "$value": "{primitives.fontFamilies.ibmFlexMono}"
+        },
+        "fontWeight": {
+          "$type": "text",
+          "$value": "{primitives.fontWeights.regular}"
+        },
+        "fontSize": {
+          "$type": "dimension",
+          "$value": "{primitives.fontSizes.body}"
+        },
+        "letterSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.letterSpacings.0}"
+        },
+        "paragraphSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphSpacings.0}"
+        },
+        "paragraphIndent": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphIndents.0}"
+        },
+        "lineHeight": {
+          "$type": "dimension",
+          "$value": "19.6px"
+        }
+      }
+    }
+  }
+}

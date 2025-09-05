@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/model/ff_artwork.dart';
 import 'package:autonomy_flutter/model/ff_exhibition.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
@@ -15,6 +16,8 @@ import 'package:autonomy_flutter/screen/detail/preview/keyboard_control_page.dar
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
+import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/feralfile_alumni_ext.dart';
@@ -22,11 +25,9 @@ import 'package:autonomy_flutter/util/now_displaying_manager.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
-import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
-import 'package:collection/collection.dart';
+import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -77,10 +78,6 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
 
     final object = nowDisplayingStatus.object;
 
-    if (object is NowDisplayingObject) {
-      final assetToken = object.dailiesWorkState.assetTokens.firstOrNull;
-      if (assetToken != null) _onUpdateAssetToken(assetToken);
-    }
     if (object is DP1NowDisplayingObject) {
       final assetToken = object.assetToken;
       _onUpdateAssetToken(assetToken);
@@ -109,8 +106,6 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
     final object = nowDisplayingStatus.object;
     if (object is DP1NowDisplayingObject) {
       return object.playlistItem.indexId;
-    } else if (object is NowDisplayingObject) {
-      return object.dailiesWorkState.assetTokens.firstOrNull?.id;
     }
 
     return null;
@@ -125,11 +120,6 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
     final object = nowDisplayingStatus.object;
     if (object is DP1NowDisplayingObject) {
       return object.playlistItem.title;
-    } else if (object is NowDisplayingObject) {
-      final assetToken = object.dailiesWorkState.assetTokens.firstOrNull;
-      if (assetToken != null) {
-        return assetToken.artistName;
-      }
     }
 
     return null;
@@ -155,29 +145,33 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
     final tokenId = getTokenId(nowDisplayingStatus);
     final artistName = getArtistName(nowDisplayingStatus);
     return Scaffold(
-      appBar: getBackAppBar(
-        context,
-        onBack: () {
-          Navigator.of(context).pop();
-        },
-        title: 'now_displaying'.tr(),
-        isWhite: false,
-        icon: SvgPicture.asset(
-          'assets/images/more_circle.svg',
-          width: 22,
-          colorFilter: const ColorFilter.mode(
-            AppColor.white,
-            BlendMode.srcIn,
+      appBar: CustomAppBar(
+        centeredTitle: 'now_displaying'.tr(),
+        backgroundColor: PrimitivesTokens.colorsBlack,
+        actions: [
+          IconButton(
+            padding: EdgeInsets.zero,
+            onPressed: tokenId != null && isArtist
+                ? () => injector<NavigationService>().openArtistDisplaySetting(
+                      artwork: getArtwork(nowDisplayingStatus),
+                    )
+                : () => injector<NavigationService>().showDeviceSettings(
+                      tokenId: tokenId,
+                      artistName: artistName,
+                    ),
+            constraints: const BoxConstraints(
+              maxWidth: 44,
+              maxHeight: 44,
+              minWidth: 44,
+              minHeight: 44,
+            ),
+            icon: SvgPicture.asset(
+              'assets/images/more_circle.svg',
+              width: 22,
+              height: 22,
+            ),
           ),
-        ),
-        action: tokenId != null && isArtist
-            ? () => injector<NavigationService>().openArtistDisplaySetting(
-                  artwork: getArtwork(nowDisplayingStatus),
-                )
-            : () => injector<NavigationService>().showDeviceSettings(
-                  tokenId: tokenId,
-                  artistName: artistName,
-                ),
+        ],
       ),
       backgroundColor: AppColor.primaryBlack,
       body: _body(context),
@@ -195,8 +189,6 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
       case NowDisplayingSuccess:
         final object = (nowDisplayingStatus! as NowDisplayingSuccess).object;
         if (object is DP1NowDisplayingObject) {
-          return _tokenNowDisplaying(context);
-        } else if (object is NowDisplayingObject) {
           return _tokenNowDisplaying(context);
         }
         return const SizedBox();

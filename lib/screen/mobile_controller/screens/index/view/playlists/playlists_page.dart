@@ -4,7 +4,8 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_list_view.dart';
 import 'package:autonomy_flutter/service/dp1_playlist_service.dart';
-import 'package:feralfile_app_theme/feral_file_app_theme.dart';
+import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

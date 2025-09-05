@@ -1,7 +1,9 @@
-import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
 
 final ValueNotifier<bool> isNowDisplayingBarExpanded = ValueNotifier(false);
+
+final GlobalKey<_TwoStopDraggableSheetState> draggableSheetKey =
+    GlobalKey<_TwoStopDraggableSheetState>();
 
 class TwoStopDraggableSheet extends StatefulWidget {
   final double minSize;
@@ -33,11 +35,19 @@ class _TwoStopDraggableSheetState extends State<TwoStopDraggableSheet> {
 
   void _snapSheet() {
     final midSize = (widget.minSize + widget.maxSize) / 2;
-    if (_controller.size > midSize) {
+    if (_controller.size > widget.minSize * 2) {
       isNowDisplayingBarExpanded.value = true;
     } else {
       isNowDisplayingBarExpanded.value = false;
     }
+  }
+
+  void collapseSheet() {
+    _controller.animateTo(
+      widget.minSize,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.linear,
+    );
   }
 
   @override
@@ -72,34 +82,28 @@ class _TwoStopDraggableSheetState extends State<TwoStopDraggableSheet> {
                           ),
                         )
                       : SingleChildScrollView(
-                          child: widget.collapsedBuilder(
-                              context, scrollController),
                           physics: const AlwaysScrollableScrollPhysics(),
                           controller: scrollController,
+                          child: widget.collapsedBuilder(
+                            context,
+                            scrollController,
+                          ),
                         ),
                 );
               },
-            ),
-            Positioned(
-              top: 5,
-              left: 0,
-              right: 0,
-              child: Center(child: _icon(context)),
             ),
           ],
         );
       },
     );
   }
+}
 
-  Widget _icon(BuildContext context) {
-    return Container(
-      height: 2,
-      width: 30,
-      decoration: BoxDecoration(
-        color: AppColor.auLightGrey,
-        borderRadius: BorderRadius.circular(50),
-      ),
-    );
+class DraggableSheetController {
+  static void collapseSheet() {
+    final state = draggableSheetKey.currentState;
+    if (state != null) {
+      state.collapseSheet();
+    }
   }
 }

@@ -1,8 +1,8 @@
 class UIConstants {
   static const double recordButtonSize = 223.0;
-  static const double recordButtonSizeActive = 223.0;
+  static const double recordButtonSpreadRadius = 63.35 / 2;
   static const Duration animationDuration = Duration(milliseconds: 300);
-  static const double topControlsBarHeight = 217.0;
+  static const double topControlsBarHeight = 185.8;
   static const double detailPageHeaderPadding = 45.0;
   static const double nowDisplayingBarBottomPadding = 32;
   static const List<String> sampleHistoryAsks = [
@@ -15,10 +15,10 @@ class UIConstants {
 }
 
 class MessageConstants {
-  static const String askAnythingText = 'ASK ME ANYTHING';
-  static const String recordingText = 'LISTENING';
-  static const String processingText = 'PROCESSING';
+  static const String askAnythingText = 'Ask anything';
+  static const String recordingText = 'Listening';
+  static const String processingText = 'Processing';
   static const String recordTranscriptionText = 'Processing';
   static const String recordProcessingText = 'Processing';
-  static const String recordIntentReceivedText = 'Building Playlist';
+  static const String recordIntentReceivedText = 'Building your playlist';
 }

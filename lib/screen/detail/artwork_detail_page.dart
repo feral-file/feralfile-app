@@ -27,11 +27,12 @@ import 'package:autonomy_flutter/screen/detail/preview/keyboard_control_page.dar
 import 'package:autonomy_flutter/screen/detail/preview_detail/preview_detail_widget.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/detail_page_appbar.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/settings_data_service.dart';
+import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/constants.dart';
@@ -44,13 +45,13 @@ import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:autonomy_flutter/view/cast_button.dart';
 import 'package:autonomy_flutter/view/loading.dart';
-import 'package:autonomy_flutter/view/now_displaying/now_displaying_view.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/view/webview_controller_text_field.dart';
+import 'package:autonomy_flutter/widgets/app_bar.dart';
+import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:backdrop/backdrop.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -275,36 +276,33 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                   frontLayerElevation: _isFullScreen ? 0 : 1,
                   appBar: _isFullScreen
                       ? null
-                      : DetailPageAppBar(
-                          title: widget.payload.backTitle ?? '',
+                      : CustomAppBar(
+                          backTitle: widget.payload.backTitle ?? '',
                           actions: [
-                            Padding(
-                              padding: const EdgeInsets.only(left: 5),
-                              child: IconButton(
-                                onPressed: () async =>
-                                    _showArtworkOptionsDialog(
-                                  context,
-                                  assetToken,
-                                  canvasState,
-                                ),
-                                constraints: const BoxConstraints(
-                                  maxWidth: 44,
-                                  maxHeight: 44,
-                                  minWidth: 44,
-                                  minHeight: 44,
-                                ),
-                                icon: SvgPicture.asset(
-                                  'assets/images/more_circle.svg',
-                                  width: 22,
-                                  height: 22,
-                                ),
+                            IconButton(
+                              padding: EdgeInsets.zero,
+                              onPressed: () async => _showArtworkOptionsDialog(
+                                context,
+                                assetToken,
+                                canvasState,
+                              ),
+                              constraints: const BoxConstraints(
+                                maxWidth: 44,
+                                maxHeight: 44,
+                                minWidth: 44,
+                                minHeight: 44,
+                              ),
+                              icon: SvgPicture.asset(
+                                'assets/images/more_circle.svg',
+                                width: 22,
+                                height: 22,
                               ),
                             ),
                             FFCastButton(
                               displayKey: _getDisplayKey(assetToken),
                               onDeviceSelected: (device) async {
                                 final playlistItem =
-                                    DP1PlaylistItemExtension.fromCAssetToken(
+                                    DP1PlaylistItemExtension.fromAssetToken(
                                   token: assetToken,
                                 );
                                 final completer = Completer<void>();
@@ -341,9 +339,9 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                         height: UIConstants.detailPageHeaderPadding,
                       ),
                       if (!_isFullScreen)
-                        Column(
+                        const Column(
                           children: [
-                            const Padding(
+                            Padding(
                               padding: EdgeInsets.symmetric(vertical: 8),
                               child: ArtworkDetailsHeader(
                                 title: 'I',
@@ -351,7 +349,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                                 color: Colors.transparent,
                               ),
                             ),
-                            _nowDisplayingSpace(context),
+                            BottomSpacing(),
                           ],
                         ),
                     ],
@@ -459,18 +457,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
     _webViewController = webViewController;
   }
 
-  Widget _nowDisplayingSpace(BuildContext context) => ValueListenableBuilder(
-        valueListenable: nowDisplayingShowing,
-        builder: (context, isNowDisplayingShowing, child) {
-          final value = isNowDisplayingShowing || _isInfoExpand;
-          return Container(
-            height: MediaQuery.of(context).padding.bottom +
-                (value ? UIConstants.nowDisplayingBarBottomPadding : 0) +
-                (value ? kNowDisplayingHeight : 0),
-          );
-        },
-      );
-
   Widget _infoHeader(
     BuildContext context,
     AssetToken asset,
@@ -503,7 +489,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
             ],
           ),
         ),
-        if (!_isInfoExpand) _nowDisplayingSpace(context),
+        if (!_isInfoExpand) const BottomSpacing(),
       ],
     );
   }

@@ -3,7 +3,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 
 extension DP1PlaylistItemExtension on DP1Item {
-  static DP1Item fromCAssetToken({
+  static DP1Item fromAssetToken({
     required AssetToken token,
     Duration duration = Duration.zero,
     ArtworkDisplayLicense license = ArtworkDisplayLicense.open,

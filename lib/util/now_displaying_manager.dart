@@ -11,6 +11,7 @@ import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/dailies_work/dailies_work_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -62,6 +63,10 @@ class NowDisplayingManager {
         return;
       }
 
+      if (device.isAlive == null) {
+        return;
+      }
+
       if (!device.isAlive) {
         _addStatus(DeviceDisconnected(device));
         return;
@@ -107,9 +112,22 @@ class NowDisplayingManager {
     BaseDevice device,
   ) async {
     if (status.displayKey == CastDailyWorkRequest.displayKey) {
-      return NowDisplayingObject(
+      final assetToken =
+          injector<DailyWorkBloc>().state.assetTokens.firstOrNull;
+
+      if (assetToken == null) {
+        return null;
+      }
+
+      final dp1Item = DP1PlaylistItemExtension.fromAssetToken(
+        token: assetToken,
+      );
+
+      return DP1NowDisplayingObject(
         connectedDevice: device,
-        dailiesWorkState: injector<DailyWorkBloc>().state,
+        index: 0,
+        dp1Items: [dp1Item],
+        assetTokens: [assetToken],
       );
     } else if (status.items?.isNotEmpty ?? false) {
       // DP1

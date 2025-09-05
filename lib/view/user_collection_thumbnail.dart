@@ -5,10 +5,10 @@ import 'package:autonomy_flutter/nft_collection/models/user_collection.dart';
 import 'package:autonomy_flutter/nft_rendering/nft_error_widget.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/indexer_collection/indexer_collection_page.dart';
+import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/feralfile_alumni_ext.dart';
 import 'package:autonomy_flutter/util/indexer_collection_ext.dart';
 import 'package:autonomy_flutter/view/feralfile_cache_network_image.dart';
-import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
 
 class UserCollectionThumbnail extends StatefulWidget {

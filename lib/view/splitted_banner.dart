@@ -1,4 +1,4 @@
-import 'package:feralfile_app_theme/feral_file_app_theme.dart';
+import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:flutter/material.dart';
 
 class SplittedBanner extends StatelessWidget {

@@ -121,6 +121,13 @@ class CanvasDevicePreviousArtworkEvent extends CanvasDeviceEvent {
   final BaseDevice device;
 }
 
+class CanvasDeviceMoveToArtworkEvent extends CanvasDeviceEvent {
+  CanvasDeviceMoveToArtworkEvent(this.device, this.index);
+
+  final BaseDevice device;
+  final int index;
+}
+
 class CanvasDeviceUpdateDurationEvent extends CanvasDeviceEvent {
   CanvasDeviceUpdateDurationEvent(this.device, this.artwork);
 
@@ -475,6 +482,14 @@ class CanvasDeviceBloc extends AuBloc<CanvasDeviceEvent, CanvasDeviceState> {
         final currentDeviceStatus = state.canvasDeviceStatus[device.deviceId];
 
         await _canvasClientServiceV2.previousArtwork(device);
+      } catch (_) {}
+    });
+
+    on<CanvasDeviceMoveToArtworkEvent>((event, emit) async {
+      final device = event.device;
+      final index = event.index;
+      try {
+        await _canvasClientServiceV2.moveToArtwork(device, index: index);
       } catch (_) {}
     });
 

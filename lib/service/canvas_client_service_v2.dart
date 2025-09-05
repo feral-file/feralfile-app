@@ -214,6 +214,16 @@ class CanvasClientServiceV2 {
     return response.ok;
   }
 
+  Future<bool> moveToArtwork(
+    BaseDevice device, {
+    required int index,
+  }) async {
+    final stub = _getStub(device);
+    final request = MoveToArtworkRequest(index: index);
+    final response = await stub.moveToArtwork(request);
+    return response.ok;
+  }
+
   Future<bool> castExhibition(
     BaseDevice device,
     CastExhibitionRequest castRequest,

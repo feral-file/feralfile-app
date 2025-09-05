@@ -80,10 +80,6 @@ dependencies:
   uuid:
   web3dart: ^2.5.1
   json_annotation: ^4.9.0
-  feralfile_app_theme:
-    git:
-      url: https://github.com/bitmark-inc/feralfile-app-client-shared-theme
-      ref: 8d791a051a9b38791e82ac1582176d1b4e8e74fa
   markdown: ^7.1.1
   easy_localization: ^3.0.1
   in_app_review: ^2.0.4
@@ -133,6 +129,7 @@ dependencies:
   flutter_sound: ^9.28.0
   octo_image: ^2.1.0
   rxdart: ^0.28.0
+  syncfusion_flutter_core: ^29.1.38
 
 dev_dependencies:
   retrofit_generator: ^9.3.0

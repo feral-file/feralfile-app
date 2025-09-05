@@ -1,0 +1,98 @@
+{
+  "DisplayItem": {
+    "DisplayItem": {
+      "thumb": {
+        "progressBar": {
+          "bgColor": {
+            "$type": "color",
+            "$value": "{primitives.colors.black}"
+          },
+          "barBgColor": {
+            "$type": "color",
+            "$value": "{primitives.colors.darkGrey}"
+          },
+          "progressColor": {
+            "$type": "color",
+            "$value": "{primitives.colors.white}"
+          },
+          "width": {
+            "$type": "dimension",
+            "$value": "61.78px"
+          },
+          "paddingHorizontal": {
+            "$type": "dimension",
+            "$value": "3px"
+          },
+          "paddingTop": {
+            "$type": "dimension",
+            "$value": "3px"
+          },
+          "paddingBottom": {
+            "$type": "dimension",
+            "$value": "2px"
+          },
+          "cornerRadius": {
+            "$type": "dimension",
+            "$value": "40px"
+          },
+          "strokeWeight": {
+            "$type": "dimension",
+            "$value": "1px"
+          }
+        },
+        "image": {
+          "width": {
+            "$type": "dimension",
+            "$value": "{DisplayItem.thumb.width}"
+          },
+          "height": {
+            "$type": "dimension",
+            "$value": "{DisplayItem.thumb.height}"
+          }
+        },
+        "width": {
+          "$type": "dimension",
+          "$value": "65.78px"
+        },
+        "height": {
+          "$type": "dimension",
+          "$value": "37px"
+        }
+      },
+      "text": {
+        "color": {
+          "$type": "color",
+          "$value": "#ffffff"
+        },
+        "device": {
+          "fontWeight": {
+            "$type": "text",
+            "$value": "{primitives.fontWeights.bold}"
+          },
+          "fontSize": {
+            "$type": "dimension",
+            "$value": "6px"
+          },
+          "lineHeight": {
+            "$type": "dimension",
+            "$value": "8.4px"
+          }
+        },
+        "artwork": {
+          "gap": {
+            "$type": "dimension",
+            "$value": "-3px"
+          }
+        }
+      },
+      "gap": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "inactiveOpacity": {
+        "$type": "dimension",
+        "$value": "50px"
+      }
+    }
+  }
+}

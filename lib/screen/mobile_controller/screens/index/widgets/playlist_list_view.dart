@@ -2,6 +2,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_item.dart';
+import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:flutter/material.dart';
 
 class PlaylistListView extends StatelessWidget {
@@ -36,7 +37,7 @@ class PlaylistListView extends StatelessWidget {
           return Column(
             children: [
               LoadMoreIndicator(isLoadingMore: isLoadingMore),
-              const SizedBox(height: 120),
+              const BottomSpacing(),
             ],
           );
         }
@@ -52,9 +53,7 @@ class PlaylistListView extends StatelessWidget {
               channelVisible: channelVisible,
             ),
             if (index == playlists.length - 1 && !hasMore)
-              const SizedBox(
-                height: 120,
-              ),
+              const BottomSpacing(),
           ],
         );
       },

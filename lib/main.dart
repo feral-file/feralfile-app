@@ -13,6 +13,7 @@ import 'dart:ui';
 
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/build/components/NowPlayingBar.dart';
 import 'package:autonomy_flutter/model/announcement/announcement_adapter.dart';
 import 'package:autonomy_flutter/model/draft_customer_support.dart';
 import 'package:autonomy_flutter/model/identity.dart';
@@ -20,6 +21,9 @@ import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
 import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
+import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/theme/app_theme.dart';
+
 import 'package:autonomy_flutter/util/au_file_service.dart';
 import 'package:autonomy_flutter/util/custom_route_observer.dart';
 import 'package:autonomy_flutter/util/device.dart';
@@ -28,10 +32,9 @@ import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/now_displaying_manager.dart';
 import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
 import 'package:autonomy_flutter/view/now_displaying/now_displaying_bar.dart';
-import 'package:autonomy_flutter/view/now_displaying/now_displaying_view.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
+import 'package:autonomy_flutter/widgets/llm_text_input/llm_text_input.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:floor/floor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -246,7 +249,7 @@ class AutonomyAppScaffold extends StatefulWidget {
 class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  bool _isVisible = true;
+  bool _isVisible = false;
   double _lastScrollPosition = 0;
   late final ValueNotifier<bool> _shouldShowOverlay;
 
@@ -305,26 +308,6 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
         isNowDisplayingBarExpanded.value && nowDisplayingShowing.value;
   }
 
-  void _handleScrollUpdate(ScrollNotification notification) {
-    if (notification.metrics.axis != Axis.vertical) {
-      return;
-    }
-    if (notification is ScrollUpdateNotification) {
-      final currentScroll = notification.metrics.pixels;
-      final scrollDelta = currentScroll - _lastScrollPosition;
-
-      if (scrollDelta > 10) {
-        nowDisplayingVisibility.value = false;
-        isNowDisplayingBarExpanded.value = false;
-      } else if (scrollDelta < -10) {
-        nowDisplayingVisibility.value = true;
-      }
-
-      _lastScrollPosition = currentScroll;
-    }
-    return;
-  }
-
   @override
   void dispose() {
     shouldShowNowDisplaying.removeListener(_updateAnimationBasedOnDisplayState);
@@ -366,7 +349,40 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
               : null,
           child: Stack(
             children: [
-              widget.child,
+              Overlay(
+                initialEntries: [
+                  OverlayEntry(
+                    builder: (context) => Stack(
+                      children: [
+                        widget.child,
+                        if (_isVisible)
+                          ValueListenableBuilder(
+                            valueListenable: isNowDisplayingBarExpanded,
+                            builder: (context, bottomSheetHeight, child) {
+                              if (isNowDisplayingBarExpanded.value) {
+                                return const SizedBox.shrink();
+                              }
+
+                              final paddingBottom =
+                                  MediaQuery.of(context).padding.bottom;
+                              return Positioned(
+                                bottom: paddingBottom +
+                                    UIConstants.nowDisplayingBarBottomPadding +
+                                    NowPlayingBarTokens.collapseHeight,
+                                left: 0,
+                                right: 0,
+                                child: const Material(
+                                  color: Colors.transparent,
+                                  child: LLMTextInput(),
+                                ),
+                              );
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
               ValueListenableBuilder<bool>(
                 valueListenable: _shouldShowOverlay,
                 builder: (context, shouldShowOverlay, child) {
@@ -376,11 +392,11 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                             behavior: HitTestBehavior.translucent,
                             onTap: () {
                               if (_isVisible) {
-                                isNowDisplayingBarExpanded.value = false;
+                                DraggableSheetController.collapseSheet();
                               }
                             },
                             child: AnimatedContainer(
-                              color: AppColor.primaryBlack.withAlpha(51),
+                              color: Colors.transparent,
                               duration: const Duration(milliseconds: 150),
                             ), // Transparent area
                           ),
@@ -399,7 +415,6 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                       duration: const Duration(milliseconds: 150),
                       bottom: bottomSheetHeight > 0
                           ? bottomSheetHeight +
-                              paddingBottom +
                               UIConstants.nowDisplayingBarBottomPadding
                           : paddingBottom +
                               UIConstants.nowDisplayingBarBottomPadding,

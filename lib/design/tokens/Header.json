@@ -1,0 +1,14 @@
+{
+  "Header": {
+    "Header": {
+      "paddingHorizontal": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "paddingVertical": {
+        "$type": "dimension",
+        "$value": "20px"
+      }
+    }
+  }
+}

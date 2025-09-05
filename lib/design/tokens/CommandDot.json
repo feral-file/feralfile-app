@@ -1,0 +1,30 @@
+{
+  "CommandDot": {
+    "CommandDot": {
+      "bgColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.lightBlue}"
+      },
+      "iconColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.black}"
+      },
+      "size": {
+        "$type": "dimension",
+        "$value": "22px"
+      },
+      "cornerRadius": {
+        "$type": "dimension",
+        "$value": "40px"
+      },
+      "iconWidth": {
+        "$type": "dimension",
+        "$value": "9.82px"
+      },
+      "iconHeight": {
+        "$type": "dimension",
+        "$value": "12px"
+      }
+    }
+  }
+}

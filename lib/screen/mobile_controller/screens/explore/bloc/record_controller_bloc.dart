@@ -73,11 +73,17 @@ class RecordBloc extends AuBloc<RecordEvent, RecordState> {
     StopRecordingEvent event,
     Emitter<RecordState> emit,
   ) async {
+    if (state is! RecordRecordingState) {
+      return;
+    }
+
     final file = await audioService.stopRecording();
     if (file == null) {
-      emit(RecordErrorState(
-          error:
-              AudioRecordNoSpeechException())); // Emit RecordNoSpeechState if no audio was recorded
+      emit(
+        RecordErrorState(
+          error: AudioRecordNoSpeechException(),
+        ),
+      ); // Emit RecordNoSpeechState if no audio was recorded
       return;
     }
     emit(
@@ -186,16 +192,20 @@ class RecordBloc extends AuBloc<RecordEvent, RecordState> {
     final transcribe = nlParserData.data['corrected_text'] as String;
     await configurationService.addRecordedMessage(transcribe);
     if (state is RecordProcessingState) {
-      emit((state as RecordProcessingState).copyWith(
-        transcription: transcribe,
-        status: RecordProcessingStatus.transcribed,
-      ));
-    } else
+      emit(
+        (state as RecordProcessingState).copyWith(
+          transcription: transcribe,
+          status: RecordProcessingStatus.transcribed,
+        ),
+      );
+    } else {
       emit(
         RecordProcessingState(
-            status: RecordProcessingStatus.transcribed,
-            transcription: transcribe),
+          status: RecordProcessingStatus.transcribed,
+          transcription: transcribe,
+        ),
       );
+    }
   }
 
   Future<void> _handleThinking(

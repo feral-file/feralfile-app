@@ -1,0 +1,685 @@
+{
+  "primitives/base": {
+    "primitives": {
+      "colors": {
+        "inactive": {
+          "$type": "color",
+          "$value": "#999999"
+        },
+        "grey": {
+          "$type": "color",
+          "$value": "#a0a0a0"
+        },
+        "lightGrey": {
+          "$type": "color",
+          "$value": "#e3e3e3"
+        },
+        "white": {
+          "$type": "color",
+          "$value": "#ffffff"
+        },
+        "black": {
+          "$type": "color",
+          "$value": "#000000"
+        },
+        "darkGrey": {
+          "$type": "color",
+          "$value": "#2e2e2e"
+        },
+        "error": {
+          "$type": "color",
+          "$value": "#d10000"
+        },
+        "lightBlue": {
+          "$type": "color",
+          "$value": "#b9e5ff"
+        },
+        "highlight": {
+          "$type": "color",
+          "$value": "#ecff0c"
+        }
+      },
+      "fontFamilies": {
+        "ppMori": {
+          "$type": "text",
+          "$value": "PP Mori"
+        },
+        "ibmFlexMono": {
+          "$type": "text",
+          "$value": "IBMPlexMono"
+        }
+      },
+      "fontWeights": {
+        "bold": {
+          "$type": "text",
+          "$value": "Bold"
+        },
+        "regular": {
+          "$type": "text",
+          "$value": "Regular"
+        }
+      },
+      "fontSizes": {
+        "h1": {
+          "$type": "dimension",
+          "$value": "36px"
+        },
+        "h2": {
+          "$type": "dimension",
+          "$value": "24px"
+        },
+        "h3": {
+          "$type": "dimension",
+          "$value": "18px"
+        },
+        "title": {
+          "$type": "dimension",
+          "$value": "16px"
+        },
+        "body": {
+          "$type": "dimension",
+          "$value": "14px"
+        },
+        "small": {
+          "$type": "dimension",
+          "$value": "12px"
+        }
+      },
+      "letterSpacings": {
+        "0": {
+          "$type": "dimension",
+          "$value": "0px"
+        }
+      },
+      "paragraphSpacings": {
+        "0": {
+          "$type": "dimension",
+          "$value": "8px"
+        },
+        "1": {
+          "$type": "dimension",
+          "$value": "24px"
+        }
+      },
+      "paragraphIndents": {
+        "0": {
+          "$type": "dimension",
+          "$value": "0px"
+        }
+      },
+      "spacing": {
+        "mainPaddingHorizontal": {
+          "$type": "dimension",
+          "$value": "12px"
+        }
+      }
+    }
+  },
+  "typography/base": {
+    "typography": {
+      "H1": {
+        "fontFamily": {
+          "$type": "text",
+          "$value": "{primitives.fontFamilies.ppMori}"
+        },
+        "fontWeight": {
+          "$type": "text",
+          "$value": "{primitives.fontWeights.bold}"
+        },
+        "fontSize": {
+          "$type": "dimension",
+          "$value": "{primitives.fontSizes.h1}"
+        },
+        "letterSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.letterSpacings.0}"
+        },
+        "paragraphSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphSpacings.1}"
+        },
+        "paragraphIndent": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphIndents.0}"
+        },
+        "lineHeight": {
+          "$type": "dimension",
+          "$value": "39.6px"
+        }
+      },
+      "H2": {
+        "fontFamily": {
+          "$type": "text",
+          "$value": "{primitives.fontFamilies.ppMori}"
+        },
+        "fontWeight": {
+          "$type": "text",
+          "$value": "{primitives.fontWeights.bold}"
+        },
+        "fontSize": {
+          "$type": "dimension",
+          "$value": "{primitives.fontSizes.h2}"
+        },
+        "letterSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.letterSpacings.0}"
+        },
+        "paragraphSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphSpacings.1}"
+        },
+        "paragraphIndent": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphIndents.0}"
+        },
+        "lineHeight": {
+          "$type": "dimension",
+          "$value": "26.4px"
+        }
+      },
+      "H3": {
+        "fontFamily": {
+          "$type": "text",
+          "$value": "{primitives.fontFamilies.ppMori}"
+        },
+        "fontWeight": {
+          "$type": "text",
+          "$value": "{primitives.fontWeights.bold}"
+        },
+        "fontSize": {
+          "$type": "dimension",
+          "$value": "{primitives.fontSizes.h3}"
+        },
+        "letterSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.letterSpacings.0}"
+        },
+        "paragraphSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphSpacings.1}"
+        },
+        "paragraphIndent": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphIndents.0}"
+        },
+        "lineHeight": {
+          "$type": "dimension",
+          "$value": "19.8px"
+        }
+      },
+      "Title": {
+        "fontFamily": {
+          "$type": "text",
+          "$value": "{primitives.fontFamilies.ppMori}"
+        },
+        "fontWeight": {
+          "$type": "text",
+          "$value": "{primitives.fontWeights.regular}"
+        },
+        "fontSize": {
+          "$type": "dimension",
+          "$value": "{primitives.fontSizes.title}"
+        },
+        "letterSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.letterSpacings.0}"
+        },
+        "paragraphSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphSpacings.0}"
+        },
+        "paragraphIndent": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphIndents.0}"
+        },
+        "lineHeight": {
+          "$type": "dimension",
+          "$value": "22.4px"
+        }
+      },
+      "Body": {
+        "fontFamily": {
+          "$type": "text",
+          "$value": "{primitives.fontFamilies.ppMori}"
+        },
+        "fontWeight": {
+          "$type": "text",
+          "$value": "{primitives.fontWeights.regular}"
+        },
+        "fontSize": {
+          "$type": "dimension",
+          "$value": "{primitives.fontSizes.body}"
+        },
+        "letterSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.letterSpacings.0}"
+        },
+        "paragraphSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphSpacings.0}"
+        },
+        "paragraphIndent": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphIndents.0}"
+        },
+        "lineHeight": {
+          "$type": "dimension",
+          "$value": "19.6px"
+        }
+      },
+      "Small": {
+        "fontFamily": {
+          "$type": "text",
+          "$value": "{primitives.fontFamilies.ppMori}"
+        },
+        "fontWeight": {
+          "$type": "text",
+          "$value": "{primitives.fontWeights.regular}"
+        },
+        "fontSize": {
+          "$type": "dimension",
+          "$value": "{primitives.fontSizes.small}"
+        },
+        "letterSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.letterSpacings.0}"
+        },
+        "paragraphSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphSpacings.0}"
+        },
+        "paragraphIndent": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphIndents.0}"
+        },
+        "lineHeight": {
+          "$type": "dimension",
+          "$value": "16.8px"
+        }
+      },
+      "Mono": {
+        "fontFamily": {
+          "$type": "text",
+          "$value": "{primitives.fontFamilies.ibmFlexMono}"
+        },
+        "fontWeight": {
+          "$type": "text",
+          "$value": "{primitives.fontWeights.regular}"
+        },
+        "fontSize": {
+          "$type": "dimension",
+          "$value": "{primitives.fontSizes.body}"
+        },
+        "letterSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.letterSpacings.0}"
+        },
+        "paragraphSpacing": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphSpacings.0}"
+        },
+        "paragraphIndent": {
+          "$type": "dimension",
+          "$value": "{primitives.paragraphIndents.0}"
+        },
+        "lineHeight": {
+          "$type": "dimension",
+          "$value": "19.6px"
+        }
+      }
+    }
+  },
+  "NowPlayingBar/base": {
+    "NowPlayingBar": {
+      "bgColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.black}"
+      },
+      "top": {
+        "line": {
+          "color": {
+            "$type": "color",
+            "$value": "{primitives.colors.lightGrey}"
+          },
+          "width": {
+            "$type": "dimension",
+            "$value": "30px"
+          },
+          "strokeWeight": {
+            "$type": "dimension",
+            "$value": "2px"
+          },
+          "height": {
+            "$type": "dimension",
+            "$value": "2px"
+          },
+          "cornerRadius": {
+            "$type": "dimension",
+            "$value": "2px"
+          }
+        }
+      },
+      "bottom": {
+        "deviceNav": {
+          "activeColor": {
+            "$type": "color",
+            "$value": "{primitives.colors.white}"
+          },
+          "inactiveColor": {
+            "$type": "color",
+            "$value": "{primitives.colors.grey}"
+          },
+          "gap": {
+            "$type": "dimension",
+            "$value": "10px"
+          }
+        },
+        "verticalGap": {
+          "$type": "dimension",
+          "$value": "20px"
+        },
+        "displayItemList": {
+          "gap": {
+            "$type": "dimension",
+            "$value": "20px"
+          }
+        }
+      },
+      "paddingTop": {
+        "$type": "dimension",
+        "$value": "5px"
+      },
+      "paddingHorizontal": {
+        "$type": "dimension",
+        "$value": "10px"
+      },
+      "paddingBottom": {
+        "$type": "dimension",
+        "$value": "8px"
+      },
+      "cornerRadius": {
+        "$type": "dimension",
+        "$value": "5px"
+      },
+      "collapseHeight": {
+        "$type": "dimension",
+        "$value": "57px"
+      },
+      "expandedHeight": {
+        "$type": "dimension",
+        "$value": "316px"
+      }
+    }
+  },
+  "DisplayItem/base": {
+    "DisplayItem": {
+      "thumb": {
+        "progressBar": {
+          "bgColor": {
+            "$type": "color",
+            "$value": "{primitives.colors.black}"
+          },
+          "barBgColor": {
+            "$type": "color",
+            "$value": "{primitives.colors.darkGrey}"
+          },
+          "progressColor": {
+            "$type": "color",
+            "$value": "{primitives.colors.white}"
+          },
+          "width": {
+            "$type": "dimension",
+            "$value": "61.78px"
+          },
+          "paddingHorizontal": {
+            "$type": "dimension",
+            "$value": "3px"
+          },
+          "paddingTop": {
+            "$type": "dimension",
+            "$value": "3px"
+          },
+          "paddingBottom": {
+            "$type": "dimension",
+            "$value": "2px"
+          },
+          "cornerRadius": {
+            "$type": "dimension",
+            "$value": "40px"
+          },
+          "strokeWeight": {
+            "$type": "dimension",
+            "$value": "1px"
+          }
+        },
+        "image": {
+          "width": {
+            "$type": "dimension",
+            "$value": "{DisplayItem.thumb.width}"
+          },
+          "height": {
+            "$type": "dimension",
+            "$value": "{DisplayItem.thumb.height}"
+          }
+        },
+        "width": {
+          "$type": "dimension",
+          "$value": "65.78px"
+        },
+        "height": {
+          "$type": "dimension",
+          "$value": "37px"
+        }
+      },
+      "text": {
+        "color": {
+          "$type": "color",
+          "$value": "#ffffff"
+        },
+        "device": {
+          "fontWeight": {
+            "$type": "text",
+            "$value": "{primitives.fontWeights.bold}"
+          },
+          "fontSize": {
+            "$type": "dimension",
+            "$value": "6px"
+          },
+          "lineHeight": {
+            "$type": "dimension",
+            "$value": "8.4px"
+          }
+        },
+        "artwork": {
+          "gap": {
+            "$type": "dimension",
+            "$value": "-3px"
+          }
+        }
+      },
+      "gap": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "inactiveOpacity": {
+        "$type": "dimension",
+        "$value": "50px"
+      }
+    }
+  },
+  "CommandDot/base": {
+    "CommandDot": {
+      "bgColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.lightBlue}"
+      },
+      "iconColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.black}"
+      },
+      "size": {
+        "$type": "dimension",
+        "$value": "22px"
+      },
+      "cornerRadius": {
+        "$type": "dimension",
+        "$value": "40px"
+      },
+      "iconWidth": {
+        "$type": "dimension",
+        "$value": "9.82px"
+      },
+      "iconHeight": {
+        "$type": "dimension",
+        "$value": "12px"
+      }
+    }
+  },
+  "LLMTextInput/base": {
+    "LLMTextInput": {
+      "LLM": {
+        "bgColor": {
+          "$type": "color",
+          "$value": "{primitives.colors.black}"
+        },
+        "textColor": {
+          "$type": "color",
+          "$value": "{primitives.colors.white}"
+        },
+        "paddingLeft": {
+          "$type": "dimension",
+          "$value": "14px"
+        },
+        "cornerRadius": {
+          "$type": "dimension",
+          "$value": "50px"
+        },
+        "paddingRight": {
+          "$type": "dimension",
+          "$value": "10px"
+        },
+        "paddingVertical": {
+          "$type": "dimension",
+          "$value": "8px"
+        },
+        "active": {
+          "cornerRadius": {
+            "$type": "dimension",
+            "$value": "13px"
+          },
+          "padding": {
+            "$type": "dimension",
+            "$value": "10px"
+          },
+          "gap": {
+            "$type": "dimension",
+            "$value": "30px"
+          }
+        }
+      },
+      "padding": {
+        "$type": "dimension",
+        "$value": "10px"
+      }
+    }
+  },
+  "SendButton/base": {
+    "SendButton": {
+      "bgColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.white}"
+      },
+      "iconColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.black}"
+      },
+      "size": {
+        "$type": "dimension",
+        "$value": "22px"
+      }
+    }
+  },
+  "PlayButton/base": {
+    "PlayButton": {
+      "bgColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.lightBlue}"
+      },
+      "color": {
+        "$type": "color",
+        "$value": "{primitives.colors.black}"
+      },
+      "paddingHorizontal": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "paddingVertical": {
+        "$type": "dimension",
+        "$value": "6px"
+      },
+      "gap": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "cornerRadius": {
+        "$type": "dimension",
+        "$value": "40px"
+      },
+      "iconWidth": {
+        "$type": "dimension",
+        "$value": "13.33px"
+      },
+      "iconHeight": {
+        "$type": "dimension",
+        "$value": "12px"
+      }
+    }
+  },
+  "BackButton/base": {
+    "BackButton": {
+      "color": {
+        "$type": "color",
+        "$value": "{primitives.colors.grey}"
+      },
+      "gap": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "iconWidth": {
+        "$type": "dimension",
+        "$value": "14.67px"
+      },
+      "iconHeight": {
+        "$type": "dimension",
+        "$value": "12px"
+      }
+    }
+  },
+  "Header/base": {
+    "Header": {
+      "paddingHorizontal": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "paddingVertical": {
+        "$type": "dimension",
+        "$value": "20px"
+      }
+    }
+  },
+  "$themes": [],
+  "$metadata": {
+    "tokenSetOrder": [
+      "primitives/base",
+      "typography/base",
+      "NowPlayingBar/base",
+      "DisplayItem/base",
+      "CommandDot/base",
+      "LLMTextInput/base",
+      "SendButton/base",
+      "PlayButton/base",
+      "BackButton/base",
+      "Header/base"
+    ]
+  }
+}
