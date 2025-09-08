@@ -5,8 +5,8 @@
 //  that can be found in the LICENSE file.
 //
 
-import 'dart:io';
 import 'dart:async';
+import 'dart:io';
 
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/model/safe_dio.dart';
@@ -16,9 +16,10 @@ import 'package:autonomy_flutter/util/log.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
+import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:sentry_dio/sentry_dio.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
-import 'package:flutter_fgbg/flutter_fgbg.dart';
+import 'package:uuid/uuid.dart';
 
 /// A simple manager to create, cache, and manage multiple configured Dio instances.
 ///
@@ -89,7 +90,7 @@ class DioManager {
 
   /// Create or get a base-configured Dio (no extra auth interceptors).
   Dio base(BaseOptions options) => _getOrCreate(
-        _key('base', options),
+        _key(Uuid().v1(), options),
         () => _createBaseDio(options),
       );
 

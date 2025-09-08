@@ -46,6 +46,7 @@ class AuthService {
 
   Future<void> init() async {
     await _authServiceStore.init(_authServiceStoreKey);
+    log.info('AuthService initialized');
   }
 
   JWT? get _jwt {
