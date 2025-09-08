@@ -17,26 +17,29 @@ class CustomBackButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Row(
-        children: [
-          SvgPicture.asset(
-            'assets/images/arrow-left.svg',
-            width: BackButtonTokens.iconWidth,
-            height: BackButtonTokens.iconHeight.toDouble(),
-            colorFilter: const ColorFilter.mode(
-              BackButtonTokens.color,
-              BlendMode.srcIn,
+      child: Container(
+        color: Colors.transparent,
+        child: Row(
+          children: [
+            SvgPicture.asset(
+              'assets/images/arrow-left.svg',
+              width: BackButtonTokens.iconWidth,
+              height: BackButtonTokens.iconHeight.toDouble(),
+              colorFilter: const ColorFilter.mode(
+                BackButtonTokens.color,
+                BlendMode.srcIn,
+              ),
             ),
-          ),
-          SizedBox(width: BackButtonTokens.gap.toDouble()),
-          Text(
-            title,
-            style: Theme.of(context)
-                .textTheme
-                .small
-                .copyWith(color: BackButtonTokens.color),
-          ),
-        ],
+            SizedBox(width: BackButtonTokens.gap.toDouble()),
+            Text(
+              title,
+              style: Theme.of(context)
+                  .textTheme
+                  .small
+                  .copyWith(color: BackButtonTokens.color),
+            ),
+          ],
+        ),
       ),
     );
   }

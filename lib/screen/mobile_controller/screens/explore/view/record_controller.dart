@@ -16,7 +16,6 @@ import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/view/ai_chat_thread_view.dart';
 import 'package:autonomy_flutter/view/ai_chat_view_widget.dart';
-import 'package:autonomy_flutter/view/now_displaying/now_displaying_bar.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:autonomy_flutter/widgets/llm_text_input/llm_text_input.dart';
@@ -180,14 +179,21 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                       // Handle back button tap
                       injector<NavigationService>().goBack();
                     },
-                    child: Padding(
-                      padding: const EdgeInsets.all(15),
-                      child: SvgPicture.asset(
-                        'assets/images/close.svg',
-                        width: 18.03,
-                        colorFilter: const ColorFilter.mode(
-                          AppColor.white,
-                          BlendMode.srcIn,
+                    child: Container(
+                      constraints: BoxConstraints(
+                        minWidth: 44,
+                        minHeight: 44,
+                      ),
+                      color: Colors.transparent,
+                      child: Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: SvgPicture.asset(
+                          'assets/images/close.svg',
+                          width: 18.03,
+                          colorFilter: const ColorFilter.mode(
+                            AppColor.white,
+                            BlendMode.srcIn,
+                          ),
                         ),
                       ),
                     ),
