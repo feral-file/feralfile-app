@@ -133,15 +133,16 @@ class CanvasNotificationService {
   }
 
   void _sendPing() {
-    if (_isConnected) {
-      _channel?.sink.add(jsonEncode({'type': 'ping'}));
-    }
+    // if (_isConnected) {
+    //   _channel?.sink.add(jsonEncode({'type': 'ping'}));
+    // }
   }
 
   Future<void> disconnect() async {
+    await _channel?.sink.close();
+    await Future.delayed(const Duration(milliseconds: 100));
     _stopPingTimer();
     _reconnectTimer?.cancel();
-    await _channel?.sink.close();
     _channel = null;
     _isConnected = false;
     log.info(

@@ -33,10 +33,10 @@ class DioManager {
       _fgbgSubscription = FGBGEvents.instance.stream.listen((event) {
         if (event == FGBGType.foreground) {
           markAppForeground();
-          resetHttpAdapters();
           log.info('[DioManager] App to foreground: adapters reset');
         } else if (event == FGBGType.background) {
           markAppBackground();
+          resetHttpAdapters();
           log.info('[DioManager] App to background');
         }
       });
@@ -59,6 +59,7 @@ class DioManager {
     for (final dio in _cache.values) {
       try {
         dio.httpClientAdapter.close(force: force);
+        dio.httpClientAdapter = IOHttpClientAdapter();
       } catch (_) {
         // ignore adapter close issues
       }
