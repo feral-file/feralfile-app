@@ -20,6 +20,7 @@ class PrimitivesTokens {
     static const colorsInactive = Color(0xFF999999);
     static const colorsLightBlue = Color(0xFFB9E5FF);
     static const colorsLightGrey = Color(0xFFE3E3E3);
+    static const colorsLightRed = Color(0xFFF44336);
     static const colorsWhite = Color(0xFFFFFFFF);
     static const fontFamiliesIbmFlexMono = "IBMPlexMono";
     static const fontFamiliesPpMori = "PP Mori";
