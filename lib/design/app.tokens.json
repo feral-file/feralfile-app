@@ -37,6 +37,10 @@
         "highlight": {
           "$type": "color",
           "$value": "#ecff0c"
+        },
+        "lightRed": {
+          "$type": "color",
+          "$value": "#f44336"
         }
       },
       "fontFamilies": {
