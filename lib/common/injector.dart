@@ -74,7 +74,7 @@ import 'package:autonomy_flutter/service/user_interactivity_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/util/au_file_service.dart';
 import 'package:autonomy_flutter/util/dio_interceptors.dart';
-import 'package:autonomy_flutter/util/dio_util.dart';
+import 'package:autonomy_flutter/util/dio_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -104,48 +104,6 @@ Future<void> setupLogger() async {
   });
 }
 
-Future<void> setupHomeWidgetInjector() async {
-  final dioOptions = BaseOptions(
-    followRedirects: true,
-    connectTimeout: const Duration(seconds: 3),
-    receiveTimeout: const Duration(seconds: 3),
-  );
-  final dio = baseDio(dioOptions);
-  injector.registerLazySingleton<FeralFileApi>(
-    () => FeralFileApi(
-      feralFileDio(dioOptions),
-      baseUrl: Environment.feralFileAPIURL,
-    ),
-  );
-  injector.registerLazySingleton(
-    () => SourceExhibitionAPI(dio, baseUrl: Environment.pubdocURL),
-  );
-  injector.registerLazySingleton<FeralFileService>(
-    () => FeralFileServiceImpl(
-      injector(),
-      injector(),
-    ),
-  );
-
-  injector.registerLazySingleton<ArtblocksClient>(
-    ArtblocksClient.new,
-  );
-
-  injector.registerLazySingleton<ArtBlockService>(
-    () => ArtBlockService(injector<ArtblocksClient>()),
-  );
-
-  final indexerClient = IndexerClient(Environment.indexerURL);
-  injector.registerLazySingleton<NftIndexerService>(
-    () => NftIndexerService(indexerClient, injector(), injector()),
-  );
-  injector.registerLazySingleton<RemoteConfigService>(
-    () => RemoteConfigServiceImpl(
-      RemoteConfigApi(dio, baseUrl: Environment.remoteConfigURL),
-    ),
-  );
-}
-
 Future<void> setupInjector() async {
   final sharedPreferences = await SharedPreferences.getInstance();
 
@@ -161,7 +119,7 @@ Future<void> setupInjector() async {
     connectTimeout: const Duration(seconds: 3),
     receiveTimeout: const Duration(seconds: 3),
   );
-  final dio = baseDio(dioOptions);
+  final dio = DioManager().base(dioOptions);
 
   final pendingTokenExpireMs = Environment.pendingTokenExpireMs;
   await NftCollection.initNftCollection(
@@ -184,13 +142,13 @@ Future<void> setupInjector() async {
     () => NftCollection.database.predefinedCollectionDao,
   );
 
-  final authenticatedDio =
-      baseDio(dioOptions); // Authenticated dio instance for AU servers
+  final authenticatedDio = DioManager()
+      .base(dioOptions); // Authenticated dio instance for AU servers
   authenticatedDio.interceptors.add(AutonomyAuthInterceptor());
   authenticatedDio.interceptors.add(FeralfileErrorHandlerInterceptor());
   authenticatedDio.interceptors.add(MetricsInterceptor());
 
-  final authenticatedDioWithTimeout5sec = baseDio(
+  final authenticatedDioWithTimeout5sec = DioManager().base(
     dioOptions.copyWith(
       connectTimeout: const Duration(seconds: 5),
       receiveTimeout: const Duration(seconds: 5),
@@ -228,7 +186,7 @@ Future<void> setupInjector() async {
     instanceName: iapApiTimeout5secInstanceName,
   );
 
-  final userApiDio = baseDio(dioOptions);
+  final userApiDio = DioManager().base(dioOptions);
   userApiDio.interceptors.add(FeralfileErrorHandlerInterceptor());
 
   injector.registerLazySingleton(
@@ -293,7 +251,7 @@ Future<void> setupInjector() async {
 
   injector.registerLazySingleton(
     () => TvCastApi(
-      tvCastDio(
+      DioManager().tvCast(
         dioOptions.copyWith(
           receiveTimeout: const Duration(seconds: 10),
           connectTimeout: const Duration(seconds: 10),
@@ -309,7 +267,7 @@ Future<void> setupInjector() async {
     () => CustomerSupportServiceImpl(
       DraftCustomerSupportStore(),
       CustomerSupportApi(
-        customerSupportDio(
+        DioManager().customerSupport(
           dioOptions.copyWith(
             connectTimeout: const Duration(seconds: 10),
             receiveTimeout: const Duration(seconds: 10),
@@ -341,7 +299,7 @@ Future<void> setupInjector() async {
 
   injector.registerLazySingleton<FeralFileApi>(
     () => FeralFileApi(
-      feralFileDio(dioOptions),
+      DioManager().feralFile(dioOptions),
       baseUrl: Environment.feralFileAPIURL,
     ),
   );
@@ -448,7 +406,7 @@ Future<void> setupInjector() async {
 
   injector.registerLazySingleton<MobileControllerAPI>(
     () => MobileControllerAPI(
-      mobileControllerDio(
+      DioManager().mobileController(
         dioOptions.copyWith(
           connectTimeout: const Duration(seconds: 10),
           receiveTimeout: const Duration(seconds: 10),
@@ -480,7 +438,7 @@ Future<void> setupInjector() async {
 
   injector.registerLazySingleton<DP1PlaylistApi>(
     () => DP1PlaylistApi(
-      baseDio(
+      DioManager().base(
         dioOptions.copyWith(
           connectTimeout: const Duration(seconds: 10),
           receiveTimeout: const Duration(seconds: 10),

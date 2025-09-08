@@ -9,7 +9,7 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/dio_interceptors.dart';
-import 'package:autonomy_flutter/util/dio_util.dart';
+import 'package:autonomy_flutter/util/dio_manager.dart';
 import 'package:autonomy_flutter/util/locale_ext.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/style.dart';
@@ -39,7 +39,7 @@ class GithubDocPage extends StatefulWidget {
 class _GithubDocPageState extends State<GithubDocPage> {
   final _navigationService = injector<NavigationService>();
 
-  final dio = baseDio(BaseOptions(
+  final dio = DioManager().base(BaseOptions(
     baseUrl: 'https://raw.githubusercontent.com',
     connectTimeout: const Duration(seconds: 5),
   ));

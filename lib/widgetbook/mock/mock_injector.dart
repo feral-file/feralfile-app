@@ -44,7 +44,7 @@ import 'package:autonomy_flutter/service/playlist_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/util/au_file_service.dart';
-import 'package:autonomy_flutter/util/dio_util.dart';
+import 'package:autonomy_flutter/util/dio_manager.dart';
 import 'package:autonomy_flutter/widgetbook/mock/dao/mock_address_collection_dao.dart';
 import 'package:autonomy_flutter/widgetbook/mock/dao/mock_asset_dao.dart';
 import 'package:autonomy_flutter/widgetbook/mock/dao/mock_asset_token_dao.dart';
@@ -242,7 +242,9 @@ class MockInjector {
 
     if (!injector.isRegistered<RemoteConfigService>()) {
       injector.registerLazySingleton<RemoteConfigService>(
-        () => RemoteConfigServiceImpl(RemoteConfigApi(baseDio(BaseOptions()))),
+        () => RemoteConfigServiceImpl(
+          RemoteConfigApi(DioManager().base(BaseOptions())),
+        ),
       );
     }
 
