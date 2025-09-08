@@ -424,7 +424,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
       child: Text(
         errorMessage,
         style: Theme.of(context).textTheme.small.copyWith(
-              color: PrimitivesTokens.colorsError,
+              color: PrimitivesTokens.colorsLightRed,
             ),
         textAlign: TextAlign.left,
       ),
