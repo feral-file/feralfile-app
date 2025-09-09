@@ -35,10 +35,6 @@
         "$type": "dimension",
         "$value": "1px"
       }
-    },
-    "Number": {
-      "$type": "dimension",
-      "$value": "0px"
     }
   }
 }
