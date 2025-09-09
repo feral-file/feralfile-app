@@ -36,6 +36,7 @@ import 'package:autonomy_flutter/screen/collection_pro/collection_pro_bloc.dart'
 import 'package:autonomy_flutter/screen/dailies_work/dailies_work_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/home/list_playlist_bloc.dart';
+import 'package:autonomy_flutter/screen/meili_search/meili_search_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/bloc/record_controller_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
@@ -61,6 +62,7 @@ import 'package:autonomy_flutter/service/domain_service.dart';
 import 'package:autonomy_flutter/service/dp1_playlist_service.dart';
 import 'package:autonomy_flutter/service/ethereum_service.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
+import 'package:autonomy_flutter/service/meilisearch_service.dart';
 import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/mobile_controller_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
@@ -72,7 +74,6 @@ import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/settings_data_service.dart';
 import 'package:autonomy_flutter/service/user_interactivity_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
-import 'package:autonomy_flutter/service/meilisearch_service.dart';
 import 'package:autonomy_flutter/util/au_file_service.dart';
 import 'package:autonomy_flutter/util/dio_interceptors.dart';
 import 'package:autonomy_flutter/util/dio_manager.dart';
@@ -468,8 +469,11 @@ Future<void> setupInjector() async {
     ),
   );
 
-  // MeiliSearch Service
+  // MeiliSearch SDK Service (using official SDK)
   injector.registerLazySingleton<MeiliSearchService>(
     () => MeiliSearchService()..initialize(),
   );
+
+  injector.registerLazySingleton<MeiliSearchBloc>(
+      () => MeiliSearchBloc(injector()));
 }

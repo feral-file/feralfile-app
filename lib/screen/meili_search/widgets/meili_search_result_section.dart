@@ -5,8 +5,8 @@
 //  that can be found in the LICENSE file.
 //
 
-import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/view/header.dart';
+import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:flutter/material.dart';
 
 class MeiliSearchResultSection<T> extends StatelessWidget {
@@ -21,12 +21,11 @@ class MeiliSearchResultSection<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        HeaderView(title: title),
-        const SizedBox(height: 10),
-        builder(context),
-      ],
-    );
+    return SectionExpandedWidget(
+        header: title,
+        headerStyle: Theme.of(context).textTheme.ppMori700White16,
+        child: builder(context),
+        isExpandedDefault: true,
+        headerPadding: EdgeInsets.only(bottom: 16));
   }
 }

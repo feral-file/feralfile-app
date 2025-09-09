@@ -5,18 +5,16 @@
 //  that can be found in the LICENSE file.
 //
 
-import 'dart:convert';
-
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/model/ff_alumni.dart';
 import 'package:autonomy_flutter/model/ff_artwork.dart';
 import 'package:autonomy_flutter/model/ff_exhibition.dart';
 import 'package:autonomy_flutter/model/ff_series.dart';
-import 'package:autonomy_flutter/util/dio_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:dio/dio.dart';
+import 'package:autonomy_flutter/util/timer_metric.dart';
+import 'package:meilisearch/meilisearch.dart';
 
-/// Service for searching across multiple MeiliSearch indexes
+/// Service for searching across multiple MeiliSearch indexes using the official MeiliSearch SDK
 class MeiliSearchService {
   MeiliSearchService._internal({this.prefix = 'ffprod'});
 
@@ -24,65 +22,148 @@ class MeiliSearchService {
   factory MeiliSearchService({String prefix = 'ffprod'}) =>
       MeiliSearchService._internal(prefix: prefix);
 
-  late final Dio _dio;
+  late final MeiliSearchClient _client;
   final String prefix;
 
   /// Initialize the service with MeiliSearch configuration
   void initialize() {
-    _dio = DioManager().base(BaseOptions(
-      baseUrl: Environment.meiliSearchUrl,
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 30),
-      headers: {
-        'Authorization': 'Bearer ${Environment.meiliSearchKey}',
-        'Content-Type': 'application/json',
-      },
-    ));
+    _client = MeiliSearchClient(
+      Environment.meiliSearchUrl,
+      Environment.meiliSearchKey,
+    );
   }
 
   /// Search across all indexes (artworks, exhibitions, artists, curators, series)
   Future<MeiliSearchResult> searchAll({
-    required String query,
+    required String text,
     int limit = 20,
     int offset = 0,
     List<String>? filters,
   }) async {
-    // Execute all searches in parallel, but handle each one independently
-    final searchFutures = [
-      _safeSearch(() => searchArtworks(
-          query: query, limit: limit, offset: offset, filters: filters)),
-      _safeSearch(() => searchExhibitions(
-          query: query, limit: limit, offset: offset, filters: filters)),
-      _safeSearch(() => searchArtists(
-          query: query, limit: limit, offset: offset, filters: filters)),
-      _safeSearch(() => searchCurators(
-          query: query, limit: limit, offset: offset, filters: filters)),
-      _safeSearch(() => searchSeries(
-          query: query, limit: limit, offset: offset, filters: filters)),
+    final start = DateTime.now();
+
+    // Build multi index query
+    final queries = [
+      IndexSearchQuery(
+        indexUid: '${prefix}_artworks',
+        query: text,
+        limit: limit,
+        offset: offset,
+        showRankingScore: true,
+      ),
+      IndexSearchQuery(
+        indexUid: '${prefix}_exhibitions',
+        query: text,
+        limit: limit,
+        offset: offset,
+        showRankingScore: true,
+      ),
+      IndexSearchQuery(
+        indexUid: '${prefix}_artists',
+        query: text,
+        limit: limit,
+        offset: offset,
+        showRankingScore: true,
+      ),
+      IndexSearchQuery(
+        indexUid: '${prefix}_curators',
+        query: text,
+        limit: limit,
+        offset: offset,
+        showRankingScore: true,
+      ),
+      IndexSearchQuery(
+        indexUid: '${prefix}_series',
+        query: text,
+        limit: limit,
+        offset: offset,
+        showRankingScore: true,
+      ),
     ];
 
-    final results = await Future.wait(searchFutures);
+    final multiResult = await timerMetric(
+        'Meili Multi Search for $text',
+        () async =>
+            await _client.multiSearch(MultiSearchQuery(queries: queries)));
 
-    // Extract results and handle nulls (failed searches)
-    final artworks = results[0] as List<Artwork>? ?? <Artwork>[];
-    final exhibitions = results[1] as List<Exhibition>? ?? <Exhibition>[];
-    final artists = results[2] as List<AlumniAccount>? ?? <AlumniAccount>[];
-    final curators = results[3] as List<AlumniAccount>? ?? <AlumniAccount>[];
-    final series = results[4] as List<FFSeries>? ?? <FFSeries>[];
+    // Parse results in index order and extract ranking scores
+    final artworksRaw = multiResult.results[0].hits
+        .map((hit) => Map<String, dynamic>.from(hit as Map))
+        .toList();
+    final artworks = artworksRaw
+        .map((map) =>
+            Artwork.fromJson(Map<String, dynamic>.from(map['artwork'] as Map)))
+        .toList();
+    final artworksRankingScore = artworksRaw
+        .map((m) => (m['_rankingScore'] as num?)?.toDouble() ?? 0.0)
+        .toList();
 
-    return MeiliSearchResult(
+    final exhibitionsRaw = multiResult.results[1].hits
+        .map((hit) => Map<String, dynamic>.from(hit as Map))
+        .toList();
+    final exhibitions = exhibitionsRaw
+        .map((map) => Exhibition.fromJson(
+            Map<String, dynamic>.from(map['exhibition'] as Map)))
+        .toList();
+    final exhibitionsRankingScore = exhibitionsRaw
+        .map((m) => (m['_rankingScore'] as num?)?.toDouble() ?? 0.0)
+        .toList();
+
+    final artistsRaw = multiResult.results[2].hits
+        .map((hit) => Map<String, dynamic>.from(hit as Map))
+        .toList();
+    final artists = artistsRaw
+        .map((map) => AlumniAccount.fromJson(
+            Map<String, dynamic>.from(map['artist'] as Map)))
+        .toList();
+    final artistsRankingScore = artistsRaw
+        .map((m) => (m['_rankingScore'] as num?)?.toDouble() ?? 0.0)
+        .toList();
+
+    final curatorsRaw = multiResult.results[3].hits
+        .map((hit) => Map<String, dynamic>.from(hit as Map))
+        .toList();
+    final curators = curatorsRaw
+        .map((map) => AlumniAccount.fromJson(
+            Map<String, dynamic>.from(map['curator'] as Map)))
+        .toList();
+    final curatorsRankingScore = curatorsRaw
+        .map((m) => (m['_rankingScore'] as num?)?.toDouble() ?? 0.0)
+        .toList();
+
+    final seriesRaw = multiResult.results[4].hits
+        .map((hit) => Map<String, dynamic>.from(hit as Map))
+        .toList();
+    final series = seriesRaw
+        .map((map) =>
+            FFSeries.fromJson(Map<String, dynamic>.from(map['series'] as Map)))
+        .toList();
+    final seriesRankingScore = seriesRaw
+        .map((m) => (m['_rankingScore'] as num?)?.toDouble() ?? 0.0)
+        .toList();
+
+    final result = MeiliSearchResult(
       artworks: artworks,
       exhibitions: exhibitions,
       artists: artists,
       curators: curators,
       series: series,
+      artworksRankingScore: artworksRankingScore,
+      exhibitionsRankingScore: exhibitionsRankingScore,
+      artistsRankingScore: artistsRankingScore,
+      curatorsRankingScore: curatorsRankingScore,
+      seriesRankingScore: seriesRankingScore,
       totalHits: artworks.length +
           exhibitions.length +
           artists.length +
           curators.length +
           series.length,
-      processingTimeMs: 0, // Individual searches don't return processing time
+      processingTimeMs: 0,
     );
+
+    log.info(
+        'MeiliSearchService.searchAll completed in ${DateTime.now().difference(start).inMilliseconds} ms with total hits: ${result.totalHits}');
+    return result;
   }
 
   /// Helper method to safely execute a search and return null if it fails
@@ -95,15 +176,35 @@ class MeiliSearchService {
     }
   }
 
+  Future<Searcheable<Map<String, dynamic>>> _search(
+      String text, String suffix, SearchQuery query) async {
+    final indexName = '${prefix}_$suffix';
+    final idx = _client.index(indexName);
+    final res = await timerMetric(
+        'Meili Search $indexName', () async => idx.search(text, query));
+    return res;
+  }
+
   /// Search artworks only
   Future<List<Artwork>> searchArtworks({
-    required String query,
+    required String text,
     int limit = 20,
     int offset = 0,
     List<String>? filters,
   }) async {
-    final result =
-        await _searchIndex('${prefix}_artworks', query, limit, offset, filters);
+    const suffix = 'artworks';
+    final searchQuery = SearchQuery(
+      offset: offset,
+      limit: limit,
+      // filter: filters?.join(' AND '),
+      // sort: ['created_at:desc'],
+      // attributesToRetrieve: ['id', 'title', 'artist', 'image_url'],
+      // attributesToSearchOn: ['title', 'artist', 'image_url'],
+      // showRankingScore: true,
+    );
+
+    final result = await _search(text, suffix, searchQuery);
+
     return result.hits.map((hit) {
       try {
         final artworkJson =
@@ -118,13 +219,24 @@ class MeiliSearchService {
 
   /// Search exhibitions only
   Future<List<Exhibition>> searchExhibitions({
-    required String query,
+    required String text,
     int limit = 20,
     int offset = 0,
     List<String>? filters,
   }) async {
-    final result = await _searchIndex(
-        '${prefix}_exhibitions', query, limit, offset, filters);
+    const suffix = 'exhibitions';
+    final searchQuery = SearchQuery(
+      offset: offset,
+      limit: limit,
+      // filter: filters?.join(' AND '),
+      // sort: ['created_at:desc'],
+      // attributesToRetrieve: ['id', 'title', 'artist', 'image_url'],
+      // attributesToSearchOn: ['title', 'artist', 'image_url'],
+      // showRankingScore: true,
+    );
+
+    final result = await _search(text, suffix, searchQuery);
+
     return result.hits.map((hit) {
       try {
         final exhibitionJson =
@@ -139,13 +251,24 @@ class MeiliSearchService {
 
   /// Search artists only
   Future<List<AlumniAccount>> searchArtists({
-    required String query,
+    required String text,
     int limit = 20,
     int offset = 0,
     List<String>? filters,
   }) async {
-    final result =
-        await _searchIndex('${prefix}_artists', query, limit, offset, filters);
+    const suffix = 'artists';
+    final searchQuery = SearchQuery(
+      offset: offset,
+      limit: limit,
+      // filter: filters?.join(' AND '),
+      // sort: ['created_at:desc'],
+      // attributesToRetrieve: ['id', 'title', 'artist', 'image_url'],
+      // attributesToSearchOn: ['title', 'artist', 'image_url'],
+      // showRankingScore: true,
+    );
+
+    final result = await _search(text, suffix, searchQuery);
+
     return result.hits.map((hit) {
       try {
         final artistJson =
@@ -160,13 +283,24 @@ class MeiliSearchService {
 
   /// Search curators only
   Future<List<AlumniAccount>> searchCurators({
-    required String query,
+    required String text,
     int limit = 20,
     int offset = 0,
     List<String>? filters,
   }) async {
-    final result =
-        await _searchIndex('${prefix}_curators', query, limit, offset, filters);
+    const suffix = 'curators';
+    final searchQuery = SearchQuery(
+      offset: offset,
+      limit: limit,
+      // filter: filters?.join(' AND '),
+      // sort: ['created_at:desc'],
+      // attributesToRetrieve: ['id', 'title', 'artist', 'image_url'],
+      // attributesToSearchOn: ['title', 'artist', 'image_url'],
+      // showRankingScore: true,
+    );
+
+    final result = await _search(text, suffix, searchQuery);
+
     return result.hits.map((hit) {
       try {
         final curatorJson =
@@ -181,13 +315,24 @@ class MeiliSearchService {
 
   /// Search series only
   Future<List<FFSeries>> searchSeries({
-    required String query,
+    required String text,
     int limit = 20,
     int offset = 0,
     List<String>? filters,
   }) async {
-    final result =
-        await _searchIndex('${prefix}_series', query, limit, offset, filters);
+    const suffix = 'series';
+    final searchQuery = SearchQuery(
+      offset: offset,
+      limit: limit,
+      // filter: filters?.join(' AND '),
+      // sort: ['created_at:desc'],
+      // attributesToRetrieve: ['id', 'title', 'artist', 'image_url'],
+      // attributesToSearchOn: ['title', 'artist', 'image_url'],
+      // showRankingScore: true,
+    );
+
+    final result = await _search(text, suffix, searchQuery);
+
     return result.hits.map((hit) {
       try {
         final seriesJson =
@@ -199,43 +344,21 @@ class MeiliSearchService {
       }
     }).toList();
   }
-
-  /// Internal method to search a specific index
-  Future<MeiliSearchIndexResult> _searchIndex(
-    String indexName,
-    String query,
-    int limit,
-    int offset,
-    List<String>? filters,
-  ) async {
-    final requestBody = {
-      'q': query,
-      'limit': limit,
-      'offset': offset,
-      if (filters != null && filters.isNotEmpty) 'filter': filters,
-    };
-
-    final response = await _dio.post<Map<String, dynamic>>(
-      '/indexes/$indexName/search',
-      data: jsonEncode(requestBody),
-    );
-
-    if (response.statusCode == 200) {
-      final data = response.data as Map<String, dynamic>;
-      return MeiliSearchIndexResult.fromJson(data);
-    } else {
-      throw Exception('MeiliSearch API error: ${response.statusCode}');
-    }
-  }
 }
 
-/// Result containing search results from all indexes
+/// Result class for MeiliSearch operations
 class MeiliSearchResult {
   final List<Artwork> artworks;
   final List<Exhibition> exhibitions;
   final List<AlumniAccount> artists;
   final List<AlumniAccount> curators;
   final List<FFSeries> series;
+  // Ranking scores from MeiliSearch (_rankingScore)
+  final List<double> artworksRankingScore;
+  final List<double> exhibitionsRankingScore;
+  final List<double> artistsRankingScore;
+  final List<double> curatorsRankingScore;
+  final List<double> seriesRankingScore;
   final int totalHits;
   final int processingTimeMs;
 
@@ -245,6 +368,11 @@ class MeiliSearchResult {
     required this.artists,
     required this.curators,
     required this.series,
+    this.artworksRankingScore = const [],
+    this.exhibitionsRankingScore = const [],
+    this.artistsRankingScore = const [],
+    this.curatorsRankingScore = const [],
+    this.seriesRankingScore = const [],
     required this.totalHits,
     required this.processingTimeMs,
   });
@@ -255,45 +383,12 @@ class MeiliSearchResult {
         artists: [],
         curators: [],
         series: [],
+        artworksRankingScore: const [],
+        exhibitionsRankingScore: const [],
+        artistsRankingScore: const [],
+        curatorsRankingScore: const [],
+        seriesRankingScore: const [],
         totalHits: 0,
         processingTimeMs: 0,
-      );
-
-  /// Get all results combined as a single list
-  List<dynamic> get allResults => [
-        ...artworks,
-        ...exhibitions,
-        ...artists,
-        ...curators,
-        ...series,
-      ];
-
-  /// Check if any results exist
-  bool get hasResults => allResults.isNotEmpty;
-
-  /// Get total count of all results
-  int get totalCount => allResults.length;
-}
-
-/// Result from a single MeiliSearch index
-class MeiliSearchIndexResult {
-  final List<dynamic> hits;
-  final int totalHits;
-  final int processingTimeMs;
-  final String? query;
-
-  MeiliSearchIndexResult({
-    required this.hits,
-    required this.totalHits,
-    required this.processingTimeMs,
-    this.query,
-  });
-
-  factory MeiliSearchIndexResult.fromJson(Map<String, dynamic> json) =>
-      MeiliSearchIndexResult(
-        hits: json['hits'] as List<dynamic>? ?? [],
-        totalHits: json['totalHits'] as int? ?? 0,
-        processingTimeMs: json['processingTimeMs'] as int? ?? 0,
-        query: json['query'] as String?,
       );
 }

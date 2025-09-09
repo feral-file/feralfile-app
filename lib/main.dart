@@ -63,6 +63,9 @@ final keyboardVisibilityController = KeyboardVisibilityController();
 final ValueNotifier<bool> shouldHideKeyboardOnTap = ValueNotifier<bool>(
     true); // This value notifies if keyboard should be hidden on tap
 
+// this value is used for specific case in a screen with pageview and scrollview
+final ValueNotifier<bool> shouldHideDisplayingBar = ValueNotifier<bool>(false);
+
 void main() async {
   unawaited(
     runZonedGuarded(() async {
@@ -268,6 +271,7 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
     shouldShowNowDisplayingOnDisconnect
         .addListener(_updateAnimationBasedOnDisplayState);
     nowDisplayingVisibility.addListener(_updateAnimationBasedOnDisplayState);
+    shouldHideDisplayingBar.addListener(_updateAnimationBasedOnDisplayState);
     CustomRouteObserver.bottomSheetHeight
         .addListener(_updateAnimationBasedOnDisplayState);
     _nowDisplayingStreamSubscription =
@@ -291,7 +295,8 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
         shouldShowNowDisplayingOnDisconnect.value &&
         nowDisplayingVisibility.value &&
         CustomRouteObserver.bottomSheetHeight.value == 0 &&
-        !keyboardVisibilityController.isVisible;
+        !keyboardVisibilityController.isVisible &&
+        !shouldHideDisplayingBar.value;
     nowDisplayingShowing.value = shouldShow;
     if (nowDisplayingShowing.value) {
       _animationController.forward();

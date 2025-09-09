@@ -166,7 +166,6 @@ class AppRouter {
   static const channelDetailPage = 'channel_detail_page';
   static const dp1PlaylistDetailsPage = 'do1_playlist_details_page';
   static const voiceCommandPage = 'voice_command_page';
-  static const meiliSearchPage = 'meili_search_page';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     log.info('[onGenerateRoute] Route: ${settings.name}');
@@ -279,7 +278,7 @@ class AppRouter {
               BlocProvider.value(value: canvasDeviceBloc),
               BlocProvider.value(value: subscriptionBloc),
             ],
-            child: const MeiliSearchPage(),
+            child: const MobileControllerHomePage(),
           ),
         );
 
@@ -782,12 +781,6 @@ class AppRouter {
               payload: payload,
             ),
           ),
-        );
-
-      case meiliSearchPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => const MeiliSearchPage(),
         );
 
       default:

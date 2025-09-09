@@ -93,13 +93,13 @@ class MeiliSearchState {
 
 class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
   final MeiliSearchService _meiliSearchService;
-  static const int _pageSize = 20;
+  static const int _pageSize = 5;
   int _currentOffset = 0;
 
   MeiliSearchBloc(this._meiliSearchService) : super(MeiliSearchState()) {
     on<MeiliSearchQueryChanged>(_onQueryChanged);
     on<MeiliSearchCleared>(_onCleared);
-    on<MeiliSearchLoadMore>(_onLoadMore);
+    // on<MeiliSearchLoadMore>(_onLoadMore);
   }
 
   Future<void> _onQueryChanged(
@@ -118,7 +118,7 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
       // Use empty string for query to get all data when no search text is provided
       final searchQuery = event.query.trim().isEmpty ? '' : event.query;
       final result = await _meiliSearchService.searchAll(
-        query: searchQuery,
+        text: searchQuery,
         limit: _pageSize,
         offset: _currentOffset,
       );
@@ -152,41 +152,41 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
     emit(MeiliSearchState());
   }
 
-  Future<void> _onLoadMore(
-    MeiliSearchLoadMore event,
-    Emitter<MeiliSearchState> emit,
-  ) async {
-    if (state.isLoading || !state.hasMoreResults) return;
-
-    emit(state.copyWith(isLoading: true));
-
-    try {
-      // Use empty string for query to get all data when no search text is provided
-      final searchQuery = state.query.trim().isEmpty ? '' : state.query;
-      final result = await _meiliSearchService.searchAll(
-        query: searchQuery,
-        limit: _pageSize,
-        offset: _currentOffset,
-      );
-
-      emit(state.copyWith(
-        artworks: [...state.artworks, ...result.artworks],
-        exhibitions: [...state.exhibitions, ...result.exhibitions],
-        artists: [...state.artists, ...result.artists],
-        curators: [...state.curators, ...result.curators],
-        series: [...state.series, ...result.series],
-        isLoading: false,
-        hasMoreResults: result.totalHits > _currentOffset + _pageSize,
-      ));
-
-      _currentOffset += _pageSize;
-    } catch (e) {
-      log.severe('MeiliSearch load more error: $e');
-      emit(state.copyWith(
-        isLoading: false,
-        hasError: true,
-        errorMessage: e.toString(),
-      ));
-    }
-  }
+  // Future<void> _onLoadMore(
+  //   MeiliSearchLoadMore event,
+  //   Emitter<MeiliSearchState> emit,
+  // ) async {
+  //   if (state.isLoading || !state.hasMoreResults) return;
+  //
+  //   emit(state.copyWith(isLoading: true));
+  //
+  //   try {
+  //     // Use empty string for query to get all data when no search text is provided
+  //     final searchQuery = state.query.trim().isEmpty ? '' : state.query;
+  //     final result = await _meiliSearchService.searchAll(
+  //       query: searchQuery,
+  //       limit: _pageSize,
+  //       offset: _currentOffset,
+  //     );
+  //
+  //     emit(state.copyWith(
+  //       artworks: [...state.artworks, ...result.artworks],
+  //       exhibitions: [...state.exhibitions, ...result.exhibitions],
+  //       artists: [...state.artists, ...result.artists],
+  //       curators: [...state.curators, ...result.curators],
+  //       series: [...state.series, ...result.series],
+  //       isLoading: false,
+  //       hasMoreResults: result.totalHits > _currentOffset + _pageSize,
+  //     ));
+  //
+  //     _currentOffset += _pageSize;
+  //   } catch (e) {
+  //     log.severe('MeiliSearch load more error: $e');
+  //     emit(state.copyWith(
+  //       isLoading: false,
+  //       hasError: true,
+  //       errorMessage: e.toString(),
+  //     ));
+  //   }
+  // }
 }
