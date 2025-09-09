@@ -113,7 +113,10 @@ function generateGlobalFiles() {
   return globalFiles.map((file) => ({
     destination: `${file}.dart`,
     format: "flutter/class.dart",
-    filter: (token) => token.filePath.includes(file),
+    filter: (token) => {
+      const fileName = token.filePath.split("/").pop().replace(".json", "");
+      return fileName.toLowerCase() === file.toLowerCase();
+    },
     options: {
       className: `${file.charAt(0).toUpperCase() + file.slice(1)}Tokens`,
     },
@@ -126,7 +129,10 @@ function generateComponentFiles() {
   return componentFiles.map((comp) => ({
     destination: `/components/${comp}.dart`,
     format: "flutter/class.dart",
-    filter: (token) => token.filePath.includes(comp),
+    filter: (token) => {
+      const fileName = token.filePath.split("/").pop().replace(".json", "");
+      return fileName.toLowerCase() === comp.toLowerCase();
+    },
     options: {
       className: `${comp.charAt(0).toUpperCase() + comp.slice(1)}Tokens`,
     },
