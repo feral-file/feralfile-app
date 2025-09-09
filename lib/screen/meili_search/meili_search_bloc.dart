@@ -12,6 +12,7 @@ import 'package:autonomy_flutter/model/ff_exhibition.dart';
 import 'package:autonomy_flutter/model/ff_series.dart';
 import 'package:autonomy_flutter/service/meilisearch_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'dart:math' as math;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 abstract class MeiliSearchEvent {}
@@ -33,6 +34,12 @@ class MeiliSearchState {
   final List<AlumniAccount> artists;
   final List<AlumniAccount> curators;
   final List<FFSeries> series;
+  // Highest ranking scores per section
+  final double artworksTopScore;
+  final double exhibitionsTopScore;
+  final double artistsTopScore;
+  final double curatorsTopScore;
+  final double seriesTopScore;
   final bool isLoading;
   final bool hasError;
   final String? errorMessage;
@@ -46,6 +53,11 @@ class MeiliSearchState {
     this.artists = const [],
     this.curators = const [],
     this.series = const [],
+    this.artworksTopScore = 0.0,
+    this.exhibitionsTopScore = 0.0,
+    this.artistsTopScore = 0.0,
+    this.curatorsTopScore = 0.0,
+    this.seriesTopScore = 0.0,
     this.isLoading = false,
     this.hasError = false,
     this.errorMessage,
@@ -60,6 +72,11 @@ class MeiliSearchState {
     List<AlumniAccount>? artists,
     List<AlumniAccount>? curators,
     List<FFSeries>? series,
+    double? artworksTopScore,
+    double? exhibitionsTopScore,
+    double? artistsTopScore,
+    double? curatorsTopScore,
+    double? seriesTopScore,
     bool? isLoading,
     bool? hasError,
     String? errorMessage,
@@ -73,6 +90,11 @@ class MeiliSearchState {
       artists: artists ?? this.artists,
       curators: curators ?? this.curators,
       series: series ?? this.series,
+      artworksTopScore: artworksTopScore ?? this.artworksTopScore,
+      exhibitionsTopScore: exhibitionsTopScore ?? this.exhibitionsTopScore,
+      artistsTopScore: artistsTopScore ?? this.artistsTopScore,
+      curatorsTopScore: curatorsTopScore ?? this.curatorsTopScore,
+      seriesTopScore: seriesTopScore ?? this.seriesTopScore,
       isLoading: isLoading ?? this.isLoading,
       hasError: hasError ?? this.hasError,
       errorMessage: errorMessage ?? this.errorMessage,
@@ -123,12 +145,20 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
         offset: _currentOffset,
       );
 
+      double _maxOrZero(List<double> values) =>
+          values.isEmpty ? 0.0 : values.reduce(math.max);
+
       emit(state.copyWith(
         artworks: result.artworks,
         exhibitions: result.exhibitions,
         artists: result.artists,
         curators: result.curators,
         series: result.series,
+        artworksTopScore: _maxOrZero(result.artworksRankingScore),
+        exhibitionsTopScore: _maxOrZero(result.exhibitionsRankingScore),
+        artistsTopScore: _maxOrZero(result.artistsRankingScore),
+        curatorsTopScore: _maxOrZero(result.curatorsRankingScore),
+        seriesTopScore: _maxOrZero(result.seriesRankingScore),
         isLoading: false,
         totalHits: result.totalHits,
         hasMoreResults: result.totalHits > _pageSize,

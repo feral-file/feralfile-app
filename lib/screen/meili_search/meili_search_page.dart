@@ -100,34 +100,7 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
                       return CustomScrollView(
                         controller: _scrollController,
                         slivers: [
-                          SliverPadding(
-                            padding: ResponsiveLayout.pageEdgeInsets,
-                            sliver: _buildExhibitionsSliver(context, state),
-                          ),
-                          const SliverToBoxAdapter(
-                            child: SizedBox(height: 16),
-                          ),
-                          SliverPadding(
-                            padding: ResponsiveLayout.pageEdgeInsets,
-                            sliver: _buildCuratorsSliver(context, state),
-                          ),
-                          const SliverToBoxAdapter(
-                            child: SizedBox(height: 16),
-                          ),
-                          SliverPadding(
-                            padding: ResponsiveLayout.pageEdgeInsets,
-                            sliver: _buildArtistsSliver(context, state),
-                          ),
-                          const SliverToBoxAdapter(
-                            child: SizedBox(height: 16),
-                          ),
-                          SliverPadding(
-                            padding: ResponsiveLayout.pageEdgeInsets,
-                            sliver: _buildSeriesSliver(context, state),
-                          ),
-                          const SliverToBoxAdapter(
-                            child: SizedBox(height: 16),
-                          ),
+                          ..._buildOrderedSections(context, state),
                           if (state.isLoading)
                             const SliverPadding(
                               padding: EdgeInsets.all(16.0),
@@ -331,4 +304,62 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
       ),
     );
   }
+
+  List<Widget> _buildOrderedSections(
+      BuildContext context, MeiliSearchState state) {
+    final sections = <_SectionEntry>[];
+    if (state.exhibitions.isNotEmpty) {
+      sections.add(_SectionEntry(
+          'Exhibitions',
+          state.exhibitionsTopScore,
+          (ctx) => SliverPadding(
+                padding: ResponsiveLayout.pageEdgeInsets,
+                sliver: _buildExhibitionsSliver(ctx, state),
+              )));
+    }
+    if (state.curators.isNotEmpty) {
+      sections.add(_SectionEntry(
+          'Curators',
+          state.curatorsTopScore,
+          (ctx) => SliverPadding(
+                padding: ResponsiveLayout.pageEdgeInsets,
+                sliver: _buildCuratorsSliver(ctx, state),
+              )));
+    }
+    if (state.artists.isNotEmpty) {
+      sections.add(_SectionEntry(
+          'Artists',
+          state.artistsTopScore,
+          (ctx) => SliverPadding(
+                padding: ResponsiveLayout.pageEdgeInsets,
+                sliver: _buildArtistsSliver(ctx, state),
+              )));
+    }
+    if (state.series.isNotEmpty) {
+      sections.add(_SectionEntry(
+          'Series',
+          state.seriesTopScore,
+          (ctx) => SliverPadding(
+                padding: ResponsiveLayout.pageEdgeInsets,
+                sliver: _buildSeriesSliver(ctx, state),
+              )));
+    }
+
+    sections.sort((a, b) => b.topScore.compareTo(a.topScore));
+
+    final widgets = <Widget>[];
+    for (final s in sections) {
+      widgets.add(s.builder(context));
+      widgets.add(const SliverToBoxAdapter(child: SizedBox(height: 16)));
+    }
+
+    return widgets;
+  }
+}
+
+class _SectionEntry {
+  final String name;
+  final double topScore;
+  final Widget Function(BuildContext) builder;
+  _SectionEntry(this.name, this.topScore, this.builder);
 }
