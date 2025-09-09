@@ -1,0 +1,44 @@
+{
+  "PlaylistHeader": {
+    "PlaylistHeader": {
+      "moreIcon": {
+        "color": {
+          "$type": "color",
+          "$value": "{primitives.colors.white}"
+        },
+        "size": {
+          "$type": "dimension",
+          "$value": "18px"
+        }
+      },
+      "playlistTitleColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.white}"
+      },
+      "channelTitleColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.grey}"
+      },
+      "borderColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.black}"
+      },
+      "paddingHorizontal": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "paddingVertical": {
+        "$type": "dimension",
+        "$value": "16px"
+      },
+      "borderWeight": {
+        "$type": "dimension",
+        "$value": "1px"
+      }
+    },
+    "Number": {
+      "$type": "dimension",
+      "$value": "0px"
+    }
+  }
+}
