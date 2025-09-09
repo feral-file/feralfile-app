@@ -1,6 +1,6 @@
 
 //
-// /components/Header.dart
+// /components/PlaylistHeader.dart
 //
 
 // Do not edit directly, this file was auto-generated.
@@ -9,8 +9,8 @@
 
 import 'dart:ui';
 
-class HeaderTokens {
-    HeaderTokens._();
+class PlaylistHeaderTokens {
+    PlaylistHeaderTokens._();
 
     static const  = 0;
     static const borderColor = Color(0xFF000000);
@@ -19,8 +19,6 @@ class HeaderTokens {
     static const moreIconColor = Color(0xFFFFFFFF);
     static const moreIconSize = 18;
     static const paddingHorizontal = 12;
-    static const paddingHorizontal = 12;
-    static const paddingVertical = 20;
     static const paddingVertical = 16;
     static const playlistTitleColor = Color(0xFFFFFFFF);
 }
