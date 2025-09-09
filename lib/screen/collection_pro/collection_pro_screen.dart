@@ -670,21 +670,3 @@ class CollectionSectionState extends State<CollectionSection>
         },
       );
 }
-
-class SectionInfo {
-  SectionInfo({required this.state});
-
-  Map<CollectionProSection, bool> state;
-}
-
-enum CollectionProSection {
-  collection,
-  medium,
-  artist;
-
-  static List<CollectionProSection> get allSections => [
-        CollectionProSection.collection,
-        CollectionProSection.medium,
-        CollectionProSection.artist,
-      ];
-}

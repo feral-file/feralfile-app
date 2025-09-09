@@ -63,7 +63,7 @@ class Exhibition {
         noteTitle: json['noteTitle'] as String?,
         noteBrief: json['noteBrief'] as String?,
         note: json['note'] as String?,
-        coverURI: json['coverURI'] as String,
+        coverURI: json['coverURI'] as String? ?? '',
         coverDisplay: json['coverDisplay'] as String?,
         curatorsAlumni: (json['curatorsAlumni'] as List<dynamic>?)
             ?.map((e) => AlumniAccount.fromJson(e as Map<String, dynamic>))

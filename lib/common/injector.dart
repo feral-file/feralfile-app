@@ -72,6 +72,7 @@ import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/settings_data_service.dart';
 import 'package:autonomy_flutter/service/user_interactivity_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
+import 'package:autonomy_flutter/service/meilisearch_service.dart';
 import 'package:autonomy_flutter/util/au_file_service.dart';
 import 'package:autonomy_flutter/util/dio_interceptors.dart';
 import 'package:autonomy_flutter/util/dio_manager.dart';
@@ -465,5 +466,10 @@ Future<void> setupInjector() async {
       injector(),
       injector(),
     ),
+  );
+
+  // MeiliSearch Service
+  injector.registerLazySingleton<MeiliSearchService>(
+    () => MeiliSearchService()..initialize(),
   );
 }

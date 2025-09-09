@@ -130,6 +130,7 @@ dependencies:
   octo_image: ^2.1.0
   rxdart: ^0.28.0
   syncfusion_flutter_core: ^29.1.38
+  meilisearch: ^0.17.0
 
 dev_dependencies:
   retrofit_generator: ^9.3.0

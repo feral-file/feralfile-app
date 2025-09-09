@@ -50,6 +50,7 @@ import 'package:autonomy_flutter/screen/feralfile_home/feralfile_home.dart';
 import 'package:autonomy_flutter/screen/feralfile_series/feralfile_series_bloc.dart';
 import 'package:autonomy_flutter/screen/feralfile_series/feralfile_series_page.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
+import 'package:autonomy_flutter/screen/meili_search/meili_search_page.dart';
 import 'package:autonomy_flutter/screen/home/collection_home_page.dart';
 import 'package:autonomy_flutter/screen/home/home_bloc.dart';
 import 'package:autonomy_flutter/screen/home/home_navigation_page.dart';
@@ -165,6 +166,7 @@ class AppRouter {
   static const channelDetailPage = 'channel_detail_page';
   static const dp1PlaylistDetailsPage = 'do1_playlist_details_page';
   static const voiceCommandPage = 'voice_command_page';
+  static const meiliSearchPage = 'meili_search_page';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     log.info('[onGenerateRoute] Route: ${settings.name}');
@@ -277,7 +279,7 @@ class AppRouter {
               BlocProvider.value(value: canvasDeviceBloc),
               BlocProvider.value(value: subscriptionBloc),
             ],
-            child: const MobileControllerHomePage(),
+            child: const MeiliSearchPage(),
           ),
         );
 
@@ -780,6 +782,12 @@ class AppRouter {
               payload: payload,
             ),
           ),
+        );
+
+      case meiliSearchPage:
+        return CupertinoPageRoute(
+          settings: settings,
+          builder: (context) => const MeiliSearchPage(),
         );
 
       default:

@@ -32,6 +32,7 @@ final listRouteShouldNotShowNowDisplaying = [
   UIHelper.artistArtworkDisplaySettingModal,
   AppRouter.oldHomePage,
   AppRouter.voiceCommandPage,
+  AppRouter.meiliSearchPage,
 ];
 
 class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {

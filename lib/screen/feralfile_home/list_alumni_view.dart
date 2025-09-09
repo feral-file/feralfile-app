@@ -367,14 +367,12 @@ class _ListAlumniViewState extends State<ListAlumniView> {
   @override
   Widget build(BuildContext context) => CustomScrollView(
         controller: _scrollController,
+        shrinkWrap: true,
         slivers: [
           if (widget.exploreBar != null || widget.header != null) ...[
             SliverToBoxAdapter(
               child: SizedBox(height: MediaQuery.of(context).padding.top),
             ),
-            // const SliverToBoxAdapter(
-            //   child: NowDisplaying(),
-            // ),
             const SliverToBoxAdapter(
               child: SizedBox(height: 32),
             ),
