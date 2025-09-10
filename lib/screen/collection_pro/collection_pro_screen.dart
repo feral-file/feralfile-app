@@ -236,20 +236,13 @@ class CollectionProState extends State<CollectionPro>
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: padding,
-                          child: ActionBar(
-                            searchBar: AuSearchBar(
-                              onChanged: (text) {},
-                              onSearch: (text) {
-                                setState(() {
-                                  searchStr.value = text;
-                                });
-                              },
-                              onClear: (text) {
-                                setState(() {
-                                  searchStr.value = text;
-                                });
-                              },
-                            ),
+                          child: FFSearchBar(
+                            onChanged: (text) {},
+                            onSearch: (text) {
+                              setState(() {
+                                searchStr.value = text;
+                              });
+                            },
                             onCancel: () {
                               setState(() {
                                 searchStr.value = '';

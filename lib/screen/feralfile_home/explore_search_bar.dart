@@ -88,25 +88,20 @@ class _ExploreBarState extends State<ExploreBar> {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: ActionBar(
-            searchBar: AuSearchBar(
-              controller: _controller,
-              onSearch: (value) {
-                _onSearch(value);
-              },
-              onClear: (value) {
-                _onSearch(null);
-              },
-              onChanged: (value) {},
-              minSearchLength: 3,
-              minSearchLengthWhenPressEnter: 2,
-            ),
+          child: FFSearchBar(
+            controller: _controller,
+            onSearch: (value) {
+              _onSearch(value);
+            },
+            onChanged: (value) {},
             onCancel: canCancel
                 ? () {
                     _controller.clear();
                     _onSearch(null);
                   }
                 : null,
+            minSearchLength: 3,
+            minSearchLengthWhenPressEnter: 2,
           ),
         ),
         const SizedBox(height: 18),

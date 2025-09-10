@@ -2,7 +2,6 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/bluetooth_connected_device_config.dart';
-import 'package:autonomy_flutter/screen/meili_search/meili_search_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/channels_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/playlists_page.dart';
@@ -59,7 +58,6 @@ class _ListDirectoryPageState extends State<ListDirectoryPage>
       const PlaylistsPage(),
       const ChannelsPage(),
       const WorksPage(),
-      const MeiliSearchPage(),
     ];
     return Center(
       child: Column(

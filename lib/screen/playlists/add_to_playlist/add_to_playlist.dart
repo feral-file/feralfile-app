@@ -203,14 +203,12 @@ class _AddToCollectionScreenState extends State<AddToCollectionScreen>
                         children: [
                           Padding(
                             padding: const EdgeInsets.fromLTRB(15, 20, 15, 18),
-                            child: ActionBar(
-                              searchBar: AuSearchBar(
-                                onChanged: (text) {
-                                  setState(() {
-                                    _searchText = text;
-                                  });
-                                },
-                              ),
+                            child: FFSearchBar(
+                              onChanged: (text) {
+                                setState(() {
+                                  _searchText = text;
+                                });
+                              },
                               onCancel: () async {
                                 setState(() {
                                   _searchText = '';

@@ -226,20 +226,13 @@ class _AddNewPlaylistScreenState extends State<AddNewPlaylistScreen>
                                 15,
                                 18,
                               ),
-                              child: ActionBar(
-                                searchBar: AuSearchBar(
-                                  onChanged: (value) {},
-                                  onSearch: (value) {
-                                    setState(() {
-                                      _searchText = value;
-                                    });
-                                  },
-                                  onClear: (value) {
-                                    setState(() {
-                                      _searchText = '';
-                                    });
-                                  },
-                                ),
+                              child: FFSearchBar(
+                                onChanged: (value) {},
+                                onSearch: (value) {
+                                  setState(() {
+                                    _searchText = value;
+                                  });
+                                },
                                 onCancel: () async {
                                   setState(() {
                                     _searchText = '';
@@ -287,7 +280,7 @@ class _AddNewPlaylistScreenState extends State<AddNewPlaylistScreen>
   Widget _assetsWidget(
     BuildContext context,
     List<CompactedAssetToken> tokens, {
-    Function(String tokenID, bool value)? onChanged,
+    void Function(String tokenID, bool value)? onChanged,
     List<String>? selectedTokens,
   }) {
     final cellPerRow =
@@ -340,7 +333,7 @@ class ThumbnailPlaylistItem extends StatefulWidget {
   final bool showSelect;
   final bool isSelected;
   final CompactedAssetToken token;
-  final Function(bool?)? onChanged;
+  final void Function(bool?)? onChanged;
   final int cachedImageSize;
   final bool usingThumbnailID;
   final bool showTriggerOrder;

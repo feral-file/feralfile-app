@@ -362,8 +362,8 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                         if (_isVisible)
                           ValueListenableBuilder(
                             valueListenable: isNowDisplayingBarExpanded,
-                            builder: (context, bottomSheetHeight, child) {
-                              if (isNowDisplayingBarExpanded.value) {
+                            builder: (context, value, child) {
+                              if (value) {
                                 return const SizedBox.shrink();
                               }
 

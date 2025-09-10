@@ -3,6 +3,8 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/screen/meili_search/meili_search_bloc.dart';
+import 'package:autonomy_flutter/screen/meili_search/meili_search_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/record_processing_status_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/bloc/record_controller_bloc.dart';
@@ -14,18 +16,11 @@ import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/view/ai_chat_thread_view.dart';
-import 'package:autonomy_flutter/view/ai_chat_view_widget.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
-import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:autonomy_flutter/widgets/llm_text_input/llm_text_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_svg/svg.dart';
-import 'package:uuid/uuid.dart';
-
-ValueNotifier<bool> chatModeNotifier = ValueNotifier<bool>(false);
 
 class RecordControllerScreenPayload {
   RecordControllerScreenPayload({
@@ -54,11 +49,15 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
   final ConfigurationService configurationService =
       injector<ConfigurationService>();
   late RecordBloc recordBloc;
+  late MeiliSearchBloc meiliSearchBloc;
   String? transcribedText;
+
+  bool shouldShowMeiliSearch = false;
 
   @override
   void initState() {
     recordBloc = context.read<RecordBloc>();
+    meiliSearchBloc = context.read<MeiliSearchBloc>();
     super.initState();
     WidgetsBinding.instance.addObserver(this);
   }
@@ -104,59 +103,45 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
   }
 
   Widget _buildBody(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: chatModeNotifier,
-      builder: (context, chatModeView, child) {
-        return BlocProvider.value(
-          value: recordBloc,
-          child: BlocConsumer<RecordBloc, RecordState>(
-            listener: (context, state) {
-              // Update transcribedText when transcription is complete
-              if (state is RecordProcessingState &&
-                  state.status == RecordProcessingStatus.transcribed &&
-                  state.transcription != null &&
-                  state.transcription!.isNotEmpty) {
-                setState(() {
-                  transcribedText = state.transcription;
-                });
-              }
+    return BlocProvider.value(
+      value: recordBloc,
+      child: BlocConsumer<RecordBloc, RecordState>(
+        listener: (context, state) {
+          // Update transcribedText when transcription is complete
+          if (state is RecordProcessingState &&
+              state.status == RecordProcessingStatus.transcribed &&
+              state.transcription != null &&
+              state.transcription!.isNotEmpty) {
+            setState(() {
+              transcribedText = state.transcription;
+            });
+          }
 
-              // Reset transcribedText when starting new recording
-              if (state is RecordRecordingState) {
-                setState(() {
-                  transcribedText = null;
-                });
-              }
+          // Reset transcribedText when starting new recording
+          if (state is RecordRecordingState) {
+            setState(() {
+              transcribedText = null;
+            });
+          }
 
-              if (state is RecordSuccessState) {
-                final dp1Playlist = state.lastDP1Call;
-                if (dp1Playlist == null || dp1Playlist.items.isEmpty) {
-                  return;
-                }
-                injector<NavigationService>().navigateTo(
-                  AppRouter.dp1PlaylistDetailsPage,
-                  arguments: DP1PlaylistDetailsScreenPayload(
-                    playlist: dp1Playlist,
-                    backTitle: 'Index',
-                  ),
-                );
-              }
-            },
-            builder: (context, state) {
-              return IndexedStack(
-                index: chatModeView ? 0 : 1,
-                children: [
-                  _aiChatThreadView(
-                    context,
-                    state is RecordSuccessState ? state : null,
-                  ),
-                  _recordView(context, state)
-                ],
-              );
-            },
-          ),
-        );
-      },
+          if (state is RecordSuccessState) {
+            final dp1Playlist = state.lastDP1Call;
+            if (dp1Playlist == null || dp1Playlist.items.isEmpty) {
+              return;
+            }
+            injector<NavigationService>().navigateTo(
+              AppRouter.dp1PlaylistDetailsPage,
+              arguments: DP1PlaylistDetailsScreenPayload(
+                playlist: dp1Playlist,
+                backTitle: 'Index',
+              ),
+            );
+          }
+        },
+        builder: (context, state) {
+          return _recordView(context, state);
+        },
+      ),
     );
   }
 
@@ -201,29 +186,37 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                 ],
               ),
             ),
-            Expanded(
-              child: Column(
-                children: [
-                  Center(
-                    child: GestureDetector(
-                      onTap: state is RecordProcessingState
-                          ? null
-                          : () {
-                              context.read<RecordBloc>().add(
-                                    state is RecordRecordingState
-                                        ? StopRecordingEvent()
-                                        : StartRecordingEvent(),
-                                  );
-                            },
-                      child: _recordButton(state),
+            (shouldShowMeiliSearch)
+                ? Expanded(
+                    child: Container(
+                    child: BlocProvider.value(
+                      value: meiliSearchBloc,
+                      child: MeiliSearchPage(),
+                    ),
+                  ))
+                : Expanded(
+                    child: Column(
+                      children: [
+                        Center(
+                          child: GestureDetector(
+                            onTap: state is RecordProcessingState
+                                ? null
+                                : () {
+                                    context.read<RecordBloc>().add(
+                                          state is RecordRecordingState
+                                              ? StopRecordingEvent()
+                                              : StartRecordingEvent(),
+                                        );
+                                  },
+                            child: _recordButton(state),
+                          ),
+                        ),
+                        const SizedBox(height: 105.52),
+                        _recordTranscribedText(context, state),
+                        _recordStatus(context, state),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 105.52),
-                  _recordTranscribedText(context, state),
-                  _recordStatus(context, state),
-                ],
-              ),
-            ),
           ],
         ),
         Positioned(
@@ -231,50 +224,34 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
           right: 0,
           bottom: MediaQuery.of(context).padding.bottom +
               MediaQuery.of(context).viewInsets.bottom,
-          child: LLMTextInput(
-            active: true,
-            enabled: !(state is RecordProcessingState ||
-                state is RecordRecordingState),
-            autoFocus: !widget.payload.isListening,
-            onSend: (text) {
-              context.read<RecordBloc>().add(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              LLMTextInput(
+                active: true,
+                enabled: !(state is RecordProcessingState ||
+                    state is RecordRecordingState),
+                autoFocus: !widget.payload.isListening,
+                onSend: (text) {
+                  recordBloc.add(
                     SubmitTextEvent(text),
                   );
-            },
+                  setState(() {
+                    shouldShowMeiliSearch = false;
+                  });
+                },
+                onChanged: (text) {
+                  setState(() {
+                    shouldShowMeiliSearch = text.isNotEmpty;
+                  });
+                  meiliSearchBloc.add(
+                    MeiliSearchQueryChanged(text),
+                  );
+                },
+              ),
+            ],
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _aiChatThreadView(BuildContext context, RecordSuccessState? state) {
-    final messages = <types.Message>[];
-    if (state != null) {
-      final userMessage = types.TextMessage(
-        author: aiChatUser,
-        createdAt: DateTime.now().millisecondsSinceEpoch,
-        id: const Uuid().v4(),
-        text: state.transcription,
-      );
-      final aiBotMessage = types.TextMessage(
-        author: aiChatBot,
-        createdAt: DateTime.now().millisecondsSinceEpoch,
-        id: const Uuid().v4(),
-        text: state.response,
-      );
-      messages.addAll([userMessage, aiBotMessage]);
-    }
-
-    return Column(
-      children: [
-        Container(
-          color: AppColor.primaryBlack,
-          height: 130 + MediaQuery.of(context).padding.top,
-        ),
-        AiChatThreadView(
-          initialMessages: [],
-        ),
-        const BottomSpacing(),
       ],
     );
   }

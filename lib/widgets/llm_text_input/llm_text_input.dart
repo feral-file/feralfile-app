@@ -14,6 +14,7 @@ class LLMTextInput extends StatefulWidget {
     super.key,
     this.placeholder = MessageConstants.askAnythingText,
     this.onSend,
+    this.onChanged,
     this.autoFocus = false,
     this.active = false,
     this.enabled = true,
@@ -24,6 +25,7 @@ class LLMTextInput extends StatefulWidget {
   final bool active;
   final bool enabled;
   final void Function(String)? onSend;
+  final void Function(String)? onChanged;
 
   @override
   State<LLMTextInput> createState() => _LLMTextInputState();
@@ -92,6 +94,9 @@ class _LLMTextInputState extends State<LLMTextInput> {
                           widget.onSend?.call(text);
                           _textController.clear();
                         }
+                      },
+                      onChanged: (text) {
+                        widget.onChanged?.call(text);
                       },
                     )
                   : GestureDetector(

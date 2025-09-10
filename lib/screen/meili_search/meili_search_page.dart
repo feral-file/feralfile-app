@@ -38,7 +38,11 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
   @override
   void initState() {
     super.initState();
-    _bloc = injector<MeiliSearchBloc>();
+    try {
+      _bloc = context.read<MeiliSearchBloc>();
+    } catch (e) {
+      _bloc = injector<MeiliSearchBloc>();
+    }
     _searchController = TextEditingController();
 
     _scrollController.addListener(_onScroll);
@@ -74,58 +78,47 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _bloc,
-      child: Scaffold(
-        backgroundColor: AppColor.auGreyBackground,
-        body: Stack(
-          children: [
-            Column(
-              children: [
-                Expanded(
-                  child: BlocBuilder<MeiliSearchBloc, MeiliSearchState>(
-                    builder: (context, state) {
-                      if (state.isLoading && state.query.isEmpty) {
-                        return const Center(
-                          child: LoadingWidget(),
-                        );
-                      }
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Expanded(
+            child: BlocBuilder<MeiliSearchBloc, MeiliSearchState>(
+              builder: (context, state) {
+                if (state.isLoading && state.query.isEmpty) {
+                  return const Center(
+                    child: LoadingWidget(),
+                  );
+                }
 
-                      if (state.hasError) {
-                        return _searchErrorView(context, state);
-                      }
+                if (state.hasError) {
+                  return _searchErrorView(context, state);
+                }
 
-                      if (!state.hasResults && state.query.isNotEmpty) {
-                        return _searchEmptyView(context);
-                      }
+                if (!state.hasResults && state.query.isNotEmpty) {
+                  return _searchEmptyView(context);
+                }
 
-                      return CustomScrollView(
-                        controller: _scrollController,
-                        slivers: [
-                          ..._buildOrderedSections(context, state),
-                          if (state.isLoading)
-                            const SliverPadding(
-                              padding: EdgeInsets.all(16.0),
-                              sliver: SliverToBoxAdapter(
-                                child: Center(child: LoadingWidget()),
-                              ),
-                            ),
-                          const SliverToBoxAdapter(
-                            child: SizedBox(height: 250),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ],
+                return CustomScrollView(
+                  shrinkWrap: true,
+                  controller: _scrollController,
+                  slivers: [
+                    ..._buildOrderedSections(context, state),
+                    if (state.isLoading)
+                      const SliverPadding(
+                        padding: EdgeInsets.all(16.0),
+                        sliver: SliverToBoxAdapter(
+                          child: Center(child: LoadingWidget()),
+                        ),
+                      ),
+                    const SliverToBoxAdapter(
+                      child: SizedBox(height: 250),
+                    ),
+                  ],
+                );
+              },
             ),
-            Positioned(
-              bottom: MediaQuery.of(context).padding.bottom + 16,
-              left: 0,
-              right: 0,
-              child: _searchBar(context),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -173,21 +166,10 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.search,
-            size: 48,
-            color: AppColor.auGrey,
-          ),
           const SizedBox(height: 16),
           Text(
             'No results found',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Try searching for artworks, exhibitions, artists, curators, or series',
-            style: Theme.of(context).textTheme.bodyMedium,
-            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.ppMori400White16,
           ),
         ],
       ),

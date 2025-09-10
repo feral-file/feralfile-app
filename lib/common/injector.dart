@@ -474,6 +474,5 @@ Future<void> setupInjector() async {
     () => MeiliSearchService()..initialize(),
   );
 
-  injector.registerLazySingleton<MeiliSearchBloc>(
-      () => MeiliSearchBloc(injector()));
+  injector.registerFactory<MeiliSearchBloc>(() => MeiliSearchBloc(injector()));
 }
