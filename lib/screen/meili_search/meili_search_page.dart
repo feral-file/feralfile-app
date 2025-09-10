@@ -18,7 +18,6 @@ import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/view/loading.dart';
-import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -57,12 +56,7 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
     super.dispose();
   }
 
-  void _onScroll() {
-    // if (_scrollController.position.pixels >=
-    //     _scrollController.position.maxScrollExtent - 200) {
-    //   _bloc.add(MeiliSearchLoadMore());
-    // }
-  }
+  void _onScroll() {}
 
   void _onSearchChanged(String query) {
     // Cancel the previous timer if it exists
@@ -215,11 +209,14 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
       child: MeiliSearchResultSection<dynamic>(
         title: 'Exhibitions',
         builder: (context) {
-          return ListExhibitionView(
-            exhibitions: exhibitions,
-            isScrollable: false,
-            padding: EdgeInsets.zero,
-            emptyWidget: const SizedBox.shrink(),
+          return Container(
+            // padding: const EdgeInsets.only(bottom: 32),
+            child: ListExhibitionView(
+              exhibitions: exhibitions,
+              isScrollable: false,
+              padding: const EdgeInsets.only(bottom: 32),
+              emptyWidget: const SizedBox.shrink(),
+            ),
           );
         },
       ),
@@ -240,7 +237,7 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
                     .openFeralFileCuratorPage(alumni.slug ?? alumni.id),
               );
             },
-            padding: EdgeInsets.zero,
+            padding: const EdgeInsets.only(bottom: 32),
             emptyWidget: const SizedBox.shrink(),
           );
         },
@@ -295,7 +292,7 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
           'Exhibitions',
           state.exhibitionsTopScore,
           (ctx) => SliverPadding(
-                padding: ResponsiveLayout.pageEdgeInsets,
+                padding: EdgeInsets.zero,
                 sliver: _buildExhibitionsSliver(ctx, state),
               )));
     }
@@ -304,7 +301,7 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
           'Curators',
           state.curatorsTopScore,
           (ctx) => SliverPadding(
-                padding: ResponsiveLayout.pageEdgeInsets,
+                padding: EdgeInsets.zero,
                 sliver: _buildCuratorsSliver(ctx, state),
               )));
     }
@@ -313,7 +310,7 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
           'Artists',
           state.artistsTopScore,
           (ctx) => SliverPadding(
-                padding: ResponsiveLayout.pageEdgeInsets,
+                padding: EdgeInsets.zero,
                 sliver: _buildArtistsSliver(ctx, state),
               )));
     }
@@ -322,7 +319,7 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
           'Series',
           state.seriesTopScore,
           (ctx) => SliverPadding(
-                padding: ResponsiveLayout.pageEdgeInsets,
+                padding: EdgeInsets.zero,
                 sliver: _buildSeriesSliver(ctx, state),
               )));
     }
