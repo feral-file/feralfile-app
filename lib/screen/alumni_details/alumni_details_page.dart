@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:autonomy_flutter/model/ff_alumni.dart';
 import 'package:autonomy_flutter/model/ff_exhibition.dart';
 import 'package:autonomy_flutter/model/ff_series.dart';
+import 'package:autonomy_flutter/nft_collection/models/user_collection.dart';
 import 'package:autonomy_flutter/screen/alumni_details/alumni_details_bloc.dart';
 import 'package:autonomy_flutter/screen/alumni_details/alumni_details_state.dart';
 import 'package:autonomy_flutter/screen/alumni_details/alumni_exhibitions_page.dart';
@@ -19,21 +20,22 @@ import 'package:autonomy_flutter/util/series_ext.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/url_hepler.dart';
 import 'package:autonomy_flutter/view/alumni_widget.dart';
-import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/loading.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
+import 'package:autonomy_flutter/widgets/app_bar.dart';
+import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
-import 'package:autonomy_flutter/nft_collection/models/user_collection.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class AlumniDetailsPagePayload {
   final String alumniID;
+  final String? backTitle;
 
-  AlumniDetailsPagePayload({required this.alumniID});
+  AlumniDetailsPagePayload({required this.alumniID, this.backTitle});
 }
 
 class AlumniDetailsPage extends StatefulWidget {
@@ -56,13 +58,10 @@ class _AlumniDetailsPageState extends State<AlumniDetailsPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: getFFAppBar(
-          context,
-          onBack: () {
-            Navigator.of(context).pop();
-          },
+        appBar: CustomAppBar(
+          backTitle: widget.payload.backTitle,
         ),
-        backgroundColor: Colors.black,
+        backgroundColor: AppColor.auGreyBackground,
         body: BlocConsumer<AlumniDetailsBloc, AlumniDetailsState>(
             listener: (context, state) {},
             builder: (BuildContext context, AlumniDetailsState state) {
@@ -119,6 +118,14 @@ class _AlumniDetailsPageState extends State<AlumniDetailsPage> {
           ),
           ..._postSection(context, user, state.posts ?? []),
         ],
+        const SliverToBoxAdapter(
+          child: SizedBox(
+            height: 36,
+          ),
+        ),
+        const SliverToBoxAdapter(
+          child: BottomSpacing(),
+        ),
       ],
     );
   }
@@ -353,8 +360,9 @@ class _AlumniDetailsPageState extends State<AlumniDetailsPage> {
     return [
       SliverToBoxAdapter(child: header),
       SliverToBoxAdapter(
-          child: addDivider(
-              height: 36, color: AppColor.auQuickSilver, thickness: 0.5)),
+          child: SizedBox(
+        height: 24,
+      )),
       SliverToBoxAdapter(
           child: Row(
         children: [
@@ -369,8 +377,10 @@ class _AlumniDetailsPageState extends State<AlumniDetailsPage> {
         ],
       )),
       SliverToBoxAdapter(
-          child: addDivider(
-              height: 36, color: AppColor.auQuickSilver, thickness: 0.5)),
+        child: SizedBox(
+          height: 24,
+        ),
+      ),
       const SliverToBoxAdapter(
         child: SizedBox(
           height: 36,

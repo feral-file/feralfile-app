@@ -5,16 +5,20 @@
 //  that can be found in the LICENSE file.
 //
 
-import 'dart:convert';
+import 'dart:async';
+import 'dart:io';
 
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/model/ff_alumni.dart';
 import 'package:autonomy_flutter/model/ff_artwork.dart';
 import 'package:autonomy_flutter/model/ff_exhibition.dart';
 import 'package:autonomy_flutter/model/ff_series.dart';
+import 'package:autonomy_flutter/service/meilisearch_models.dart';
 import 'package:autonomy_flutter/util/dio_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
+import 'package:meilisearch/meilisearch.dart';
 
 /// Custom MeiliSearch service using Dio for HTTP requests
 class CustomMeiliSDK {
@@ -31,13 +35,51 @@ class CustomMeiliSDK {
   void initialize() {
     _dio = DioManager().base(BaseOptions(
       baseUrl: Environment.meiliSearchUrl,
-      connectTimeout: const Duration(seconds: 10),
+      connectTimeout: const Duration(seconds: 5),
       receiveTimeout: const Duration(seconds: 30),
       headers: {
         'Authorization': 'Bearer ${Environment.meiliSearchKey}',
         'Content-Type': 'application/json',
+        'Accept-Encoding': 'gzip',
       },
     ));
+
+    // Configure IO adapter with tuned HttpClient for better connection reuse
+    final ioAdapter = IOHttpClientAdapter();
+    ioAdapter.createHttpClient = () {
+      final client = HttpClient();
+      client.idleTimeout = const Duration(seconds: 90);
+      client.connectionTimeout = const Duration(seconds: 5);
+      client.maxConnectionsPerHost = 6;
+      return client;
+    };
+    _dio.httpClientAdapter = ioAdapter;
+
+    // Ensure gzip header stays present even if caller overrides headers
+    _dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
+      options.headers['Accept-Encoding'] = 'gzip';
+      handler.next(options);
+    }));
+
+    // Warm-up to reduce cold-start latency (ignore errors)
+    unawaited(_dio
+        .get<Map<String, dynamic>>('/health')
+        .then((_) {}, onError: (_) {}));
+  }
+
+  /// Multi-search across multiple indexes in a single request
+  Future<MultiSearchResult> multiSearch(MultiSearchQuery query) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/multi-search',
+      data: query.toSparseMap(),
+    );
+
+    if (response.statusCode == 200) {
+      final data = response.data as Map<String, Object?>;
+      return MultiSearchResult.fromMap(data);
+    } else {
+      throw Exception('MeiliSearch API error: ${response.statusCode}');
+    }
   }
 
   /// Search across all indexes (artworks, exhibitions, artists, curators, series)
@@ -47,28 +89,86 @@ class CustomMeiliSDK {
     int offset = 0,
     List<String>? filters,
   }) async {
-    // Execute all searches in parallel, but handle each one independently
+    // Execute per-index search calls in parallel to collect items and ranking scores
     final searchFutures = [
-      _safeSearch(() => searchArtworks(
-          query: query, limit: limit, offset: offset, filters: filters)),
-      _safeSearch(() => searchExhibitions(
-          query: query, limit: limit, offset: offset, filters: filters)),
-      _safeSearch(() => searchArtists(
-          query: query, limit: limit, offset: offset, filters: filters)),
-      _safeSearch(() => searchCurators(
-          query: query, limit: limit, offset: offset, filters: filters)),
-      _safeSearch(() => searchSeries(
-          query: query, limit: limit, offset: offset, filters: filters)),
+      _safeSearch(() =>
+          _searchIndex('${prefix}_artworks', query, limit, offset, filters)),
+      _safeSearch(() =>
+          _searchIndex('${prefix}_exhibitions', query, limit, offset, filters)),
+      _safeSearch(() =>
+          _searchIndex('${prefix}_artists', query, limit, offset, filters)),
+      _safeSearch(() =>
+          _searchIndex('${prefix}_curators', query, limit, offset, filters)),
+      _safeSearch(() =>
+          _searchIndex('${prefix}_series', query, limit, offset, filters)),
     ];
 
     final results = await Future.wait(searchFutures);
 
-    // Extract results and handle nulls (failed searches)
-    final artworks = results[0] as List<Artwork>? ?? <Artwork>[];
-    final exhibitions = results[1] as List<Exhibition>? ?? <Exhibition>[];
-    final artists = results[2] as List<AlumniAccount>? ?? <AlumniAccount>[];
-    final curators = results[3] as List<AlumniAccount>? ?? <AlumniAccount>[];
-    final series = results[4] as List<FFSeries>? ?? <FFSeries>[];
+    // Artworks
+    final artworksIndex = results[0] as MeiliSearchIndexResult?;
+    final artworksRaw = (artworksIndex?.hits ?? const <dynamic>[])
+        .map((hit) => (hit as Map).cast<String, dynamic>())
+        .toList();
+    final artworks = artworksRaw
+        .map((map) =>
+            Artwork.fromJson(Map<String, dynamic>.from(map['artwork'] as Map)))
+        .toList();
+    final artworksRankingScore = artworksRaw
+        .map((m) => (m['_rankingScore'] as num?)?.toDouble() ?? 0.0)
+        .toList();
+
+    // Exhibitions
+    final exhibitionsIndex = results[1] as MeiliSearchIndexResult?;
+    final exhibitionsRaw = (exhibitionsIndex?.hits ?? const <dynamic>[])
+        .map((hit) => (hit as Map).cast<String, dynamic>())
+        .toList();
+    final exhibitions = exhibitionsRaw
+        .map((map) => Exhibition.fromJson(
+            Map<String, dynamic>.from(map['exhibition'] as Map)))
+        .toList();
+    final exhibitionsRankingScore = exhibitionsRaw
+        .map((m) => (m['_rankingScore'] as num?)?.toDouble() ?? 0.0)
+        .toList();
+
+    // Artists
+    final artistsIndex = results[2] as MeiliSearchIndexResult?;
+    final artistsRaw = (artistsIndex?.hits ?? const <dynamic>[])
+        .map((hit) => (hit as Map).cast<String, dynamic>())
+        .toList();
+    final artists = artistsRaw
+        .map((map) => AlumniAccount.fromJson(
+            Map<String, dynamic>.from(map['artist'] as Map)))
+        .toList();
+    final artistsRankingScore = artistsRaw
+        .map((m) => (m['_rankingScore'] as num?)?.toDouble() ?? 0.0)
+        .toList();
+
+    // Curators
+    final curatorsIndex = results[3] as MeiliSearchIndexResult?;
+    final curatorsRaw = (curatorsIndex?.hits ?? const <dynamic>[])
+        .map((hit) => (hit as Map).cast<String, dynamic>())
+        .toList();
+    final curators = curatorsRaw
+        .map((map) => AlumniAccount.fromJson(
+            Map<String, dynamic>.from(map['curator'] as Map)))
+        .toList();
+    final curatorsRankingScore = curatorsRaw
+        .map((m) => (m['_rankingScore'] as num?)?.toDouble() ?? 0.0)
+        .toList();
+
+    // Series
+    final seriesIndex = results[4] as MeiliSearchIndexResult?;
+    final seriesRaw = (seriesIndex?.hits ?? const <dynamic>[])
+        .map((hit) => (hit as Map).cast<String, dynamic>())
+        .toList();
+    final series = seriesRaw
+        .map((map) =>
+            FFSeries.fromJson(Map<String, dynamic>.from(map['series'] as Map)))
+        .toList();
+    final seriesRankingScore = seriesRaw
+        .map((m) => (m['_rankingScore'] as num?)?.toDouble() ?? 0.0)
+        .toList();
 
     return MeiliSearchResult(
       artworks: artworks,
@@ -76,6 +176,11 @@ class CustomMeiliSDK {
       artists: artists,
       curators: curators,
       series: series,
+      artworksRankingScore: artworksRankingScore,
+      exhibitionsRankingScore: exhibitionsRankingScore,
+      artistsRankingScore: artistsRankingScore,
+      curatorsRankingScore: curatorsRankingScore,
+      seriesRankingScore: seriesRankingScore,
       totalHits: artworks.length +
           exhibitions.length +
           artists.length +
@@ -212,12 +317,13 @@ class CustomMeiliSDK {
       'q': query,
       'limit': limit,
       'offset': offset,
+      'showRankingScore': true,
       if (filters != null && filters.isNotEmpty) 'filter': filters,
     };
 
     final response = await _dio.post<Map<String, dynamic>>(
       '/indexes/$indexName/search',
-      data: jsonEncode(requestBody),
+      data: requestBody,
     );
 
     if (response.statusCode == 200) {
@@ -229,50 +335,31 @@ class CustomMeiliSDK {
   }
 }
 
-/// Result containing search results from all indexes
-class MeiliSearchResult {
-  final List<Artwork> artworks;
-  final List<Exhibition> exhibitions;
-  final List<AlumniAccount> artists;
-  final List<AlumniAccount> curators;
-  final List<FFSeries> series;
-  final int totalHits;
-  final int processingTimeMs;
+/// Multi-search query for custom SDK
+class CustomIndexSearchQuery {
+  final String indexUid;
+  final String query;
+  final int limit;
+  final int offset;
+  final List<String>? filters;
 
-  MeiliSearchResult({
-    required this.artworks,
-    required this.exhibitions,
-    required this.artists,
-    required this.curators,
-    required this.series,
-    required this.totalHits,
-    required this.processingTimeMs,
+  CustomIndexSearchQuery({
+    required this.indexUid,
+    required this.query,
+    this.limit = 20,
+    this.offset = 0,
+    this.filters,
   });
 
-  factory MeiliSearchResult.empty() => MeiliSearchResult(
-        artworks: [],
-        exhibitions: [],
-        artists: [],
-        curators: [],
-        series: [],
-        totalHits: 0,
-        processingTimeMs: 0,
-      );
-
-  /// Get all results combined as a single list
-  List<dynamic> get allResults => [
-        ...artworks,
-        ...exhibitions,
-        ...artists,
-        ...curators,
-        ...series,
-      ];
-
-  /// Check if any results exist
-  bool get hasResults => allResults.isNotEmpty;
-
-  /// Get total count of all results
-  int get totalCount => allResults.length;
+  Map<String, dynamic> toMap() => {
+        'indexUid': indexUid,
+        'q': query,
+        'limit': limit,
+        'offset': offset,
+        // Always request ranking scores as required
+        'showRankingScore': true,
+        if (filters != null && filters!.isNotEmpty) 'filter': filters,
+      };
 }
 
 /// Result from a single MeiliSearch index
@@ -292,8 +379,12 @@ class MeiliSearchIndexResult {
   factory MeiliSearchIndexResult.fromJson(Map<String, dynamic> json) =>
       MeiliSearchIndexResult(
         hits: json['hits'] as List<dynamic>? ?? [],
-        totalHits: json['totalHits'] as int? ?? 0,
+        totalHits: (json['totalHits'] as int?) ??
+            (json['estimatedTotalHits'] as int?) ??
+            0,
         processingTimeMs: json['processingTimeMs'] as int? ?? 0,
         query: json['query'] as String?,
       );
 }
+
+// Removed custom multi-search result in favor of official MultiSearchResult

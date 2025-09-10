@@ -393,3 +393,32 @@ class MobileControllerAuthInterceptor extends Interceptor {
     handler.next(err);
   }
 }
+
+// log how long the request takes
+class MeiliSearchInterceptor extends Interceptor {
+  static Map<String, int> _requestTimes = {};
+
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    _requestTimes[options.uri.toString()] =
+        DateTime.now().millisecondsSinceEpoch;
+    handler.next(options);
+  }
+
+  @override
+  void onResponse(
+      Response<dynamic> response, ResponseInterceptorHandler handler) {
+    final requestTime = _requestTimes[response.requestOptions.uri.toString()];
+    if (requestTime != null) {
+      log.info(
+          '[MeiliSearchInterceptor] Request time: ${DateTime.now().millisecondsSinceEpoch - requestTime} ms');
+    }
+    handler.next(response);
+  }
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    log.info('[MeiliSearchInterceptor] Error: ${err.message}');
+    handler.next(err);
+  }
+}

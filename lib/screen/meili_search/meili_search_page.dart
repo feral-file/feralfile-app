@@ -8,7 +8,6 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/design/build/components/LLMTextInput.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/artwork_view.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/list_alumni_view.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/list_exhibition_view.dart';
@@ -50,23 +49,12 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
   @override
   void dispose() {
     _debounceTimer?.cancel();
-    _bloc.close();
     _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
   void _onScroll() {}
-
-  void _onSearchChanged(String query) {
-    // Cancel the previous timer if it exists
-    _debounceTimer?.cancel();
-
-    // Start a new timer with 50ms delay
-    _debounceTimer = Timer(const Duration(milliseconds: 50), () {
-      _bloc.add(MeiliSearchQueryChanged(query));
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,10 +65,13 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
         children: [
           Expanded(
             child: BlocBuilder<MeiliSearchBloc, MeiliSearchState>(
+              bloc: _bloc,
               builder: (context, state) {
-                if (state.isLoading && state.query.isEmpty) {
-                  return const Center(
-                    child: LoadingWidget(),
+                if (state.isLoading && !state.hasResults) {
+                  return Column(
+                    children: [
+                      LoadingWidget(),
+                    ],
                   );
                 }
 
@@ -113,44 +104,6 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _searchBar(BuildContext context) {
-    final focusNode = FocusNode();
-    return Container(
-      padding: EdgeInsets.all(LLMTextInputTokens.padding.toDouble()),
-      child: Container(
-        decoration: BoxDecoration(
-          color: LLMTextInputTokens.llmBgColor,
-          borderRadius: BorderRadius.circular(
-            focusNode.hasFocus
-                ? LLMTextInputTokens.llmActiveCornerRadius.toDouble()
-                : LLMTextInputTokens.llmCornerRadius.toDouble(),
-          ),
-        ),
-        padding: EdgeInsets.all(LLMTextInputTokens.llmActivePadding.toDouble()),
-        child: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                  controller: _searchController,
-                  style: Theme.of(context).textTheme.small,
-                  minLines: 1,
-                  maxLines: 1,
-                  onChanged: _onSearchChanged,
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    hintText:
-                        'Search artworks, exhibitions, artists, curators, or series',
-                    hintStyle: Theme.of(context).textTheme.small,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                  )),
-            ),
-          ],
-        ),
       ),
     );
   }

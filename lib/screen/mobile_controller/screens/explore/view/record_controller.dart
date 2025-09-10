@@ -189,10 +189,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
             (shouldShowMeiliSearch)
                 ? Expanded(
                     child: Container(
-                    child: BlocProvider.value(
-                      value: meiliSearchBloc,
-                      child: MeiliSearchPage(),
-                    ),
+                    child: MeiliSearchPage(),
                   ))
                 : Expanded(
                     child: Column(

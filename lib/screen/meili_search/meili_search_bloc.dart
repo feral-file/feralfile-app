@@ -5,14 +5,17 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'dart:math' as math;
+
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/model/ff_alumni.dart';
 import 'package:autonomy_flutter/model/ff_artwork.dart';
 import 'package:autonomy_flutter/model/ff_exhibition.dart';
 import 'package:autonomy_flutter/model/ff_series.dart';
+import 'package:autonomy_flutter/service/meilisearch_models.dart';
 import 'package:autonomy_flutter/service/meilisearch_service.dart';
+import 'package:autonomy_flutter/util/latest_async.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'dart:math' as math;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 abstract class MeiliSearchEvent {}
@@ -117,6 +120,8 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
   final MeiliSearchService _meiliSearchService;
   static const int _pageSize = 5;
   int _currentOffset = 0;
+  final LatestAsync<MeiliSearchResult> _latestSearch =
+      LatestAsync<MeiliSearchResult>();
 
   MeiliSearchBloc(this._meiliSearchService) : super(MeiliSearchState()) {
     on<MeiliSearchQueryChanged>(_onQueryChanged);
@@ -124,10 +129,17 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
     // on<MeiliSearchLoadMore>(_onLoadMore);
   }
 
+  @override
+  void add(MeiliSearchEvent event) {
+    log.info('MeiliSearchBloc event: $event');
+    super.add(event);
+  }
+
   Future<void> _onQueryChanged(
     MeiliSearchQueryChanged event,
     Emitter<MeiliSearchState> emit,
   ) async {
+    final start = DateTime.now();
     emit(state.copyWith(
       query: event.query,
       isLoading: true,
@@ -139,32 +151,47 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
       _currentOffset = 0;
       // Use empty string for query to get all data when no search text is provided
       final searchQuery = event.query.trim().isEmpty ? '' : event.query;
-      final result = await _meiliSearchService.searchAll(
-        text: searchQuery,
-        limit: _pageSize,
-        offset: _currentOffset,
+      await _latestSearch.run(
+        () async => _meiliSearchService.searchAll(
+          text: searchQuery,
+          limit: _pageSize,
+          offset: _currentOffset,
+        ),
+        onData: (result) {
+          double _maxOrZero(List<double> values) =>
+              values.isEmpty ? 0.0 : values.reduce(math.max);
+
+          emit(state.copyWith(
+            artworks: result.artworks,
+            exhibitions: result.exhibitions,
+            artists: result.artists,
+            curators: result.curators,
+            series: result.series,
+            artworksTopScore: _maxOrZero(result.artworksRankingScore),
+            exhibitionsTopScore: _maxOrZero(result.exhibitionsRankingScore),
+            artistsTopScore: _maxOrZero(result.artistsRankingScore),
+            curatorsTopScore: _maxOrZero(result.curatorsRankingScore),
+            seriesTopScore: _maxOrZero(result.seriesRankingScore),
+            isLoading: false,
+            totalHits: result.totalHits,
+            hasMoreResults: result.totalHits > _pageSize,
+          ));
+
+          final duration = DateTime.now().difference(start);
+          log.info(
+              '_onQueryChanged MeiliSearch query "${event.query}" took ${duration.inMilliseconds} ms');
+
+          _currentOffset = _pageSize;
+        },
+        onError: (e, st) {
+          log.severe('MeiliSearch error: $e');
+          emit(state.copyWith(
+            isLoading: false,
+            hasError: true,
+            errorMessage: e.toString(),
+          ));
+        },
       );
-
-      double _maxOrZero(List<double> values) =>
-          values.isEmpty ? 0.0 : values.reduce(math.max);
-
-      emit(state.copyWith(
-        artworks: result.artworks,
-        exhibitions: result.exhibitions,
-        artists: result.artists,
-        curators: result.curators,
-        series: result.series,
-        artworksTopScore: _maxOrZero(result.artworksRankingScore),
-        exhibitionsTopScore: _maxOrZero(result.exhibitionsRankingScore),
-        artistsTopScore: _maxOrZero(result.artistsRankingScore),
-        curatorsTopScore: _maxOrZero(result.curatorsRankingScore),
-        seriesTopScore: _maxOrZero(result.seriesRankingScore),
-        isLoading: false,
-        totalHits: result.totalHits,
-        hasMoreResults: result.totalHits > _pageSize,
-      ));
-
-      _currentOffset = _pageSize;
     } catch (e) {
       log.severe('MeiliSearch error: $e');
       emit(state.copyWith(
@@ -173,6 +200,8 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
         errorMessage: e.toString(),
       ));
     }
+
+    log.info('_onQueryChanged MeiliSearch finished');
   }
 
   Future<void> _onCleared(
@@ -181,42 +210,4 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
   ) async {
     emit(MeiliSearchState());
   }
-
-  // Future<void> _onLoadMore(
-  //   MeiliSearchLoadMore event,
-  //   Emitter<MeiliSearchState> emit,
-  // ) async {
-  //   if (state.isLoading || !state.hasMoreResults) return;
-  //
-  //   emit(state.copyWith(isLoading: true));
-  //
-  //   try {
-  //     // Use empty string for query to get all data when no search text is provided
-  //     final searchQuery = state.query.trim().isEmpty ? '' : state.query;
-  //     final result = await _meiliSearchService.searchAll(
-  //       query: searchQuery,
-  //       limit: _pageSize,
-  //       offset: _currentOffset,
-  //     );
-  //
-  //     emit(state.copyWith(
-  //       artworks: [...state.artworks, ...result.artworks],
-  //       exhibitions: [...state.exhibitions, ...result.exhibitions],
-  //       artists: [...state.artists, ...result.artists],
-  //       curators: [...state.curators, ...result.curators],
-  //       series: [...state.series, ...result.series],
-  //       isLoading: false,
-  //       hasMoreResults: result.totalHits > _currentOffset + _pageSize,
-  //     ));
-  //
-  //     _currentOffset += _pageSize;
-  //   } catch (e) {
-  //     log.severe('MeiliSearch load more error: $e');
-  //     emit(state.copyWith(
-  //       isLoading: false,
-  //       hasError: true,
-  //       errorMessage: e.toString(),
-  //     ));
-  //   }
-  // }
 }

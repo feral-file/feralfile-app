@@ -24,6 +24,7 @@ import 'package:autonomy_flutter/view/ff_artwork_preview.dart';
 import 'package:autonomy_flutter/view/loading.dart';
 import 'package:autonomy_flutter/view/note_view.dart';
 import 'package:autonomy_flutter/view/post_view.dart';
+import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -62,7 +63,7 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
       BlocConsumer<ExhibitionDetailBloc, ExhibitionDetailState>(
           builder: (context, state) => Scaffold(
                 appBar: _getAppBar(context, state.exhibition),
-                backgroundColor: AppColor.primaryBlack,
+                backgroundColor: AppColor.auGreyBackground,
                 body: _body(context, state),
               ),
           listener: (context, state) {},
@@ -131,7 +132,8 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
           ),
         ),
         if (_currentIndex == 0 || (_currentIndex == 1 && shouldShowNotePage))
-          _nextButton()
+          _nextButton(),
+        BottomSpacing(),
       ],
     );
   }
@@ -143,7 +145,7 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
       return const SizedBox();
     }
     return Padding(
-      padding: const EdgeInsets.only(bottom: 40),
+      padding: const EdgeInsets.only(bottom: 0),
       child: FeralFileArtworkPreview(
         key: Key('feral_file_artwork_preview_${artwork.id}'),
         payload: FeralFileArtworkPreviewPayload(

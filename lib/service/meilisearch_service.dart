@@ -5,13 +5,21 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'dart:async';
+import 'dart:io';
+
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/model/ff_alumni.dart';
 import 'package:autonomy_flutter/model/ff_artwork.dart';
 import 'package:autonomy_flutter/model/ff_exhibition.dart';
 import 'package:autonomy_flutter/model/ff_series.dart';
+import 'package:autonomy_flutter/service/custom_meilisearch_sdk.dart';
+import 'package:autonomy_flutter/service/meilisearch_models.dart';
+import 'package:autonomy_flutter/util/dio_interceptors.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/timer_metric.dart';
+import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:meilisearch/meilisearch.dart';
 
 /// Service for searching across multiple MeiliSearch indexes using the official MeiliSearch SDK
@@ -25,12 +33,40 @@ class MeiliSearchService {
   late final MeiliSearchClient _client;
   final String prefix;
 
+  late CustomMeiliSDK _customClient;
+
   /// Initialize the service with MeiliSearch configuration
   void initialize() {
-    _client = MeiliSearchClient(
+    _customClient = CustomMeiliSDK(prefix: prefix)..initialize();
+    final ioAdapter = IOHttpClientAdapter();
+    ioAdapter.createHttpClient = () {
+      final client = HttpClient();
+      client.idleTimeout = const Duration(seconds: 90);
+      client.connectionTimeout = const Duration(seconds: 5);
+      client.maxConnectionsPerHost = 6;
+      return client;
+    };
+
+    final interceptors = <Interceptor>[
+      // Existing MeiliSearch timing/logging interceptor
+      MeiliSearchInterceptor(),
+      // Ensure gzip and any future per-request headers
+      InterceptorsWrapper(onRequest: (options, handler) {
+        options.headers['Accept-Encoding'] = 'gzip';
+        handler.next(options);
+      }),
+    ];
+
+    _client = MeiliSearchClient.withCustomDio(
       Environment.meiliSearchUrl,
-      Environment.meiliSearchKey,
+      apiKey: Environment.meiliSearchKey,
+      connectTimeout: const Duration(seconds: 5),
+      adapter: ioAdapter,
+      interceptors: interceptors,
     );
+
+    // Warm-up connection to reduce first-request latency
+    unawaited(_client.health());
   }
 
   /// Search across all indexes (artworks, exhibitions, artists, curators, series)
@@ -41,6 +77,19 @@ class MeiliSearchService {
     List<String>? filters,
   }) async {
     final start = DateTime.now();
+
+    // final res = await _customClient.searchAll(
+    //   query: text,
+    //   limit: limit,
+    //   offset: offset,
+    //   filters: filters,
+    // );
+    //
+    // final duration = DateTime.now().difference(start);
+    // log.info(
+    //     'MeiliSearchService.searchAll took $duration ms with total hits: ${res.totalHits}');
+    //
+    // return res;
 
     // Build multi index query
     final queries = [
@@ -158,9 +207,13 @@ class MeiliSearchService {
           artists.length +
           curators.length +
           series.length,
-      processingTimeMs: 0,
+      processingTimeMs: multiResult.results
+          .fold(0, (sum, result) => sum + (result.processingTimeMs ?? 0)),
     );
-
+    log.info(
+        'MeiliSearchService.searchAll processing time: ${result.processingTimeMs} ms');
+    log.info(
+        'MeiliSearchService.searchAll processing time of each index: ${multiResult.results.map((result) => result.processingTimeMs).toList()}');
     log.info(
         'MeiliSearchService.searchAll completed in ${DateTime.now().difference(start).inMilliseconds} ms with total hits: ${result.totalHits}');
     return result;
@@ -347,48 +400,4 @@ class MeiliSearchService {
 }
 
 /// Result class for MeiliSearch operations
-class MeiliSearchResult {
-  final List<Artwork> artworks;
-  final List<Exhibition> exhibitions;
-  final List<AlumniAccount> artists;
-  final List<AlumniAccount> curators;
-  final List<FFSeries> series;
-  // Ranking scores from MeiliSearch (_rankingScore)
-  final List<double> artworksRankingScore;
-  final List<double> exhibitionsRankingScore;
-  final List<double> artistsRankingScore;
-  final List<double> curatorsRankingScore;
-  final List<double> seriesRankingScore;
-  final int totalHits;
-  final int processingTimeMs;
-
-  MeiliSearchResult({
-    required this.artworks,
-    required this.exhibitions,
-    required this.artists,
-    required this.curators,
-    required this.series,
-    this.artworksRankingScore = const [],
-    this.exhibitionsRankingScore = const [],
-    this.artistsRankingScore = const [],
-    this.curatorsRankingScore = const [],
-    this.seriesRankingScore = const [],
-    required this.totalHits,
-    required this.processingTimeMs,
-  });
-
-  factory MeiliSearchResult.empty() => MeiliSearchResult(
-        artworks: [],
-        exhibitions: [],
-        artists: [],
-        curators: [],
-        series: [],
-        artworksRankingScore: const [],
-        exhibitionsRankingScore: const [],
-        artistsRankingScore: const [],
-        curatorsRankingScore: const [],
-        seriesRankingScore: const [],
-        totalHits: 0,
-        processingTimeMs: 0,
-      );
-}
+// MeiliSearchResult moved to meilisearch_models.dart
