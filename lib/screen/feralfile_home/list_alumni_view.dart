@@ -11,7 +11,7 @@ import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/feral_file_explore_helper.dart';
 import 'package:autonomy_flutter/util/feralfile_alumni_ext.dart';
-import 'package:autonomy_flutter/view/alumni_widget.dart';
+import 'package:autonomy_flutter/view/ff_title_row.dart';
 import 'package:autonomy_flutter/view/loading.dart';
 import 'package:flutter/material.dart';
 
@@ -367,14 +367,12 @@ class _ListAlumniViewState extends State<ListAlumniView> {
   @override
   Widget build(BuildContext context) => CustomScrollView(
         controller: _scrollController,
+        shrinkWrap: true,
         slivers: [
           if (widget.exploreBar != null || widget.header != null) ...[
             SliverToBoxAdapter(
               child: SizedBox(height: MediaQuery.of(context).padding.top),
             ),
-            // const SliverToBoxAdapter(
-            //   child: NowDisplaying(),
-            // ),
             const SliverToBoxAdapter(
               child: SizedBox(height: 32),
             ),
@@ -396,13 +394,7 @@ class _ListAlumniViewState extends State<ListAlumniView> {
           ] else ...[
             SliverPadding(
               padding: widget.padding,
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  childAspectRatio: 102.0 / 152,
-                  crossAxisSpacing: 24,
-                  mainAxisSpacing: 30,
-                ),
+              sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     final alumni = widget.listAlumni![index];
@@ -433,35 +425,15 @@ class _ListAlumniViewState extends State<ListAlumniView> {
 
 class AlumniCard extends StatelessWidget {
   const AlumniCard({
-    super.key,
     required this.alumni,
+    super.key,
   });
 
   final AlumniAccount alumni;
 
-  Widget _artistAvatar(BuildContext context, AlumniAccount alumni) {
-    final avatarUrl = alumni.avatarUrl;
-    return AlumniAvatar(url: avatarUrl);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        AspectRatio(aspectRatio: 1, child: _artistAvatar(context, alumni)),
-        const SizedBox(height: 14),
-        Expanded(
-          child: Text(
-            alumni.displayAlias,
-            style: theme.textTheme.ppMori400White12,
-            overflow: TextOverflow.ellipsis,
-            maxLines: 2,
-          ),
-        ),
-      ],
-    );
+    Theme.of(context);
+    return FFTitleRow(title: alumni.displayAlias);
   }
 }

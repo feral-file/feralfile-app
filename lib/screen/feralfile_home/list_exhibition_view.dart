@@ -2,14 +2,11 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/ff_exhibition.dart';
-import 'package:autonomy_flutter/screen/feralfile_home/explore_search_bar.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/feralfile_home.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/filter_bar.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
-import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/constants.dart';
-import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/view/exhibition_item.dart';
 import 'package:autonomy_flutter/view/loading.dart';
 import 'package:collection/collection.dart';
@@ -74,26 +71,11 @@ class ExploreExhibitionState extends State<ExploreExhibition> {
     );
   }
 
-  Widget _getExploreBar(BuildContext context) => ExploreBar(
-        key: const ValueKey(FeralfileHomeTab.exhibitions),
-        onUpdate: (searchText, filters, sortBy) async {
-          WidgetsBinding.instance.addPostFrameCallback((_) async {
-            _searchText = searchText;
-            _filters = filters;
-            _sortBy = sortBy;
-            await _fetchExhibitions(context);
-          });
-        },
-        tab: FeralfileHomeTab.exhibitions,
-      );
-
   Widget _exhibitionView(BuildContext context, List<Exhibition>? exhibitions) =>
       ListExhibitionView(
         scrollController: _scrollController,
         exhibitions: exhibitions,
         padding: const EdgeInsets.only(bottom: 100),
-        exploreBar: _getExploreBar(context),
-        header: widget.header,
         emptyWidget: _emptyView(context),
       );
 
@@ -160,8 +142,6 @@ class ListExhibitionView extends StatefulWidget {
     super.key,
     this.isScrollable = true,
     this.padding = EdgeInsets.zero,
-    this.exploreBar,
-    this.header,
     this.emptyWidget = const SizedBox.shrink(),
   });
 
@@ -169,8 +149,6 @@ class ListExhibitionView extends StatefulWidget {
   final ScrollController? scrollController;
   final bool isScrollable;
   final EdgeInsets padding;
-  final Widget? exploreBar;
-  final Widget? header;
   final Widget emptyWidget;
 
   @override
@@ -178,7 +156,6 @@ class ListExhibitionView extends StatefulWidget {
 }
 
 class _ListExhibitionViewState extends State<ListExhibitionView> {
-  static const _padding = 15.0;
   late ScrollController _scrollController;
 
   @override
@@ -189,8 +166,6 @@ class _ListExhibitionViewState extends State<ListExhibitionView> {
 
   @override
   Widget build(BuildContext context) {
-    final divider =
-        addDivider(height: 40, color: AppColor.auQuickSilver, thickness: 0.5);
     return CustomScrollView(
       controller: _scrollController,
       shrinkWrap: true,
@@ -198,23 +173,6 @@ class _ListExhibitionViewState extends State<ListExhibitionView> {
           ? const AlwaysScrollableScrollPhysics()
           : const NeverScrollableScrollPhysics(),
       slivers: [
-        if (widget.exploreBar != null || widget.header != null) ...[
-          SliverToBoxAdapter(
-            child: SizedBox(height: MediaQuery.of(context).padding.top),
-          ),
-          // const SliverToBoxAdapter(
-          //   child: NowDisplaying(),
-          // ),
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 32),
-          ),
-          SliverToBoxAdapter(
-            child: widget.header ?? const SizedBox.shrink(),
-          ),
-          SliverToBoxAdapter(
-            child: widget.exploreBar ?? const SizedBox.shrink(),
-          ),
-        ],
         if (widget.exhibitions == null) ...[
           const SliverToBoxAdapter(
             child: Padding(
@@ -235,16 +193,10 @@ class _ListExhibitionViewState extends State<ListExhibitionView> {
                   final exhibition = widget.exhibitions![index];
                   return Column(
                     children: [
-                      Padding(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: _padding),
-                        child: ExhibitionCard(
-                          exhibition: exhibition,
-                          viewableExhibitions: widget.exhibitions!,
-                          horizontalMargin: _padding,
-                        ),
+                      ExhibitionCard(
+                        exhibition: exhibition,
+                        viewableExhibitions: widget.exhibitions!,
                       ),
-                      if (index != widget.exhibitions!.length - 1) divider,
                     ],
                   );
                 },

@@ -19,6 +19,7 @@ import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/ff_artwork_thumbnail_view.dart';
 import 'package:autonomy_flutter/view/series_title_view.dart';
+import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
@@ -53,31 +54,6 @@ class _FeralFileSeriesPageState extends State<FeralFileSeriesPage> {
     // _pagingController.addPageRequestListener((pageKey) async {
     //   await _fetchPage(context, pageKey);
     // });
-  }
-
-  Future<void> _fetchPage(BuildContext context, int pageKey) async {
-    try {
-      final newItems = await injector<FeralFileService>().getSeriesArtworks(
-          widget.payload.seriesId, widget.payload.exhibitionId,
-          offset: pageKey,
-          // ignore: avoid_redundant_argument_values
-          limit: _pageSize);
-      final isLastPage = !(newItems.paging?.shouldLoadMore ?? false);
-      if (isLastPage) {
-        // _pagingController.appendLastPage(newItems.result);
-        // return newItems.result;
-      } else {
-        final nextPageKey = pageKey + _pageSize;
-        if (context.mounted) {
-          // make sure the page is not disposed
-          // _pagingController.appendPage(newItems.result, nextPageKey);
-          // return newItems.result;
-        }
-      }
-    } catch (error) {
-      log.info('Error fetching series page: $error');
-      unawaited(Sentry.captureException(error));
-    }
   }
 
   Future<void> _fetchNextPage() async {
@@ -126,7 +102,7 @@ class _FeralFileSeriesPageState extends State<FeralFileSeriesPage> {
       BlocConsumer<FeralFileSeriesBloc, FeralFileSeriesState>(
         builder: (context, state) => Scaffold(
             appBar: _getAppBar(context, state.series),
-            backgroundColor: AppColor.primaryBlack,
+            backgroundColor: AppColor.auGreyBackground,
             body: _body(context, state.series, state.thumbnailRatio)),
         listener: (context, state) {},
       );
@@ -218,7 +194,10 @@ class _FeralFileSeriesPageState extends State<FeralFileSeriesPage> {
               firstPageErrorIndicatorBuilder: (context) => const SizedBox(),
               newPageErrorIndicatorBuilder: (context) => const SizedBox(),
             ),
-          )
+          ),
+          SliverToBoxAdapter(
+            child: BottomSpacing(),
+          ),
         ],
       ),
     );

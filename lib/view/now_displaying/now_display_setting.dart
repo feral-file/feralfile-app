@@ -45,17 +45,30 @@ class _NowDisplaySettingViewState extends State<NowDisplaySettingView> {
     }
 
     connectedDevice = BluetoothDeviceManager().castingBluetoothDevice;
-    BluetoothDeviceManager().castingDeviceStatus.addListener(() {
-      final deviceStatus =
-          injector<CanvasDeviceBloc>().state.statusOf(connectedDevice!);
-      if (deviceStatus != null &&
-          deviceStatus.deviceSettings?.scaling != null &&
-          deviceStatus.deviceSettings!.scaling != selectedFitment) {
-        setState(() {
-          selectedFitment = deviceStatus.deviceSettings!.scaling!;
-        });
-      }
-    });
+    BluetoothDeviceManager().castingDeviceStatus.addListener(
+          deviceStatusListener,
+        );
+  }
+
+  @override
+  Future<void> dispose() async {
+    BluetoothDeviceManager().castingDeviceStatus.removeListener(
+          deviceStatusListener,
+        );
+    super.dispose();
+  }
+
+  void deviceStatusListener() {
+    final deviceStatus =
+        injector<CanvasDeviceBloc>().state.statusOf(connectedDevice!);
+    if (deviceStatus != null &&
+        deviceStatus.deviceSettings?.scaling != null &&
+        deviceStatus.deviceSettings!.scaling != selectedFitment) {
+      if (!mounted) return;
+      setState(() {
+        selectedFitment = deviceStatus.deviceSettings!.scaling!;
+      });
+    }
   }
 
   void initDisplaySettings() {

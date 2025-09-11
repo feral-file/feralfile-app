@@ -1,4 +1,5 @@
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/bluetooth_connected_device_config.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
@@ -17,7 +18,6 @@ import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
 import 'package:easy_localization/easy_localization.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -37,6 +37,18 @@ class _ListDirectoryPageState extends State<ListDirectoryPage>
   void initState() {
     super.initState();
     _pageController = PageController();
+  }
+
+  void _onPageChanged(int index) {
+    setState(() {
+      _selectedPageIndex = index;
+    });
+    _pageController.jumpToPage(index);
+    if (index == 3) {
+      shouldHideDisplayingBar.value = true;
+    } else {
+      shouldHideDisplayingBar.value = false;
+    }
   }
 
   @override
@@ -86,12 +98,7 @@ class _ListDirectoryPageState extends State<ListDirectoryPage>
           ),
           HeaderWidget(
             selectedIndex: _selectedPageIndex,
-            onPageChanged: (index) {
-              setState(() {
-                _selectedPageIndex = index;
-              });
-              _pageController.jumpToPage(index);
-            },
+            onPageChanged: _onPageChanged,
           ),
           const SizedBox(height: UIConstants.detailPageHeaderPadding),
           // _myCollectionButton(context),

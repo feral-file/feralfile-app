@@ -246,4 +246,8 @@ class Environment {
   // Artblocks GraphQL URL
   static String get artblocksGraphQLURL =>
       _readKey('ARTBLOCKS_GRAPHQL_URL', '');
+
+  // MeiliSearch configuration
+  static String get meiliSearchUrl => _readKey('MEILISEARCH_URL', '');
+  static String get meiliSearchKey => _readKey('MEILISEARCH_KEY', '');
 }

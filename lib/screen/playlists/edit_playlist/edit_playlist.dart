@@ -121,7 +121,7 @@ class _EditPlaylistScreenState extends State<EditPlaylistScreen> {
   Widget _assetsWidget(
     BuildContext context,
     List<CompactedAssetToken> tokens, {
-    Function(String tokenID, bool value)? onChanged,
+    void Function(String tokenID, bool value)? onChanged,
     List<String>? selectedTokens,
   }) {
     int cellPerRow =
@@ -219,14 +219,12 @@ class _EditPlaylistScreenState extends State<EditPlaylistScreen> {
                                 Padding(
                                   padding:
                                       const EdgeInsets.fromLTRB(15, 20, 15, 18),
-                                  child: ActionBar(
-                                    searchBar: AuSearchBar(
-                                      onChanged: (text) {
-                                        setState(() {
-                                          _searchText = text;
-                                        });
-                                      },
-                                    ),
+                                  child: FFSearchBar(
+                                    onChanged: (text) {
+                                      setState(() {
+                                        _searchText = text;
+                                      });
+                                    },
                                     onCancel: () async {
                                       setState(() {
                                         _searchText = '';

@@ -50,6 +50,8 @@ import 'package:autonomy_flutter/screen/feralfile_home/feralfile_home.dart';
 import 'package:autonomy_flutter/screen/feralfile_series/feralfile_series_bloc.dart';
 import 'package:autonomy_flutter/screen/feralfile_series/feralfile_series_page.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
+import 'package:autonomy_flutter/screen/meili_search/meili_search_bloc.dart';
+import 'package:autonomy_flutter/screen/meili_search/meili_search_page.dart';
 import 'package:autonomy_flutter/screen/home/collection_home_page.dart';
 import 'package:autonomy_flutter/screen/home/home_bloc.dart';
 import 'package:autonomy_flutter/screen/home/home_navigation_page.dart';
@@ -774,6 +776,9 @@ class AppRouter {
             providers: [
               BlocProvider.value(
                 value: injector<RecordBloc>(),
+              ),
+              BlocProvider.value(
+                value: injector<MeiliSearchBloc>(),
               ),
             ],
             child: RecordControllerScreen(

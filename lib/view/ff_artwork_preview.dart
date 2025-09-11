@@ -24,7 +24,7 @@ class FeralFileArtworkPreview extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Padding(
-            padding: const EdgeInsets.only(left: 14, right: 14, bottom: 20),
+            padding: const EdgeInsets.only(left: 14, right: 14),
             child: GestureDetector(
               onTap: () async {
                 final artwork = payload.artwork;

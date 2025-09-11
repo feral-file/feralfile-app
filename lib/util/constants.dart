@@ -127,7 +127,7 @@ const artworkDataDivider = Divider(
 );
 
 const artworkSectionDivider = Divider(
-  height: 32,
+  height: 1,
   color: AppColor.white,
   thickness: 1,
 );

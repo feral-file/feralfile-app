@@ -8,6 +8,8 @@ import 'package:autonomy_flutter/model/ff_account.dart';
 import 'package:autonomy_flutter/model/ff_artwork.dart';
 import 'package:autonomy_flutter/model/ff_exhibition.dart';
 import 'package:autonomy_flutter/model/ff_series.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/provenance.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
@@ -292,10 +294,90 @@ extension ArtworkExt on Artwork {
   }
 
   String? get indexerTokenId {
+    final chainPrefix = _getChainPrefix();
+    final contractAddress = _getContractAddress();
+    final indexId = _getIndexId();
+
+    if (chainPrefix == null || contractAddress == null || indexId == null) {
+      return null;
+    }
+
+    return '$chainPrefix-$contractAddress-$indexId';
+  }
+
+  DP1Item? get dp1Item {
+    final chainPrefix = _getChainPrefix();
+    final contractAddress = _getContractAddress();
+    final indexId = _getIndexId();
+
+    if (chainPrefix == null || contractAddress == null || indexId == null) {
+      return null;
+    }
+
+    final dp1Chain = chainPrefix == 'eth'
+        ? DP1ProvenanceChain.evm
+        : (chainPrefix == 'tez'
+            ? DP1ProvenanceChain.tezos
+            : DP1ProvenanceChain.bitmark);
+
+    final standard =
+        series?.exhibition?.mintBlockchain.toLowerCase() == 'ethereum'
+            ? DP1ProvenanceStandard.erc721
+            : (series?.exhibition?.mintBlockchain.toLowerCase() == 'tezos'
+                ? DP1ProvenanceStandard.fa2
+                : DP1ProvenanceStandard.other);
+
+    return DP1Item(
+        title: this.name,
+        source: previewURL,
+        duration: 5 * 60,
+        provenance: DP1Provenance(
+            type: DP1ProvenanceType.onChain,
+            contract: DP1Contract(
+                chain: dp1Chain,
+                standard: DP1ProvenanceStandard.erc721,
+                address: contractAddress,
+                tokenId: indexId)));
+  }
+
+  /// Get chain prefix for indexerTokenId
+  /// Returns null if chain is not supported or invalid
+  String? _getChainPrefix() {
     final chain = series?.exhibition?.mintBlockchain.toLowerCase();
     if (chain == null || chain.isEmpty) {
       return null;
     }
+
+    // normal case: tezos or ethereum chain
+    if (['tezos', 'ethereum'].contains(chain)) {
+      return chain == 'tezos' ? 'tez' : 'eth';
+    } else if (chain == 'bitmark') {
+      // if artwork was burned, get chain prefix from swap
+      if (swap != null) {
+        final swapChain = swap!.blockchainType == 'ethereum' ? 'eth' : 'tez';
+        return swapChain;
+      } else {
+        return 'bmk';
+      }
+    } else {
+      unawaited(
+        Sentry.captureMessage(
+          'ArtworkExt: get chain prefix failed, '
+          'unknown chain: $chain, artworkID: $id',
+        ),
+      );
+    }
+    return null;
+  }
+
+  /// Get contract address for indexerTokenId
+  /// Returns null if contract is not found or invalid
+  String? _getContractAddress() {
+    final chain = series?.exhibition?.mintBlockchain.toLowerCase();
+    if (chain == null || chain.isEmpty) {
+      return null;
+    }
+
     // normal case: tezos or ethereum chain
     if (['tezos', 'ethereum'].contains(chain)) {
       final contract = series!.exhibition!.contracts?.firstWhereOrNull(
@@ -304,39 +386,42 @@ extension ArtworkExt on Artwork {
       if (contract == null) {
         unawaited(
           Sentry.captureMessage(
-            'ArtworkExt: get indexerTokenId failed,'
+            'ArtworkExt: get contract address failed,'
             ' contract is null for chain: $chain, artworkID: $id',
           ),
         );
         return null;
       }
-      final chainPrefix = chain == 'tezos' ? 'tez' : 'eth';
-      final contractAddress = contract.address;
-      return '$chainPrefix-$contractAddress-$id';
-    } else
-    // special case: bitmark chain
-    if (chain == 'bitmark') {
-      // if artwork was burned, get indexerTokenId from swap
+      return contract.address;
+    } else if (chain == 'bitmark') {
+      // if artwork was burned, get contract address from swap
       if (swap != null) {
-        return swap!.indexerId;
+        return swap!.contractAddress;
       } else {
-        // if artwork was not burned, it's bitmark token
-        const chanPrefix = 'bmk';
         final contract = series!.exhibition!.contracts!.firstWhereOrNull(
           (e) => e.blockchainType == chain,
         );
-        final contractAddress = contract?.address ?? '';
-        return '$chanPrefix-$contractAddress-$id';
+        return contract?.address ?? '';
       }
-    } else {
-      unawaited(
-        Sentry.captureMessage(
-          'ArtworkExt: get indexerTokenId failed, '
-          'unknown chain: $chain, artworkID: $id',
-        ),
-      );
     }
     return null;
+  }
+
+  /// Get index ID for indexerTokenId
+  /// Returns null if ID is not available
+  String? _getIndexId() {
+    final chain = series?.exhibition?.mintBlockchain.toLowerCase();
+    if (chain == null || chain.isEmpty) {
+      return null;
+    }
+
+    // if artwork was burned, get token from swap
+    if (swap != null) {
+      return swap!.token;
+    } else {
+      // normal case: use artwork ID
+      return id;
+    }
   }
 }
 

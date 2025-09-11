@@ -644,6 +644,7 @@ class SectionExpandedWidget extends StatefulWidget {
     this.iconOnUnExpanded,
     this.withDivider = true,
     this.padding = EdgeInsets.zero,
+    this.isExpandedDefault = false,
   });
 
   final String? header;
@@ -654,13 +655,20 @@ class SectionExpandedWidget extends StatefulWidget {
   final Widget? iconOnUnExpanded;
   final bool withDivider;
   final EdgeInsets padding;
+  final bool isExpandedDefault;
 
   @override
   State<SectionExpandedWidget> createState() => _SectionExpandedWidgetState();
 }
 
 class _SectionExpandedWidgetState extends State<SectionExpandedWidget> {
-  bool _isExpanded = false;
+  late bool _isExpanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _isExpanded = widget.isExpandedDefault;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -686,6 +694,7 @@ class _SectionExpandedWidgetState extends State<SectionExpandedWidget> {
                   });
                 },
                 child: Container(
+                  padding: EdgeInsets.only(top: 16),
                   color: Colors.transparent,
                   child: Padding(
                     padding: widget.headerPadding ?? EdgeInsets.zero,

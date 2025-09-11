@@ -1,0 +1,16 @@
+[
+  {
+    "template": "Who is {name}",
+    "regex": "Who is (.+?)(?=$|[?.!,;:])",
+    "placeholders": [
+      "name"
+    ]
+  },
+  {
+    "template": "artwork {title}",
+    "regex": "artwork (.+?)(?=$|[?.!,;:])",
+    "placeholders": [
+      "title"
+    ]
+  }
+]

@@ -35,6 +35,7 @@ class _MobileControllerHomePageState
     // load channel and playlist
     _channelsBloc.add(const LoadChannelsEvent());
     _playlistsBloc.add(const LoadPlaylistsEvent());
+    // injector<MeiliSearchBloc>().add(MeiliSearchQueryChanged(''));
 
     HomePageHelper.instance.onHomePageInit(context, this);
   }
