@@ -34,7 +34,7 @@ extension BluetoothDeviceExtension on BluetoothDevice {
     if (name.isNotEmpty) {
       return name;
     }
-    return 'FF-X1';
+    return 'FF1';
   }
 
   Future<void> discoverCharacteristics() async {

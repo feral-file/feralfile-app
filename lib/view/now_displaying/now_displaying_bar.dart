@@ -98,8 +98,7 @@ class _NowDisplayingBarState extends State<NowDisplayingBar>
 
   Widget _connectFailedView(BuildContext context, NowDisplayingStatus status) {
     final device = (status as DeviceDisconnected).device;
-    final deviceName =
-        device.name.isNotEmpty == true ? device.name : 'Portal (FF-X1)';
+    final deviceName = device.name.isNotEmpty == true ? device.name : 'FF1';
     return NowPlayingStatusBar(
       status: 'Device $deviceName is offline or disconnected.',
     );
@@ -110,8 +109,7 @@ class _NowDisplayingBarState extends State<NowDisplayingBar>
     NowDisplayingStatus status,
   ) {
     final device = (status as ConnectionLost).device;
-    final deviceName =
-        device.name.isNotEmpty == true ? device.name : 'Portal (FF-X1)';
+    final deviceName = device.name.isNotEmpty == true ? device.name : 'FF1';
     return NowPlayingStatusBar(
       status: 'Connection to $deviceName lost.',
     );

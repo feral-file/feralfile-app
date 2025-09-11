@@ -54,9 +54,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Allow Feral File to scan for your FF-X1 Device.</string>
+	<string>Allow Feral File to scan for your FF1 Device.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>Allow Feral File to scan for your FF-X1 Device.</string>
+	<string>Allow Feral File to scan for your FF1 Device.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_googlecast._tcp</string>

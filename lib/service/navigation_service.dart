@@ -1061,7 +1061,7 @@ class NavigationService {
     final version = packageInfo.version;
     final buildNumber = packageInfo.buildNumber;
     final deviceName =
-        BluetoothDeviceManager().castingBluetoothDevice?.getName ?? 'FF-X1';
+        BluetoothDeviceManager().castingBluetoothDevice?.getName ?? 'FF1';
     if (context.mounted) {
       await UIHelper.showDialog(
         context,
@@ -1115,7 +1115,7 @@ class NavigationService {
   Future<void> showDeviceNotCompatibleDialog() async {
     if (context.mounted) {
       final deviceName =
-          BluetoothDeviceManager().castingBluetoothDevice?.getName ?? 'FF-X1';
+          BluetoothDeviceManager().castingBluetoothDevice?.getName ?? 'FF1';
       await UIHelper.showDialog(
         context,
         'FF1 Software Update Needed',

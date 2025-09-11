@@ -1,5 +1,5 @@
 class MockFfX1 {
-  static const String name = 'FF-X1';
+  static const String name = 'FF1';
   static const String description =
       'A mock F-16 fighter jet with advanced avionics and weapon systems.';
   static const String imageUrl = 'https://example.com/images/ff-x1.png';
