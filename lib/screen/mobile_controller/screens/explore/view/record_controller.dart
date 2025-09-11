@@ -16,6 +16,7 @@ import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:autonomy_flutter/view/hight_light_tetx_controller.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/widgets/llm_text_input/llm_text_input.dart';
 import 'package:flutter/material.dart';
@@ -54,10 +55,13 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
 
   bool shouldShowMeiliSearch = false;
 
+  late HighlightController textEditingController;
+
   @override
   void initState() {
     recordBloc = context.read<RecordBloc>();
     meiliSearchBloc = context.read<MeiliSearchBloc>();
+    textEditingController = HighlightController();
     super.initState();
     WidgetsBinding.instance.addObserver(this);
   }
@@ -225,6 +229,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               LLMTextInput(
+                controller: textEditingController,
                 active: true,
                 enabled: !(state is RecordProcessingState ||
                     state is RecordRecordingState),
@@ -238,6 +243,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                   });
                 },
                 onChanged: (text) {
+                  final match = textEditingController.getMatchOrFull();
                   setState(() {
                     shouldShowMeiliSearch = text.isNotEmpty;
                   });

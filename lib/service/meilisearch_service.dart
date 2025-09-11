@@ -53,6 +53,7 @@ class MeiliSearchService {
       // Ensure gzip and any future per-request headers
       InterceptorsWrapper(onRequest: (options, handler) {
         options.headers['Accept-Encoding'] = 'gzip';
+        options.headers['Connection'] = 'keep-alive';
         handler.next(options);
       }),
     ];

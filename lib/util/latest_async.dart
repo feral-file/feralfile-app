@@ -50,6 +50,11 @@ class LatestAsync<T> {
       _debounceCompleter = completer;
 
       void execute() async {
+        // Cancel both timers to prevent double execution
+        _debounceTimer?.cancel();
+        _maxWaitTimer?.cancel();
+        _maxWaitTimer = null;
+
         try {
           final T value = await task();
           if (requestId == _counter) {
@@ -60,8 +65,6 @@ class LatestAsync<T> {
             if (onError != null) onError(error, stackTrace);
           }
         } finally {
-          _maxWaitTimer?.cancel();
-          _maxWaitTimer = null;
           if (!completer.isCompleted) completer.complete();
         }
       }
@@ -71,6 +74,7 @@ class LatestAsync<T> {
       // Ensure task runs at most after maxWait even if new calls keep arriving
       if (maxWait != null && maxWait.inMilliseconds > 0) {
         _maxWaitTimer ??= Timer(maxWait, () {
+          // Cancel debounce timer to prevent double execution
           if (_debounceTimer?.isActive ?? false) {
             _debounceTimer!.cancel();
           }

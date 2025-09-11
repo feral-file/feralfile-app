@@ -18,6 +18,7 @@ class LLMTextInput extends StatefulWidget {
     this.autoFocus = false,
     this.active = false,
     this.enabled = true,
+    this.controller,
   });
 
   final String placeholder;
@@ -26,18 +27,20 @@ class LLMTextInput extends StatefulWidget {
   final bool enabled;
   final void Function(String)? onSend;
   final void Function(String)? onChanged;
+  final TextEditingController? controller;
 
   @override
   State<LLMTextInput> createState() => _LLMTextInputState();
 }
 
 class _LLMTextInputState extends State<LLMTextInput> {
-  final TextEditingController _textController = TextEditingController();
+  late final TextEditingController _textController;
   final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
+    _textController = widget.controller ?? TextEditingController();
 
     if (widget.autoFocus) {
       _focusNode.requestFocus();
@@ -46,7 +49,9 @@ class _LLMTextInputState extends State<LLMTextInput> {
 
   @override
   void dispose() {
-    _textController.dispose();
+    if (widget.controller == null) {
+      _textController.dispose();
+    }
     super.dispose();
   }
 
