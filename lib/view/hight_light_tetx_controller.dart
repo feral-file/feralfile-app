@@ -109,7 +109,9 @@ class HighlightController extends TextEditingController {
         text: text.substring(
             closestMatchIndex, closestMatchIndex + matchedWord.length),
         style: style?.copyWith(
-            color: AppColor.feralFileLightBlue, fontWeight: FontWeight.bold),
+            color: AppColor.feralFileHighlight,
+            fontWeight: FontWeight.bold,
+            backgroundColor: AppColor.auGreyBackground),
       ));
 
       start = closestMatchIndex + matchedWord.length;
