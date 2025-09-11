@@ -8,6 +8,8 @@ import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/exhibition_details/exhibition_detail_bloc.dart';
 import 'package:autonomy_flutter/screen/exhibition_details/exhibition_detail_state.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/intent.dart';
 import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/exhibition_ext.dart';
@@ -283,25 +285,61 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
         ),
       );
 
-  AppBar _getAppBar(BuildContext buildContext, Exhibition? exhibition) =>
-      getFFAppBar(
-        buildContext,
-        onBack: () => Navigator.pop(buildContext),
-        action: exhibition != null
-            ? FFCastButton(
-                displayKey: exhibition.id,
-                onDeviceSelected: (device) async {
-                  final request = _getCastExhibitionRequest(exhibition);
-                  final completer = Completer<void>();
-                  _canvasDeviceBloc.add(
-                    CanvasDeviceCastExhibitionEvent(device, request,
-                        onDone: completer.complete),
-                  );
-                  await completer.future;
-                },
-              )
-            : null,
-      );
+  AppBar _getAppBar(BuildContext buildContext, Exhibition? exhibition) {
+    final shouldShowCastButton = exhibition != null &&
+        (_currentIndex != 0 &&
+            !(_currentIndex == 1 && exhibition.shouldShowCuratorNotePage));
+    return getFFAppBar(
+      buildContext,
+      onBack: () => Navigator.pop(buildContext),
+      action: shouldShowCastButton
+          ? FFCastButton(
+              displayKey: exhibition.id,
+              onDeviceSelected: (device) async {
+                final shouldShowNotePage = exhibition.shouldShowCuratorNotePage;
+                final exhibitionInfoCount = shouldShowNotePage ? 3 : 2;
+                final index = _currentIndex - (exhibitionInfoCount - 1);
+                final artworks = exhibition.displayableSeries.sorted
+                    .map((e) => e.artwork?.copyWith(
+                          series: e.copyWith(exhibition: exhibition),
+                        ))
+                    .where((e) => e != null)
+                    .map((e) => e!)
+                    .toList();
+                if (artworks.isEmpty) {
+                  return;
+                }
+                // Cycle artworks so the artwork at current index becomes first
+                final startIndex = index.clamp(0, artworks.length - 1);
+                final rotatedArtworks = [
+                  ...artworks.sublist(startIndex),
+                  ...artworks.sublist(0, startIndex),
+                ];
+                final dp1items = rotatedArtworks
+                    .map((e) => e.dp1Item)
+                    .where((e) => e != null)
+                    .map((e) => e!)
+                    .toList();
+                if (dp1items.isEmpty) {
+                  return;
+                }
+
+                final playlist = DP1CallExtension.fromItems(items: dp1items);
+                final completer = Completer<void>();
+                _canvasDeviceBloc.add(
+                  CanvasDeviceCastDP1PlaylistEvent(
+                    device: device,
+                    playlist: playlist,
+                    intent: DP1Intent.displayNow(),
+                    onDoneCallback: completer.complete,
+                  ),
+                );
+                await completer.future;
+              },
+            )
+          : null,
+    );
+  }
 
   Pair<ExhibitionCatalog, String?> _getCurrentCatalogInfo(
       Exhibition exhibition) {

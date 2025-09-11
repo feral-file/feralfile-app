@@ -11,6 +11,8 @@ import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/feralfile_artwork_details/feralfile_artwork_details_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/preview/keyboard_control_page.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/intent.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
@@ -263,29 +265,21 @@ class _FeralFileArtworkPreviewPageState
       );
 
   Future<void> _onDeviceSelected(BaseDevice device, Artwork artwork) async {
-    final exhibitionId = artwork.series?.exhibitionID;
-    if (exhibitionId == null) {
-      await Sentry.captureMessage('Exhibition ID is null for artwork '
-          '${artwork.id}');
-    } else {
-      final artworkId = artwork.id;
-      final request = CastExhibitionRequest(
-        exhibitionId: exhibitionId,
-        catalog: ExhibitionCatalog.artwork,
-        catalogId: artworkId,
-      );
-      final completer = Completer<void>();
-      _canvasDeviceBloc.add(
-        CanvasDeviceCastExhibitionEvent(
-          device,
-          request,
-          onDone: () {
-            completer.complete();
-          },
-        ),
-      );
-      await completer.future;
+    final dp1item = artwork.dp1Item;
+    if (dp1item == null) {
+      return;
     }
+    final playlist = DP1CallExtension.fromItems(items: [dp1item]);
+    final completer = Completer<void>();
+    _canvasDeviceBloc.add(
+      CanvasDeviceCastDP1PlaylistEvent(
+        device: device,
+        playlist: playlist,
+        intent: DP1Intent.displayNow(),
+        onDoneCallback: completer.complete,
+      ),
+    );
+    await completer.future;
   }
 
   dynamic _onLoaded({WebViewController? webViewController, int? time}) {
