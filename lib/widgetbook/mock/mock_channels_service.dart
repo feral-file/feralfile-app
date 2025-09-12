@@ -2,11 +2,10 @@ import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/services/channels_service.dart';
-import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/widgetbook/mock_data/mock_mobile_controller.dart';
 
 class MockChannelsService extends ChannelsService {
-  MockChannelsService(DP1PlaylistApi api, String apiKey) : super(api, apiKey);
+  MockChannelsService(DP1FeedApi api, String apiKey) : super(api);
 
   @override
   Future<DP1ChannelsResponse> getChannels({

@@ -6,6 +6,7 @@ const List<String> pageTitles = [
   'Playlists',
   'Channels',
   'Works',
+  'Collection',
 ];
 
 class HeaderWidget extends StatelessWidget {

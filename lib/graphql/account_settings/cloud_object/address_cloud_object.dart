@@ -1,21 +1,20 @@
 import 'dart:convert';
 
 import 'package:autonomy_flutter/graphql/account_settings/account_settings_db.dart';
+import 'package:autonomy_flutter/graphql/account_settings/cloud_object/base_cloud_object.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 
-class WalletAddressCloudObject {
-  final CloudDB _accountSettingsDB;
-
-  WalletAddressCloudObject(this._accountSettingsDB);
+class WalletAddressCloudObject extends BaseCloudObject {
+  WalletAddressCloudObject(CloudDB db) : super(db);
 
   Future<void> deleteAddress(WalletAddress address) async {
     // address is also the key
-    await _accountSettingsDB.delete([address.key]);
+    await db.delete([address.key]);
   }
 
   WalletAddress? findByAddress(String address) {
     // address is also the key
-    final value = _accountSettingsDB.query([address]);
+    final value = db.query([address]);
     if (value.isEmpty) {
       return null;
     }
@@ -25,7 +24,7 @@ class WalletAddressCloudObject {
   }
 
   List<WalletAddress> getAllAddresses() {
-    final addresses = _accountSettingsDB.values
+    final addresses = db.values
         .map((value) =>
             WalletAddress.fromJson(jsonDecode(value) as Map<String, dynamic>))
         .toList();
@@ -34,8 +33,7 @@ class WalletAddressCloudObject {
 
   Future<void> insertAddresses(List<WalletAddress> addresses,
       {OnConflict onConflict = OnConflict.override}) async {
-    await _accountSettingsDB.write(
-        addresses.map((address) => address.toKeyValue).toList(),
+    await db.write(addresses.map((address) => address.toKeyValue).toList(),
         onConflict: onConflict);
   }
 
@@ -48,14 +46,6 @@ class WalletAddressCloudObject {
   }
 
   Future<void> updateAddresses(List<WalletAddress> addresses) async {
-    await _accountSettingsDB.write(addresses.map((e) => e.toKeyValue).toList());
-  }
-
-  Future<void> download() async {
-    await _accountSettingsDB.download();
-  }
-
-  void clearCache() {
-    _accountSettingsDB.clearCache();
+    await db.write(addresses.map((e) => e.toKeyValue).toList());
   }
 }

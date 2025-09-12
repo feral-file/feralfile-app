@@ -5,6 +5,7 @@ import 'package:autonomy_flutter/graphql/account_settings/account_settings_clien
 import 'package:autonomy_flutter/graphql/account_settings/account_settings_db.dart';
 import 'package:autonomy_flutter/graphql/account_settings/cloud_object/address_cloud_object.dart';
 import 'package:autonomy_flutter/graphql/account_settings/cloud_object/playlist_cloud_object.dart';
+import 'package:autonomy_flutter/graphql/account_settings/cloud_object/dp1_feed_cloud_object.dart';
 import 'package:autonomy_flutter/service/settings_data_service.dart';
 import 'package:autonomy_flutter/util/device.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -21,6 +22,8 @@ class CloudManager {
   late final String _flavor;
 
   late final WalletAddressCloudObject _walletAddressObject;
+
+  late final DP1FeedCloudObject _dp1FeedCloudObject;
 
   // this settings is for one device
   late final CloudDB _deviceSettingsDB;
@@ -64,6 +67,11 @@ class CloudManager {
         [_flavor, _commonKeyPrefix, _db, _playlistKeyPrefix].join('.'));
     _playlistCloudObject = PlaylistCloudObject(playlistCloudDB);
 
+    /// dp1 feed
+    final dp1FeedCloudDB = CloudDBImpl(injector(),
+        [_flavor, _commonKeyPrefix, _db, _dp1FeedKeyPrefix].join('.'));
+    _dp1FeedCloudObject = DP1FeedCloudObject(dp1FeedCloudDB);
+
     /// ff device
     _ffDeviceCloudDB = CloudDBImpl(injector(),
         [_flavor, _commonKeyPrefix, _db, _ffDeviceKeyPrefix].join('.'));
@@ -87,6 +95,9 @@ class CloudManager {
   // this for saving playlist data
   static const _playlistKeyPrefix = 'playlist';
 
+  // this for saving dp1 feed playlist data
+  static const _dp1FeedKeyPrefix = 'dp1_feed';
+
   // this for saving ff device data
   static const _ffDeviceKeyPrefix = 'ff_device';
 
@@ -97,6 +108,7 @@ class CloudManager {
   CloudDB get userSettingsDB => _userSettingsDB;
 
   PlaylistCloudObject get playlistCloudObject => _playlistCloudObject;
+  DP1FeedCloudObject get dp1FeedCloudObject => _dp1FeedCloudObject;
 
   CloudDB get ffDeviceDB => _ffDeviceCloudDB;
 
@@ -108,11 +120,11 @@ class CloudManager {
     unawaited(injector<SettingsDataService>().restoreSettingsData());
     await Future.wait([
       addressObject.download(),
+      dp1FeedCloudObject.download(),
+      ffDeviceDB.download(),
+      deviceSettingsDB.download(),
     ]);
 
-    await deviceSettingsDB.download();
-
-    await ffDeviceDB.download();
     log.info('[CloudManager] downloadAll done');
   }
 
@@ -121,6 +133,7 @@ class CloudManager {
     _deviceSettingsDB.clearCache();
     _userSettingsDB.clearCache();
     _playlistCloudObject.clearCache();
+    _dp1FeedCloudObject.clearCache();
     _ffDeviceCloudDB.clearCache();
   }
 

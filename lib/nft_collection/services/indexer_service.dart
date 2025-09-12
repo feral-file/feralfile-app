@@ -48,32 +48,30 @@ class NftIndexerService {
     if (missingArtistAssetTokens.isEmpty) {
       return assetTokens;
     }
-    final List<AssetToken> newAssetTokens = assetTokens
-      ..removeWhere(missingArtistAssetTokens.contains);
+    // Build a replacement map for tokens that need artist enrichment
+    final Map<String, AssetToken> replacementById = {};
     for (final assetToken in missingArtistAssetTokens) {
       final asset = assetToken.asset;
       if (asset == null) {
-        newAssetTokens.add(assetToken);
+        replacementById[assetToken.id] = assetToken;
         continue;
       }
       final artblockArtist = await _artBlockService.getArtistByToken(
           contractAddress: assetToken.contractAddress!.toLowerCase(),
           tokenId: assetToken.tokenId!);
       if (artblockArtist == null) {
-        newAssetTokens.add(assetToken);
+        replacementById[assetToken.id] = assetToken;
         continue;
       }
       final newAsset = asset.copyWith(
           artistID: artblockArtist.address, artistName: artblockArtist.name);
-      newAssetTokens.add(assetToken.copyWith(asset: newAsset));
+      replacementById[assetToken.id] = assetToken.copyWith(asset: newAsset);
     }
-    // sort the newAssetToken to match with assetTokens
-    newAssetTokens.sort((a, b) {
-      final aIndex = assetTokens.indexOf(a);
-      final bIndex = assetTokens.indexOf(b);
-      return aIndex.compareTo(bIndex);
-    });
-    return newAssetTokens;
+    // Rebuild the list preserving original order, replacing where applicable
+    final List<AssetToken> finalList = assetTokens
+        .map((t) => replacementById[t.id] ?? t)
+        .toList(growable: false);
+    return finalList;
   }
 
   Future<Identity> getIdentity(QueryIdentityRequest request) async {

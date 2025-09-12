@@ -3,7 +3,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channel_details/bloc/channel_detail_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel_item.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/detail_page_appbar.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_list_view.dart';
@@ -43,7 +42,7 @@ class _ChannelDetailPageState extends State<ChannelDetailPage>
     _scrollController.addListener(_onScroll);
     _channelDetailBloc = ChannelDetailBloc(
       channel: widget.payload.channel,
-      dp1playlistService: injector<Dp1PlaylistService>(),
+      dp1playlistService: injector<DP1FeedService>(),
     );
     _channelDetailBloc.add(const LoadChannelPlaylistsEvent());
   }

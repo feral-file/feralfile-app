@@ -1,21 +1,38 @@
-import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_create_playlist_request.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/provenance.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/services/channels_service.dart';
 import 'package:autonomy_flutter/service/dp1_playlist_service.dart';
-import 'package:autonomy_flutter/util/log.dart';
-import 'package:dio/dio.dart';
 
-class MockDp1PlaylistService extends Dp1PlaylistService {
+class MockDp1PlaylistService extends DP1FeedService {
   MockDp1PlaylistService(super.api, super.apiKey);
 
   @override
-  Future<DP1Call> createPlaylist(DP1Call playlist) async {
-    // Mock creating a playlist
-    return playlist;
+  Future<DP1Call> createPlaylist(
+      {required DP1CreatePlaylistRequest request,
+      bool isSyncToCloud = true}) async {
+    // Mock creating a playlist: return a DP1Call-like object using provided data
+    return DP1Call(
+      dpVersion: request.dpVersion,
+      id: 'mock-created-playlist-id',
+      slug: 'mock-created-playlist',
+      title: request.title,
+      created: DateTime.now(),
+      defaults: {'display': {}},
+      items: request.items
+          .map(
+            (e) => DP1Item(
+              duration: e.duration,
+              provenance: e.provenance,
+              title: e.title,
+              source: e.source,
+            ),
+          )
+          .toList(),
+      signature: 'mock-created-signature',
+    );
   }
 
   @override

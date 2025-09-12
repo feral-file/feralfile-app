@@ -317,22 +317,21 @@ class MockInjector {
     // Channels Service
     if (!injector.isRegistered<ChannelsService>()) {
       injector.registerLazySingleton<ChannelsService>(
-        () => MockChannelsService(injector<DP1PlaylistApi>(), 'mock-api-key'),
+        () => MockChannelsService(injector<DP1FeedApi>(), 'mock-api-key'),
       );
     }
 
-    // DP1PlaylistApi
-    if (!injector.isRegistered<DP1PlaylistApi>()) {
-      injector.registerLazySingleton<DP1PlaylistApi>(
+    // DP1FeedApi
+    if (!injector.isRegistered<DP1FeedApi>()) {
+      injector.registerLazySingleton<DP1FeedApi>(
         MockDP1PlaylistApi.new,
       );
     }
 
-    // Dp1PlaylistService
-    if (!injector.isRegistered<Dp1PlaylistService>()) {
-      injector.registerLazySingleton<Dp1PlaylistService>(
-        () =>
-            MockDp1PlaylistService(injector<DP1PlaylistApi>(), 'mock-api-key'),
+    // DP1FeedService
+    if (!injector.isRegistered<DP1FeedService>()) {
+      injector.registerLazySingleton<DP1FeedService>(
+        () => MockDp1PlaylistService(injector<DP1FeedApi>(), 'mock-api-key'),
       );
     }
 

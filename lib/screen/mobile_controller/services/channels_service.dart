@@ -5,7 +5,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_respons
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 
 class ChannelsService {
-  ChannelsService(this.api, this.apiKey);
+  ChannelsService(this.api);
 
   final List<Channel> _channels = [];
 
@@ -19,8 +19,7 @@ class ChannelsService {
       (channel) => !(remoteConfigChannelIds?.contains(channel.id) ?? false),
     );
 
-  final DP1PlaylistApi api;
-  final String apiKey;
+  final DP1FeedApi api;
 
   Future<DP1ChannelsResponse> getChannels({
     String? cursor,
@@ -68,7 +67,7 @@ class ChannelsService {
   }
 
   Future<Channel> createChannel(Channel channel) async {
-    return api.createPlaylistGroup(channel.toJson(), 'Bearer $apiKey');
+    return api.createPlaylistGroup(channel.toJson());
   }
 
   Future<Channel> getChannelDetail(String channelId) async {

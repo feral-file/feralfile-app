@@ -73,10 +73,62 @@ class DP1Call {
     );
   }
 
+  DynamicQuery get dynamicQuery => DynamicQuery(
+        endpoint: 'https://indexer.feralfile.com/v2/graphql',
+        params: DynamicQueryParams(
+          owners: ['a3ezwdYVEVrHwszQrYzDTCAZwUD3yKtNsCq9YhEu97bPaGAKy1'],
+        ),
+      );
+
   // == operator
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     return other is DP1Call && other.dpVersion == dpVersion && other.id == id;
+  }
+}
+
+class DynamicQuery {
+  DynamicQuery({
+    required this.endpoint,
+    required this.params,
+  });
+
+  final String endpoint;
+  final DynamicQueryParams params;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'endpoint': endpoint,
+      'params': params.toJson(),
+    };
+  }
+
+  factory DynamicQuery.fromJson(Map<String, dynamic> json) {
+    return DynamicQuery(
+      endpoint: json['endpoint'] as String,
+      params:
+          DynamicQueryParams.fromJson(json['params'] as Map<String, dynamic>),
+    );
+  }
+}
+
+class DynamicQueryParams {
+  DynamicQueryParams({
+    required this.owners,
+  });
+
+  final List<String> owners;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'owners': owners,
+    };
+  }
+
+  factory DynamicQueryParams.fromJson(Map<String, dynamic> json) {
+    return DynamicQueryParams(
+      owners: json['owners'] as List<String>,
+    );
   }
 }

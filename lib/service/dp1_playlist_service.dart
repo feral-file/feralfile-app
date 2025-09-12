@@ -3,21 +3,40 @@ import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_create_playlist_request.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/services/channels_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:dio/dio.dart';
 
-class Dp1PlaylistService {
-  Dp1PlaylistService(this.api, this.apiKey);
+class DP1FeedService {
+  DP1FeedService(this.api, this.apiKey);
 
-  final DP1PlaylistApi api;
+  final DP1FeedApi api;
   final String apiKey;
+
+  //
+  // PLAYLIST
+  // Api for playlist
+  //
 
   final urlmap = <String, String>{};
 
   // PLAYLIST
-  Future<DP1Call> createPlaylist(DP1Call playlist) async {
-    return api.createPlaylist(playlist.toJson(), 'Bearer $apiKey');
+  Future<DP1Call> createPlaylist(
+      {required DP1CreatePlaylistRequest request,
+      bool isSyncToCloud = true}) async {
+    final created = await api.createPlaylist(request.toJson());
+    try {
+      if (isSyncToCloud) {
+        final cloud = injector<CloudManager>().dp1FeedCloudObject;
+        await cloud.insertPlaylists([created]);
+      }
+    } catch (e) {
+      // Keep API success even if cloud sync fails
+      log.info('Failed to cache created DP1 playlist to cloud: $e');
+    }
+    return created;
   }
 
   Future<DP1Call> getPlaylistById(String playlistId) async {
@@ -70,6 +89,11 @@ class Dp1PlaylistService {
     return DP1PlaylistResponse(playlists, false, null);
   }
 
+  //
+  // CHANNEL
+  // Api for channel
+  //
+
   Channel? getChannelByPlaylistId(String playlistId) {
     final cachedChannels = injector<ChannelsService>().cachedChannels;
     for (final channel in cachedChannels) {
@@ -104,5 +128,20 @@ class Dp1PlaylistService {
       cursor: cursor,
       limit: limit,
     );
+  }
+
+// OWNED PLAYLIST
+// Api for owned playlist
+//
+
+  Future<DP1Call> insertAddressesToPlaylist(
+      String playlistId, List<String> addresses) async {
+    final playlist = getPlaylistById(playlistId);
+    return playlist;
+  }
+
+  Future<bool> deletePlaylist(String id) async {
+    //TODO: Implement delete playlist
+    return true;
   }
 }

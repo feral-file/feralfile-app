@@ -205,6 +205,9 @@ class _OnboardingPageState extends State<OnboardingPage>
     }
     // download user data
     await injector<CloudManager>().downloadAll(includePlaylists: true);
+
+    // migrate
+
     if (injector<ConfigurationService>().isNotificationEnabled()) {
       unawaited(_registerPushNotifications());
     }

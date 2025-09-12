@@ -4,6 +4,7 @@ import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/bluetooth_connected_device_config.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/channels_page.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/collection_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/works/works_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/header.dart';
@@ -58,6 +59,7 @@ class _ListDirectoryPageState extends State<ListDirectoryPage>
       const PlaylistsPage(),
       const ChannelsPage(),
       const WorksPage(),
+      const CollectionPage(),
     ];
     return Center(
       child: Column(

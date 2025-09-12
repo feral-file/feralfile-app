@@ -422,3 +422,20 @@ class MeiliSearchInterceptor extends Interceptor {
     handler.next(err);
   }
 }
+
+class DP1FeedAuthInterceptor extends Interceptor {
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    if (options.method.toUpperCase() == 'POST' &&
+        options.headers['Authorization'] == null) {
+      options.headers['Authorization'] = 'Bearer ${Environment.dp1FeedApiKey}';
+    }
+    handler.next(options);
+  }
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    log.info('[DP1FeedAuthInterceptor] Error: ${err.message}');
+    handler.next(err);
+  }
+}

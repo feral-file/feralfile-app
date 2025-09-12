@@ -1,9 +1,11 @@
-import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
-import 'package:autonomy_flutter/view/responsive.dart';
+import 'package:autonomy_flutter/util/ui_helper.dart';
+import 'package:autonomy_flutter/view/loading.dart';
+import 'package:autonomy_flutter/widgets/llm_text_input/llm_text_input.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class CollectionPage extends StatefulWidget {
   const CollectionPage({super.key});
@@ -14,56 +16,66 @@ class CollectionPage extends StatefulWidget {
 
 class _CollectionPageState extends State<CollectionPage>
     with AutomaticKeepAliveClientMixin {
+  late final UserAllOwnCollectionBloc _bloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _bloc = injector<UserAllOwnCollectionBloc>();
+    // For now, use example dynamic query from DP1Call.dynamicQuery
+    // final sample = DP1Call(
+    //   dpVersion: '1.0.0',
+    //   id: 'sample',
+    //   slug: 'sample',
+    //   title: 'sample',
+    //   created: DateTime.now(),
+    //   defaults: const {},
+    //   items: const [],
+    //   signature: 'sample',
+    // ).dynamicQuery;
+    // _bloc.add(LoadDynamicQueryEvent(sample));
+  }
+
+  @override
+  void dispose() {
+    _bloc.close();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final theme = Theme.of(context);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _myCollectionButton(context),
-        Expanded(
-          child: Center(
-            child: Text(
-              'Collection page',
-              style: theme.textTheme.ppMori400White12,
+    return BlocBuilder<UserAllOwnCollectionBloc, UserAllOwnCollectionState>(
+      bloc: _bloc,
+      builder: (context, state) {
+        return CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: LLMTextInput(
+                active: true,
+                placeholder: 'Type or Paste Address / Domain',
+                onSend: (text) {
+                  _bloc.add(InsertAddressEvent(text));
+                },
+              ),
             ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _myCollectionButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        // Handle navigation to My Collection
-        Navigator.of(context).pushNamed(
-          AppRouter.oldHomePage,
+            if (state.isLoading)
+              SliverToBoxAdapter(child: const Center(child: LoadingWidget()))
+            else if (state.isError)
+              SliverToBoxAdapter(
+                child: Center(
+                  child: Text(
+                    'Error: ${state.error}',
+                    style: const TextStyle(color: AppColor.white),
+                  ),
+                ),
+              )
+            else
+              UIHelper.assetTokenSliverGrid(
+                  context, state.assetTokens, 'Collection'),
+          ],
         );
       },
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColor.primaryBlack,
-          borderRadius: BorderRadius.circular(90),
-        ),
-        padding: ResponsiveLayout.paddingAll,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'My Collection',
-              style: Theme.of(context).textTheme.ppMori400White12,
-            ),
-            const SizedBox(width: 20),
-            SvgPicture.asset(
-              'assets/images/arraw-left.svg',
-            ),
-          ],
-        ),
-      ),
     );
   }
 

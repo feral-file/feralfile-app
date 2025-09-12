@@ -154,6 +154,16 @@ class DioManager {
         },
       );
 
+  // dio for dp1 feed
+  Dio dp1Feed(BaseOptions options) => _getOrCreate(
+        _key('dp1Feed', options),
+        () {
+          final dio = _createBaseDio(options);
+          dio.interceptors.add(DP1FeedAuthInterceptor());
+          return dio;
+        },
+      );
+
   /// Remove and dispose a cached instance that matches the provided key parts.
   /// Use the same type and options used to create the client.
   bool remove(String type, BaseOptions options) {

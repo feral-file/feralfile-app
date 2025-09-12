@@ -8,7 +8,7 @@ part 'playlists_state.dart';
 
 class PlaylistsBloc extends Bloc<PlaylistsEvent, PlaylistsState> {
   PlaylistsBloc({
-    required Dp1PlaylistService playlistService,
+    required DP1FeedService playlistService,
   })  : _playlistService = playlistService,
         super(const PlaylistsState()) {
     on<LoadPlaylistsEvent>(_onLoadPlaylists);
@@ -18,7 +18,7 @@ class PlaylistsBloc extends Bloc<PlaylistsEvent, PlaylistsState> {
 
   static const int _pageSize = 20;
 
-  final Dp1PlaylistService _playlistService;
+  final DP1FeedService _playlistService;
 
   Future<void> _onLoadPlaylists(
     LoadPlaylistsEvent event,

@@ -1,5 +1,38 @@
 import 'package:autonomy_flutter/screen/mobile_controller/models/provenance.dart';
 
+class DP1PlaylistDisplay {
+  DP1PlaylistDisplay({
+    required this.scaling,
+    required this.margin,
+    required this.background,
+    required this.autoplay,
+    required this.loop,
+  });
+
+  final String scaling; // e.g., "fill"
+  final int margin; // e.g., 0
+  final String background; // e.g., "transparent"
+  final bool autoplay;
+  final bool loop;
+
+  factory DP1PlaylistDisplay.fromJson(Map<String, dynamic> json) =>
+      DP1PlaylistDisplay(
+        scaling: json['scaling'] as String,
+        margin: (json['margin'] as num).toInt(),
+        background: json['background'] as String,
+        autoplay: json['autoplay'] as bool,
+        loop: json['loop'] as bool,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'scaling': scaling,
+        'margin': margin,
+        'background': background,
+        'autoplay': autoplay,
+        'loop': loop,
+      };
+}
+
 class DP1Item {
   DP1Item({
     required this.duration,
@@ -7,6 +40,7 @@ class DP1Item {
     this.title,
     this.source,
     this.license,
+    this.display,
   }); // e.g., "open", "restricted", etc.
 
 // from JSON
@@ -21,6 +55,11 @@ class DP1Item {
             : ArtworkDisplayLicense.fromString(
                 json['license'] as String,
               ),
+        display: json['display'] == null
+            ? null
+            : DP1PlaylistDisplay.fromJson(
+                Map<String, dynamic>.from(json['display'] as Map),
+              ),
         provenance: DP1Provenance.fromJson(
           Map<String, dynamic>.from(json['provenance'] as Map),
         ),
@@ -34,6 +73,7 @@ class DP1Item {
   final String? source;
   final int duration; // in seconds
   final ArtworkDisplayLicense? license;
+  final DP1PlaylistDisplay? display;
   final DP1Provenance provenance;
 
   Map<String, dynamic> toJson() {
@@ -42,6 +82,7 @@ class DP1Item {
       'source': source,
       'duration': duration,
       'license': license?.value,
+      'display': display?.toJson(),
       'provenance': provenance.toJson(),
     };
   }

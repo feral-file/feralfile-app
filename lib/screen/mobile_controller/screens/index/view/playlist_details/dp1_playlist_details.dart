@@ -3,7 +3,6 @@ import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/intent.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/detail_page_appbar.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_item.dart';
 import 'package:autonomy_flutter/service/dp1_playlist_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
@@ -67,7 +66,7 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen> {
   }
 
   Widget _body(BuildContext context) {
-    final channel = injector<Dp1PlaylistService>()
+    final channel = injector<DP1FeedService>()
         .getChannelByPlaylistId(widget.payload.playlist.id);
     final playlist = widget.payload.playlist;
 

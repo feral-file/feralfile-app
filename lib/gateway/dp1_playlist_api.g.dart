@@ -8,8 +8,8 @@ part of 'dp1_playlist_api.dart';
 
 // ignore_for_file: unnecessary_brace_in_string_interps,no_leading_underscores_for_local_identifiers,unused_element
 
-class _DP1PlaylistApi implements DP1PlaylistApi {
-  _DP1PlaylistApi(
+class _DP1FeedApi implements DP1FeedApi {
+  _DP1FeedApi(
     this._dio, {
     this.baseUrl,
     this.errorLogger,
@@ -26,11 +26,10 @@ class _DP1PlaylistApi implements DP1PlaylistApi {
   @override
   Future<DP1Call> createPlaylist(
     Map<String, dynamic> body,
-    String bearerToken,
   ) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
-    final _headers = <String, dynamic>{r'Authorization': bearerToken};
+    final _headers = <String, dynamic>{};
     _headers.removeWhere((k, v) => v == null);
     final _data = <String, dynamic>{};
     _data.addAll(body);
@@ -139,11 +138,10 @@ class _DP1PlaylistApi implements DP1PlaylistApi {
   @override
   Future<Channel> createPlaylistGroup(
     Map<String, dynamic> body,
-    String bearerToken,
   ) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
-    final _headers = <String, dynamic>{r'Authorization': bearerToken};
+    final _headers = <String, dynamic>{};
     _headers.removeWhere((k, v) => v == null);
     final _data = <String, dynamic>{};
     _data.addAll(body);

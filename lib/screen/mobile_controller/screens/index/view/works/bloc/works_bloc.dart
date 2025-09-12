@@ -9,7 +9,7 @@ part 'works_state.dart';
 
 class WorksBloc extends Bloc<WorksEvent, WorksState> {
   WorksBloc({
-    required Dp1PlaylistService dp1PlaylistService,
+    required DP1FeedService dp1PlaylistService,
     required NftIndexerService indexerService,
   })  : _dp1PlaylistService = dp1PlaylistService,
         _indexerService = indexerService,
@@ -21,7 +21,7 @@ class WorksBloc extends Bloc<WorksEvent, WorksState> {
 
   static const int _pageSize = 10;
 
-  final Dp1PlaylistService _dp1PlaylistService;
+  final DP1FeedService _dp1PlaylistService;
   final NftIndexerService _indexerService;
 
   Future<void> _onLoadWorks(

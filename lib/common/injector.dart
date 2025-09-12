@@ -39,6 +39,7 @@ import 'package:autonomy_flutter/screen/home/list_playlist_bloc.dart';
 import 'package:autonomy_flutter/screen/meili_search/meili_search_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/bloc/record_controller_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/works/bloc/works_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/services/channels_service.dart';
@@ -73,6 +74,7 @@ import 'package:autonomy_flutter/service/playlist_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/settings_data_service.dart';
 import 'package:autonomy_flutter/service/user_interactivity_service.dart';
+import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/util/au_file_service.dart';
 import 'package:autonomy_flutter/util/dio_interceptors.dart';
@@ -430,17 +432,21 @@ Future<void> setupInjector() async {
     () => PlaylistsBloc(playlistService: injector()),
   );
 
+  injector.registerFactory<UserAllOwnCollectionBloc>(
+    () => UserAllOwnCollectionBloc(injector(), injector()),
+  );
+
   injector.registerLazySingleton<ChannelsService>(
-    () => ChannelsService(injector(), Environment.dp1FeedApiKey),
+    () => ChannelsService(injector()),
   );
 
   injector.registerFactory<ChannelsBloc>(
     () => ChannelsBloc(channelsService: injector()),
   );
 
-  injector.registerLazySingleton<DP1PlaylistApi>(
-    () => DP1PlaylistApi(
-      DioManager().base(
+  injector.registerLazySingleton<DP1FeedApi>(
+    () => DP1FeedApi(
+      DioManager().dp1Feed(
         dioOptions.copyWith(
           connectTimeout: const Duration(seconds: 10),
           receiveTimeout: const Duration(seconds: 10),
@@ -450,8 +456,8 @@ Future<void> setupInjector() async {
     ),
   );
 
-  injector.registerLazySingleton<Dp1PlaylistService>(
-    () => Dp1PlaylistService(injector(), Environment.dp1FeedApiKey),
+  injector.registerLazySingleton<DP1FeedService>(
+    () => DP1FeedService(injector(), Environment.dp1FeedApiKey),
   );
 
   injector.registerFactory<WorksBloc>(
@@ -467,6 +473,11 @@ Future<void> setupInjector() async {
       injector(),
       injector(),
     ),
+  );
+
+  // User playlist service (DP1)
+  injector.registerLazySingleton<UserDp1PlaylistService>(
+    () => UserDp1PlaylistService(injector(), injector()),
   );
 
   // MeiliSearch SDK Service (using official SDK)

@@ -5,11 +5,10 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/provenance.dart';
 
-class MockDP1PlaylistApi implements DP1PlaylistApi {
+class MockDP1PlaylistApi implements DP1FeedApi {
   @override
   Future<DP1Call> createPlaylist(
     Map<String, dynamic> body,
-    String bearerToken,
   ) async {
     // Mock creating a playlist
     return DP1Call(
@@ -178,7 +177,6 @@ class MockDP1PlaylistApi implements DP1PlaylistApi {
   @override
   Future<Channel> createPlaylistGroup(
     Map<String, dynamic> body,
-    String bearerToken,
   ) async {
     // Mock creating a playlist group
     return Channel(

@@ -7,14 +7,13 @@ import 'package:retrofit/retrofit.dart';
 part 'dp1_playlist_api.g.dart';
 
 @RestApi(baseUrl: 'https://api.feed.feralfile.com')
-abstract class DP1PlaylistApi {
-  factory DP1PlaylistApi(Dio dio, {String baseUrl}) = _DP1PlaylistApi;
+abstract class DP1FeedApi {
+  factory DP1FeedApi(Dio dio, {String baseUrl}) = _DP1FeedApi;
 
   // PLAYLIST
   @POST('/api/v1/playlists')
   Future<DP1Call> createPlaylist(
     @Body() Map<String, dynamic> body,
-    @Header('Authorization') String bearerToken,
   );
 
   @GET('/api/v1/playlists/{playlistId}')
@@ -33,7 +32,6 @@ abstract class DP1PlaylistApi {
   @POST('/api/v1/playlist-groups')
   Future<Channel> createPlaylistGroup(
     @Body() Map<String, dynamic> body,
-    @Header('Authorization') String bearerToken,
   );
 
   @GET('/api/v1/playlist-groups/{groupId}')
