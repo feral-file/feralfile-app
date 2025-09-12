@@ -31,6 +31,7 @@ import 'package:autonomy_flutter/view/cast_button.dart';
 import 'package:autonomy_flutter/view/feralfile_artwork_preview_widget.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/view/webview_controller_text_field.dart';
+import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:backdrop/backdrop.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -114,12 +115,10 @@ class _FeralFileArtworkPreviewPageState
     _focusNode.dispose();
     _webViewController?.onDispose();
     _detector?.stopListening();
-    unawaited(
-      SystemChrome.setEnabledSystemUIMode(
-        SystemUiMode.manual,
-        overlays: SystemUiOverlay.values,
-      ),
-    );
+    unawaited(SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: SystemUiOverlay.values,
+    ));
     unawaited(disableLandscapeMode());
     super.dispose();
   }
@@ -216,6 +215,7 @@ class _FeralFileArtworkPreviewPageState
                 color: Colors.transparent,
               ),
             ],
+            BottomSpacing(),
           ],
         ],
       ),
@@ -324,50 +324,49 @@ class _FeralFileArtworkPreviewPageState
         ),
       );
 
-  Widget _infoHeader(
-    BuildContext context,
-    Artwork artwork,
-    CanvasDeviceState canvasState,
-  ) =>
-      Padding(
-        padding: const EdgeInsets.fromLTRB(15, 15, 5, 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+  Widget _infoHeader(BuildContext context, Artwork artwork,
+          CanvasDeviceState canvasState) =>
+      Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(15, 15, 5, 20),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: ArtworkTitleView(
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: ArtworkTitleView(
+                        artwork: artwork,
+                      ),
+                    ),
+                    _artworkInfoIcon(),
+                    Semantics(
+                      label: 'artworkDotIcon',
+                      child: IconButton(
+                        onPressed: () async => _showArtworkOptionsDialog(
+                            context, artwork, canvasState),
+                        icon: SvgPicture.asset(
+                          'assets/images/more_circle.svg',
+                          width: 22,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (artwork.isCrystallineWork) ...[
+                  const SizedBox(height: 20),
+                  ArtworkAttributesText(
                     artwork: artwork,
                   ),
-                ),
-                _artworkInfoIcon(),
-                Semantics(
-                  label: 'artworkDotIcon',
-                  child: IconButton(
-                    onPressed: () async => _showArtworkOptionsDialog(
-                      context,
-                      artwork,
-                      canvasState,
-                    ),
-                    icon: SvgPicture.asset(
-                      'assets/images/more_circle.svg',
-                      width: 22,
-                    ),
-                  ),
-                ),
+                ]
               ],
             ),
-            if (artwork.isCrystallineWork) ...[
-              const SizedBox(height: 20),
-              ArtworkAttributesText(
-                artwork: artwork,
-              ),
-            ],
-          ],
-        ),
+          ),
+          BottomSpacing(),
+        ],
       );
 
   Future<void> _showArtworkOptionsDialog(

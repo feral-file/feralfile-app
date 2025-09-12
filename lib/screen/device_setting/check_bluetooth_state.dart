@@ -253,9 +253,12 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
     if (topicId != null &&
         topicId.isNotEmpty &&
         isConnectedToInternet == true) {
+      log.info(
+        'FF1 is already setup and connected to internet. Skip scanning and wifi setup.',
+      );
       final ffDevice = FFBluetoothDevice(
           name: deviceName ?? 'FF1',
-          remoteID: 'remoteID',
+          remoteID: '',
           topicId: topicId,
           deviceId: deviceName ?? 'FF1',
           branchName: branchName);
@@ -276,27 +279,12 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
       ));
     }
 
-    log.info('Starting scan for device: $deviceName');
-    await injector<FFBluetoothService>().startScan(
+    log.info('Starting scan for FF1: $deviceName');
+    resultDevice = await injector<FFBluetoothService>().scanForName(
       timeout: const Duration(seconds: 30),
-      forceScan: true,
-      onData: (results) async {
-        final devices = results;
-        final device = devices
-            .firstWhereOrNull((element) => element.advName == deviceName);
-        if (device != null) {
-          resultDevice = device;
-          return true;
-        }
-        return false;
-      },
-      onError: (error) {
-        log.info('Failed to scan for device: $error');
-        setState(() {
-          _isScanning = false;
-        });
-      },
+      name: deviceName ?? 'FF1',
     );
+
     if (context.mounted) {
       setState(() {
         _isScanning = false;
@@ -313,30 +301,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
 
       // device is already setup and connected to internet
       // so we can skip the wifi setup
-      if (topicId != null &&
-          topicId.isNotEmpty &&
-          isConnectedToInternet == true) {
-        final ffDevice = resultDevice!.toFFBluetoothDevice(
-          topicId: topicId,
-          deviceId: resultDevice!.advName,
-          branchName: branchName,
-        );
-        // add device to canvas
-        await BluetoothDeviceManager().addDevice(ffDevice);
-
-        // Hide QR code on device
-        unawaited(injector<CanvasClientServiceV2>()
-            .showPairingQRCode(ffDevice, false));
-
-        await injector<NavigationService>().showThePortalIsSet(ffDevice, null);
-
-        unawaited(injector<NavigationService>().navigateTo(
-          AppRouter.bluetoothConnectedDeviceConfig,
-          arguments: BluetoothConnectedDeviceConfigPayload(
-            isFromOnboarding: true,
-          ),
-        ));
-      } else {
+      {
         if (topicId != null && topicId.isNotEmpty) {
           // add device to canvas
           final device = resultDevice!.toFFBluetoothDevice(
@@ -359,14 +324,17 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
       }
 
       log.info(
-        'Bluetooth device setup completed. Disconnecting from device: ${resultDevice!.name}',
+        'Bluetooth device setup completed. Disconnecting from FF1: ${resultDevice!.name}',
       );
       unawaited(_resultDevice?.disconnect());
-      try {
-        await onFinish?.call();
-      } catch (e) {
-        log.info('Failed to call onFinish: $e');
-      }
+    } else {
+      log.info('FF1 not found after scanning: $deviceName');
+    }
+
+    try {
+      await onFinish?.call();
+    } catch (e) {
+      log.info('Failed to call onFinish: $e');
     }
   }
 }
