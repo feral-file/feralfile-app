@@ -158,4 +158,8 @@ extension FFBluetoothDeviceExt on FFBluetoothDevice {
   bool get isOtherBranch {
     return branchName == DeviceReleaseBranch.other.name;
   }
+
+  bool get isQEMU {
+    return branchName.toLowerCase().contains('qemu');
+  }
 }

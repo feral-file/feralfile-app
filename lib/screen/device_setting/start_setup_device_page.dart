@@ -237,8 +237,7 @@ class BluetoothDevicePortalPageState extends State<BluetoothDevicePortalPage>
           ));
         } else if (error != null) {
           injector<NavigationService>()
-            ..popUntil(AppRouter.bluetoothDevicePortalPage)
-            ..goBack(result: error);
+            ..popUntil(AppRouter.bluetoothDevicePortalPage);
         }
       },
     );

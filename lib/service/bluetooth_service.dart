@@ -22,6 +22,7 @@ import 'package:autonomy_flutter/util/byte_builder_ext.dart';
 import 'package:autonomy_flutter/util/exception_ext.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/timezone.dart';
+import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -514,6 +515,25 @@ class FFBluetoothService {
   // completer for multi call connectToDevice
   Completer<void>? _multiConnectCompleter;
 
+  Future<void> scanAndConnect(FFBluetoothDevice device) async {
+    if (device.remoteId.str.isEmpty) {
+      log.warning('FF1 remoteId is empty');
+      throw Exception('FF1 remoteId is empty');
+    }
+
+    final result = await scanForName(name: device.deviceId);
+    if (result == null) {
+      log.warning('FF1 not found during scan');
+      throw Exception('FF1 not found during scan');
+    } else {
+      final newFF1 = device.copyWith(remoteID: result.remoteId.str);
+      await BluetoothDeviceManager().addDevice(newFF1);
+    }
+    if (device.isDisconnected) {
+      await connectToDevice(device, timeout: const Duration(seconds: 20));
+    }
+  }
+
   Future<void> connectToDevice(
     BluetoothDevice device, {
     bool shouldShowError = true,
@@ -694,6 +714,43 @@ class FFBluetoothService {
     } else {
       log.info('Device already connected: ${device.remoteId.str}');
     }
+  }
+
+  Future<BluetoothDevice?> scanForName({
+    required String name,
+    Duration timeout = const Duration(seconds: 15),
+  }) {
+    final completer = Completer<BluetoothDevice?>();
+    startScan(
+      timeout: timeout,
+      onData: (devices) async {
+        final foundDevice = devices.firstWhereOrNull(
+          (d) => d.advName == name,
+        );
+        if (foundDevice != null) {
+          log.info('Found device during scan: ${foundDevice.remoteId.str}');
+          await FlutterBluePlus.stopScan();
+          completer.complete(foundDevice);
+          return true;
+        }
+        return false;
+      },
+      onError: (dynamic e) {
+        log.warning('Error during scan: $e');
+        if (!completer.isCompleted) {
+          completer.completeError(e as Object);
+        }
+      },
+    ).then((_) {
+      if (!completer.isCompleted) {
+        completer.complete(null);
+      }
+    }).catchError((e) {
+      if (!completer.isCompleted) {
+        completer.completeError(e as Object);
+      }
+    });
+    return completer.future;
   }
 
   Future<void> startScan({

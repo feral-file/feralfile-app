@@ -237,7 +237,7 @@ class BluetoothConnectedDeviceConfigState
                   });
                 },
               ),
-        actions: widget.payload.isFromOnboarding
+        actions: widget.payload.isFromOnboarding || selectedDevice.isQEMU
             ? []
             : [
                 _buildDeviceSwitcher(context),
@@ -1512,9 +1512,10 @@ class BluetoothConnectedDeviceConfigState
 
   void _showOption(BuildContext context, CanvasDeviceState state) {
     final isDeviceAlive = selectedDevice.isAlive;
+    final isQEMU = selectedDevice.isQEMU;
 
     final options = [
-      if (isDeviceAlive)
+      if (isDeviceAlive & !isQEMU)
         OptionItem(
           title: 'Power Off',
           icon: const Icon(
@@ -1526,7 +1527,7 @@ class BluetoothConnectedDeviceConfigState
           },
         ),
       // reboot
-      if (isDeviceAlive)
+      if (isDeviceAlive & !isQEMU)
         OptionItem(
           title: 'Restart',
           icon: const Icon(
@@ -1537,13 +1538,14 @@ class BluetoothConnectedDeviceConfigState
             _onRebootSelected();
           },
         ),
-      OptionItem(
-        title: 'Send Log',
-        icon: Icon(AuIcon.help),
-        onTap: () async {
-          await _onSendLogSelected();
-        },
-      ),
+      if (!isQEMU)
+        OptionItem(
+          title: 'Send Log',
+          icon: Icon(AuIcon.help),
+          onTap: () async {
+            await _onSendLogSelected();
+          },
+        ),
       if (kDebugMode)
         OptionItem(
           title: 'Factory Reset',
