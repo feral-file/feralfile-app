@@ -24,6 +24,7 @@ import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/passkey_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
+import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/dailies_helper.dart';
@@ -207,6 +208,8 @@ class _OnboardingPageState extends State<OnboardingPage>
     await injector<CloudManager>().downloadAll(includePlaylists: true);
 
     // migrate
+    await injector<UserDp1PlaylistService>()
+        .createAllOwnedPlaylistIfNotExists();
 
     if (injector<ConfigurationService>().isNotificationEnabled()) {
       unawaited(_registerPushNotifications());

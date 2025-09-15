@@ -36,7 +36,7 @@ import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
 import 'package:autonomy_flutter/service/client_token_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
-import 'package:autonomy_flutter/service/dp1_playlist_service.dart';
+import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/ethereum_service.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
 import 'package:autonomy_flutter/service/mobile_controller_service.dart';
@@ -331,7 +331,7 @@ class MockInjector {
     // DP1FeedService
     if (!injector.isRegistered<DP1FeedService>()) {
       injector.registerLazySingleton<DP1FeedService>(
-        () => MockDp1PlaylistService(injector<DP1FeedApi>(), 'mock-api-key'),
+        () => MockDp1PlaylistService(injector<DP1FeedApi>()),
       );
     }
 

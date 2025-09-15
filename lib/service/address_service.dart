@@ -13,6 +13,7 @@ import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/nft_collection/services/address_service.dart'
     as nft;
 import 'package:autonomy_flutter/service/auth_service.dart';
+import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/exception.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -64,20 +65,26 @@ class AddressService {
     WalletAddress address, {
     bool checkAddressDuplicated = true,
   }) async {
+    log.info('Insert address: ${address.address}');
     var checkSumAddress = address.address;
     final cryptoType = address.cryptoType;
     if (cryptoType == CryptoType.ETH || cryptoType == CryptoType.USDC) {
       checkSumAddress = await address.getETHEip55Address();
     }
+    log.info('Check sum address: $checkSumAddress');
     if (checkAddressDuplicated) {
       final walletAddress = _cloudObject.addressObject.getAllAddresses();
       if (walletAddress.any((element) => element.address == checkSumAddress)) {
+        log.info('Address already exists: $checkSumAddress');
         throw LinkAddressException(message: 'already_imported_address'.tr());
       }
     }
     final newAddress = address.copyWith(address: checkSumAddress);
     await _cloudObject.addressObject.insertAddresses([newAddress]);
     await _nftCollectionAddressService.addAddresses([newAddress.address]);
+    await injector<UserDp1PlaylistService>()
+        .insertAddressesToPlaylist([newAddress.address]);
+    log.info('Inserted address: ${newAddress.address}');
     return newAddress;
   }
 

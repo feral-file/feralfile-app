@@ -7,10 +7,13 @@ class DP1Call {
     required this.slug,
     required this.title,
     required this.created,
-    required this.defaults,
+    this.defaults,
     required this.items,
     required this.signature,
-  }); // e.g., "ed25519:0x884e6b4bab7ab8"
+    this.dynamicQueries = const [],
+  }) : // asset items ií not empty or dynamic queries is not empty
+        assert(items.isNotEmpty || dynamicQueries.isNotEmpty,
+            'Either items or dynamicQueries must be not empty');
 
   // from JSON
   factory DP1Call.fromJson(Map<String, dynamic> json) {
@@ -20,11 +23,17 @@ class DP1Call {
       slug: json['slug'] as String? ?? 'slug',
       title: json['title'] as String? ?? '',
       created: DateTime.parse(json['created'] as String),
-      defaults: json['defaults'] as Map<String, dynamic>,
+      defaults: json['defaults'] as Map<String, dynamic>?,
       items: (json['items'] as List<dynamic>)
           .map((e) => DP1Item.fromJson(e as Map<String, dynamic>))
           .toList(),
       signature: json['signature'] as String,
+      dynamicQueries: (json['dynamicQueries'] == null)
+          ? []
+          : (List<dynamic>.from(json['dynamicQueries'] as List))
+              .map((e) =>
+                  DynamicQuery.fromJson(Map<String, dynamic>.from(e as Map)))
+              .toList(),
     );
   }
 
@@ -33,9 +42,10 @@ class DP1Call {
   final String slug; // e.g., "summer‑mix‑01"
   final String title;
   final DateTime created; // e.g., "2025-06-26T06:38:26.396Z"
-  final Map<String, dynamic> defaults; // e.g., {"display": {...}}
+  final Map<String, dynamic>? defaults; // e.g., {"display": {...}}
   final List<DP1Item> items; // list of DP1PlaylistItem
   final String signature;
+  final List<DynamicQuery> dynamicQueries;
 
   Map<String, dynamic> toJson() {
     return {
@@ -60,6 +70,7 @@ class DP1Call {
     Map<String, dynamic>? defaults,
     List<DP1Item>? items,
     String? signature,
+    List<DynamicQuery>? dynamicQueries,
   }) {
     return DP1Call(
       dpVersion: dpVersion ?? this.dpVersion,
@@ -70,15 +81,9 @@ class DP1Call {
       defaults: defaults ?? this.defaults,
       items: items ?? this.items,
       signature: signature ?? this.signature,
+      dynamicQueries: dynamicQueries ?? this.dynamicQueries,
     );
   }
-
-  DynamicQuery get dynamicQuery => DynamicQuery(
-        endpoint: 'https://indexer.feralfile.com/v2/graphql',
-        params: DynamicQueryParams(
-          owners: ['a3ezwdYVEVrHwszQrYzDTCAZwUD3yKtNsCq9YhEu97bPaGAKy1'],
-        ),
-      );
 
   // == operator
   @override
@@ -111,6 +116,19 @@ class DynamicQuery {
           DynamicQueryParams.fromJson(json['params'] as Map<String, dynamic>),
     );
   }
+
+  // copyWith method
+  DynamicQuery copyWith({
+    String? endpoint,
+    DynamicQueryParams? params,
+  }) {
+    return DynamicQuery(
+        endpoint: endpoint ?? this.endpoint, params: params ?? this.params);
+  }
+
+  DynamicQuery insertAddresses(List<String> addresses) {
+    return copyWith(params: params.insertAddresses(addresses));
+  }
 }
 
 class DynamicQueryParams {
@@ -122,13 +140,31 @@ class DynamicQueryParams {
 
   Map<String, dynamic> toJson() {
     return {
-      'owners': owners,
+      'owners': owners.join(','),
     };
   }
 
   factory DynamicQueryParams.fromJson(Map<String, dynamic> json) {
-    return DynamicQueryParams(
-      owners: json['owners'] as List<String>,
-    );
+    final ownersData = json['owners'];
+    List<String> owners;
+    if (ownersData is String) {
+      owners = ownersData.split(',').where((s) => s.isNotEmpty).toList();
+    } else if (ownersData is List) {
+      owners = ownersData.cast<String>();
+    } else {
+      owners = [];
+    }
+    return DynamicQueryParams(owners: owners);
+  }
+
+  // copyWith method
+  DynamicQueryParams copyWith({
+    List<String>? owners,
+  }) {
+    return DynamicQueryParams(owners: owners ?? this.owners);
+  }
+
+  DynamicQueryParams insertAddresses(List<String> addresses) {
+    return copyWith(owners: [...owners, ...addresses].toSet().toList());
   }
 }

@@ -171,15 +171,17 @@ class AutonomyAuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    final jwt = await injector<AuthService>().getAuthToken();
-    if (jwt == null) {
-      unawaited(Sentry.captureMessage('JWT is null'));
-      log.info('JWT is null when calling ${options.uri}');
-      throw JwtException(message: 'can_not_authenticate_desc'.tr());
+    if (options.headers['Authorization'] == null &&
+        ['POST', 'PUT', 'DELETE'].contains(options.method.toUpperCase())) {
+      final jwt = await injector<AuthService>().getAuthToken();
+      if (jwt == null) {
+        unawaited(Sentry.captureMessage('JWT is null'));
+        log.info('JWT is null when calling ${options.uri}');
+        throw JwtException(message: 'can_not_authenticate_desc'.tr());
+      }
+
+      options.headers['Authorization'] = 'Bearer ${jwt.jwtToken}';
     }
-
-    options.headers['Authorization'] = 'Bearer ${jwt.jwtToken}';
-
     return handler.next(options);
   }
 }

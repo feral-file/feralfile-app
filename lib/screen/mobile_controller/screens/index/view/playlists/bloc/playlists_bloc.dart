@@ -1,5 +1,5 @@
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
-import 'package:autonomy_flutter/service/dp1_playlist_service.dart';
+import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

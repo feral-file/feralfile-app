@@ -60,7 +60,7 @@ import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/device_info_service.dart';
 import 'package:autonomy_flutter/service/domain_address_service.dart';
 import 'package:autonomy_flutter/service/domain_service.dart';
-import 'package:autonomy_flutter/service/dp1_playlist_service.dart';
+import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/ethereum_service.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
 import 'package:autonomy_flutter/service/meilisearch_service.dart';
@@ -433,7 +433,7 @@ Future<void> setupInjector() async {
   );
 
   injector.registerFactory<UserAllOwnCollectionBloc>(
-    () => UserAllOwnCollectionBloc(injector(), injector()),
+    () => UserAllOwnCollectionBloc(injector()),
   );
 
   injector.registerLazySingleton<ChannelsService>(
@@ -457,7 +457,7 @@ Future<void> setupInjector() async {
   );
 
   injector.registerLazySingleton<DP1FeedService>(
-    () => DP1FeedService(injector(), Environment.dp1FeedApiKey),
+    () => DP1FeedService(injector()),
   );
 
   injector.registerFactory<WorksBloc>(

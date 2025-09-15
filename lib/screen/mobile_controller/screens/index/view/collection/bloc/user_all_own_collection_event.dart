@@ -7,9 +7,3 @@ class LoadDynamicQueryEvent extends UserAllOwnCollectionEvent {
 
   final DynamicQuery dynamicQuery;
 }
-
-class InsertAddressEvent extends UserAllOwnCollectionEvent {
-  InsertAddressEvent(this.input);
-
-  final String input;
-}

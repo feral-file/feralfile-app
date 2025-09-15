@@ -16,6 +16,12 @@ abstract class DP1FeedApi {
     @Body() Map<String, dynamic> body,
   );
 
+  @PUT('/api/v1/playlists/{playlistId}')
+  Future<DP1Call> updatePlaylist(
+    @Path('playlistId') String playlistId,
+    @Body() Map<String, dynamic> body,
+  );
+
   @GET('/api/v1/playlists/{playlistId}')
   Future<DP1Call> getPlaylistById(
     @Path('playlistId') String playlistId,

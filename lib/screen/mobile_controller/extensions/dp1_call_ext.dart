@@ -29,15 +29,14 @@ extension DP1CallExtension on DP1Call {
     String? playlistId,
   }) {
     return DP1Call(
-      dpVersion: DP_VERSION,
-      id: playlistId ?? '',
-      slug: '',
-      title: 'Playlist',
-      created: DateTime.now(),
-      items: items,
-      defaults: {},
-      signature: '0x17794533e25b08',
-    );
+        dpVersion: DP_VERSION,
+        id: playlistId ?? '',
+        slug: '',
+        title: 'Playlist',
+        created: DateTime.now(),
+        items: items,
+        defaults: {},
+        signature: '0x17794533e25b08');
   }
 
   String get channelName => 'Feral File';

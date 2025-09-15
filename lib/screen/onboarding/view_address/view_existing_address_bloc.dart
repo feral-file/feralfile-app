@@ -7,17 +7,15 @@ import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_ad
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/domain_address_service.dart';
 import 'package:autonomy_flutter/util/exception.dart';
+import 'package:autonomy_flutter/util/latest_async.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:bloc/bloc.dart';
-import 'package:synchronized/synchronized.dart';
 
 class ViewExistingAddressBloc
     extends AuBloc<ViewExistingAddressEvent, ViewExistingAddressState> {
   final DomainAddressService _domainAddressService;
   final AddressService _addressService;
-  int _operationId = 0; // Unique identifier for each operation
-
-  final _checkDomainLock = Lock();
+  final LatestAsync<Address?> _latestAsync = LatestAsync<Address?>();
 
   ViewExistingAddressBloc(
     this._domainAddressService,
@@ -73,6 +71,12 @@ class ViewExistingAddressBloc
   bool get isValid =>
       state.isValid && state.address.isNotEmpty && state.type != null;
 
+  @override
+  Future<void> close() {
+    _latestAsync.cancelInFlight();
+    return super.close();
+  }
+
   Future<Address?> _checkDomain(String text) async {
     return _domainAddressService.verifyAddressOrDomain(text);
   }
@@ -82,9 +86,6 @@ class ViewExistingAddressBloc
     Emitter<ViewExistingAddressState> emit,
   ) async {
     final address = event.address.trim();
-
-    // Increment operation ID for each new operation
-    final currentOperationId = ++_operationId;
 
     // Emit initial state for address processing
     emit(
@@ -100,33 +101,42 @@ class ViewExistingAddressBloc
       return;
     }
 
-    // Wait for the operation to finish and emit the final state
-    final domainInfo = await _checkDomain(address);
+    // Use LatestAsync to handle concurrent requests
+    await _latestAsync.run(
+      () => _checkDomain(address),
+      onData: (domainInfo) {
+        log.info('Domain info for ${event.address}: $domainInfo');
 
-    // If this operation ID doesn't match the latest one, skip the result
-    if (_operationId != currentOperationId) {
-      return; // Ignore results from previous operations
-    }
-    log.info('Domain info for ${event.address}: $domainInfo');
-
-    if (domainInfo != null) {
-      emit(
-        state.copyWith(
-          address: domainInfo.address,
-          domain: domainInfo.domain,
-          isValid: true,
-          type: domainInfo.type,
-          isError: false,
-        ),
-      );
-    } else {
-      emit(
-        state.copyWith(
-          address: address,
-          isValid: false,
-          isError: true, // Invalid address
-        ),
-      );
-    }
+        if (domainInfo != null) {
+          emit(
+            state.copyWith(
+              address: domainInfo.address,
+              domain: domainInfo.domain,
+              isValid: true,
+              type: domainInfo.type,
+              isError: false,
+            ),
+          );
+        } else {
+          emit(
+            state.copyWith(
+              address: address,
+              isValid: false,
+              isError: true, // Invalid address
+            ),
+          );
+        }
+      },
+      onError: (error, stackTrace) {
+        log.info('Error checking domain for ${event.address}: $error');
+        emit(
+          state.copyWith(
+            address: address,
+            isValid: false,
+            isError: true,
+          ),
+        );
+      },
+    );
   }
 }

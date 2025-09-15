@@ -163,6 +163,16 @@ class _ListDirectoryPageState extends State<ListDirectoryPage>
           isNowDisplayingBarExpanded.value = false;
         },
       ),
+      OptionItem(
+        title: 'wallet'.tr(),
+        icon: const Icon(
+          AuIcon.wallet,
+        ),
+        onTap: () {
+          Navigator.of(context).pushNamed(AppRouter.walletPage);
+        },
+      ),
+
       // help
       OptionItem(
         title: 'help'.tr(),

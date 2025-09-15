@@ -270,4 +270,7 @@ class MockDP1PlaylistApi implements DP1FeedApi {
       null, // cursor
     );
   }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

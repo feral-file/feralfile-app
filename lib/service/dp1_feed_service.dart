@@ -1,19 +1,18 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
+import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_create_playlist_request.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/services/channels_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:dio/dio.dart';
 
 class DP1FeedService {
-  DP1FeedService(this.api, this.apiKey);
+  DP1FeedService(this.api);
 
   final DP1FeedApi api;
-  final String apiKey;
 
   //
   // PLAYLIST
@@ -37,6 +36,14 @@ class DP1FeedService {
       log.info('Failed to cache created DP1 playlist to cloud: $e');
     }
     return created;
+  }
+
+  Future<DP1Call> updatePlaylist(
+      {required String playlistId,
+      required DP1CreatePlaylistRequest request,
+      bool isSyncToCloud = true}) async {
+    final updated = await api.updatePlaylist(playlistId, request.toJson());
+    return updated;
   }
 
   Future<DP1Call> getPlaylistById(String playlistId) async {
@@ -133,12 +140,6 @@ class DP1FeedService {
 // OWNED PLAYLIST
 // Api for owned playlist
 //
-
-  Future<DP1Call> insertAddressesToPlaylist(
-      String playlistId, List<String> addresses) async {
-    final playlist = getPlaylistById(playlistId);
-    return playlist;
-  }
 
   Future<bool> deletePlaylist(String id) async {
     //TODO: Implement delete playlist

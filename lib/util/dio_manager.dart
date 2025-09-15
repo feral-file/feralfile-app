@@ -159,7 +159,8 @@ class DioManager {
         _key('dp1Feed', options),
         () {
           final dio = _createBaseDio(options);
-          dio.interceptors.add(DP1FeedAuthInterceptor());
+          // dio.interceptors.add(DP1FeedAuthInterceptor());
+          dio.interceptors.add(AutonomyAuthInterceptor());
           return dio;
         },
       );

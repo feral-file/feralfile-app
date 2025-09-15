@@ -1,10 +1,11 @@
-import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
+import 'package:autonomy_flutter/model/error/dp1_error.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_create_playlist_request.dart';
 import 'package:autonomy_flutter/util/log.dart';
 
-import 'dp1_playlist_service.dart';
+import 'dp1_feed_service.dart';
 
 /// A high-level service to manage a user's DP1 playlists.
 ///
@@ -17,8 +18,7 @@ class UserDp1PlaylistService {
   final CloudManager _cloudManager;
 
   /// Create a new playlist remotely and cache it locally under owned playlists.
-  Future<DP1Call> createAllOwnedPlaylistIfNotExists(
-      DP1CreatePlaylistRequest request) async {
+  Future<DP1Call> createAllOwnedPlaylistIfNotExists() async {
     final allOwnedPlaylistIds =
         _cloudManager.dp1FeedCloudObject.getOwnedPlaylistIds();
     if (allOwnedPlaylistIds.isNotEmpty) {
@@ -26,6 +26,21 @@ class UserDp1PlaylistService {
       final playlist = _dp1FeedService.getPlaylistById(playlistId);
       return playlist;
     }
+
+    final allOwnedAddresses =
+        await _cloudManager.addressObject.getAllAddresses();
+    final request = DP1CreatePlaylistRequest(
+      dpVersion: '1.0.0',
+      title: 'All Owned',
+      items: [],
+      dynamicQueries: [
+        DynamicQuery(
+          endpoint: '${Environment.indexerURL}/v2/graphql',
+          params: DynamicQueryParams(
+              owners: allOwnedAddresses.map((e) => e.address).toList()),
+        )
+      ],
+    );
 
     final created = await _dp1FeedService.createPlaylist(
       request: request,
@@ -41,16 +56,38 @@ class UserDp1PlaylistService {
     return playlist;
   }
 
-  Future<DP1Call> insertAddressesToPlaylist(
-      String playlistId, List<String> addresses) async {
-    final playlist =
-        _dp1FeedService.insertAddressesToPlaylist(playlistId, addresses);
+  Future<DP1Call> insertAddressesToPlaylist(List<String> addresses) async {
+    log.info('Insert addresses to playlist: $addresses');
+    final allOwnedPlaylistIds =
+        _cloudManager.dp1FeedCloudObject.getOwnedPlaylistIds();
+    if (allOwnedPlaylistIds.isEmpty) {
+      log.info('All owned playlist is empty');
+      throw DP1AllOwnCollectionEmptyError(
+          message: 'All owned playlist not found');
+    }
+    final playlistId = allOwnedPlaylistIds.first;
+    final currentPlaylist = await _dp1FeedService.getPlaylistById(playlistId);
+    final request = DP1CreatePlaylistRequest(
+      dpVersion: currentPlaylist.dpVersion,
+      title: currentPlaylist.title,
+      items: currentPlaylist.items,
+      dynamicQueries: currentPlaylist.dynamicQueries
+          .map((e) => e.insertAddresses(addresses))
+          .toList(),
+    );
+
+    final playlist = _dp1FeedService.updatePlaylist(
+        playlistId: playlistId, request: request);
+    log.info('Inserted addresses to playlist: $addresses');
     return playlist;
   }
 
   Future<bool> deletePlaylist(String id) async {
     try {
+      log.info('Delete playlist: $id');
       final deleted = _dp1FeedService.deletePlaylist(id);
+      _cloudManager.dp1FeedCloudObject.removeOwnedPlaylistId(id);
+      log.info('Deleted playlist: $id');
       return deleted;
     } catch (e) {
       log.info('Failed to delete playlist: $e');
