@@ -122,13 +122,6 @@ class _ViewPlaylistScreenState extends State<ViewPlaylistScreen> {
     return tokensPlaylist;
   }
 
-  List<ArtworkIdentity> _getIdentities(List<CompactedAssetToken> tokens) {
-    return tokens
-        .where((e) => e.pending != true || e.hasMetadata)
-        .map((element) => ArtworkIdentity(element.id, element.owner))
-        .toList();
-  }
-
   @override
   void dispose() {
     _focusNode.dispose();
@@ -392,20 +385,13 @@ class _ViewPlaylistScreenState extends State<ViewPlaylistScreen> {
                 itemBuilder: (context, index) {
                   final asset = tokens[index];
                   return GestureDetector(
-                    child: asset.pending == true && !asset.hasMetadata
-                        ? PendingTokenWidget(
-                            thumbnail: asset.galleryThumbnailURL,
-                            tokenId: asset.tokenId,
-                            shouldRefreshCache:
-                                asset.shouldRefreshThumbnailCache,
-                          )
-                        : tokenGalleryThumbnailWidget(
-                            context,
-                            asset,
-                            cachedImageSize,
-                            usingThumbnailID: index > 50,
-                            useHero: false,
-                          ),
+                    child: tokenGalleryThumbnailWidget(
+                      context,
+                      asset,
+                      cachedImageSize,
+                      usingThumbnailID: index > 50,
+                      useHero: false,
+                    ),
                     onTap: () async {
                       if (asset.pending == true && !asset.hasMetadata) {
                         return;

@@ -91,60 +91,6 @@ class MintTokenWidget extends StatelessWidget {
   }
 }
 
-class PendingTokenWidget extends StatelessWidget {
-  const PendingTokenWidget({
-    super.key,
-    this.thumbnail,
-    this.tokenId,
-    this.shouldRefreshCache = false,
-  });
-
-  final String? thumbnail;
-  final String? tokenId;
-  final bool shouldRefreshCache;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Semantics(
-      label: 'gallery_artwork_${tokenId}_pending',
-      child: Container(
-        color: theme.auLightGrey,
-        padding: const EdgeInsets.all(10),
-        child: Stack(
-          children: [
-            if (thumbnail?.isNotEmpty == true) ...[
-              SizedBox.expand(
-                child: ImageExt.customNetwork(
-                  thumbnail!,
-                  fit: BoxFit.cover,
-                  shouldRefreshCache: shouldRefreshCache,
-                ),
-              ),
-            ] else ...[
-              Center(
-                child: loadingIndicator(
-                  size: 22,
-                  strokeWidth: 1.5,
-                  valueColor: theme.colorScheme.primary,
-                  backgroundColor: theme.colorScheme.primary.withOpacity(0.5),
-                ),
-              ),
-            ],
-            Align(
-              alignment: AlignmentDirectional.bottomStart,
-              child: Text(
-                'pending_token'.tr(),
-                style: theme.textTheme.ppMori700QuickSilver8,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 final Map<String, Future<bool>> _cachingStates = {};
 
 Widget tokenGalleryThumbnailWidget(

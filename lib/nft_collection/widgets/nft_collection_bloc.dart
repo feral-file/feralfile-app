@@ -50,7 +50,6 @@ class NftCollectionBloc
     extends Bloc<NftCollectionBlocEvent, NftCollectionBlocState> {
   final NftTokensService tokensService;
   final NftCollectionDatabase database;
-  final Duration pendingTokenExpire;
   final NftCollectionPrefs prefs;
   final bool isSortedToken;
   final NftAddressService addressService;
@@ -84,7 +83,7 @@ class NftCollectionBloc
 
   NftCollectionBloc(
       this.tokensService, this.database, this.prefs, this.addressService,
-      {required this.pendingTokenExpire, this.isSortedToken = true})
+      {this.isSortedToken = true})
       : super(
           NftCollectionBlocState(
             state: NftLoadingState.notRequested,
@@ -195,32 +194,6 @@ class NftCollectionBloc
 
       try {
         final mapAddresses = _mapAddressesByLastRefreshedTime(addresses);
-
-        final pendingTokens = await database.tokenDao.findAllPendingTokens();
-        NftCollection.logger
-            .info("[NftCollectionBloc] ${pendingTokens.length} pending tokens. "
-                "${pendingTokens.map((e) => e.id).toList()}");
-
-        final removePendingIds = pendingTokens
-            .where(
-              (e) => e.lastActivityTime
-                  .add(pendingTokenExpire)
-                  .isBefore(DateTime.now()),
-            )
-            .map((e) => e.id)
-            .toList();
-
-        if (removePendingIds.isNotEmpty) {
-          NftCollection.logger.info(
-              "[NftCollectionBloc] Delete old pending tokens $removePendingIds");
-          await database.tokenDao.deleteTokens(removePendingIds);
-        }
-
-        if (pendingTokens.length - removePendingIds.length > 0) {
-          tokensService.reindexAddresses(
-            addresses.map((e) => e.address).toList(),
-          );
-        }
 
         fetchManuallyTokens(_debugTokenIds);
 

@@ -1,7 +1,6 @@
-import 'package:autonomy_flutter/util/asset_token_ext.dart';
+import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 
 class GaleryThumbnailItem extends StatefulWidget {
   const GaleryThumbnailItem(
@@ -26,18 +25,12 @@ class _GaleryThumbnailItemState extends State<GaleryThumbnailItem> {
     final asset = widget.assetToken;
 
     return GestureDetector(
-      child: asset.pending == true && !asset.hasMetadata
-          ? PendingTokenWidget(
-              thumbnail: asset.galleryThumbnailURL,
-              tokenId: asset.tokenId,
-              shouldRefreshCache: asset.shouldRefreshThumbnailCache,
-            )
-          : tokenGalleryThumbnailWidget(
-              context,
-              asset,
-              _cachedImageSize,
-              usingThumbnailID: widget.usingThumbnailID,
-            ),
+      child: tokenGalleryThumbnailWidget(
+        context,
+        asset,
+        _cachedImageSize,
+        usingThumbnailID: widget.usingThumbnailID,
+      ),
       onTap: () {
         widget.onTap?.call();
       },

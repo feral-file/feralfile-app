@@ -125,7 +125,6 @@ Future<void> setupInjector() async {
   );
   final dio = DioManager().base(dioOptions);
 
-  final pendingTokenExpireMs = Environment.pendingTokenExpireMs;
   await NftCollection.initNftCollection(
     indexerUrl: Environment.indexerURL,
     logger: log,
@@ -239,9 +238,6 @@ Future<void> setupInjector() async {
       injector(),
       injector(),
       injector(),
-      pendingTokenExpire: pendingTokenExpireMs != null
-          ? Duration(milliseconds: pendingTokenExpireMs)
-          : const Duration(hours: 4),
       isSortedToken: p1 ?? true,
     ),
   );

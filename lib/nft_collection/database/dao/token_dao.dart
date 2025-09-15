@@ -5,8 +5,8 @@
 //  that can be found in the LICENSE file.
 //
 
-import 'package:floor/floor.dart';
 import 'package:autonomy_flutter/nft_collection/models/token.dart';
+import 'package:floor/floor.dart';
 
 @dao
 abstract class TokenDao {
@@ -18,9 +18,6 @@ abstract class TokenDao {
 
   @Query('SELECT id FROM Token where owner IN (:owners) AND balance > 0')
   Future<List<String>> findTokenIDsOwnersOwn(List<String> owners);
-
-  @Query('SELECT * FROM Token WHERE pending = 1')
-  Future<List<Token>> findAllPendingTokens();
 
   @Query('SELECT * FROM Token WHERE id = (:id)')
   Future<List<Token>> findTokensByID(String id);

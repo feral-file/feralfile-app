@@ -34,11 +34,6 @@ class MockAssetTokenDao implements AssetTokenDao {
   }
 
   @override
-  Future<List<AssetToken>> findAllPendingAssetTokens() async {
-    return MockAssetToken.all.where((token) => token.pending == true).toList();
-  }
-
-  @override
   Future<DateTime?> getLastRefreshedTime() async {
     return DateTime.now();
   }

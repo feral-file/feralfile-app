@@ -256,7 +256,6 @@ class MockInjector {
           injector.get(),
           injector.get(),
           injector.get(),
-          pendingTokenExpire: const Duration(hours: 4),
         ),
       );
     }

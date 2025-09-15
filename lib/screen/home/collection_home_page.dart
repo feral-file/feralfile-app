@@ -441,20 +441,14 @@ class CollectionHomePageState extends State<CollectionHomePage>
     final asset = tokens[index];
 
     return GestureDetector(
-      child: asset.pending == true && !asset.hasMetadata
-          ? PendingTokenWidget(
-              thumbnail: asset.galleryThumbnailURL,
-              tokenId: asset.tokenId,
-              shouldRefreshCache: asset.shouldRefreshThumbnailCache,
-            )
-          : tokenGalleryThumbnailWidget(
-              context,
-              asset,
-              _cachedImageSize,
-              // usingThumbnailID: index > 50,
-              variant: variant,
-              ratio: ratio,
-            ),
+      child: tokenGalleryThumbnailWidget(
+        context,
+        asset,
+        _cachedImageSize,
+        // usingThumbnailID: index > 50,
+        variant: variant,
+        ratio: ratio,
+      ),
       onTap: () {
         if (asset.pending == true && !asset.hasMetadata) {
           return;

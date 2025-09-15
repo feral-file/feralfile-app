@@ -9,11 +9,11 @@
 
 import 'dart:async';
 
-import 'package:floor/floor.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:autonomy_flutter/nft_collection/models/token.dart';
 import 'package:autonomy_flutter/nft_collection/utils/date_time_converter.dart';
+import 'package:floor/floor.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
 
 // ignore_for_file: unused_element
@@ -32,8 +32,6 @@ abstract class AssetTokenDao {
   Future<List<AssetToken>> findAllAssetTokensWithoutOffset(
     List<String> owners,
   );
-
-  Future<List<AssetToken>> findAllPendingAssetTokens();
 
   Future<DateTime?> getLastRefreshedTime();
 
@@ -183,13 +181,6 @@ class DatabaseAssetTokenDao implements AssetTokenDao {
         'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE owner IN ($sqliteVariablesForOwner) ORDER BY lastActivityTime DESC, id DESC',
         mapper: mapper,
         arguments: [...owners]);
-  }
-
-  Future<List<AssetToken>> findAllPendingAssetTokens() async {
-    return _queryAdapter.queryList(
-      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE pending = 1',
-      mapper: mapper,
-    );
   }
 
   Future<DateTime?> getLastRefreshedTime() async {
