@@ -16,10 +16,12 @@ class DP1PlaylistDetailsScreenPayload {
   const DP1PlaylistDetailsScreenPayload({
     required this.playlist,
     this.backTitle,
+    this.isFromFeedServer = false,
   });
 
   final DP1Call playlist;
   final String? backTitle;
+  final bool isFromFeedServer;
 }
 
 class DP1PlaylistDetailsScreen extends StatefulWidget {
@@ -52,6 +54,7 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen> {
                       device: device,
                       playlist: widget.payload.playlist,
                       intent: DP1Intent.displayNow(),
+                      usingUrl: widget.payload.isFromFeedServer,
                     ),
                   );
                 },

@@ -39,6 +39,7 @@ class PlaylistItem extends StatelessWidget {
           arguments: DP1PlaylistDetailsScreenPayload(
             playlist: playlist,
             backTitle: isFromPlaylistsPage ? 'Playlists' : channel?.title,
+            isFromFeedServer: true,
           ),
         );
       },
