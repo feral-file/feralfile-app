@@ -47,14 +47,11 @@ class _CollectionPageState extends State<CollectionPage>
 
   void _autoRefresh() async {
     _autoRefreshTimer?.cancel();
-    final allOwnedPlaylist =
-        await injector<UserDp1PlaylistService>().allOwnedPlaylist();
-    final dynamicQuery = allOwnedPlaylist.firstDynamicQuery;
-    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
+    _autoRefreshTimer = Timer.periodic(const Duration(minutes: 15), (_) async {
       try {
-        // final allOwnedPlaylist =
-        //     await injector<UserDp1PlaylistService>().allOwnedPlaylist();
-        // final dynamicQuery = allOwnedPlaylist.firstDynamicQuery;
+        final allOwnedPlaylist =
+            await injector<UserDp1PlaylistService>().allOwnedPlaylist();
+        final dynamicQuery = allOwnedPlaylist.firstDynamicQuery;
         if (!mounted) return;
         if (dynamicQuery != null) {
           _collectionBloc.add(LoadDynamicQueryEvent(dynamicQuery, lazy: false));
@@ -166,7 +163,7 @@ class _CollectionPageState extends State<CollectionPage>
                                   ),
                                 ),
                               ),
-                            if (collectionState.isLoading &&
+                            if (collectionState.isLazyLoading &&
                                 !collectionState.isRefreshing)
                               SliverToBoxAdapter(
                                 child: Padding(

@@ -152,6 +152,7 @@ class UserDp1PlaylistService {
   }
 
   Future<void> _onUpdateAllOwnedPlaylist(DP1Call playlist) async {
+    log.info('[UserDp1PlaylistService] onUpdateAllOwnedPlaylist');
     final dynamicQuery = playlist.firstDynamicQuery;
     if (dynamicQuery == null) {
       return;

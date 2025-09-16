@@ -42,12 +42,13 @@ class UserAllOwnCollectionBloc
       _currentEvent = event;
 
       // Always emit loading state when starting to load
-      emit(
-        state.copyWith(
-          status: UserAllOwnCollectionStatus.loading,
-          isRefreshing: true && event.lazy,
-        ),
-      );
+      if (event.lazy)
+        emit(
+          state.copyWith(
+            status: UserAllOwnCollectionStatus.lazyLoading,
+            isRefreshing: true,
+          ),
+        );
 
       // Cancel previous stream if any and advance sequence
       await _tokensStreamSub?.cancel();
@@ -103,9 +104,11 @@ class UserAllOwnCollectionBloc
         final List<AssetToken> collected = [];
         _tokensStreamSub = stream.listen(
           (tokens) {
+            log.info('Received ${tokens.length} tokens');
             collected.addAll(tokens);
           },
           onError: (Object error, StackTrace stackTrace) {
+            log.info('Stream error: $error');
             emit(
               state.copyWith(
                 status: UserAllOwnCollectionStatus.error,
@@ -116,6 +119,7 @@ class UserAllOwnCollectionBloc
             _activeCompleter?.completeError(error);
           },
           onDone: () {
+            log.info('Stream done with total ${collected.length} tokens');
             emit(
               state.copyWith(
                 assetTokens: List<AssetToken>.from(collected),

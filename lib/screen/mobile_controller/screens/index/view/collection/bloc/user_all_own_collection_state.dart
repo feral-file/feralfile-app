@@ -1,6 +1,6 @@
 part of 'user_all_own_collection_bloc.dart';
 
-enum UserAllOwnCollectionStatus { initial, loading, loaded, error }
+enum UserAllOwnCollectionStatus { initial, lazyLoading, loaded, error }
 
 class UserAllOwnCollectionState {
   const UserAllOwnCollectionState({
@@ -15,7 +15,7 @@ class UserAllOwnCollectionState {
   final String error;
   final bool isRefreshing;
 
-  bool get isLoading => status == UserAllOwnCollectionStatus.loading;
+  bool get isLazyLoading => status == UserAllOwnCollectionStatus.lazyLoading;
   bool get isLoaded => status == UserAllOwnCollectionStatus.loaded;
   bool get isError => status == UserAllOwnCollectionStatus.error;
 
