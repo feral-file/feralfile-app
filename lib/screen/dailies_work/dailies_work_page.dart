@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
-import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/dailies.dart';
 import 'package:autonomy_flutter/model/ff_alumni.dart';
 import 'package:autonomy_flutter/model/ff_artwork.dart';
@@ -13,7 +12,6 @@ import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/dailies_work/dailies_work_bloc.dart';
 import 'package:autonomy_flutter/screen/dailies_work/dailies_work_state.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
-import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/preview_detail/preview_detail_widget.dart';
 import 'package:autonomy_flutter/screen/exhibition_details/exhibition_detail_page.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
@@ -295,21 +293,6 @@ class DailyWorkPageState extends State<DailyWorkPage>
                   .copyWith(color: AppColor.white),
               textAlign: TextAlign.left,
             ),
-          ),
-          FFCastButton(
-            key: _displayButtonKey,
-            displayKey: CastDailyWorkRequest.displayKey,
-            onDeviceSelected: (device) {
-              context.read<CanvasDeviceBloc>().add(
-                    CanvasDeviceCastDailyWorkEvent(
-                      device,
-                      CastDailyWorkRequest(),
-                    ),
-                  );
-            },
-            onTap: _setUserLiked,
-            text: 'display'.tr(),
-            shouldCheckSubscription: false,
           ),
           const SizedBox(width: 16),
           // close button

@@ -428,7 +428,7 @@ Future<void> setupInjector() async {
     () => PlaylistsBloc(playlistService: injector()),
   );
 
-  injector.registerFactory<UserAllOwnCollectionBloc>(
+  injector.registerLazySingleton<UserAllOwnCollectionBloc>(
     () => UserAllOwnCollectionBloc(injector()),
   );
 

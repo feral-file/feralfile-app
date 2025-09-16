@@ -37,29 +37,36 @@ String getContractAddress(String address) {
 class DP1Contract {
   DP1Contract({
     required this.chain,
-    required this.standard,
-    required String address,
-    required this.tokenId,
+    this.standard,
+    this.address,
+    this.tokenId,
+    this.seriesId,
     this.uri,
     this.metaHash,
-  }) : address = getContractAddress(address);
+  }) : assert(
+          (address != null && tokenId != null) || (seriesId != null),
+        );
 
   //from json method
   factory DP1Contract.fromJson(Map<String, dynamic> json) {
     return DP1Contract(
       chain: DP1ProvenanceChain.fromString(json['chain'] as String),
-      standard: DP1ProvenanceStandard.fromString(json['standard'] as String),
-      address: json['address'] as String,
-      tokenId: json['tokenId'] as String,
+      standard: json['standard'] != null
+          ? DP1ProvenanceStandard.fromString(json['standard'] as String)
+          : null,
+      address: json['address'] as String?,
+      tokenId: json['tokenId'] as String?,
       uri: json['uri'] as String?,
+      seriesId: json['seriesId'] as String?,
       metaHash: json['metaHash'] as String?,
     );
   }
 
   final DP1ProvenanceChain chain;
-  final DP1ProvenanceStandard standard;
-  final String address;
-  final String tokenId;
+  final DP1ProvenanceStandard? standard;
+  final String? address;
+  final String? tokenId;
+  final String? seriesId;
   final String? uri;
   final String? metaHash;
 
@@ -67,7 +74,7 @@ class DP1Contract {
   Map<String, dynamic> toJson() {
     return {
       'chain': chain.value,
-      'standard': standard.value,
+      'standard': standard?.value,
       'address': address,
       'tokenId': tokenId,
       'uri': uri,

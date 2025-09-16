@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/util/constants.dart';
@@ -40,4 +41,6 @@ extension DP1CallExtension on DP1Call {
   }
 
   String get channelName => 'Feral File';
+
+  String get url => '${Environment.dp1FeedUrl}/api/v1/playlists/$id';
 }

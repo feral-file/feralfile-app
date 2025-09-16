@@ -44,6 +44,12 @@ abstract class NftTokensService {
     Map<int, List<String>> addresses,
   );
 
+  Future<Stream<List<AssetToken>>> getAssetTokensStream(
+    List<String> addresses, {
+    int pageSize = 50,
+    DateTime? lastUpdatedAt,
+  });
+
   Future<void> reindexAddresses(List<String> addresses);
 
   bool get isRefreshAllTokensListen;
@@ -80,6 +86,7 @@ class NftTokensServiceImpl extends NftTokensService {
   static const REFRESH_ALL_TOKENS = 'REFRESH_ALL_TOKENS';
   static const FETCH_TOKENS = 'FETCH_TOKENS';
   static const REINDEX_ADDRESSES = 'REINDEX_ADDRESSES';
+  static const GET_ASSET_TOKENS_STREAM = 'GET_ASSET_TOKENS_STREAM';
 
   SendPort? _sendPort;
   ReceivePort? _receivePort;
@@ -93,6 +100,7 @@ class NftTokensServiceImpl extends NftTokensService {
       _refreshAllTokensWorker?.hasListener ?? false;
   Map<String, Completer<void>> _fetchTokensCompleters = {};
   final Map<String, Completer<void>> _reindexAddressesCompleters = {};
+  final Map<String, StreamController<List<AssetToken>>> _streamControllers = {};
 
   Future<void> get isolateReady => _isolateReady.future;
 
@@ -128,6 +136,11 @@ class NftTokensServiceImpl extends NftTokensService {
   void disposeIsolate() {
     NftCollection.logger.info('[TokensService][disposeIsolate] Start');
     _refreshAllTokensWorker?.close();
+    // Close all stream controllers
+    for (final controller in _streamControllers.values) {
+      controller.close();
+    }
+    _streamControllers.clear();
     _isolate?.kill();
     _isolateSendPort = null;
     _isolate = null;
@@ -180,6 +193,36 @@ class NftTokensServiceImpl extends NftTokensService {
     _currentAddresses = List.from(inputAddresses);
 
     return _refreshAllTokensWorker!.stream;
+  }
+
+  @override
+  Future<Stream<List<AssetToken>>> getAssetTokensStream(
+    List<String> addresses, {
+    int pageSize = 50,
+    DateTime? lastUpdatedAt,
+  }) async {
+    if (addresses.isEmpty) {
+      return Stream.value([]);
+    }
+
+    await startIsolateOrWait();
+
+    final streamController = StreamController<List<AssetToken>>();
+    final uuid = const Uuid().v4();
+
+    // Store the stream controller for cleanup
+    _streamControllers[uuid] = streamController;
+
+    // Send message to isolate to start streaming
+    _sendPort?.send([
+      GET_ASSET_TOKENS_STREAM,
+      uuid,
+      addresses,
+      pageSize,
+      lastUpdatedAt?.millisecondsSinceEpoch,
+    ]);
+
+    return streamController.stream;
   }
 
   @override
@@ -397,6 +440,31 @@ class NftTokensServiceImpl extends NftTokensService {
       _fetchTokensCompleters.remove(result.uuid);
       NftCollection.logger.info('[reindexAddresses][end]');
     }
+
+    if (result is StreamTokensSuccess) {
+      final controller = _streamControllers[result.uuid];
+      if (controller != null && !controller.isClosed) {
+        controller.add(result.assets);
+
+        if (result.done) {
+          controller.close();
+          _streamControllers.remove(result.uuid);
+          NftCollection.logger
+              .info('[GET_ASSET_TOKENS_STREAM][end] ${result.uuid}');
+        }
+      }
+    }
+
+    if (result is StreamTokensFailure) {
+      final controller = _streamControllers[result.uuid];
+      if (controller != null && !controller.isClosed) {
+        controller.addError(result.exception);
+        controller.close();
+        _streamControllers.remove(result.uuid);
+        NftCollection.logger.info(
+            '[GET_ASSET_TOKENS_STREAM][error] ${result.uuid}: ${result.exception}');
+      }
+    }
   }
 
   static SendPort? _isolateSendPort;
@@ -426,6 +494,16 @@ class NftTokensServiceImpl extends NftTokensService {
           _reindexAddressesInIndexer(
             message[1] as String,
             List<String>.from(message[2] as List),
+          );
+
+        case GET_ASSET_TOKENS_STREAM:
+          _getAssetTokensStreamInIsolate(
+            message[1] as String,
+            List<String>.from(message[2] as List),
+            message[3] as int,
+            message[4] != null
+                ? DateTime.fromMillisecondsSinceEpoch(message[4] as int)
+                : null,
           );
 
         default:
@@ -501,6 +579,60 @@ class NftTokensServiceImpl extends NftTokensService {
     }
     _isolateSendPort?.send(ReindexAddressesDone(uuid));
   }
+
+  static Future<void> _getAssetTokensStreamInIsolate(
+    String uuid,
+    List<String> addresses,
+    int pageSize,
+    DateTime? lastUpdatedAt,
+  ) async {
+    try {
+      final isolateIndexerService = _isolateScopeInjector<NftIndexerService>();
+      int offset = 0;
+      bool hasMoreData = true;
+
+      while (hasMoreData) {
+        final request = QueryListTokensRequest(
+          owners: addresses,
+          offset: offset,
+          size: pageSize,
+          lastUpdatedAt: lastUpdatedAt,
+        );
+
+        final tokens = await isolateIndexerService.getNftTokens(request);
+
+        if (tokens.isEmpty) {
+          hasMoreData = false;
+        } else {
+          _isolateSendPort?.send(
+            StreamTokensSuccess(
+              uuid,
+              tokens,
+              false,
+            ),
+          );
+
+          offset += tokens.length;
+
+          // If we got fewer tokens than requested, we've reached the end
+          if (tokens.length < pageSize) {
+            hasMoreData = false;
+          }
+        }
+      }
+
+      // Send completion signal
+      _isolateSendPort?.send(
+        StreamTokensSuccess(
+          uuid,
+          [],
+          true,
+        ),
+      );
+    } catch (exception) {
+      _isolateSendPort?.send(StreamTokensFailure(uuid, exception));
+    }
+  }
 }
 
 abstract class TokensServiceResult {}
@@ -533,4 +665,23 @@ class ReindexAddressesDone extends TokensServiceResult {
   ReindexAddressesDone(this.uuid);
 
   final String uuid;
+}
+
+class StreamTokensSuccess extends TokensServiceResult {
+  StreamTokensSuccess(
+    this.uuid,
+    this.assets,
+    this.done,
+  );
+
+  final String uuid;
+  final List<AssetToken> assets;
+  final bool done;
+}
+
+class StreamTokensFailure extends TokensServiceResult {
+  StreamTokensFailure(this.uuid, this.exception);
+
+  final String uuid;
+  final Object exception;
 }

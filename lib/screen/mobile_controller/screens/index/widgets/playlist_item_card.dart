@@ -6,7 +6,7 @@ import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
-import 'package:autonomy_flutter/view/feralfile_cache_network_image.dart';
+import 'package:autonomy_flutter/view/ff_artwork_thumbnail_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -46,6 +46,7 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
     final title = widget.asset.title ?? '';
     final artist = widget.asset.artistName ?? '';
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () {
         injector<NavigationService>().navigateTo(
           AppRouter.artworkDetailsPage,
@@ -59,51 +60,57 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
       child: Container(
         color: Colors.transparent,
         padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Expanded(
-              child: Center(
-                child: FFCacheNetworkImage(
-                  imageUrl: widget.asset.galleryThumbnailURL ?? '',
-                  fit: BoxFit.fitWidth,
+        child: IgnorePointer(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Expanded(
+                child: Center(
+                  child: Builder(
+                    builder: (context) {
+                      return FFArtworkThumbnailView(
+                        url: widget.asset.galleryThumbnailURL ?? '',
+                        fit: BoxFit.fitWidth,
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 10),
-            BlocBuilder<IdentityBloc, IdentityState>(
-                bloc: identityBloc,
-                builder: (context, identityState) {
-                  final assetToken = widget.asset;
-                  final artistName = assetToken.artistName
-                          ?.toIdentityOrMask(identityState.identityMap) ??
-                      assetToken.artistID ??
-                      '';
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        artistName,
-                        style: Theme.of(context).textTheme.ppMori700White12,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        title,
-                        // italic
-                        style: Theme.of(context)
-                            .textTheme
-                            .ppMori700White12
-                            .copyWith(fontStyle: FontStyle.italic),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  );
-                }),
-          ],
+              const SizedBox(height: 10),
+              BlocBuilder<IdentityBloc, IdentityState>(
+                  bloc: identityBloc,
+                  builder: (context, identityState) {
+                    final assetToken = widget.asset;
+                    final artistName = assetToken.artistName
+                            ?.toIdentityOrMask(identityState.identityMap) ??
+                        assetToken.artistID ??
+                        '';
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          artistName,
+                          style: Theme.of(context).textTheme.ppMori700White12,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          title,
+                          // italic
+                          style: Theme.of(context)
+                              .textTheme
+                              .ppMori700White12
+                              .copyWith(fontStyle: FontStyle.italic),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    );
+                  }),
+            ],
+          ),
         ),
       ),
     );

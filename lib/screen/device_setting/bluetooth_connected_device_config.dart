@@ -274,6 +274,19 @@ class BluetoothConnectedDeviceConfigState
     return Stack(
       children: [
         _deviceConfig(context),
+        if (widget.payload.isFromOnboarding)
+          Positioned(
+            bottom: 15,
+            left: 0,
+            right: 0,
+            child: PrimaryAsyncButton(
+              onTap: () async {
+                injector<NavigationService>().popUntilHome();
+              },
+              text: 'finish'.tr(),
+              color: AppColor.white,
+            ),
+          ),
         if (widget.payload.isFromOnboarding && !_isBLEDeviceConnected)
           Positioned.fill(
             child: BlocConsumer<CanvasDeviceBloc, CanvasDeviceState>(
@@ -297,19 +310,6 @@ class BluetoothConnectedDeviceConfigState
                     ),
                   );
                 }),
-          ),
-        if (widget.payload.isFromOnboarding)
-          Positioned(
-            bottom: 15,
-            left: 0,
-            right: 0,
-            child: PrimaryAsyncButton(
-              onTap: () async {
-                injector<NavigationService>().popUntilHome();
-              },
-              text: 'finish'.tr(),
-              color: AppColor.white,
-            ),
           ),
       ],
     );

@@ -26,7 +26,9 @@ import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/preview/keyboard_control_page.dart';
 import 'package:autonomy_flutter/screen/detail/preview_detail/preview_detail_widget.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/intent.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
@@ -299,18 +301,22 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                               ),
                             ),
                             FFCastButton(
-                              displayKey: _getDisplayKey(assetToken),
+                              // displayKey: _getDisplayKey(assetToken),
                               onDeviceSelected: (device) async {
                                 final playlistItem =
                                     DP1PlaylistItemExtension.fromAssetToken(
                                   token: assetToken,
                                 );
+                                final dp1Playlist = DP1CallExtension.fromItems(
+                                    items: [playlistItem]);
                                 final completer = Completer<void>();
                                 _canvasDeviceBloc.add(
-                                  CanvasDeviceCastListArtworkEvent(
-                                    device,
-                                    [playlistItem],
-                                    onDone: () {
+                                  CanvasDeviceCastDP1PlaylistEvent(
+                                    intent: DP1Intent.displayNow(),
+                                    device: device,
+                                    playlist: dp1Playlist,
+                                    usingUrl: false,
+                                    onDoneCallback: () {
                                       completer.complete();
                                     },
                                   ),

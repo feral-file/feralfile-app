@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/device/base_device.dart';
 import 'package:autonomy_flutter/model/ff_artwork.dart';
 import 'package:autonomy_flutter/nft_rendering/nft_loading_widget.dart';
@@ -12,16 +11,16 @@ import 'package:autonomy_flutter/screen/bloc/feralfile_artwork_details/feralfile
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/preview/keyboard_control_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/intent.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
-import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
+import 'package:autonomy_flutter/util/device_status_ext.dart';
 import 'package:autonomy_flutter/util/exhibition_ext.dart';
 import 'package:autonomy_flutter/util/feralfile_alumni_ext.dart';
-import 'package:autonomy_flutter/util/metric_helper.dart';
 import 'package:autonomy_flutter/util/series_ext.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
@@ -39,7 +38,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
-import 'package:sentry/sentry.dart';
 import 'package:shake/shake.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -94,18 +92,6 @@ class _FeralFileArtworkPreviewPageState
     );
   }
 
-  void _sendMetricViewExhibition(Artwork artwork) {
-    final exhibitionId = artwork.series?.exhibitionID;
-    final data = {
-      MetricParameter.exhibitionId: exhibitionId,
-      MetricParameter.section: ExhibitionCatalog.artwork.metricName,
-      MetricParameter.tokenId: artwork.id,
-    };
-
-    injector<MetricClientService>()
-        .addEvent(MetricEventName.exhibitionView, data: data);
-  }
-
   @override
   void didUpdateWidget(covariant FeralFileArtworkPreviewPage oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -128,10 +114,12 @@ class _FeralFileArtworkPreviewPageState
     _focusNode.dispose();
     _webViewController?.onDispose();
     _detector?.stopListening();
-    unawaited(SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.manual,
-      overlays: SystemUiOverlay.values,
-    ));
+    unawaited(
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.manual,
+        overlays: SystemUiOverlay.values,
+      ),
+    );
     unawaited(disableLandscapeMode());
     super.dispose();
   }
@@ -139,45 +127,43 @@ class _FeralFileArtworkPreviewPageState
   @override
   Widget build(BuildContext context) =>
       BlocBuilder<CanvasDeviceBloc, CanvasDeviceState>(
-          bloc: _canvasDeviceBloc,
-          builder: (context, canvasState) {
-            final theme = Theme.of(context);
-            return BlocBuilder<FeralfileArtworkDetailsBloc,
-                FeralfileArtworkDetailsState>(
-              bloc: _feralfileArtworkDetailsBloc,
-              buildWhen: (previous, current) {
-                // Only rebuild when the artwork is loaded or an error occurs
-                if (current is FeralfileArtworkDetailsLoadedState) {
-                  final artwork = current.artwork;
-                  _sendMetricViewExhibition(artwork!);
-                }
-                return true;
-              },
-              builder: (context, artworkDetailState) {
-                if (artworkDetailState is FeralfileArtworkDetailsErrorState) {
-                  return Center(
-                    child: Text(artworkDetailState.error,
-                        style: theme.textTheme.ppMori400White14),
-                  );
-                }
-                if (artworkDetailState is FeralfileArtworkDetailsLoadedState) {
-                  final artwork = artworkDetailState.artwork!;
-                  return _buildBackdrop(
-                    context,
-                    artwork,
-                    canvasState,
-                  );
-                }
-                if (artworkDetailState is FeralfileArtworkDetailsLoadingState) {
-                  return const Center(child: LoadingWidget());
-                }
+        bloc: _canvasDeviceBloc,
+        builder: (context, canvasState) {
+          final theme = Theme.of(context);
+          return BlocBuilder<FeralfileArtworkDetailsBloc,
+              FeralfileArtworkDetailsState>(
+            bloc: _feralfileArtworkDetailsBloc,
+            builder: (context, artworkDetailState) {
+              if (artworkDetailState is FeralfileArtworkDetailsErrorState) {
+                return Center(
+                  child: Text(
+                    artworkDetailState.error,
+                    style: theme.textTheme.ppMori400White14,
+                  ),
+                );
+              }
+              if (artworkDetailState is FeralfileArtworkDetailsLoadedState) {
+                final artwork = artworkDetailState.artwork!;
+                return _buildBackdrop(
+                  context,
+                  artwork,
+                  canvasState,
+                );
+              }
+              if (artworkDetailState is FeralfileArtworkDetailsLoadingState) {
                 return const Center(child: LoadingWidget());
-              },
-            );
-          });
+              }
+              return const Center(child: LoadingWidget());
+            },
+          );
+        },
+      );
 
   Widget _buildBackdrop(
-      BuildContext context, Artwork artwork, CanvasDeviceState canvasState) {
+    BuildContext context,
+    Artwork artwork,
+    CanvasDeviceState canvasState,
+  ) {
     return BackdropScaffold(
       appBar: _isFullScreen
           ? null
@@ -188,13 +174,15 @@ class _FeralFileArtworkPreviewPageState
                     height: toolbarHeight,
                   ),
                 )
-              : getFFAppBar(context,
+              : getFFAppBar(
+                  context,
                   onBack: () => Navigator.pop(context),
                   action: FFCastButton(
-                    displayKey: artwork.series?.exhibitionID ?? '',
+                    // displayKey: artwork.series?.exhibitionID ?? '',
                     onDeviceSelected: (BaseDevice device) =>
                         _onDeviceSelected(device, artwork),
-                  )),
+                  ),
+                ),
       backgroundColor: AppColor.primaryBlack,
       frontLayerElevation: _isFullScreen ? 0 : 1,
       frontLayerBackgroundColor:
@@ -227,8 +215,8 @@ class _FeralFileArtworkPreviewPageState
                 artwork: artwork,
                 color: Colors.transparent,
               ),
-            ]
-          ]
+            ],
+          ],
         ],
       ),
       frontLayer:
@@ -246,7 +234,7 @@ class _FeralFileArtworkPreviewPageState
                     _infoShrink();
                   }
                 },
-                child: Container(
+                child: ColoredBox(
                   color: Colors.transparent,
                   child: _infoHeader(context, artwork, canvasState),
                 ),
@@ -275,6 +263,7 @@ class _FeralFileArtworkPreviewPageState
       CanvasDeviceCastDP1PlaylistEvent(
         device: device,
         playlist: playlist,
+        usingUrl: false,
         intent: DP1Intent.displayNow(),
         onDoneCallback: completer.complete,
       ),
@@ -316,26 +305,30 @@ class _FeralFileArtworkPreviewPageState
   Widget _artworkInfoIcon() => Semantics(
         label: 'artworkInfoIcon',
         child: IconButton(
-            onPressed: () {
-              _isInfoExpand ? _infoShrink() : _infoExpand();
-            },
-            constraints: const BoxConstraints(
-              maxWidth: 44,
-              maxHeight: 44,
-              minWidth: 44,
-              minHeight: 44,
-            ),
-            icon: SvgPicture.asset(
-              !_isInfoExpand
-                  ? 'assets/images/info_white.svg'
-                  : 'assets/images/info_white_active.svg',
-              width: 22,
-              height: 22,
-            )),
+          onPressed: () {
+            _isInfoExpand ? _infoShrink() : _infoExpand();
+          },
+          constraints: const BoxConstraints(
+            maxWidth: 44,
+            maxHeight: 44,
+            minWidth: 44,
+            minHeight: 44,
+          ),
+          icon: SvgPicture.asset(
+            !_isInfoExpand
+                ? 'assets/images/info_white.svg'
+                : 'assets/images/info_white_active.svg',
+            width: 22,
+            height: 22,
+          ),
+        ),
       );
 
-  Widget _infoHeader(BuildContext context, Artwork artwork,
-          CanvasDeviceState canvasState) =>
+  Widget _infoHeader(
+    BuildContext context,
+    Artwork artwork,
+    CanvasDeviceState canvasState,
+  ) =>
       Padding(
         padding: const EdgeInsets.fromLTRB(15, 15, 5, 20),
         child: Column(
@@ -355,7 +348,10 @@ class _FeralFileArtworkPreviewPageState
                   label: 'artworkDotIcon',
                   child: IconButton(
                     onPressed: () async => _showArtworkOptionsDialog(
-                        context, artwork, canvasState),
+                      context,
+                      artwork,
+                      canvasState,
+                    ),
                     icon: SvgPicture.asset(
                       'assets/images/more_circle.svg',
                       width: 22,
@@ -369,19 +365,22 @@ class _FeralFileArtworkPreviewPageState
               ArtworkAttributesText(
                 artwork: artwork,
               ),
-            ]
+            ],
           ],
         ),
       );
 
-  Future<void> _showArtworkOptionsDialog(BuildContext context, Artwork artwork,
-      CanvasDeviceState canvasDeviceState) async {
+  Future<void> _showArtworkOptionsDialog(
+    BuildContext context,
+    Artwork artwork,
+    CanvasDeviceState canvasDeviceState,
+  ) async {
     final castingDevice = canvasDeviceState
         .lastSelectedActiveDeviceForKey(artwork.series?.exhibitionID ?? '');
     final status =
         canvasDeviceState.canvasDeviceStatus[castingDevice?.deviceId];
-    final isCastingThisArtwork =
-        castingDevice != null && status?.catalogId == artwork.id;
+    final isCastingThisArtwork = castingDevice != null &&
+        status?.playingItem?.indexId == artwork.indexerTokenId;
     if (!context.mounted) {
       return;
     }
@@ -390,52 +389,57 @@ class _FeralFileArtworkPreviewPageState
         ? false
         : injector<AuthService>().isLinkArtist(artistAddresses);
     _focusNode.unfocus();
-    unawaited(UIHelper.showDrawerAction(
-      context,
-      options: [
-        OptionItem(
+    unawaited(
+      UIHelper.showDrawerAction(
+        context,
+        options: [
+          OptionItem(
             title: 'full_screen'.tr(),
             icon: SvgPicture.asset('assets/images/fullscreen_icon.svg'),
             onTap: () {
               Navigator.of(context).pop();
               _setFullScreen();
-            }),
-        if (isUserArtist)
-          OptionItem(
-            title: 'Artist Display Settings',
-            icon: const Icon(
-              AuIcon.settings,
-              color: AppColor.white,
+            },
+          ),
+          if (isUserArtist)
+            OptionItem(
+              title: 'Artist Display Settings',
+              icon: const Icon(
+                AuIcon.settings,
+                color: AppColor.white,
+              ),
+              onTap: () {
+                injector<NavigationService>().openArtistDisplaySetting(
+                  artwork: artwork,
+                );
+              },
             ),
-            onTap: () {
-              injector<NavigationService>().openArtistDisplaySetting(
-                artwork: artwork,
-              );
-            },
-          ),
-        if (isCastingThisArtwork)
-          OptionItem(
-            title: 'interact'.tr(),
-            icon: SvgPicture.asset('assets/images/keyboard_icon.svg'),
-            onTap: () {
-              Navigator.of(context).pop();
-              if (isCastingThisArtwork) {
-                unawaited(Navigator.of(context).pushNamed(
-                  AppRouter.keyboardControlPage,
-                  arguments: KeyboardControlPagePayload(
-                    artwork.name,
-                    '',
-                    [castingDevice],
-                  ),
-                ));
-              } else {
-                FocusScope.of(context).requestFocus(_focusNode);
-              }
-            },
-          ),
-        OptionItem.emptyOptionItem,
-      ],
-    ));
+          if (isCastingThisArtwork)
+            OptionItem(
+              title: 'interact'.tr(),
+              icon: SvgPicture.asset('assets/images/keyboard_icon.svg'),
+              onTap: () {
+                Navigator.of(context).pop();
+                if (isCastingThisArtwork) {
+                  unawaited(
+                    Navigator.of(context).pushNamed(
+                      AppRouter.keyboardControlPage,
+                      arguments: KeyboardControlPagePayload(
+                        artwork.name,
+                        '',
+                        [castingDevice],
+                      ),
+                    ),
+                  );
+                } else {
+                  FocusScope.of(context).requestFocus(_focusNode);
+                }
+              },
+            ),
+          OptionItem.emptyOptionItem,
+        ],
+      ),
+    );
   }
 
   Future<void> _setFullScreen() async {
@@ -472,12 +476,13 @@ class _FeralFileArtworkPreviewPageState
     return Stack(
       children: [
         Visibility(
-            child: WebviewControllerTextField(
-          webViewController: _webViewController,
-          focusNode: _focusNode,
-          textController: _textController,
-          disableKeys: artwork.series?.exhibition?.disableKeys ?? [],
-        )),
+          child: WebviewControllerTextField(
+            webViewController: _webViewController,
+            focusNode: _focusNode,
+            textController: _textController,
+            disableKeys: artwork.series?.exhibition?.disableKeys ?? [],
+          ),
+        ),
         SingleChildScrollView(
           controller: _scrollController,
           physics: const BouncingScrollPhysics()
@@ -517,8 +522,10 @@ class _FeralFileArtworkPreviewPageState
                           artwork.series!.description ?? '',
                           textStyle: theme.textTheme.ppMori400White14,
                           onTapUrl: (url) async {
-                            await launchUrl(Uri.parse(url),
-                                mode: LaunchMode.externalApplication);
+                            await launchUrl(
+                              Uri.parse(url),
+                              mode: LaunchMode.externalApplication,
+                            );
                             return true;
                           },
                         ),
@@ -547,11 +554,10 @@ class _FeralFileArtworkPreviewPageState
 }
 
 class FeralFileArtworkPreviewPagePayload {
-  final String artworkId;
-  bool isFromExhibition;
-
   FeralFileArtworkPreviewPagePayload({
     required this.artworkId,
     this.isFromExhibition = false,
   });
+  final String artworkId;
+  bool isFromExhibition;
 }

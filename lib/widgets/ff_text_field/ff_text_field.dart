@@ -23,6 +23,9 @@ class FFTextField extends StatefulWidget {
     this.isError = false,
     this.isLoading = false,
     this.errorMessage,
+    this.maxLines = 1,
+    this.minLines = 1,
+    this.keyboardType = TextInputType.text,
   });
 
   final String placeholder;
@@ -35,7 +38,9 @@ class FFTextField extends StatefulWidget {
   final void Function(String)? onSend;
   final void Function(String)? onChanged;
   final TextEditingController? controller;
-
+  final int maxLines;
+  final int minLines;
+  final TextInputType keyboardType;
   @override
   State<FFTextField> createState() => _FFTextFieldState();
 }
@@ -96,12 +101,13 @@ class _FFTextFieldState extends State<FFTextField> {
                       ? TextField(
                           controller: _textController,
                           focusNode: _focusNode,
+                          keyboardType: widget.keyboardType,
                           enabled: widget.enabled && !widget.isLoading,
                           style: Theme.of(context).textTheme.small.copyWith(
                                 color: widget.isError ? AppColor.red : null,
                               ),
-                          minLines: 1,
-                          maxLines: 3,
+                          minLines: widget.minLines,
+                          maxLines: widget.maxLines,
                           decoration: InputDecoration(
                             border: InputBorder.none,
                             hintText: widget.placeholder,

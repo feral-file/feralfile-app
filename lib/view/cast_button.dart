@@ -16,7 +16,6 @@ import 'package:sentry/sentry.dart';
 
 class FFCastButton extends StatefulWidget {
   const FFCastButton({
-    required this.displayKey,
     this.type = '',
     super.key,
     this.onDeviceSelected,
@@ -26,7 +25,6 @@ class FFCastButton extends StatefulWidget {
   });
 
   final FutureOr<void> Function(BaseDevice device)? onDeviceSelected;
-  final String displayKey;
   final String? text;
   final String? type;
   final bool shouldCheckSubscription;

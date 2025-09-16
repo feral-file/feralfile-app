@@ -1,6 +1,7 @@
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
+import 'package:autonomy_flutter/util/log.dart';
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 
@@ -20,6 +21,11 @@ abstract class DP1FeedApi {
   Future<DP1Call> updatePlaylist(
     @Path('playlistId') String playlistId,
     @Body() Map<String, dynamic> body,
+  );
+
+  @DELETE('/api/v1/playlists/{playlistId}')
+  Future<void> deletePlaylist(
+    @Path('playlistId') String playlistId,
   );
 
   @GET('/api/v1/playlists/{playlistId}')

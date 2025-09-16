@@ -334,10 +334,7 @@ extension ArtworkExt on Artwork {
         provenance: DP1Provenance(
             type: DP1ProvenanceType.onChain,
             contract: DP1Contract(
-                chain: dp1Chain,
-                standard: DP1ProvenanceStandard.erc721,
-                address: contractAddress,
-                tokenId: indexId)));
+                chain: dp1Chain, address: contractAddress, tokenId: indexId)));
   }
 
   /// Get chain prefix for indexerTokenId

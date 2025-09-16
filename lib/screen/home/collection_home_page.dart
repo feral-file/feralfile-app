@@ -11,7 +11,6 @@ import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/model/blockchain.dart';
-import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
@@ -199,7 +198,7 @@ class CollectionHomePageState extends State<CollectionHomePage>
                       fontSize: 14,
                     ),
                     action: FFCastButton(
-                      displayKey: _getDisplayKey(),
+                      // displayKey: _getDisplayKey(),
                       onDeviceSelected: (device) async {
                         log.info('Device selected: ${device.name}');
                         final listTokenIds =
@@ -211,24 +210,6 @@ class CollectionHomePageState extends State<CollectionHomePage>
                           return;
                         }
                         final duration = speedValues.values.first;
-                        final listPlayArtwork = listTokenIds
-                            .map(
-                              (e) => PlayArtworkV2(
-                                token: CastAssetToken(id: e),
-                                duration: duration,
-                              ),
-                            )
-                            .toList();
-                        final completer = Completer<void>();
-                        _canvasDeviceBloc.add(
-                          CanvasDeviceCastListArtworkEvent(
-                            device,
-                            [],
-                            // listPlayArtwork,
-                            onDone: completer.complete,
-                          ),
-                        );
-                        await completer.future;
                       },
                     ),
                   ),

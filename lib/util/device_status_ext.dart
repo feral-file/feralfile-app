@@ -3,6 +3,7 @@ import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/device/base_device.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/pair.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
 import 'package:autonomy_flutter/util/log.dart';
 
@@ -28,15 +29,21 @@ extension ListDeviceStatusExtension
 
 extension DeviceStatusExtension on CheckCastingStatusReply {
   String get playingArtworkKey {
-    if (exhibitionId != null) {
-      return exhibitionId.toString();
-    }
-
-    if (artworks.isNotEmpty) {
-      return artworks.playArtworksHashCode.toString();
-    }
-
     return this.displayKey ?? '';
+  }
+
+  DP1Item? get playingItem {
+    final items = this.items;
+    if (items == null || items.isEmpty) {
+      return null;
+    }
+
+    final index = this.index;
+    if (index == null || index < 0 || index >= items.length) {
+      return null;
+    }
+
+    return items[index];
   }
 }
 

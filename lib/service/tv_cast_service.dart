@@ -5,7 +5,6 @@ import 'package:autonomy_flutter/gateway/tv_cast_api.dart';
 import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/ff_account.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call_request.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/constants.dart';
@@ -20,13 +19,13 @@ abstract class TvCastService {
     bool shouldShowError = true,
   });
 
-  Future<Map<String, dynamic>> sendDP1Call(DP1CallRequest request);
-
   Future<ConnectReplyV2> connect(ConnectRequestV2 request);
 
   Future<DisconnectReplyV2> disconnect(DisconnectRequestV2 request);
 
-  Future<CastListArtworkReply> castListArtwork(DP1CallRequest request);
+  Future<CastDP1PlaylistReply> castDP1Playlist(
+    CastDP1PlaylistRequestAbstract request,
+  );
 
   Future<PauseCastingReply> pauseCasting(PauseCastingRequest request);
 
@@ -59,10 +58,6 @@ abstract class TvCastService {
   Future<UpdateToLatestVersionReply> updateToLatestVersion(
     UpdateToLatestVersionRequest request,
   );
-
-  Future<CastExhibitionReply> castExhibition(CastExhibitionRequest request);
-
-  Future<CastDailyWorkReply> castDailyWork(CastDailyWorkRequest request);
 
   Future<GestureReply> tap(TapGestureRequest request);
 
@@ -134,11 +129,15 @@ abstract class BaseTvCastService implements TvCastService {
   }
 
   @override
-  Future<CastListArtworkReply> castListArtwork(
-    DP1CallRequest request,
+  Future<CastDP1PlaylistReply> castDP1Playlist(
+    CastDP1PlaylistRequestAbstract request,
   ) async {
-    final result = await sendDP1Call(request);
-    return CastListArtworkReply.fromJson(result);
+    final result = await _sendData(
+      RequestBody(request).toJson(),
+      shouldShowError: false,
+      timeout: const Duration(seconds: 10),
+    );
+    return CastDP1PlaylistReply.fromJson(result);
   }
 
   @override
@@ -231,25 +230,6 @@ abstract class BaseTvCastService implements TvCastService {
       timeout: const Duration(seconds: 30),
     );
     return UpdateToLatestVersionReply.fromJson(result);
-  }
-
-  @override
-  Future<CastExhibitionReply> castExhibition(
-    CastExhibitionRequest request,
-  ) async {
-    final result = await _sendData(_getBody(request));
-    return CastExhibitionReply.fromJson(result);
-  }
-
-  @override
-  Future<CastDailyWorkReply> castDailyWork(CastDailyWorkRequest request) async {
-    try {
-      final body = _getBody(request);
-      final result = await _sendData(body);
-      return CastDailyWorkReply.fromJson(result);
-    } catch (e) {
-      rethrow;
-    }
   }
 
   @override
@@ -370,14 +350,10 @@ class TvCastServiceImpl extends BaseTvCastService {
   }
 
   @override
-  Future<Map<String, dynamic>> sendDP1Call(DP1CallRequest request) async {
+  Future<CastDP1PlaylistReply> castDP1Playlist(
+    CastDP1PlaylistRequestAbstract request,
+  ) async {
     await BluetoothDeviceManager().switchDevice(_device);
-    final res = await _sendData(
-      RequestBody(request).toJson(),
-      shouldShowError: false,
-      timeout: const Duration(seconds: 10),
-    );
-    log.info('[TvCastServiceImpl] sendDP1Call response: $res');
-    return res;
+    return super.castDP1Playlist(request);
   }
 }

@@ -7,17 +7,20 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_svg/svg.dart';
 
 class FFArtworkThumbnailView extends StatelessWidget {
-  const FFArtworkThumbnailView(
-      {required this.url,
-      this.cacheWidth,
-      this.cacheHeight,
-      super.key,
-      this.onTap});
+  const FFArtworkThumbnailView({
+    required this.url,
+    this.cacheWidth,
+    this.cacheHeight,
+    super.key,
+    this.onTap,
+    this.fit = BoxFit.cover,
+  });
 
   final String url;
   final Function? onTap;
   final int? cacheWidth;
   final int? cacheHeight;
+  final BoxFit fit;
 
   @override
   Widget build(BuildContext context) => GestureDetector(
@@ -40,7 +43,7 @@ class FFArtworkThumbnailView extends StatelessWidget {
                 memCacheHeight: cacheHeight,
                 maxWidthDiskCache: cacheWidth,
                 maxHeightDiskCache: cacheHeight,
-                fit: BoxFit.cover,
+                fit: fit,
                 placeholder: (context, url) =>
                     const GalleryThumbnailPlaceholder(),
                 errorWidget: (context, url, error) =>

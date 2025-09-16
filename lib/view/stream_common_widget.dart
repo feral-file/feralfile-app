@@ -423,48 +423,41 @@ class _ArtworkDurationControlState extends State<ArtworkDurationControl> {
   }
 
   void _changeSpeed(Duration duration) {
-    final lastSelectedCanvasDevice = _canvasDeviceBloc.state
-        .lastSelectedActiveDeviceForKey(widget.displayKey);
-    if (lastSelectedCanvasDevice == null) {
-      return;
-    }
-    final canvasStatus =
-        _canvasDeviceBloc.state.statusOf(lastSelectedCanvasDevice);
-    if (canvasStatus == null) {
-      return;
-    }
-    final playArtworks = canvasStatus.artworks;
-    final playArtworkWithNewDuration = playArtworks
-        .map(
-          (e) =>
-              e.copy(duration: Duration(milliseconds: duration.inMilliseconds)),
-        )
-        .toList();
-    _canvasDeviceBloc.add(
-      CanvasDeviceUpdateDurationEvent(
-        lastSelectedCanvasDevice,
-        playArtworkWithNewDuration,
-      ),
-    );
+    // final lastSelectedCanvasDevice = _canvasDeviceBloc.state
+    //     .lastSelectedActiveDeviceForKey(widget.displayKey);
+    // if (lastSelectedCanvasDevice == null) {
+    //   return;
+    // }
+    // final canvasStatus =
+    //     _canvasDeviceBloc.state.statusOf(lastSelectedCanvasDevice);
+    // if (canvasStatus == null) {
+    //   return;
+    // }
+    // _canvasDeviceBloc.add(
+    //   CanvasDeviceUpdateDurationEvent(
+    //     lastSelectedCanvasDevice,
+    //     playArtworkWithNewDuration,
+    //   ),
+    // );
   }
 
   void _revertToOldDuration() {
-    final lastSelectedCanvasDevice = _canvasDeviceBloc.state
-        .lastSelectedActiveDeviceForKey(widget.displayKey);
-    if (lastSelectedCanvasDevice == null) {
-      return;
-    }
-    final canvasStatus =
-        _canvasDeviceBloc.state.statusOf(lastSelectedCanvasDevice);
-    if (canvasStatus == null) {
-      return;
-    }
-    final playArtworks = canvasStatus.artworks;
-    if (playArtworks.isEmpty) {
-      return;
-    }
-    final duration = playArtworks.first.duration;
-    initDurationController(duration);
+    // final lastSelectedCanvasDevice = _canvasDeviceBloc.state
+    //     .lastSelectedActiveDeviceForKey(widget.displayKey);
+    // if (lastSelectedCanvasDevice == null) {
+    //   return;
+    // }
+    // final canvasStatus =
+    //     _canvasDeviceBloc.state.statusOf(lastSelectedCanvasDevice);
+    // if (canvasStatus == null) {
+    //   return;
+    // }
+    // final playArtworks = canvasStatus.artworks;
+    // if (playArtworks.isEmpty) {
+    //   return;
+    // }
+    // final duration = playArtworks.first.duration;
+    // initDurationController(duration);
   }
 
   void _onDurationSubmitted() {

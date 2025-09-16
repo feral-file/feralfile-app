@@ -99,6 +99,32 @@ class _DP1FeedApi implements DP1FeedApi {
   }
 
   @override
+  Future<void> deletePlaylist(String playlistId) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<void>(Options(
+      method: 'DELETE',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/api/v1/playlists/${playlistId}',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(
+            baseUrl: _combineBaseUrls(
+          _dio.options.baseUrl,
+          baseUrl,
+        )));
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    log.info('Result: $_result');
+  }
+
+  @override
   Future<DP1Call> getPlaylistById(String playlistId) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};

@@ -7,9 +7,6 @@ class DeviceCastingInfo {
     this.index,
     bool? isPaused,
     this.connectedDevice,
-    this.exhibitionId,
-    this.catalogId,
-    this.catalog,
     this.displayKey,
     this.deviceSettings,
   }) : isPaused = isPaused ?? false;
@@ -30,11 +27,6 @@ class DeviceCastingInfo {
                 json['connectedDevice'] as Map<String, dynamic>,
               )
             : null,
-        exhibitionId: json['exhibitionId'] as String?,
-        catalogId: json['catalogId'] as String?,
-        catalog: json['catalog'] == null
-            ? null
-            : ExhibitionCatalog.values[json['catalog'] as int],
         displayKey: json['displayKey'] as String?,
         deviceSettings: json['deviceSettings'] != null
             ? DeviceDisplaySetting.fromJson(
@@ -54,9 +46,6 @@ class DeviceCastingInfo {
   int? index;
   bool isPaused;
   DeviceInfoV2? connectedDevice;
-  String? exhibitionId;
-  String? catalogId;
-  ExhibitionCatalog? catalog;
   String? displayKey;
   DeviceDisplaySetting? deviceSettings;
 
@@ -65,9 +54,6 @@ class DeviceCastingInfo {
     int? index,
     bool? isPaused,
     DeviceInfoV2? connectedDevice,
-    String? exhibitionId,
-    String? catalogId,
-    ExhibitionCatalog? catalog,
     String? displayKey,
     DeviceDisplaySetting? deviceSettings,
   }) {
@@ -76,9 +62,6 @@ class DeviceCastingInfo {
       index: index ?? this.index,
       isPaused: isPaused ?? this.isPaused,
       connectedDevice: connectedDevice ?? this.connectedDevice,
-      exhibitionId: exhibitionId ?? this.exhibitionId,
-      catalogId: catalogId ?? this.catalogId,
-      catalog: catalog ?? this.catalog,
       displayKey: displayKey ?? this.displayKey,
       deviceSettings: deviceSettings ?? this.deviceSettings,
     );

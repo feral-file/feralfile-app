@@ -95,6 +95,9 @@ class AddressService {
   Future<void> deleteAddress(WalletAddress address) async {
     await _cloudObject.addressObject.deleteAddress(address);
     await _nftCollectionAddressService.deleteAddresses([address.address]);
+    await injector<UserDp1PlaylistService>()
+        .removeAddressesFromPlaylist([address.address]);
+    log.info('Deleted address: ${address.address}');
   }
 
   Future<void> setHiddenStatus({
@@ -110,6 +113,15 @@ class AddressService {
       addresses,
       isHidden,
     );
+    if (isHidden) {
+      // remove from playlist
+      await injector<UserDp1PlaylistService>()
+          .removeAddressesFromPlaylist(addresses);
+    } else {
+      // add to playlist
+      await injector<UserDp1PlaylistService>()
+          .insertAddressesToPlaylist(addresses);
+    }
   }
 
   Future<WalletAddress> nameAddress(WalletAddress address, String name) async {

@@ -1,5 +1,4 @@
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/bluetooth_connected_device_config.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
@@ -45,11 +44,6 @@ class _ListDirectoryPageState extends State<ListDirectoryPage>
       _selectedPageIndex = index;
     });
     _pageController.jumpToPage(index);
-    if (index == 3) {
-      shouldHideDisplayingBar.value = true;
-    } else {
-      shouldHideDisplayingBar.value = false;
-    }
   }
 
   @override

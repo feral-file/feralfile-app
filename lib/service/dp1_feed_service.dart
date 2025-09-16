@@ -142,7 +142,7 @@ class DP1FeedService {
 //
 
   Future<bool> deletePlaylist(String id) async {
-    //TODO: Implement delete playlist
+    await api.deletePlaylist(id);
     return true;
   }
 }

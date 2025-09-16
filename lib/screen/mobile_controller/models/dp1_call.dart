@@ -60,6 +60,9 @@ class DP1Call {
     };
   }
 
+  DynamicQuery? get firstDynamicQuery =>
+      dynamicQueries.isNotEmpty ? dynamicQueries.first : null;
+
   // copyWith method
   DP1Call copyWith({
     String? dpVersion,
@@ -129,6 +132,20 @@ class DynamicQuery {
   DynamicQuery insertAddresses(List<String> addresses) {
     return copyWith(params: params.insertAddresses(addresses));
   }
+
+  DynamicQuery removeAddresses(List<String> addresses) {
+    return copyWith(params: params.removeAddresses(addresses));
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! DynamicQuery) return false;
+    return endpoint == other.endpoint && params == other.params;
+  }
+
+  @override
+  int get hashCode => Object.hash(endpoint, params);
 }
 
 class DynamicQueryParams {
@@ -166,5 +183,30 @@ class DynamicQueryParams {
 
   DynamicQueryParams insertAddresses(List<String> addresses) {
     return copyWith(owners: [...owners, ...addresses].toSet().toList());
+  }
+
+  DynamicQueryParams removeAddresses(List<String> addresses) {
+    return copyWith(
+        owners: owners.where((e) => !addresses.contains(e)).toList());
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! DynamicQueryParams) return false;
+    // Compare owners order-insensitively
+    final a = List<String>.from(owners)..sort();
+    final b = List<String>.from(other.owners)..sort();
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode {
+    final sorted = List<String>.from(owners)..sort();
+    return Object.hashAll(sorted);
   }
 }

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/explore_statistics_data.dart';
 import 'package:autonomy_flutter/model/ff_artwork.dart';
@@ -12,16 +10,12 @@ import 'package:autonomy_flutter/screen/feralfile_home/feralfile_home_state.dart
 import 'package:autonomy_flutter/screen/feralfile_home/filter_bar.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/list_alumni_view.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/list_exhibition_view.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/util/exhibition_ext.dart';
-import 'package:autonomy_flutter/util/playlist_ext.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
-import 'package:autonomy_flutter/view/cast_button.dart';
 import 'package:autonomy_flutter/view/keep_alive_widget.dart';
-import 'package:autonomy_flutter/view/stream_common_widget.dart';
 import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -129,32 +123,6 @@ class FeralfileHomePageState extends State<FeralfileHomePage>
     _canvasDeviceBloc = injector.get<CanvasDeviceBloc>();
     context.read<FeralfileHomeBloc>().add(FeralFileHomeFetchDataEvent());
     _selectedIndex = FeralfileHomeTab.exhibitions.index;
-  }
-
-  // cast featured artworks to device
-  Widget _castButton(BuildContext context, List<Artwork> featuredArtworks) {
-    final tokenIDs =
-        featuredArtworks.map((e) => e.indexerTokenId).whereNotNull().toList();
-    final displayKey = tokenIDs.displayKey ?? '';
-    return FFCastButton(
-      displayKey: displayKey,
-      onDeviceSelected: (device) async {
-        final duration = speedValues.values.first;
-        final items = <DP1Item>[];
-
-        final completer = Completer<void>();
-        _canvasDeviceBloc.add(
-          CanvasDeviceCastListArtworkEvent(
-            device,
-            items,
-            onDone: () {
-              completer.complete();
-            },
-          ),
-        );
-        await completer.future;
-      },
-    );
   }
 
   void scrollToTop() {
@@ -300,12 +268,7 @@ class FeralfileHomePageState extends State<FeralfileHomePage>
                 quarterTurns: 1,
                 child: icon,
               ),
-              actions: [
-                if (_selectedIndex == FeralfileHomeTab.featured.index &&
-                    state.featuredArtworks != null &&
-                    state.featuredArtworks!.isNotEmpty)
-                  _castButton(context, state.featuredArtworks ?? []),
-              ],
+              actions: [],
             ),
           ),
         ),

@@ -45,7 +45,7 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen> {
             backTitle: widget.payload.backTitle ?? 'Playlists',
             actions: [
               FFCastButton(
-                displayKey: widget.payload.playlist.id,
+                // displayKey: widget.payload.playlist.id,
                 onDeviceSelected: (device) {
                   _canvasDeviceBloc.add(
                     CanvasDeviceCastDP1PlaylistEvent(

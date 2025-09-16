@@ -16,7 +16,6 @@ import 'package:autonomy_flutter/screen/bloc/artist_artwork_display_settings/art
 import 'package:autonomy_flutter/screen/device_setting/bluetooth_connected_device_config.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call_request.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/intent.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
@@ -82,27 +81,6 @@ class CanvasClientServiceV2 {
     }
   }
 
-  Future<void> sendDp1Call(
-    BaseDevice device,
-    Map<String, dynamic> dp1Call,
-    Map<String, dynamic> intent,
-  ) async {
-    final stub = _getStub(device);
-    final request = DP1CallRequest(
-      dp1Call: dp1Call,
-      intent: intent,
-    );
-    try {
-      await stub.sendDP1Call(request);
-    } catch (e) {
-      log.info('CanvasClientService: sendDp1Call error: $e');
-      unawaited(
-        Sentry.captureException('CanvasClientService: sendDp1Call error: $e'),
-      );
-      rethrow;
-    }
-  }
-
   Future<ConnectReplyV2> _connect(
     BaseDevice device,
   ) async {
@@ -139,7 +117,8 @@ class CanvasClientServiceV2 {
   }
 
   Future<bool> castPlaylist(
-      BaseDevice device, DP1Call playlist, DP1Intent intent) async {
+      BaseDevice device, DP1Call playlist, DP1Intent intent,
+      {bool usingUrl = true}) async {
     try {
       final canConnect = await connectToDevice(device);
       if (!canConnect) {
@@ -147,11 +126,16 @@ class CanvasClientServiceV2 {
       }
 
       final stub = _getStub(device);
-      final dp1CallRequest = DP1CallRequest(
-        dp1Call: playlist.toJson(),
-        intent: intent.toJson(),
-      );
-      final response = await stub.castListArtwork(dp1CallRequest);
+      final dp1CallRequest = usingUrl
+          ? CastDP1UrlPlaylistRequest(
+              playlistUrl: playlist.url,
+              intent: intent,
+            )
+          : CastDP1JsonPlaylistRequest(
+              dp1Call: playlist,
+              intent: intent,
+            );
+      final response = await stub.castDP1Playlist(dp1CallRequest);
       return response.ok;
     } catch (e) {
       log.info('CanvasClientService: castPlaylist error: $e');
@@ -221,32 +205,6 @@ class CanvasClientServiceV2 {
     final stub = _getStub(device);
     final request = MoveToArtworkRequest(index: index);
     final response = await stub.moveToArtwork(request);
-    return response.ok;
-  }
-
-  Future<bool> castExhibition(
-    BaseDevice device,
-    CastExhibitionRequest castRequest,
-  ) async {
-    final canConnect = await connectToDevice(device);
-    if (!canConnect) {
-      return false;
-    }
-    final stub = _getStub(device);
-    final response = await stub.castExhibition(castRequest);
-    return response.ok;
-  }
-
-  Future<bool> castDailyWork(
-    BaseDevice device,
-    CastDailyWorkRequest castRequest,
-  ) async {
-    final canConnect = await connectToDevice(device);
-    if (!canConnect) {
-      return false;
-    }
-    final stub = _getStub(device);
-    final response = await stub.castDailyWork(castRequest);
     return response.ok;
   }
 

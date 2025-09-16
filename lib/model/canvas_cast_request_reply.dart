@@ -8,8 +8,10 @@ import 'package:autonomy_flutter/model/device/device_display_setting.dart';
 import 'package:autonomy_flutter/model/device/device_status.dart';
 import 'package:autonomy_flutter/screen/bloc/artist_artwork_display_settings/artist_artwork_display_setting_bloc.dart';
 import 'package:autonomy_flutter/screen/device_setting/bluetooth_connected_device_config.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call_request.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/intent.dart';
 import 'package:flutter/material.dart';
 
 enum CastCommand {
@@ -21,7 +23,6 @@ enum CastCommand {
   previousArtwork,
   moveToArtwork,
   updateDuration,
-  castExhibition,
   connect,
   disconnect,
   sendKeyboardEvent,
@@ -32,7 +33,6 @@ enum CastCommand {
   tapGesture,
   dragGesture,
   showPairingQRCode,
-  castDaily,
   updateDisplaySettings,
   shutdown,
   reboot,
@@ -44,8 +44,6 @@ enum CastCommand {
         return CastCommand.checkStatus;
       case 'displayPlaylist':
         return CastCommand.displayPlaylist;
-      case 'castDaily':
-        return CastCommand.castDaily;
       case 'pauseCasting':
         return CastCommand.pauseCasting;
       case 'resumeCasting':
@@ -58,8 +56,6 @@ enum CastCommand {
         return CastCommand.moveToArtwork;
       case 'updateDuration':
         return CastCommand.updateDuration;
-      case 'castExhibition':
-        return CastCommand.castExhibition;
       case 'connect':
         return CastCommand.connect;
       case 'disconnect':
@@ -97,10 +93,10 @@ enum CastCommand {
     switch (request.runtimeType) {
       case const (CheckCastingStatusRequest):
         return CastCommand.checkStatus;
-      case const (DP1CallRequest):
+      case const (CastDP1JsonPlaylistRequest):
+      case const (CastDP1UrlPlaylistRequest):
+      case const (CastDP1PlaylistRequestAbstract):
         return CastCommand.displayPlaylist;
-      case const (CastDailyWorkRequest):
-        return CastCommand.castDaily;
       case const (PauseCastingRequest):
         return CastCommand.pauseCasting;
       case const (ResumeCastingRequest):
@@ -113,8 +109,6 @@ enum CastCommand {
         return CastCommand.moveToArtwork;
       case const (UpdateDurationRequest):
         return CastCommand.updateDuration;
-      case const (CastExhibitionRequest):
-        return CastCommand.castExhibition;
       case const (ConnectRequestV2):
         return CastCommand.connect;
       case const (DisconnectRequestV2):
@@ -375,31 +369,6 @@ class PlayArtworkV2 {
       };
 }
 
-// Class representing CastListArtworkRequest message
-class CastListArtworkRequest implements FF1Request {
-  CastListArtworkRequest({
-    required this.artworks,
-    this.startTime,
-  });
-
-  factory CastListArtworkRequest.fromJson(Map<String, dynamic> json) =>
-      CastListArtworkRequest(
-        artworks: List<PlayArtworkV2>.from(
-          (json['artworks'] as List)
-              .map((x) => PlayArtworkV2.fromJson(x as Map<String, dynamic>)),
-        ),
-        startTime: json['startTime'] as int?,
-      );
-  List<PlayArtworkV2> artworks;
-  int? startTime;
-
-  @override
-  Map<String, dynamic> toJson() => {
-        'artworks': artworks.map((artwork) => artwork.toJson()).toList(),
-        'startTime': startTime,
-      };
-}
-
 // Class representing CheckDeviceStatusRequest message
 class CheckCastingStatusRequest implements FF1Request {
   CheckCastingStatusRequest();
@@ -415,13 +384,9 @@ class CheckCastingStatusRequest implements FF1Request {
 class CheckCastingStatusReply extends ReplyWithOK {
   CheckCastingStatusReply({
     required super.ok,
-    required this.artworks,
     this.index,
     bool? isPaused,
     this.connectedDevice,
-    this.exhibitionId,
-    this.catalogId,
-    this.catalog,
     this.displayKey,
     this.deviceSettings,
     super.error,
@@ -431,13 +396,6 @@ class CheckCastingStatusReply extends ReplyWithOK {
   factory CheckCastingStatusReply.fromJson(Map<String, dynamic> json) =>
       CheckCastingStatusReply(
         ok: json['ok'] as bool,
-        artworks: json['artworks'] == null
-            ? []
-            : List<PlayArtworkV2>.from(
-                (json['artworks'] as List).map(
-                  (x) => PlayArtworkV2.fromJson(x as Map<String, dynamic>),
-                ),
-              ),
         index: json['index'] as int?,
         isPaused: json['isPaused'] as bool?,
         connectedDevice: json['connectedDevice'] != null
@@ -445,11 +403,6 @@ class CheckCastingStatusReply extends ReplyWithOK {
                 json['connectedDevice'] as Map<String, dynamic>,
               )
             : null,
-        exhibitionId: json['exhibitionId'] as String?,
-        catalogId: json['catalogId'] as String?,
-        catalog: json['catalog'] == null
-            ? null
-            : ExhibitionCatalog.values[json['catalog'] as int],
         displayKey: json['displayKey'] as String?,
         deviceSettings: json['deviceSettings'] != null
             ? DeviceDisplaySetting.fromJson(
@@ -471,19 +424,12 @@ class CheckCastingStatusReply extends ReplyWithOK {
       );
 
   int? get currentArtworkIndex {
-    if (artworks.isEmpty) {
-      return null;
-    }
     return index;
   }
 
-  List<PlayArtworkV2> artworks;
   int? index;
   bool isPaused;
   DeviceInfoV2? connectedDevice;
-  String? exhibitionId;
-  String? catalogId;
-  ExhibitionCatalog? catalog;
   String? displayKey;
   DeviceDisplaySetting? deviceSettings;
   final List<DP1Item>? items;
@@ -491,13 +437,9 @@ class CheckCastingStatusReply extends ReplyWithOK {
   @override
   Map<String, dynamic> toJson() => {
         'ok': super.ok,
-        'artworks': artworks.map((artwork) => artwork.toJson()).toList(),
         'index': index,
         'isPaused': isPaused,
         'connectedDevice': connectedDevice?.toJson(),
-        'exhibitionId': exhibitionId,
-        'catalogId': catalogId,
-        'catalog': catalog?.index,
         'displayKey': displayKey,
         'deviceSettings': deviceSettings?.toJson(),
         'error': super.error?.jsonString,
@@ -506,13 +448,11 @@ class CheckCastingStatusReply extends ReplyWithOK {
   // copyWith method
   CheckCastingStatusReply copyWith({
     bool? ok,
-    List<PlayArtworkV2>? artworks,
     int? index,
     bool? isPaused,
     DeviceInfoV2? connectedDevice,
     String? exhibitionId,
     String? catalogId,
-    ExhibitionCatalog? catalog,
     String? displayKey,
     DeviceDisplaySetting? deviceSettings,
     List<DP1Item>? items,
@@ -520,13 +460,9 @@ class CheckCastingStatusReply extends ReplyWithOK {
   }) {
     return CheckCastingStatusReply(
       ok: super.ok,
-      artworks: artworks ?? this.artworks,
       index: index ?? this.index,
       isPaused: isPaused ?? this.isPaused,
       connectedDevice: connectedDevice ?? this.connectedDevice,
-      exhibitionId: exhibitionId ?? this.exhibitionId,
-      catalogId: catalogId ?? this.catalogId,
-      catalog: catalog ?? this.catalog,
       displayKey: displayKey ?? this.displayKey,
       deviceSettings: deviceSettings ?? this.deviceSettings,
       items: items ?? this.items,
@@ -535,12 +471,64 @@ class CheckCastingStatusReply extends ReplyWithOK {
   }
 }
 
-// Class representing CastListArtworkReply message
-class CastListArtworkReply extends ReplyWithOK {
-  CastListArtworkReply({required super.ok});
+abstract class CastDP1PlaylistRequestAbstract extends FF1Request {
+  CastDP1PlaylistRequestAbstract({required this.intent});
 
-  factory CastListArtworkReply.fromJson(Map<String, dynamic> json) =>
-      CastListArtworkReply(ok: json['ok'] as bool);
+  final DP1Intent intent;
+}
+
+class CastDP1JsonPlaylistRequest implements CastDP1PlaylistRequestAbstract {
+  CastDP1JsonPlaylistRequest({
+    required this.dp1Call,
+    required this.intent,
+  });
+
+  factory CastDP1JsonPlaylistRequest.fromJson(Map<String, dynamic> json) {
+    return CastDP1JsonPlaylistRequest(
+      dp1Call: DP1Call.fromJson(json['dp1_call'] as Map<String, dynamic>),
+      intent: DP1Intent.fromJson(json['intent'] as Map<String, dynamic>),
+    );
+  }
+
+  final DP1Call dp1Call;
+  @override
+  final DP1Intent intent;
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'dp1_call': dp1Call.toJson(),
+      'intent': intent.toJson(),
+    };
+  }
+}
+
+class CastDP1UrlPlaylistRequest implements CastDP1PlaylistRequestAbstract {
+  factory CastDP1UrlPlaylistRequest.fromDp1Playlist(
+      DP1Call dp1Call, DP1Intent intent) {
+    return CastDP1UrlPlaylistRequest(
+      playlistUrl: dp1Call.url,
+      intent: intent,
+    );
+  }
+  CastDP1UrlPlaylistRequest({required this.playlistUrl, required this.intent});
+  final String playlistUrl; // url of the playlist
+  @override
+  final DP1Intent intent;
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'playlistUrl': playlistUrl,
+        'intent': intent.toJson(),
+      };
+}
+
+// Class representing CastListArtworkReply message
+class CastDP1PlaylistReply extends ReplyWithOK {
+  CastDP1PlaylistReply({required super.ok});
+
+  factory CastDP1PlaylistReply.fromJson(Map<String, dynamic> json) =>
+      CastDP1PlaylistReply(ok: json['ok'] as bool);
 
   @override
   Map<String, dynamic> toJson() => {
@@ -697,63 +685,6 @@ class UpdateDurationReply extends Reply {
   Map<String, dynamic> toJson() => {
         'artworks': artworks.map((artwork) => artwork.toJson()).toList(),
       };
-}
-
-// Enum for ExhibitionCatalog
-enum ExhibitionCatalog {
-  home,
-  curatorNote,
-  resource,
-  resourceDetail,
-  artwork;
-
-  String get metricName {
-    switch (this) {
-      case ExhibitionCatalog.home:
-        return 'home';
-      case ExhibitionCatalog.curatorNote:
-      case ExhibitionCatalog.resource:
-      case ExhibitionCatalog.resourceDetail:
-        // resource and resourceDetail are treated as the same metric
-        return 'curator_note';
-      case ExhibitionCatalog.artwork:
-        return 'artworks';
-    }
-  }
-}
-
-// Class representing CastExhibitionRequest message
-class CastExhibitionRequest implements FF1Request {
-  CastExhibitionRequest({
-    required this.catalog,
-    this.exhibitionId,
-    this.catalogId,
-  });
-
-  factory CastExhibitionRequest.fromJson(Map<String, dynamic> json) =>
-      CastExhibitionRequest(
-        exhibitionId: json['exhibitionId'] as String?,
-        catalog: ExhibitionCatalog.values[json['catalog'] as int],
-        catalogId: json['catalogId'] as String?,
-      );
-  String? exhibitionId;
-  ExhibitionCatalog catalog;
-  String? catalogId;
-
-  @override
-  Map<String, dynamic> toJson() => {
-        'exhibitionId': exhibitionId,
-        'catalog': catalog.index,
-        'catalogId': catalogId,
-      };
-}
-
-// Class representing CastExhibitionReply message
-class CastExhibitionReply extends ReplyWithOK {
-  CastExhibitionReply({required super.ok});
-
-  factory CastExhibitionReply.fromJson(Map<String, dynamic> json) =>
-      CastExhibitionReply(ok: json['ok'] as bool);
 }
 
 class KeyboardEventRequest implements FF1Request {
@@ -1006,28 +937,6 @@ class EmptyReply extends Reply {
 
   @override
   Map<String, dynamic> toJson() => {};
-}
-
-class CastDailyWorkRequest extends EmptyRequest {
-  CastDailyWorkRequest();
-
-  // fromJson method
-  factory CastDailyWorkRequest.fromJson(Map<String, dynamic> json) =>
-      CastDailyWorkRequest();
-
-  static String get displayKey => 'daily_work';
-}
-
-class CastDailyWorkReply extends ReplyWithOK {
-  CastDailyWorkReply({required super.ok});
-
-  factory CastDailyWorkReply.fromJson(Map<String, dynamic> json) =>
-      CastDailyWorkReply(ok: json['ok'] as bool);
-
-  @override
-  Map<String, dynamic> toJson() => {
-        'ok': ok,
-      };
 }
 
 // Class representing EnableMetricsStreamingRequest message

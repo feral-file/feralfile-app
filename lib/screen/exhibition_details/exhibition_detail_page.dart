@@ -2,20 +2,15 @@ import 'dart:async';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/ff_exhibition.dart';
-import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/exhibition_details/exhibition_detail_bloc.dart';
 import 'package:autonomy_flutter/screen/exhibition_details/exhibition_detail_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/intent.dart';
-import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/exhibition_ext.dart';
 import 'package:autonomy_flutter/util/feral_file_helper.dart';
-import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/util/metric_helper.dart';
 import 'package:autonomy_flutter/util/series_ext.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/cast_button.dart';
@@ -55,27 +50,24 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
   void initState() {
     super.initState();
     _exBloc = context.read<ExhibitionDetailBloc>();
-    _exBloc.add(GetExhibitionDetailEvent(
-        widget.payload.exhibitions[widget.payload.index].id));
+    _exBloc.add(
+      GetExhibitionDetailEvent(
+        widget.payload.exhibitions[widget.payload.index].id,
+      ),
+    );
     _controller = PageController();
   }
 
   @override
   Widget build(BuildContext context) =>
       BlocConsumer<ExhibitionDetailBloc, ExhibitionDetailState>(
-          builder: (context, state) => Scaffold(
-                appBar: _getAppBar(context, state.exhibition),
-                backgroundColor: AppColor.auGreyBackground,
-                body: _body(context, state),
-              ),
-          listener: (context, state) {},
-          listenWhen: (previous, current) {
-            if (previous.exhibition == null && current.exhibition != null) {
-              _stream(current.exhibition!);
-              _sendMetricViewExhibition();
-            }
-            return true;
-          });
+        builder: (context, state) => Scaffold(
+          appBar: _getAppBar(context, state.exhibition),
+          backgroundColor: AppColor.auGreyBackground,
+          body: _body(context, state),
+        ),
+        listener: (context, state) {},
+      );
 
   Widget _body(BuildContext context, ExhibitionDetailState state) {
     final exhibition = state.exhibition;
@@ -98,10 +90,6 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
               setState(() {
                 _currentIndex = index;
               });
-              if (index < itemCount - 1) {
-                _stream(exhibition);
-                _sendMetricViewExhibition();
-              }
             },
             scrollDirection: Axis.vertical,
             itemCount: itemCount,
@@ -123,7 +111,7 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
                   if (shouldShowNotePage) {
                     return _notePage(exhibition);
                   } else {
-                    final seriesIndex = 0; //index - (exhibitionInfoCount - 1);
+                    const seriesIndex = 0; //index - (exhibitionInfoCount - 1);
                     return _getSeriesPreviewPage(seriesIndex, exhibition);
                   }
                 default:
@@ -135,7 +123,7 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
         ),
         if (_currentIndex == 0 || (_currentIndex == 1 && shouldShowNotePage))
           _nextButton(),
-        BottomSpacing(),
+        const BottomSpacing(),
       ],
     );
   }
@@ -147,7 +135,7 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
       return const SizedBox();
     }
     return Padding(
-      padding: const EdgeInsets.only(bottom: 0),
+      padding: EdgeInsets.zero,
       child: FeralFileArtworkPreview(
         key: Key('feral_file_artwork_preview_${artwork.id}'),
         payload: FeralFileArtworkPreviewPayload(
@@ -156,40 +144,6 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
         ),
       ),
     );
-  }
-
-  void _sendMetricViewExhibition() {
-    final exhibition = _exBloc.state.exhibition;
-    if (exhibition == null) {
-      return;
-    }
-
-    final request = _getCastExhibitionRequest(exhibition);
-    final data = {
-      MetricParameter.exhibitionId: request.exhibitionId,
-      MetricParameter.section: request.catalog.metricName,
-      if (request.catalog == ExhibitionCatalog.artwork)
-        MetricParameter.tokenId: request.catalogId,
-    };
-    unawaited(injector<MetricClientService>()
-        .addEvent(MetricEventName.exhibitionView, data: data));
-  }
-
-  Future<void> _stream(Exhibition exhibition) async {
-    log.info('onPageChanged: $_currentIndex');
-    final displayKey = exhibition.displayKey;
-    final lastSelectedDevice =
-        _canvasDeviceBloc.state.lastSelectedActiveDeviceForKey(displayKey);
-    if (lastSelectedDevice != null) {
-      final request = _getCastExhibitionRequest(exhibition);
-      log.info('onPageChanged: request: $request');
-      final completer = Completer<void>();
-      _canvasDeviceBloc.add(
-        CanvasDeviceCastExhibitionEvent(lastSelectedDevice, request,
-            onDone: completer.complete),
-      );
-      await completer.future;
-    }
   }
 
   Widget _getPreviewPage(Exhibition exhibition) => Column(
@@ -207,8 +161,9 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
           quarterTurns: 3,
           child: IconButton(
             onPressed: () async => _controller.nextPage(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeIn),
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeIn,
+            ),
             constraints: const BoxConstraints(
               maxWidth: 44,
               maxHeight: 44,
@@ -226,15 +181,19 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
     final resources = <Widget>[];
     for (final resource in exhibition.allResources) {
       if (resource is CustomExhibitionNote) {
-        resources.add(ExhibitionCustomNote(
-          info: resource,
-        ));
+        resources.add(
+          ExhibitionCustomNote(
+            info: resource,
+          ),
+        );
       }
       if (resource is Post) {
-        resources.add(ExhibitionPostView(
-          post: resource,
-          exhibitionID: exhibition.id,
-        ));
+        resources.add(
+          ExhibitionPostView(
+            post: resource,
+            exhibitionID: exhibition.id,
+          ),
+        );
       }
     }
     return resources;
@@ -245,15 +204,18 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
     for (final foreWord in exhibition.foreWord) {
       final id =
           'forework_${exhibition.id}_${exhibition.foreWord.indexOf(foreWord)}';
-      foreWords.add(ExhibitionCustomNote(
-        info: CustomExhibitionNote(
+      foreWords.add(
+        ExhibitionCustomNote(
+          info: CustomExhibitionNote(
             id: id,
             title: 'Foreword',
             content: foreWord,
             canReadMore: true,
             readMoreUrl:
-                FeralFileHelper.getExhibitionForewordUrl(exhibition.slug)),
-      ));
+                FeralFileHelper.getExhibitionForewordUrl(exhibition.slug),
+          ),
+        ),
+      );
     }
     return foreWords;
   }
@@ -278,7 +240,6 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
               initialPage: _carouselIndex,
               onPageChanged: (index, reason) {
                 _carouselIndex = index;
-                _stream(exhibition);
               },
             ),
           ),
@@ -294,15 +255,17 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
       onBack: () => Navigator.pop(buildContext),
       action: shouldShowCastButton
           ? FFCastButton(
-              displayKey: exhibition.id,
+              // displayKey: exhibition.id,
               onDeviceSelected: (device) async {
                 final shouldShowNotePage = exhibition.shouldShowCuratorNotePage;
                 final exhibitionInfoCount = shouldShowNotePage ? 3 : 2;
                 final index = _currentIndex - (exhibitionInfoCount - 1);
                 final artworks = exhibition.displayableSeries.sorted
-                    .map((e) => e.artwork?.copyWith(
-                          series: e.copyWith(exhibition: exhibition),
-                        ))
+                    .map(
+                      (e) => e.artwork?.copyWith(
+                        series: e.copyWith(exhibition: exhibition),
+                      ),
+                    )
                     .where((e) => e != null)
                     .map((e) => e!)
                     .toList();
@@ -330,6 +293,7 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
                   CanvasDeviceCastDP1PlaylistEvent(
                     device: device,
                     playlist: playlist,
+                    usingUrl: false,
                     intent: DP1Intent.displayNow(),
                     onDoneCallback: completer.complete,
                   ),
@@ -341,67 +305,17 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
     );
   }
 
-  Pair<ExhibitionCatalog, String?> _getCurrentCatalogInfo(
-      Exhibition exhibition) {
-    ExhibitionCatalog? catalog;
-    String? catalogId;
-    final shouldShowNotePage = exhibition.shouldShowCuratorNotePage;
-    final exhibitionInfoCount = shouldShowNotePage ? 3 : 2;
-    switch (_currentIndex) {
-      case 0:
-        catalog = ExhibitionCatalog.home;
-      case 1:
-        if (shouldShowNotePage) {
-          final foreword = exhibition.foreWord;
-          if (_carouselIndex < foreword.length) {
-            catalog = ExhibitionCatalog.curatorNote;
-          } else if (_carouselIndex == foreword.length) {
-            catalog = ExhibitionCatalog.curatorNote;
-          } else {
-            catalog = ExhibitionCatalog.resource;
-            catalogId = exhibition
-                .allResources[_carouselIndex - (foreword.length + 1)].id;
-          }
-        } else {
-          catalog = ExhibitionCatalog.artwork;
-          final seriesIndex = 0; //_currentIndex - (exhibitionInfoCount - 1);
-          catalogId =
-              exhibition.displayableSeries.sorted[seriesIndex].artwork?.id;
-        }
-      default:
-        catalog = ExhibitionCatalog.artwork;
-        final seriesIndex = _currentIndex - (exhibitionInfoCount - 1);
-        catalogId =
-            exhibition.displayableSeries.sorted[seriesIndex].artwork?.id;
-    }
-    return Pair(catalog, catalogId);
-  }
-
-  CastExhibitionRequest _getCastExhibitionRequest(Exhibition exhibition) {
-    final exhibitionId = exhibition.id;
-    final catalogInfo = _getCurrentCatalogInfo(exhibition);
-    final catalog = catalogInfo.first;
-    final catalogId = catalogInfo.second;
-    CastExhibitionRequest request = CastExhibitionRequest(
-      exhibitionId: exhibitionId,
-      catalog: catalog,
-      catalogId: catalogId,
-    );
-    return request;
-  }
-
   @override
   FutureOr<void> afterFirstLayout(BuildContext context) {}
 }
 
 class ExhibitionDetailPayload {
-  final List<Exhibition> exhibitions;
-  final int index;
-
   const ExhibitionDetailPayload({
     required this.exhibitions,
     required this.index,
   });
+  final List<Exhibition> exhibitions;
+  final int index;
 
   // copyWith function
   ExhibitionDetailPayload copyWith({

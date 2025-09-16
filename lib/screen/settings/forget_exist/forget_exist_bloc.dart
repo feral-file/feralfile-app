@@ -21,6 +21,7 @@ import 'package:autonomy_flutter/service/canvas_notification_manager.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/metric_client_service.dart';
+import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/shared.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -56,6 +57,7 @@ class ForgetExistBloc extends AuBloc<ForgetExistEvent, ForgetExistState> {
       await _configurationService.removeAll();
       await injector<CacheManager>().emptyCache();
       await DefaultCacheManager().emptyCache();
+      await injector<UserDp1PlaylistService>().deleteAllPlaylists();
       unawaited(injector<CloudManager>().deleteAll());
       injector<CloudManager>().clearCache();
       await injector<CustomerSupportService>().clear();
