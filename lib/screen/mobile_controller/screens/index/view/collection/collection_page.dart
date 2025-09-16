@@ -5,7 +5,6 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/intent.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address_bloc.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address_state.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
@@ -163,17 +162,17 @@ class _CollectionPageState extends State<CollectionPage>
                                   ),
                                 ),
                               ),
-                            if (collectionState.isLazyLoading &&
-                                !collectionState.isRefreshing)
-                              SliverToBoxAdapter(
-                                child: Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 16),
-                                  child: Center(
-                                      child: LoadMoreIndicator(
-                                          isLoadingMore: true)),
-                                ),
-                              ),
+                            // if (collectionState.isLazyLoading &&
+                            //     !collectionState.isRefreshing)
+                            //   SliverToBoxAdapter(
+                            //     child: Padding(
+                            //       padding:
+                            //           const EdgeInsets.symmetric(vertical: 16),
+                            //       child: Center(
+                            //           child: LoadMoreIndicator(
+                            //               isLoadingMore: true)),
+                            //     ),
+                            //   ),
                             SliverToBoxAdapter(
                               child: BottomSpacing(),
                             )
