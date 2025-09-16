@@ -208,8 +208,13 @@ class _OnboardingPageState extends State<OnboardingPage>
     await injector<CloudManager>().downloadAll(includePlaylists: true);
 
     // migrate
-    await injector<UserDp1PlaylistService>()
-        .createAllOwnedPlaylistIfNotExists();
+    try {
+      await injector<UserDp1PlaylistService>()
+          .createAllOwnedPlaylistIfNotExists();
+    } catch (e, s) {
+      log.info('Failed to create owned playlist: $e');
+      unawaited(Sentry.captureException(e, stackTrace: s));
+    }
 
     if (injector<ConfigurationService>().isNotificationEnabled()) {
       unawaited(_registerPushNotifications());

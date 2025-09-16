@@ -159,13 +159,13 @@ class _DP1FeedApi implements DP1FeedApi {
 
   @override
   Future<DP1PlaylistResponse> getAllPlaylists({
-    String? playlistGroupId,
+    String? channelId,
     String? cursor,
     int? limit,
   }) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
-      r'playlist-group': playlistGroupId,
+      r'channel': channelId,
       r'cursor': cursor,
       r'limit': limit,
     };
@@ -200,7 +200,7 @@ class _DP1FeedApi implements DP1FeedApi {
   }
 
   @override
-  Future<Channel> createPlaylistGroup(
+  Future<Channel> createChannel(
     Map<String, dynamic> body,
   ) async {
     final _extra = <String, dynamic>{};
@@ -216,7 +216,7 @@ class _DP1FeedApi implements DP1FeedApi {
     )
         .compose(
           _dio.options,
-          '/api/v1/playlist-groups',
+          '/api/v1/channels',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -237,7 +237,7 @@ class _DP1FeedApi implements DP1FeedApi {
   }
 
   @override
-  Future<Channel> getPlaylistGroupById(String groupId) async {
+  Future<Channel> getChannelById(String channelId) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
@@ -249,7 +249,7 @@ class _DP1FeedApi implements DP1FeedApi {
     )
         .compose(
           _dio.options,
-          '/api/v1/playlist-groups/${groupId}',
+          '/api/v1/channels/${channelId}',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -270,7 +270,7 @@ class _DP1FeedApi implements DP1FeedApi {
   }
 
   @override
-  Future<DP1ChannelsResponse> getAllPlaylistGroups({
+  Future<DP1ChannelsResponse> getAllChannels({
     String? cursor,
     int? limit,
   }) async {
@@ -289,7 +289,7 @@ class _DP1FeedApi implements DP1FeedApi {
     )
         .compose(
           _dio.options,
-          '/api/v1/playlist-groups',
+          '/api/v1/channels',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -311,13 +311,13 @@ class _DP1FeedApi implements DP1FeedApi {
 
   @override
   Future<DP1PlaylistItemsResponse> getPlaylistItems({
-    List<String>? playlistGroupIds,
+    String? channelId,
     String? cursor,
     int? limit,
   }) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
-      r'playlist-group': playlistGroupIds,
+      r'channel': channelId,
       r'cursor': cursor,
       r'limit': limit,
     };

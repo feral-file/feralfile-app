@@ -1,5 +1,7 @@
+import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/services/channels_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -75,7 +77,11 @@ class WorksBloc extends Bloc<WorksEvent, WorksState> {
         emit(state.copyWith(status: WorksStateStatus.loading));
       }
 
+      final channelId =
+          injector<ChannelsService>().remoteConfigChannelIds?.firstOrNull;
+
       final worksResponse = await _dp1PlaylistService.getPlaylistItems(
+        channelId: channelId,
         cursor: cursor,
         limit: _pageSize,
       );

@@ -119,19 +119,19 @@ class DP1FeedService {
     int? limit,
   }) async {
     return api.getAllPlaylists(
-      playlistGroupId: channelId,
+      channelId: channelId,
       cursor: cursor,
       limit: limit,
     );
   }
 
   Future<DP1PlaylistItemsResponse> getPlaylistItems({
-    List<String>? playlistGroupIds,
+    String? channelId,
     String? cursor,
     int? limit,
   }) async {
     return api.getPlaylistItems(
-      playlistGroupIds: playlistGroupIds,
+      channelId: channelId,
       cursor: cursor,
       limit: limit,
     );

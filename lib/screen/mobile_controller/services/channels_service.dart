@@ -29,7 +29,7 @@ class ChannelsService {
     if (remoteConfigChannelIds != null) {
       final future = remoteConfigChannelIds!
           .map(
-            (id) => api.getPlaylistGroupById(id),
+            (id) => api.getChannelById(id),
           )
           .toList();
       final channels = await Future.wait(future);
@@ -44,7 +44,7 @@ class ChannelsService {
     String? currentCursor = cursor;
 
     while (true) {
-      final channels = await api.getAllPlaylistGroups(
+      final channels = await api.getAllChannels(
         cursor: currentCursor,
         limit: limit,
       );
@@ -67,10 +67,10 @@ class ChannelsService {
   }
 
   Future<Channel> createChannel(Channel channel) async {
-    return api.createPlaylistGroup(channel.toJson());
+    return api.createChannel(channel.toJson());
   }
 
   Future<Channel> getChannelDetail(String channelId) async {
-    return api.getPlaylistGroupById(channelId);
+    return api.getChannelById(channelId);
   }
 }

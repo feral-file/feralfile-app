@@ -35,24 +35,24 @@ abstract class DP1FeedApi {
 
   @GET('/api/v1/playlists')
   Future<DP1PlaylistResponse> getAllPlaylists({
-    @Query('playlist-group') String? playlistGroupId,
+    @Query('channel') String? channelId,
     @Query('cursor') String? cursor,
     @Query('limit') int? limit,
   });
 
-  // PLAYLIST GROUP
-  @POST('/api/v1/playlist-groups')
-  Future<Channel> createPlaylistGroup(
+  // CHANNEL
+  @POST('/api/v1/channels')
+  Future<Channel> createChannel(
     @Body() Map<String, dynamic> body,
   );
 
-  @GET('/api/v1/playlist-groups/{groupId}')
-  Future<Channel> getPlaylistGroupById(
-    @Path('groupId') String groupId,
+  @GET('/api/v1/channels/{channelId}')
+  Future<Channel> getChannelById(
+    @Path('channelId') String channelId,
   );
 
-  @GET('/api/v1/playlist-groups')
-  Future<DP1ChannelsResponse> getAllPlaylistGroups({
+  @GET('/api/v1/channels')
+  Future<DP1ChannelsResponse> getAllChannels({
     @Query('cursor') String? cursor,
     @Query('limit') int? limit,
   });
@@ -60,7 +60,7 @@ abstract class DP1FeedApi {
   // PLAYLIST ITEM
   @GET('/api/v1/playlist-items')
   Future<DP1PlaylistItemsResponse> getPlaylistItems({
-    @Query('playlist-group') List<String>? playlistGroupIds,
+    @Query('channel') String? channelId,
     @Query('cursor') String? cursor,
     @Query('limit') int? limit,
   });

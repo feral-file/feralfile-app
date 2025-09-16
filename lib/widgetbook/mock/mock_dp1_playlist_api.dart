@@ -17,7 +17,8 @@ class MockDP1PlaylistApi implements DP1FeedApi {
       slug: 'mock-created-playlist',
       title: (body['title'] as String?) ?? 'Mock Created Playlist',
       created: DateTime.now(),
-      defaults: (body['defaults'] as Map<String, dynamic>?) ?? {'display': {}},
+      defaults: (body['defaults'] as Map<String, dynamic>?) ??
+          <String, dynamic>{'display': <String, dynamic>{}},
       items: [
         DP1Item(
           duration: 30,
@@ -47,7 +48,7 @@ class MockDP1PlaylistApi implements DP1FeedApi {
       slug: 'mock-playlist-$playlistId',
       title: 'Mock Playlist $playlistId',
       created: DateTime.now().subtract(const Duration(days: 1)),
-      defaults: {'display': {}},
+      defaults: <String, dynamic>{'display': <String, dynamic>{}},
       items: [
         DP1Item(
           duration: 45,
@@ -84,7 +85,7 @@ class MockDP1PlaylistApi implements DP1FeedApi {
 
   @override
   Future<DP1PlaylistResponse> getAllPlaylists({
-    String? playlistGroupId,
+    String? channelId,
     String? cursor,
     int? limit,
   }) async {
@@ -96,7 +97,7 @@ class MockDP1PlaylistApi implements DP1FeedApi {
         slug: 'mock-playlist-1',
         title: 'Mock Playlist 1',
         created: DateTime.now().subtract(const Duration(days: 1)),
-        defaults: {'display': {}},
+        defaults: <String, dynamic>{'display': <String, dynamic>{}},
         items: [
           DP1Item(
             duration: 30,
@@ -121,7 +122,7 @@ class MockDP1PlaylistApi implements DP1FeedApi {
         slug: 'mock-playlist-2',
         title: 'Mock Playlist 2',
         created: DateTime.now().subtract(const Duration(days: 2)),
-        defaults: {'display': {}},
+        defaults: <String, dynamic>{'display': <String, dynamic>{}},
         items: [
           DP1Item(
             duration: 45,
@@ -146,7 +147,7 @@ class MockDP1PlaylistApi implements DP1FeedApi {
         slug: 'mock-playlist-3',
         title: 'Mock Playlist 3',
         created: DateTime.now().subtract(const Duration(days: 3)),
-        defaults: {'display': {}},
+        defaults: <String, dynamic>{'display': <String, dynamic>{}},
         items: [
           DP1Item(
             duration: 60,
@@ -175,7 +176,7 @@ class MockDP1PlaylistApi implements DP1FeedApi {
   }
 
   @override
-  Future<Channel> createPlaylistGroup(
+  Future<Channel> createChannel(
     Map<String, dynamic> body,
   ) async {
     // Mock creating a playlist group
@@ -192,13 +193,13 @@ class MockDP1PlaylistApi implements DP1FeedApi {
   }
 
   @override
-  Future<Channel> getPlaylistGroupById(String groupId) async {
+  Future<Channel> getChannelById(String channelId) async {
     // Mock getting a playlist group by ID
     return Channel(
-      id: groupId,
-      slug: 'mock-group-$groupId',
-      title: 'Mock Group $groupId',
-      summary: 'Mock group description for $groupId',
+      id: channelId,
+      slug: 'mock-channel-$channelId',
+      title: 'Mock Channel $channelId',
+      summary: 'Mock channel description for $channelId',
       created: DateTime.now().subtract(const Duration(days: 1)),
       playlists: [
         'https://example.com/mock-playlist-1.json',
@@ -209,17 +210,17 @@ class MockDP1PlaylistApi implements DP1FeedApi {
   }
 
   @override
-  Future<DP1ChannelsResponse> getAllPlaylistGroups({
+  Future<DP1ChannelsResponse> getAllChannels({
     String? cursor,
     int? limit,
   }) async {
     // Mock getting all playlist groups
     final mockChannels = [
       Channel(
-        id: 'mock-group-1',
-        slug: 'mock-group-1',
-        title: 'Mock Group 1',
-        summary: 'Mock group description 1',
+        id: 'mock-channel-1',
+        slug: 'mock-channel-1',
+        title: 'Mock Channel 1',
+        summary: 'Mock channel description 1',
         created: DateTime.now().subtract(const Duration(days: 1)),
         playlists: [
           'https://example.com/mock-playlist-1.json',
@@ -227,20 +228,20 @@ class MockDP1PlaylistApi implements DP1FeedApi {
         ],
       ),
       Channel(
-        id: 'mock-group-2',
-        slug: 'mock-group-2',
-        title: 'Mock Group 2',
-        summary: 'Mock group description 2',
+        id: 'mock-channel-2',
+        slug: 'mock-channel-2',
+        title: 'Mock Channel 2',
+        summary: 'Mock channel description 2',
         created: DateTime.now().subtract(const Duration(days: 2)),
         playlists: [
           'https://example.com/mock-playlist-3.json',
         ],
       ),
       Channel(
-        id: 'mock-group-3',
-        slug: 'mock-group-3',
-        title: 'Mock Group 3',
-        summary: 'Mock group description 3',
+        id: 'mock-channel-3',
+        slug: 'mock-channel-3',
+        title: 'Mock Channel 3',
+        summary: 'Mock channel description 3',
         created: DateTime.now().subtract(const Duration(days: 3)),
         playlists: [
           'https://example.com/mock-playlist-4.json',
@@ -259,7 +260,7 @@ class MockDP1PlaylistApi implements DP1FeedApi {
 
   @override
   Future<DP1PlaylistItemsResponse> getPlaylistItems({
-    List<String>? playlistGroupIds,
+    List<String>? channelIds,
     String? cursor,
     int? limit,
   }) async {

@@ -20,7 +20,7 @@ class MockDp1PlaylistService extends DP1FeedService {
       slug: 'mock-created-playlist',
       title: request.title,
       created: DateTime.now(),
-      defaults: {'display': {}},
+      defaults: <String, dynamic>{'display': <String, dynamic>{}},
       items: request.items
           .map(
             (e) => DP1Item(
@@ -44,7 +44,7 @@ class MockDp1PlaylistService extends DP1FeedService {
       slug: 'mock-playlist',
       title: 'Mock Playlist',
       created: DateTime.now(),
-      defaults: {'display': {}},
+      defaults: <String, dynamic>{'display': <String, dynamic>{}},
       items: [
         DP1Item(
           duration: 30,
@@ -89,7 +89,7 @@ class MockDp1PlaylistService extends DP1FeedService {
         slug: 'mock-playlist-1',
         title: 'Mock Playlist 1',
         created: DateTime.now(),
-        defaults: {'display': {}},
+        defaults: <String, dynamic>{'display': <String, dynamic>{}},
         items: [
           DP1Item(
             duration: 30,
@@ -114,7 +114,7 @@ class MockDp1PlaylistService extends DP1FeedService {
         slug: 'mock-playlist-2',
         title: 'Mock Playlist 2',
         created: DateTime.now(),
-        defaults: {'display': {}},
+        defaults: <String, dynamic>{'display': <String, dynamic>{}},
         items: [
           DP1Item(
             duration: 45,
@@ -146,7 +146,7 @@ class MockDp1PlaylistService extends DP1FeedService {
         slug: 'mock-all-playlist-1',
         title: 'Mock All Playlist 1',
         created: DateTime.now(),
-        defaults: {'display': {}},
+        defaults: <String, dynamic>{'display': <String, dynamic>{}},
         items: [
           DP1Item(
             duration: 30,
@@ -206,7 +206,7 @@ class MockDp1PlaylistService extends DP1FeedService {
         slug: 'mock-playlist-response-1',
         title: 'Mock Playlist Response 1',
         created: DateTime.now(),
-        defaults: {'display': {}},
+        defaults: <String, dynamic>{'display': <String, dynamic>{}},
         items: [
           DP1Item(
             duration: 30,
@@ -232,7 +232,7 @@ class MockDp1PlaylistService extends DP1FeedService {
 
   @override
   Future<DP1PlaylistItemsResponse> getPlaylistItems({
-    List<String>? playlistGroupIds,
+    List<String>? channelIds,
     String? cursor,
     int? limit,
   }) async {
