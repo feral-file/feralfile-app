@@ -24,7 +24,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class BluetoothDevicePortalPagePayload {
   BluetoothDevicePortalPagePayload({
@@ -102,9 +101,18 @@ class BluetoothDevicePortalPageState extends State<BluetoothDevicePortalPage>
                     ),
                   ),
                   SliverToBoxAdapter(
-                    child: SvgPicture.asset(
-                      'assets/images/portal.svg',
-                      fit: BoxFit.fitWidth,
+                    child: Center(
+                      child: Text(
+                        'FF1',
+                        style: Theme.of(context)
+                            .textTheme
+                            .ppMori700White24
+                            .copyWith(
+                                letterSpacing: 8.0,
+                                height: 0.8,
+                                color: AppColor.feralFileLightBlue,
+                                fontSize: 98),
+                      ),
                     ),
                   ),
                   const SliverToBoxAdapter(
