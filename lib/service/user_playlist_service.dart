@@ -6,6 +6,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_create_playlist_request.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:uuid/uuid.dart';
 
 import 'dp1_feed_service.dart';
 
@@ -41,11 +42,13 @@ class UserDp1PlaylistService {
       return playlist;
     }
 
-    final allOwnedAddresses =
-        await _cloudManager.addressObject.getAllAddresses();
+    final allOwnedAddresses = await _cloudManager.addressObject
+        .getAllAddresses()
+        .where((e) => !e.isHidden);
+    final title = 'All Own ${const Uuid().v1()}';
     final request = DP1CreatePlaylistRequest(
       dpVersion: '1.0.0',
-      title: 'All Owned',
+      title: title,
       items: [],
       dynamicQueries: [
         DynamicQuery(
