@@ -54,7 +54,7 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen> {
                       device: device,
                       playlist: widget.payload.playlist,
                       intent: DP1Intent.displayNow(),
-                      usingUrl: widget.payload.isFromFeedServer,
+                      usingUrl: false, //widget.payload.isFromFeedServer,
                     ),
                   );
                 },
