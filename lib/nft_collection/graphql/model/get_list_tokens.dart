@@ -29,6 +29,7 @@ class QueryListTokensRequest {
     this.lastUpdatedAt,
     this.offset = 0,
     this.size = indexerTokensPageSize,
+    this.sortBy = IndexerAssetTokenSortBy.lastActivityTime,
   }) : burnedIncluded = ids.any((id) => id.startsWith('bmk'));
 
   final List<String> owners;
@@ -37,6 +38,7 @@ class QueryListTokensRequest {
   final int offset;
   final int size;
   final bool burnedIncluded;
+  final IndexerAssetTokenSortBy sortBy;
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
@@ -46,6 +48,7 @@ class QueryListTokensRequest {
       'offset': offset,
       'size': size,
       'burnedIncluded': burnedIncluded,
+      'sortBy': sortBy.toJson(),
     };
   }
 }

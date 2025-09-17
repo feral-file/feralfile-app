@@ -38,21 +38,21 @@ class _MobileControllerHomePageState
     // load channel and playlist
     _channelsBloc.add(const LoadChannelsEvent());
     _playlistsBloc.add(const LoadPlaylistsEvent());
-    injector<UserDp1PlaylistService>().allOwnedPlaylist().then((playlist) {
-      final dynamicQuery = playlist.firstDynamicQuery;
-      if (dynamicQuery != null) {
-        _userAllOwnCollectionBloc.add(LoadDynamicQueryEvent(dynamicQuery));
-      }
-    }).catchError((error) {
-      // Handle error if needed
-    });
+
+    final cachedAllOwnPlaylist =
+        injector<UserDp1PlaylistService>().cachedAllOwnedPlaylist;
+    _userAllOwnCollectionBloc.add(
+      UpdateDynamicQueryEvent(
+        dynamicQuery: cachedAllOwnPlaylist.firstDynamicQuery!,
+      ),
+    );
     // final dynamicQuery = injector<UserAllOwnCollectionBloc>()
     //     .state
     //     .dynamicQuery
     //     .copyWith(
     //         params:
     //             injector<UserAllOwnCollectionBloc>().state.dynamicQuery.params);
-    // _userAllOwnCollectionBloc.add(LoadDynamicQueryEvent());
+    // _userAllOwnCollectionBloc.add(RefreshAssetTokenFromDynamicQuery());
     // injector<MeiliSearchBloc>().add(MeiliSearchQueryChanged(''));
 
     HomePageHelper.instance.onHomePageInit(context, this);

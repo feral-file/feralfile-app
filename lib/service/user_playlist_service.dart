@@ -6,6 +6,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_create_playlist_request.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:sentry/sentry.dart';
 import 'package:uuid/uuid.dart';
 
 import 'dp1_feed_service.dart';
@@ -19,6 +20,20 @@ class UserDp1PlaylistService {
 
   final DP1FeedService _dp1FeedService;
   final CloudManager _cloudManager;
+
+  Map<String, DateTime> addressLastRefreshedTime = {};
+
+  DP1Call? _cachedAllOwnedPlaylist;
+
+  // make sure the cached playlist is not null
+  DP1Call get cachedAllOwnedPlaylist {
+    if (_cachedAllOwnedPlaylist == null) {
+      Sentry.captureMessage('Cached all owned playlist is null when accessed');
+      throw DP1AllOwnCollectionEmptyError(
+          message: 'All owned playlist not found');
+    }
+    return _cachedAllOwnedPlaylist!;
+  }
 
   Future<DP1Call> allOwnedPlaylist() async {
     final allOwnedPlaylistIds =
@@ -38,7 +53,8 @@ class UserDp1PlaylistService {
         _cloudManager.dp1FeedCloudObject.getOwnedPlaylistIds();
     if (allOwnedPlaylistIds.isNotEmpty) {
       final playlistId = allOwnedPlaylistIds.first;
-      final playlist = _dp1FeedService.getPlaylistById(playlistId);
+      final playlist = await _dp1FeedService.getPlaylistById(playlistId);
+      _cachedAllOwnedPlaylist = playlist;
       return playlist;
     }
 
@@ -64,7 +80,8 @@ class UserDp1PlaylistService {
       isSyncToCloud: true,
     );
 
-    _cloudManager.dp1FeedCloudObject.addOwnedPlaylistId(created.id);
+    await _cloudManager.dp1FeedCloudObject.addOwnedPlaylistId(created.id);
+    _cachedAllOwnedPlaylist = created;
     return created;
   }
 
@@ -134,6 +151,7 @@ class UserDp1PlaylistService {
       return true;
     }
     final deleted = await Future.wait(allOwnedPlaylistIds.map(deletePlaylist));
+    addressLastRefreshedTime.clear();
     if (deleted.any((e) => e == false)) {
       log.info('Failed to delete all owned playlists');
       return false;
@@ -154,13 +172,42 @@ class UserDp1PlaylistService {
     }
   }
 
+  Future<void> updateAddressLastRefreshedTime({
+    required List<String> addresses,
+    DateTime? dateTime,
+  }) async {
+    // update the time for the addresses
+    final time = dateTime ?? DateTime.now();
+    for (var address in addresses) {
+      addressLastRefreshedTime[address] = time;
+    }
+  }
+
+  DateTime getAddressOldestLastRefreshedTime({
+    required List<String> addresses,
+  }) {
+    // find the oldest time, saved in addressLastRefreshedTime
+    // if any address in addresses is not in addressLastRefreshedTime, return 1970-01-01
+    for (var address in addresses) {
+      if (!addressLastRefreshedTime.containsKey(address)) {
+        return DateTime(1970, 1, 1);
+      }
+    }
+    return addressLastRefreshedTime.entries
+        .where((e) => addresses.contains(e.key))
+        .map((e) => e.value)
+        .toList()
+        .reduce((a, b) => a.isBefore(b) ? a : b);
+  }
+
   Future<void> _onUpdateAllOwnedPlaylist(DP1Call playlist) async {
     log.info('[UserDp1PlaylistService] onUpdateAllOwnedPlaylist');
     final dynamicQuery = playlist.firstDynamicQuery;
     if (dynamicQuery == null) {
       return;
     }
-    injector<UserAllOwnCollectionBloc>()
-        .add(LoadDynamicQueryEvent(dynamicQuery));
+    _cachedAllOwnedPlaylist = playlist;
+    final bloc = injector<UserAllOwnCollectionBloc>();
+    bloc.add(UpdateDynamicQueryEvent(dynamicQuery: dynamicQuery));
   }
 }

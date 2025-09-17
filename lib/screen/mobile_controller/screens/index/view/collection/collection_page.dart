@@ -5,6 +5,7 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/intent.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address_bloc.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address_state.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
@@ -46,14 +47,15 @@ class _CollectionPageState extends State<CollectionPage>
 
   void _autoRefresh() async {
     _autoRefreshTimer?.cancel();
-    _autoRefreshTimer = Timer.periodic(const Duration(minutes: 15), (_) async {
+    _autoRefreshTimer = Timer.periodic(const Duration(minutes: 1), (_) async {
       try {
         final allOwnedPlaylist =
-            await injector<UserDp1PlaylistService>().allOwnedPlaylist();
+            await injector<UserDp1PlaylistService>().cachedAllOwnedPlaylist;
         final dynamicQuery = allOwnedPlaylist.firstDynamicQuery;
         if (!mounted) return;
         if (dynamicQuery != null) {
-          _collectionBloc.add(LoadDynamicQueryEvent(dynamicQuery, lazy: false));
+          _collectionBloc
+              .add(UpdateDynamicQueryEvent(dynamicQuery: dynamicQuery));
         }
       } catch (_) {
         // Silently ignore refresh errors
@@ -143,10 +145,10 @@ class _CollectionPageState extends State<CollectionPage>
                         CustomScrollView(
                           shrinkWrap: true,
                           slivers: [
-                            if (collectionState.assetTokens.isNotEmpty)
+                            if (collectionState.compactedAssetTokens.isNotEmpty)
                               UIHelper.assetTokenSliverGrid(
                                 context,
-                                collectionState.assetTokens,
+                                collectionState.compactedAssetTokens,
                                 'Collection',
                               )
                             else
@@ -162,24 +164,24 @@ class _CollectionPageState extends State<CollectionPage>
                                   ),
                                 ),
                               ),
-                            // if (collectionState.isLazyLoading &&
-                            //     !collectionState.isRefreshing)
-                            //   SliverToBoxAdapter(
-                            //     child: Padding(
-                            //       padding:
-                            //           const EdgeInsets.symmetric(vertical: 16),
-                            //       child: Center(
-                            //           child: LoadMoreIndicator(
-                            //               isLoadingMore: true)),
-                            //     ),
-                            //   ),
+                            if (collectionState.isLazyLoading)
+                              SliverToBoxAdapter(
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  child: Center(
+                                      child: LoadMoreIndicator(
+                                          isLoadingMore: true)),
+                                ),
+                              ),
                             SliverToBoxAdapter(
                               child: BottomSpacing(),
                             )
                           ],
                         ),
                         // Loading overlay when loading and no tokens yet
-                        if (collectionState.isRefreshing)
+                        if (collectionState.isLazyLoading &&
+                            collectionState.compactedAssetTokens.isEmpty)
                           Container(
                             color: Colors.black.withOpacity(0.3),
                             child: const Center(

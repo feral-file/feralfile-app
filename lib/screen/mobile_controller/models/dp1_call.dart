@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/nft_collection/utils/constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 
 class DP1Call {
@@ -151,13 +152,16 @@ class DynamicQuery {
 class DynamicQueryParams {
   DynamicQueryParams({
     required this.owners,
+    this.sortBy = IndexerAssetTokenSortBy.lastActivityTime,
   });
 
   final List<String> owners;
+  IndexerAssetTokenSortBy sortBy;
 
   Map<String, dynamic> toJson() {
     return {
       'owners': owners.join(','),
+      'sortBy': sortBy.toJson(),
     };
   }
 

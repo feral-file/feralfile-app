@@ -2,10 +2,12 @@ part of 'user_all_own_collection_bloc.dart';
 
 abstract class UserAllOwnCollectionEvent {}
 
-class LoadDynamicQueryEvent extends UserAllOwnCollectionEvent {
-  LoadDynamicQueryEvent(this.dynamicQuery, {this.lazy = true});
+class LazyLoadAssetTokenFromDynamicQuery extends UserAllOwnCollectionEvent {}
+
+class RefreshAssetTokenFromDynamicQuery extends UserAllOwnCollectionEvent {}
+
+class UpdateDynamicQueryEvent extends UserAllOwnCollectionEvent {
+  UpdateDynamicQueryEvent({required this.dynamicQuery});
 
   final DynamicQuery dynamicQuery;
-  // lazy=true: emit on every batch; lazy=false: emit once when completed
-  final bool lazy;
 }
