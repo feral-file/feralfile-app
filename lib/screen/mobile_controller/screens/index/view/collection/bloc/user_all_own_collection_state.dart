@@ -5,13 +5,13 @@ enum UserAllOwnCollectionStatus { initial, lazyLoading, loaded, error }
 class UserAllOwnCollectionState {
   const UserAllOwnCollectionState({
     this.status = UserAllOwnCollectionStatus.initial,
-    this.assetTokens = const <AssetToken>[],
+    this.assetTokens = const <CompactedAssetToken>[],
     this.error = '',
     this.isRefreshing = false,
   });
 
   final UserAllOwnCollectionStatus status;
-  final List<AssetToken> assetTokens;
+  final List<CompactedAssetToken> assetTokens;
   final String error;
   final bool isRefreshing;
 
@@ -21,7 +21,7 @@ class UserAllOwnCollectionState {
 
   UserAllOwnCollectionState copyWith({
     UserAllOwnCollectionStatus? status,
-    List<AssetToken>? assetTokens,
+    List<CompactedAssetToken>? assetTokens,
     String? error,
     bool? isRefreshing,
   }) {

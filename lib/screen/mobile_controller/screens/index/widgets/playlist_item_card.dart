@@ -5,6 +5,7 @@ import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/view/ff_artwork_thumbnail_view.dart';
 import 'package:flutter/material.dart';
@@ -12,12 +13,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 class PlaylistItemCard extends StatefulWidget {
   const PlaylistItemCard({
-    required this.asset,
+    required this.compactedAssetToken,
     this.playlistTitle,
     super.key,
   });
 
-  final AssetToken asset;
+  final CompactedAssetToken compactedAssetToken;
   final String? playlistTitle;
 
   @override
@@ -35,7 +36,7 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
 
   void _fetchIdentity() {
     final listIdentities = <String>[];
-    final assetToken = widget.asset;
+    final assetToken = widget.compactedAssetToken;
 
     listIdentities.addAll([assetToken.owner, assetToken.artistName ?? '']);
     identityBloc.add(GetIdentityEvent(listIdentities));
@@ -43,15 +44,14 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.asset.title ?? '';
-    final artist = widget.asset.artistName ?? '';
+    final title = widget.compactedAssetToken.title ?? '';
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
         injector<NavigationService>().navigateTo(
           AppRouter.artworkDetailsPage,
           arguments: ArtworkDetailPayload(
-            ArtworkIdentity(widget.asset.id, widget.asset.owner),
+            widget.compactedAssetToken.identity,
             useIndexer: true,
             backTitle: widget.playlistTitle,
           ),
@@ -70,7 +70,8 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
                   child: Builder(
                     builder: (context) {
                       return FFArtworkThumbnailView(
-                        url: widget.asset.galleryThumbnailURL ?? '',
+                        url: widget.compactedAssetToken.galleryThumbnailURL ??
+                            '',
                         fit: BoxFit.fitWidth,
                       );
                     },
@@ -81,7 +82,7 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
               BlocBuilder<IdentityBloc, IdentityState>(
                   bloc: identityBloc,
                   builder: (context, identityState) {
-                    final assetToken = widget.asset;
+                    final assetToken = widget.compactedAssetToken;
                     final artistName = assetToken.artistName
                             ?.toIdentityOrMask(identityState.identityMap) ??
                         assetToken.artistID ??

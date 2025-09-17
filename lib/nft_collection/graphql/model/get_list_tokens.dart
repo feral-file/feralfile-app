@@ -1,24 +1,25 @@
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:autonomy_flutter/nft_collection/utils/constants.dart';
 
-class QueryListTokensResponse {
+class QueryListTokensResponse<T extends CompactedAssetToken> {
   QueryListTokensResponse({
     required this.tokens,
   });
 
-  factory QueryListTokensResponse.fromJson(Map<String, dynamic> map) {
-    return QueryListTokensResponse(
+  factory QueryListTokensResponse.fromJson(Map<String, dynamic> map,
+      T Function(Map<String, dynamic>) fromJsonGraphQl) {
+    return QueryListTokensResponse<T>(
       tokens: map['tokens'] != null
-          ? List<AssetToken>.from(
-              (map['tokens'] as List<dynamic>).map<AssetToken>(
-                (x) => AssetToken.fromJsonGraphQl(x as Map<String, dynamic>),
+          ? List<T>.from(
+              (map['tokens'] as List<dynamic>).map<T>(
+                (x) => fromJsonGraphQl(x as Map<String, dynamic>),
               ),
             )
           : [],
     );
   }
 
-  List<AssetToken> tokens;
+  List<T> tokens;
 }
 
 class QueryListTokensRequest {

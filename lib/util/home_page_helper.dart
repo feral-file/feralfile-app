@@ -100,9 +100,9 @@ class HomePageHelper {
 
     context.read<HomeBloc>().add(CheckReviewAppEvent());
 
-    _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
-      unawaited(clientTokenService.refreshTokens());
-    });
+    // _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
+    //   unawaited(clientTokenService.refreshTokens());
+    // });
 
     _triggerShowAnnouncement();
 

@@ -32,6 +32,66 @@ class CompactedAssetToken implements Comparable<CompactedAssetToken> {
           : null,
     );
   }
+
+  factory CompactedAssetToken.fromJsonGraphQl(Map<String, dynamic> json) {
+    final rawOwnerList = (json['owners'] ?? <dynamic>[]) as List<dynamic>;
+    final owners = <String, int>{};
+    for (final rawOwner in rawOwnerList) {
+      final owner = rawOwner as Map<String, dynamic>;
+      owners[owner['address'] as String] = owner['balance'] as int;
+    }
+    final projectMetadata = ProjectMetadata.fromJson(
+      Map<String, dynamic>.from(json['asset'] as Map),
+    );
+
+    return CompactedAssetToken(
+      id: json['indexID'] as String,
+      edition: json['edition'] as int,
+      blockchain: json['blockchain'] as String,
+      mintedAt: json['mintedAt'] != null
+          ? DateTime.parse(json['mintedAt'] as String)
+          : null,
+      tokenId: json['id'] as String?,
+      balance: json['balance'] as int,
+      owner: json['owner'] as String,
+      lastActivityTime: json['lastActivityTime'] != null
+          ? DateTime.parse(json['lastActivityTime'] as String)
+          : DateTime(1970),
+      lastRefreshedTime: json['lastRefreshedTime'] != null
+          ? DateTime.parse(json['lastRefreshedTime'] as String)
+          : DateTime(1970),
+      asset: projectMetadata.toAsset,
+    );
+  }
+
+  // copyWith
+  CompactedAssetToken copyWith({
+    String? id,
+    int? balance,
+    String? owner,
+    DateTime? lastActivityTime,
+    DateTime? lastRefreshedTime,
+    int? edition,
+    String? blockchain,
+    String? tokenId,
+    DateTime? mintedAt,
+    covariant CompactedAsset? asset,
+  }) =>
+      CompactedAssetToken(
+        id: id ?? this.id,
+        balance: balance ?? this.balance,
+        owner: owner ?? this.owner,
+        lastActivityTime: lastActivityTime ?? this.lastActivityTime,
+        lastRefreshedTime: lastRefreshedTime ?? this.lastRefreshedTime,
+        edition: edition ?? this.edition,
+        blockchain: blockchain ?? this.blockchain,
+        tokenId: tokenId ?? this.tokenId,
+        mintedAt: mintedAt ?? this.mintedAt,
+        asset: asset ?? this.asset,
+        pending: pending ?? this.pending,
+        isDebugged: isDebugged ?? this.isDebugged,
+      );
+
   CompactedAssetToken({
     required this.id,
     required this.balance,
@@ -58,8 +118,7 @@ class CompactedAssetToken implements Comparable<CompactedAssetToken> {
   final String? tokenId;
   final DateTime? mintedAt;
   final int edition;
-
-  final CompactedAsset? asset;
+  covariant CompactedAsset? asset;
 
   String? get artistID => asset?.artistID;
 
@@ -271,23 +330,25 @@ class AssetToken extends CompactedAssetToken {
   }
 
   // copyWith method
+  @override
   AssetToken copyWith({
     String? id,
-    int? edition,
-    String? editionName,
-    String? blockchain,
-    bool? fungible,
-    DateTime? mintedAt,
-    String? contractType,
-    String? tokenId,
-    String? contractAddress,
     int? balance,
     String? owner,
+    DateTime? lastActivityTime,
+    DateTime? lastRefreshedTime,
+    int? edition,
+    String? blockchain,
+    String? tokenId,
+    DateTime? mintedAt,
+    Asset? asset,
+    String? editionName,
+    bool? fungible,
+    String? contractType,
+    String? contractAddress,
     Map<String, int>?
         owners, // Map from owner's address to number of owned tokens.
     ProjectMetadata? projectMetadata,
-    DateTime? lastActivityTime,
-    DateTime? lastRefreshedTime,
     List<Provenance>? provenance,
     List<OriginTokenInfo>? originTokenInfo,
     bool? swapped,
@@ -297,35 +358,35 @@ class AssetToken extends CompactedAssetToken {
     bool? isManual,
     String? originTokenInfoId,
     bool? ipfsPinned,
-    Asset? asset,
-  }) =>
-      AssetToken(
-        id: id ?? this.id,
-        edition: edition ?? this.edition,
-        editionName: editionName ?? this.editionName,
-        blockchain: blockchain ?? this.blockchain,
-        fungible: fungible ?? this.fungible,
-        mintedAt: mintedAt ?? this.mintedAt,
-        contractType: contractType ?? this.contractType,
-        tokenId: tokenId ?? this.tokenId,
-        contractAddress: contractAddress ?? this.contractAddress,
-        balance: balance ?? this.balance,
-        owner: owner ?? this.owner,
-        owners: owners ?? this.owners,
-        projectMetadata: projectMetadata ?? this.projectMetadata,
-        lastActivityTime: lastActivityTime ?? this.lastActivityTime,
-        lastRefreshedTime: lastRefreshedTime ?? this.lastRefreshedTime,
-        provenance: provenance ?? this.provenance,
-        originTokenInfo: originTokenInfo ?? this.originTokenInfo,
-        swapped: swapped ?? this.swapped,
-        attributes: attributes ?? this.attributes,
-        burned: burned ?? this.burned,
-        pending: pending ?? this.pending,
-        isManual: isManual ?? this.isManual,
-        originTokenInfoId: originTokenInfoId ?? this.originTokenInfoId,
-        ipfsPinned: ipfsPinned ?? this.ipfsPinned,
-        asset: asset ?? this.asset,
-      );
+  }) {
+    return AssetToken(
+      id: id ?? this.id,
+      edition: edition ?? this.edition,
+      editionName: editionName ?? this.editionName,
+      blockchain: blockchain ?? this.blockchain,
+      fungible: fungible ?? this.fungible,
+      mintedAt: mintedAt ?? this.mintedAt,
+      contractType: contractType ?? this.contractType,
+      tokenId: tokenId ?? this.tokenId,
+      contractAddress: contractAddress ?? this.contractAddress,
+      balance: balance ?? this.balance,
+      owner: owner ?? this.owner,
+      owners: owners ?? this.owners,
+      projectMetadata: projectMetadata ?? this.projectMetadata,
+      lastActivityTime: lastActivityTime ?? this.lastActivityTime,
+      lastRefreshedTime: lastRefreshedTime ?? this.lastRefreshedTime,
+      provenance: provenance ?? this.provenance,
+      originTokenInfo: originTokenInfo ?? this.originTokenInfo,
+      swapped: swapped ?? this.swapped,
+      attributes: attributes ?? this.attributes,
+      burned: burned ?? this.burned,
+      pending: pending ?? this.pending,
+      isManual: isManual ?? this.isManual,
+      originTokenInfoId: originTokenInfoId ?? this.originTokenInfoId,
+      ipfsPinned: ipfsPinned ?? this.ipfsPinned,
+      asset: asset ?? this.asset,
+    );
+  }
 
   final String? editionName;
   final bool fungible;
@@ -373,13 +434,13 @@ class AssetToken extends CompactedAssetToken {
     final latestSaleModel = projectMetadata?.latest.initialSaleModel?.trim();
     return latestSaleModel?.isNotEmpty == true
         ? latestSaleModel
-        : projectMetadata?.origin.initialSaleModel;
+        : projectMetadata?.origin?.initialSaleModel;
   }
 }
 
 class ProjectMetadata {
   ProjectMetadata({
-    required this.origin,
+    this.origin,
     required this.latest,
     this.lastRefreshedTime,
     this.thumbnailID,
@@ -393,11 +454,13 @@ class ProjectMetadata {
         lastRefreshedTime: json['lastRefreshedTime'] != null
             ? DateTime.tryParse(json['lastRefreshedTime'] as String)
             : null,
-        origin: ProjectMetadataData.fromJson(
-          Map<String, dynamic>.from(
-            json['metadata']['project']['origin'] as Map,
-          ),
-        ),
+        origin: json['metadata']['project']['origin'] == null
+            ? null
+            : ProjectMetadataData.fromJson(
+                Map<String, dynamic>.from(
+                  json['metadata']['project']['origin'] as Map,
+                ),
+              ),
         latest: ProjectMetadataData.fromJson(
           Map<String, dynamic>.from(
             json['metadata']['project']['latest'] as Map,
@@ -409,7 +472,7 @@ class ProjectMetadata {
   String? thumbnailID;
   DateTime? lastRefreshedTime;
 
-  ProjectMetadataData origin;
+  ProjectMetadataData? origin;
   ProjectMetadataData latest;
 
   Asset get toAsset => Asset(
@@ -439,8 +502,25 @@ class ProjectMetadata {
         artworkMetadata: jsonEncode(latest.artworkMetadata),
       );
 
+  CompactedAsset get toCompactedAsset => CompactedAsset(
+        indexID: indexID,
+        thumbnailID: thumbnailID,
+        lastRefreshedTime: lastRefreshedTime,
+        artistID: latest.artistId,
+        artistName: latest.artistName,
+        artistURL: latest.artistUrl,
+        artists: jsonEncode(latest.artists),
+        assetID: latest.assetId,
+        title: latest.title,
+        mimeType: latest.mimeType,
+        medium: latest.medium,
+        source: latest.source,
+        thumbnailURL: latest.thumbnailUrl,
+        galleryThumbnailURL: latest.galleryThumbnailUrl,
+      );
+
   Map<String, dynamic> toJson() => {
-        'origin': origin.toJson(),
+        'origin': origin?.toJson(),
         'latest': latest.toJson(),
       };
 }

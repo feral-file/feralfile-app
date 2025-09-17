@@ -104,6 +104,41 @@ class CompactedAsset {
           : null,
     );
   }
+
+  // copyWith
+  CompactedAsset copyWith({
+    String? indexID,
+    String? thumbnailID,
+    DateTime? lastRefreshedTime,
+    String? artistID,
+    String? artistName,
+    String? artistURL,
+    String? artists,
+    String? assetID,
+    String? title,
+    String? mimeType,
+    String? medium,
+    String? source,
+    String? thumbnailURL,
+    String? galleryThumbnailURL,
+  }) {
+    return CompactedAsset(
+      indexID: indexID ?? this.indexID,
+      thumbnailID: thumbnailID ?? this.thumbnailID,
+      lastRefreshedTime: lastRefreshedTime ?? this.lastRefreshedTime,
+      artistID: artistID ?? this.artistID,
+      artistName: artistName ?? this.artistName,
+      artistURL: artistURL ?? this.artistURL,
+      artists: artists ?? this.artists,
+      assetID: assetID ?? this.assetID,
+      title: title ?? this.title,
+      mimeType: mimeType ?? this.mimeType,
+      medium: medium ?? this.medium,
+      source: source ?? this.source,
+      thumbnailURL: thumbnailURL ?? this.thumbnailURL,
+      galleryThumbnailURL: galleryThumbnailURL ?? this.galleryThumbnailURL,
+    );
+  }
 }
 
 @Entity(primaryKeys: ['indexID'])
@@ -220,6 +255,60 @@ class Asset extends CompactedAsset {
           : null,
     );
   }
+
+  @override
+  Asset copyWith({
+    String? indexID,
+    String? thumbnailID,
+    DateTime? lastRefreshedTime,
+    String? artistID,
+    String? artistName,
+    String? artistURL,
+    String? artists,
+    String? assetID,
+    String? title,
+    String? description,
+    String? mimeType,
+    String? medium,
+    int? maxEdition,
+    String? source,
+    String? sourceURL,
+    String? previewURL,
+    String? thumbnailURL,
+    String? galleryThumbnailURL,
+    String? assetData,
+    String? assetURL,
+    bool? isFeralfileFrame,
+    String? initialSaleModel,
+    String? originalFileURL,
+    String? artworkMetadata,
+  }) =>
+      Asset(
+        indexID: indexID ?? this.indexID,
+        thumbnailID: thumbnailID ?? this.thumbnailID,
+        lastRefreshedTime: lastRefreshedTime ?? this.lastRefreshedTime,
+        artistID: artistID ?? this.artistID,
+        artistName: artistName ?? this.artistName,
+        artistURL: artistURL ?? this.artistURL,
+        artists: artists ?? this.artists,
+        assetID: assetID ?? this.assetID,
+        title: title ?? this.title,
+        description: description ?? this.description,
+        mimeType: mimeType ?? this.mimeType,
+        medium: medium ?? this.medium,
+        maxEdition: maxEdition ?? this.maxEdition,
+        source: source ?? this.source,
+        sourceURL: sourceURL ?? this.sourceURL,
+        previewURL: previewURL ?? this.previewURL,
+        thumbnailURL: thumbnailURL ?? this.thumbnailURL,
+        galleryThumbnailURL: galleryThumbnailURL ?? this.galleryThumbnailURL,
+        assetData: assetData ?? this.assetData,
+        assetURL: assetURL ?? this.assetURL,
+        initialSaleModel: initialSaleModel ?? this.initialSaleModel,
+        originalFileURL: originalFileURL ?? this.originalFileURL,
+        isFeralfileFrame: isFeralfileFrame ?? this.isFeralfileFrame,
+        artworkMetadata: artworkMetadata ?? this.artworkMetadata,
+      );
 }
 
 String mediumFromMimeType(String? mimeType) {

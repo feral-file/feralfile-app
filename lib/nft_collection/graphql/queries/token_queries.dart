@@ -205,6 +205,61 @@ const String getTokens = r'''
 }
 ''';
 
+const String getCompactedTokens = r'''
+  query getCompactedTokens($owners: [String!]! = [],$ids: [String!]! = [], $size: Int64! = 50, $lastUpdatedAt: Time, $offset: Int64! = 0, $burnedIncluded: Boolean! = false) {
+  tokens(owners: $owners,ids: $ids, size: $size, lastUpdatedAt: $lastUpdatedAt, offset: $offset, burnedIncluded: $burnedIncluded) {
+    id
+    blockchain
+    edition
+    mintedAt
+    balance
+    owner
+    owners {
+      address
+      balance
+    }
+    indexID
+    lastActivityTime
+    lastRefreshedTime
+    asset{
+      indexID
+      thumbnailID
+      lastRefreshedTime
+      metadata{
+        project{
+          latest{
+            artistID
+            artistName
+            artistURL
+            artists{
+            name
+            id
+            url
+            }
+            assetID
+            title
+            description
+            mimeType
+            medium
+            maxEdition
+            baseCurrency
+            basePrice
+            source
+            sourceURL
+            previewURL
+            thumbnailURL
+            galleryThumbnailURL
+            assetData
+            assetURL
+            artworkMetadata
+          }
+        }
+      }
+    }
+  }
+}
+''';
+
 const String getColectionTokenQuery = r'''
 query getCollectionToken($collectionID: String!,
 $offset: Int64! = 0,

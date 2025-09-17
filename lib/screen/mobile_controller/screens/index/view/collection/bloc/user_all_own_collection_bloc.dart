@@ -11,7 +11,7 @@ part 'user_all_own_collection_state.dart';
 
 class UserAllOwnCollectionBloc
     extends Bloc<UserAllOwnCollectionEvent, UserAllOwnCollectionState> {
-  StreamSubscription<List<AssetToken>>? _tokensStreamSub;
+  StreamSubscription<List<CompactedAssetToken>>? _tokensStreamSub;
   Completer<void>? _activeCompleter;
   // Track latest query to optionally ignore redundant loads if needed in future
   LoadDynamicQueryEvent? _currentEvent;
@@ -57,7 +57,7 @@ class UserAllOwnCollectionBloc
       final owners = event.dynamicQuery.params.owners;
 
       // Use the new stream method with pagination from NftTokensService
-      final stream = await _tokensService.getAssetTokensStream(
+      final stream = await _tokensService.getCompactedAssetTokensStream(
         owners,
         pageSize: 20, // Configurable page size
       );
@@ -68,7 +68,7 @@ class UserAllOwnCollectionBloc
       }
       _activeCompleter = Completer<void>();
       if (event.lazy) {
-        final List<AssetToken> accumulated = [];
+        final List<CompactedAssetToken> accumulated = [];
 
         _tokensStreamSub = stream.listen(
           (tokens) {
@@ -76,7 +76,7 @@ class UserAllOwnCollectionBloc
             accumulated.addAll(tokens);
             emit(
               state.copyWith(
-                assetTokens: List<AssetToken>.from(accumulated),
+                assetTokens: List<CompactedAssetToken>.from(accumulated),
                 isRefreshing: false,
                 status: UserAllOwnCollectionStatus.loaded,
               ),
@@ -101,7 +101,7 @@ class UserAllOwnCollectionBloc
           cancelOnError: true,
         );
       } else {
-        final List<AssetToken> collected = [];
+        final List<CompactedAssetToken> collected = [];
         _tokensStreamSub = stream.listen(
           (tokens) {
             log.info('Received ${tokens.length} tokens');

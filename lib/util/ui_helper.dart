@@ -1463,8 +1463,8 @@ class UIHelper {
     return jwt as JWT?;
   }
 
-  static SliverGrid assetTokenSliverGrid(
-      BuildContext context, List<AssetToken> assetTokens, String title) {
+  static SliverGrid assetTokenSliverGrid(BuildContext context,
+      List<CompactedAssetToken> compactedAssetTokens, String title) {
     return SliverGrid(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
@@ -1473,13 +1473,13 @@ class UIHelper {
       ),
       delegate: SliverChildBuilderDelegate(
         (context, index) {
-          final asset = assetTokens[index];
+          final asset = compactedAssetTokens[index];
           return PlaylistItemCard(
-            asset: asset,
+            compactedAssetToken: asset,
             playlistTitle: title,
           );
         },
-        childCount: assetTokens.length,
+        childCount: compactedAssetTokens.length,
       ),
     );
   }

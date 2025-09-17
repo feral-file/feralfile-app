@@ -44,7 +44,7 @@ abstract class NftTokensService {
     Map<int, List<String>> addresses,
   );
 
-  Future<Stream<List<AssetToken>>> getAssetTokensStream(
+  Future<Stream<List<CompactedAssetToken>>> getCompactedAssetTokensStream(
     List<String> addresses, {
     int pageSize = 50,
     DateTime? lastUpdatedAt,
@@ -100,7 +100,8 @@ class NftTokensServiceImpl extends NftTokensService {
       _refreshAllTokensWorker?.hasListener ?? false;
   Map<String, Completer<void>> _fetchTokensCompleters = {};
   final Map<String, Completer<void>> _reindexAddressesCompleters = {};
-  final Map<String, StreamController<List<AssetToken>>> _streamControllers = {};
+  final Map<String, StreamController<List<CompactedAssetToken>>>
+      _streamControllers = {};
 
   Future<void> get isolateReady => _isolateReady.future;
 
@@ -196,7 +197,7 @@ class NftTokensServiceImpl extends NftTokensService {
   }
 
   @override
-  Future<Stream<List<AssetToken>>> getAssetTokensStream(
+  Future<Stream<List<CompactedAssetToken>>> getCompactedAssetTokensStream(
     List<String> addresses, {
     int pageSize = 50,
     DateTime? lastUpdatedAt,
@@ -207,7 +208,7 @@ class NftTokensServiceImpl extends NftTokensService {
 
     await startIsolateOrWait();
 
-    final streamController = StreamController<List<AssetToken>>();
+    final streamController = StreamController<List<CompactedAssetToken>>();
     final uuid = const Uuid().v4();
 
     // Store the stream controller for cleanup
@@ -445,7 +446,7 @@ class NftTokensServiceImpl extends NftTokensService {
     if (result is StreamTokensSuccess) {
       final controller = _streamControllers[result.uuid];
       if (controller != null && !controller.isClosed) {
-        controller.add(result.assets);
+        controller.add(result.compactedAssets);
 
         if (result.done) {
           controller.close();
@@ -600,7 +601,8 @@ class NftTokensServiceImpl extends NftTokensService {
           lastUpdatedAt: lastUpdatedAt,
         );
 
-        final tokens = await isolateIndexerService.getNftTokens(request);
+        final tokens =
+            await isolateIndexerService.getNftCompactedTokens(request);
 
         if (tokens.isEmpty) {
           hasMoreData = false;
@@ -671,12 +673,12 @@ class ReindexAddressesDone extends TokensServiceResult {
 class StreamTokensSuccess extends TokensServiceResult {
   StreamTokensSuccess(
     this.uuid,
-    this.assets,
+    this.compactedAssets,
     this.done,
   );
 
   final String uuid;
-  final List<AssetToken> assets;
+  final List<CompactedAssetToken> compactedAssets;
   final bool done;
 }
 

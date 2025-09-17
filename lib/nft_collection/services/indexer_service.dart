@@ -14,7 +14,7 @@ import 'package:autonomy_flutter/nft_collection/models/user_collection.dart';
 import 'package:autonomy_flutter/nft_collection/services/artblocks_service.dart';
 import 'package:autonomy_flutter/screen/bloc/artist_artwork_display_settings/artist_artwork_display_setting_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
-import 'package:autonomy_flutter/util/asset_ext.dart';
+import 'package:autonomy_flutter/util/asset_token_ext.dart';
 
 class NftIndexerService {
   NftIndexerService(this._client, this._indexerApi, this._artBlockService);
@@ -40,6 +40,7 @@ class NftIndexerService {
     }
     final data = QueryListTokensResponse.fromJson(
       Map<String, dynamic>.from(result as Map),
+      AssetToken.fromJsonGraphQl,
     );
     final assetTokens = data.tokens;
     // missing artist assetToken
@@ -71,6 +72,62 @@ class NftIndexerService {
     }
     // Rebuild the list preserving original order, replacing where applicable
     final List<AssetToken> finalList = assetTokens
+        .map((t) => replacementById[t.id] ?? t)
+        .toList(growable: false);
+    return finalList;
+  }
+
+  /*
+  getNftCompactedTokens
+  params: QueryListTokensRequest
+  return: List<CompactedAssetToken>
+  description: Get the list of asset tokens from the indexer
+  */
+  Future<List<CompactedAssetToken>> getNftCompactedTokens(
+      QueryListTokensRequest request) async {
+    final vars = request.toJson();
+    final result = await _client.query(
+      doc: getCompactedTokens,
+      vars: vars,
+    );
+    if (result == null) {
+      return [];
+    }
+    final data = QueryListTokensResponse.fromJson(
+      Map<String, dynamic>.from(result as Map),
+      CompactedAssetToken.fromJsonGraphQl,
+    );
+    final compactedAssetTokens = data.tokens;
+    // missing artist compactedAssetToken
+    final missingArtistAssetTokens = compactedAssetTokens.where((token) {
+      final artistAddress = token.asset?.artistID;
+      return artistAddress == '0x0000000000000000000000000000000000000000';
+    }).toList();
+    if (missingArtistAssetTokens.isEmpty) {
+      return compactedAssetTokens;
+    }
+    // Build a replacement map for tokens that need artist enrichment
+    final Map<String, CompactedAssetToken> replacementById = {};
+    for (final compactedAssetToken in missingArtistAssetTokens) {
+      final asset = compactedAssetToken.asset;
+      if (asset == null) {
+        replacementById[compactedAssetToken.id] = compactedAssetToken;
+        continue;
+      }
+      final artblockArtist = await _artBlockService.getArtistByToken(
+          contractAddress: compactedAssetToken.contractAddress!.toLowerCase(),
+          tokenId: compactedAssetToken.tokenId!);
+      if (artblockArtist == null) {
+        replacementById[compactedAssetToken.id] = compactedAssetToken;
+        continue;
+      }
+      final newCompactedAsset = asset.copyWith(
+          artistID: artblockArtist.address, artistName: artblockArtist.name);
+      replacementById[compactedAssetToken.id] =
+          compactedAssetToken.copyWith(asset: newCompactedAsset);
+    }
+    // Rebuild the list preserving original order, replacing where applicable
+    final List<CompactedAssetToken> finalList = compactedAssetTokens
         .map((t) => replacementById[t.id] ?? t)
         .toList(growable: false);
     return finalList;
@@ -111,8 +168,8 @@ class NftIndexerService {
       doc: getColectionTokenQuery,
       vars: {'collectionID': collectionId, 'offset': 0, 'size': 100},
     );
-    final data =
-        QueryListTokensResponse.fromJson(Map<String, dynamic>.from(res as Map));
+    final data = QueryListTokensResponse.fromJson(
+        Map<String, dynamic>.from(res as Map), AssetToken.fromJsonGraphQl);
     return data.tokens;
   }
 
