@@ -12,31 +12,120 @@ import 'package:autonomy_flutter/nft_collection/models/attributes.dart';
 import 'package:autonomy_flutter/nft_collection/models/origin_token_info.dart';
 import 'package:autonomy_flutter/nft_collection/models/provenance.dart';
 
-class AssetToken {
-  AssetToken({
+class CompactedAssetToken implements Comparable<CompactedAssetToken> {
+  factory CompactedAssetToken.fromAssetToken(AssetToken assetToken) {
+    return CompactedAssetToken(
+      id: assetToken.id,
+      balance: assetToken.balance,
+      owner: assetToken.owner,
+      lastActivityTime: assetToken.lastActivityTime,
+      lastRefreshedTime: assetToken.lastRefreshedTime,
+      // previewURL: assetToken.previewURL,
+      pending: assetToken.pending,
+      isDebugged: assetToken.isManual,
+      blockchain: assetToken.blockchain,
+      tokenId: assetToken.tokenId,
+      mintedAt: assetToken.mintedAt,
+      edition: assetToken.edition,
+      asset: assetToken.asset != null
+          ? CompactedAsset.fromAsset(assetToken.asset!)
+          : null,
+    );
+  }
+  CompactedAssetToken({
     required this.id,
-    required this.edition,
-    required this.editionName,
-    required this.blockchain,
-    required this.fungible,
-    required this.contractType,
-    required this.tokenId,
-    required this.contractAddress,
     required this.balance,
     required this.owner,
-    required this.owners,
     required this.lastActivityTime,
     required this.lastRefreshedTime,
+    required this.edition,
+    this.pending,
+    this.isDebugged,
+    required this.blockchain,
+    this.tokenId,
+    this.mintedAt,
+    this.asset,
+  });
+
+  final String id;
+  final int? balance;
+  final String owner;
+  final DateTime lastActivityTime;
+  final DateTime lastRefreshedTime;
+  final bool? pending;
+  final bool? isDebugged;
+  final String blockchain;
+  final String? tokenId;
+  final DateTime? mintedAt;
+  final int edition;
+
+  final CompactedAsset? asset;
+
+  String? get artistID => asset?.artistID;
+
+  String? get artistName => asset?.artistName;
+
+  String? get artistURL => asset?.artistURL;
+
+  String? get artists => asset?.artists;
+
+  String? get assetID => asset?.assetID;
+
+  String? get title => asset?.title;
+
+  String? get mimeType => asset?.mimeType;
+
+  String? get medium => asset?.mimeType != null && asset!.mimeType!.isNotEmpty
+      ? mediumFromMimeType(asset!.mimeType!)
+      : asset?.medium;
+
+  String? get source => asset?.source;
+
+  String? get thumbnailURL => asset?.thumbnailURL;
+
+  String? get thumbnailID => asset?.thumbnailID;
+
+  String? get galleryThumbnailURL => asset?.galleryThumbnailURL;
+
+  @override
+  int compareTo(other) {
+    if (other.id.compareTo(id) == 0 && other.owner.compareTo(owner) == 0) {
+      return other.id.compareTo(id);
+    }
+
+    if (other.lastActivityTime.compareTo(lastActivityTime) == 0) {
+      return other.id.compareTo(id);
+    }
+
+    return other.lastActivityTime.compareTo(lastActivityTime);
+  }
+}
+
+class AssetToken extends CompactedAssetToken {
+  AssetToken({
+    required super.id,
+    required super.edition,
+    required this.editionName,
+    required super.blockchain,
+    required this.fungible,
+    required this.contractType,
+    required super.tokenId,
+    required this.contractAddress,
+    required super.balance,
+    required super.owner,
+    required this.owners,
+    required super.lastActivityTime,
+    required super.lastRefreshedTime,
     required this.provenance,
     required this.originTokenInfo,
-    this.mintedAt,
+    super.mintedAt,
     this.projectMetadata,
     this.swapped = false,
     this.attributes,
     this.burned,
     this.ipfsPinned,
     this.asset,
-    this.pending,
+    super.pending,
     this.isManual,
     this.originTokenInfoId,
   });
@@ -181,68 +270,90 @@ class AssetToken {
     );
   }
 
-  String id;
-  int edition;
-  String? editionName;
-  String blockchain;
-  bool fungible;
-  DateTime? mintedAt;
-  String contractType;
-  String? tokenId;
-  String? contractAddress;
-  int? balance;
-  String owner;
-  Map<String, int>
+  // copyWith method
+  AssetToken copyWith({
+    String? id,
+    int? edition,
+    String? editionName,
+    String? blockchain,
+    bool? fungible,
+    DateTime? mintedAt,
+    String? contractType,
+    String? tokenId,
+    String? contractAddress,
+    int? balance,
+    String? owner,
+    Map<String, int>?
+        owners, // Map from owner's address to number of owned tokens.
+    ProjectMetadata? projectMetadata,
+    DateTime? lastActivityTime,
+    DateTime? lastRefreshedTime,
+    List<Provenance>? provenance,
+    List<OriginTokenInfo>? originTokenInfo,
+    bool? swapped,
+    Attributes? attributes,
+    bool? burned,
+    bool? pending,
+    bool? isManual,
+    String? originTokenInfoId,
+    bool? ipfsPinned,
+    Asset? asset,
+  }) =>
+      AssetToken(
+        id: id ?? this.id,
+        edition: edition ?? this.edition,
+        editionName: editionName ?? this.editionName,
+        blockchain: blockchain ?? this.blockchain,
+        fungible: fungible ?? this.fungible,
+        mintedAt: mintedAt ?? this.mintedAt,
+        contractType: contractType ?? this.contractType,
+        tokenId: tokenId ?? this.tokenId,
+        contractAddress: contractAddress ?? this.contractAddress,
+        balance: balance ?? this.balance,
+        owner: owner ?? this.owner,
+        owners: owners ?? this.owners,
+        projectMetadata: projectMetadata ?? this.projectMetadata,
+        lastActivityTime: lastActivityTime ?? this.lastActivityTime,
+        lastRefreshedTime: lastRefreshedTime ?? this.lastRefreshedTime,
+        provenance: provenance ?? this.provenance,
+        originTokenInfo: originTokenInfo ?? this.originTokenInfo,
+        swapped: swapped ?? this.swapped,
+        attributes: attributes ?? this.attributes,
+        burned: burned ?? this.burned,
+        pending: pending ?? this.pending,
+        isManual: isManual ?? this.isManual,
+        originTokenInfoId: originTokenInfoId ?? this.originTokenInfoId,
+        ipfsPinned: ipfsPinned ?? this.ipfsPinned,
+        asset: asset ?? this.asset,
+      );
+
+  final String? editionName;
+  final bool fungible;
+  final String contractType;
+  final String? contractAddress;
+  final Map<String, int>
       owners; // Map from owner's address to number of owned tokens.
-  ProjectMetadata? projectMetadata;
-  DateTime lastActivityTime;
-  DateTime lastRefreshedTime;
-  List<Provenance> provenance;
-  List<OriginTokenInfo>? originTokenInfo;
-  bool? swapped;
-  Attributes? attributes;
+  final ProjectMetadata? projectMetadata;
+  final List<Provenance> provenance;
+  final List<OriginTokenInfo>? originTokenInfo;
+  final bool? swapped;
+  final Attributes? attributes;
 
-  bool? burned;
-  bool? pending;
-  bool? isManual;
-  String? originTokenInfoId;
-  bool? ipfsPinned;
+  final bool? burned;
+  final bool? isManual;
+  final String? originTokenInfoId;
+  final bool? ipfsPinned;
 
-  Asset? asset;
-
-  String? get artistID => asset?.artistID;
-
-  String? get artistName => asset?.artistName;
-
-  String? get artistURL => asset?.artistURL;
-
-  String? get artists => asset?.artists;
-
-  String? get assetID => asset?.assetID;
-
-  String? get title => asset?.title;
+  @override
+  final Asset? asset;
 
   String? get description => asset?.description;
 
-  String? get mimeType => asset?.mimeType;
-
-  String? get medium => asset?.mimeType != null && asset!.mimeType!.isNotEmpty
-      ? mediumFromMimeType(asset!.mimeType!)
-      : asset?.medium;
-
   int? get maxEdition => asset?.maxEdition;
-
-  String? get source => asset?.source;
 
   String? get sourceURL => asset?.sourceURL;
 
   String? get previewURL => asset?.previewURL;
-
-  String? get thumbnailURL => asset?.thumbnailURL;
-
-  String? get thumbnailID => asset?.thumbnailID;
-
-  String? get galleryThumbnailURL => asset?.galleryThumbnailURL;
 
   String? get assetData => asset?.assetData;
 
@@ -263,100 +374,6 @@ class AssetToken {
     return latestSaleModel?.isNotEmpty == true
         ? latestSaleModel
         : projectMetadata?.origin.initialSaleModel;
-  }
-}
-
-class CompactedAssetToken implements Comparable<CompactedAssetToken> {
-  CompactedAssetToken({
-    required this.id,
-    required this.balance,
-    required this.owner,
-    required this.lastActivityTime,
-    required this.lastRefreshedTime,
-    required this.edition,
-    this.mimeType,
-    this.previewURL,
-    this.thumbnailURL,
-    this.thumbnailID,
-    this.galleryThumbnailURL,
-    this.pending,
-    this.isDebugged,
-    this.artistID,
-    this.artistTitle,
-    this.artistURL,
-    this.blockchain,
-    this.tokenId,
-    this.title,
-    this.source,
-    this.mintedAt,
-    this.assetID,
-  });
-
-  final String id;
-
-  int? balance;
-  String owner;
-
-  final DateTime lastActivityTime;
-  DateTime lastRefreshedTime;
-
-  bool? pending;
-  bool? isDebugged;
-
-  String? mimeType;
-  String? previewURL;
-  String? thumbnailURL;
-  String? thumbnailID;
-  String? galleryThumbnailURL;
-  String? artistID;
-  String? artistTitle;
-  String? artistURL;
-  String? blockchain;
-  String? tokenId;
-  String? title;
-  String? source;
-  DateTime? mintedAt;
-  String? assetID;
-  int edition;
-
-  factory CompactedAssetToken.fromAssetToken(AssetToken assetToken) {
-    return CompactedAssetToken(
-      id: assetToken.id,
-      balance: assetToken.balance,
-      owner: assetToken.owner,
-      lastActivityTime: assetToken.lastActivityTime,
-      lastRefreshedTime: assetToken.lastRefreshedTime,
-      mimeType: assetToken.mimeType,
-      previewURL: assetToken.previewURL,
-      thumbnailURL: assetToken.thumbnailURL,
-      thumbnailID: assetToken.thumbnailID,
-      galleryThumbnailURL: assetToken.galleryThumbnailURL,
-      pending: assetToken.pending,
-      isDebugged: assetToken.isManual,
-      artistID: assetToken.artistID,
-      artistTitle: assetToken.artistName,
-      artistURL: assetToken.artistURL,
-      blockchain: assetToken.blockchain,
-      tokenId: assetToken.tokenId,
-      title: assetToken.title,
-      source: assetToken.source,
-      mintedAt: assetToken.mintedAt,
-      assetID: assetToken.asset?.assetID,
-      edition: assetToken.edition,
-    );
-  }
-
-  @override
-  int compareTo(other) {
-    if (other.id.compareTo(id) == 0 && other.owner.compareTo(owner) == 0) {
-      return other.id.compareTo(id);
-    }
-
-    if (other.lastActivityTime.compareTo(lastActivityTime) == 0) {
-      return other.id.compareTo(id);
-    }
-
-    return other.lastActivityTime.compareTo(lastActivityTime);
   }
 }
 
@@ -396,30 +413,30 @@ class ProjectMetadata {
   ProjectMetadataData latest;
 
   Asset get toAsset => Asset(
-        indexID,
-        thumbnailID,
-        lastRefreshedTime,
-        latest.artistId,
-        latest.artistName,
-        latest.artistUrl,
-        jsonEncode(latest.artists),
-        latest.assetId,
-        latest.title,
-        latest.description,
-        latest.mimeType,
-        latest.medium,
-        latest.maxEdition,
-        latest.source,
-        latest.sourceUrl,
-        latest.previewUrl,
-        latest.thumbnailUrl,
-        latest.galleryThumbnailUrl,
-        latest.assetData,
-        latest.assetUrl,
-        latest.initialSaleModel,
-        latest.originalFileUrl,
-        latest.artworkMetadata?['isFeralfileFrame'] as bool?,
-        jsonEncode(latest.artworkMetadata),
+        indexID: indexID,
+        thumbnailID: thumbnailID,
+        lastRefreshedTime: lastRefreshedTime,
+        artistID: latest.artistId,
+        artistName: latest.artistName,
+        artistURL: latest.artistUrl,
+        artists: jsonEncode(latest.artists),
+        assetID: latest.assetId,
+        title: latest.title,
+        description: latest.description,
+        mimeType: latest.mimeType,
+        medium: latest.medium,
+        maxEdition: latest.maxEdition,
+        source: latest.source,
+        sourceURL: latest.sourceUrl,
+        previewURL: latest.previewUrl,
+        thumbnailURL: latest.thumbnailUrl,
+        galleryThumbnailURL: latest.galleryThumbnailUrl,
+        assetData: latest.assetData,
+        assetURL: latest.assetUrl,
+        initialSaleModel: latest.initialSaleModel,
+        originalFileURL: latest.originalFileUrl,
+        isFeralfileFrame: latest.artworkMetadata?['isFeralfileFrame'] as bool?,
+        artworkMetadata: jsonEncode(latest.artworkMetadata),
       );
 
   Map<String, dynamic> toJson() => {

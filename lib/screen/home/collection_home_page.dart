@@ -85,7 +85,7 @@ class CollectionHomePageState extends State<CollectionHomePage>
   }
 
   void _getArtistIdentity(List<CompactedAssetToken> tokens) {
-    final needIdentities = tokens.map((e) => e.artistTitle ?? '').toList();
+    final needIdentities = tokens.map((e) => e.artistName ?? '').toList();
     _identityBloc.add(GetIdentityEvent(needIdentities));
   }
 
@@ -366,7 +366,7 @@ class CollectionHomePageState extends State<CollectionHomePage>
     final theme = Theme.of(context);
     final asset = tokens[index];
     final title = asset.displayTitle;
-    final artistTitle = asset.artistTitle?.toIdentityOrMask(artistIdentities);
+    final artistTitle = asset.artistName?.toIdentityOrMask(artistIdentities);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

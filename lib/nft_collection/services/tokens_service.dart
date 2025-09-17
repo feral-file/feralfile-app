@@ -292,8 +292,9 @@ class NftTokensServiceImpl extends NftTokensService {
 
     //stripe owner for manual asset
     for (var i = 0; i < manuallyAssets.length; i++) {
-      manuallyAssets[i].owner = '';
-      manuallyAssets[i].isManual = true;
+      final assetToken = manuallyAssets[i];
+      final newAssetToken = assetToken.copyWith(owner: '', isManual: true);
+      manuallyAssets[i] = newAssetToken;
     }
 
     NftCollection.logger.info('[TokensService] '

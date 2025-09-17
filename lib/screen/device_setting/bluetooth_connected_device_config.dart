@@ -107,7 +107,7 @@ class BluetoothConnectedDeviceConfigState
   late FFBluetoothDevice selectedDevice;
   Timer? _connectionStatusTimer;
 
-  bool _isBLEDeviceConnected = false;
+  late bool _isBLEDeviceConnected;
 
   NotificationCallback? cb;
 
@@ -144,6 +144,9 @@ class BluetoothConnectedDeviceConfigState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _isBLEDeviceConnected = injector<CanvasDeviceBloc>()
+        .state
+        .isDeviceAlive(BluetoothDeviceManager().castingBluetoothDevice!);
 
     selectedDevice = BluetoothDeviceManager().castingBluetoothDevice!;
     deviceStatus = BluetoothDeviceManager().castingDeviceStatus.value;
@@ -1617,11 +1620,17 @@ class BluetoothConnectedDeviceConfigState
       if (error) {
         injector<NavigationService>().popUntilHome();
         await UIHelper.showInfoDialog(context, 'Restoring Factory Defaults',
-            'The device is now restoring to factory settings. It may take some time to complete. Please keep the device powered on and wait until the reset is finished.');
+            'The device is now restoring to factory settings. It may take some time to complete. Please keep the device powered on and wait until the reset is finished.',
+            closeButton: 'Go Back', onClose: () {
+          injector<NavigationService>().goBack();
+        });
       }
     } else if (error != null) {
-      await UIHelper.showInfoDialog(context, 'Factory Reset Failed',
-          'Something went wrong while trying to restore the device to factory settings. ${error.toString()}');
+      await UIHelper.showInfoDialog(
+        context,
+        'Factory Reset Failed',
+        'Something went wrong while trying to restore the device to factory settings. ${error.toString()}',
+      );
     }
   }
 

@@ -6,10 +6,9 @@
 //  that can be found in the LICENSE file.
 //
 
-import 'package:floor_annotation/floor_annotation.dart';
+import 'package:floor/floor.dart';
 
-@Entity(primaryKeys: ['indexID'])
-class Asset {
+class CompactedAsset {
   String? indexID;
   String? thumbnailID;
   DateTime? lastRefreshedTime;
@@ -19,15 +18,100 @@ class Asset {
   String? artists;
   String? assetID;
   String? title;
-  String? description;
   String? mimeType;
   String? medium;
-  int? maxEdition;
   String? source;
-  String? sourceURL;
-  String? previewURL;
   String? thumbnailURL;
   String? galleryThumbnailURL;
+
+  CompactedAsset({
+    this.indexID,
+    this.thumbnailID,
+    this.lastRefreshedTime,
+    this.artistID,
+    this.artistName,
+    this.artistURL,
+    this.artists,
+    this.assetID,
+    this.title,
+    this.mimeType,
+    this.medium,
+    this.source,
+    this.thumbnailURL,
+    this.galleryThumbnailURL,
+  });
+
+  CompactedAsset.init({
+    this.indexID,
+    this.thumbnailID,
+    this.lastRefreshedTime,
+    this.artistID,
+    this.artistName,
+    this.artistURL,
+    this.artists,
+    this.assetID,
+    this.title,
+    this.mimeType,
+    this.medium,
+    this.source,
+    this.thumbnailURL,
+    this.galleryThumbnailURL,
+  });
+
+  factory CompactedAsset.fromAsset(Asset asset) {
+    return CompactedAsset(
+      indexID: asset.indexID,
+      thumbnailID: asset.thumbnailID,
+      lastRefreshedTime: asset.lastRefreshedTime,
+      artistID: asset.artistID,
+      artistName: asset.artistName,
+      artistURL: asset.artistURL,
+      artists: asset.artists,
+      assetID: asset.assetID,
+      title: asset.title,
+      mimeType: asset.mimeType,
+      medium: asset.medium,
+      source: asset.source,
+      thumbnailURL: asset.thumbnailURL,
+      galleryThumbnailURL: asset.galleryThumbnailURL,
+    );
+  }
+
+  factory CompactedAsset.fromJson(Map<String, dynamic> map) {
+    return CompactedAsset(
+      indexID: map['indexID'] != null ? map['indexID'] as String : null,
+      thumbnailID:
+          map['thumbnailID'] != null ? map['thumbnailID'] as String : null,
+      lastRefreshedTime: map['lastRefreshedTime'] != null
+          ? DateTime.tryParse(map['lastRefreshedTime'] as String)
+          : null,
+      artistID: map['metadata']['artistID'] != null
+          ? map['artistID'] as String
+          : null,
+      artistName:
+          map['artistName'] != null ? map['artistName'] as String : null,
+      artistURL: map['artistURL'] != null ? map['artistURL'] as String : null,
+      artists: map['artists'] != null ? map['artists'] as String : null,
+      assetID: map['assetID'] != null ? map['assetID'] as String : null,
+      title: map['title'] != null ? map['title'] as String : null,
+      mimeType: map['mimeType'] != null ? map['mimeType'] as String : null,
+      medium: map['medium'] as String?,
+      source: map['source'] != null ? map['source'] as String : null,
+      thumbnailURL:
+          map['thumbnailURL'] != null ? map['thumbnailURL'] as String : null,
+      galleryThumbnailURL: map['galleryThumbnailURL'] != null
+          ? map['galleryThumbnailURL'] as String
+          : null,
+    );
+  }
+}
+
+@Entity(primaryKeys: ['indexID'])
+class Asset extends CompactedAsset {
+  String? description;
+  int? maxEdition;
+  String? sourceURL;
+  String? previewURL;
   String? assetData;
   String? assetURL;
   bool? isFeralfileFrame;
@@ -35,92 +119,105 @@ class Asset {
   String? originalFileURL;
   String? artworkMetadata;
 
-  Asset(
-    this.indexID,
-    this.thumbnailID,
-    this.lastRefreshedTime,
-    this.artistID,
-    this.artistName,
-    this.artistURL,
-    this.artists,
-    this.assetID,
-    this.title,
+  Asset({
+    super.indexID,
+    super.thumbnailID,
+    super.lastRefreshedTime,
+    super.artistID,
+    super.artistName,
+    super.artistURL,
+    super.artists,
+    super.assetID,
+    super.title,
+    super.mimeType,
+    super.medium,
+    super.source,
+    super.thumbnailURL,
+    super.galleryThumbnailURL,
     this.description,
-    this.mimeType,
-    this.medium,
     this.maxEdition,
-    this.source,
-    this.sourceURL,
     this.previewURL,
-    this.thumbnailURL,
-    this.galleryThumbnailURL,
     this.assetData,
     this.assetURL,
-    this.initialSaleModel,
-    this.originalFileURL,
-    this.isFeralfileFrame,
-    this.artworkMetadata,
-  );
-
-  Asset.init({
-    this.indexID,
-    this.thumbnailID,
-    this.lastRefreshedTime,
-    this.artistID,
-    this.artistName,
-    this.artistURL,
-    this.artists,
-    this.assetID,
-    this.title,
-    this.description,
-    this.mimeType,
-    this.medium,
-    this.maxEdition,
-    this.source,
     this.sourceURL,
-    this.previewURL,
-    this.thumbnailURL,
-    this.galleryThumbnailURL,
-    this.assetData,
-    this.assetURL,
     this.initialSaleModel,
     this.originalFileURL,
     this.isFeralfileFrame,
     this.artworkMetadata,
   });
 
+  Asset.init({
+    super.indexID,
+    super.thumbnailID,
+    super.lastRefreshedTime,
+    super.artistID,
+    super.artistName,
+    super.artistURL,
+    super.artists,
+    super.assetID,
+    super.title,
+    super.mimeType,
+    super.medium,
+    super.source,
+    super.thumbnailURL,
+    super.galleryThumbnailURL,
+    this.description,
+    this.maxEdition,
+    this.previewURL,
+    this.assetData,
+    this.assetURL,
+    this.sourceURL,
+    this.initialSaleModel,
+    this.originalFileURL,
+    this.isFeralfileFrame,
+    this.artworkMetadata,
+  }) : super.init();
+
   factory Asset.fromJson(Map<String, dynamic> map) {
     return Asset(
-      map['indexID'] != null ? map['indexID'] as String : null,
-      map['thumbnailID'] != null ? map['thumbnailID'] as String : null,
-      map['lastRefreshedTime'] != null
+      indexID: map['indexID'] != null ? map['indexID'] as String : null,
+      thumbnailID:
+          map['thumbnailID'] != null ? map['thumbnailID'] as String : null,
+      lastRefreshedTime: map['lastRefreshedTime'] != null
           ? DateTime.tryParse(map['lastRefreshedTime'] as String)
           : null,
-      map['metadata']['artistID'] != null ? map['artistID'] as String : null,
-      map['artistName'] != null ? map['artistName'] as String : null,
-      map['artistURL'] != null ? map['artistURL'] as String : null,
-      map['artists'] != null ? map['artists'] as String : null,
-      map['assetID'] != null ? map['assetID'] as String : null,
-      map['title'] != null ? map['title'] as String : null,
-      map['description'] != null ? map['description'] as String : null,
-      map['mimeType'] != null ? map['mimeType'] as String : null,
-      map['medium'] as String?,
-      map['maxEdition'] != null ? map['maxEdition'] as int : null,
-      map['source'] != null ? map['source'] as String : null,
-      map['sourceURL'] != null ? map['sourceURL'] as String : null,
-      map['previewURL'] != null ? map['previewURL'] as String : null,
-      map['thumbnailURL'] != null ? map['thumbnailURL'] as String : null,
-      map['galleryThumbnailURL'] != null
+      artistID: map['metadata']['artistID'] != null
+          ? map['artistID'] as String
+          : null,
+      artistName:
+          map['artistName'] != null ? map['artistName'] as String : null,
+      artistURL: map['artistURL'] != null ? map['artistURL'] as String : null,
+      artists: map['artists'] != null ? map['artists'] as String : null,
+      assetID: map['assetID'] != null ? map['assetID'] as String : null,
+      title: map['title'] != null ? map['title'] as String : null,
+      description:
+          map['description'] != null ? map['description'] as String : null,
+      mimeType: map['mimeType'] != null ? map['mimeType'] as String : null,
+      medium: map['medium'] as String?,
+      maxEdition: map['maxEdition'] != null ? map['maxEdition'] as int : null,
+      source: map['source'] != null ? map['source'] as String : null,
+      sourceURL: map['sourceURL'] != null ? map['sourceURL'] as String : null,
+      previewURL:
+          map['previewURL'] != null ? map['previewURL'] as String : null,
+      thumbnailURL:
+          map['thumbnailURL'] != null ? map['thumbnailURL'] as String : null,
+      galleryThumbnailURL: map['galleryThumbnailURL'] != null
           ? map['galleryThumbnailURL'] as String
           : null,
-      map['assetData'] != null ? map['assetData'] as String : null,
-      map['assetURL'] != null ? map['assetURL'] as String : null,
-      map['initialSaleModel'] != null
+      assetData: map['assetData'] != null ? map['assetData'] as String : null,
+      assetURL: map['assetURL'] != null ? map['assetURL'] as String : null,
+      initialSaleModel: map['initialSaleModel'] != null
           ? map['initialSaleModel'] as String
           : null,
-      map['originalFileURL'] != null ? map['originalFileURL'] as String : null,
-      map['isFeralfileFrame'] != null ? map['isFeralfileFrame'] as bool : null,
-      map['artworkMetadata'] != null ? map['artworkMetadata'] as String : null,
+      originalFileURL: map['originalFileURL'] != null
+          ? map['originalFileURL'] as String
+          : null,
+      isFeralfileFrame: map['isFeralfileFrame'] != null
+          ? map['isFeralfileFrame'] as bool
+          : null,
+      artworkMetadata: map['artworkMetadata'] != null
+          ? map['artworkMetadata'] as String
+          : null,
     );
   }
 }

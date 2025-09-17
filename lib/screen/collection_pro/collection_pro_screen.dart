@@ -504,7 +504,7 @@ class CollectionProState extends State<CollectionPro>
   Widget _artworkItem(BuildContext context, CompactedAssetToken token) {
     final theme = Theme.of(context);
     final title = token.displayTitle ?? '';
-    final artistName = token.artistTitle ?? token.artistID ?? '';
+    final artistName = token.artistName ?? token.artistID ?? '';
     return GestureDetector(
       onTap: () async {
         await Navigator.pushNamed(

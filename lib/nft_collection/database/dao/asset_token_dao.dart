@@ -88,66 +88,70 @@ class DatabaseAssetTokenDao implements AssetTokenDao {
   DatabaseAssetTokenDao(this.database, this.changeListener)
       : _queryAdapter = QueryAdapter(database);
 
-  static AssetToken
-      Function(Map<String, Object?>) mapper = (Map<String, Object?>
-          row) =>
-      AssetToken(
-        id: row['id'] as String,
-        tokenId: row['tokenId'] as String?,
-        blockchain: row['blockchain'] as String,
-        fungible:
-            row['fungible'] == null ? false : (row['fungible'] as int) != 0,
-        contractType: row['contractType'] as String,
-        contractAddress: row['contractAddress'] as String?,
-        edition: row['edition'] as int,
-        editionName: row['editionName'] as String?,
-        mintedAt: _nullableDateTimeConverter.decode(row['mintedAt'] as int?),
-        balance: row['balance'] as int?,
-        owner: row['owner'] as String,
-        owners: _tokenOwnersConverter.decode(row['owners'] as String),
-        swapped: row['swapped'] == null ? null : (row['swapped'] as int) != 0,
-        burned: row['burned'] == null ? null : (row['burned'] as int) != 0,
-        pending: row['pending'] == null ? null : (row['pending'] as int) != 0,
-        lastActivityTime:
-            _dateTimeConverter.decode(row['lastActivityTime'] as int),
-        lastRefreshedTime:
-            _dateTimeConverter.decode(row['tokenLastRefresh'] as int),
-        ipfsPinned:
-            row['ipfsPinned'] == null ? null : (row['ipfsPinned'] as int) != 0,
-        isManual:
-            row['isDebugged'] == null ? null : (row['isDebugged'] as int) != 0,
-        originTokenInfo: [],
-        provenance: [],
-        originTokenInfoId: row['originTokenInfoId'] as String?,
-        asset: Asset(
-          row['indexID'] as String?,
-          row['thumbnailID'] as String?,
-          _nullableDateTimeConverter.decode(row['tokenLastRefresh'] as int?),
-          row['artistID'] as String?,
-          row['artistName'] as String?,
-          row['artistURL'] as String?,
-          row['artists'] as String?,
-          row['assetID'] as String?,
-          row['title'] as String?,
-          row['description'] as String?,
-          row['mimeType'] as String?,
-          row['medium'] as String?,
-          row['maxEdition'] as int?,
-          row['source'] as String?,
-          row['sourceURL'] as String?,
-          row['previewURL'] as String?,
-          row['thumbnailURL'] as String?,
-          row['galleryThumbnailURL'] as String?,
-          row['assetData'] as String?,
-          row['assetURL'] as String?,
-          row['initialSaleModel'] as String?,
-          row['originalFileURL'] as String?,
-          row['isFeralfileFrame'] == null
-              ? null
-              : (row['isFeralfileFrame'] as int) != 0,
-          row['artworkMetadata'] as String?,
-        ),
-      );
+  static AssetToken Function(Map<String, Object?>) mapper =
+      (Map<String, Object?> row) => AssetToken(
+            id: row['id'] as String,
+            tokenId: row['tokenId'] as String?,
+            blockchain: row['blockchain'] as String,
+            fungible:
+                row['fungible'] == null ? false : (row['fungible'] as int) != 0,
+            contractType: row['contractType'] as String,
+            contractAddress: row['contractAddress'] as String?,
+            edition: row['edition'] as int,
+            editionName: row['editionName'] as String?,
+            mintedAt:
+                _nullableDateTimeConverter.decode(row['mintedAt'] as int?),
+            balance: row['balance'] as int?,
+            owner: row['owner'] as String,
+            owners: _tokenOwnersConverter.decode(row['owners'] as String),
+            swapped:
+                row['swapped'] == null ? null : (row['swapped'] as int) != 0,
+            burned: row['burned'] == null ? null : (row['burned'] as int) != 0,
+            pending:
+                row['pending'] == null ? null : (row['pending'] as int) != 0,
+            lastActivityTime:
+                _dateTimeConverter.decode(row['lastActivityTime'] as int),
+            lastRefreshedTime:
+                _dateTimeConverter.decode(row['tokenLastRefresh'] as int),
+            ipfsPinned: row['ipfsPinned'] == null
+                ? null
+                : (row['ipfsPinned'] as int) != 0,
+            isManual: row['isDebugged'] == null
+                ? null
+                : (row['isDebugged'] as int) != 0,
+            originTokenInfo: [],
+            provenance: [],
+            originTokenInfoId: row['originTokenInfoId'] as String?,
+            asset: Asset(
+              indexID: row['indexID'] as String?,
+              thumbnailID: row['thumbnailID'] as String?,
+              lastRefreshedTime: _nullableDateTimeConverter
+                  .decode(row['tokenLastRefresh'] as int?),
+              artistID: row['artistID'] as String?,
+              artistName: row['artistName'] as String?,
+              artistURL: row['artistURL'] as String?,
+              artists: row['artists'] as String?,
+              assetID: row['assetID'] as String?,
+              title: row['title'] as String?,
+              description: row['description'] as String?,
+              mimeType: row['mimeType'] as String?,
+              medium: row['medium'] as String?,
+              maxEdition: row['maxEdition'] as int?,
+              source: row['source'] as String?,
+              sourceURL: row['sourceURL'] as String?,
+              previewURL: row['previewURL'] as String?,
+              thumbnailURL: row['thumbnailURL'] as String?,
+              galleryThumbnailURL: row['galleryThumbnailURL'] as String?,
+              assetData: row['assetData'] as String?,
+              assetURL: row['assetURL'] as String?,
+              initialSaleModel: row['initialSaleModel'] as String?,
+              originalFileURL: row['originalFileURL'] as String?,
+              isFeralfileFrame: row['isFeralfileFrame'] == null
+                  ? null
+                  : (row['isFeralfileFrame'] as int) != 0,
+              artworkMetadata: row['artworkMetadata'] as String?,
+            ),
+          );
 
   @override
   Future<List<AssetToken>> findAllAssetTokens() async {
