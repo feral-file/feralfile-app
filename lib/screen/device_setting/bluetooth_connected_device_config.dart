@@ -33,7 +33,6 @@ import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/view/tappable_forward_row.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -1547,18 +1546,17 @@ class BluetoothConnectedDeviceConfigState
           await _onSendLogSelected();
         },
       ),
-      if (kDebugMode)
-        OptionItem(
-          title: 'Factory Reset',
-          icon: Icon(Icons.restart_alt),
-          onTap: () {
-            _onFactoryResetSelected();
-          },
-        ),
+      OptionItem(
+        title: 'Factory Reset',
+        icon: Icon(Icons.restart_alt),
+        onTap: () {
+          _onFactoryResetSelected();
+        },
+      ),
       OptionItem.emptyOptionItem,
     ];
     unawaited(UIHelper.showDrawerAction(context,
-        options: options, title: selectedDevice?.name));
+        options: options, title: selectedDevice.name));
   }
 
   Future<void> _onFactoryResetSelected() async {
@@ -1599,7 +1597,7 @@ class BluetoothConnectedDeviceConfigState
                   color: Colors.transparent,
                   onTap: () async {
                     try {
-                      final device = selectedDevice!;
+                      final device = selectedDevice;
                       await injector<FFBluetoothService>().factoryReset(device);
                       unawaited(device.disconnect());
                       await BluetoothDeviceManager()
