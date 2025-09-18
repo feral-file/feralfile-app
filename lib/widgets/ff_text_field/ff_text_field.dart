@@ -1,11 +1,14 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/build/components/LLMTextInput.dart';
+import 'package:autonomy_flutter/design/build/components/SendButton.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/view/record_controller.dart';
+import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/widgets/llm_text_input/send_button.dart';
 import 'package:flutter/material.dart';
 
@@ -154,15 +157,40 @@ class _FFTextFieldState extends State<FFTextField> {
                         ),
                 ),
                 if (widget.active &&
-                    !widget.isError &&
-                    _textController.text.isNotEmpty)
+                        !widget.isError &&
+                        _textController.text.isNotEmpty ||
+                    widget.isLoading)
                   Row(
                     children: [
                       SizedBox(
                           width: LLMTextInputTokens.llmActiveGap.toDouble()),
                       _buildActionButton(),
                     ],
-                  ),
+                  )
+                else
+                  GestureDetector(
+                    child: Icon(
+                      AuIcon.scan,
+                      color: AppColor.white,
+                      size: SendButtonTokens.size.toDouble(),
+                    ),
+                    onTap: () async {
+                      dynamic res = await Navigator.of(context).pushNamed(
+                        AppRouter.scanQRPage,
+                        arguments: const ScanQRPagePayload(
+                          scannerItem: ScannerItem.ETH_ADDRESS,
+                        ),
+                      );
+                      final address = res as String?;
+                      if (address == null) return;
+                      setState(() {
+                        _textController
+                          ..clear()
+                          ..text = address;
+                        widget.onChanged?.call(_textController.text);
+                      });
+                    },
+                  )
               ],
             ),
           ),
