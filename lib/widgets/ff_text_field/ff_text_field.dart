@@ -6,7 +6,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/view/r
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
-import 'package:autonomy_flutter/widgets/llm_text_input/command_dot.dart';
 import 'package:autonomy_flutter/widgets/llm_text_input/send_button.dart';
 import 'package:flutter/material.dart';
 
@@ -154,22 +153,16 @@ class _FFTextFieldState extends State<FFTextField> {
                           ),
                         ),
                 ),
-                if (widget.active) ...[
-                  SizedBox(width: LLMTextInputTokens.llmActiveGap.toDouble()),
-                  _buildActionButton(),
-                ] else ...[
-                  if (!widget.isLoading)
-                    CommandDot(
-                      onTap: () {
-                        injector<NavigationService>().popToRouteOrPush(
-                          AppRouter.voiceCommandPage,
-                          arguments: RecordControllerScreenPayload(),
-                        );
-                      },
-                    )
-                  else
-                    _buildLoadingIndicator(),
-                ],
+                if (widget.active &&
+                    !widget.isError &&
+                    _textController.text.isNotEmpty)
+                  Row(
+                    children: [
+                      SizedBox(
+                          width: LLMTextInputTokens.llmActiveGap.toDouble()),
+                      _buildActionButton(),
+                    ],
+                  ),
               ],
             ),
           ),

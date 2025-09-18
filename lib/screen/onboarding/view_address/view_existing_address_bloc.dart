@@ -24,19 +24,23 @@ class ViewExistingAddressBloc
     on<AddressChangeEvent>(_onAddressChanged);
 
     on<AddConnectionEvent>((event, emit) async {
-      if (!isValid) {
-        emit(
-          state.copyWith(
-            isError: true,
-          ),
-        );
-        return;
-      }
+      // Wait for any pending address validation to complete
       emit(
         state.copyWith(
           isAddConnectionLoading: true,
         ),
       );
+      await _latestAsync.waitForCurrentTask();
+
+      if (!isValid) {
+        emit(
+          state.copyWith(
+            isError: true,
+            isAddConnectionLoading: false,
+          ),
+        );
+        return;
+      }
 
       try {
         final walletAddress = WalletAddress(

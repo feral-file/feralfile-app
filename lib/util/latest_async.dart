@@ -27,6 +27,7 @@ class LatestAsync<T> {
   Timer? _debounceTimer;
   Completer<void>? _debounceCompleter;
   Timer? _maxWaitTimer;
+  final List<Completer<void>> _waitingCompleters = [];
 
   /// Run an async [task]. If a new run starts before this [task] completes,
   /// the result of this [task] will be ignored.
@@ -66,6 +67,8 @@ class LatestAsync<T> {
           }
         } finally {
           if (!completer.isCompleted) completer.complete();
+          // Complete all waiting completers
+          _completeWaitingCompleters();
         }
       }
 
@@ -96,6 +99,9 @@ class LatestAsync<T> {
       if (requestId == _counter) {
         if (onError != null) onError(error, stackTrace);
       }
+    } finally {
+      // Complete all waiting completers
+      _completeWaitingCompleters();
     }
   }
 
@@ -110,5 +116,85 @@ class LatestAsync<T> {
       _maxWaitTimer!.cancel();
     }
     _counter++;
+    // Complete all waiting completers
+    _completeWaitingCompleters();
+  }
+
+  /// Returns true if the latest task is currently running or waiting to run.
+  /// This includes tasks that are:
+  /// - Waiting for debounce timer
+  /// - Currently executing
+  /// - Waiting for maxWait timer
+  bool get isRunning {
+    return (_debounceTimer?.isActive ?? false) ||
+        (_maxWaitTimer?.isActive ?? false) ||
+        (_debounceCompleter != null && !_debounceCompleter!.isCompleted);
+  }
+
+  /// Returns true if the latest task has finished (either successfully or with error).
+  /// This is the opposite of [isRunning].
+  bool get isFinished {
+    return !isRunning;
+  }
+
+  /// Returns true if there is currently a task waiting for debounce timer.
+  bool get isWaitingForDebounce {
+    return _debounceTimer?.isActive ?? false;
+  }
+
+  /// Returns true if there is currently a task waiting for maxWait timer.
+  bool get isWaitingForMaxWait {
+    return _maxWaitTimer?.isActive ?? false;
+  }
+
+  /// Returns true if there is currently a task executing (not waiting for timers).
+  bool get isExecuting {
+    return _debounceCompleter != null &&
+        !_debounceCompleter!.isCompleted &&
+        !isWaitingForDebounce;
+  }
+
+  /// Returns the current request counter value.
+  /// This can be used to track which task is the latest.
+  int get currentRequestId => _counter;
+
+  /// Returns a Completer that will complete when the current latest task finishes.
+  /// If no task is currently running, the completer will complete immediately.
+  ///
+  /// Usage example:
+  /// ```dart
+  /// final latest = LatestAsync<SearchResult>();
+  /// latest.run(() => service.search(query), onData: (result) {});
+  ///
+  /// // Wait for the current task to complete
+  /// await latest.waitForCurrentTask();
+  /// print('Current task completed');
+  /// ```
+  Future<void> waitForCurrentTask() {
+    // If no task is running, return completed future
+    if (!isRunning) {
+      return Future.value();
+    }
+
+    // If there's a debounce completer, return its future
+    if (_debounceCompleter != null && !_debounceCompleter!.isCompleted) {
+      return _debounceCompleter!.future;
+    }
+
+    // Create a new completer that will complete when the task finishes
+    final completer = Completer<void>();
+    _waitingCompleters.add(completer);
+
+    return completer.future;
+  }
+
+  /// Helper method to complete all waiting completers and clear the list
+  void _completeWaitingCompleters() {
+    for (final completer in _waitingCompleters) {
+      if (!completer.isCompleted) {
+        completer.complete();
+      }
+    }
+    _waitingCompleters.clear();
   }
 }
