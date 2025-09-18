@@ -260,7 +260,7 @@ class MockDP1PlaylistApi implements DP1FeedApi {
 
   @override
   Future<DP1PlaylistItemsResponse> getPlaylistItems({
-    List<String>? channelIds,
+    String? channelId,
     String? cursor,
     int? limit,
   }) async {

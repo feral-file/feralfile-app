@@ -1,10 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:crypto/crypto.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
-import 'package:web3dart/crypto.dart';
-
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
@@ -17,6 +13,9 @@ import 'package:autonomy_flutter/util/int_ext.dart';
 import 'package:autonomy_flutter/util/john_gerrard_helper.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
+import 'package:crypto/crypto.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:web3dart/crypto.dart';
 
 extension AssetTokenExtension on AssetToken {
   bool get hasMetadata => galleryThumbnailURL != null;
@@ -150,6 +149,7 @@ extension CompactedAssetTokenExtension on CompactedAssetToken {
   }
 
   String? get displayTitle {
+    final title = asset?.title;
     if (title == null) {
       return null;
     }
@@ -158,9 +158,14 @@ extension CompactedAssetTokenExtension on CompactedAssetToken {
         JohnGerrardHelper.assetIDs
             .any((id) => asset?.assetID!.startsWith(id) ?? false);
 
-    return mintedAt != null && !isJohnGerrardSeries
-        ? '$title (${mintedAt!.year})'
-        : title;
+    if (mintedAt != null && !isJohnGerrardSeries)
+      return '$title (${mintedAt!.year})';
+
+    if (isFeralfile) {
+      return '$title (${edition})';
+    }
+
+    return title;
   }
 
   String? get contractAddress {

@@ -1,7 +1,8 @@
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/service/configuration_service.dart';
-import 'package:collection/collection.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
+import 'package:autonomy_flutter/service/configuration_service.dart';
+import 'package:autonomy_flutter/util/asset_token_ext.dart';
+import 'package:collection/collection.dart';
 
 extension AssetTokenExtension on List<CompactedAssetToken> {
   List<CompactedAssetToken> filterAssetToken({bool isShowHidden = false}) {
@@ -16,6 +17,7 @@ extension AssetTokenExtension on List<CompactedAssetToken> {
   }
 
   List<CompactedAssetToken> filterByTitleContain(String title) => where(
-        (element) => element.title!.toLowerCase().contains(title.toLowerCase()),
+        (element) =>
+            element.displayTitle!.toLowerCase().contains(title.toLowerCase()),
       ).toList();
 }

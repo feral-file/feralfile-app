@@ -398,7 +398,7 @@ class MockDataSetup {
 
     final mockCanvasDeviceStatus = <String, CheckCastingStatusReply>{
       for (final device in canvasDevices)
-        device.deviceId: CheckCastingStatusReply(artworks: [], ok: true),
+        device.deviceId: CheckCastingStatusReply(ok: true),
     };
 
     injector<CanvasDeviceBloc>()

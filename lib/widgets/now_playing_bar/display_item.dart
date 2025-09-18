@@ -4,6 +4,7 @@ import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/text_style_ext.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
@@ -115,7 +116,8 @@ class DisplayItem extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
                         style: TextStyle(
-                          fontSize: DisplayItemTokens.textDeviceFontSize.toDouble(),
+                          fontSize:
+                              DisplayItemTokens.textDeviceFontSize.toDouble(),
                           fontWeight: FontWeightUtil.fromString(
                             DisplayItemTokens.textDeviceFontWeight,
                           ),
@@ -147,7 +149,7 @@ class DisplayItem extends StatelessWidget {
                             DisplayItemTokens.textArtworkGap.toDouble(),
                           ),
                           child: Text(
-                            assetToken.title ?? '',
+                            assetToken.displayTitle ?? '',
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
                             style: isInExpandedView

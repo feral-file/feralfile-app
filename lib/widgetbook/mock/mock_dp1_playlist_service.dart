@@ -232,7 +232,7 @@ class MockDp1PlaylistService extends DP1FeedService {
 
   @override
   Future<DP1PlaylistItemsResponse> getPlaylistItems({
-    List<String>? channelIds,
+    String? channelId,
     String? cursor,
     int? limit,
   }) async {

@@ -1,13 +1,14 @@
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/screen/predefined_collection/predefined_collection_screen.dart';
-import 'package:autonomy_flutter/screen/predefined_collection/predefined_collection_state.dart';
-import 'package:autonomy_flutter/service/configuration_service.dart';
-import 'package:autonomy_flutter/util/medium_category_ext.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:autonomy_flutter/nft_collection/database/dao/dao.dart';
 import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/nft_collection/utils/medium_category.dart';
+import 'package:autonomy_flutter/screen/predefined_collection/predefined_collection_screen.dart';
+import 'package:autonomy_flutter/screen/predefined_collection/predefined_collection_state.dart';
+import 'package:autonomy_flutter/service/configuration_service.dart';
+import 'package:autonomy_flutter/util/asset_token_ext.dart';
+import 'package:autonomy_flutter/util/medium_category_ext.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class PredefinedCollectionBloc
     extends Bloc<PredefinedCollectionEvent, PredefinedCollectionState> {
@@ -54,7 +55,7 @@ class PredefinedCollectionBloc
           .where(
             (element) =>
                 !isFilterByTokenTitle ||
-                (element.title
+                (element.displayTitle
                         ?.toLowerCase()
                         .contains(event.filterStr.toLowerCase()) ??
                     false),

@@ -19,6 +19,7 @@ import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/preview_detail/preview_detail_widget.dart';
 import 'package:autonomy_flutter/screen/detail/royalty/royalty_bloc.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:autonomy_flutter/view/cast_button.dart';
 import 'package:autonomy_flutter/view/daily_progress_bar.dart';
@@ -69,10 +70,10 @@ WidgetbookUseCase artworkPreviewWidget() {
     builder: (context) {
       // This is a placeholder for the actual ArtworkIdentity
       final title = context.knobs.list(label: 'Asset Token', options: [
-        ...MockAssetToken.all.map((token) => token.title),
+        ...MockAssetToken.all.map((token) => token.displayTitle),
       ]);
       final assetToken = MockAssetToken.all.firstWhere(
-        (token) => token.title == title,
+        (token) => token.displayTitle == title,
         orElse: () => MockAssetToken.all.first,
       );
       final identity = ArtworkIdentity(
@@ -102,11 +103,11 @@ WidgetbookUseCase dailyDetails() {
       final title = context.knobs.list(
         label: 'Asset Token',
         options: [
-          ...MockAssetToken.all.map((token) => token.title),
+          ...MockAssetToken.all.map((token) => token.displayTitle),
         ],
       );
       final assetToken = MockAssetToken.all.firstWhere(
-        (token) => token.title == title,
+        (token) => token.displayTitle == title,
         orElse: () => MockAssetToken.all.first,
       );
 
@@ -168,7 +169,6 @@ WidgetbookUseCase ffCastButton() {
             children: [
               Center(
                 child: FFCastButton(
-                  displayKey: '',
                   text: text,
                   shouldCheckSubscription: false,
                 ),

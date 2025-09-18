@@ -44,7 +44,7 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.compactedAssetToken.title ?? '';
+    final title = widget.compactedAssetToken.displayTitle ?? '';
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {

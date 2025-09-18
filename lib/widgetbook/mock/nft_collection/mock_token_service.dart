@@ -46,4 +46,13 @@ class MockTokensService extends NftTokensService {
     // TODO: implement getManualTokens
     throw UnimplementedError();
   }
+
+  @override
+  Future<Stream<List<CompactedAssetToken>>> getCompactedAssetTokensStream(
+      List<String> addresses,
+      {int pageSize = 50,
+      DateTime? lastUpdatedAt}) {
+    // TODO: implement getCompactedAssetTokensStream
+    throw UnimplementedError();
+  }
 }

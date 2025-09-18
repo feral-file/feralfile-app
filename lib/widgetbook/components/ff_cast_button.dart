@@ -14,8 +14,6 @@ final ffCastButtonComponent = WidgetbookComponent(
 
 Widget useCaseFFCastButton(BuildContext context) {
   return FFCastButton(
-    displayKey:
-        context.knobs.string(label: 'Display key', initialValue: 'Display key'),
     type: context.knobs.stringOrNull(label: 'Type'),
     text: context.knobs.stringOrNull(label: 'Text'),
     shouldCheckSubscription:

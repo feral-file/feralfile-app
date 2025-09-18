@@ -11,6 +11,7 @@ import 'package:autonomy_flutter/nft_collection/models/asset.dart';
 import 'package:autonomy_flutter/nft_collection/models/attributes.dart';
 import 'package:autonomy_flutter/nft_collection/models/origin_token_info.dart';
 import 'package:autonomy_flutter/nft_collection/models/provenance.dart';
+import 'package:autonomy_flutter/util/eth_utils.dart';
 
 class CompactedAssetToken implements Comparable<CompactedAssetToken> {
   factory CompactedAssetToken.fromAssetToken(AssetToken assetToken) {
@@ -20,7 +21,6 @@ class CompactedAssetToken implements Comparable<CompactedAssetToken> {
       owner: assetToken.owner,
       lastActivityTime: assetToken.lastActivityTime,
       lastRefreshedTime: assetToken.lastRefreshedTime,
-      // previewURL: assetToken.previewURL,
       pending: assetToken.pending,
       isDebugged: assetToken.isManual,
       blockchain: assetToken.blockchain,
@@ -30,6 +30,7 @@ class CompactedAssetToken implements Comparable<CompactedAssetToken> {
       asset: assetToken.asset != null
           ? CompactedAsset.fromAsset(assetToken.asset!)
           : null,
+      editionName: assetToken.editionName,
     );
   }
 
@@ -61,6 +62,9 @@ class CompactedAssetToken implements Comparable<CompactedAssetToken> {
           ? DateTime.parse(json['lastRefreshedTime'] as String)
           : DateTime(1970),
       asset: projectMetadata.toAsset,
+      editionName: json['editionName'] as String?,
+      isDebugged: json['isDebugged'] as bool?,
+      pending: json['pending'] as bool?,
     );
   }
 
@@ -76,6 +80,9 @@ class CompactedAssetToken implements Comparable<CompactedAssetToken> {
     String? tokenId,
     DateTime? mintedAt,
     covariant CompactedAsset? asset,
+    String? editionName,
+    bool? pending,
+    bool? isDebugged,
   }) =>
       CompactedAssetToken(
         id: id ?? this.id,
@@ -90,6 +97,7 @@ class CompactedAssetToken implements Comparable<CompactedAssetToken> {
         asset: asset ?? this.asset,
         pending: pending ?? this.pending,
         isDebugged: isDebugged ?? this.isDebugged,
+        editionName: editionName ?? this.editionName,
       );
 
   CompactedAssetToken({
@@ -99,6 +107,7 @@ class CompactedAssetToken implements Comparable<CompactedAssetToken> {
     required this.lastActivityTime,
     required this.lastRefreshedTime,
     required this.edition,
+    this.editionName,
     this.pending,
     this.isDebugged,
     required this.blockchain,
@@ -118,11 +127,35 @@ class CompactedAssetToken implements Comparable<CompactedAssetToken> {
   final String? tokenId;
   final DateTime? mintedAt;
   final int edition;
+  final String? editionName;
+
   covariant CompactedAsset? asset;
 
-  String? get artistID => asset?.artistID;
+  String? get artistID {
+    final id = asset?.artistID;
+    if (id == null || id.isEmpty) {
+      return null;
+    }
 
-  String? get artistName => asset?.artistName;
+    if (id.isNullAddress) {
+      return null;
+    }
+
+    return id;
+  }
+
+  String? get artistName {
+    final name = asset?.artistName;
+    if (name == null || name.isEmpty) {
+      return null;
+    }
+
+    if (name.isNullAddress) {
+      return null;
+    }
+
+    return name;
+  }
 
   String? get artistURL => asset?.artistURL;
 
@@ -130,7 +163,7 @@ class CompactedAssetToken implements Comparable<CompactedAssetToken> {
 
   String? get assetID => asset?.assetID;
 
-  String? get title => asset?.title;
+  // String? get displayTitle => asset?.title;
 
   String? get mimeType => asset?.mimeType;
 
@@ -164,7 +197,7 @@ class AssetToken extends CompactedAssetToken {
   AssetToken({
     required super.id,
     required super.edition,
-    required this.editionName,
+    required super.editionName,
     required super.blockchain,
     required this.fungible,
     required this.contractType,
@@ -177,6 +210,7 @@ class AssetToken extends CompactedAssetToken {
     required super.lastRefreshedTime,
     required this.provenance,
     required this.originTokenInfo,
+    required super.isDebugged,
     super.mintedAt,
     this.projectMetadata,
     this.swapped = false,
@@ -255,6 +289,7 @@ class AssetToken extends CompactedAssetToken {
             )
           : null,
       asset: projectMetadata.toAsset,
+      isDebugged: json['isDebugged'] as bool?,
     );
   }
 
@@ -320,6 +355,7 @@ class AssetToken extends CompactedAssetToken {
       ipfsPinned: json['ipfsPinned'] as bool?,
       burned: json['burned'] as bool?,
       pending: json['pending'] as bool?,
+      isDebugged: json['isDebugged'] as bool?,
       attributes: json['asset']['attributes'] != null
           ? Attributes.fromJson(
               Map<String, dynamic>.from(json['asset']['attributes'] as Map),
@@ -328,6 +364,20 @@ class AssetToken extends CompactedAssetToken {
       asset: projectMetadata.toAsset,
     );
   }
+
+// String? id,
+//     int? balance,
+//     String? owner,
+//     DateTime? lastActivityTime,
+//     DateTime? lastRefreshedTime,
+//     int? edition,
+//     String? blockchain,
+//     String? tokenId,
+//     DateTime? mintedAt,
+//     covariant CompactedAsset? asset,
+//     String? editionName,
+//     bool? pending,
+//     bool? isDebugged,
 
   // copyWith method
   @override
@@ -343,6 +393,8 @@ class AssetToken extends CompactedAssetToken {
     DateTime? mintedAt,
     Asset? asset,
     String? editionName,
+    bool? pending,
+    bool? isDebugged,
     bool? fungible,
     String? contractType,
     String? contractAddress,
@@ -354,7 +406,6 @@ class AssetToken extends CompactedAssetToken {
     bool? swapped,
     Attributes? attributes,
     bool? burned,
-    bool? pending,
     bool? isManual,
     String? originTokenInfoId,
     bool? ipfsPinned,
@@ -385,10 +436,10 @@ class AssetToken extends CompactedAssetToken {
       originTokenInfoId: originTokenInfoId ?? this.originTokenInfoId,
       ipfsPinned: ipfsPinned ?? this.ipfsPinned,
       asset: asset ?? this.asset,
+      isDebugged: isDebugged ?? this.isDebugged,
     );
   }
 
-  final String? editionName;
   final bool fungible;
   final String contractType;
   final String? contractAddress;

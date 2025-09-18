@@ -10,4 +10,8 @@ extension EthereumExtension on String {
       return null;
     }
   }
+
+  bool get isNullAddress {
+    return this == '0x0000000000000000000000000000000000000000';
+  }
 }
