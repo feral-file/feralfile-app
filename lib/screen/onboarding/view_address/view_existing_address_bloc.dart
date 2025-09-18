@@ -102,6 +102,7 @@ class ViewExistingAddressBloc
 
     // Early exit if address is empty
     if (address.isEmpty) {
+      _latestAsync.cancelInFlight();
       return;
     }
 
