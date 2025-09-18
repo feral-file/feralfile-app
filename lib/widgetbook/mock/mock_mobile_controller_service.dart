@@ -13,7 +13,7 @@ class MockMobileControllerService extends MobileControllerService {
   MockMobileControllerService(MobileControllerAPI api) : super(api);
 
   @override
-  Future<(DP1Call dp1Call, DP1Intent intent, String response)>
+  Future<(DP1Call dp1Call, AiIntent intent, String response)>
       getDP1CallFromText({
     required String command,
     required List<String> deviceNames,
@@ -59,8 +59,8 @@ class MockMobileControllerService extends MobileControllerService {
       signature: 'mock-signature',
     );
 
-    final mockIntent = DP1Intent(
-      action: DP1Action.now,
+    final mockIntent = AiIntent(
+      action: AiAction.now,
       deviceName: deviceNames.isNotEmpty ? deviceNames.first : 'Mock Device',
     );
 

@@ -8,11 +8,13 @@ extension RecordProcessingStatusEx on RecordProcessingStatus {
         return MessageConstants.recordTranscriptionText;
       case RecordProcessingStatus.transcribed:
         return MessageConstants.recordProcessingText;
-      case RecordProcessingStatus.intentReceived:
-      case RecordProcessingStatus.dp1CallReceived:
-        return MessageConstants.recordIntentReceivedText;
       case RecordProcessingStatus.thinking:
         return '';
+      case RecordProcessingStatus.intentReceived:
+      case RecordProcessingStatus.dp1CallReceived:
+      case RecordProcessingStatus.responseReceived:
+      case RecordProcessingStatus.completed:
+        return MessageConstants.recordIntentReceivedText;
     }
   }
 }

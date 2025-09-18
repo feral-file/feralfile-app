@@ -7,10 +7,14 @@ import 'package:autonomy_flutter/screen/meili_search/meili_search_bloc.dart';
 import 'package:autonomy_flutter/screen/meili_search/meili_search_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/record_processing_status_ext.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/intent.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/bloc/record_controller_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channel_details/channel_detail.page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/dp1_playlist_details.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/services/channels_service.dart';
 import 'package:autonomy_flutter/service/audio_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
+import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/mobile_controller_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
@@ -130,6 +134,60 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
 
           if (state is RecordSuccessState) {
             final dp1Playlist = state.lastDP1Call;
+
+            if (dp1Playlist == null) {
+              final entity = state.lastIntent.entities?.firstOrNull;
+              if (entity == null) {
+                return;
+              }
+              switch (entity.type) {
+                case AiEntityType.playlist:
+                  final playlistId = entity.ids?.first;
+                  if (playlistId == null) {
+                    return;
+                  }
+                  injector<DP1FeedService>()
+                      .getPlaylistById(playlistId)
+                      .then((value) {
+                    final dp1Playlist = value;
+                    if (dp1Playlist.items.isEmpty) {
+                      return;
+                    }
+                    injector<NavigationService>().navigateTo(
+                      AppRouter.dp1PlaylistDetailsPage,
+                      arguments: DP1PlaylistDetailsScreenPayload(
+                        playlist: dp1Playlist,
+                        backTitle: 'Index',
+                      ),
+                    );
+                  });
+                case AiEntityType.channel:
+                  final channelId = entity.ids?.first;
+                  if (channelId == null) {
+                    return;
+                  }
+                  injector<ChannelsService>()
+                      .getChannelDetail(channelId)
+                      .then((value) {
+                    final channel = value;
+                    if (channel.playlists.isEmpty) {
+                      return;
+                    }
+                    injector<NavigationService>().navigateTo(
+                      AppRouter.channelDetailPage,
+                      arguments: ChannelDetailPagePayload(
+                        channel: channel,
+                      ),
+                    );
+                  });
+                case AiEntityType.myCollection:
+                  injector<NavigationService>().openMyCollection();
+                  break;
+                default:
+                  return;
+              }
+            }
+
             if (dp1Playlist == null || dp1Playlist.items.isEmpty) {
               return;
             }
@@ -314,7 +372,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
           (state as RecordProcessingState).status.message,
         );
       case RecordSuccessState:
-        if (state.lastDP1Call!.items.isEmpty) {
+        if (!state.isValid) {
           return _recordErrorStatus(
             AudioException((state as RecordSuccessState).response).message,
           );
@@ -410,80 +468,6 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
       ),
     );
   }
-
-  // Widget _historyChat(BuildContext context) {
-  //   var messages = configurationService.getRecordedMessages();
-  //   if (kDebugMode && messages.isEmpty) {
-  //     messages = UIConstants.sampleHistoryAsks;
-  //   }
-
-  //   return Stack(
-  //     children: [
-  //       ListView.builder(
-  //         padding: EdgeInsets.zero,
-  //         itemCount: messages.length + 1,
-  //         itemBuilder: (context, index) {
-  //           if (index == messages.length) {
-  //             return const SizedBox(height: 100);
-  //           }
-
-  //           final theme = Theme.of(context);
-  //           return Column(
-  //             crossAxisAlignment: CrossAxisAlignment.start,
-  //             children: [
-  //               Padding(
-  //                 padding: ResponsiveLayout.paddingAll,
-  //                 child: Text(
-  //                   messages[index],
-  //                   style: theme.textTheme.ppMori400Grey12,
-  //                   maxLines: 3,
-  //                   overflow: TextOverflow.ellipsis,
-  //                 ),
-  //               ),
-  //               addDivider(color: AppColor.primaryBlack, height: 1),
-  //             ],
-  //           );
-  //         },
-  //       ),
-  //       Positioned(
-  //         bottom: 0,
-  //         left: 0,
-  //         right: 0,
-  //         child: MultiValueListenableBuilder(
-  //           valueListenables: [
-  //             nowDisplayingShowing,
-  //           ],
-  //           builder: (context, values, _) {
-  //             return values.every((value) => value as bool)
-  //                 ? Positioned(
-  //                     bottom: 0,
-  //                     left: 0,
-  //                     right: 0,
-  //                     child: IgnorePointer(
-  //                       child: Container(
-  //                         height: 160,
-  //                         decoration: BoxDecoration(
-  //                           gradient: LinearGradient(
-  //                             begin: Alignment.topCenter,
-  //                             end: Alignment.bottomCenter,
-  //                             stops: const [0.0, 0.37, 0.37],
-  //                             colors: [
-  //                               AppColor.auGreyBackground.withAlpha(0),
-  //                               AppColor.auGreyBackground,
-  //                               AppColor.auGreyBackground,
-  //                             ],
-  //                           ),
-  //                         ),
-  //                       ),
-  //                     ),
-  //                   )
-  //                 : Container();
-  //           },
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
 
   @override
   bool get wantKeepAlive => true;

@@ -6,33 +6,49 @@ enum RecordProcessingStatus {
   thinking,
   intentReceived,
   dp1CallReceived,
+  responseReceived,
+  completed,
 }
 
 class RecordState {
-  const RecordState({
-    this.lastIntent,
+  RecordState({
+    AiIntent? lastIntent,
     this.lastDP1Call,
-  });
+  }) : _lastIntent = lastIntent;
 
-  final DP1Intent? lastIntent;
+  final AiIntent? _lastIntent;
+  AiIntent? get lastIntent => _lastIntent;
   final DP1Call? lastDP1Call;
 
   RecordState copyWith({
-    DP1Intent? lastIntent,
+    AiIntent? lastIntent,
     DP1Call? lastDP1Call,
   }) =>
       RecordState(
         lastIntent: lastIntent ?? this.lastIntent,
         lastDP1Call: lastDP1Call ?? this.lastDP1Call,
       );
+
+  bool get isValid {
+    // check if the intent has type open_screen or dp1Call has items
+    if (lastIntent?.action == AiAction.openScreen ||
+        (lastIntent?.entities?.any((e) =>
+                e.type == AiEntityType.playlist ||
+                e.type == AiEntityType.channel) ??
+            false) ||
+        (lastDP1Call?.items.isNotEmpty ?? false)) {
+      return true;
+    }
+    return false;
+  }
 }
 
 class RecordInitialState extends RecordState {
-  const RecordInitialState();
+  RecordInitialState();
 }
 
 class RecordRecordingState extends RecordState {
-  const RecordRecordingState();
+  RecordRecordingState();
 }
 
 class RecordProcessingState extends RecordState {
@@ -42,19 +58,22 @@ class RecordProcessingState extends RecordState {
     super.lastDP1Call,
     this.statusMessage,
     this.transcription,
+    this.response,
   });
 
   final RecordProcessingStatus status;
   final String? statusMessage;
   final String? transcription;
+  final String? response;
 
   @override
   RecordProcessingState copyWith({
     RecordProcessingStatus? status,
-    DP1Intent? lastIntent,
+    AiIntent? lastIntent,
     DP1Call? lastDP1Call,
     String? statusMessage,
     String? transcription,
+    String? response,
   }) =>
       RecordProcessingState(
         status: status ?? this.status,
@@ -62,6 +81,7 @@ class RecordProcessingState extends RecordState {
         transcription: transcription ?? this.transcription,
         lastIntent: lastIntent ?? this.lastIntent,
         lastDP1Call: lastDP1Call ?? this.lastDP1Call,
+        response: response ?? this.response,
       );
 
   String get processingMessage => statusMessage ?? status.message;
@@ -77,10 +97,15 @@ class RecordSuccessState extends RecordState {
   final String response;
   final String transcription;
 
-  const RecordSuccessState({
-    required DP1Intent lastIntent,
-    required DP1Call lastDP1Call,
+  final AiIntent _lastIntentNonNull;
+  @override
+  AiIntent get lastIntent => _lastIntentNonNull;
+
+  RecordSuccessState({
+    required AiIntent lastIntent,
+    required DP1Call? lastDP1Call,
     required this.response,
     required this.transcription,
-  }) : super(lastIntent: lastIntent, lastDP1Call: lastDP1Call);
+  })  : _lastIntentNonNull = lastIntent,
+        super(lastIntent: lastIntent, lastDP1Call: lastDP1Call);
 }

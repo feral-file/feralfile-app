@@ -8,7 +8,7 @@ class HighlightController extends TextEditingController {
   List<Map<String, dynamic>> _templates = [];
   bool _templatesLoaded = false;
 
-  HighlightController() {
+  HighlightController({String? text}) : super(text: text) {
     _loadTemplates();
   }
 

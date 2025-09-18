@@ -29,6 +29,8 @@ class MockIndexerApi implements IndexerApi {
         burned: false,
         ipfsPinned: false,
         asset: Asset.init(indexID: 'mock_token_id'),
+        isDebugged: false,
+        pending: false,
       )
     ];
   }
@@ -87,6 +89,8 @@ class MockIndexerApi implements IndexerApi {
         burned: false,
         ipfsPinned: false,
         asset: Asset.init(indexID: 'mock_id_$collectionId'),
+        isDebugged: false,
+        pending: false,
       )
     ];
   }

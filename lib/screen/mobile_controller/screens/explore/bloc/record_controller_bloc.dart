@@ -18,14 +18,14 @@ part 'record_controller_state.dart';
 // Bloc
 class RecordBloc extends AuBloc<RecordEvent, RecordState> {
   RecordBloc(this.service, this.audioService, this.configurationService)
-      : super(const RecordInitialState()) {
+      : super(RecordInitialState()) {
     on<PermissionGrantedEvent>(_onPermissionGranted);
     on<StartRecordingEvent>(_onStartRecording);
     on<StopRecordingEvent>(_onStopRecording);
     on<SubmitTextEvent>(_onSubmitText);
 
     on<ResetPlaylistEvent>((event, emit) {
-      emit(const RecordInitialState());
+      emit(RecordInitialState());
     });
   }
 
@@ -46,7 +46,7 @@ class RecordBloc extends AuBloc<RecordEvent, RecordState> {
   ) {
     if (state is RecordErrorState &&
         (state as RecordErrorState).error is AudioPermissionDeniedException) {
-      emit(const RecordInitialState());
+      emit(RecordInitialState());
     }
   }
 
@@ -55,7 +55,7 @@ class RecordBloc extends AuBloc<RecordEvent, RecordState> {
     Emitter<RecordState> emit,
   ) async {
     _statusTimer?.cancel();
-    emit(const RecordInitialState());
+    emit(RecordInitialState());
 
     final granted = await audioService.askMicrophonePermission();
     if (!granted) {
@@ -66,7 +66,7 @@ class RecordBloc extends AuBloc<RecordEvent, RecordState> {
     await audioService.startRecording(onSilenceDetected: () {
       add(StopRecordingEvent());
     });
-    emit(const RecordRecordingState());
+    emit(RecordRecordingState());
   }
 
   Future<void> _onStopRecording(
@@ -232,7 +232,7 @@ class RecordBloc extends AuBloc<RecordEvent, RecordState> {
     Emitter<RecordState> emit,
   ) async {
     final intent =
-        DP1Intent.fromJson(Map<String, dynamic>.from(nlParserData.data as Map));
+        AiIntent.fromJson(Map<String, dynamic>.from(nlParserData.data as Map));
     if (state is RecordProcessingState) {
       emit((state as RecordProcessingState).copyWith(
           lastIntent: intent,
@@ -284,11 +284,42 @@ class RecordBloc extends AuBloc<RecordEvent, RecordState> {
   ) async {
     log.info('Response action received: ${nlParserData.data}');
 
+    final response = nlParserData.content;
+    if (state is RecordProcessingState) {
+      emit((state as RecordProcessingState).copyWith(
+        status: RecordProcessingStatus.responseReceived,
+        response: response,
+      ));
+    } else {
+      emit(RecordProcessingState(
+          status: RecordProcessingStatus.responseReceived, response: response));
+    }
+
+    // if (state is RecordProcessingState) {
+    //   final response = nlParserData.content;
+    //   final intent = state.lastIntent!;
+    //   final dp1call = state.lastDP1Call!;
+    //   final transcription = (state as RecordProcessingState).transcription!;
+    //   final successState = RecordSuccessState(
+    //     lastIntent: intent,
+    //     lastDP1Call: dp1call,
+    //     response: response,
+    //     transcription: transcription,
+    //   );
+    //   emit(successState);
+    // }
+  }
+
+  Future<void> _handleComplete(
+    NLParserData nlParserData,
+    Emitter<RecordState> emit,
+  ) async {
+    log.info('Complete action received');
     if (state is RecordProcessingState) {
       final response = nlParserData.content;
-      final intent = state.lastIntent!;
-      final dp1call = state.lastDP1Call!;
       final transcription = (state as RecordProcessingState).transcription!;
+      final intent = state.lastIntent!;
+      final dp1call = state.lastDP1Call;
       final successState = RecordSuccessState(
         lastIntent: intent,
         lastDP1Call: dp1call,
@@ -297,13 +328,6 @@ class RecordBloc extends AuBloc<RecordEvent, RecordState> {
       );
       emit(successState);
     }
-  }
-
-  Future<void> _handleComplete(
-    NLParserData nlParserData,
-    Emitter<RecordState> emit,
-  ) async {
-    log.info('Complete action received');
   }
 
   Future<void> _handleError(

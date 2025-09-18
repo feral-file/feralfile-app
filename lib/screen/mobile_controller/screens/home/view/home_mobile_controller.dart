@@ -38,14 +38,17 @@ class _MobileControllerHomePageState
     // load channel and playlist
     _channelsBloc.add(const LoadChannelsEvent());
     _playlistsBloc.add(const LoadPlaylistsEvent());
-
-    final cachedAllOwnPlaylist =
-        injector<UserDp1PlaylistService>().cachedAllOwnedPlaylist;
-    _userAllOwnCollectionBloc.add(
-      UpdateDynamicQueryEvent(
-        dynamicQuery: cachedAllOwnPlaylist.firstDynamicQuery!,
-      ),
-    );
+    try {
+      final cachedAllOwnPlaylist =
+          injector<UserDp1PlaylistService>().cachedAllOwnedPlaylist;
+      _userAllOwnCollectionBloc.add(
+        UpdateDynamicQueryEvent(
+          dynamicQuery: cachedAllOwnPlaylist.firstDynamicQuery!,
+        ),
+      );
+    } catch (_) {
+      // Silently ignore if no cached playlist
+    }
     // final dynamicQuery = injector<UserAllOwnCollectionBloc>()
     //     .state
     //     .dynamicQuery
@@ -88,7 +91,9 @@ class _MobileControllerHomePageState
         BlocProvider.value(value: _channelsBloc),
         BlocProvider.value(value: _playlistsBloc),
       ],
-      child: const ListDirectoryPage(),
+      child: ListDirectoryPage(
+        key: directoryPageGlobalKey,
+      ),
     );
   }
 }

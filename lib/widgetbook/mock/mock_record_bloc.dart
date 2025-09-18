@@ -22,8 +22,8 @@ class MockRecordBloc extends RecordBloc {
       // Use shared mock data for text submission
       final mockDp1Call = MockMobileControllerData.mockRecordPlaylist;
 
-      final mockIntent = DP1Intent(
-        action: DP1Action.now,
+      final mockIntent = AiIntent(
+        action: AiAction.now,
         deviceName: 'Mock Record Device',
       );
 
@@ -40,8 +40,8 @@ class MockRecordBloc extends RecordBloc {
       // Use shared mock data for voice recording
       final mockDp1Call = MockMobileControllerData.mockVoicePlaylist;
 
-      final mockIntent = DP1Intent(
-        action: DP1Action.now,
+      final mockIntent = AiIntent(
+        action: AiAction.now,
         deviceName: 'Mock Voice Device',
       );
 

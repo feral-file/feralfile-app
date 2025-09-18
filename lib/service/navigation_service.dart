@@ -24,6 +24,7 @@ import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/feralfile_home.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/index.dart';
 import 'package:autonomy_flutter/screen/playlists/view_playlist/view_playlist.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/shared.dart';
@@ -1158,5 +1159,10 @@ class NavigationService {
         ),
       );
     }
+  }
+
+  void openMyCollection() {
+    popUntilHome();
+    directoryPageGlobalKey.currentState?.openMyCollection();
   }
 }

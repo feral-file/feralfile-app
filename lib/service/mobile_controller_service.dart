@@ -14,7 +14,7 @@ class MobileControllerService {
   final MobileControllerAPI api;
 
   /// Gọi API và trả về intent, dp1_call
-  Future<(DP1Call dp1Call, DP1Intent intent, String response)>
+  Future<(DP1Call dp1Call, AiIntent intent, String response)>
       getDP1CallFromText({
     required String command,
     required List<String> deviceNames,
@@ -27,7 +27,7 @@ class MobileControllerService {
     final dp1call =
         DP1Call.fromJson(Map<String, dynamic>.from(result['dp1_call'] as Map));
     final intent =
-        DP1Intent.fromJson(Map<String, dynamic>.from(result['intent'] as Map));
+        AiIntent.fromJson(Map<String, dynamic>.from(result['intent'] as Map));
     final response = result['response'] as String;
     return (dp1call, intent, response);
   }

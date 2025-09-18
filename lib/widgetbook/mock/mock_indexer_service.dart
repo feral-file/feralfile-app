@@ -88,6 +88,8 @@ class MockIndexerService extends NftIndexerService {
         burned: false,
         ipfsPinned: false,
         asset: Asset.init(indexID: 'mock_id_$collectionId'),
+        isDebugged: false,
+        pending: false,
       ),
     ];
   }

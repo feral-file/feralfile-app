@@ -21,14 +21,16 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
+final directoryPageGlobalKey = GlobalKey<ListDirectoryPageState>();
+
 class ListDirectoryPage extends StatefulWidget {
   const ListDirectoryPage({super.key});
 
   @override
-  State<ListDirectoryPage> createState() => _ListDirectoryPageState();
+  State<ListDirectoryPage> createState() => ListDirectoryPageState();
 }
 
-class _ListDirectoryPageState extends State<ListDirectoryPage>
+class ListDirectoryPageState extends State<ListDirectoryPage>
     with AutomaticKeepAliveClientMixin {
   late PageController _pageController;
   int _selectedPageIndex = 0;
@@ -37,6 +39,10 @@ class _ListDirectoryPageState extends State<ListDirectoryPage>
   void initState() {
     super.initState();
     _pageController = PageController();
+  }
+
+  void openMyCollection() {
+    _onPageChanged(3);
   }
 
   void _onPageChanged(int index) {

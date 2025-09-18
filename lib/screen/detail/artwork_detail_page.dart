@@ -28,7 +28,7 @@ import 'package:autonomy_flutter/screen/detail/preview_detail/preview_detail_wid
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/intent.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_intent.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
@@ -308,7 +308,8 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                                   token: assetToken,
                                 );
                                 final dp1Playlist = DP1CallExtension.fromItems(
-                                    items: [playlistItem]);
+                                  items: [playlistItem],
+                                );
                                 final completer = Completer<void>();
                                 _canvasDeviceBloc.add(
                                   CanvasDeviceCastDP1PlaylistEvent(

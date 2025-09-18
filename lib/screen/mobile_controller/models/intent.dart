@@ -1,75 +1,100 @@
-enum DP1Action {
+enum AiAction {
   now,
-  schedulePlay;
+  schedulePlay,
+  openScreen;
 
   String get value {
     switch (this) {
-      case DP1Action.now:
+      case AiAction.now:
         return 'now_display';
-      case DP1Action.schedulePlay:
+      case AiAction.schedulePlay:
         return 'schedule_play';
+      case AiAction.openScreen:
+        return 'open_screen';
     }
   }
 
-  static DP1Action fromString(String value) {
+  static AiAction fromString(String value) {
     switch (value) {
       case 'now_display':
-        return DP1Action.now;
+        return AiAction.now;
       case 'schedule_play':
-        return DP1Action.schedulePlay;
+        return AiAction.schedulePlay;
+      case 'open_screen':
+        return AiAction.openScreen;
       default:
         throw ArgumentError('Unknown action type: $value');
     }
   }
 }
 
-enum DPIEntityType {
+enum AiEntityType {
   artist,
-  exhibition;
+  exhibition,
+  channel,
+  playlist,
+  myCollection;
 
   String get value {
     switch (this) {
-      case DPIEntityType.artist:
+      case AiEntityType.artist:
         return 'artist';
-      case DPIEntityType.exhibition:
+      case AiEntityType.exhibition:
         return 'exhibition';
+      case AiEntityType.channel:
+        return 'channel';
+      case AiEntityType.playlist:
+        return 'playlist';
+      case AiEntityType.myCollection:
+        return 'my_collection';
     }
   }
 
-  static DPIEntityType fromString(String value) {
+  static AiEntityType fromString(String value) {
     switch (value) {
       case 'artist':
-        return DPIEntityType.artist;
+        return AiEntityType.artist;
       case 'exhibition':
-        return DPIEntityType.exhibition;
+        return AiEntityType.exhibition;
+      case 'channel':
+        return AiEntityType.channel;
+      case 'playlist':
+        return AiEntityType.playlist;
+      case 'my_collection':
+        return AiEntityType.myCollection;
       default:
-        return DPIEntityType.artist;
+        return AiEntityType.artist;
         throw ArgumentError('Unknown entity type: $value');
     }
   }
 }
 
-class DPEntity {
-  DPEntity({
+class AiEntity {
+  AiEntity({
     required this.name,
     required this.type,
     required this.probability,
     this.slug,
+    this.ids,
   });
 
-  factory DPEntity.fromJson(Map<String, dynamic> json) {
-    return DPEntity(
+  factory AiEntity.fromJson(Map<String, dynamic> json) {
+    return AiEntity(
       name: json['name'] as String,
-      type: DPIEntityType.fromString(json['type'] as String),
+      type: AiEntityType.fromString(json['type'] as String),
       probability: (json['probability'] as num).toDouble(),
       slug: json['slug'] as String?,
+      ids: json['ids'] == null
+          ? null
+          : (json['ids'] as List<dynamic>).map((e) => e as String).toList(),
     );
   }
 
   final String name;
-  final DPIEntityType type;
+  final AiEntityType type;
   final double probability;
   final String? slug;
+  final List<String>? ids;
 
   Map<String, dynamic> toJson() {
     return {
@@ -77,40 +102,41 @@ class DPEntity {
       'type': type.value,
       'probability': probability,
       'slug': slug,
+      'ids': ids,
     };
   }
 }
 
-class DP1Intent {
-  DP1Intent({
+class AiIntent {
+  AiIntent({
     required this.action,
     this.deviceName,
     this.entities,
     this.searchTerm,
   });
 
-  DP1Intent.displayNow({this.deviceName, this.entities, this.searchTerm})
-      : action = DP1Action.now;
+  AiIntent.displayNow({this.deviceName, this.entities, this.searchTerm})
+      : action = AiAction.now;
 
-  DP1Intent.schedulePlay({this.deviceName, this.entities, this.searchTerm})
-      : action = DP1Action.schedulePlay;
+  AiIntent.schedulePlay({this.deviceName, this.entities, this.searchTerm})
+      : action = AiAction.schedulePlay;
 
-  factory DP1Intent.fromJson(Map<String, dynamic> json) {
-    return DP1Intent(
-      action: DP1Action.fromString(json['action'] as String),
+  factory AiIntent.fromJson(Map<String, dynamic> json) {
+    return AiIntent(
+      action: AiAction.fromString(json['action'] as String),
       deviceName: json['device_name'] as String?,
       entities: json['entities'] == null
           ? null
           : (json['entities'] as List<dynamic>)
-              .map((e) => DPEntity.fromJson(e as Map<String, dynamic>))
+              .map((e) => AiEntity.fromJson(e as Map<String, dynamic>))
               .toList(),
       searchTerm: json['search_term'] as String?,
     );
   }
 
-  final DP1Action action;
+  final AiAction action;
   final String? deviceName;
-  final List<DPEntity>? entities;
+  final List<AiEntity>? entities;
   final String? searchTerm;
 
   Map<String, dynamic> toJson() {
@@ -124,9 +150,9 @@ class DP1Intent {
 
   String get displayText {
     String prefix = 'Building playlist';
-    if (action == DP1Action.now) {
+    if (action == AiAction.now) {
       prefix = 'Building playlist';
-    } else if (action == DP1Action.schedulePlay) {
+    } else if (action == AiAction.schedulePlay) {
       prefix = 'Building playlist for scheduled play';
     }
 

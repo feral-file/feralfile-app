@@ -19,7 +19,7 @@ class ChatThreadView extends StatefulWidget {
 
 class _ChatThreadViewState extends State<ChatThreadView> {
   late DP1Call playlist;
-  late DP1Intent intent;
+  late AiIntent intent;
 
   @override
   void initState() {
