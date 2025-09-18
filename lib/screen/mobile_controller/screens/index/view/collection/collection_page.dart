@@ -164,7 +164,8 @@ class _CollectionPageState extends State<CollectionPage>
                                   ),
                                 ),
                               ),
-                            if (collectionState.isLazyLoading)
+                            if (collectionState.isLazyLoading &&
+                                collectionState.compactedAssetTokens.isNotEmpty)
                               SliverToBoxAdapter(
                                 child: Padding(
                                   padding:

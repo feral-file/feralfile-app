@@ -149,7 +149,7 @@ extension CompactedAssetTokenExtension on CompactedAssetToken {
   }
 
   String? get displayTitle {
-    final title = asset?.title;
+    String? title = asset?.title;
     if (title == null) {
       return null;
     }
@@ -158,11 +158,16 @@ extension CompactedAssetTokenExtension on CompactedAssetToken {
         JohnGerrardHelper.assetIDs
             .any((id) => asset?.assetID!.startsWith(id) ?? false);
 
-    if (mintedAt != null && !isJohnGerrardSeries)
-      return '$title (${mintedAt!.year})';
+    if (isJohnGerrardSeries) {
+      return title;
+    }
 
     if (isFeralfile) {
-      return '$title (${edition})';
+      title = '$title #${edition}';
+    }
+
+    if (mintedAt != null && !isJohnGerrardSeries) {
+      title = '$title (${mintedAt!.year})';
     }
 
     return title;

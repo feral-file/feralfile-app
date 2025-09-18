@@ -211,6 +211,7 @@ const String getCompactedTokens = r'''
     id
     blockchain
     edition
+    editionName
     mintedAt
     balance
     owner
