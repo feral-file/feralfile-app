@@ -35,6 +35,10 @@ import 'package:autonomy_flutter/view/passkey/passkey_login_view.dart';
 import 'package:autonomy_flutter/view/passkey/passkey_register_view.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel_item.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_item.dart';
 import 'package:card_swiper/card_swiper.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
@@ -1480,6 +1484,49 @@ class UIHelper {
           );
         },
         childCount: compactedAssetTokens.length,
+      ),
+    );
+  }
+
+  // Channel list as sliver for search and index pages
+  static SliverList ChannelSliverListView({
+    required List<Channel> channels,
+    EdgeInsetsGeometry padding = EdgeInsets.zero,
+  }) {
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final channel = channels[index];
+          return ColoredBox(
+            color: Colors.transparent,
+            child: ChannelItem(channel: channel),
+          );
+        },
+        childCount: channels.length,
+      ),
+    );
+  }
+
+  // Playlist list as sliver for search and index pages
+  static SliverList PlaylistSliverListView({
+    required List<DP1Call> playlists,
+    Channel? channel,
+    bool channelVisible = true,
+    bool isFromPlaylistsPage = false,
+    EdgeInsetsGeometry padding = EdgeInsets.zero,
+  }) {
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final playlist = playlists[index];
+          return PlaylistItem(
+            playlist: playlist,
+            channel: channel,
+            isFromPlaylistsPage: isFromPlaylistsPage,
+            channelVisible: channelVisible,
+          );
+        },
+        childCount: playlists.length,
       ),
     );
   }

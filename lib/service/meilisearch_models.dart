@@ -5,53 +5,40 @@
 //  that can be found in the LICENSE file.
 //
 
-import 'package:autonomy_flutter/model/ff_alumni.dart';
-import 'package:autonomy_flutter/model/ff_artwork.dart';
-import 'package:autonomy_flutter/model/ff_exhibition.dart';
-import 'package:autonomy_flutter/model/ff_series.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 
 /// Result class for MeiliSearch operations
 class MeiliSearchResult {
-  final List<Artwork> artworks;
-  final List<Exhibition> exhibitions;
-  final List<AlumniAccount> artists;
-  final List<AlumniAccount> curators;
-  final List<FFSeries> series;
+  final List<Channel> channels;
+  final List<DP1Call> playlists;
+  final List<DP1Item> items;
   // Ranking scores from MeiliSearch (_rankingScore)
-  final List<double> artworksRankingScore;
-  final List<double> exhibitionsRankingScore;
-  final List<double> artistsRankingScore;
-  final List<double> curatorsRankingScore;
-  final List<double> seriesRankingScore;
+  final List<double> channelsRankingScore;
+  final List<double> playlistsRankingScore;
+  final List<double> itemsRankingScore;
   final int totalHits;
   final int processingTimeMs;
 
   MeiliSearchResult({
-    required this.artworks,
-    required this.exhibitions,
-    required this.artists,
-    required this.curators,
-    required this.series,
-    this.artworksRankingScore = const [],
-    this.exhibitionsRankingScore = const [],
-    this.artistsRankingScore = const [],
-    this.curatorsRankingScore = const [],
-    this.seriesRankingScore = const [],
+    required this.channels,
+    required this.playlists,
+    required this.items,
+    this.channelsRankingScore = const [],
+    this.playlistsRankingScore = const [],
+    this.itemsRankingScore = const [],
     required this.totalHits,
     required this.processingTimeMs,
   });
 
   factory MeiliSearchResult.empty() => MeiliSearchResult(
-        artworks: [],
-        exhibitions: [],
-        artists: [],
-        curators: [],
-        series: [],
-        artworksRankingScore: const [],
-        exhibitionsRankingScore: const [],
-        artistsRankingScore: const [],
-        curatorsRankingScore: const [],
-        seriesRankingScore: const [],
+        channels: [],
+        playlists: [],
+        items: [],
+        channelsRankingScore: const [],
+        playlistsRankingScore: const [],
+        itemsRankingScore: const [],
         totalHits: 0,
         processingTimeMs: 0,
       );

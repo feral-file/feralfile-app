@@ -8,10 +8,9 @@
 import 'dart:math' as math;
 
 import 'package:autonomy_flutter/au_bloc.dart';
-import 'package:autonomy_flutter/model/ff_alumni.dart';
-import 'package:autonomy_flutter/model/ff_artwork.dart';
-import 'package:autonomy_flutter/model/ff_exhibition.dart';
-import 'package:autonomy_flutter/model/ff_series.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/service/meilisearch_models.dart';
 import 'package:autonomy_flutter/service/meilisearch_service.dart';
 import 'package:autonomy_flutter/util/latest_async.dart';
@@ -32,17 +31,13 @@ class MeiliSearchLoadMore extends MeiliSearchEvent {}
 
 class MeiliSearchState {
   final String query;
-  final List<Artwork> artworks;
-  final List<Exhibition> exhibitions;
-  final List<AlumniAccount> artists;
-  final List<AlumniAccount> curators;
-  final List<FFSeries> series;
+  final List<Channel> channels;
+  final List<DP1Call> playlists;
+  final List<DP1Item> items;
   // Highest ranking scores per section
-  final double artworksTopScore;
-  final double exhibitionsTopScore;
-  final double artistsTopScore;
-  final double curatorsTopScore;
-  final double seriesTopScore;
+  final double channelsTopScore;
+  final double playlistsTopScore;
+  final double itemsTopScore;
   final bool isLoading;
   final bool hasError;
   final String? errorMessage;
@@ -51,16 +46,12 @@ class MeiliSearchState {
 
   MeiliSearchState({
     this.query = '',
-    this.artworks = const [],
-    this.exhibitions = const [],
-    this.artists = const [],
-    this.curators = const [],
-    this.series = const [],
-    this.artworksTopScore = 0.0,
-    this.exhibitionsTopScore = 0.0,
-    this.artistsTopScore = 0.0,
-    this.curatorsTopScore = 0.0,
-    this.seriesTopScore = 0.0,
+    this.channels = const [],
+    this.playlists = const [],
+    this.items = const [],
+    this.channelsTopScore = 0.0,
+    this.playlistsTopScore = 0.0,
+    this.itemsTopScore = 0.0,
     this.isLoading = false,
     this.hasError = false,
     this.errorMessage,
@@ -70,16 +61,12 @@ class MeiliSearchState {
 
   MeiliSearchState copyWith({
     String? query,
-    List<Artwork>? artworks,
-    List<Exhibition>? exhibitions,
-    List<AlumniAccount>? artists,
-    List<AlumniAccount>? curators,
-    List<FFSeries>? series,
-    double? artworksTopScore,
-    double? exhibitionsTopScore,
-    double? artistsTopScore,
-    double? curatorsTopScore,
-    double? seriesTopScore,
+    List<Channel>? channels,
+    List<DP1Call>? playlists,
+    List<DP1Item>? items,
+    double? channelsTopScore,
+    double? playlistsTopScore,
+    double? itemsTopScore,
     bool? isLoading,
     bool? hasError,
     String? errorMessage,
@@ -88,16 +75,12 @@ class MeiliSearchState {
   }) {
     return MeiliSearchState(
       query: query ?? this.query,
-      artworks: artworks ?? this.artworks,
-      exhibitions: exhibitions ?? this.exhibitions,
-      artists: artists ?? this.artists,
-      curators: curators ?? this.curators,
-      series: series ?? this.series,
-      artworksTopScore: artworksTopScore ?? this.artworksTopScore,
-      exhibitionsTopScore: exhibitionsTopScore ?? this.exhibitionsTopScore,
-      artistsTopScore: artistsTopScore ?? this.artistsTopScore,
-      curatorsTopScore: curatorsTopScore ?? this.curatorsTopScore,
-      seriesTopScore: seriesTopScore ?? this.seriesTopScore,
+      channels: channels ?? this.channels,
+      playlists: playlists ?? this.playlists,
+      items: items ?? this.items,
+      channelsTopScore: channelsTopScore ?? this.channelsTopScore,
+      playlistsTopScore: playlistsTopScore ?? this.playlistsTopScore,
+      itemsTopScore: itemsTopScore ?? this.itemsTopScore,
       isLoading: isLoading ?? this.isLoading,
       hasError: hasError ?? this.hasError,
       errorMessage: errorMessage ?? this.errorMessage,
@@ -107,11 +90,7 @@ class MeiliSearchState {
   }
 
   bool get hasResults =>
-      artworks.isNotEmpty ||
-      exhibitions.isNotEmpty ||
-      artists.isNotEmpty ||
-      curators.isNotEmpty ||
-      series.isNotEmpty;
+      channels.isNotEmpty || playlists.isNotEmpty || items.isNotEmpty;
 
   bool get isEmpty => !hasResults && !isLoading && query.isNotEmpty;
 }
@@ -162,16 +141,12 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
               values.isEmpty ? 0.0 : values.reduce(math.max);
 
           emit(state.copyWith(
-            artworks: result.artworks,
-            exhibitions: result.exhibitions,
-            artists: result.artists,
-            curators: result.curators,
-            series: result.series,
-            artworksTopScore: _maxOrZero(result.artworksRankingScore),
-            exhibitionsTopScore: _maxOrZero(result.exhibitionsRankingScore),
-            artistsTopScore: _maxOrZero(result.artistsRankingScore),
-            curatorsTopScore: _maxOrZero(result.curatorsRankingScore),
-            seriesTopScore: _maxOrZero(result.seriesRankingScore),
+            channels: result.channels,
+            playlists: result.playlists,
+            items: result.items,
+            channelsTopScore: _maxOrZero(result.channelsRankingScore),
+            playlistsTopScore: _maxOrZero(result.playlistsRankingScore),
+            itemsTopScore: _maxOrZero(result.itemsRankingScore),
             isLoading: false,
             totalHits: result.totalHits,
             hasMoreResults: result.totalHits > _pageSize,

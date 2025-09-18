@@ -8,17 +8,17 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/screen/feralfile_home/artwork_view.dart';
-import 'package:autonomy_flutter/screen/feralfile_home/list_alumni_view.dart';
-import 'package:autonomy_flutter/screen/feralfile_home/list_exhibition_view.dart';
 import 'package:autonomy_flutter/screen/meili_search/meili_search_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
+import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/screen/meili_search/widgets/meili_search_result_section.dart';
-import 'package:autonomy_flutter/service/navigation_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/view/loading.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
+import 'package:autonomy_flutter/view/dp1_playlist_grid_view.dart';
 
 class MeiliSearchPage extends StatefulWidget {
   const MeiliSearchPage({super.key});
@@ -156,81 +156,53 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
     );
   }
 
-  Widget _buildExhibitionsSliver(BuildContext context, MeiliSearchState state) {
-    final exhibitions = state.exhibitions;
+  Widget _buildChannelsSliver(BuildContext context, MeiliSearchState state) {
+    final channels = state.channels;
     return SliverToBoxAdapter(
       child: MeiliSearchResultSection<dynamic>(
-        title: 'Exhibitions',
+        title: 'Channels',
         builder: (context) {
-          return Container(
-            // padding: const EdgeInsets.only(bottom: 32),
-            child: ListExhibitionView(
-              exhibitions: exhibitions,
-              isScrollable: false,
-              padding: const EdgeInsets.only(bottom: 32),
-              emptyWidget: const SizedBox.shrink(),
-            ),
+          return CustomScrollView(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            slivers: [
+              UIHelper.ChannelSliverListView(channels: channels),
+            ],
           );
         },
       ),
     );
   }
 
-  Widget _buildCuratorsSliver(BuildContext context, MeiliSearchState state) {
-    final curators = state.curators;
+  Widget _buildPlaylistsSliver(BuildContext context, MeiliSearchState state) {
+    final playlists = state.playlists;
     return SliverToBoxAdapter(
       child: MeiliSearchResultSection<dynamic>(
-        title: 'Curators',
+        title: 'Playlists',
         builder: (context) {
-          return ListAlumniView(
-            listAlumni: curators,
-            onAlumniSelected: (alumni) {
-              unawaited(
-                injector<NavigationService>()
-                    .openFeralFileCuratorPage(alumni.slug ?? alumni.id),
-              );
-            },
-            padding: const EdgeInsets.only(bottom: 32),
-            emptyWidget: const SizedBox.shrink(),
+          return CustomScrollView(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            slivers: [
+              UIHelper.PlaylistSliverListView(playlists: playlists),
+            ],
           );
         },
       ),
     );
   }
 
-  Widget _buildArtistsSliver(BuildContext context, MeiliSearchState state) {
-    final artists = state.artists;
-    return SliverToBoxAdapter(
-      child: MeiliSearchResultSection<dynamic>(
-        title: 'Artists',
-        builder: (context) {
-          return ListAlumniView(
-            listAlumni: artists,
-            onAlumniSelected: (alumni) {
-              unawaited(
-                injector<NavigationService>()
-                    .openFeralFileArtistPage(alumni.slug ?? alumni.id),
-              );
-            },
-            padding: EdgeInsets.zero,
-            emptyWidget: const SizedBox.shrink(),
-          );
-        },
-      ),
-    );
-  }
+  Widget _buildItemsSliver(BuildContext context, MeiliSearchState state) {
+    final items = state.items;
+    final playlist = DP1CallExtension.fromItems(items: items);
 
-  Widget _buildSeriesSliver(BuildContext context, MeiliSearchState state) {
-    final series = state.series;
     return SliverToBoxAdapter(
       child: MeiliSearchResultSection<dynamic>(
-        title: 'Series',
+        title: 'Items',
         builder: (context) {
-          return SeriesView(
-            series: series,
-            isScrollable: false,
-            padding: EdgeInsets.zero,
-            userCollections: [],
+          return PlaylistAssetGridView(
+            playlist: playlist,
+            physics: const NeverScrollableScrollPhysics(),
           );
         },
       ),
@@ -240,40 +212,31 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
   List<Widget> _buildOrderedSections(
       BuildContext context, MeiliSearchState state) {
     final sections = <_SectionEntry>[];
-    if (state.exhibitions.isNotEmpty) {
+    if (state.channels.isNotEmpty) {
       sections.add(_SectionEntry(
-          'Exhibitions',
-          state.exhibitionsTopScore,
+          'Channels',
+          state.channelsTopScore,
           (ctx) => SliverPadding(
                 padding: EdgeInsets.zero,
-                sliver: _buildExhibitionsSliver(ctx, state),
+                sliver: _buildChannelsSliver(ctx, state),
               )));
     }
-    if (state.curators.isNotEmpty) {
+    if (state.playlists.isNotEmpty) {
       sections.add(_SectionEntry(
-          'Curators',
-          state.curatorsTopScore,
+          'Playlists',
+          state.playlistsTopScore,
           (ctx) => SliverPadding(
                 padding: EdgeInsets.zero,
-                sliver: _buildCuratorsSliver(ctx, state),
+                sliver: _buildPlaylistsSliver(ctx, state),
               )));
     }
-    if (state.artists.isNotEmpty) {
+    if (state.items.isNotEmpty) {
       sections.add(_SectionEntry(
-          'Artists',
-          state.artistsTopScore,
+          'Items',
+          state.itemsTopScore,
           (ctx) => SliverPadding(
                 padding: EdgeInsets.zero,
-                sliver: _buildArtistsSliver(ctx, state),
-              )));
-    }
-    if (state.series.isNotEmpty) {
-      sections.add(_SectionEntry(
-          'Series',
-          state.seriesTopScore,
-          (ctx) => SliverPadding(
-                padding: EdgeInsets.zero,
-                sliver: _buildSeriesSliver(ctx, state),
+                sliver: _buildItemsSliver(ctx, state),
               )));
     }
 

@@ -19,11 +19,13 @@ class PlaylistAssetGridView extends StatefulWidget {
     super.key,
     this.header,
     this.backgroundColor = AppColor.auGreyBackground,
+    this.physics,
   });
 
   final DP1Call playlist;
   final Widget? header;
   final Color backgroundColor;
+  final ScrollPhysics? physics;
 
   @override
   State<PlaylistAssetGridView> createState() => _PlaylistAssetGridViewState();
@@ -82,7 +84,7 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
         return CustomScrollView(
           controller: _scrollController,
           shrinkWrap: true,
-          physics: const AlwaysScrollableScrollPhysics(),
+          physics: widget.physics ?? const AlwaysScrollableScrollPhysics(),
           slivers: [
             if (widget.header != null) ...[
               SliverToBoxAdapter(

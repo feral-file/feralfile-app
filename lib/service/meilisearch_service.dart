@@ -9,11 +9,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:autonomy_flutter/common/environment.dart';
-import 'package:autonomy_flutter/model/ff_alumni.dart';
-import 'package:autonomy_flutter/model/ff_artwork.dart';
-import 'package:autonomy_flutter/model/ff_exhibition.dart';
-import 'package:autonomy_flutter/model/ff_series.dart';
-import 'package:autonomy_flutter/service/custom_meilisearch_sdk.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/service/meilisearch_models.dart';
 import 'package:autonomy_flutter/util/dio_interceptors.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -24,20 +22,20 @@ import 'package:meilisearch/meilisearch.dart';
 
 /// Service for searching across multiple MeiliSearch indexes using the official MeiliSearch SDK
 class MeiliSearchService {
-  MeiliSearchService._internal({this.prefix = 'ffprod'});
+  MeiliSearchService._internal({this.prefix = 'rag-dev'});
 
   /// Create a new instance with the specified prefix
-  factory MeiliSearchService({String prefix = 'ffprod'}) =>
+  factory MeiliSearchService({String prefix = 'rag-dev'}) =>
       MeiliSearchService._internal(prefix: prefix);
 
   late final MeiliSearchClient _client;
   final String prefix;
 
-  late CustomMeiliSDK _customClient;
+  // late CustomMeiliSDK _customClient;
 
   /// Initialize the service with MeiliSearch configuration
   void initialize() {
-    _customClient = CustomMeiliSDK(prefix: prefix)..initialize();
+    // _customClient = CustomMeiliSDK(prefix: prefix)..initialize();
     final ioAdapter = IOHttpClientAdapter();
     ioAdapter.createHttpClient = () {
       final client = HttpClient();
@@ -70,7 +68,7 @@ class MeiliSearchService {
     unawaited(_client.health());
   }
 
-  /// Search across all indexes (artworks, exhibitions, artists, curators, series)
+  /// Search across all indexes (channels, playlists, playlist_items)
   Future<MeiliSearchResult> searchAll({
     required String text,
     int limit = 20,
@@ -95,35 +93,21 @@ class MeiliSearchService {
     // Build multi index query
     final queries = [
       IndexSearchQuery(
-        indexUid: '${prefix}_artworks',
+        indexUid: '${prefix}_channels',
         query: text,
         limit: limit,
         offset: offset,
         showRankingScore: true,
       ),
       IndexSearchQuery(
-        indexUid: '${prefix}_exhibitions',
+        indexUid: '${prefix}_playlists',
         query: text,
         limit: limit,
         offset: offset,
         showRankingScore: true,
       ),
       IndexSearchQuery(
-        indexUid: '${prefix}_artists',
-        query: text,
-        limit: limit,
-        offset: offset,
-        showRankingScore: true,
-      ),
-      IndexSearchQuery(
-        indexUid: '${prefix}_curators',
-        query: text,
-        limit: limit,
-        offset: offset,
-        showRankingScore: true,
-      ),
-      IndexSearchQuery(
-        indexUid: '${prefix}_series',
+        indexUid: '${prefix}_playlist_items',
         query: text,
         limit: limit,
         offset: offset,
@@ -137,77 +121,47 @@ class MeiliSearchService {
             await _client.multiSearch(MultiSearchQuery(queries: queries)));
 
     // Parse results in index order and extract ranking scores
-    final artworksRaw = multiResult.results[0].hits
+    final channelsRaw = multiResult.results[0].hits
         .map((hit) => Map<String, dynamic>.from(hit as Map))
         .toList();
-    final artworks = artworksRaw
+    final channels = channelsRaw
         .map((map) =>
-            Artwork.fromJson(Map<String, dynamic>.from(map['artwork'] as Map)))
+            Channel.fromJson(Map<String, dynamic>.from(map['channel'] as Map)))
         .toList();
-    final artworksRankingScore = artworksRaw
+    final channelsRankingScore = channelsRaw
         .map((m) => (m['_rankingScore'] as num?)?.toDouble() ?? 0.0)
         .toList();
 
-    final exhibitionsRaw = multiResult.results[1].hits
+    final playlistsRaw = multiResult.results[1].hits
         .map((hit) => Map<String, dynamic>.from(hit as Map))
         .toList();
-    final exhibitions = exhibitionsRaw
-        .map((map) => Exhibition.fromJson(
-            Map<String, dynamic>.from(map['exhibition'] as Map)))
-        .toList();
-    final exhibitionsRankingScore = exhibitionsRaw
-        .map((m) => (m['_rankingScore'] as num?)?.toDouble() ?? 0.0)
-        .toList();
-
-    final artistsRaw = multiResult.results[2].hits
-        .map((hit) => Map<String, dynamic>.from(hit as Map))
-        .toList();
-    final artists = artistsRaw
-        .map((map) => AlumniAccount.fromJson(
-            Map<String, dynamic>.from(map['artist'] as Map)))
-        .toList();
-    final artistsRankingScore = artistsRaw
-        .map((m) => (m['_rankingScore'] as num?)?.toDouble() ?? 0.0)
-        .toList();
-
-    final curatorsRaw = multiResult.results[3].hits
-        .map((hit) => Map<String, dynamic>.from(hit as Map))
-        .toList();
-    final curators = curatorsRaw
-        .map((map) => AlumniAccount.fromJson(
-            Map<String, dynamic>.from(map['curator'] as Map)))
-        .toList();
-    final curatorsRankingScore = curatorsRaw
-        .map((m) => (m['_rankingScore'] as num?)?.toDouble() ?? 0.0)
-        .toList();
-
-    final seriesRaw = multiResult.results[4].hits
-        .map((hit) => Map<String, dynamic>.from(hit as Map))
-        .toList();
-    final series = seriesRaw
+    final playlists = playlistsRaw
         .map((map) =>
-            FFSeries.fromJson(Map<String, dynamic>.from(map['series'] as Map)))
+            DP1Call.fromJson(Map<String, dynamic>.from(map['playlist'] as Map)))
         .toList();
-    final seriesRankingScore = seriesRaw
+    final playlistsRankingScore = playlistsRaw
+        .map((m) => (m['_rankingScore'] as num?)?.toDouble() ?? 0.0)
+        .toList();
+
+    final itemsRaw = multiResult.results[2].hits
+        .map((hit) => Map<String, dynamic>.from(hit as Map))
+        .toList();
+    final items = itemsRaw
+        .map((map) => DP1Item.fromJson(
+            Map<String, dynamic>.from(map['playlistItem'] as Map)))
+        .toList();
+    final itemsRankingScore = itemsRaw
         .map((m) => (m['_rankingScore'] as num?)?.toDouble() ?? 0.0)
         .toList();
 
     final result = MeiliSearchResult(
-      artworks: artworks,
-      exhibitions: exhibitions,
-      artists: artists,
-      curators: curators,
-      series: series,
-      artworksRankingScore: artworksRankingScore,
-      exhibitionsRankingScore: exhibitionsRankingScore,
-      artistsRankingScore: artistsRankingScore,
-      curatorsRankingScore: curatorsRankingScore,
-      seriesRankingScore: seriesRankingScore,
-      totalHits: artworks.length +
-          exhibitions.length +
-          artists.length +
-          curators.length +
-          series.length,
+      channels: channels,
+      playlists: playlists,
+      items: items,
+      channelsRankingScore: channelsRankingScore,
+      playlistsRankingScore: playlistsRankingScore,
+      itemsRankingScore: itemsRankingScore,
+      totalHits: channels.length + playlists.length + items.length,
       processingTimeMs: multiResult.results
           .fold(0, (sum, result) => sum + (result.processingTimeMs ?? 0)),
     );
@@ -220,15 +174,7 @@ class MeiliSearchService {
     return result;
   }
 
-  /// Helper method to safely execute a search and return null if it fails
-  Future<T?> _safeSearch<T>(Future<T> Function() searchFunction) async {
-    try {
-      return await searchFunction();
-    } catch (e) {
-      log.warning('Search failed: $e');
-      return null;
-    }
-  }
+  // Removed: _safeSearch helper (no longer used)
 
   Future<Searcheable<Map<String, dynamic>>> _search(
       String text, String suffix, SearchQuery query) async {
@@ -239,165 +185,85 @@ class MeiliSearchService {
     return res;
   }
 
-  /// Search artworks only
-  Future<List<Artwork>> searchArtworks({
+  /// Search channels only
+  Future<List<Channel>> searchChannels({
     required String text,
     int limit = 20,
     int offset = 0,
     List<String>? filters,
   }) async {
-    const suffix = 'artworks';
+    const suffix = 'channels';
     final searchQuery = SearchQuery(
       offset: offset,
       limit: limit,
-      // filter: filters?.join(' AND '),
-      // sort: ['created_at:desc'],
-      // attributesToRetrieve: ['id', 'title', 'artist', 'image_url'],
-      // attributesToSearchOn: ['title', 'artist', 'image_url'],
-      // showRankingScore: true,
     );
 
     final result = await _search(text, suffix, searchQuery);
 
     return result.hits.map((hit) {
       try {
-        final artworkJson =
-            Map<String, dynamic>.from(hit as Map)['artwork'] as Map;
-        return Artwork.fromJson(Map<String, dynamic>.from(artworkJson));
+        final json = Map<String, dynamic>.from(hit as Map);
+        return Channel.fromJson(json);
       } catch (e) {
-        log.warning('Failed to parse artwork: $e');
+        log.warning('Failed to parse channel: $e');
         rethrow;
       }
     }).toList();
   }
 
-  /// Search exhibitions only
-  Future<List<Exhibition>> searchExhibitions({
+  /// Search playlists only
+  Future<List<DP1Call>> searchPlaylists({
     required String text,
     int limit = 20,
     int offset = 0,
     List<String>? filters,
   }) async {
-    const suffix = 'exhibitions';
+    const suffix = 'playlists';
     final searchQuery = SearchQuery(
       offset: offset,
       limit: limit,
-      // filter: filters?.join(' AND '),
-      // sort: ['created_at:desc'],
-      // attributesToRetrieve: ['id', 'title', 'artist', 'image_url'],
-      // attributesToSearchOn: ['title', 'artist', 'image_url'],
-      // showRankingScore: true,
     );
 
     final result = await _search(text, suffix, searchQuery);
 
     return result.hits.map((hit) {
       try {
-        final exhibitionJson =
-            Map<String, dynamic>.from(hit as Map)['exhibition'] as Map;
-        return Exhibition.fromJson(Map<String, dynamic>.from(exhibitionJson));
+        final json = Map<String, dynamic>.from(hit as Map);
+        return DP1Call.fromJson(json);
       } catch (e) {
-        log.warning('Failed to parse exhibition: $e');
+        log.warning('Failed to parse playlist: $e');
         rethrow;
       }
     }).toList();
   }
 
-  /// Search artists only
-  Future<List<AlumniAccount>> searchArtists({
+  /// Search playlist items only
+  Future<List<DP1Item>> searchPlaylistItems({
     required String text,
     int limit = 20,
     int offset = 0,
     List<String>? filters,
   }) async {
-    const suffix = 'artists';
+    const suffix = 'playlist_items';
     final searchQuery = SearchQuery(
       offset: offset,
       limit: limit,
-      // filter: filters?.join(' AND '),
-      // sort: ['created_at:desc'],
-      // attributesToRetrieve: ['id', 'title', 'artist', 'image_url'],
-      // attributesToSearchOn: ['title', 'artist', 'image_url'],
-      // showRankingScore: true,
     );
 
     final result = await _search(text, suffix, searchQuery);
 
     return result.hits.map((hit) {
       try {
-        final artistJson =
-            Map<String, dynamic>.from(hit as Map)['artist'] as Map;
-        return AlumniAccount.fromJson(Map<String, dynamic>.from(artistJson));
+        final json = Map<String, dynamic>.from(hit as Map);
+        return DP1Item.fromJson(json);
       } catch (e) {
-        log.warning('Failed to parse artist: $e');
+        log.warning('Failed to parse playlist item: $e');
         rethrow;
       }
     }).toList();
   }
 
-  /// Search curators only
-  Future<List<AlumniAccount>> searchCurators({
-    required String text,
-    int limit = 20,
-    int offset = 0,
-    List<String>? filters,
-  }) async {
-    const suffix = 'curators';
-    final searchQuery = SearchQuery(
-      offset: offset,
-      limit: limit,
-      // filter: filters?.join(' AND '),
-      // sort: ['created_at:desc'],
-      // attributesToRetrieve: ['id', 'title', 'artist', 'image_url'],
-      // attributesToSearchOn: ['title', 'artist', 'image_url'],
-      // showRankingScore: true,
-    );
-
-    final result = await _search(text, suffix, searchQuery);
-
-    return result.hits.map((hit) {
-      try {
-        final curatorJson =
-            Map<String, dynamic>.from(hit as Map)['curator'] as Map;
-        return AlumniAccount.fromJson(Map<String, dynamic>.from(curatorJson));
-      } catch (e) {
-        log.warning('Failed to parse curator: $e');
-        rethrow;
-      }
-    }).toList();
-  }
-
-  /// Search series only
-  Future<List<FFSeries>> searchSeries({
-    required String text,
-    int limit = 20,
-    int offset = 0,
-    List<String>? filters,
-  }) async {
-    const suffix = 'series';
-    final searchQuery = SearchQuery(
-      offset: offset,
-      limit: limit,
-      // filter: filters?.join(' AND '),
-      // sort: ['created_at:desc'],
-      // attributesToRetrieve: ['id', 'title', 'artist', 'image_url'],
-      // attributesToSearchOn: ['title', 'artist', 'image_url'],
-      // showRankingScore: true,
-    );
-
-    final result = await _search(text, suffix, searchQuery);
-
-    return result.hits.map((hit) {
-      try {
-        final seriesJson =
-            Map<String, dynamic>.from(hit as Map)['series'] as Map;
-        return FFSeries.fromJson(Map<String, dynamic>.from(seriesJson));
-      } catch (e) {
-        log.warning('Failed to parse series: $e');
-        rethrow;
-      }
-    }).toList();
-  }
+  // Old search methods removed in favor of channels/playlists/playlist_items
 }
 
 /// Result class for MeiliSearch operations
