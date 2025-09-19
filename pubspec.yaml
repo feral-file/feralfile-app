@@ -1,6 +1,6 @@
 name: autonomy_flutter
 description: Autonomy cross platform
-version: 1.0.0+562
+version: 0.63.0+588
 publish_to: none
 
 environment:

@@ -74,7 +74,8 @@ class ChannelDetailBloc extends Bloc<ChannelDetailEvent, ChannelDetailState> {
         emit(state.copyWith(status: ChannelDetailStateStatus.loading));
       }
 
-      final playlistsResponse = await _dp1playlistService.getPlaylists(
+      final playlistsResponse =
+          await _dp1playlistService.getPlaylistsByChannelId(
         channelId: channel.id,
         limit: _pageSize,
         cursor: cursor,

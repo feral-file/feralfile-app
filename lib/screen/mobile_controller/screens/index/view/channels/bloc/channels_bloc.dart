@@ -1,5 +1,5 @@
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/services/channels_service.dart';
+import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,8 +9,8 @@ part 'channels_state.dart';
 
 class ChannelsBloc extends Bloc<ChannelsEvent, ChannelsState> {
   ChannelsBloc({
-    required ChannelsService channelsService,
-  })  : _channelsService = channelsService,
+    required DP1FeedService dp1FeedService,
+  })  : _dp1FeedService = dp1FeedService,
         super(const ChannelsState()) {
     on<LoadChannelsEvent>(_onLoadChannels);
     on<LoadMoreChannelsEvent>(_onLoadMoreChannels);
@@ -19,7 +19,7 @@ class ChannelsBloc extends Bloc<ChannelsEvent, ChannelsState> {
 
   static const int _pageSize = 10;
 
-  final ChannelsService _channelsService;
+  final DP1FeedService _dp1FeedService;
 
   Future<void> _onLoadChannels(
     LoadChannelsEvent event,
@@ -72,9 +72,10 @@ class ChannelsBloc extends Bloc<ChannelsEvent, ChannelsState> {
         emit(state.copyWith(status: ChannelsStateStatus.loading));
       }
 
-      final channelsResponse = await _channelsService.getChannels(
+      final channelsResponse = await _dp1FeedService.getAllChannels(
         cursor: cursor,
         limit: _pageSize,
+        usingCache: false,
       );
 
       final List<Channel> newChannels;

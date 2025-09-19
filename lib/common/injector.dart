@@ -42,7 +42,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/cha
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/works/bloc/works_bloc.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/services/channels_service.dart';
 import 'package:autonomy_flutter/screen/playlists/add_new_playlist/add_new_playlist_bloc.dart';
 import 'package:autonomy_flutter/screen/playlists/edit_playlist/edit_playlist_bloc.dart';
 import 'package:autonomy_flutter/screen/predefined_collection/predefined_collection_bloc.dart';
@@ -432,12 +431,8 @@ Future<void> setupInjector() async {
     () => UserAllOwnCollectionBloc(injector()),
   );
 
-  injector.registerLazySingleton<ChannelsService>(
-    () => ChannelsService(injector()),
-  );
-
   injector.registerFactory<ChannelsBloc>(
-    () => ChannelsBloc(channelsService: injector()),
+    () => ChannelsBloc(dp1FeedService: injector()),
   );
 
   injector.registerLazySingleton<DP1FeedApi>(

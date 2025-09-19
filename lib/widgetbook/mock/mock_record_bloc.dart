@@ -35,7 +35,7 @@ class MockRecordBloc extends RecordBloc {
       ));
     } else if (event is StartRecordingEvent) {
       // Mock recording state
-      emit(const RecordRecordingState());
+      emit(RecordRecordingState());
     } else if (event is StopRecordingEvent) {
       // Use shared mock data for voice recording
       final mockDp1Call = MockMobileControllerData.mockVoicePlaylist;
@@ -53,7 +53,7 @@ class MockRecordBloc extends RecordBloc {
       ));
     } else if (event is ResetPlaylistEvent) {
       // Mock reset state
-      emit(const RecordInitialState());
+      emit(RecordInitialState());
     } else {
       super.add(event);
     }

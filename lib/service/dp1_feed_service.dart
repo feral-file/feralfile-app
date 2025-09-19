@@ -5,7 +5,8 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_create_playlist_request.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/services/channels_service.dart';
+import 'package:autonomy_flutter/service/remote_config_service.dart';
+import 'package:autonomy_flutter/util/feed_cache_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:dio/dio.dart';
 
@@ -14,14 +15,23 @@ class DP1FeedService {
 
   final DP1FeedApi api;
 
-  //
-  // PLAYLIST
-  // Api for playlist
-  //
+  final FeedCacheManager _feedCacheManager = FeedCacheManager();
 
-  final urlmap = <String, String>{};
+  List<String>? get remoteConfigChannelIds => injector<RemoteConfigService>()
+      .getConfig<List<dynamic>?>(
+          ConfigGroup.dp1Playlist, ConfigKey.dp1PlaylistChannelIds, null)
+      ?.cast<String>();
 
-  // PLAYLIST
+  /*
+  =======================================================================
+
+  PLAYLIST
+  Api for playlist
+  
+  =======================================================================
+  */
+
+  // create playlist
   Future<DP1Call> createPlaylist(
       {required DP1CreatePlaylistRequest request,
       bool isSyncToCloud = true}) async {
@@ -38,27 +48,44 @@ class DP1FeedService {
     return created;
   }
 
+  // update playlist
   Future<DP1Call> updatePlaylist(
       {required String playlistId,
       required DP1CreatePlaylistRequest request,
       bool isSyncToCloud = true}) async {
-    final updated = await api.updatePlaylist(playlistId, request.toJson());
-    return updated;
+    final updatedPlaylist =
+        await api.updatePlaylist(playlistId, request.toJson());
+    _feedCacheManager.addPlaylistToCache(updatedPlaylist);
+    return updatedPlaylist;
   }
 
-  Future<DP1Call> getPlaylistById(String playlistId) async {
-    return api.getPlaylistById(playlistId);
+  // get playlist by id
+  Future<DP1Call> getPlaylistById(String playlistId,
+      {bool usingCache = true}) async {
+    if (usingCache) {
+      final cachedPlaylist = _feedCacheManager.getPlaylistById(playlistId);
+      if (cachedPlaylist != null) return cachedPlaylist;
+    }
+    final result = await api.getPlaylistById(playlistId);
+    return result;
   }
 
-  Future<List<DP1Call>> getPlaylistsByChannel(Channel channel) async {
-    // map DP1Call Id to url
+  Future<List<DP1Call>> getPlaylistsByChannel(Channel channel,
+      {bool usingCache = true}) async {
+    // find in cache, if not found, fetch from api
+    if (usingCache) {
+      final cachedPlaylists =
+          _feedCacheManager.getPlaylistsOfChannel(channel.id);
+      return cachedPlaylists;
+    }
+
     final dio = Dio();
     final futures = channel.playlists.map((playlistUrl) async {
       try {
         final response = await dio.get<Map<String, dynamic>>(playlistUrl);
         if (response.statusCode == 200 && response.data != null) {
           final playlist = DP1Call.fromJson(response.data!);
-          urlmap.putIfAbsent(playlist.id, () => playlistUrl);
+          _feedCacheManager.addPlaylistToCache(playlist, url: playlistUrl);
           return playlist;
         }
       } catch (e) {
@@ -67,58 +94,167 @@ class DP1FeedService {
       }
     });
     final results = await Future.wait(futures);
-    return results.whereType<DP1Call>().toList();
+    final playlists = results.nonNulls.toList();
+    return playlists;
   }
 
-  Future<List<DP1Call>> getAllPlaylistsFromAllChannel() async {
-    final response = await injector<ChannelsService>().getChannels();
-    final channels = response.items;
-
-    // Execute all requests in parallel
-    final futures = channels.map((c) async {
-      try {
-        return await getPlaylistsByChannel(c);
-      } catch (e) {
-        log.info('Error when get playlists from channel ${c.title}: $e');
-        return <DP1Call>[]; // Return empty list on error
-      }
-    });
-
-    final results = await Future.wait(futures);
-    return results.expand((list) => list).toList();
-  }
-
-  Future<DP1PlaylistResponse> getPlaylistsFromChannels({
+  Future<DP1PlaylistResponse> getPlaylistsByChannelId({
+    required String channelId,
     String? cursor,
     int? limit,
+    bool usingCache = true,
   }) async {
-    final playlists = await getAllPlaylistsFromAllChannel();
-    return DP1PlaylistResponse(playlists, false, null);
-  }
-
-  //
-  // CHANNEL
-  // Api for channel
-  //
-
-  Channel? getChannelByPlaylistId(String playlistId) {
-    final cachedChannels = injector<ChannelsService>().cachedChannels;
-    for (final channel in cachedChannels) {
-      for (final playlistUrl in channel.playlists) {
-        if (urlmap[playlistId] == playlistUrl) {
-          return channel;
-        }
+    if (usingCache) {
+      final cachedPlaylists =
+          _feedCacheManager.getPlaylistsOfChannel(channelId);
+      if (cachedPlaylists.isNotEmpty) {
+        return DP1PlaylistResponse(cachedPlaylists, false, null);
       }
     }
-    return null;
+    final resp = await api.getAllPlaylists(
+      channelId: channelId,
+      cursor: cursor,
+      limit: limit,
+    );
+    return resp;
   }
 
-  Future<DP1PlaylistResponse> getPlaylists({
-    String? channelId,
+  Future<DP1PlaylistResponse> getAllPlaylists({
     String? cursor,
     int? limit,
+    bool usingCache = true,
   }) async {
-    return api.getAllPlaylists(
+    if (usingCache) {
+      final cachedPlaylists = _feedCacheManager.getAllPlaylists();
+      if (cachedPlaylists.isNotEmpty) {
+        return DP1PlaylistResponse(cachedPlaylists, false, null);
+      }
+    }
+
+    final remoteChannelIds = remoteConfigChannelIds;
+
+    if (remoteChannelIds != null) {
+      final channels = await getChannelsByIds(
+          channelIds: remoteChannelIds, usingCache: usingCache);
+      final futures = channels.map((c) async {
+        return await getPlaylistsByChannel(c, usingCache: usingCache);
+      });
+      final results = await Future.wait(futures);
+      final playlists = results.expand((list) => list).toList();
+      _feedCacheManager.addListPlaylistsToCache(playlists);
+      return DP1PlaylistResponse(playlists, false, null);
+    } else {
+      final resp = await api.getAllPlaylists(cursor: cursor, limit: limit);
+      _feedCacheManager.addListPlaylistsToCache(resp.items);
+      return resp;
+    }
+  }
+
+  /*
+  =======================================================================
+
+  CHANNEL
+  Api for channel
+
+  =======================================================================
+  */
+
+  Channel? getChannelByPlaylistId(String playlistId) {
+    final channel = _feedCacheManager.getChannelByPlaylistId(playlistId);
+    return channel;
+  }
+
+  Future<Channel> getChannelDetail(String channelId,
+      {bool usingCache = true}) async {
+    if (usingCache) {
+      final cached = _feedCacheManager.getChannelById(channelId);
+      if (cached != null) return cached;
+    }
+    final channel = await api.getChannelById(channelId);
+    return channel;
+  }
+
+  Future<List<Channel>> getChannelsByIds({
+    required List<String> channelIds,
+    bool usingCache = true,
+  }) async {
+    final futures = channelIds.map((id) async {
+      return getChannelDetail(id, usingCache: usingCache);
+    });
+    final channels = await Future.wait(futures);
+    return channels;
+  }
+
+  Future<DP1ChannelsResponse> getAllChannels({
+    String? cursor,
+    int? limit,
+    bool usingCache = true,
+  }) async {
+    final remoteChannelIds = remoteConfigChannelIds;
+
+    if (remoteChannelIds != null) {
+      final channels = await getChannelsByIds(
+          channelIds: remoteChannelIds, usingCache: usingCache);
+      if (channels.isNotEmpty) {
+        _feedCacheManager.addListChannelsToCache(channels);
+        return DP1ChannelsResponse(
+          channels,
+          false, // hasMore is false because we fetched all remote config channels
+          null, // cursor is null because we fetched all channels
+        );
+      }
+    }
+
+    // if not remote channel ids, get all channels from api
+    String? currentCursor = cursor;
+
+    if (usingCache) {
+      final cachedChannels = _feedCacheManager.getAllChannels();
+      return DP1ChannelsResponse(
+        cachedChannels,
+        false, // hasMore is false because we fetched all remote config channels
+        null, // cursor is null because we fetched all channels
+      );
+    } else {
+      final channels = await api.getAllChannels(
+        cursor: currentCursor,
+        limit: limit,
+      );
+      currentCursor = channels.cursor;
+      channels.items.sort(
+        (channel1, channel2) => channel1.created.compareTo(
+          channel2.created,
+        ),
+      );
+      channels.items.removeWhere(
+        (channel) => !(remoteChannelIds?.contains(channel.id) ?? true),
+      );
+
+      _feedCacheManager.addListChannelsToCache(channels.items);
+
+      return DP1ChannelsResponse(
+        channels.items,
+        channels.hasMore,
+        channels.cursor,
+      );
+    }
+  }
+
+/*
+  =======================================================================
+
+  Playlist Item
+
+  =======================================================================
+*/
+
+  Future<DP1PlaylistItemsResponse> getPlaylistItemsOfChannel({
+    required String channelId,
+    String? cursor,
+    int? limit,
+    bool usingCache = true,
+  }) async {
+    return api.getPlaylistItems(
       channelId: channelId,
       cursor: cursor,
       limit: limit,
@@ -126,12 +262,11 @@ class DP1FeedService {
   }
 
   Future<DP1PlaylistItemsResponse> getPlaylistItems({
-    String? channelId,
     String? cursor,
     int? limit,
+    bool usingCache = true,
   }) async {
     return api.getPlaylistItems(
-      channelId: channelId,
       cursor: cursor,
       limit: limit,
     );

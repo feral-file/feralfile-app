@@ -11,7 +11,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/intent.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/bloc/record_controller_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channel_details/channel_detail.page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/dp1_playlist_details.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/services/channels_service.dart';
 import 'package:autonomy_flutter/service/audio_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
@@ -166,7 +165,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                   if (channelId == null) {
                     return;
                   }
-                  injector<ChannelsService>()
+                  injector<DP1FeedService>()
                       .getChannelDetail(channelId)
                       .then((value) {
                     final channel = value;

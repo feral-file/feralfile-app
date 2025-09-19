@@ -5,7 +5,7 @@ import 'package:autonomy_flutter/widgetbook/mock_data/mock_mobile_controller.dar
 
 class MockChannelsBloc extends ChannelsBloc {
   MockChannelsBloc({required ChannelsService channelsService})
-      : super(channelsService: channelsService);
+      : super(dp1FeedService: channelsService);
 
   @override
   void add(ChannelsEvent event) {

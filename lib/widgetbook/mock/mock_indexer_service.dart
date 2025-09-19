@@ -15,7 +15,8 @@ class MockIndexerService extends NftIndexerService {
       super.indexerClient, super.indexerApi, super.artBlockService);
 
   @override
-  Future<List<AssetToken>> getNftTokens(QueryListTokensRequest request) async {
+  Future<List<AssetToken>> getNftTokens(QueryListTokensRequest request,
+      {bool usingArtBlock = false}) async {
     return [
       ...MockAssetToken.all,
     ];

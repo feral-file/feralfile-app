@@ -71,9 +71,10 @@ class PlaylistsBloc extends Bloc<PlaylistsEvent, PlaylistsState> {
         emit(state.copyWith(status: PlaylistsStateStatus.loading));
       }
 
-      final playlistsResponse = await _playlistService.getPlaylistsFromChannels(
+      final playlistsResponse = await _playlistService.getAllPlaylists(
         cursor: cursor,
         limit: _pageSize,
+        usingCache: false,
       );
 
       final List<DP1Call> newPlaylists;

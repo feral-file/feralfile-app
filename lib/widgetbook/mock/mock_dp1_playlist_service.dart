@@ -36,7 +36,8 @@ class MockDp1PlaylistService extends DP1FeedService {
   }
 
   @override
-  Future<DP1Call> getPlaylistById(String playlistId) async {
+  Future<DP1Call> getPlaylistById(String playlistId,
+      {bool usingCache = true}) async {
     // Mock playlist data
     return DP1Call(
       dpVersion: '1.0.0',
@@ -80,7 +81,8 @@ class MockDp1PlaylistService extends DP1FeedService {
   }
 
   @override
-  Future<List<DP1Call>> getPlaylistsByChannel(Channel channel) async {
+  Future<List<DP1Call>> getPlaylistsByChannel(Channel channel,
+      {bool usingCache = true}) async {
     // Mock playlists for a channel
     return [
       DP1Call(
@@ -137,7 +139,8 @@ class MockDp1PlaylistService extends DP1FeedService {
   }
 
   @override
-  Future<List<DP1Call>> getAllPlaylistsFromAllChannel() async {
+  Future<List<DP1Call>> getAllPlaylistsFromAllChannel(
+      {bool usingCache = true}) async {
     // Mock all playlists from all channels
     return [
       DP1Call(
@@ -169,9 +172,10 @@ class MockDp1PlaylistService extends DP1FeedService {
   }
 
   @override
-  Future<DP1PlaylistResponse> getPlaylistsFromChannels({
+  Future<DP1PlaylistResponse> getAllPlaylists({
     String? cursor,
     int? limit,
+    bool usingCache = true,
   }) async {
     final playlists = await getAllPlaylistsFromAllChannel();
     return DP1PlaylistResponse(playlists, false, null);
@@ -193,10 +197,11 @@ class MockDp1PlaylistService extends DP1FeedService {
   }
 
   @override
-  Future<DP1PlaylistResponse> getPlaylists({
+  Future<DP1PlaylistResponse> getPlaylistsByChannelId({
     String? channelId,
     String? cursor,
     int? limit,
+    bool usingCache = true,
   }) async {
     // Mock playlists response
     final mockPlaylists = [
@@ -235,8 +240,25 @@ class MockDp1PlaylistService extends DP1FeedService {
     String? channelId,
     String? cursor,
     int? limit,
+    bool usingCache = true,
   }) async {
     // Mock playlist items response
     return DP1PlaylistItemsResponse([], false, null);
+  }
+
+  @override
+  Future<Channel> getChannelDetail(String channelId,
+      {bool usingCache = true}) async {
+    // Mock channel detail
+    return Channel(
+      id: channelId,
+      slug: 'mock-channel-detail',
+      title: 'Mock Channel Detail',
+      summary: 'Mock channel detail description',
+      created: DateTime.now(),
+      playlists: [
+        'https://example.com/mock-playlist-detail.json',
+      ],
+    );
   }
 }
