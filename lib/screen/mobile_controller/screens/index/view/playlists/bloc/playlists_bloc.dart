@@ -1,5 +1,6 @@
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
+import 'package:autonomy_flutter/util/feed_cache_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -74,7 +75,7 @@ class PlaylistsBloc extends Bloc<PlaylistsEvent, PlaylistsState> {
       final playlistsResponse = await _playlistService.getAllPlaylists(
         cursor: cursor,
         limit: _pageSize,
-        usingCache: false,
+        usingCache: FeedCacheManager().hasCache,
       );
 
       final List<DP1Call> newPlaylists;

@@ -11,6 +11,8 @@ abstract class RemoteConfigService {
   bool getBool(final ConfigGroup group, final ConfigKey key);
 
   T getConfig<T>(final ConfigGroup group, final ConfigKey key, T defaultValue);
+
+  bool get isLoaded;
 }
 
 class RemoteConfigServiceImpl implements RemoteConfigService {
@@ -156,6 +158,9 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
 
   static Map<String, dynamic>? _configs;
   bool _isLoading = false;
+
+  @override
+  bool get isLoaded => _configs != null;
 
   @override
   Future<void> loadConfigs({bool forceRefresh = false}) async {

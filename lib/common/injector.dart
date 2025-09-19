@@ -78,6 +78,7 @@ import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/util/au_file_service.dart';
 import 'package:autonomy_flutter/util/dio_interceptors.dart';
 import 'package:autonomy_flutter/util/dio_manager.dart';
+import 'package:autonomy_flutter/util/feed_cache_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -447,8 +448,10 @@ Future<void> setupInjector() async {
     ),
   );
 
+  injector.registerSingleton<FeedCacheManager>(FeedCacheManager());
+
   injector.registerLazySingleton<DP1FeedService>(
-    () => DP1FeedService(injector()),
+    () => DP1FeedService(injector(), injector<FeedCacheManager>()),
   );
 
   injector.registerFactory<WorksBloc>(

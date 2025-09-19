@@ -1,5 +1,6 @@
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
+import 'package:autonomy_flutter/util/feed_cache_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -75,7 +76,7 @@ class ChannelsBloc extends Bloc<ChannelsEvent, ChannelsState> {
       final channelsResponse = await _dp1FeedService.getAllChannels(
         cursor: cursor,
         limit: _pageSize,
-        usingCache: false,
+        usingCache: FeedCacheManager().hasCache,
       );
 
       final List<Channel> newChannels;

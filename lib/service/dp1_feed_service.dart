@@ -11,11 +11,11 @@ import 'package:autonomy_flutter/util/log.dart';
 import 'package:dio/dio.dart';
 
 class DP1FeedService {
-  DP1FeedService(this.api);
+  DP1FeedService(this.api, this._feedCacheManager);
 
   final DP1FeedApi api;
 
-  final FeedCacheManager _feedCacheManager = FeedCacheManager();
+  final FeedCacheManager _feedCacheManager;
 
   List<String>? get remoteConfigChannelIds => injector<RemoteConfigService>()
       .getConfig<List<dynamic>?>(
