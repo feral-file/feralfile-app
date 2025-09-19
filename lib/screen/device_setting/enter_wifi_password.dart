@@ -215,7 +215,6 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                             closeButton: 'Go Back',
                             onClose: () {
                               injector<NavigationService>().goBack();
-                              widget.payload.onSubmitted?.call(null, e);
                             },
                           ).then(
                             (_) {
