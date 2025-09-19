@@ -12,9 +12,11 @@ class DP1Call {
     required this.items,
     required this.signature,
     this.dynamicQueries = const [],
-  }) : // asset items ií not empty or dynamic queries is not empty
-        assert(items.isNotEmpty || dynamicQueries.isNotEmpty,
-            'Either items or dynamicQueries must be not empty');
+  }) {
+    // if (items.isEmpty && dynamicQueries.isEmpty) {
+    //   throw Exception('There is no artwork in the playlist');
+    // }
+  } // asset items ií not empty or dynamic queries is not empty
 
   // from JSON
   factory DP1Call.fromJson(Map<String, dynamic> json) {

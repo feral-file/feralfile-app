@@ -146,6 +146,11 @@ class RecordBloc extends AuBloc<RecordEvent, RecordState> {
   ) async {
     await for (final json in stream) {
       try {
+        if (state is RecordErrorState) {
+          log.info(
+              '[RecordBloc] Skipping processing due to error state: $state');
+          break;
+        }
         final nlParserData =
             NLParserData.fromJson(Map<String, dynamic>.from(json));
         await _handleNLParserData(nlParserData, emit);

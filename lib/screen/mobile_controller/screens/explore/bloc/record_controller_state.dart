@@ -31,11 +31,11 @@ class RecordState {
 
   bool get isValid {
     // check if the intent has type open_screen or dp1Call has items
-    if (lastIntent?.action == AiAction.openScreen &&
+    if ((lastIntent?.action == AiAction.openScreen &&
             (lastIntent?.entities?.any((e) =>
                     e.type == AiEntityType.playlist ||
                     e.type == AiEntityType.channel) ??
-                false) ||
+                false)) ||
         (lastDP1Call?.items.isNotEmpty ?? false)) {
       return true;
     }
