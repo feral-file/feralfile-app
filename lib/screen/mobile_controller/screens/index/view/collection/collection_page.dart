@@ -66,7 +66,6 @@ class _CollectionPageState extends State<CollectionPage>
   @override
   void dispose() {
     _autoRefreshTimer?.cancel();
-    _collectionBloc.close();
     _addressBloc.close();
     super.dispose();
   }

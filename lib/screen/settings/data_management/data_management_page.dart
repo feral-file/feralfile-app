@@ -12,11 +12,14 @@ import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/settings/forget_exist/forget_exist_bloc.dart';
 import 'package:autonomy_flutter/screen/settings/forget_exist/forget_exist_view.dart';
 import 'package:autonomy_flutter/service/client_token_service.dart';
+import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
+import 'package:autonomy_flutter/util/feed_cache_manager.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
@@ -141,6 +144,18 @@ class _DataManagementPageState extends State<DataManagementPage> {
               .refreshTokens(syncAddresses: true);
           NftCollectionBloc.eventController
               .add(GetTokensByOwnerEvent(pageKey: PageKey.init()));
+          injector<UserAllOwnCollectionBloc>().add(ClearDataEvent());
+          final dynamicQuery = injector<UserDp1PlaylistService>()
+              .cachedAllOwnedPlaylist
+              .firstDynamicQuery;
+          if (dynamicQuery != null) {
+            injector<UserAllOwnCollectionBloc>()
+                .add(UpdateDynamicQueryEvent(dynamicQuery: dynamicQuery));
+          }
+          injector<FeedCacheManager>()
+            ..clearAll()
+            ..reloadCache();
+
           if (!mounted) {
             return;
           }

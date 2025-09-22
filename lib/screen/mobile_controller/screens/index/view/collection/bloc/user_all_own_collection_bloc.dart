@@ -23,6 +23,7 @@ class UserAllOwnCollectionBloc
     on<LazyLoadAssetTokenFromDynamicQuery>(_onLazyLoad);
     on<RefreshAssetTokenFromDynamicQuery>(_onRefreshLoad);
     on<UpdateDynamicQueryEvent>(_onUpdateDynamicQuery);
+    on<ClearDataEvent>(_onClearData);
   }
 
   final NftTokensService _tokensService;
@@ -118,6 +119,7 @@ class UserAllOwnCollectionBloc
         cancelOnError: true,
       );
       await completer.future;
+      _tokensStreamSubs[subType] = null;
       injector<UserDp1PlaylistService>()
           .updateAddressLastRefreshedTime(addresses: owners, dateTime: now);
     } catch (e) {
@@ -198,6 +200,7 @@ class UserAllOwnCollectionBloc
         cancelOnError: true,
       );
       await completer.future;
+      _tokensStreamSubs[subType] = null;
 
       // update the last updated at
       injector<UserDp1PlaylistService>().updateAddressLastRefreshedTime(
@@ -221,6 +224,16 @@ class UserAllOwnCollectionBloc
     log.info('[${event.runtimeType}] completed');
   }
 
+  Future<void> _onClearData(
+    ClearDataEvent event,
+    Emitter<UserAllOwnCollectionState> emit,
+  ) async {
+    _tokensStreamSubs.clear();
+    _activeCompleters.clear();
+    _dynamicQuery = null;
+    emit(const UserAllOwnCollectionState());
+  }
+
   bool get isLazyLoadAssetTokenFromDynamicQueryProcessing =>
       _tokensStreamSubs[LazyLoadAssetTokenFromDynamicQuery] != null ||
       _activeCompleters[LazyLoadAssetTokenFromDynamicQuery]?.isCompleted ==
@@ -230,4 +243,11 @@ class UserAllOwnCollectionBloc
       _tokensStreamSubs[RefreshAssetTokenFromDynamicQuery] != null ||
       _activeCompleters[RefreshAssetTokenFromDynamicQuery]?.isCompleted ==
           false;
+
+  @override
+  Future<void> close() {
+    log.info('UserAllOwnCollectionBloc closing, cancelling streams');
+    // TODO: implement close
+    return super.close();
+  }
 }

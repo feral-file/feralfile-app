@@ -53,7 +53,8 @@ class UserDp1PlaylistService {
         _cloudManager.dp1FeedCloudObject.getOwnedPlaylistIds();
     if (allOwnedPlaylistIds.isNotEmpty) {
       final playlistId = allOwnedPlaylistIds.first;
-      final playlist = await _dp1FeedService.getPlaylistById(playlistId);
+      final playlist =
+          await _dp1FeedService.getPlaylistById(playlistId, usingCache: false);
       _cachedAllOwnedPlaylist = playlist;
       return playlist;
     }

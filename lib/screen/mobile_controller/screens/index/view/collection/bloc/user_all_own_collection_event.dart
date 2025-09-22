@@ -11,3 +11,5 @@ class UpdateDynamicQueryEvent extends UserAllOwnCollectionEvent {
 
   final DynamicQuery dynamicQuery;
 }
+
+class ClearDataEvent extends UserAllOwnCollectionEvent {}

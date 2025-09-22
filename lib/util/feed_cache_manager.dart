@@ -204,8 +204,7 @@ class FeedCacheManager {
         await injector<DP1FeedService>().getAllChannels(usingCache: false);
     addListChannelsToCache(channels.items);
     addListPlaylistsToCache(playlists.items);
-    injector<ChannelsBloc>().add(const LoadChannelsEvent());
-    injector<PlaylistsBloc>().add(const LoadPlaylistsEvent());
+    _onCacheUpdated();
   }
 
   // Clear operations (optional)
@@ -217,6 +216,12 @@ class FeedCacheManager {
     unawaited(_channelStore.clear());
     unawaited(_playlistStore.clear());
     unawaited(_urlMapStore.clear());
+    _onCacheUpdated();
+  }
+
+  void _onCacheUpdated() {
+    injector<ChannelsBloc>().add(const LoadChannelsEvent());
+    injector<PlaylistsBloc>().add(const LoadPlaylistsEvent());
   }
 
   void _persistUrlMap() {

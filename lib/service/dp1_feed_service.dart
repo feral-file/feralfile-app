@@ -55,7 +55,6 @@ class DP1FeedService {
       bool isSyncToCloud = true}) async {
     final updatedPlaylist =
         await api.updatePlaylist(playlistId, request.toJson());
-    _feedCacheManager.addPlaylistToCache(updatedPlaylist);
     return updatedPlaylist;
   }
 
