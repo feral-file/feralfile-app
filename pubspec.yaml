@@ -44,6 +44,7 @@ dependencies:
   hive: ^2.2.1
   hive_flutter: ^1.1.0
   http: ^1.1.0
+  flutter_js: ^0.8.0
   image_picker: ^1.0.1
   infinite_scroll_pagination: ^5.1.0
   jiffy: ^6.2.1
@@ -158,7 +159,7 @@ flutter:
     - assets/images/
     - assets/translations/
     - assets/videos/
-    - lib/dsl/templates_enriched.json
+    - lib/dsl/bundle.js
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

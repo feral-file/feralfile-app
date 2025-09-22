@@ -20,12 +20,14 @@ class PlaylistAssetGridView extends StatefulWidget {
     this.header,
     this.backgroundColor = AppColor.auGreyBackground,
     this.physics,
+    this.showLoadingOnUpdating = true,
   });
 
   final DP1Call playlist;
   final Widget? header;
   final Color backgroundColor;
   final ScrollPhysics? physics;
+  final bool showLoadingOnUpdating;
 
   @override
   State<PlaylistAssetGridView> createState() => _PlaylistAssetGridViewState();
@@ -40,7 +42,7 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
   @override
   void initState() {
     super.initState();
-    _playlistDetailsBloc = PlaylistDetailsBloc(widget.playlist);
+    _playlistDetailsBloc = PlaylistDetailsBloc(playlist: widget.playlist);
     _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
@@ -49,8 +51,9 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
   @override
   void didUpdateWidget(covariant PlaylistAssetGridView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.playlist != widget.playlist)
-      _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
+    if (oldWidget.playlist.isItemsEqual(widget.playlist))
+      _playlistDetailsBloc
+          .add(SetPlaylistDetailsEvent(playlist: widget.playlist));
   }
 
   @override
@@ -97,7 +100,8 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
               ),
             ],
             if (state is PlaylistDetailsInitialState ||
-                state is PlaylistDetailsLoadingState)
+                (state is PlaylistDetailsLoadingState &&
+                    widget.showLoadingOnUpdating))
               SliverToBoxAdapter(
                 child: _loadingView(context),
               )

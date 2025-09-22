@@ -68,91 +68,106 @@ class MeiliSearchService {
     unawaited(_client.health());
   }
 
-  /// Search across all indexes (channels, playlists, playlist_items)
+  /// Search across all indexes (channels, playlists, playlist_items) for multiple queries
   Future<MeiliSearchResult> searchAll({
-    required String text,
+    required List<String> texts,
     int limit = 20,
     int offset = 0,
     List<String>? filters,
   }) async {
     final start = DateTime.now();
 
-    // final res = await _customClient.searchAll(
-    //   query: text,
-    //   limit: limit,
-    //   offset: offset,
-    //   filters: filters,
-    // );
-    //
-    // final duration = DateTime.now().difference(start);
-    // log.info(
-    //     'MeiliSearchService.searchAll took $duration ms with total hits: ${res.totalHits}');
-    //
-    // return res;
+    // Normalize queries (trim and remove empties). If empty, use single empty query to fetch defaults
+    final normalizedTexts =
+        texts.map((t) => t.trim()).where((t) => t.isNotEmpty).toList();
+    if (normalizedTexts.isEmpty) {
+      normalizedTexts.add('');
+    }
 
-    // Build multi index query
-    final queries = [
-      IndexSearchQuery(
-        indexUid: '${prefix}_channels',
-        query: text,
-        limit: limit,
-        offset: offset,
-        showRankingScore: true,
-      ),
-      IndexSearchQuery(
-        indexUid: '${prefix}_playlists',
-        query: text,
-        limit: limit,
-        offset: offset,
-        showRankingScore: true,
-      ),
-      IndexSearchQuery(
-        indexUid: '${prefix}_playlist_items',
-        query: text,
-        limit: limit,
-        offset: offset,
-        showRankingScore: true,
-      ),
-    ];
+    // Build multi index query for all texts and all indexes
+    final queries = <IndexSearchQuery>[];
+    for (final text in normalizedTexts) {
+      queries.addAll([
+        IndexSearchQuery(
+          indexUid: '${prefix}_channels',
+          query: text,
+          limit: limit,
+          offset: offset,
+          showRankingScore: true,
+          attributesToRetrieve: ['channel'],
+        ),
+        IndexSearchQuery(
+          indexUid: '${prefix}_playlists',
+          query: text,
+          limit: limit,
+          offset: offset,
+          showRankingScore: true,
+          attributesToRetrieve: ['playlist'],
+        ),
+        IndexSearchQuery(
+          indexUid: '${prefix}_playlist_items',
+          query: text,
+          limit: limit,
+          offset: offset,
+          showRankingScore: true,
+          attributesToRetrieve: ['playlistItem'],
+        ),
+      ]);
+    }
 
     final multiResult = await timerMetric(
-        'Meili Multi Search for $text',
+        'Meili Multi Search for ${normalizedTexts.join(', ')}',
         () async =>
             await _client.multiSearch(MultiSearchQuery(queries: queries)));
 
-    // Parse results in index order and extract ranking scores
-    final channelsRaw = multiResult.results[0].hits
-        .map((hit) => Map<String, dynamic>.from(hit as Map))
-        .toList();
-    final channels = channelsRaw
-        .map((map) =>
-            Channel.fromJson(Map<String, dynamic>.from(map['channel'] as Map)))
-        .toList();
-    final channelsRankingScore = channelsRaw
-        .map((m) => (m['_rankingScore'] as num?)?.toDouble() ?? 0.0)
-        .toList();
+    // Group by indexUid, merge hits per index, then parse with the old logic
+    final indexUidToHits = <String, List<Map<String, dynamic>>>{};
+    for (final r in multiResult.results) {
+      final uid = r.indexUid;
+      final list =
+          r.hits.map((hit) => Map<String, dynamic>.from(hit as Map)).toList();
+      indexUidToHits
+          .putIfAbsent(uid, () => <Map<String, dynamic>>[])
+          .addAll(list);
+    }
 
-    final playlistsRaw = multiResult.results[1].hits
-        .map((hit) => Map<String, dynamic>.from(hit as Map))
-        .toList();
-    final playlists = playlistsRaw
-        .map((map) =>
-            DP1Call.fromJson(Map<String, dynamic>.from(map['playlist'] as Map)))
-        .toList();
-    final playlistsRankingScore = playlistsRaw
-        .map((m) => (m['_rankingScore'] as num?)?.toDouble() ?? 0.0)
-        .toList();
+    final channelsRaw = indexUidToHits['${prefix}_channels'] ?? const [];
+    final playlistsRaw = indexUidToHits['${prefix}_playlists'] ?? const [];
+    final itemsRaw = indexUidToHits['${prefix}_playlist_items'] ?? const [];
 
-    final itemsRaw = multiResult.results[2].hits
-        .map((hit) => Map<String, dynamic>.from(hit as Map))
-        .toList();
-    final items = itemsRaw
-        .map((map) => DP1Item.fromJson(
-            Map<String, dynamic>.from(map['playlistItem'] as Map)))
-        .toList();
-    final itemsRankingScore = itemsRaw
-        .map((m) => (m['_rankingScore'] as num?)?.toDouble() ?? 0.0)
-        .toList();
+    // Parse with scores
+    final channelPairs = channelsRaw.map((map) {
+      final score = (map['_rankingScore'] as num?)?.toDouble() ?? 0.0;
+      final data =
+          Channel.fromJson(Map<String, dynamic>.from(map['channel'] as Map));
+      return (data: data, score: score);
+    }).toList();
+    final playlistPairs = playlistsRaw.map((map) {
+      final score = (map['_rankingScore'] as num?)?.toDouble() ?? 0.0;
+      final data =
+          DP1Call.fromJson(Map<String, dynamic>.from(map['playlist'] as Map));
+      return (data: data, score: score);
+    }).toList();
+    final itemPairs = itemsRaw.map((map) {
+      final score = (map['_rankingScore'] as num?)?.toDouble() ?? 0.0;
+      final data = DP1Item.fromJson(
+          Map<String, dynamic>.from(map['playlistItem'] as Map));
+      return (data: data, score: score);
+    }).toList();
+
+    // Sort by score desc
+    channelPairs.sort((a, b) => b.score.compareTo(a.score));
+    playlistPairs.sort((a, b) => b.score.compareTo(a.score));
+    itemPairs.sort((a, b) => b.score.compareTo(a.score));
+
+    // Extract ordered lists
+    final channels = channelPairs.map((e) => e.data).toList();
+    final playlists = playlistPairs.map((e) => e.data).toList();
+    final items = itemPairs.map((e) => e.data).toList();
+
+    final channelsRankingScore = channelPairs.map((e) => e.score).toList();
+    final playlistsRankingScore = playlistPairs.map((e) => e.score).toList();
+    final itemsRankingScore = itemPairs.map((e) => e.score).toList();
 
     final result = MeiliSearchResult(
       channels: channels,
@@ -163,12 +178,11 @@ class MeiliSearchService {
       itemsRankingScore: itemsRankingScore,
       totalHits: channels.length + playlists.length + items.length,
       processingTimeMs: multiResult.results
-          .fold(0, (sum, result) => sum + (result.processingTimeMs ?? 0)),
+          .fold(0, (sum, r) => sum + (r.processingTimeMs ?? 0)),
     );
+
     log.info(
         'MeiliSearchService.searchAll processing time: ${result.processingTimeMs} ms');
-    log.info(
-        'MeiliSearchService.searchAll processing time of each index: ${multiResult.results.map((result) => result.processingTimeMs).toList()}');
     log.info(
         'MeiliSearchService.searchAll completed in ${DateTime.now().difference(start).inMilliseconds} ms with total hits: ${result.totalHits}');
     return result;

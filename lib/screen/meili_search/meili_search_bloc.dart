@@ -20,9 +20,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 abstract class MeiliSearchEvent {}
 
 class MeiliSearchQueryChanged extends MeiliSearchEvent {
-  final String query;
+  final List<String> queries;
 
-  MeiliSearchQueryChanged(this.query);
+  MeiliSearchQueryChanged(this.queries);
 }
 
 class MeiliSearchCleared extends MeiliSearchEvent {}
@@ -120,7 +120,7 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
   ) async {
     final start = DateTime.now();
     emit(state.copyWith(
-      query: event.query,
+      query: event.queries.join(' ').trim(),
       isLoading: true,
       hasError: false,
       errorMessage: null,
@@ -128,11 +128,11 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
 
     try {
       _currentOffset = 0;
-      // Use empty string for query to get all data when no search text is provided
-      final searchQuery = event.query.trim().isEmpty ? '' : event.query;
+      // Normalize queries and allow empty to fetch defaults
+      final normalizedQueries = event.queries.map((e) => e.trim()).toList();
       await _latestSearch.run(
         () async => _meiliSearchService.searchAll(
-          text: searchQuery,
+          texts: normalizedQueries,
           limit: _pageSize,
           offset: _currentOffset,
         ),
@@ -154,7 +154,7 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
 
           final duration = DateTime.now().difference(start);
           log.info(
-              '_onQueryChanged MeiliSearch query "${event.query}" took ${duration.inMilliseconds} ms');
+              '_onQueryChanged MeiliSearch queries "${event.queries}" took ${duration.inMilliseconds} ms');
 
           _currentOffset = _pageSize;
         },

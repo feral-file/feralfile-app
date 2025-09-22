@@ -2,6 +2,7 @@ import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/util/constants.dart';
+import 'package:uuid/uuid.dart';
 
 extension DP1CallExtension on DP1Call {
   // static DP1Call fromCompactedAssetToken({
@@ -31,7 +32,7 @@ extension DP1CallExtension on DP1Call {
   }) {
     return DP1Call(
         dpVersion: DP_VERSION,
-        id: playlistId ?? '',
+        id: playlistId ?? Uuid().v1(),
         slug: '',
         title: 'Playlist',
         created: DateTime.now(),

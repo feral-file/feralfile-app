@@ -9,16 +9,15 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/meili_search/meili_search_bloc.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
-import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/screen/meili_search/widgets/meili_search_result_section.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
-import 'package:autonomy_flutter/view/loading.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
+import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/dp1_playlist_grid_view.dart';
+import 'package:autonomy_flutter/view/loading.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MeiliSearchPage extends StatefulWidget {
   const MeiliSearchPage({super.key});
@@ -88,13 +87,13 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
                   controller: _scrollController,
                   slivers: [
                     ..._buildOrderedSections(context, state),
-                    if (state.isLoading)
-                      const SliverPadding(
-                        padding: EdgeInsets.all(16.0),
-                        sliver: SliverToBoxAdapter(
-                          child: Center(child: LoadingWidget()),
-                        ),
-                      ),
+                    // if (state.isLoading)
+                    //   const SliverPadding(
+                    //     padding: EdgeInsets.all(16.0),
+                    //     sliver: SliverToBoxAdapter(
+                    //       child: Center(child: LoadingWidget()),
+                    //     ),
+                    //   ),
                     const SliverToBoxAdapter(
                       child: SizedBox(height: 250),
                     ),
@@ -147,7 +146,7 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
-              _bloc.add(MeiliSearchQueryChanged(state.query));
+              _bloc.add(MeiliSearchQueryChanged([state.query]));
             },
             child: const Text('Retry'),
           ),
@@ -161,6 +160,7 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
     return SliverToBoxAdapter(
       child: MeiliSearchResultSection<dynamic>(
         title: 'Channels',
+        key: ValueKey('channels_${state.hashCode}'),
         builder: (context) {
           return CustomScrollView(
             shrinkWrap: true,
@@ -179,6 +179,7 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
     return SliverToBoxAdapter(
       child: MeiliSearchResultSection<dynamic>(
         title: 'Playlists',
+        key: ValueKey('playlists_${state.hashCode}'),
         builder: (context) {
           return CustomScrollView(
             shrinkWrap: true,
@@ -203,6 +204,7 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
           return PlaylistAssetGridView(
             playlist: playlist,
             physics: const NeverScrollableScrollPhysics(),
+            showLoadingOnUpdating: false,
           );
         },
       ),

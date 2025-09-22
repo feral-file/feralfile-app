@@ -305,7 +305,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                     shouldShowMeiliSearch = text.isNotEmpty;
                   });
                   meiliSearchBloc.add(
-                    MeiliSearchQueryChanged(text),
+                    MeiliSearchQueryChanged(match),
                   );
                 },
               ),

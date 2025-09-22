@@ -75,7 +75,7 @@ class _DisplayItemListState extends State<DisplayItemList> {
   @override
   void initState() {
     super.initState();
-    _playlistDetailsBloc = PlaylistDetailsBloc(widget.playlist);
+    _playlistDetailsBloc = PlaylistDetailsBloc(playlist: widget.playlist);
     _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
 
     _scrollController = ScrollController();
@@ -90,7 +90,7 @@ class _DisplayItemListState extends State<DisplayItemList> {
     // Todo: update function compare playlist
     if (oldWidget.playlist.items.length != widget.playlist.items.length) {
       _playlistDetailsBloc.close();
-      _playlistDetailsBloc = PlaylistDetailsBloc(widget.playlist);
+      _playlistDetailsBloc = PlaylistDetailsBloc(playlist: widget.playlist);
       _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
       _scrollToSelectedIndex();
     }

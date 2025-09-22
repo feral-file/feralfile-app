@@ -59,6 +59,7 @@ import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/device_info_service.dart';
 import 'package:autonomy_flutter/service/domain_address_service.dart';
 import 'package:autonomy_flutter/service/domain_service.dart';
+import 'package:autonomy_flutter/service/dls_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/ethereum_service.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
@@ -353,6 +354,10 @@ Future<void> setupInjector() async {
       injector(),
       injector(),
     ),
+  );
+
+  injector.registerSingleton<DLSService>(
+    DLSServiceImpl(),
   );
 
   injector.registerFactory<AddNewPlaylistBloc>(

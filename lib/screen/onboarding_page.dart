@@ -20,6 +20,7 @@ import 'package:autonomy_flutter/service/canvas_notification_manager.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/device_info_service.dart';
+import 'package:autonomy_flutter/service/dls_service.dart';
 import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/passkey_service.dart';
@@ -128,6 +129,7 @@ class _OnboardingPageState extends State<OnboardingPage>
       await injector<AuthService>().init();
       await injector<MetricClientService>().initService();
       await injector<FFBluetoothService>().init();
+      await injector<DLSService>().init();
 
       unawaited(
         injector<RemoteConfigService>().loadConfigs().then(

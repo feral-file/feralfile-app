@@ -97,6 +97,11 @@ class DP1Call {
     if (identical(this, other)) return true;
     return other is DP1Call && other.dpVersion == dpVersion && other.id == id;
   }
+
+  bool isItemsEqual(Object other) {
+    if (identical(this, other)) return true;
+    return other is DP1Call && other.items == items;
+  }
 }
 
 class DynamicQuery {

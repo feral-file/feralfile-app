@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/service/dls_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -35,6 +37,7 @@ class HighlightController extends TextEditingController {
     if (!_templatesLoaded) {
       return keywords;
     }
+    return injector<DLSService>().extractIdentities(inputText);
 
     for (var template in _templates) {
       final String regex = template['regex'] as String;
@@ -58,10 +61,10 @@ class HighlightController extends TextEditingController {
   }
 
   // Return first matched keyword or full text if no match
-  String getMatchOrFull([String? inputOverride]) {
+  List<String> getMatchOrFull([String? inputOverride]) {
     final String input = inputOverride ?? text;
     final matches = getKeywordsFromInput(input);
-    return matches.isNotEmpty ? matches.first : input;
+    return matches;
   }
 
   @override
@@ -109,9 +112,9 @@ class HighlightController extends TextEditingController {
         text: text.substring(
             closestMatchIndex, closestMatchIndex + matchedWord.length),
         style: style?.copyWith(
-            color: AppColor.feralFileHighlight,
-            fontWeight: FontWeight.bold,
-            backgroundColor: AppColor.auGreyBackground),
+          color: AppColor.feralFileHighlight,
+          fontWeight: FontWeight.bold,
+        ),
       ));
 
       start = closestMatchIndex + matchedWord.length;

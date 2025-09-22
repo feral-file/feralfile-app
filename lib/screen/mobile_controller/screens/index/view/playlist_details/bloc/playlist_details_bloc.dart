@@ -12,14 +12,25 @@ import 'package:sentry/sentry.dart';
 
 class PlaylistDetailsBloc
     extends AuBloc<PlaylistDetailsEvent, PlaylistDetailsState> {
-  PlaylistDetailsBloc(this.playlist)
-      : super(const PlaylistDetailsInitialState()) {
+  PlaylistDetailsBloc({required DP1Call playlist})
+      : _playlist = playlist,
+        super(const PlaylistDetailsInitialState()) {
+    on<SetPlaylistDetailsEvent>(_onSetPlaylistDetails);
     on<GetPlaylistDetailsEvent>(_onGetPlaylistDetails);
     on<LoadMorePlaylistDetailsEvent>(_onLoadMorePlaylistDetails);
   }
 
-  final DP1Call playlist;
+  DP1Call _playlist;
+
   static const int _pageSize = 10;
+
+  Future<void> _onSetPlaylistDetails(
+    SetPlaylistDetailsEvent event,
+    Emitter<PlaylistDetailsState> emit,
+  ) async {
+    _playlist = event.playlist;
+    add(GetPlaylistDetailsEvent());
+  }
 
   Future<void> _onGetPlaylistDetails(
     GetPlaylistDetailsEvent event,
@@ -33,7 +44,7 @@ class PlaylistDetailsBloc
       ),
     );
     try {
-      final items = playlist.items;
+      final items = _playlist.items;
       final pageItems = items.take(_pageSize).toList();
       final pageIndexIds =
           pageItems.map((item) => item.indexId).whereType<String>().toList();
@@ -85,7 +96,7 @@ class PlaylistDetailsBloc
       ),
     );
     try {
-      final items = playlist.items;
+      final items = _playlist.items;
       final nextPage = state.currentPage + 1;
       final start = nextPage * _pageSize;
       final end = start + _pageSize;
