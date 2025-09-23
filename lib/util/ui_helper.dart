@@ -1197,61 +1197,59 @@ class UIHelper {
         curve: Curves.easeOutQuart,
         reverseCurve: Curves.easeOutQuart,
       ),
-      builder: (context) => SafeArea(
-        child: ColoredBox(
-          key: bottomSheetKey,
-          color: AppColor.auGreyBackground,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 13),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      title ?? '',
-                      style: theme.textTheme.ppMori700White14,
+      builder: (context) => ColoredBox(
+        key: bottomSheetKey,
+        color: AppColor.red,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 13),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    title ?? '',
+                    style: theme.textTheme.ppMori700White14,
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    constraints: const BoxConstraints(
+                      maxWidth: 44,
+                      maxHeight: 44,
+                      minWidth: 44,
+                      minHeight: 44,
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      constraints: const BoxConstraints(
-                        maxWidth: 44,
-                        maxHeight: 44,
-                        minWidth: 44,
-                        minHeight: 44,
-                      ),
-                      icon: const Icon(
-                        AuIcon.close,
-                        size: 18,
-                        color: AppColor.white,
-                      ),
+                    icon: const Icon(
+                      AuIcon.close,
+                      size: 18,
+                      color: AppColor.white,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemBuilder: (BuildContext context, int index) {
-                  final option = options[index];
-                  if (option.builder != null) {
-                    return option.builder!.call(context, option);
-                  }
-                  return DrawerItem(
-                    item: option,
-                    color: AppColor.white,
-                  );
-                },
-                itemCount: options.length,
-                separatorBuilder: (context, index) => const Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: AppColor.primaryBlack,
-                ),
+            ),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemBuilder: (BuildContext context, int index) {
+                final option = options[index];
+                if (option.builder != null) {
+                  return option.builder!.call(context, option);
+                }
+                return DrawerItem(
+                  item: option,
+                  color: AppColor.white,
+                );
+              },
+              itemCount: options.length,
+              separatorBuilder: (context, index) => const Divider(
+                height: 1,
+                thickness: 1,
+                color: AppColor.primaryBlack,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
