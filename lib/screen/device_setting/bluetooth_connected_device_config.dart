@@ -250,16 +250,19 @@ class BluetoothConnectedDeviceConfigState
                         current.isDeviceAlive(selectedDevice);
                   },
                   builder: (context, state) {
-                    return GestureDetector(
-                      onTap: () {
-                        _showOption(context, state);
-                      },
-                      child: SvgPicture.asset(
-                        'assets/images/more_circle.svg',
-                        width: 22,
-                        colorFilter: const ColorFilter.mode(
-                          AppColor.white,
-                          BlendMode.srcIn,
+                    return Container(
+                      padding: const EdgeInsets.all(8),
+                      child: GestureDetector(
+                        onTap: () {
+                          _showOption(context, state);
+                        },
+                        child: SvgPicture.asset(
+                          'assets/images/more_circle.svg',
+                          width: 22,
+                          colorFilter: const ColorFilter.mode(
+                            AppColor.white,
+                            BlendMode.srcIn,
+                          ),
                         ),
                       ),
                     );
@@ -1454,11 +1457,6 @@ class BluetoothConnectedDeviceConfigState
     }
 
     return PopupMenuButton<FFBluetoothDevice>(
-      icon: const Icon(
-        Icons.devices,
-        color: AppColor.white,
-        size: 24,
-      ),
       tooltip: 'Switch Device',
       offset: const Offset(0, 40),
       onSelected: (FFBluetoothDevice device) async {
@@ -1509,6 +1507,14 @@ class BluetoothConnectedDeviceConfigState
           );
         }).toList();
       },
+      child: const Padding(
+        padding: EdgeInsets.all(8),
+        child: Icon(
+          Icons.devices,
+          color: AppColor.white,
+          size: 24,
+        ),
+      ),
     );
   }
 

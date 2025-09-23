@@ -399,7 +399,7 @@ AppBar getCustomBackAppBar(
       title: title,
       actions: actions
         ..add(
-          SizedBox(width: 16),
+          const SizedBox(width: 4),
         ),
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(0.25),
