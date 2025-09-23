@@ -321,14 +321,13 @@ class RecordBloc extends AuBloc<RecordEvent, RecordState> {
   ) async {
     log.info('Complete action received');
     if (state is RecordProcessingState) {
-      final response = nlParserData.content;
       final transcription = (state as RecordProcessingState).transcription!;
       final intent = state.lastIntent!;
       final dp1call = state.lastDP1Call;
       final successState = RecordSuccessState(
         lastIntent: intent,
         lastDP1Call: dp1call,
-        response: response,
+        response: (state as RecordProcessingState).response ?? '',
         transcription: transcription,
       );
       emit(successState);
