@@ -112,13 +112,18 @@ class _CollectionPageState extends State<CollectionPage>
                         final allOwnedPlaylist =
                             await injector<UserDp1PlaylistService>()
                                 .allOwnedPlaylist();
+                        final completer = Completer<void>();
                         injector<CanvasDeviceBloc>().add(
                           CanvasDeviceCastDP1PlaylistEvent(
                             device: device,
                             playlist: allOwnedPlaylist,
                             intent: DP1Intent.displayNow(),
+                            onDoneCallback: () {
+                              completer.complete();
+                            },
                           ),
                         );
+                        await completer.future;
                       },
                     );
                   },

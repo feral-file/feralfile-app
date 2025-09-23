@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
@@ -49,14 +51,19 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen> {
               FFCastButton(
                 // displayKey: widget.payload.playlist.id,
                 onDeviceSelected: (device) {
+                  final completer = Completer<void>();
                   _canvasDeviceBloc.add(
                     CanvasDeviceCastDP1PlaylistEvent(
                       device: device,
                       playlist: widget.payload.playlist,
                       intent: DP1Intent.displayNow(),
                       usingUrl: false, //widget.payload.isFromFeedServer,
+                      onDoneCallback: () {
+                        completer.complete();
+                      },
                     ),
                   );
+                  return completer.future;
                 },
               )
             ],
