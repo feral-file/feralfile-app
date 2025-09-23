@@ -14,6 +14,7 @@ import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/cast_button.dart';
 import 'package:autonomy_flutter/view/loading.dart';
+import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:autonomy_flutter/widgets/ff_text_field/ff_text_field.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -78,57 +79,80 @@ class _CollectionPageState extends State<CollectionPage>
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: BlocBuilder<ViewExistingAddressBloc,
-                      ViewExistingAddressState>(
-                    bloc: _addressBloc,
-                    builder: (context, addressState) {
-                      return FFTextField(
-                        active: true,
-                        placeholder: 'Type or Paste Address / Domain',
-                        isError: addressState.isError,
-                        isLoading: addressState.isAddConnectionLoading,
-                        errorMessage: addressState.exception?.message ??
-                            (addressState.isError ? 'Invalid address' : null),
-                        onChanged: (text) {
-                          _addressBloc.add(AddressChangeEvent(text));
-                        },
-                        onSend: (text) {
-                          _addressBloc.add(AddConnectionEvent());
-                        },
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                BlocBuilder<UserAllOwnCollectionBloc,
-                    UserAllOwnCollectionState>(
-                  bloc: _collectionBloc,
-                  builder: (context, collectionState) {
-                    return FFCastButton(
-                      onDeviceSelected: (device) async {
-                        final allOwnedPlaylist =
-                            await injector<UserDp1PlaylistService>()
-                                .allOwnedPlaylist();
-                        final completer = Completer<void>();
-                        injector<CanvasDeviceBloc>().add(
-                          CanvasDeviceCastDP1PlaylistEvent(
-                            device: device,
-                            playlist: allOwnedPlaylist,
-                            intent: DP1Intent.displayNow(),
-                            onDoneCallback: () {
-                              completer.complete();
+                Row(
+                  children: [
+                    Expanded(
+                      child: BlocBuilder<ViewExistingAddressBloc,
+                          ViewExistingAddressState>(
+                        bloc: _addressBloc,
+                        builder: (context, addressState) {
+                          return FFTextField(
+                            active: true,
+                            placeholder: 'Type or Paste Address / Domain',
+                            isError: addressState.isError,
+                            isLoading: addressState.isAddConnectionLoading,
+                            onChanged: (text) {
+                              _addressBloc.add(AddressChangeEvent(text));
                             },
-                          ),
+                            onSend: (text) {
+                              _addressBloc.add(AddConnectionEvent());
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                    BlocBuilder<UserAllOwnCollectionBloc,
+                        UserAllOwnCollectionState>(
+                      bloc: _collectionBloc,
+                      builder: (context, collectionState) {
+                        return FFCastButton(
+                          onDeviceSelected: (device) async {
+                            final allOwnedPlaylist =
+                                await injector<UserDp1PlaylistService>()
+                                    .allOwnedPlaylist();
+                            final completer = Completer<void>();
+                            injector<CanvasDeviceBloc>().add(
+                              CanvasDeviceCastDP1PlaylistEvent(
+                                device: device,
+                                playlist: allOwnedPlaylist,
+                                intent: DP1Intent.displayNow(),
+                                onDoneCallback: () {
+                                  completer.complete();
+                                },
+                              ),
+                            );
+                            await completer.future;
+                          },
                         );
-                        await completer.future;
                       },
-                    );
-                  },
+                    ),
+                    SizedBox(width: ResponsiveLayout.paddingHorizontal),
+                  ],
                 ),
-                const SizedBox(width: 8),
+                BlocBuilder<ViewExistingAddressBloc, ViewExistingAddressState>(
+                  bloc: _addressBloc,
+                  builder: (context, addressState) {
+                    final errorMessage = addressState.exception?.message ??
+                        (addressState.isError ? 'Invalid address' : null);
+                    if (errorMessage != null) {
+                      return Padding(
+                        padding: ResponsiveLayout.pageHorizontalEdgeInsets,
+                        child: Text(
+                          errorMessage,
+                          style: Theme.of(context).textTheme.small.copyWith(
+                                color: AppColor.red,
+                                fontSize: 12,
+                              ),
+                        ),
+                      );
+                    }
+
+                    return const SizedBox.shrink();
+                  },
+                )
               ],
             ),
             Expanded(

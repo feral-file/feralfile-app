@@ -24,7 +24,6 @@ class FFTextField extends StatefulWidget {
     this.controller,
     this.isError = false,
     this.isLoading = false,
-    this.errorMessage,
     this.maxLines = 1,
     this.minLines = 1,
     this.keyboardType = TextInputType.text,
@@ -36,7 +35,6 @@ class FFTextField extends StatefulWidget {
   final bool enabled;
   final bool isError;
   final bool isLoading;
-  final String? errorMessage;
   final void Function(String)? onSend;
   final void Function(String)? onChanged;
   final TextEditingController? controller;
@@ -80,13 +78,11 @@ class _FFTextFieldState extends State<FFTextField> {
             decoration: BoxDecoration(
               color: LLMTextInputTokens.llmBgColor,
               borderRadius: BorderRadius.circular(
-                _focusNode.hasFocus
-                    ? LLMTextInputTokens.llmActiveCornerRadius.toDouble()
-                    : LLMTextInputTokens.llmCornerRadius.toDouble(),
+                LLMTextInputTokens.llmActiveCornerRadius.toDouble(),
               ),
-              border: widget.isError
-                  ? Border.all(color: AppColor.red, width: 1)
-                  : null,
+              border: Border.all(
+                color: widget.isError ? AppColor.red : Colors.transparent,
+              ),
             ),
             padding: widget.active
                 ? EdgeInsets.all(LLMTextInputTokens.llmActivePadding.toDouble())
@@ -190,21 +186,10 @@ class _FFTextFieldState extends State<FFTextField> {
                         widget.onChanged?.call(_textController.text);
                       });
                     },
-                  )
+                  ),
               ],
             ),
           ),
-          // Error message display
-          if (widget.isError && widget.errorMessage != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              widget.errorMessage!,
-              style: Theme.of(context).textTheme.small.copyWith(
-                    color: AppColor.red,
-                    fontSize: 12,
-                  ),
-            ),
-          ],
         ],
       ),
     );
