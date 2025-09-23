@@ -332,58 +332,60 @@ class _AccountsViewState extends State<AccountsView> {
               : Constants.maxWidthModalTablet,
         ),
         barrierColor: Colors.black.withOpacity(0.5),
-        builder: (context) => Container(
-          color: Colors.transparent,
+        builder: (context) => SafeArea(
           child: Container(
-            decoration: BoxDecoration(
-              color: theme.auGreyBackground,
-              borderRadius: const BorderRadius.only(
-                topRight: Radius.circular(20),
+            color: Colors.transparent,
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.auGreyBackground,
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(20),
+                ),
               ),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'remove_account'.tr(),
-                  style: theme.primaryTextTheme.ppMori700White24,
-                ),
-                const SizedBox(height: 40),
-                RichText(
-                  textScaler: MediaQuery.textScalerOf(context),
-                  text: TextSpan(
-                    style: theme.primaryTextTheme.ppMori400White14,
-                    children: <TextSpan>[
-                      TextSpan(
-                        text: 'sure_remove_account'.tr(),
-                        //'Are you sure you want to delete the account ',
-                      ),
-                      TextSpan(
-                        text: '“$accountName”',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const TextSpan(
-                        text: '?',
-                      ),
-                    ],
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'remove_account'.tr(),
+                    style: theme.primaryTextTheme.ppMori700White24,
                   ),
-                ),
-                const SizedBox(height: 40),
-                PrimaryButton(
-                  text: 'remove'.tr(),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    unawaited(_deleteAccount(pageContext, walletAddress));
-                  },
-                ),
-                const SizedBox(height: 10),
-                OutlineButton(
-                  onTap: () => Navigator.of(context).pop(),
-                  text: 'cancel_dialog'.tr(),
-                ),
-              ],
+                  const SizedBox(height: 40),
+                  RichText(
+                    textScaler: MediaQuery.textScalerOf(context),
+                    text: TextSpan(
+                      style: theme.primaryTextTheme.ppMori400White14,
+                      children: <TextSpan>[
+                        TextSpan(
+                          text: 'sure_remove_account'.tr(),
+                          //'Are you sure you want to delete the account ',
+                        ),
+                        TextSpan(
+                          text: '“$accountName”',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const TextSpan(
+                          text: '?',
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  PrimaryButton(
+                    text: 'remove'.tr(),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      unawaited(_deleteAccount(pageContext, walletAddress));
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  OutlineButton(
+                    onTap: () => Navigator.of(context).pop(),
+                    text: 'cancel_dialog'.tr(),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

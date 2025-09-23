@@ -169,7 +169,9 @@ class BugBountyPage extends StatelessWidget {
                     arguments:
                         NewIssuePayload(reportIssueType: ReportIssueType.Bug))),
               ),
-              const SizedBox(height: 56),
+              SizedBox(
+                height: MediaQuery.of(context).padding.bottom + 32,
+              ),
             ],
           ),
         ),
