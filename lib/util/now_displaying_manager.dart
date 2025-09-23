@@ -86,6 +86,11 @@ class NowDisplayingManager {
       if (status == null) {
         throw Exception('Failed to get Now Displaying');
       }
+
+      if (status.castCommand == CastCommand.castDaily && status.items == null) {
+        return;
+      }
+
       final nowDisplaying = await getNowDisplayingObject(status, device);
       if (nowDisplaying == null) {
         final status = NowDisplayingError(

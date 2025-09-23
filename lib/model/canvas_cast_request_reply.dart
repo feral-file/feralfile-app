@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 
 enum CastCommand {
   checkStatus,
+  castDaily,
   displayPlaylist,
   pauseCasting,
   resumeCasting,
@@ -43,6 +44,8 @@ enum CastCommand {
     switch (command) {
       case 'checkStatus':
         return CastCommand.checkStatus;
+      case 'castDaily':
+        return CastCommand.castDaily;
       case 'displayPlaylist':
         return CastCommand.displayPlaylist;
       case 'pauseCasting':
@@ -392,6 +395,7 @@ class CheckCastingStatusReply extends ReplyWithOK {
     this.deviceSettings,
     super.error,
     this.items,
+    this.castCommand,
   }) : isPaused = isPaused ?? false;
 
   factory CheckCastingStatusReply.fromJson(Map<String, dynamic> json) =>
@@ -419,6 +423,9 @@ class CheckCastingStatusReply extends ReplyWithOK {
                   ),
                 ),
               ),
+        castCommand: json['castCommand'] != null
+            ? CastCommand.fromString(json['castCommand'] as String)
+            : null,
         error: json['error'] != null
             ? ReplyError.fromString(json['error'] as String)
             : null,
@@ -434,6 +441,7 @@ class CheckCastingStatusReply extends ReplyWithOK {
   String? displayKey;
   DeviceDisplaySetting? deviceSettings;
   final List<DP1Item>? items;
+  final CastCommand? castCommand;
 
   @override
   Map<String, dynamic> toJson() => {
@@ -443,6 +451,7 @@ class CheckCastingStatusReply extends ReplyWithOK {
         'connectedDevice': connectedDevice?.toJson(),
         'displayKey': displayKey,
         'deviceSettings': deviceSettings?.toJson(),
+        'castCommand': castCommand?.toString(),
         'error': super.error?.jsonString,
       };
 
@@ -457,6 +466,7 @@ class CheckCastingStatusReply extends ReplyWithOK {
     String? displayKey,
     DeviceDisplaySetting? deviceSettings,
     List<DP1Item>? items,
+    CastCommand? castCommand,
     ReplyError? error,
   }) {
     return CheckCastingStatusReply(
@@ -467,6 +477,7 @@ class CheckCastingStatusReply extends ReplyWithOK {
       displayKey: displayKey ?? this.displayKey,
       deviceSettings: deviceSettings ?? this.deviceSettings,
       items: items ?? this.items,
+      castCommand: castCommand ?? this.castCommand,
       error: error ?? super.error,
     );
   }
