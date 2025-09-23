@@ -155,12 +155,12 @@ class MeiliSearchService {
       return (data: data, score: score);
     }).toList();
 
-    // Sort by score desc
+    // Sort by score desc first
     channelPairs.sort((a, b) => b.score.compareTo(a.score));
     playlistPairs.sort((a, b) => b.score.compareTo(a.score));
     itemPairs.sort((a, b) => b.score.compareTo(a.score));
 
-    // Extract ordered lists
+    // Extract ordered lists first
     final channels = channelPairs.map((e) => e.data).toList();
     final playlists = playlistPairs.map((e) => e.data).toList();
     final items = itemPairs.map((e) => e.data).toList();
@@ -169,14 +169,20 @@ class MeiliSearchService {
     final playlistsRankingScore = playlistPairs.map((e) => e.score).toList();
     final itemsRankingScore = itemPairs.map((e) => e.score).toList();
 
+    // Remove duplicates after extracting data to keep highest ranking items
+    final uniqueChannels = channels.removeDuplicates();
+    final uniquePlaylists = playlists.removeDuplicates();
+    final uniqueItems = items.removeDuplicates();
+
     final result = MeiliSearchResult(
-      channels: channels,
-      playlists: playlists,
-      items: items,
+      channels: uniqueChannels,
+      playlists: uniquePlaylists,
+      items: uniqueItems,
       channelsRankingScore: channelsRankingScore,
       playlistsRankingScore: playlistsRankingScore,
       itemsRankingScore: itemsRankingScore,
-      totalHits: channels.length + playlists.length + items.length,
+      totalHits:
+          uniqueChannels.length + uniquePlaylists.length + uniqueItems.length,
       processingTimeMs: multiResult.results
           .fold(0, (sum, r) => sum + (r.processingTimeMs ?? 0)),
     );

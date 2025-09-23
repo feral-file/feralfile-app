@@ -46,3 +46,24 @@ class Channel {
     };
   }
 }
+
+/// Extension for removing duplicate channels based on unique identifiers
+extension ChannelListExtension on List<Channel> {
+  /// Remove duplicate channels based on unique identifiers
+  List<Channel> removeDuplicates() {
+    final seenIds = <String>{};
+    final uniqueChannels = <Channel>[];
+
+    for (final channel in this) {
+      // Channel has id field as String (required)
+      final uniqueId = channel.id;
+
+      if (!seenIds.contains(uniqueId)) {
+        seenIds.add(uniqueId);
+        uniqueChannels.add(channel);
+      }
+    }
+
+    return uniqueChannels;
+  }
+}

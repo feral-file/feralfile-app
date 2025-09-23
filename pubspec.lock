@@ -1710,10 +1710,10 @@ packages:
     dependency: "direct main"
     description:
       name: meilisearch
-      sha256: "30a0c67668494dc109e088361e7bbe230e617cff82a697b8c88674794d8fbeaf"
+      sha256: "18283178f4cc7224cc1277570c699e2374d6015487ac838f72f9ce196119efd8"
       url: "https://pub.dev"
     source: hosted
-    version: "0.17.0"
+    version: "0.17.1"
   meta:
     dependency: transitive
     description:

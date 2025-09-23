@@ -116,3 +116,26 @@ enum ArtworkDisplayLicense {
 extension DP1PlaylistItemExt on DP1Item {
   String get indexId => provenance.indexId;
 }
+
+/// Extension for removing duplicate items based on unique identifiers
+extension DP1ItemListExtension on List<DP1Item> {
+  /// Remove duplicate items based on unique identifiers
+  List<DP1Item> removeDuplicates() {
+    final seenIds = <String>{};
+    final uniqueItems = <DP1Item>[];
+
+    for (final item in this) {
+      // DP1Item doesn't have id field, use provenance contract info as unique identifier
+      final contract = item.provenance.contract;
+      final uniqueId =
+          '${contract.chain.value}-${contract.address ?? ''}-${contract.tokenId ?? ''}-${contract.seriesId ?? ''}';
+
+      if (!seenIds.contains(uniqueId)) {
+        seenIds.add(uniqueId);
+        uniqueItems.add(item);
+      }
+    }
+
+    return uniqueItems;
+  }
+}
