@@ -132,6 +132,8 @@ dependencies:
   rxdart: ^0.28.0
   syncfusion_flutter_core: ^29.1.38
   meilisearch: ^0.17.0
+  objectbox: ^4.0.2
+  objectbox_flutter_libs: ^4.0.2
 
 dev_dependencies:
   retrofit_generator: ^9.3.0
@@ -140,7 +142,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   mocktail: ^1.0.4
-  #  objectbox_generator: any
+  objectbox_generator: ^4.0.2
   very_good_analysis: ^7.0.0
   sentry_dart_plugin: ^3.1.1
   widgetbook_generator: ^3.13.0
