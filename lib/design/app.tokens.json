@@ -725,7 +725,7 @@
       }
     }
   },
-  "NoticeBanner/Mode 1": {
+  "NoticeBanner/base": {
     "NoticeBanner": {
       "bgColor": {
         "$type": "color",
@@ -764,7 +764,7 @@
       "Header/base",
       "IndexSubNav/base",
       "PlaylistHeader/base",
-      "NoticeBanner/Mode 1"
+      "NoticeBanner/base"
     ]
   }
 }
