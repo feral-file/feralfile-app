@@ -134,6 +134,11 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
           if (state is RecordSuccessState) {
             final dp1Playlist = state.lastDP1Call;
 
+            if (state.lastIntent.action == AiAction.addAddress) {
+              recordBloc.add(AddAddressEvent(state.transcription));
+              return;
+            }
+
             if (dp1Playlist == null) {
               final entity = state.lastIntent.entities?.firstOrNull;
               if (entity == null) {
@@ -198,10 +203,12 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
               ),
             );
           }
+
+          if (state is AddAddressSuccessState) {
+            injector<NavigationService>().openMyCollection();
+          }
         },
-        builder: (context, state) {
-          return _recordView(context, state);
-        },
+        builder: _recordView,
       ),
     );
   }
@@ -226,7 +233,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                       injector<NavigationService>().goBack();
                     },
                     child: Container(
-                      constraints: BoxConstraints(
+                      constraints: const BoxConstraints(
                         minWidth: 44,
                         minHeight: 44,
                       ),
@@ -367,9 +374,12 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
           MessageConstants.recordingText,
         );
       case RecordProcessingState:
-        return _recordProcessingStatus(
-          (state as RecordProcessingState).status.message,
-        );
+        if ((state as RecordProcessingState).lastIntent?.action !=
+            AiAction.addAddress) {
+          return _recordProcessingStatus(
+            state.status.message,
+          );
+        }
       case RecordSuccessState:
         if (!state.isValid) {
           return _recordErrorStatus(
@@ -387,6 +397,32 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
             );
           }
         }
+
+      // Add Address
+      case VerifyingAddressState:
+        return _recordProcessingStatus(
+          'Verifying address...',
+        );
+      case ResolvingDomainState:
+        return _recordProcessingStatus(
+          'Resolving domain...',
+        );
+      case InvalidAddressState:
+        return _recordErrorStatus(
+          (state as InvalidAddressState).error,
+        );
+      case AddingAddressState:
+        return _recordProcessingStatus(
+          'Adding address...',
+        );
+      case AddAddressErrorState:
+        return _recordErrorStatus(
+          (state as AddAddressErrorState).error,
+        );
+      case AddAddressSuccessState:
+        return _recordProcessingStatus(
+          'Address added successfully',
+        );
     }
 
     return const SizedBox.shrink();

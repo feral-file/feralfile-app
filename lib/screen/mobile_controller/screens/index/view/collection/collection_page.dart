@@ -2,17 +2,13 @@ import 'dart:async';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/design/build/components/LLMTextInput.dart';
-import 'package:autonomy_flutter/design/build/components/NowPlayingBar.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_intent.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/view/record_controller.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address_bloc.dart';
-import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address_state.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
@@ -22,7 +18,6 @@ import 'package:autonomy_flutter/view/cast_button.dart';
 import 'package:autonomy_flutter/view/loading.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
-import 'package:autonomy_flutter/widgets/ff_text_field/ff_text_field.dart';
 import 'package:autonomy_flutter/widgets/notice-banner/notice_banner.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -75,6 +70,38 @@ class _CollectionPageState extends State<CollectionPage>
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            BlocBuilder<UserAllOwnCollectionBloc, UserAllOwnCollectionState>(
+              bloc: _collectionBloc,
+              builder: (context, collectionState) {
+                return Padding(
+                  padding: ResponsiveLayout.pageHorizontalEdgeInsets
+                      .copyWith(bottom: 10),
+                  child: Row(
+                    children: [
+                      FFCastButton(
+                        onDeviceSelected: (device) async {
+                          final allOwnedPlaylist =
+                              await injector<UserDp1PlaylistService>()
+                                  .allOwnedPlaylist();
+                          final completer = Completer<void>();
+                          injector<CanvasDeviceBloc>().add(
+                            CanvasDeviceCastDP1PlaylistEvent(
+                              device: device,
+                              playlist: allOwnedPlaylist,
+                              intent: DP1Intent.displayNow(),
+                              onDoneCallback: () {
+                                completer.complete();
+                              },
+                            ),
+                          );
+                          await completer.future;
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
             if (_isNoticeBannerVisible)
               Column(
                 children: [
