@@ -2,12 +2,18 @@ import 'dart:async';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/build/components/LLMTextInput.dart';
+import 'package:autonomy_flutter/design/build/components/NowPlayingBar.dart';
+import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_intent.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/view/record_controller.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address_bloc.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address_state.dart';
+import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
@@ -17,6 +23,7 @@ import 'package:autonomy_flutter/view/loading.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:autonomy_flutter/widgets/ff_text_field/ff_text_field.dart';
+import 'package:autonomy_flutter/widgets/notice-banner/notice_banner.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -33,6 +40,7 @@ class _CollectionPageState extends State<CollectionPage>
     with AutomaticKeepAliveClientMixin, AfterLayoutMixin<CollectionPage> {
   late final UserAllOwnCollectionBloc _collectionBloc;
   late final ViewExistingAddressBloc _addressBloc;
+  bool _isNoticeBannerVisible = true;
   Timer? _autoRefreshTimer;
 
   late final ScrollController _scrollController;
@@ -67,82 +75,32 @@ class _CollectionPageState extends State<CollectionPage>
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: BlocBuilder<ViewExistingAddressBloc,
-                          ViewExistingAddressState>(
-                        bloc: _addressBloc,
-                        builder: (context, addressState) {
-                          return FFTextField(
-                            active: true,
-                            placeholder: 'Type or Paste Address / Domain',
-                            isError: addressState.isError,
-                            isLoading: addressState.isAddConnectionLoading,
-                            onChanged: (text) {
-                              _addressBloc.add(AddressChangeEvent(text));
-                            },
-                            onSend: (text) {
-                              _addressBloc.add(AddConnectionEvent());
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                    BlocBuilder<UserAllOwnCollectionBloc,
-                        UserAllOwnCollectionState>(
-                      bloc: _collectionBloc,
-                      builder: (context, collectionState) {
-                        return FFCastButton(
-                          onDeviceSelected: (device) async {
-                            final allOwnedPlaylist =
-                                await injector<UserDp1PlaylistService>()
-                                    .allOwnedPlaylist();
-                            final completer = Completer<void>();
-                            injector<CanvasDeviceBloc>().add(
-                              CanvasDeviceCastDP1PlaylistEvent(
-                                device: device,
-                                playlist: allOwnedPlaylist,
-                                intent: DP1Intent.displayNow(),
-                                onDoneCallback: () {
-                                  completer.complete();
-                                },
-                              ),
-                            );
-                            await completer.future;
-                          },
+            if (_isNoticeBannerVisible)
+              Column(
+                children: [
+                  Padding(
+                    padding: ResponsiveLayout.pageHorizontalEdgeInsets,
+                    child: NoticeBanner(
+                      message: '''
+Type or paste an address into the command bar to load''',
+                      onClose: () {
+                        setState(() {
+                          _isNoticeBannerVisible = false;
+                        });
+                      },
+                      onTap: () {
+                        injector<NavigationService>().popToRouteOrPush(
+                          AppRouter.voiceCommandPage,
+                          arguments: RecordControllerScreenPayload(
+                            isListening: false,
+                          ),
                         );
                       },
                     ),
-                    SizedBox(width: ResponsiveLayout.paddingHorizontal),
-                  ],
-                ),
-                BlocBuilder<ViewExistingAddressBloc, ViewExistingAddressState>(
-                  bloc: _addressBloc,
-                  builder: (context, addressState) {
-                    final errorMessage = addressState.exception?.message ??
-                        (addressState.isError ? 'Invalid address' : null);
-                    if (errorMessage != null) {
-                      return Padding(
-                        padding: ResponsiveLayout.pageHorizontalEdgeInsets,
-                        child: Text(
-                          errorMessage,
-                          style: Theme.of(context).textTheme.small.copyWith(
-                                color: AppColor.red,
-                                fontSize: 12,
-                              ),
-                        ),
-                      );
-                    }
-
-                    return const SizedBox.shrink();
-                  },
-                )
-              ],
-            ),
+                  ),
+                  const SizedBox(height: 40),
+                ],
+              ),
             Expanded(
               child: BlocBuilder<UserAllOwnCollectionBloc,
                   UserAllOwnCollectionState>(
@@ -154,6 +112,20 @@ class _CollectionPageState extends State<CollectionPage>
                         'Error: ${collectionState.error}',
                         style: const TextStyle(color: AppColor.white),
                       ),
+                    );
+                  } else if (collectionState.compactedAssetTokens.isEmpty) {
+                    return Column(
+                      children: [
+                        Expanded(
+                          child: Center(
+                            child: Text(
+                              'collection_empty_now'.tr(),
+                              style: Theme.of(context).textTheme.small,
+                            ),
+                          ),
+                        ),
+                        const BottomSpacing()
+                      ],
                     );
                   } else {
                     return Stack(
@@ -200,14 +172,13 @@ class _CollectionPageState extends State<CollectionPage>
                                 collectionState.addressAssetTokens.isNotEmpty)
                               SliverToBoxAdapter(
                                 child: Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 16),
+                                  padding: EdgeInsets.symmetric(vertical: 16),
                                   child: Center(
                                       child: LoadMoreIndicator(
                                           isLoadingMore: true)),
                                 ),
                               ),
-                            SliverToBoxAdapter(
+                            const SliverToBoxAdapter(
                               child: BottomSpacing(),
                             )
                           ],
