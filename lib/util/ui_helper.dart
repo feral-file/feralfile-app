@@ -1199,7 +1199,7 @@ class UIHelper {
       ),
       builder: (context) => ColoredBox(
         key: bottomSheetKey,
-        color: AppColor.red,
+        color: AppColor.auGreyBackground,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
