@@ -252,7 +252,6 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   bool _isVisible = false;
-  double _lastScrollPosition = 0;
   late final ValueNotifier<bool> _shouldShowOverlay;
 
   StreamSubscription<bool>? _keyboardVisibilitySubscription;
