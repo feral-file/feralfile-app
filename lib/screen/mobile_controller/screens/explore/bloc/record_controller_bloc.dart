@@ -2,14 +2,21 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/au_bloc.dart';
+import 'package:autonomy_flutter/model/error/dp1_error.dart';
+import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/record_processing_status_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/intent.dart';
+import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/audio_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
+import 'package:autonomy_flutter/service/domain_address_service.dart';
 import 'package:autonomy_flutter/service/mobile_controller_service.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
+import 'package:autonomy_flutter/util/eth_utils.dart';
+import 'package:autonomy_flutter/util/exception.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:autonomy_flutter/util/xtz_utils.dart';
 import 'package:bloc/bloc.dart';
 
 part 'record_controller_event.dart';
@@ -17,8 +24,13 @@ part 'record_controller_state.dart';
 
 // Bloc
 class RecordBloc extends AuBloc<RecordEvent, RecordState> {
-  RecordBloc(this.service, this.audioService, this.configurationService)
-      : super(RecordInitialState()) {
+  RecordBloc(
+    this.service,
+    this.audioService,
+    this.configurationService,
+    this.domainAddressService,
+    this.addressService,
+  ) : super(RecordInitialState()) {
     on<PermissionGrantedEvent>(_onPermissionGranted);
     on<StartRecordingEvent>(_onStartRecording);
     on<StopRecordingEvent>(_onStopRecording);
@@ -27,6 +39,8 @@ class RecordBloc extends AuBloc<RecordEvent, RecordState> {
     on<ResetPlaylistEvent>((event, emit) {
       emit(RecordInitialState());
     });
+
+    on<AddAddressEvent>(_onAddAddress);
   }
 
   @override
@@ -38,6 +52,8 @@ class RecordBloc extends AuBloc<RecordEvent, RecordState> {
   final MobileControllerService service;
   final AudioService audioService;
   final ConfigurationService configurationService;
+  final DomainAddressService domainAddressService;
+  final AddressService addressService;
   Timer? _statusTimer;
 
   void _onPermissionGranted(
@@ -345,5 +361,78 @@ class RecordBloc extends AuBloc<RecordEvent, RecordState> {
         error: AudioFailedToParseCommandException(),
       ),
     );
+  }
+
+  // Add address handler
+  Future<void> _onAddAddress(
+    AddAddressEvent event,
+    Emitter<RecordState> emit,
+  ) async {
+    final text = event.text;
+    final isEthereumAddress = text.isEthereumAddressFormat();
+    final isTezosAddress = text.isTezosAddressFormat();
+    final isENSFormat = text.isENSFormat();
+
+    String? address;
+    String? domain;
+    if (isEthereumAddress || isTezosAddress) {
+      emit(VerifyingAddressState(address: text));
+
+      address = isEthereumAddress
+          ? domainAddressService.verifyEthereumAddress(text)
+          : domainAddressService.verifyTezosAddress(text);
+
+      if (address == null) {
+        emit(InvalidAddressState(error: 'Invalid address'));
+        return;
+      }
+    } else {
+      emit(ResolvingDomainState(ens: text));
+
+      address = isENSFormat
+          ? await domainAddressService.verifyENS(text)
+          : await domainAddressService.verifyTNS(text);
+
+      if (address == null) {
+        emit(
+          InvalidAddressState(error: 'Invalid ${isENSFormat ? 'ENS' : 'TNS'}'),
+        );
+        return;
+      }
+    }
+
+    emit(AddingAddressState(address: address));
+
+    try {
+      final walletAddress = WalletAddress(
+        address: address,
+        name: domain,
+        createdAt: DateTime.now(),
+      );
+      await addressService.insertAddress(
+        walletAddress,
+      );
+      emit(AddAddressSuccessState());
+    } on LinkAddressException catch (e) {
+      emit(
+        AddAddressErrorState(error: e.message),
+      );
+    } catch (e) {
+      if (e is DP1AllOwnCollectionEmptyError) {
+        emit(AddAddressSuccessState());
+        return;
+      }
+
+      var errorMessage = '';
+      if (e is DP1Error) {
+        errorMessage = e.message;
+      } else {
+        errorMessage = e.toString();
+      }
+
+      emit(
+        AddAddressErrorState(error: errorMessage),
+      );
+    }
   }
 }

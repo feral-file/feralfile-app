@@ -1,7 +1,8 @@
 enum AiAction {
   now,
   schedulePlay,
-  openScreen;
+  openScreen,
+  addAddress;
 
   String get value {
     switch (this) {
@@ -11,6 +12,8 @@ enum AiAction {
         return 'schedule_play';
       case AiAction.openScreen:
         return 'open_screen';
+      case AiAction.addAddress:
+        return 'add_address';
     }
   }
 
@@ -22,6 +25,8 @@ enum AiAction {
         return AiAction.schedulePlay;
       case 'open_screen':
         return AiAction.openScreen;
+      case 'add_address':
+        return AiAction.addAddress;
       default:
         throw ArgumentError('Unknown action type: $value');
     }
@@ -33,7 +38,8 @@ enum AiEntityType {
   exhibition,
   channel,
   playlist,
-  myCollection;
+  myCollection,
+  address;
 
   String get value {
     switch (this) {
@@ -47,6 +53,8 @@ enum AiEntityType {
         return 'playlist';
       case AiEntityType.myCollection:
         return 'my_collection';
+      case AiEntityType.address:
+        return 'address';
     }
   }
 
@@ -62,9 +70,10 @@ enum AiEntityType {
         return AiEntityType.playlist;
       case 'my_collection':
         return AiEntityType.myCollection;
+      case 'address':
+        return AiEntityType.address;
       default:
         return AiEntityType.artist;
-        throw ArgumentError('Unknown entity type: $value');
     }
   }
 }
