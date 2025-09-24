@@ -9,7 +9,7 @@ import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
-import 'package:autonomy_flutter/widgets/llm_text_input/send_button.dart';
+import 'package:autonomy_flutter/widgets/buttons/send_button.dart';
 import 'package:flutter/material.dart';
 
 class FFTextField extends StatefulWidget {
