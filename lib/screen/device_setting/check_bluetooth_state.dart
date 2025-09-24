@@ -277,58 +277,58 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
           isFromOnboarding: true,
         ),
       ));
-    }
+    } else {
+      log.info('Starting scan for FF1: $deviceName');
+      resultDevice = await injector<FFBluetoothService>().scanForName(
+        timeout: const Duration(seconds: 30),
+        name: deviceName ?? 'FF1',
+      );
 
-    log.info('Starting scan for FF1: $deviceName');
-    resultDevice = await injector<FFBluetoothService>().scanForName(
-      timeout: const Duration(seconds: 30),
-      name: deviceName ?? 'FF1',
-    );
-
-    if (context.mounted) {
-      setState(() {
-        _isScanning = false;
-        _resultDevice = resultDevice;
-      });
-    }
-    if (resultDevice != null) {
       if (context.mounted) {
-        Navigator.of(context).pop();
+        setState(() {
+          _isScanning = false;
+          _resultDevice = resultDevice;
+        });
       }
-      unawaited(injector<ConfigurationService>().setBetaTester(true));
-      injector<SubscriptionBloc>().add(GetSubscriptionEvent());
-      // go to setting wifi page
+      if (resultDevice != null) {
+        if (context.mounted) {
+          Navigator.of(context).pop();
+        }
+        unawaited(injector<ConfigurationService>().setBetaTester(true));
+        injector<SubscriptionBloc>().add(GetSubscriptionEvent());
+        // go to setting wifi page
 
-      // device is already setup and connected to internet
-      // so we can skip the wifi setup
-      {
-        if (topicId != null && topicId.isNotEmpty) {
-          // add device to canvas
-          final device = resultDevice!.toFFBluetoothDevice(
-            topicId: topicId,
-            deviceId: resultDevice!.advName,
-            branchName: branchName,
-          );
-          await BluetoothDeviceManager().addDevice(
-            device,
+        // device is already setup and connected to internet
+        // so we can skip the wifi setup
+        {
+          if (topicId != null && topicId.isNotEmpty) {
+            // add device to canvas
+            final device = resultDevice!.toFFBluetoothDevice(
+              topicId: topicId,
+              deviceId: resultDevice!.advName,
+              branchName: branchName,
+            );
+            await BluetoothDeviceManager().addDevice(
+              device,
+            );
+          }
+          await injector<NavigationService>().navigateTo(
+            AppRouter.bluetoothDevicePortalPage,
+            arguments: BluetoothDevicePortalPagePayload(
+              device: resultDevice!,
+              canSkipNetworkSetup: isConnectedToInternet,
+              branchName: branchName,
+            ),
           );
         }
-        await injector<NavigationService>().navigateTo(
-          AppRouter.bluetoothDevicePortalPage,
-          arguments: BluetoothDevicePortalPagePayload(
-            device: resultDevice!,
-            canSkipNetworkSetup: isConnectedToInternet,
-            branchName: branchName,
-          ),
-        );
-      }
 
-      log.info(
-        'Bluetooth device setup completed. Disconnecting from FF1: ${resultDevice!.name}',
-      );
-      unawaited(_resultDevice?.disconnect());
-    } else {
-      log.info('FF1 not found after scanning: $deviceName');
+        log.info(
+          'Bluetooth device setup completed. Disconnecting from FF1: ${resultDevice!.name}',
+        );
+        unawaited(_resultDevice?.disconnect());
+      } else {
+        log.info('FF1 not found after scanning: $deviceName');
+      }
     }
 
     try {
