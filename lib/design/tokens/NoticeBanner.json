@@ -1,3 +1,26 @@
 {
-  "NoticeBanner": null
+  "NoticeBanner": {
+    "NoticeBanner": {
+      "bgColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.black}"
+      },
+      "color": {
+        "$type": "color",
+        "$value": "{primitives.colors.white}"
+      },
+      "padding": {
+        "$type": "dimension",
+        "$value": "10px"
+      },
+      "cornerRadius": {
+        "$type": "dimension",
+        "$value": "10px"
+      },
+      "iconSize": {
+        "$type": "dimension",
+        "$value": "12px"
+      }
+    }
+  }
 }
