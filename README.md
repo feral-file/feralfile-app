@@ -98,12 +98,4 @@ We welcome contributions of any kind including new features, bug fixes, and docu
 Join us on [Discord](https://discord.gg/3BBkrjS4n7) to give feedback and help us shape new features.
 
 ## License
-```
-//
-//  SPDX-License-Identifier: BSD-2-Clause-Patent
-//  Copyright © 2022 Bitmark. All rights reserved.
-//  Use of this UI/UX is governed by the CC BY-NC 4.0 License.
-//  Use of this source code is governed by the BSD-2-Clause Plus Patent License
-//  that can be found in the LICENSE file.
-//
-```
+This project is licensed under the BSD-2-Clause Plus Patent License. See the [LICENSE](LICENSE) file for details.
