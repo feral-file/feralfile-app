@@ -337,19 +337,25 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
           // _handleScrollUpdate(notification);
           return false; // Allow the notification to continue to be dispatched
         },
-        child: Listener(
-          onPointerDown: keyboardVisibilityController.isVisible &&
-                  shouldHideKeyboardOnTap.value
-              ? (PointerDownEvent event) {
-                  // Hide keyboard when tapping outside while keyboard is visible
-                  Timer(const Duration(milliseconds: 100), () {
-                    log.info('Hiding keyboard');
-                    SystemChannels.textInput.invokeMethod('TextInput.hide');
-                    FocusScope.of(context).unfocus();
-                    log.info('Keyboard hidden');
-                  });
-                }
-              : null,
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () {
+            if (keyboardVisibilityController.isVisible &&
+                shouldHideKeyboardOnTap.value) {
+              final currentFocus = FocusScope.of(context);
+              if (!currentFocus.hasPrimaryFocus &&
+                  currentFocus.focusedChild != null) {
+                // Hide keyboard when tapping outside while keyboard is visible
+                Timer(const Duration(milliseconds: 100), () {
+                  log.info('Hiding keyboard');
+                  SystemChannels.textInput.invokeMethod('TextInput.hide');
+                  FocusScope.of(context).unfocus();
+                  log.info('Keyboard hidden');
+                });
+              }
+            }
+            ;
+          },
           child: Stack(
             children: [
               Overlay(
