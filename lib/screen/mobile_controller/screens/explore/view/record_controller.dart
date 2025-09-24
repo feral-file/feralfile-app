@@ -29,8 +29,10 @@ import 'package:flutter_svg/svg.dart';
 class RecordControllerScreenPayload {
   RecordControllerScreenPayload({
     this.isListening = true,
+    this.text,
   });
   final bool isListening;
+  final String? text;
 }
 
 class RecordControllerScreen extends StatefulWidget {
@@ -64,7 +66,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
   void initState() {
     recordBloc = context.read<RecordBloc>();
     meiliSearchBloc = context.read<MeiliSearchBloc>();
-    textEditingController = HighlightController();
+    textEditingController = HighlightController(text: widget.payload.text);
     super.initState();
     WidgetsBinding.instance.addObserver(this);
   }

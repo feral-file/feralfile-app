@@ -5,6 +5,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/view/record_controller.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/widgets/buttons/scan_button.dart';
 import 'package:autonomy_flutter/widgets/buttons/send_button.dart';
 import 'package:autonomy_flutter/widgets/command-dot/command_dot.dart';
 import 'package:flutter/material.dart';
@@ -63,21 +64,36 @@ class _LLMTextInputState extends State<LLMTextInput> {
         decoration: BoxDecoration(
           color: LLMTextInputTokens.llmBgColor,
           borderRadius: BorderRadius.circular(
-            _focusNode.hasFocus
-                ? LLMTextInputTokens.llmActiveCornerRadius.toDouble()
-                : LLMTextInputTokens.llmCornerRadius.toDouble(),
+            LLMTextInputTokens.llmCornerRadius.toDouble(),
           ),
         ),
-        padding: widget.active
-            ? EdgeInsets.all(LLMTextInputTokens.llmActivePadding.toDouble())
-            : EdgeInsets.fromLTRB(
-                LLMTextInputTokens.llmPaddingLeft.toDouble(),
-                LLMTextInputTokens.llmPaddingVertical.toDouble(),
-                LLMTextInputTokens.llmPaddingRight.toDouble(),
-                LLMTextInputTokens.llmPaddingVertical.toDouble(),
-              ),
+        padding: EdgeInsets.fromLTRB(
+          LLMTextInputTokens.llmPaddingLeft.toDouble(),
+          LLMTextInputTokens.llmPaddingVertical.toDouble(),
+          LLMTextInputTokens.llmPaddingRight.toDouble(),
+          LLMTextInputTokens.llmPaddingVertical.toDouble(),
+        ),
         child: Row(
           children: [
+            ScanButton(
+              onScanDone: (text) {
+                if (text == null) return;
+                if (widget.active) {
+                  _textController.text = text;
+                } else {
+                  injector<NavigationService>().popToRouteOrPush(
+                    AppRouter.voiceCommandPage,
+                    arguments: RecordControllerScreenPayload(
+                      isListening: false,
+                      text: text,
+                    ),
+                  );
+                }
+              },
+            ),
+            SizedBox(
+              width: LLMTextInputTokens.llmActivePadding.toDouble(),
+            ),
             Expanded(
               child: widget.active
                   ? TextField(
