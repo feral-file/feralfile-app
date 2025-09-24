@@ -8,23 +8,34 @@
 
 import 'dart:convert';
 
-import 'package:objectbox/objectbox.dart';
-
 import 'package:autonomy_flutter/nft_collection/models/asset.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
-import 'package:autonomy_flutter/nft_collection/models/provenance.dart';
 import 'package:autonomy_flutter/nft_collection/models/origin_token_info.dart';
+import 'package:autonomy_flutter/nft_collection/models/provenance.dart';
+import 'package:objectbox/objectbox.dart';
+
+/// Base class for ObjectBox entities
+abstract class ObjectboxEntity {
+  @Unique()
+  String uniqueId;
+
+  ObjectboxEntity() : uniqueId = '';
+}
 
 /// ObjectBox persistence model for Asset
 @Entity()
-class AssetObject {
+class AssetObject extends ObjectboxEntity {
   /// ObjectBox internal id (auto-increment). Keep 0 for new objects.
   int id;
 
-  @Unique()
   String? indexID;
 
+  @override
+  @Unique()
+  String uniqueId;
+
   String? thumbnailID;
+  @Property(type: PropertyType.date)
   DateTime? lastRefreshedTime;
   String? artistID;
   String? artistName;
@@ -76,7 +87,7 @@ class AssetObject {
     this.initialSaleModel,
     this.originalFileURL,
     this.artworkMetadata,
-  });
+  }) : uniqueId = '$indexID';
 
   factory AssetObject.fromAsset(Asset asset) => AssetObject(
         indexID: asset.indexID,
@@ -136,16 +147,19 @@ class AssetObject {
 /// ObjectBox persistence model for AssetToken
 /// Many AssetTokenObject -> One AssetObject (via ToOne relation)
 @Entity()
-class AssetTokenObject {
+class AssetTokenObject extends ObjectboxEntity {
   int id;
 
   // Core identifying fields
-  @Unique()
   @Index()
   String indexID; // same as AssetToken.id
 
   @Index()
   String owner;
+
+  @override
+  @Unique()
+  String uniqueId;
 
   int edition;
   String blockchain;
@@ -161,7 +175,9 @@ class AssetTokenObject {
   String ownersJson;
 
   // status/info fields
+  @Property(type: PropertyType.date)
   DateTime lastActivityTime;
+  @Property(type: PropertyType.date)
   DateTime lastRefreshedTime;
   bool? swapped;
   bool? burned;
@@ -172,6 +188,8 @@ class AssetTokenObject {
 
   // Relation to AssetObject
   final ToOne<AssetObject> asset;
+  // 1 AssetTokenObject -> many ProvenanceObject
+  final ToMany<ProvenanceObject> provenance;
 
   AssetTokenObject({
     this.id = 0,
@@ -195,12 +213,11 @@ class AssetTokenObject {
     this.pending,
     this.isDebugged,
     this.originTokenInfoId,
-  }) : asset = ToOne<AssetObject>();
+  })  : asset = ToOne<AssetObject>(),
+        provenance = ToMany<ProvenanceObject>(),
+        uniqueId = '$indexID-$owner';
 
-  factory AssetTokenObject.fromAssetToken(
-    AssetToken token, {
-    AssetObject? assetObject,
-  }) {
+  factory AssetTokenObject.fromAssetToken(AssetToken token) {
     final obj = AssetTokenObject(
       indexID: token.id,
       owner: token.owner,
@@ -223,8 +240,16 @@ class AssetTokenObject {
       isDebugged: token.isDebugged,
       originTokenInfoId: token.originTokenInfoId,
     );
-    if (assetObject != null) {
-      obj.asset.target = assetObject;
+    if (token.asset != null) {
+      obj.asset.target = AssetObject.fromAsset(token.asset!);
+    }
+    // set provenance relation
+    if (token.provenance.isNotEmpty) {
+      obj.provenance.addAll(
+        token.provenance
+            .map((p) => ProvenanceObject.fromProvenance(p))
+            .toList(),
+      );
     }
     return obj;
   }
@@ -241,11 +266,11 @@ class AssetTokenObject {
         contractAddress: contractAddress,
         balance: balance,
         owner: owner,
-        owners: _decodeOwners(ownersJson),
-        projectMetadata: null,
+        owners: Map<String, int>.from(json.decode(ownersJson) as Map),
         lastActivityTime: lastActivityTime,
         lastRefreshedTime: lastRefreshedTime,
-        provenance: <Provenance>[],
+        provenance:
+            provenance.map((p) => p.toProvenance()).toList(growable: false),
         originTokenInfo: <OriginTokenInfo>[],
         swapped: swapped,
         attributes: null,
@@ -256,5 +281,69 @@ class AssetTokenObject {
         ipfsPinned: ipfsPinned,
         asset: asset.target?.toAsset(),
         isDebugged: isDebugged,
+      );
+}
+
+//ProvenanceObject
+@Entity()
+class ProvenanceObject extends ObjectboxEntity {
+  int id;
+
+  String provenanceId; // same as Provenance.id
+
+  @override
+  @Unique()
+  String uniqueId;
+
+  String txID;
+  String type;
+  String blockchain;
+  String owner;
+  @Property(type: PropertyType.date)
+  DateTime timestamp;
+  String txURL;
+  String tokenID; // indexer token id (matches AssetTokenObject.indexID)
+  int? blockNumber;
+
+  ProvenanceObject({
+    this.id = 0,
+    required this.provenanceId,
+    required this.txID,
+    required this.type,
+    required this.blockchain,
+    required this.owner,
+    required this.timestamp,
+    required this.txURL,
+    required this.tokenID,
+    this.blockNumber,
+  }) : uniqueId = '$txID-$type-$owner';
+
+  factory ProvenanceObject.fromProvenance(
+    Provenance provenance,
+  ) {
+    final obj = ProvenanceObject(
+      provenanceId: provenance.id,
+      txID: provenance.txID,
+      type: provenance.type,
+      blockchain: provenance.blockchain,
+      owner: provenance.owner,
+      timestamp: provenance.timestamp,
+      txURL: provenance.txURL,
+      tokenID: provenance.tokenID,
+      blockNumber: provenance.blockNumber,
+    );
+    return obj;
+  }
+
+  Provenance toProvenance() => Provenance(
+        id: provenanceId,
+        type: type,
+        blockchain: blockchain,
+        txID: txID,
+        owner: owner,
+        timestamp: timestamp,
+        txURL: txURL,
+        tokenID: tokenID,
+        blockNumber: blockNumber,
       );
 }

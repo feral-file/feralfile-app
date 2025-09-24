@@ -86,8 +86,7 @@ class Token {
         editionName: assetToken.editionName,
         id: assetToken.id,
         mintedAt: assetToken.mintedAt,
-        source: assetToken.projectMetadata?.latest.source ??
-            assetToken.asset?.source,
+        source: assetToken.asset?.source,
         owners: assetToken.owners,
         balance: assetToken.balance,
         lastActivityTime: assetToken.lastActivityTime,
@@ -101,8 +100,7 @@ class Token {
         pending: assetToken.pending ?? false,
         tokenId: assetToken.tokenId,
         isDebugged: assetToken.isManual ?? false,
-        indexID:
-            assetToken.projectMetadata?.indexID ?? assetToken.asset?.indexID,
+        indexID: assetToken.asset?.indexID,
       );
 
   @override

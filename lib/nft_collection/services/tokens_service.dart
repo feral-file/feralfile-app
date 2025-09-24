@@ -10,17 +10,12 @@ import 'dart:isolate';
 
 import 'package:autonomy_flutter/nft_collection/data/api/indexer_api.dart';
 import 'package:autonomy_flutter/nft_collection/data/api/tzkt_api.dart';
-import 'package:autonomy_flutter/nft_collection/database/dao/dao.dart';
-import 'package:autonomy_flutter/nft_collection/database/nft_collection_database.dart';
+import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/clients/artblocks_client.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/clients/indexer_client.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
-import 'package:autonomy_flutter/nft_collection/models/asset.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
-import 'package:autonomy_flutter/nft_collection/models/provenance.dart';
-import 'package:autonomy_flutter/nft_collection/models/token.dart';
 import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
-import 'package:autonomy_flutter/nft_collection/services/address_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/artblocks_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/configuration_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
@@ -31,14 +26,12 @@ import 'package:get_it/get_it.dart';
 import 'package:uuid/uuid.dart';
 
 abstract class NftTokensService {
-  Future<void> fetchTokensForAddresses(List<String> addresses);
-
   Future<List<AssetToken>> fetchManualTokens(List<String> indexerIds);
 
-  Future<List<AssetToken>> getManualTokens(
-      {required List<String> indexerIds, bool shouldCallIndexer = true});
-
-  Future<void> setCustomTokens(List<AssetToken> assetTokens);
+  Future<List<AssetToken>> getManualTokens({
+    required List<String> indexerIds,
+    bool shouldCallIndexer = true,
+  });
 
   Future<Stream<List<AssetToken>>> refreshTokensInIsolate(
     Map<int, List<String>> addresses,
@@ -63,8 +56,7 @@ class NftTokensServiceImpl extends NftTokensService {
   NftTokensServiceImpl(
     this._indexerUrl,
     this._database,
-    this._configurationService,
-    this._addressService, [
+    this._configurationService, [
     Dio? dio,
   ]) {
     dio ??= Dio()..interceptors.add(LoggingInterceptor());
@@ -79,12 +71,10 @@ class NftTokensServiceImpl extends NftTokensService {
   final String _indexerUrl;
   late IndexerApi _indexer;
   late NftIndexerService _indexerService;
-  final NftCollectionDatabase _database;
+  final IndexerDatabaseAbstract _database;
   final NftCollectionPrefs _configurationService;
-  final NftAddressService _addressService;
 
   static const REFRESH_ALL_TOKENS = 'REFRESH_ALL_TOKENS';
-  static const FETCH_TOKENS = 'FETCH_TOKENS';
   static const REINDEX_ADDRESSES = 'REINDEX_ADDRESSES';
   static const GET_ASSET_TOKENS_STREAM = 'GET_ASSET_TOKENS_STREAM';
 
@@ -98,18 +88,11 @@ class NftTokensServiceImpl extends NftTokensService {
   @override
   bool get isRefreshAllTokensListen =>
       _refreshAllTokensWorker?.hasListener ?? false;
-  Map<String, Completer<void>> _fetchTokensCompleters = {};
   final Map<String, Completer<void>> _reindexAddressesCompleters = {};
   final Map<String, StreamController<List<CompactedAssetToken>>>
       _streamControllers = {};
 
   Future<void> get isolateReady => _isolateReady.future;
-
-  TokenDao get _tokenDao => _database.tokenDao;
-
-  AssetDao get _assetDao => _database.assetDao;
-
-  AssetTokenDao get _assetTokenDao => _database.assetTokenDao;
 
   Future<void> start() async {
     if (_sendPort != null) return;
@@ -149,7 +132,6 @@ class NftTokensServiceImpl extends NftTokensService {
     _receivePort?.close();
     _currentAddresses = null;
     _isolateReady = Completer<void>();
-    _fetchTokensCompleters = {};
     NftCollection.logger.info('[TokensService][disposeIsolate] Done');
   }
 
@@ -157,7 +139,7 @@ class NftTokensServiceImpl extends NftTokensService {
   Future<void> purgeCachedGallery() async {
     disposeIsolate();
     await _configurationService.setDidSyncAddress(false);
-    await _database.removeAll();
+    _database.clearAll();
   }
 
   @override
@@ -241,46 +223,13 @@ class NftTokensServiceImpl extends NftTokensService {
   }
 
   Future<void> insertAssetsWithProvenance(List<AssetToken> assetTokens) async {
-    final tokens = <Token>[];
-    final assets = <Asset>[];
-    final provenance = <Provenance>[];
-
     for (final assetToken in assetTokens) {
-      final token = Token.fromAssetToken(assetToken);
-      tokens.add(token);
-      final asset = assetToken.projectMetadata?.toAsset;
-      if (asset != null) {
-        assets.add(asset);
-      }
-      provenance.addAll(assetToken.provenance);
+      _database.insertAssetToken(assetToken);
     }
-
     final tokensLog =
-        tokens.map((e) => 'id: ${e.id} balance: ${e.balance} ').toList();
-    await _tokenDao.insertTokens(tokens);
+        assetTokens.map((e) => 'id: ${e.id} balance: ${e.balance} ').toList();
     NftCollection.logger
         .info('[insertAssetsWithProvenance][tokens] $tokensLog');
-
-    await _assetDao.insertAssets(assets);
-    await _database.provenanceDao.insertProvenance(provenance);
-  }
-
-  @override
-  Future<void> fetchTokensForAddresses(List<String> addresses) async {
-    await startIsolateOrWait();
-
-    final uuid = const Uuid().v4();
-    final completer = Completer<void>();
-    _fetchTokensCompleters[uuid] = completer;
-
-    _sendPort!.send([
-      FETCH_TOKENS,
-      uuid,
-      {0: addresses},
-    ]);
-    NftCollection.logger.fine('[FETCH_TOKENS][start] $addresses');
-
-    return completer.future;
   }
 
   @override
@@ -308,11 +257,13 @@ class NftTokensServiceImpl extends NftTokensService {
   }
 
   @override
-  Future<List<AssetToken>> getManualTokens(
-      {required List<String> indexerIds, bool shouldCallIndexer = true}) async {
+  Future<List<AssetToken>> getManualTokens({
+    required List<String> indexerIds,
+    bool shouldCallIndexer = true,
+  }) async {
     // get from database
     final assetTokenFromDatabase =
-        await _assetTokenDao.findAllAssetTokensByTokenIDs(indexerIds);
+        await _database.getAssetTokensByIndexIds(indexIds: indexerIds);
     final res = [...assetTokenFromDatabase];
     final missingIds = indexerIds
         .where((id) => !assetTokenFromDatabase.any((e) => e.id == id))
@@ -330,23 +281,6 @@ class NftTokensServiceImpl extends NftTokensService {
           ),
     );
     return res;
-  }
-
-  @override
-  Future<void> setCustomTokens(List<AssetToken> assetTokens) async {
-    try {
-      final tokens = assetTokens.map(Token.fromAssetToken).toList();
-      final assets = assetTokens
-          .where((element) => element.asset != null)
-          .map((e) => e.asset!)
-          .toList();
-      await _tokenDao.insertTokensAbort(tokens);
-      await _assetDao.insertAssetsAbort(assets);
-    } catch (e) {
-      NftCollection.logger.info('[TokensService] '
-          'setCustomTokens '
-          'error: $e');
-    }
   }
 
   static void _isolateEntry(List<dynamic> arguments) {
@@ -371,8 +305,11 @@ class NftTokensServiceImpl extends NftTokensService {
       ..registerLazySingleton(() => indexerClient)
       ..registerLazySingleton(() => artBlockService)
       ..registerLazySingleton(
-        () => NftIndexerService(indexerClient,
-            _isolateScopeInjector<IndexerApi>(), artBlockService),
+        () => NftIndexerService(
+          indexerClient,
+          _isolateScopeInjector<IndexerApi>(),
+          artBlockService,
+        ),
       )
       ..registerLazySingleton(() => TZKTApi(dio));
   }
@@ -401,23 +338,11 @@ class NftTokensServiceImpl extends NftTokensService {
 
         if (result.done) {
           await _refreshAllTokensWorker?.close();
-          final lastRefreshedTime = await _assetTokenDao.getLastRefreshedTime();
-          await _addressService.updateRefreshedTime(
-            result.addresses,
-            lastRefreshedTime ?? DateTime.fromMillisecondsSinceEpoch(0),
-          );
           NftCollection.logger.fine(
             '[REFRESH_ALL_TOKENS]'
             ' ${result.addresses.join(',')} at ${DateTime.now()}',
           );
           NftCollection.logger.info('[REFRESH_ALL_TOKENS][end]');
-        }
-      }
-      if (result.key == FETCH_TOKENS) {
-        if (result.done) {
-          _fetchTokensCompleters[result.uuid]?.complete();
-          _fetchTokensCompleters.remove(result.uuid);
-          NftCollection.logger.info('[FETCH_TOKENS][end]');
         }
       }
 
@@ -430,16 +355,12 @@ class NftTokensServiceImpl extends NftTokensService {
 
       if (result.key == REFRESH_ALL_TOKENS) {
         await _refreshAllTokensWorker?.close();
-      } else if (result.key == FETCH_TOKENS) {
-        _fetchTokensCompleters[result.uuid]?.completeError(result.exception);
-        _fetchTokensCompleters.remove(result.uuid);
       }
       return;
     }
 
     if (result is ReindexAddressesDone) {
       _reindexAddressesCompleters[result.uuid]?.complete();
-      _fetchTokensCompleters.remove(result.uuid);
       NftCollection.logger.info('[reindexAddresses][end]');
     }
 
@@ -449,7 +370,7 @@ class NftTokensServiceImpl extends NftTokensService {
         controller.add(result.compactedAssets);
 
         if (result.done) {
-          controller.close();
+          await controller.close();
           _streamControllers.remove(result.uuid);
           NftCollection.logger
               .info('[GET_ASSET_TOKENS_STREAM][end] ${result.uuid}');
@@ -461,10 +382,11 @@ class NftTokensServiceImpl extends NftTokensService {
       final controller = _streamControllers[result.uuid];
       if (controller != null && !controller.isClosed) {
         controller.addError(result.exception);
-        controller.close();
+        await controller.close();
         _streamControllers.remove(result.uuid);
         NftCollection.logger.info(
-            '[GET_ASSET_TOKENS_STREAM][error] ${result.uuid}: ${result.exception}');
+          '[GET_ASSET_TOKENS_STREAM][error] ${result.uuid}: ${result.exception}',
+        );
       }
     }
   }
@@ -479,15 +401,6 @@ class NftTokensServiceImpl extends NftTokensService {
             REFRESH_ALL_TOKENS,
             const Uuid().v4(),
             Map<int, dynamic>.from(message[1] as Map).map(
-              (key, value) => MapEntry(key, List<String>.from(value as List)),
-            ),
-          );
-
-        case FETCH_TOKENS:
-          _refreshAllTokens(
-            FETCH_TOKENS,
-            message[1] as String,
-            Map<int, dynamic>.from(message[2] as Map).map(
               (key, value) => MapEntry(key, List<String>.from(value as List)),
             ),
           );
@@ -590,8 +503,8 @@ class NftTokensServiceImpl extends NftTokensService {
   ) async {
     try {
       final isolateIndexerService = _isolateScopeInjector<NftIndexerService>();
-      int offset = 0;
-      bool hasMoreData = true;
+      var offset = 0;
+      var hasMoreData = true;
 
       while (hasMoreData) {
         final request = QueryListTokensRequest(

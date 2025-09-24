@@ -6,21 +6,21 @@
 //
 
 import 'package:autonomy_flutter/au_bloc.dart';
-import 'package:autonomy_flutter/service/configuration_service.dart';
-import 'package:autonomy_flutter/nft_collection/database/dao/dao.dart';
+import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
+import 'package:autonomy_flutter/service/configuration_service.dart';
 
 class HiddenArtworksBloc
     extends AuBloc<HiddenArtworksEvent, List<CompactedAssetToken>> {
   final ConfigurationService configurationService;
-  final AssetTokenDao assetTokenDao;
+  final IndexerDatabaseAbstract database;
 
-  HiddenArtworksBloc(this.configurationService, this.assetTokenDao)
-      : super([]) {
+  HiddenArtworksBloc(this.configurationService, this.database) : super([]) {
     on<HiddenArtworksEvent>((event, emit) async {
       final hiddenArtworks =
           configurationService.getTempStorageHiddenTokenIDs();
-      final assets = await assetTokenDao.findAllAssetTokens();
+      final assets =
+          database.getAssetTokensByIndexIds(indexIds: hiddenArtworks);
       final compactedAssetToken =
           assets.map((e) => CompactedAssetToken.fromAssetToken(e)).toList();
 

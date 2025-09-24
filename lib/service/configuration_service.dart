@@ -164,6 +164,12 @@ abstract class ConfigurationService {
   Future<void> addRecordedMessage(String message);
 
   Future<void> setRecordedMessages(List<String> messages);
+
+  Future<void> setAddressLastRefreshedTime(Map<String, DateTime> time);
+
+  Map<String, DateTime> getAddressLastRefreshedTime();
+
+  Future<void> clearAddressLastRefreshedTime();
 }
 
 class ConfigurationServiceImpl implements ConfigurationService {
@@ -255,6 +261,9 @@ class ConfigurationServiceImpl implements ConfigurationService {
   static const String PILOT_VERSION = 'pilot_version';
 
   static const String KEY_SELECTED_DEVICE_ID = 'selected_device_id';
+
+  static const String KEY_ADDRESS_LAST_REFRESHED_TIME =
+      'address_last_refreshed_time';
 
   // Do at once
   static const String KEY_SENT_TEZOS_ARTWORK_METRIC =
@@ -654,6 +663,32 @@ class ConfigurationServiceImpl implements ConfigurationService {
   @override
   Future<void> setRecordedMessages(List<String> messages) async {
     await _preferences.setStringList(KEY_RECORDED_MESSAGES, messages);
+  }
+
+  @override
+  Future<void> clearAddressLastRefreshedTime() {
+    return _preferences.remove(KEY_ADDRESS_LAST_REFRESHED_TIME);
+  }
+
+  @override
+  Map<String, DateTime> getAddressLastRefreshedTime() {
+    final time = _preferences.getString(KEY_ADDRESS_LAST_REFRESHED_TIME);
+    if (time == null) {
+      return {};
+    }
+    final timeJson = jsonDecode(time) as Map<String, dynamic>;
+    return timeJson
+        .map((key, value) => MapEntry(key, DateTime.parse(value as String)));
+  }
+
+  @override
+  Future<void> setAddressLastRefreshedTime(Map<String, DateTime> time) {
+    final timeJson =
+        time.map((key, value) => MapEntry(key, value.toIso8601String()));
+    return _preferences.setString(
+      KEY_ADDRESS_LAST_REFRESHED_TIME,
+      jsonEncode(timeJson),
+    );
   }
 }
 

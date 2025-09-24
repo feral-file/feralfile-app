@@ -16,7 +16,39 @@ import 'package:autonomy_flutter/screen/bloc/artist_artwork_display_settings/art
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 
-class NftIndexerService {
+abstract class NftIndexerServiceBase {
+  Future<List<AssetToken>> getNftTokens(
+    QueryListTokensRequest request, {
+    bool usingArtBlock = false,
+  });
+
+  Future<List<CompactedAssetToken>> getNftCompactedTokens(
+    QueryListTokensRequest request, {
+    bool usingArtBlock = false,
+  });
+
+  Future<Identity> getIdentity(QueryIdentityRequest request);
+
+  Future<List<UserCollection>> getUserCollections(String address);
+
+  Future<List<UserCollection>> getCollectionsByAddresses(
+    List<String> addresses,
+  );
+
+  Future<List<AssetToken>> getCollectionListToken(String collectionId);
+
+  Future<ArtistDisplaySetting?> getTokenConfiguration(String tokenId);
+
+  Future<List<AssetToken>> getAssetTokens(List<DP1Item> items);
+
+  Stream<List<AssetToken>> getAssetTokensStream(
+    List<String> addresses, {
+    int pageSize = 50,
+    DateTime? lastUpdatedAt,
+  });
+}
+
+class NftIndexerService implements NftIndexerServiceBase {
   NftIndexerService(this._client, this._indexerApi, this._artBlockService);
 
   final IndexerClient _client;
@@ -29,6 +61,7 @@ class NftIndexerService {
   return: List<AssetToken>
   description: Get the list of asset tokens from the indexer
   */
+  @override
   Future<List<AssetToken>> getNftTokens(QueryListTokensRequest request,
       {bool usingArtBlock = false}) async {
     final vars = request.toJson();
@@ -88,6 +121,7 @@ class NftIndexerService {
   return: List<CompactedAssetToken>
   description: Get the list of asset tokens from the indexer
   */
+  @override
   Future<List<CompactedAssetToken>> getNftCompactedTokens(
       QueryListTokensRequest request,
       {bool usingArtBlock = false}) async {
@@ -144,6 +178,7 @@ class NftIndexerService {
     }
   }
 
+  @override
   Future<Identity> getIdentity(QueryIdentityRequest request) async {
     final vars = request.toJson();
     final result = await _client.query(
@@ -159,10 +194,12 @@ class NftIndexerService {
     return data.identity;
   }
 
+  @override
   Future<List<UserCollection>> getUserCollections(String address) async {
     return _indexerApi.getCollection(address, 100);
   }
 
+  @override
   Future<List<UserCollection>> getCollectionsByAddresses(
     List<String> addresses,
   ) async {
@@ -174,6 +211,7 @@ class NftIndexerService {
     return data.collections;
   }
 
+  @override
   Future<List<AssetToken>> getCollectionListToken(String collectionId) async {
     final res = await _client.query(
       doc: getColectionTokenQuery,
@@ -184,6 +222,7 @@ class NftIndexerService {
     return data.tokens;
   }
 
+  @override
   Future<ArtistDisplaySetting?> getTokenConfiguration(String tokenId) async {
     final response = await _client.query(
       doc: getTokenConfigurations,
@@ -200,6 +239,7 @@ class NftIndexerService {
     return data.tokenConfigurations.firstOrNull;
   }
 
+  @override
   Future<List<AssetToken>> getAssetTokens(List<DP1Item> items) async {
     final indexIds =
         items.map((item) => item.indexId).whereType<String>().toList();
@@ -217,6 +257,7 @@ class NftIndexerService {
   /// [lastUpdatedAt] - Optional timestamp to filter tokens updated after this time
   ///
   /// Returns a Stream of List<AssetToken> where each emission contains a batch of tokens
+  @override
   Stream<List<AssetToken>> getAssetTokensStream(
     List<String> addresses, {
     int pageSize = 50,
@@ -249,5 +290,10 @@ class NftIndexerService {
         }
       }
     }
+  }
+
+  Future<void> indexTokenHistory(String indexID) {
+    final map = {'indexID': indexID};
+    return _indexerApi.indexTokenHistory(map);
   }
 }

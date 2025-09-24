@@ -212,7 +212,7 @@ class AssetToken extends CompactedAssetToken {
     required this.originTokenInfo,
     required super.isDebugged,
     super.mintedAt,
-    this.projectMetadata,
+    // this.projectMetadata,
     this.swapped = false,
     this.attributes,
     this.burned,
@@ -247,7 +247,7 @@ class AssetToken extends CompactedAssetToken {
       balance: json['balance'] as int,
       owner: json['owner'] as String,
       owners: owners,
-      projectMetadata: projectMetadata,
+      // projectMetadata: projectMetadata,
       lastActivityTime: json['lastActivityTime'] != null
           ? DateTime.parse(json['lastActivityTime'] as String)
           : DateTime(1970),
@@ -319,7 +319,7 @@ class AssetToken extends CompactedAssetToken {
       balance: json['balance'] as int,
       owner: json['owner'] as String,
       owners: owners,
-      projectMetadata: projectMetadata,
+      // projectMetadata: projectMetadata,
       lastActivityTime: json['lastActivityTime'] != null
           ? DateTime.parse(json['lastActivityTime'] as String)
           : DateTime(1970),
@@ -365,20 +365,6 @@ class AssetToken extends CompactedAssetToken {
     );
   }
 
-// String? id,
-//     int? balance,
-//     String? owner,
-//     DateTime? lastActivityTime,
-//     DateTime? lastRefreshedTime,
-//     int? edition,
-//     String? blockchain,
-//     String? tokenId,
-//     DateTime? mintedAt,
-//     covariant CompactedAsset? asset,
-//     String? editionName,
-//     bool? pending,
-//     bool? isDebugged,
-
   // copyWith method
   @override
   AssetToken copyWith({
@@ -400,7 +386,7 @@ class AssetToken extends CompactedAssetToken {
     String? contractAddress,
     Map<String, int>?
         owners, // Map from owner's address to number of owned tokens.
-    ProjectMetadata? projectMetadata,
+    // ProjectMetadata? projectMetadata,
     List<Provenance>? provenance,
     List<OriginTokenInfo>? originTokenInfo,
     bool? swapped,
@@ -423,7 +409,7 @@ class AssetToken extends CompactedAssetToken {
       balance: balance ?? this.balance,
       owner: owner ?? this.owner,
       owners: owners ?? this.owners,
-      projectMetadata: projectMetadata ?? this.projectMetadata,
+      // projectMetadata: projectMetadata ?? this.projectMetadata,
       lastActivityTime: lastActivityTime ?? this.lastActivityTime,
       lastRefreshedTime: lastRefreshedTime ?? this.lastRefreshedTime,
       provenance: provenance ?? this.provenance,
@@ -445,7 +431,7 @@ class AssetToken extends CompactedAssetToken {
   final String? contractAddress;
   final Map<String, int>
       owners; // Map from owner's address to number of owned tokens.
-  final ProjectMetadata? projectMetadata;
+  // final ProjectMetadata? projectMetadata;
   final List<Provenance> provenance;
   final List<OriginTokenInfo>? originTokenInfo;
   final bool? swapped;
@@ -481,12 +467,12 @@ class AssetToken extends CompactedAssetToken {
 
   bool get isBitmarkToken => id.startsWith('bmk-');
 
-  String? get saleModel {
-    final latestSaleModel = projectMetadata?.latest.initialSaleModel?.trim();
-    return latestSaleModel?.isNotEmpty == true
-        ? latestSaleModel
-        : projectMetadata?.origin?.initialSaleModel;
-  }
+  // String? get saleModel {
+  //   final latestSaleModel = initialSaleModel?.trim();
+  //   return latestSaleModel?.isNotEmpty == true
+  //       ? latestSaleModel
+  //       : projectMetadata?.origin?.initialSaleModel;
+  // }
 }
 
 class ProjectMetadata {

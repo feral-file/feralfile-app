@@ -208,7 +208,8 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
     Theme.of(context);
     return BlocConsumer<ArtworkDetailBloc, ArtworkDetailState>(
       listener: (context, state) {
-        final identitiesList = state.provenances.map((e) => e.owner).toList();
+        final identitiesList =
+            state.assetToken?.provenance.map((e) => e.owner).toList() ?? [];
         if (state.assetToken?.artistName != null &&
             state.assetToken!.artistName!.length > 20) {
           identitiesList.add(state.assetToken!.artistName!);

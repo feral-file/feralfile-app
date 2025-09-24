@@ -9,7 +9,7 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
-import 'package:autonomy_flutter/nft_collection/database/dao/dao.dart';
+import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_state.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
@@ -101,8 +101,8 @@ Widget accountItem(
 Future<String> getNftBalance(
   String address,
 ) async {
-  final tokenDao = injector<TokenDao>();
-  final tokens = await tokenDao.findTokenIDsOwnersOwn([address]);
+  final tokenDao = injector<IndexerDatabaseAbstract>();
+  final tokens = tokenDao.getAssetTokensByOwner(ownerAddress: address);
   final nftBalance =
       "${tokens.length} ${tokens.length == 1 ? 'nft'.tr() : 'nfts'.tr()}";
 

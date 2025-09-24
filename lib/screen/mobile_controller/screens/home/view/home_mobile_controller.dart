@@ -3,10 +3,8 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/cha
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/index.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
-import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/home_page_helper.dart';
-import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -39,18 +37,7 @@ class _MobileControllerHomePageState
     // load channel and playlist
     _channelsBloc.add(const LoadChannelsEvent());
     _playlistsBloc.add(const LoadPlaylistsEvent());
-    try {
-      final cachedAllOwnPlaylist =
-          injector<UserDp1PlaylistService>().cachedAllOwnedPlaylist;
-      _userAllOwnCollectionBloc.add(
-        UpdateDynamicQueryEvent(
-          dynamicQuery: cachedAllOwnPlaylist.firstDynamicQuery!,
-        ),
-      );
-    } catch (e) {
-      log.info("[MobileControllerHomePage] error loading cached playlist: $e");
-      // Silently ignore if no cached playlist
-    }
+
     // final dynamicQuery = injector<UserAllOwnCollectionBloc>()
     //     .state
     //     .dynamicQuery

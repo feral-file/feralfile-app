@@ -245,7 +245,8 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
       backgroundColor: AppColor.auGreyBackground,
       body: BlocConsumer<ArtworkDetailBloc, ArtworkDetailState>(
         listener: (context, state) {
-          final identitiesList = state.provenances.map((e) => e.owner).toList();
+          final identitiesList =
+              state.assetToken?.provenance.map((e) => e.owner).toList() ?? [];
           if (state.assetToken?.artistName != null &&
               state.assetToken!.artistName!.length > 20) {
             identitiesList.add(state.assetToken!.artistName!);
@@ -595,8 +596,9 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                           identityState.identityMap[asset.owner] ?? '',
                         ),
                       ] else ...[
-                        if (state.provenances.isNotEmpty)
-                          _provenanceView(context, state.provenances)
+                        if (state.assetToken?.provenance.isNotEmpty ?? false)
+                          _provenanceView(
+                              context, state.assetToken?.provenance ?? [])
                         else
                           const SizedBox(),
                       ],
@@ -650,7 +652,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
   ) async {
     final connectedDevice = BluetoothDeviceManager().castingBluetoothDevice;
     final isCasting = connectedDevice != null;
-    final hasLocalAddress = await asset.hasLocalAddress();
+    final hasLocalAddress = asset.hasLocalAddress();
     if (!context.mounted) {
       return;
     }

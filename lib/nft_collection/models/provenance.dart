@@ -5,14 +5,6 @@
 //  that can be found in the LICENSE file.
 //
 
-import 'package:floor/floor.dart';
-
-@Entity(
-  tableName: 'Provenance',
-  indices: [
-    Index(value: ['id']),
-  ],
-)
 class Provenance {
   Provenance({
     required this.id,
@@ -44,7 +36,6 @@ class Provenance {
         tokenID: tokenID,
         blockNumber: json['blockNumber'] as int?,
       );
-  @primaryKey
   String id;
   String txID;
   String type;

@@ -1,6 +1,6 @@
 part of 'user_all_own_collection_bloc.dart';
 
-enum UserAllOwnCollectionStatus { initial, lazyLoading, loaded, error }
+enum UserAllOwnCollectionStatus { initial, loading, loaded, error }
 
 class UserAllOwnCollectionState {
   const UserAllOwnCollectionState({
@@ -13,7 +13,7 @@ class UserAllOwnCollectionState {
   final List<CompactedAssetToken> compactedAssetTokens;
   final String error;
 
-  bool get isLazyLoading => status == UserAllOwnCollectionStatus.lazyLoading;
+  bool get isLazyLoading => status == UserAllOwnCollectionStatus.loading;
   bool get isLoaded => status == UserAllOwnCollectionStatus.loaded;
   bool get isError => status == UserAllOwnCollectionStatus.error;
 

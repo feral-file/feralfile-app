@@ -5,11 +5,11 @@ import 'package:autonomy_flutter/model/error/dp1_error.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_create_playlist_request.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/service/configuration_service.dart';
+import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:sentry/sentry.dart';
 import 'package:uuid/uuid.dart';
-
-import 'dp1_feed_service.dart';
 
 /// A high-level service to manage a user's DP1 playlists.
 ///
@@ -21,8 +21,6 @@ class UserDp1PlaylistService {
   final DP1FeedService _dp1FeedService;
   final CloudManager _cloudManager;
 
-  Map<String, DateTime> addressLastRefreshedTime = {};
-
   DP1Call? _cachedAllOwnedPlaylist;
 
   // make sure the cached playlist is not null
@@ -33,6 +31,16 @@ class UserDp1PlaylistService {
           message: 'All owned playlist not found');
     }
     return _cachedAllOwnedPlaylist!;
+  }
+
+  void set cachedAllOwnedPlaylist(DP1Call? playlist) {
+    _cachedAllOwnedPlaylist = playlist;
+    final dynamicQuery = playlist?.firstDynamicQuery;
+    if (dynamicQuery == null) {
+      return;
+    }
+    final bloc = injector<UserAllOwnCollectionBloc>();
+    bloc.add(UpdateDynamicQueryEvent(dynamicQuery: dynamicQuery));
   }
 
   Future<DP1Call> allOwnedPlaylist() async {
@@ -55,7 +63,7 @@ class UserDp1PlaylistService {
       final playlistId = allOwnedPlaylistIds.first;
       final playlist =
           await _dp1FeedService.getPlaylistById(playlistId, usingCache: false);
-      _cachedAllOwnedPlaylist = playlist;
+      cachedAllOwnedPlaylist = playlist;
       return playlist;
     }
 
@@ -82,7 +90,7 @@ class UserDp1PlaylistService {
     );
 
     await _cloudManager.dp1FeedCloudObject.addOwnedPlaylistId(created.id);
-    _cachedAllOwnedPlaylist = created;
+    cachedAllOwnedPlaylist = created;
     return created;
   }
 
@@ -113,7 +121,7 @@ class UserDp1PlaylistService {
 
     final playlist = await _dp1FeedService.updatePlaylist(
         playlistId: playlistId, request: request);
-    _onUpdateAllOwnedPlaylist(playlist);
+    cachedAllOwnedPlaylist = playlist;
     log.info('Inserted addresses to playlist: $addresses');
     return playlist;
   }
@@ -139,7 +147,7 @@ class UserDp1PlaylistService {
 
     final playlist = await _dp1FeedService.updatePlaylist(
         playlistId: playlistId, request: request);
-    _onUpdateAllOwnedPlaylist(playlist);
+    cachedAllOwnedPlaylist = playlist;
     log.info('Removed addresses from playlist: $addresses');
     return playlist;
   }
@@ -152,7 +160,8 @@ class UserDp1PlaylistService {
       return true;
     }
     final deleted = await Future.wait(allOwnedPlaylistIds.map(deletePlaylist));
-    addressLastRefreshedTime.clear();
+    injector<ConfigurationService>().setAddressLastRefreshedTime({});
+
     if (deleted.any((e) => e == false)) {
       log.info('Failed to delete all owned playlists');
       return false;
@@ -177,16 +186,25 @@ class UserDp1PlaylistService {
     required List<String> addresses,
     DateTime? dateTime,
   }) async {
+    final addressLastRefreshedTime =
+        injector<ConfigurationService>().getAddressLastRefreshedTime();
     // update the time for the addresses
     final time = dateTime ?? DateTime.now();
     for (var address in addresses) {
       addressLastRefreshedTime[address] = time;
     }
+    await injector<ConfigurationService>()
+        .setAddressLastRefreshedTime(addressLastRefreshedTime);
   }
 
   DateTime getAddressOldestLastRefreshedTime({
     required List<String> addresses,
   }) {
+    final addressLastRefreshedTime =
+        injector<ConfigurationService>().getAddressLastRefreshedTime();
+    if (addresses.isEmpty) {
+      return DateTime(1970, 1, 1);
+    }
     // find the oldest time, saved in addressLastRefreshedTime
     // if any address in addresses is not in addressLastRefreshedTime, return 1970-01-01
     for (var address in addresses) {
@@ -201,14 +219,8 @@ class UserDp1PlaylistService {
         .reduce((a, b) => a.isBefore(b) ? a : b);
   }
 
-  Future<void> _onUpdateAllOwnedPlaylist(DP1Call playlist) async {
-    log.info('[UserDp1PlaylistService] onUpdateAllOwnedPlaylist');
-    final dynamicQuery = playlist.firstDynamicQuery;
-    if (dynamicQuery == null) {
-      return;
-    }
-    _cachedAllOwnedPlaylist = playlist;
-    final bloc = injector<UserAllOwnCollectionBloc>();
-    bloc.add(UpdateDynamicQueryEvent(dynamicQuery: dynamicQuery));
+  Future<void> clearData() async {
+    await injector<ConfigurationService>().clearAddressLastRefreshedTime();
+    cachedAllOwnedPlaylist = null;
   }
 }

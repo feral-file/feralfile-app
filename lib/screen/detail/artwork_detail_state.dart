@@ -24,7 +24,6 @@ class ArtworkDetailGetInfoEvent extends ArtworkDetailEvent {
 
 class ArtworkDetailState {
   ArtworkDetailState({
-    required this.provenances,
     this.assetToken,
     this.owners = const {},
     this.artwork,
@@ -32,7 +31,6 @@ class ArtworkDetailState {
   });
 
   final AssetToken? assetToken;
-  final List<Provenance> provenances;
   final Map<String, int> owners;
   final Artwork? artwork;
   final Exhibition? exhibition;
@@ -40,14 +38,12 @@ class ArtworkDetailState {
   //copyWith
   ArtworkDetailState copyWith({
     AssetToken? assetToken,
-    List<Provenance>? provenances,
     Map<String, int>? owners,
     Artwork? artwork,
     Exhibition? exhibition,
   }) =>
       ArtworkDetailState(
         assetToken: assetToken ?? this.assetToken,
-        provenances: provenances ?? this.provenances,
         owners: owners ?? this.owners,
         artwork: artwork ?? this.artwork,
         exhibition: exhibition ?? this.exhibition,

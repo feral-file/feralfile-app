@@ -22,7 +22,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(5, 9121764917203472736),
       name: 'AssetObject',
-      lastPropertyId: const obx_int.IdUid(25, 1006665434378091429),
+      lastPropertyId: const obx_int.IdUid(26, 2119658136783413238),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -34,8 +34,7 @@ final _entities = <obx_int.ModelEntity>[
             id: const obx_int.IdUid(2, 637822972188724080),
             name: 'indexID',
             type: 9,
-            flags: 2080,
-            indexId: const obx_int.IdUid(6, 5042876510331899459)),
+            flags: 0),
         obx_int.ModelProperty(
             id: const obx_int.IdUid(3, 2686313886126480436),
             name: 'thumbnailID',
@@ -150,14 +149,20 @@ final _entities = <obx_int.ModelEntity>[
             id: const obx_int.IdUid(25, 1006665434378091429),
             name: 'artworkMetadata',
             type: 9,
-            flags: 0)
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(26, 2119658136783413238),
+            name: 'uniqueId',
+            type: 9,
+            flags: 2080,
+            indexId: const obx_int.IdUid(7, 8141939759143461103))
       ],
       relations: <obx_int.ModelRelation>[],
       backlinks: <obx_int.ModelBacklink>[]),
   obx_int.ModelEntity(
       id: const obx_int.IdUid(6, 768055645286842371),
       name: 'AssetTokenObject',
-      lastPropertyId: const obx_int.IdUid(22, 3688922902700582816),
+      lastPropertyId: const obx_int.IdUid(23, 8650214023243238913),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -169,7 +174,7 @@ final _entities = <obx_int.ModelEntity>[
             id: const obx_int.IdUid(2, 8998927899387537492),
             name: 'indexID',
             type: 9,
-            flags: 2080,
+            flags: 2048,
             indexId: const obx_int.IdUid(3, 8540577488980236051)),
         obx_int.ModelProperty(
             id: const obx_int.IdUid(3, 8929594438647314911),
@@ -273,7 +278,83 @@ final _entities = <obx_int.ModelEntity>[
             type: 11,
             flags: 520,
             indexId: const obx_int.IdUid(5, 6849648735860605912),
-            relationTarget: 'AssetObject')
+            relationTarget: 'AssetObject'),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(23, 8650214023243238913),
+            name: 'uniqueId',
+            type: 9,
+            flags: 2080,
+            indexId: const obx_int.IdUid(8, 4342564864780720707))
+      ],
+      relations: <obx_int.ModelRelation>[
+        obx_int.ModelRelation(
+            id: const obx_int.IdUid(1, 4480229473099763885),
+            name: 'provenance',
+            targetId: const obx_int.IdUid(7, 1829843208606867060))
+      ],
+      backlinks: <obx_int.ModelBacklink>[]),
+  obx_int.ModelEntity(
+      id: const obx_int.IdUid(7, 1829843208606867060),
+      name: 'ProvenanceObject',
+      lastPropertyId: const obx_int.IdUid(11, 7259616555571793378),
+      flags: 0,
+      properties: <obx_int.ModelProperty>[
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(1, 5928604402732136567),
+            name: 'id',
+            type: 6,
+            flags: 1),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(2, 446505263569461009),
+            name: 'provenanceId',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(3, 4426499261764439980),
+            name: 'txID',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(4, 2570299214081486438),
+            name: 'type',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(5, 5651151757126249999),
+            name: 'blockchain',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(6, 8291663310622297510),
+            name: 'owner',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(7, 2981455231783579716),
+            name: 'timestamp',
+            type: 10,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(8, 6787460858322477909),
+            name: 'txURL',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(9, 3262720642570168366),
+            name: 'tokenID',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(10, 8663056925435548024),
+            name: 'blockNumber',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(11, 7259616555571793378),
+            name: 'uniqueId',
+            type: 9,
+            flags: 2080,
+            indexId: const obx_int.IdUid(9, 6783878973126291135))
       ],
       relations: <obx_int.ModelRelation>[],
       backlinks: <obx_int.ModelBacklink>[])
@@ -314,9 +395,9 @@ Future<obx.Store> openStore(
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
       entities: _entities,
-      lastEntityId: const obx_int.IdUid(6, 768055645286842371),
-      lastIndexId: const obx_int.IdUid(6, 5042876510331899459),
-      lastRelationId: const obx_int.IdUid(0, 0),
+      lastEntityId: const obx_int.IdUid(7, 1829843208606867060),
+      lastIndexId: const obx_int.IdUid(9, 6783878973126291135),
+      lastRelationId: const obx_int.IdUid(1, 4480229473099763885),
       lastSequenceId: const obx_int.IdUid(0, 0),
       retiredEntityUids: const [
         3545671819156561601,
@@ -324,7 +405,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         1005553247711674799,
         5815070005230898589
       ],
-      retiredIndexUids: const [],
+      retiredIndexUids: const [5042876510331899459],
       retiredPropertyUids: const [
         3766269381233881871,
         5605060947817876347,
@@ -423,7 +504,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final artworkMetadataOffset = object.artworkMetadata == null
               ? null
               : fbb.writeString(object.artworkMetadata!);
-          fbb.startTable(26);
+          final uniqueIdOffset = fbb.writeString(object.uniqueId);
+          fbb.startTable(27);
           fbb.addInt64(0, object.id);
           fbb.addOffset(1, indexIDOffset);
           fbb.addOffset(2, thumbnailIDOffset);
@@ -449,6 +531,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           fbb.addOffset(22, initialSaleModelOffset);
           fbb.addOffset(23, originalFileURLOffset);
           fbb.addOffset(24, artworkMetadataOffset);
+          fbb.addOffset(25, uniqueIdOffset);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -540,14 +623,19 @@ obx_int.ModelDefinition getObjectBoxModel() {
               isFeralfileFrame: isFeralfileFrameParam,
               initialSaleModel: initialSaleModelParam,
               originalFileURL: originalFileURLParam,
-              artworkMetadata: artworkMetadataParam);
+              artworkMetadata: artworkMetadataParam)
+            ..uniqueId = const fb.StringReader(asciiOptimization: true)
+                .vTableGet(buffer, rootOffset, 54, '');
 
           return object;
         }),
     AssetTokenObject: obx_int.EntityDefinition<AssetTokenObject>(
         model: _entities[1],
         toOneRelations: (AssetTokenObject object) => [object.asset],
-        toManyRelations: (AssetTokenObject object) => {},
+        toManyRelations: (AssetTokenObject object) => {
+              obx_int.RelInfo<AssetTokenObject>.toMany(1, object.id):
+                  object.provenance
+            },
         getId: (AssetTokenObject object) => object.id,
         setId: (AssetTokenObject object, int id) {
           object.id = id;
@@ -569,7 +657,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final originTokenInfoIdOffset = object.originTokenInfoId == null
               ? null
               : fbb.writeString(object.originTokenInfoId!);
-          fbb.startTable(23);
+          final uniqueIdOffset = fbb.writeString(object.uniqueId);
+          fbb.startTable(24);
           fbb.addInt64(0, object.id);
           fbb.addOffset(1, indexIDOffset);
           fbb.addOffset(2, ownerOffset);
@@ -592,6 +681,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           fbb.addBool(19, object.isDebugged);
           fbb.addOffset(20, originTokenInfoIdOffset);
           fbb.addInt64(21, object.asset.targetId);
+          fbb.addOffset(22, uniqueIdOffset);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -668,10 +758,88 @@ obx_int.ModelDefinition getObjectBoxModel() {
               ipfsPinned: ipfsPinnedParam,
               pending: pendingParam,
               isDebugged: isDebuggedParam,
-              originTokenInfoId: originTokenInfoIdParam);
+              originTokenInfoId: originTokenInfoIdParam)
+            ..uniqueId = const fb.StringReader(asciiOptimization: true)
+                .vTableGet(buffer, rootOffset, 48, '');
           object.asset.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 46, 0);
           object.asset.attach(store);
+          obx_int.InternalToManyAccess.setRelInfo<AssetTokenObject>(
+              object.provenance,
+              store,
+              obx_int.RelInfo<AssetTokenObject>.toMany(1, object.id));
+          return object;
+        }),
+    ProvenanceObject: obx_int.EntityDefinition<ProvenanceObject>(
+        model: _entities[2],
+        toOneRelations: (ProvenanceObject object) => [],
+        toManyRelations: (ProvenanceObject object) => {},
+        getId: (ProvenanceObject object) => object.id,
+        setId: (ProvenanceObject object, int id) {
+          object.id = id;
+        },
+        objectToFB: (ProvenanceObject object, fb.Builder fbb) {
+          final provenanceIdOffset = fbb.writeString(object.provenanceId);
+          final txIDOffset = fbb.writeString(object.txID);
+          final typeOffset = fbb.writeString(object.type);
+          final blockchainOffset = fbb.writeString(object.blockchain);
+          final ownerOffset = fbb.writeString(object.owner);
+          final txURLOffset = fbb.writeString(object.txURL);
+          final tokenIDOffset = fbb.writeString(object.tokenID);
+          final uniqueIdOffset = fbb.writeString(object.uniqueId);
+          fbb.startTable(12);
+          fbb.addInt64(0, object.id);
+          fbb.addOffset(1, provenanceIdOffset);
+          fbb.addOffset(2, txIDOffset);
+          fbb.addOffset(3, typeOffset);
+          fbb.addOffset(4, blockchainOffset);
+          fbb.addOffset(5, ownerOffset);
+          fbb.addInt64(6, object.timestamp.millisecondsSinceEpoch);
+          fbb.addOffset(7, txURLOffset);
+          fbb.addOffset(8, tokenIDOffset);
+          fbb.addInt64(9, object.blockNumber);
+          fbb.addOffset(10, uniqueIdOffset);
+          fbb.finish(fbb.endTable());
+          return object.id;
+        },
+        objectFromFB: (obx.Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+          final idParam =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
+          final provenanceIdParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 6, '');
+          final txIDParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 8, '');
+          final typeParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 10, '');
+          final blockchainParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 12, '');
+          final ownerParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 14, '');
+          final timestampParam = DateTime.fromMillisecondsSinceEpoch(
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 16, 0));
+          final txURLParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 18, '');
+          final tokenIDParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 20, '');
+          final blockNumberParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 22);
+          final object = ProvenanceObject(
+              id: idParam,
+              provenanceId: provenanceIdParam,
+              txID: txIDParam,
+              type: typeParam,
+              blockchain: blockchainParam,
+              owner: ownerParam,
+              timestamp: timestampParam,
+              txURL: txURLParam,
+              tokenID: tokenIDParam,
+              blockNumber: blockNumberParam)
+            ..uniqueId = const fb.StringReader(asciiOptimization: true)
+                .vTableGet(buffer, rootOffset, 24, '');
+
           return object;
         })
   };
@@ -780,6 +948,10 @@ class AssetObject_ {
   /// See [AssetObject.artworkMetadata].
   static final artworkMetadata =
       obx.QueryStringProperty<AssetObject>(_entities[0].properties[24]);
+
+  /// See [AssetObject.uniqueId].
+  static final uniqueId =
+      obx.QueryStringProperty<AssetObject>(_entities[0].properties[25]);
 }
 
 /// [AssetTokenObject] entity fields to define ObjectBox queries.
@@ -871,4 +1043,60 @@ class AssetTokenObject_ {
   /// See [AssetTokenObject.asset].
   static final asset = obx.QueryRelationToOne<AssetTokenObject, AssetObject>(
       _entities[1].properties[21]);
+
+  /// See [AssetTokenObject.uniqueId].
+  static final uniqueId =
+      obx.QueryStringProperty<AssetTokenObject>(_entities[1].properties[22]);
+
+  /// see [AssetTokenObject.provenance]
+  static final provenance =
+      obx.QueryRelationToMany<AssetTokenObject, ProvenanceObject>(
+          _entities[1].relations[0]);
+}
+
+/// [ProvenanceObject] entity fields to define ObjectBox queries.
+class ProvenanceObject_ {
+  /// See [ProvenanceObject.id].
+  static final id =
+      obx.QueryIntegerProperty<ProvenanceObject>(_entities[2].properties[0]);
+
+  /// See [ProvenanceObject.provenanceId].
+  static final provenanceId =
+      obx.QueryStringProperty<ProvenanceObject>(_entities[2].properties[1]);
+
+  /// See [ProvenanceObject.txID].
+  static final txID =
+      obx.QueryStringProperty<ProvenanceObject>(_entities[2].properties[2]);
+
+  /// See [ProvenanceObject.type].
+  static final type =
+      obx.QueryStringProperty<ProvenanceObject>(_entities[2].properties[3]);
+
+  /// See [ProvenanceObject.blockchain].
+  static final blockchain =
+      obx.QueryStringProperty<ProvenanceObject>(_entities[2].properties[4]);
+
+  /// See [ProvenanceObject.owner].
+  static final owner =
+      obx.QueryStringProperty<ProvenanceObject>(_entities[2].properties[5]);
+
+  /// See [ProvenanceObject.timestamp].
+  static final timestamp =
+      obx.QueryDateProperty<ProvenanceObject>(_entities[2].properties[6]);
+
+  /// See [ProvenanceObject.txURL].
+  static final txURL =
+      obx.QueryStringProperty<ProvenanceObject>(_entities[2].properties[7]);
+
+  /// See [ProvenanceObject.tokenID].
+  static final tokenID =
+      obx.QueryStringProperty<ProvenanceObject>(_entities[2].properties[8]);
+
+  /// See [ProvenanceObject.blockNumber].
+  static final blockNumber =
+      obx.QueryIntegerProperty<ProvenanceObject>(_entities[2].properties[9]);
+
+  /// See [ProvenanceObject.uniqueId].
+  static final uniqueId =
+      obx.QueryStringProperty<ProvenanceObject>(_entities[2].properties[10]);
 }

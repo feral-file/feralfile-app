@@ -4,10 +4,10 @@ import 'dart:convert';
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
-import 'package:autonomy_flutter/nft_collection/services/address_service.dart';
 import 'package:autonomy_flutter/nft_rendering/nft_rendering_widget.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/provenance.dart';
+import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/int_ext.dart';
 import 'package:autonomy_flutter/util/john_gerrard_helper.dart';
@@ -94,18 +94,21 @@ extension AssetTokenExtension on AssetToken {
 
   DP1Provenance get dp1Provenance {
     final chain = DP1ProvenanceChain.fromString(blockchain);
-    final standard = this.isBitmarkToken
+    final standard = isBitmarkToken
         ? DP1ProvenanceStandard.other
         : DP1ProvenanceStandard.fromString(contractType);
     final contractAddress = this.contractAddress!;
     final tokenId = this.tokenId;
     final dp1Contract = DP1Contract(
-        chain: chain,
-        standard: standard,
-        address: contractAddress,
-        tokenId: tokenId!);
+      chain: chain,
+      standard: standard,
+      address: contractAddress,
+      tokenId: tokenId,
+    );
     return DP1Provenance(
-        type: DP1ProvenanceType.onChain, contract: dp1Contract);
+      type: DP1ProvenanceType.onChain,
+      contract: dp1Contract,
+    );
   }
 }
 
@@ -149,7 +152,7 @@ extension CompactedAssetTokenExtension on CompactedAssetToken {
   }
 
   String? get displayTitle {
-    String? title = asset?.title;
+    var title = asset?.title;
     if (title == null) {
       return null;
     }
@@ -163,7 +166,7 @@ extension CompactedAssetTokenExtension on CompactedAssetToken {
     }
 
     if (isFeralfile) {
-      title = '$title #${edition}';
+      title = '$title #$edition';
     }
 
     if (mintedAt != null && !isJohnGerrardSeries) {
@@ -348,11 +351,10 @@ extension CompactedAssetTokenExtension on CompactedAssetToken {
   bool get shouldShowFeralfileRight =>
       isFeralfile && !isWedgwoodActivationToken;
 
-  Future<bool> hasLocalAddress() async {
+  bool hasLocalAddress() {
     final owner = this.owner;
-    final collectionAddresses =
-        await injector<NftAddressService>().getAllAddresses();
-    return collectionAddresses.any((element) => element.address == owner);
+    final collectionAddresses = injector<AddressService>().getAllAddresses();
+    return collectionAddresses.any((element) => element == owner);
   }
 }
 

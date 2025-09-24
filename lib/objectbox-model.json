@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "5:9121764917203472736",
-      "lastPropertyId": "25:1006665434378091429",
+      "lastPropertyId": "26:2119658136783413238",
       "name": "AssetObject",
       "properties": [
         {
@@ -17,9 +17,7 @@
         {
           "id": "2:637822972188724080",
           "name": "indexID",
-          "type": 9,
-          "flags": 2080,
-          "indexId": "6:5042876510331899459"
+          "type": 9
         },
         {
           "id": "3:2686313886126480436",
@@ -135,13 +133,20 @@
           "id": "25:1006665434378091429",
           "name": "artworkMetadata",
           "type": 9
+        },
+        {
+          "id": "26:2119658136783413238",
+          "name": "uniqueId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "7:8141939759143461103"
         }
       ],
       "relations": []
     },
     {
       "id": "6:768055645286842371",
-      "lastPropertyId": "22:3688922902700582816",
+      "lastPropertyId": "23:8650214023243238913",
       "name": "AssetTokenObject",
       "properties": [
         {
@@ -154,7 +159,7 @@
           "id": "2:8998927899387537492",
           "name": "indexID",
           "type": 9,
-          "flags": 2080,
+          "flags": 2048,
           "indexId": "3:8540577488980236051"
         },
         {
@@ -261,14 +266,93 @@
           "flags": 520,
           "indexId": "5:6849648735860605912",
           "relationTarget": "AssetObject"
+        },
+        {
+          "id": "23:8650214023243238913",
+          "name": "uniqueId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "8:4342564864780720707"
+        }
+      ],
+      "relations": [
+        {
+          "id": "1:4480229473099763885",
+          "name": "provenance",
+          "targetId": "7:1829843208606867060"
+        }
+      ]
+    },
+    {
+      "id": "7:1829843208606867060",
+      "lastPropertyId": "11:7259616555571793378",
+      "name": "ProvenanceObject",
+      "properties": [
+        {
+          "id": "1:5928604402732136567",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:446505263569461009",
+          "name": "provenanceId",
+          "type": 9
+        },
+        {
+          "id": "3:4426499261764439980",
+          "name": "txID",
+          "type": 9
+        },
+        {
+          "id": "4:2570299214081486438",
+          "name": "type",
+          "type": 9
+        },
+        {
+          "id": "5:5651151757126249999",
+          "name": "blockchain",
+          "type": 9
+        },
+        {
+          "id": "6:8291663310622297510",
+          "name": "owner",
+          "type": 9
+        },
+        {
+          "id": "7:2981455231783579716",
+          "name": "timestamp",
+          "type": 10
+        },
+        {
+          "id": "8:6787460858322477909",
+          "name": "txURL",
+          "type": 9
+        },
+        {
+          "id": "9:3262720642570168366",
+          "name": "tokenID",
+          "type": 9
+        },
+        {
+          "id": "10:8663056925435548024",
+          "name": "blockNumber",
+          "type": 6
+        },
+        {
+          "id": "11:7259616555571793378",
+          "name": "uniqueId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "9:6783878973126291135"
         }
       ],
       "relations": []
     }
   ],
-  "lastEntityId": "6:768055645286842371",
-  "lastIndexId": "6:5042876510331899459",
-  "lastRelationId": "0:0",
+  "lastEntityId": "7:1829843208606867060",
+  "lastIndexId": "9:6783878973126291135",
+  "lastRelationId": "1:4480229473099763885",
   "lastSequenceId": "0:0",
   "modelVersion": 5,
   "modelVersionParserMinimum": 5,
@@ -278,7 +362,9 @@
     1005553247711674799,
     5815070005230898589
   ],
-  "retiredIndexUids": [],
+  "retiredIndexUids": [
+    5042876510331899459
+  ],
   "retiredPropertyUids": [
     3766269381233881871,
     5605060947817876347,

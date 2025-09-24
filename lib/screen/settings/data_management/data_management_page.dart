@@ -15,7 +15,6 @@ import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/settings/forget_exist/forget_exist_bloc.dart';
 import 'package:autonomy_flutter/screen/settings/forget_exist/forget_exist_view.dart';
-import 'package:autonomy_flutter/service/client_token_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
@@ -137,24 +136,19 @@ class _DataManagementPageState extends State<DataManagementPage> {
         //"This action will safely clear local cache and\nre-download all artwork metadata. We recommend only doing this if instructed to do so by customer support to resolve a problem.",
         'rebuild'.tr(),
         () async {
+          // remove all cached data
           await injector<NftTokensService>().purgeCachedGallery();
+          await injector<UserDp1PlaylistService>().clearData();
           await injector<CacheManager>().emptyCache();
           await DefaultCacheManager().emptyCache();
-          await injector<ClientTokenService>()
-              .refreshTokens(syncAddresses: true);
-          NftCollectionBloc.eventController
-              .add(GetTokensByOwnerEvent(pageKey: PageKey.init()));
           injector<UserAllOwnCollectionBloc>().add(ClearDataEvent());
-          final dynamicQuery = injector<UserDp1PlaylistService>()
-              .cachedAllOwnedPlaylist
-              .firstDynamicQuery;
-          if (dynamicQuery != null) {
-            injector<UserAllOwnCollectionBloc>()
-                .add(UpdateDynamicQueryEvent(dynamicQuery: dynamicQuery));
-          }
-          injector<FeedCacheManager>()
-            ..clearAll()
-            ..reloadCache();
+          injector<FeedCacheManager>().clearAll();
+
+          //redownload data
+          await injector<UserDp1PlaylistService>()
+              .createAllOwnedPlaylistIfNotExists();
+          injector<UserAllOwnCollectionBloc>().add(RefreshAssetTokens());
+          await injector<FeedCacheManager>().reloadCache();
 
           if (!mounted) {
             return;

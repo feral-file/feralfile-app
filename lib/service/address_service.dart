@@ -10,8 +10,6 @@ import 'dart:async';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
-import 'package:autonomy_flutter/nft_collection/services/address_service.dart'
-    as nft;
 import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
@@ -22,10 +20,9 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:sentry/sentry.dart';
 
 class AddressService {
-  AddressService(this._cloudObject, this._nftCollectionAddressService);
+  AddressService(this._cloudObject);
 
   final CloudManager _cloudObject;
-  final nft.NftAddressService _nftCollectionAddressService;
 
   Future<bool> registerReferralCode({required String referralCode}) async {
     try {
@@ -81,7 +78,6 @@ class AddressService {
     }
     final newAddress = address.copyWith(address: checkSumAddress);
     await _cloudObject.addressObject.insertAddresses([newAddress]);
-    await _nftCollectionAddressService.addAddresses([newAddress.address]);
     await injector<UserDp1PlaylistService>()
         .insertAddressesToPlaylist([newAddress.address]);
     log.info('Inserted address: ${newAddress.address}');
@@ -94,7 +90,6 @@ class AddressService {
 
   Future<void> deleteAddress(WalletAddress address) async {
     await _cloudObject.addressObject.deleteAddress(address);
-    await _nftCollectionAddressService.deleteAddresses([address.address]);
     await injector<UserDp1PlaylistService>()
         .removeAddressesFromPlaylist([address.address]);
     log.info('Deleted address: ${address.address}');
@@ -108,10 +103,6 @@ class AddressService {
       addresses.map(
         (e) => _cloudObject.addressObject.setAddressIsHidden(e, isHidden),
       ),
-    );
-    await _nftCollectionAddressService.setIsHiddenAddresses(
-      addresses,
-      isHidden,
     );
     if (isHidden) {
       // remove from playlist

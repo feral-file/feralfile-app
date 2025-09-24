@@ -9,10 +9,10 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/nft_collection/data/api/indexer_api.dart';
-import 'package:autonomy_flutter/nft_collection/database/dao/dao.dart';
+import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
+import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_state.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
@@ -21,16 +21,14 @@ import 'package:http/http.dart' as http;
 import 'package:sentry/sentry.dart';
 
 class ArtworkDetailBloc extends AuBloc<ArtworkDetailEvent, ArtworkDetailState> {
-  ArtworkDetailBloc(
-    this._assetTokenDao,
-    this._assetDao,
-    this._provenanceDao,
-    this._indexerService,
-    this._tokenDao,
-    this._indexerApi,
-  ) : super(ArtworkDetailState(provenances: [])) {
+  final nftTokensService = injector<NftTokensService>();
+  final database = injector<IndexerDatabaseAbstract>();
+  final indexerService = injector<NftIndexerService>();
+
+  ArtworkDetailBloc() : super(ArtworkDetailState()) {
     on<ArtworkDetailGetInfoEvent>((event, emit) async {
-      final tokens = await _tokenDao.findTokensByID(event.identity.id);
+      final indexIds = event.identity.id;
+      final tokens = database.getAssetTokensByIndexIds(indexIds: [indexIds]);
       final owners = <String, int>{};
       for (final token in tokens) {
         if (token.balance != null && token.balance! > 0) {
@@ -41,14 +39,13 @@ class ArtworkDetailBloc extends AuBloc<ArtworkDetailEvent, ArtworkDetailState> {
         final request = QueryListTokensRequest(
           ids: [event.identity.id],
         );
-        final assetToken = await _indexerService.getNftTokens(request);
+        final assetToken = await indexerService.getNftTokens(request);
 
         if (assetToken.isNotEmpty) {
           final token = assetToken.first;
           emit(
             ArtworkDetailState(
               assetToken: token,
-              provenances: token.provenance,
               owners: owners,
             ),
           );
@@ -60,7 +57,6 @@ class ArtworkDetailBloc extends AuBloc<ArtworkDetailEvent, ArtworkDetailState> {
             emit(
               ArtworkDetailState(
                 assetToken: token,
-                provenances: token.provenance,
                 owners: owners,
                 artwork: artwork,
                 exhibition: exhibition,
@@ -70,16 +66,13 @@ class ArtworkDetailBloc extends AuBloc<ArtworkDetailEvent, ArtworkDetailState> {
         }
         return;
       } else {
-        final assetToken = await _assetTokenDao.findAssetTokenByIdAndOwner(
+        final assetToken = await database.findAssetTokenByIdAndOwner(
           event.identity.id,
           event.identity.owner,
         );
-        final provenances =
-            await _provenanceDao.findProvenanceByTokenID(event.identity.id);
         emit(
           ArtworkDetailState(
             assetToken: assetToken,
-            provenances: provenances,
             owners: owners,
           ),
         );
@@ -93,11 +86,10 @@ class ArtworkDetailBloc extends AuBloc<ArtworkDetailEvent, ArtworkDetailState> {
                   .head(uri)
                   .timeout(const Duration(milliseconds: 10000));
               assetToken.asset!.mimeType = res.headers['content-type'];
-              unawaited(_assetDao.updateAsset(assetToken.asset!));
+              (database.insertAssetToken(assetToken));
               emit(
                 ArtworkDetailState(
                   assetToken: assetToken,
-                  provenances: provenances,
                   owners: owners,
                 ),
               );
@@ -115,7 +107,6 @@ class ArtworkDetailBloc extends AuBloc<ArtworkDetailEvent, ArtworkDetailState> {
           emit(
             ArtworkDetailState(
               assetToken: assetToken,
-              provenances: provenances,
               owners: owners,
               artwork: artwork,
               exhibition: exhibition,
@@ -126,16 +117,9 @@ class ArtworkDetailBloc extends AuBloc<ArtworkDetailEvent, ArtworkDetailState> {
     });
   }
 
-  final AssetTokenDao _assetTokenDao;
-  final AssetDao _assetDao;
-  final ProvenanceDao _provenanceDao;
-  final NftIndexerService _indexerService;
-  final TokenDao _tokenDao;
-  final IndexerApi _indexerApi;
-
   Future<void> _indexHistory(String tokenId) async {
     try {
-      await _indexerApi.indexTokenHistory({'indexID': tokenId});
+      await indexerService.indexTokenHistory(tokenId);
     } catch (e) {
       log.info('index history error: $e');
       unawaited(

@@ -7,12 +7,14 @@ import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/home/home_bloc.dart';
 import 'package:autonomy_flutter/screen/home/home_state.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/service/announcement/announcement_service.dart';
 import 'package:autonomy_flutter/service/client_token_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
+import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/shared.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
@@ -51,7 +53,7 @@ class HomePageHelper {
 
   static final HomePageHelper instance = HomePageHelper._();
 
-  Timer? _timer;
+  Timer? _collectionRefreshTimer;
   StreamSubscription<FGBGType>? _fgbgSubscription;
 
   final _announcementService = injector<AnnouncementService>();
@@ -63,16 +65,16 @@ class HomePageHelper {
 
     unawaited(injector<CustomerSupportService>().getChatThreads());
 
-    NftCollectionBloc.eventController.stream.listen((event) async {
-      switch (event.runtimeType) {
-        case const (ReloadEvent):
-        case const (GetTokensByOwnerEvent):
-        case const (UpdateTokensEvent):
-        case const (GetTokensBeforeByOwnerEvent):
-          nftBloc.add(event);
-        default:
-      }
-    });
+    // NftCollectionBloc.eventController.stream.listen((event) async {
+    //   switch (event.runtimeType) {
+    //     case const (ReloadEvent):
+    //     case const (GetTokensByOwnerEvent):
+    //     case const (UpdateTokensEvent):
+    //     case const (GetTokensBeforeByOwnerEvent):
+    //       nftBloc.add(event);
+    //     default:
+    //   }
+    // });
     unawaited(injector<VersionService>().checkForUpdate());
     BluetoothDeviceManager().castingDeviceStatus.addListener(
       () async {
@@ -103,6 +105,20 @@ class HomePageHelper {
     // _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
     //   unawaited(clientTokenService.refreshTokens());
     // });
+    _collectionRefreshTimer?.cancel();
+    _collectionRefreshTimer =
+        Timer.periodic(const Duration(minutes: 1), (_) async {
+      try {
+        final allOwnedPlaylist =
+            await injector<UserDp1PlaylistService>().cachedAllOwnedPlaylist;
+        final dynamicQuery = allOwnedPlaylist.firstDynamicQuery;
+        if (dynamicQuery != null) {
+          injector<UserAllOwnCollectionBloc>().add(RefreshAssetTokens());
+        }
+      } catch (_) {
+        // Silently ignore refresh errors
+      }
+    });
 
     _triggerShowAnnouncement();
 
@@ -128,7 +144,7 @@ class HomePageHelper {
   }
 
   void onHomePageDispose() {
-    _timer?.cancel();
+    _collectionRefreshTimer?.cancel();
     _fgbgSubscription?.cancel();
   }
 

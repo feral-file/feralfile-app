@@ -10,7 +10,7 @@ import 'dart:convert';
 
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/nft_collection/database/dao/dao.dart';
+import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
@@ -25,10 +25,9 @@ import 'package:web3dart/web3dart.dart';
 class ArtworkPreviewDetailBloc
     extends AuBloc<ArtworkPreviewDetailEvent, ArtworkPreviewDetailState> {
   ArtworkPreviewDetailBloc(
-    this._assetTokenDao,
     this._ethereumService,
     this._indexerService,
-    this._assetDao,
+    this._database,
   ) : super(ArtworkPreviewDetailLoadingState()) {
     on<ArtworkPreviewDetailGetAssetTokenEvent>((event, emit) async {
       AssetToken? assetToken;
@@ -42,7 +41,7 @@ class ArtworkPreviewDetailBloc
           assetToken = tokens.first;
         }
       } else {
-        assetToken = await _assetTokenDao.findAssetTokenByIdAndOwner(
+        assetToken = _database.findAssetTokenByIdAndOwner(
           event.identity.id,
           event.identity.owner,
         );
@@ -62,7 +61,7 @@ class ArtworkPreviewDetailBloc
                 .head(uri)
                 .timeout(const Duration(milliseconds: 10000));
             assetToken.asset!.mimeType = res.headers['content-type'];
-            unawaited(_assetDao.updateAsset(assetToken.asset!));
+            _database.insertAssetToken(assetToken);
           } catch (error) {
             log.info(
               'ArtworkPreviewDetailGetAssetTokenEvent: preview url error',
@@ -96,10 +95,9 @@ class ArtworkPreviewDetailBloc
     });
   }
 
-  final AssetTokenDao _assetTokenDao;
   final EthereumService _ethereumService;
   final NftIndexerService _indexerService;
-  final AssetDao _assetDao;
+  final IndexerDatabaseAbstract _database;
 
   Future<String?> _fetchFeralFileFramePreview(AssetToken token) async {
     if (token.contractAddress == null) return '';

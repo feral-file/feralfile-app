@@ -15,7 +15,7 @@ import 'package:autonomy_flutter/model/ff_exhibition.dart';
 import 'package:autonomy_flutter/model/jwt.dart';
 import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/model/play_list_model.dart';
-import 'package:autonomy_flutter/nft_collection/database/nft_collection_database.dart';
+import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/screen/alumni_details/alumni_details_page.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
@@ -25,7 +25,6 @@ import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/feralfile_home.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/index.dart';
-import 'package:autonomy_flutter/screen/playlists/view_playlist/view_playlist.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/shared.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
@@ -369,14 +368,6 @@ class NavigationService {
     }
   }
 
-  Future<void> gotoExhibitionDetailsPage(String exhibitionID) async {
-    popUntilHome();
-    await Future.delayed(const Duration(seconds: 1), () async {
-      await (homePageKey.currentState ?? homePageNoTransactionKey.currentState)
-          ?.openExhibition(exhibitionID);
-    });
-  }
-
   Future<void> popToCollection() async {
     popUntilHome();
     await injector<NavigationService>().openCollection();
@@ -384,9 +375,8 @@ class NavigationService {
 
   Future<void> gotoArtworkDetailsPage(String indexID) async {
     popUntilHome();
-    final tokens = await injector<NftCollectionDatabase>()
-        .assetTokenDao
-        .findAllAssetTokensByTokenIDs([indexID]);
+    final tokens = injector<IndexerDatabaseAbstract>()
+        .getAssetTokensByIndexIds(indexIds: [indexID]);
     final owner = tokens.first.owner;
     final artworkDetailPayload =
         ArtworkDetailPayload(ArtworkIdentity(indexID, owner));
@@ -501,21 +491,6 @@ class NavigationService {
     }
 
     popUntilHome();
-
-    await Future.delayed(const Duration(milliseconds: 300), () async {
-      if (homeNavigationTab != null) {
-        unawaited(
-          (homePageKey.currentState ?? homePageNoTransactionKey.currentState)
-              ?.onItemTapped(homeNavigationTab.index),
-        );
-
-        await Future.delayed(const Duration(milliseconds: 300), () {
-          if (exploreTab != null) {
-            feralFileHomeKey.currentState?.jumpToTab(exploreTab);
-          }
-        });
-      }
-    });
   }
 
   Pair<String, dynamic>? _resolvePath(String? path) {
@@ -554,14 +529,14 @@ class NavigationService {
   }
 
   Future<void> openPlaylist({required PlayListModel playlist}) async {
-    if (navigatorKey.currentState?.mounted != true ||
-        navigatorKey.currentContext == null) {
-      return;
-    }
-    await navigatorKey.currentState?.pushNamed(
-      AppRouter.viewPlayListPage,
-      arguments: ViewPlaylistScreenPayload(playListModel: playlist),
-    );
+    // if (navigatorKey.currentState?.mounted != true ||
+    //     navigatorKey.currentContext == null) {
+    //   return;
+    // }
+    // await navigatorKey.currentState?.pushNamed(
+    //   AppRouter.viewPlayListPage,
+    //   arguments: ViewPlaylistScreenPayload(playListModel: playlist),
+    // );
   }
 
   Future<void> showALreadyClaimPlaylist({
