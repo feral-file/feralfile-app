@@ -77,7 +77,7 @@ class WorksBloc extends Bloc<WorksEvent, WorksState> {
       }
 
       final channelId =
-          injector<DP1FeedService>().remoteConfigChannelIds?.firstOrNull;
+          injector<DP1FeedService>().remoteConfigChannelUrls?.firstOrNull;
       if (channelId == null) {
         emit(state.copyWith(
             status: WorksStateStatus.loaded,

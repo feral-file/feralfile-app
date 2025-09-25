@@ -5,7 +5,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_create_playlist_request.dart';
-import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/util/feed_cache_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:dio/dio.dart';
@@ -17,10 +16,20 @@ class DP1FeedService {
 
   final FeedCacheManager _feedCacheManager;
 
-  List<String>? get remoteConfigChannelIds => injector<RemoteConfigService>()
-      .getConfig<List<dynamic>?>(
-          ConfigGroup.dp1Playlist, ConfigKey.dp1PlaylistChannelIds, null)
-      ?.cast<String>();
+  // List<String>? get remoteConfigChannelIds => [];
+  // injector<RemoteConfigService>()
+  //     .getConfig<List<dynamic>?>(
+  //         ConfigGroup.dp1Playlist, ConfigKey.dp1PlaylistChannelIds, null)
+  //     ?.cast<String>();
+
+  List<String>? get remoteConfigChannelUrls => [
+        'https://dp1-feed-operator-api-prod.autonomy-system.workers.dev/api/v1/channels/dae709d7-26da-4b4c-b881-39cd681cc82f',
+        'https://dp1-feed-operator-api-dev.objkt-com.workers.dev/api/v1/channels/cb3455c2-7122-4414-a9f5-7ccbe434de21',
+        'https://dp1-feed-operator-api-dev.objkt-com.workers.dev/api/v1/channels/5b467722-202d-44d2-af77-4c438c7f2258',
+        'https://dp1-feed-operator-api-dev.objkt-com.workers.dev/api/v1/channels/21f9b1a1-7ad6-4752-ba2c-3f675c4dea63',
+        'https://dp1-feed-operator-api-dev.objkt-com.workers.dev/api/v1/channels/92c75624-10ee-403b-81eb-0da0011d4dde',
+        'https://dp1-feed-operator-api-dev.objkt-com.workers.dev/api/v1/channels/70930b59-04cc-49e0-a982-7ffc17210add',
+      ];
 
   /*
   =======================================================================
@@ -130,13 +139,16 @@ class DP1FeedService {
       }
     }
 
-    final remoteChannelIds = remoteConfigChannelIds;
+    // final remoteChannelIds = remoteConfigChannelIds;
+    final remoteChannelUrls = remoteConfigChannelUrls;
 
-    if (remoteChannelIds != null) {
-      final channels = await getChannelsByIds(
-          channelIds: remoteChannelIds, usingCache: usingCache);
+    if (remoteConfigChannelUrls != null) {
+      final channels = (await getChannelsByUrls(
+              channelUrls: remoteChannelUrls!, usingCache: usingCache))
+          .values
+          .toList();
       final futures = channels.map((c) async {
-        return await getPlaylistsByChannel(c, usingCache: usingCache);
+        return getPlaylistsByChannel(c, usingCache: usingCache);
       });
       final results = await Future.wait(futures);
       final playlists = results.expand((list) => list).toList();
@@ -173,15 +185,48 @@ class DP1FeedService {
     return channel;
   }
 
-  Future<List<Channel>> getChannelsByIds({
-    required List<String> channelIds,
+  // Future<List<Channel>> getChannelsByIds({
+  //   required List<String> channelIds,
+  //   bool usingCache = true,
+  // }) async {
+  //   final futures = channelIds.map((id) async {
+  //     return getChannelDetail(id, usingCache: usingCache);
+  //   });
+  //   final channels = await Future.wait(futures);
+  //   return channels;
+  // }
+
+  Future<Map<String, Channel>> getChannelsByUrls({
+    required List<String> channelUrls,
     bool usingCache = true,
   }) async {
-    final futures = channelIds.map((id) async {
-      return getChannelDetail(id, usingCache: usingCache);
+    if (usingCache) {
+      final cachedChannels = _feedCacheManager.getChannelsByUrls(channelUrls);
+      if (cachedChannels.isNotEmpty) {
+        return cachedChannels;
+      }
+    }
+    final dio = Dio();
+    final futures = channelUrls.map((url) async {
+      try {
+        final response = await dio.get<Map<String, dynamic>>(url);
+        if (response.statusCode == 200 && response.data != null) {
+          final channel = Channel.fromJson(response.data!);
+          _feedCacheManager.setChannels([channel]);
+          return MapEntry(url, channel);
+        }
+      } catch (e) {
+        log.info('Error when get channel from url $url: $e');
+        return null;
+      }
     });
-    final channels = await Future.wait(futures);
-    return channels;
+    final results = await Future.wait(futures);
+    final map = <String, Channel>{};
+    for (final result in results) {
+      if (result == null) continue;
+      map[result.key] = result.value;
+    }
+    return map;
   }
 
   Future<DP1ChannelsResponse> getAllChannels({
@@ -189,15 +234,15 @@ class DP1FeedService {
     int? limit,
     bool usingCache = true,
   }) async {
-    final remoteChannelIds = remoteConfigChannelIds;
+    // final remoteChannelIds = remoteConfigChannelIds;
+    final remoteChannelUrls = remoteConfigChannelUrls;
 
-    if (remoteChannelIds != null) {
-      final channels = await getChannelsByIds(
-          channelIds: remoteChannelIds, usingCache: usingCache);
+    if (remoteChannelUrls != null) {
+      final channels = await getChannelsByUrls(
+          channelUrls: remoteChannelUrls, usingCache: usingCache);
       if (channels.isNotEmpty) {
-        _feedCacheManager.addListChannelsToCache(channels);
         return DP1ChannelsResponse(
-          channels,
+          channels.values.toList(),
           false, // hasMore is false because we fetched all remote config channels
           null, // cursor is null because we fetched all channels
         );
@@ -226,7 +271,7 @@ class DP1FeedService {
         ),
       );
       channels.items.removeWhere(
-        (channel) => !(remoteChannelIds?.contains(channel.id) ?? true),
+        (channel) => !(remoteChannelUrls?.contains(channel.id) ?? true),
       );
 
       _feedCacheManager.addListChannelsToCache(channels.items);

@@ -145,6 +145,11 @@ class FeedCacheManager {
     }
   }
 
+  void setChannelWithUrls(Channel channel, String url) {
+    _channels[url] = channel;
+    _persistUrlMap();
+  }
+
   List<Channel> getAllChannels() => _channels.values.toList();
 
   Channel? getChannelById(String channelId) => _channels[channelId];
@@ -235,5 +240,14 @@ class FeedCacheManager {
     } catch (e) {
       // ignore failures
     }
+  }
+
+  Map<String, Channel> getChannelsByUrls(List<String> channelUrls) {
+    final map = <String, Channel>{};
+    for (final url in channelUrls) {
+      if (_channels[url] == null) continue;
+      map[url] = _channels[url]!;
+    }
+    return map;
   }
 }

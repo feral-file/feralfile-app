@@ -11,6 +11,12 @@ part 'dp1_playlist_api.g.dart';
 abstract class DP1FeedApi {
   factory DP1FeedApi(Dio dio, {String baseUrl}) = _DP1FeedApi;
 
+  // factory
+  factory DP1FeedApi.dioBaseUrl(
+      {String baseUrl = 'https://api.feed.feralfile.com'}) {
+    return DP1FeedApi(Dio(BaseOptions(baseUrl: baseUrl)), baseUrl: baseUrl);
+  }
+
   // PLAYLIST
   @POST('/api/v1/playlists')
   Future<DP1Call> createPlaylist(
