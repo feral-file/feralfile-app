@@ -15,6 +15,10 @@ import 'package:autonomy_flutter/model/ff_account.dart';
 import 'package:autonomy_flutter/model/jwt.dart';
 import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel_item.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_item_card.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/metric_client_service.dart';
@@ -31,14 +35,12 @@ import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:autonomy_flutter/view/au_button_clipper.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
+import 'package:autonomy_flutter/view/expandable_sticky_headers.dart';
 import 'package:autonomy_flutter/view/passkey/passkey_login_view.dart';
 import 'package:autonomy_flutter/view/passkey/passkey_register_view.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel_item.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_item.dart';
+import 'package:autonomy_flutter/view/sliver_expandable_sticky_header.dart';
 import 'package:card_swiper/card_swiper.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
@@ -1483,6 +1485,81 @@ class UIHelper {
         },
         childCount: compactedAssetTokens.length,
       ),
+    );
+  }
+
+  static GridView assetTokenGridView(BuildContext context,
+      List<CompactedAssetToken> compactedAssetTokens, String title) {
+    return GridView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 188 / 307,
+          crossAxisSpacing: 17,
+        ),
+        itemBuilder: (context, index) {
+          log.info('assetTokenGridView: $index');
+          final asset = compactedAssetTokens[index];
+          return PlaylistItemCard(
+            compactedAssetToken: asset,
+            playlistTitle: title,
+          );
+        },
+        itemCount: compactedAssetTokens.length);
+  }
+
+  static ExpandableSliverStickyHeader assetTokenExpandableSliverStickyHeader(
+    BuildContext context, {
+    required List<CompactedAssetToken> compactedAssetTokens,
+    required String title,
+    bool isExpanded = false,
+    void Function(bool)? onExpandedChanged,
+    required ScrollController scrollController,
+  }) {
+    return ExpandableSliverStickyHeader(
+        key: Key(title),
+        header:
+            Text(title, style: Theme.of(context).textTheme.ppMori400White12),
+        initiallyExpanded: isExpanded,
+        sliver:
+            UIHelper.assetTokenSliverGrid(context, compactedAssetTokens, title),
+        onExpandedChanged: onExpandedChanged,
+        scrollController: scrollController);
+  }
+
+  static SliverExpandableStickyHeader assetTokenSliverExpandableStickyHeader(
+    BuildContext context, {
+    required List<CompactedAssetToken> compactedAssetTokens,
+    required String title,
+    bool isExpanded = false,
+    required void Function(bool) onExpandedChanged,
+  }) {
+    return SliverExpandableStickyHeader(
+      key: Key('sliver-$title'),
+      header: Text(title, style: Theme.of(context).textTheme.ppMori400White12),
+      initiallyExpanded: isExpanded,
+      sliverBuilder: (context) => SliverPadding(
+        padding: const EdgeInsets.all(8.0),
+        sliver: SliverGrid(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 188 / 307,
+            crossAxisSpacing: 17,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final asset = compactedAssetTokens[index];
+              return PlaylistItemCard(
+                compactedAssetToken: asset,
+                playlistTitle: title,
+              );
+            },
+            childCount: compactedAssetTokens.length,
+          ),
+        ),
+      ),
+      onExpandedChanged: onExpandedChanged,
     );
   }
 

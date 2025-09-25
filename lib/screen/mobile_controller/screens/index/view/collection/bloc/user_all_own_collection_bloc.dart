@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
@@ -157,18 +158,25 @@ class UserAllOwnCollectionBloc
   ) async {
     final owners = _dynamicQuery?.params.owners;
     if (owners == null) {
-      emit(state.copyWith(compactedAssetTokens: []));
+      emit(state.copyWith(addressAssetTokens: []));
       return;
     }
-    final assetTokens =
-        injector<IndexerDatabaseAbstract>().getAssetTokensByOwners(
+    final assetTokenGroupByAddress = injector<IndexerDatabaseAbstract>()
+        .getGroupAssetTokensByOwnersGroupByAddress(
       owners: _dynamicQuery!.params.owners,
     );
-    emit(state.copyWith(
-      compactedAssetTokens: assetTokens
-          .map((e) => CompactedAssetToken.fromAssetToken(e))
-          .toList(),
-    ));
+    emit(
+      state.copyWith(
+        addressAssetTokens: assetTokenGroupByAddress
+            .map(
+              (e) => AddressAssetTokens(
+                address: e.address,
+                compactedAssetTokens: e.compactedAssetTokens,
+              ),
+            )
+            .toList(),
+      ),
+    );
   }
 
   Future<void> _onClearData(

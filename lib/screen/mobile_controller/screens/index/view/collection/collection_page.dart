@@ -20,6 +20,7 @@ import 'package:autonomy_flutter/widgets/ff_text_field/ff_text_field.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 
 class CollectionPage extends StatefulWidget {
   const CollectionPage({super.key});
@@ -34,35 +35,22 @@ class _CollectionPageState extends State<CollectionPage>
   late final ViewExistingAddressBloc _addressBloc;
   Timer? _autoRefreshTimer;
 
+  late final ScrollController _scrollController;
+  late final StickyHeaderController _stickyHeaderController;
+
+  final Map<String, bool> _expandedAddressesMap = {};
+
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController();
+    _stickyHeaderController = StickyHeaderController();
     _collectionBloc = injector<UserAllOwnCollectionBloc>();
     _addressBloc = ViewExistingAddressBloc(injector(), injector());
   }
 
   @override
-  void afterFirstLayout(BuildContext context) {
-    _autoRefresh();
-  }
-
-  void _autoRefresh() async {
-    _autoRefreshTimer?.cancel();
-    _autoRefreshTimer = Timer.periodic(const Duration(minutes: 1), (_) async {
-      try {
-        final allOwnedPlaylist =
-            await injector<UserDp1PlaylistService>().cachedAllOwnedPlaylist;
-        final dynamicQuery = allOwnedPlaylist.firstDynamicQuery;
-        if (!mounted) return;
-        if (dynamicQuery != null) {
-          _collectionBloc
-              .add(UpdateDynamicQueryEvent(dynamicQuery: dynamicQuery));
-        }
-      } catch (_) {
-        // Silently ignore refresh errors
-      }
-    });
-  }
+  void afterFirstLayout(BuildContext context) {}
 
   @override
   void dispose() {
@@ -171,14 +159,30 @@ class _CollectionPageState extends State<CollectionPage>
                     return Stack(
                       children: [
                         CustomScrollView(
+                          controller: _scrollController,
                           shrinkWrap: true,
                           slivers: [
-                            if (collectionState.compactedAssetTokens.isNotEmpty)
-                              UIHelper.assetTokenSliverGrid(
-                                context,
-                                collectionState.compactedAssetTokens,
-                                'Collection',
-                              )
+                            if (collectionState.addressAssetTokens.isNotEmpty)
+                              ...collectionState.addressAssetTokens.map(
+                                (addressAssetToken) {
+                                  return UIHelper
+                                      .assetTokenExpandableSliverStickyHeader(
+                                    context,
+                                    compactedAssetTokens:
+                                        addressAssetToken.compactedAssetTokens,
+                                    title: addressAssetToken.address.name,
+                                    isExpanded: _expandedAddressesMap[
+                                            addressAssetToken
+                                                .address.address] ??
+                                        false,
+                                    onExpandedChanged: (isExpanded) {
+                                      _expandedAddressesMap[addressAssetToken
+                                          .address.address] = isExpanded;
+                                    },
+                                    scrollController: _scrollController,
+                                  );
+                                },
+                              ).toList()
                             else
                               SliverToBoxAdapter(
                                 child: Padding(
@@ -193,7 +197,7 @@ class _CollectionPageState extends State<CollectionPage>
                                 ),
                               ),
                             if (collectionState.isLazyLoading &&
-                                collectionState.compactedAssetTokens.isNotEmpty)
+                                collectionState.addressAssetTokens.isNotEmpty)
                               SliverToBoxAdapter(
                                 child: Padding(
                                   padding:
@@ -210,7 +214,7 @@ class _CollectionPageState extends State<CollectionPage>
                         ),
                         // Loading overlay when loading and no tokens yet
                         if (collectionState.isLazyLoading &&
-                            collectionState.compactedAssetTokens.isEmpty)
+                            collectionState.addressAssetTokens.isEmpty)
                           Container(
                             color: Colors.black.withOpacity(0.3),
                             child: const Center(
