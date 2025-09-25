@@ -9,6 +9,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/view/r
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address_bloc.dart';
+import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
@@ -22,7 +23,9 @@ import 'package:autonomy_flutter/widgets/notice-banner/notice_banner.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class CollectionPage extends StatefulWidget {
   const CollectionPage({super.key});
@@ -164,22 +167,61 @@ Type or paste an address into the command bar to load''',
                             if (collectionState.addressAssetTokens.isNotEmpty)
                               ...collectionState.addressAssetTokens.map(
                                 (addressAssetToken) {
+                                  final address =
+                                      addressAssetToken.address.address;
                                   return UIHelper
                                       .assetTokenExpandableSliverStickyHeader(
-                                    context,
-                                    compactedAssetTokens:
-                                        addressAssetToken.compactedAssetTokens,
-                                    title: addressAssetToken.address.name,
-                                    isExpanded: _expandedAddressesMap[
-                                            addressAssetToken
-                                                .address.address] ??
-                                        false,
-                                    onExpandedChanged: (isExpanded) {
-                                      _expandedAddressesMap[addressAssetToken
-                                          .address.address] = isExpanded;
-                                    },
-                                    scrollController: _scrollController,
-                                  );
+                                          context,
+                                          compactedAssetTokens:
+                                              addressAssetToken
+                                                  .compactedAssetTokens,
+                                          title: addressAssetToken.address.name,
+                                          isExpanded:
+                                              _expandedAddressesMap[address] ??
+                                                  false,
+                                          onExpandedChanged: (isExpanded) {
+                                    _expandedAddressesMap[address] = isExpanded;
+                                  },
+                                          scrollController: _scrollController,
+                                          slidableActions: [
+                                        CustomSlidableAction(
+                                          backgroundColor:
+                                              AppColor.primaryBlack,
+                                          padding: EdgeInsets.zero,
+                                          onPressed:
+                                              (BuildContext context) async {
+                                            final address =
+                                                addressAssetToken.address;
+                                            UIHelper
+                                                .showDeleteAccountConfirmation(
+                                                    address, (address) async {
+                                              await injector<AddressService>()
+                                                  .deleteAddress(address);
+                                            });
+                                          },
+                                          child: Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 12, vertical: 16),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                SvgPicture.asset(
+                                                  'assets/images/trash.svg',
+                                                  height: 15,
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Text(
+                                                  'Delete',
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .ppMori400White12,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ]);
                                 },
                               ).toList(),
                             if (collectionState.isLazyLoading &&

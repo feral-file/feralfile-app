@@ -13,6 +13,7 @@ import 'dart:async';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/ff_account.dart';
 import 'package:autonomy_flutter/model/jwt.dart';
+import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
@@ -32,6 +33,7 @@ import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
 import 'package:autonomy_flutter/util/inapp_notifications.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:autonomy_flutter/view/au_button_clipper.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
@@ -45,6 +47,7 @@ import 'package:card_swiper/card_swiper.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart'; // import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:jiffy/jiffy.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -1516,15 +1519,19 @@ class UIHelper {
     bool isExpanded = false,
     void Function(bool)? onExpandedChanged,
     required ScrollController scrollController,
+    List<CustomSlidableAction> slidableActions = const [],
   }) {
+    final header =
+        Text(title, style: Theme.of(context).textTheme.ppMori400White12);
     return ExpandableSliverStickyHeader(
-        header:
-            Text(title, style: Theme.of(context).textTheme.ppMori400White12),
+        key: Key(title),
+        header: header,
         initiallyExpanded: isExpanded,
         sliver:
             UIHelper.assetTokenSliverGrid(context, compactedAssetTokens, title),
         onExpandedChanged: onExpandedChanged,
-        scrollController: scrollController);
+        scrollController: scrollController,
+        slidableActions: slidableActions);
   }
 
   static SliverExpandableStickyHeader assetTokenSliverExpandableStickyHeader(
@@ -1601,6 +1608,89 @@ class UIHelper {
           );
         },
         childCount: playlists.length,
+      ),
+    );
+  }
+
+  static void showDeleteAccountConfirmation(
+    WalletAddress walletAddress,
+    FutureOr<void> Function(WalletAddress walletAddress) onRemove,
+  ) {
+    final context = injector<NavigationService>().context;
+    final theme = Theme.of(context);
+    var accountName = walletAddress.name;
+    if (accountName.isEmpty) {
+      accountName = walletAddress.name.mask(4);
+    }
+
+    unawaited(
+      showModalBottomSheet(
+        context: context,
+        enableDrag: false,
+        backgroundColor: Colors.transparent,
+        constraints: BoxConstraints(
+          maxWidth: ResponsiveLayout.isMobile
+              ? double.infinity
+              : Constants.maxWidthModalTablet,
+        ),
+        barrierColor: Colors.black.withOpacity(0.5),
+        builder: (context) => SafeArea(
+          child: Container(
+            color: Colors.transparent,
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.auGreyBackground,
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'remove_account'.tr(),
+                    style: theme.primaryTextTheme.ppMori700White24,
+                  ),
+                  const SizedBox(height: 40),
+                  RichText(
+                    textScaler: MediaQuery.textScalerOf(context),
+                    text: TextSpan(
+                      style: theme.primaryTextTheme.ppMori400White14,
+                      children: <TextSpan>[
+                        TextSpan(
+                          text: 'sure_remove_account'.tr(),
+                          //'Are you sure you want to delete the account ',
+                        ),
+                        TextSpan(
+                          text: '“$accountName”',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const TextSpan(
+                          text: '?',
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  PrimaryAsyncButton(
+                    text: 'remove'.tr(),
+                    onTap: () async {
+                      await onRemove(walletAddress);
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  OutlineButton(
+                    onTap: () => Navigator.of(context).pop(),
+                    text: 'cancel_dialog'.tr(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
