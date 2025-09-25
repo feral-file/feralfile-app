@@ -1524,7 +1524,6 @@ class UIHelper {
     final header =
         Text(title, style: Theme.of(context).textTheme.ppMori400White12);
     return ExpandableSliverStickyHeader(
-        key: Key(title),
         header: header,
         initiallyExpanded: isExpanded,
         sliver:
@@ -1542,7 +1541,6 @@ class UIHelper {
     required void Function(bool) onExpandedChanged,
   }) {
     return SliverExpandableStickyHeader(
-      key: Key('sliver-$title'),
       header: Text(title, style: Theme.of(context).textTheme.ppMori400White12),
       initiallyExpanded: isExpanded,
       sliverBuilder: (context) => SliverPadding(
@@ -1623,6 +1621,8 @@ class UIHelper {
       accountName = walletAddress.name.mask(4);
     }
 
+    final bottomSheetKey = GlobalKey();
+
     unawaited(
       showModalBottomSheet(
         context: context,
@@ -1633,8 +1633,15 @@ class UIHelper {
               ? double.infinity
               : Constants.maxWidthModalTablet,
         ),
+        routeSettings: RouteSettings(
+          name: ignoreBackLayerPopUpRouteName,
+          arguments: {
+            'key': bottomSheetKey,
+          },
+        ),
         barrierColor: Colors.black.withOpacity(0.5),
         builder: (context) => SafeArea(
+          key: bottomSheetKey,
           child: Container(
             color: Colors.transparent,
             child: Container(
