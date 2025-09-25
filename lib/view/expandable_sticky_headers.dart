@@ -38,7 +38,6 @@ class _ExpandableSliverStickyHeaderState
       headerBuilder:
           (BuildContext context, SliverStickyCollapsablePanelStatus status) {
         return Container(
-          color: AppColor.auGreyBackground,
           padding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
           alignment: Alignment.centerLeft,
           child: Column(

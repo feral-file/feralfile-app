@@ -140,7 +140,7 @@ Type or paste an address into the command bar to load''',
                         style: const TextStyle(color: AppColor.white),
                       ),
                     );
-                  } else if (collectionState.compactedAssetTokens.isEmpty) {
+                  } else if (collectionState.addressAssetTokens.isEmpty) {
                     return Column(
                       children: [
                         Expanded(
@@ -181,20 +181,7 @@ Type or paste an address into the command bar to load''',
                                     scrollController: _scrollController,
                                   );
                                 },
-                              ).toList()
-                            else
-                              SliverToBoxAdapter(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 32, horizontal: 12),
-                                  child: Text(
-                                    'collection_empty_now'.tr(),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .ppMori400White12,
-                                  ),
-                                ),
-                              ),
+                              ).toList(),
                             if (collectionState.isLazyLoading &&
                                 collectionState.addressAssetTokens.isNotEmpty)
                               SliverToBoxAdapter(

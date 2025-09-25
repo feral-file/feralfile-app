@@ -1518,7 +1518,6 @@ class UIHelper {
     required ScrollController scrollController,
   }) {
     return ExpandableSliverStickyHeader(
-        key: Key(title),
         header:
             Text(title, style: Theme.of(context).textTheme.ppMori400White12),
         initiallyExpanded: isExpanded,
