@@ -749,6 +749,38 @@
       }
     }
   },
+  "CollectionItem/base": {
+    "CollectionItem": {
+      "color": {
+        "$type": "color",
+        "$value": "{primitives.colors.white}"
+      },
+      "borderColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.black}"
+      },
+      "paddingHorizontal": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "paddingVertical": {
+        "$type": "dimension",
+        "$value": "16px"
+      },
+      "iconWidth": {
+        "$type": "dimension",
+        "$value": "9px"
+      },
+      "iconHeight": {
+        "$type": "dimension",
+        "$value": "18px"
+      },
+      "deleteIconSize": {
+        "$type": "dimension",
+        "$value": "15px"
+      }
+    }
+  },
   "$themes": [],
   "$metadata": {
     "tokenSetOrder": [
@@ -764,7 +796,8 @@
       "Header/base",
       "IndexSubNav/base",
       "PlaylistHeader/base",
-      "NoticeBanner/base"
+      "NoticeBanner/base",
+      "CollectionItem/base"
     ]
   }
 }
