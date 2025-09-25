@@ -134,6 +134,7 @@ dependencies:
   meilisearch: ^0.17.0
   objectbox: ^4.0.2
   objectbox_flutter_libs: ^4.0.2
+  sticky_headers: ^0.3.0+2
 
 dev_dependencies:
   retrofit_generator: ^9.3.0

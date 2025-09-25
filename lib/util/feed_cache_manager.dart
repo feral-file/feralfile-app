@@ -202,6 +202,9 @@ class FeedCacheManager {
         await injector<DP1FeedService>().getAllPlaylists(usingCache: false);
     final channels =
         await injector<DP1FeedService>().getAllChannels(usingCache: false);
+    log.info(
+        'Reloaded cache: ${channels.items.length} channels, ${playlists.items.length} playlists');
+    clearAll();
     addListChannelsToCache(channels.items);
     addListPlaylistsToCache(playlists.items);
     _onCacheUpdated();

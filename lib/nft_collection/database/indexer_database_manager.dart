@@ -5,11 +5,14 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/nft_collection/models/objectbox_entities.dart';
 import 'package:autonomy_flutter/objectbox.g.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:sentry/sentry.dart';
 
@@ -110,6 +113,40 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
     } finally {
       query.close();
     }
+  }
+
+  @override
+  List<AddressAssetTokens> getGroupAssetTokensByOwnersGroupByAddress(
+      {required List<String> owners,
+      IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.lastActivityTime}) {
+    final groupByAddress = <AddressAssetTokens>[];
+    log.info('[getGroupAssetTokensByOwnersGroupByAddress] Owners: $owners');
+    for (final owner in owners) {
+      final assetTokens =
+          getAssetTokensByOwner(ownerAddress: owner, sortBy: sortBy);
+      final address = assetTokens.first.owner;
+      final compactedAssetTokens = assetTokens
+          .map(
+            (e) => CompactedAssetToken.fromAssetToken(
+              e,
+            ),
+          )
+          .toList();
+      final walletAddress =
+          injector<AddressService>().getWalletAddress(address);
+      if (walletAddress == null) {
+        log.info(
+            '[getGroupAssetTokensByOwnersGroupByAddress] Wallet address not found: $address');
+        continue;
+      }
+      groupByAddress.add(
+        AddressAssetTokens(
+          address: walletAddress,
+          compactedAssetTokens: compactedAssetTokens,
+        ),
+      );
+    }
+    return groupByAddress;
   }
 
   /// get asset tokens by token ids

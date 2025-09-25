@@ -34,6 +34,8 @@ class _CollectionPageState extends State<CollectionPage>
   late final ViewExistingAddressBloc _addressBloc;
   Timer? _autoRefreshTimer;
 
+  final Map<String, bool> _expandedAddressesMap = {};
+
   @override
   void initState() {
     super.initState();
@@ -42,27 +44,7 @@ class _CollectionPageState extends State<CollectionPage>
   }
 
   @override
-  void afterFirstLayout(BuildContext context) {
-    _autoRefresh();
-  }
-
-  void _autoRefresh() async {
-    _autoRefreshTimer?.cancel();
-    _autoRefreshTimer = Timer.periodic(const Duration(minutes: 1), (_) async {
-      try {
-        final allOwnedPlaylist =
-            await injector<UserDp1PlaylistService>().cachedAllOwnedPlaylist;
-        final dynamicQuery = allOwnedPlaylist.firstDynamicQuery;
-        if (!mounted) return;
-        if (dynamicQuery != null) {
-          _collectionBloc
-              .add(UpdateDynamicQueryEvent(dynamicQuery: dynamicQuery));
-        }
-      } catch (_) {
-        // Silently ignore refresh errors
-      }
-    });
-  }
+  void afterFirstLayout(BuildContext context) {}
 
   @override
   void dispose() {
@@ -173,11 +155,31 @@ class _CollectionPageState extends State<CollectionPage>
                         CustomScrollView(
                           shrinkWrap: true,
                           slivers: [
-                            if (collectionState.compactedAssetTokens.isNotEmpty)
-                              UIHelper.assetTokenSliverGrid(
-                                context,
-                                collectionState.compactedAssetTokens,
-                                'Collection',
+                            if (collectionState.addressAssetTokens.isNotEmpty)
+                              SliverList.builder(
+                                itemBuilder: (context, index) =>
+                                    UIHelper.assetTokenExpandableStickyHeader(
+                                  context,
+                                  compactedAssetTokens: collectionState
+                                      .addressAssetTokens[index]
+                                      .compactedAssetTokens,
+                                  title: collectionState
+                                      .addressAssetTokens[index].address.name,
+                                  isExpanded: _expandedAddressesMap[
+                                          collectionState
+                                              .addressAssetTokens[index]
+                                              .address
+                                              .address] ??
+                                      false,
+                                  onExpandedChanged: (isExpanded) {
+                                    _expandedAddressesMap[collectionState
+                                        .addressAssetTokens[index]
+                                        .address
+                                        .address] = isExpanded;
+                                  },
+                                ),
+                                itemCount:
+                                    collectionState.addressAssetTokens.length,
                               )
                             else
                               SliverToBoxAdapter(
@@ -193,7 +195,7 @@ class _CollectionPageState extends State<CollectionPage>
                                 ),
                               ),
                             if (collectionState.isLazyLoading &&
-                                collectionState.compactedAssetTokens.isNotEmpty)
+                                collectionState.addressAssetTokens.isNotEmpty)
                               SliverToBoxAdapter(
                                 child: Padding(
                                   padding:
@@ -210,7 +212,7 @@ class _CollectionPageState extends State<CollectionPage>
                         ),
                         // Loading overlay when loading and no tokens yet
                         if (collectionState.isLazyLoading &&
-                            collectionState.compactedAssetTokens.isEmpty)
+                            collectionState.addressAssetTokens.isEmpty)
                           Container(
                             color: Colors.black.withOpacity(0.3),
                             child: const Center(
