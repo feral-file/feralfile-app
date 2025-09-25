@@ -40,6 +40,7 @@ import 'package:autonomy_flutter/view/passkey/passkey_login_view.dart';
 import 'package:autonomy_flutter/view/passkey/passkey_register_view.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
+import 'package:autonomy_flutter/view/sliver_expandable_sticky_header.dart';
 import 'package:card_swiper/card_swiper.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
@@ -1508,19 +1509,56 @@ class UIHelper {
         itemCount: compactedAssetTokens.length);
   }
 
-  static ExpandableStickyHeader assetTokenExpandableStickyHeader(
+  static ExpandableSliverStickyHeader assetTokenExpandableSliverStickyHeader(
+    BuildContext context, {
+    required List<CompactedAssetToken> compactedAssetTokens,
+    required String title,
+    bool isExpanded = false,
+    void Function(bool)? onExpandedChanged,
+    required ScrollController scrollController,
+  }) {
+    return ExpandableSliverStickyHeader(
+        key: Key(title),
+        header:
+            Text(title, style: Theme.of(context).textTheme.ppMori400White12),
+        initiallyExpanded: isExpanded,
+        sliver:
+            UIHelper.assetTokenSliverGrid(context, compactedAssetTokens, title),
+        onExpandedChanged: onExpandedChanged,
+        scrollController: scrollController);
+  }
+
+  static SliverExpandableStickyHeader assetTokenSliverExpandableStickyHeader(
     BuildContext context, {
     required List<CompactedAssetToken> compactedAssetTokens,
     required String title,
     bool isExpanded = false,
     required void Function(bool) onExpandedChanged,
   }) {
-    return ExpandableStickyHeader(
-      key: Key(title),
+    return SliverExpandableStickyHeader(
+      key: Key('sliver-$title'),
       header: Text(title, style: Theme.of(context).textTheme.ppMori400White12),
       initiallyExpanded: isExpanded,
-      contentBuilder: (context) =>
-          UIHelper.assetTokenGridView(context, compactedAssetTokens, title),
+      sliverBuilder: (context) => SliverPadding(
+        padding: const EdgeInsets.all(8.0),
+        sliver: SliverGrid(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 188 / 307,
+            crossAxisSpacing: 17,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final asset = compactedAssetTokens[index];
+              return PlaylistItemCard(
+                compactedAssetToken: asset,
+                playlistTitle: title,
+              );
+            },
+            childCount: compactedAssetTokens.length,
+          ),
+        ),
+      ),
       onExpandedChanged: onExpandedChanged,
     );
   }

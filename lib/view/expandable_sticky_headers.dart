@@ -1,70 +1,69 @@
+import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:flutter/material.dart';
-import 'package:sticky_headers/sticky_headers.dart';
+import 'package:sliver_sticky_collapsable_panel/sliver_sticky_collapsable_panel.dart';
 
-class ExpandableStickyHeader extends StatefulWidget {
+class ExpandableSliverStickyHeader extends StatefulWidget {
   final Widget header;
-  final Widget Function(BuildContext) contentBuilder;
+  final Widget sliver;
   final bool initiallyExpanded;
-  final void Function(bool) onExpandedChanged;
+  final void Function(bool)? onExpandedChanged;
+  final ScrollController scrollController;
 
-  const ExpandableStickyHeader({
+  const ExpandableSliverStickyHeader({
     super.key,
     required this.header,
-    required this.contentBuilder,
+    required this.sliver,
     this.initiallyExpanded = true,
-    required this.onExpandedChanged,
+    this.onExpandedChanged,
+    required this.scrollController,
   });
 
   @override
-  State<ExpandableStickyHeader> createState() => _ExpandableStickyHeaderState();
+  State<ExpandableSliverStickyHeader> createState() =>
+      _ExpandableSliverStickyHeaderState();
 }
 
-class _ExpandableStickyHeaderState extends State<ExpandableStickyHeader> {
-  late bool isExpanded;
-
+class _ExpandableSliverStickyHeaderState
+    extends State<ExpandableSliverStickyHeader> {
   @override
   void initState() {
     super.initState();
-    isExpanded = widget.initiallyExpanded;
-  }
-
-  void _toggle() {
-    setState(() {
-      isExpanded = !isExpanded;
-    });
-    widget.onExpandedChanged(isExpanded);
   }
 
   @override
   Widget build(BuildContext context) {
-    return StickyHeader(
-      header: GestureDetector(
-        onTap: _toggle,
-        child: Container(
-          height: 50,
+    return SliverStickyCollapsablePanel(
+      scrollController: widget.scrollController,
+      controller: StickyCollapsablePanelController(),
+      headerBuilder:
+          (BuildContext context, SliverStickyCollapsablePanelStatus status) {
+        return Container(
+          color: AppColor.auGreyBackground,
           padding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
           alignment: Alignment.centerLeft,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
             children: [
-              Expanded(child: widget.header),
-              const SizedBox(width: 8),
-              Icon(
-                isExpanded
-                    ? Icons.keyboard_arrow_up
-                    : Icons.keyboard_arrow_down,
-                color: Colors.white,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(child: widget.header),
+                  const SizedBox(width: 8),
+                  Icon(
+                    status.isExpanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
+                    color: Colors.white,
+                  ),
+                ],
               ),
+              if (status.isPinned)
+                Divider(color: AppColor.primaryBlack, height: 1),
             ],
           ),
-        ),
-      ),
-      content: isExpanded
-          ? Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: widget.contentBuilder(context),
-            )
-          : SizedBox.shrink(),
+        );
+      },
+      sliverPanel: widget.sliver,
+      expandCallback: widget.onExpandedChanged,
     );
   }
 }

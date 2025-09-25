@@ -20,6 +20,7 @@ import 'package:autonomy_flutter/widgets/ff_text_field/ff_text_field.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 
 class CollectionPage extends StatefulWidget {
   const CollectionPage({super.key});
@@ -34,11 +35,16 @@ class _CollectionPageState extends State<CollectionPage>
   late final ViewExistingAddressBloc _addressBloc;
   Timer? _autoRefreshTimer;
 
+  late final ScrollController _scrollController;
+  late final StickyHeaderController _stickyHeaderController;
+
   final Map<String, bool> _expandedAddressesMap = {};
 
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController();
+    _stickyHeaderController = StickyHeaderController();
     _collectionBloc = injector<UserAllOwnCollectionBloc>();
     _addressBloc = ViewExistingAddressBloc(injector(), injector());
   }
@@ -153,34 +159,30 @@ class _CollectionPageState extends State<CollectionPage>
                     return Stack(
                       children: [
                         CustomScrollView(
+                          controller: _scrollController,
                           shrinkWrap: true,
                           slivers: [
                             if (collectionState.addressAssetTokens.isNotEmpty)
-                              SliverList.builder(
-                                itemBuilder: (context, index) =>
-                                    UIHelper.assetTokenExpandableStickyHeader(
-                                  context,
-                                  compactedAssetTokens: collectionState
-                                      .addressAssetTokens[index]
-                                      .compactedAssetTokens,
-                                  title: collectionState
-                                      .addressAssetTokens[index].address.name,
-                                  isExpanded: _expandedAddressesMap[
-                                          collectionState
-                                              .addressAssetTokens[index]
-                                              .address
-                                              .address] ??
-                                      false,
-                                  onExpandedChanged: (isExpanded) {
-                                    _expandedAddressesMap[collectionState
-                                        .addressAssetTokens[index]
-                                        .address
-                                        .address] = isExpanded;
-                                  },
-                                ),
-                                itemCount:
-                                    collectionState.addressAssetTokens.length,
-                              )
+                              ...collectionState.addressAssetTokens.map(
+                                (addressAssetToken) {
+                                  return UIHelper
+                                      .assetTokenExpandableSliverStickyHeader(
+                                    context,
+                                    compactedAssetTokens:
+                                        addressAssetToken.compactedAssetTokens,
+                                    title: addressAssetToken.address.name,
+                                    isExpanded: _expandedAddressesMap[
+                                            addressAssetToken
+                                                .address.address] ??
+                                        false,
+                                    onExpandedChanged: (isExpanded) {
+                                      _expandedAddressesMap[addressAssetToken
+                                          .address.address] = isExpanded;
+                                    },
+                                    scrollController: _scrollController,
+                                  );
+                                },
+                              ).toList()
                             else
                               SliverToBoxAdapter(
                                 child: Padding(
