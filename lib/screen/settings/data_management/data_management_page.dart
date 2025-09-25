@@ -147,7 +147,8 @@ class _DataManagementPageState extends State<DataManagementPage> {
           //redownload data
           await injector<UserDp1PlaylistService>()
               .createAllOwnedPlaylistIfNotExists();
-          injector<UserAllOwnCollectionBloc>().add(RefreshAssetTokens());
+          injector<UserAllOwnCollectionBloc>()
+              .add(RefreshAssetTokens(shouldEmitLoading: true));
           await injector<FeedCacheManager>().reloadCache();
 
           if (!mounted) {

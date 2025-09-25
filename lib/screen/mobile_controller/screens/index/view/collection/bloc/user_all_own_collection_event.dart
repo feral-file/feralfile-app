@@ -3,8 +3,8 @@ part of 'user_all_own_collection_bloc.dart';
 abstract class UserAllOwnCollectionEvent {}
 
 class RefreshAssetTokens extends UserAllOwnCollectionEvent {
+  RefreshAssetTokens({this.shouldEmitLoading = true});
   final bool shouldEmitLoading;
-  RefreshAssetTokens({this.shouldEmitLoading = false});
 }
 
 class UpdateDynamicQueryEvent extends UserAllOwnCollectionEvent {
@@ -14,10 +14,10 @@ class UpdateDynamicQueryEvent extends UserAllOwnCollectionEvent {
 }
 
 class ReloadAssetTokensFromIndexerDatabase extends UserAllOwnCollectionEvent {
-  final IndexerDatabaseSortBy sortBy;
-
   ReloadAssetTokensFromIndexerDatabase(
       {this.sortBy = IndexerDatabaseSortBy.lastActivityTime});
+
+  final IndexerDatabaseSortBy sortBy;
 }
 
 class ClearDataEvent extends UserAllOwnCollectionEvent {}

@@ -11,6 +11,7 @@ import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/nft_collection/models/objectbox_entities.dart';
 import 'package:autonomy_flutter/objectbox.g.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:sentry/sentry.dart';
 
 /// Simple manager wrapping ObjectBox operations for Indexer persistence.
 class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
@@ -77,6 +78,7 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
       return tokenId;
     } catch (e) {
       log.info('Error inserting asset token: $e');
+      Sentry.captureException('Error inserting asset token: $e');
       rethrow;
     }
   }
