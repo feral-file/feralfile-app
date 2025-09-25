@@ -406,7 +406,7 @@ class RecordBloc extends AuBloc<RecordEvent, RecordState> {
     try {
       final walletAddress = WalletAddress(
         address: address,
-        name: domain,
+        name: text,
         createdAt: DateTime.now(),
       );
       await addressService.insertAddress(

@@ -1657,7 +1657,7 @@ class UIHelper {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'remove_account'.tr(),
+                    'Delete Address'.tr(),
                     style: theme.primaryTextTheme.ppMori700White24,
                   ),
                   const SizedBox(height: 40),
@@ -1667,11 +1667,11 @@ class UIHelper {
                       style: theme.primaryTextTheme.ppMori400White14,
                       children: <TextSpan>[
                         TextSpan(
-                          text: 'sure_remove_account'.tr(),
+                          text: 'sure_delete_account'.tr(),
                           //'Are you sure you want to delete the account ',
                         ),
                         TextSpan(
-                          text: '“$accountName”',
+                          text: ' “$accountName”',
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const TextSpan(
@@ -1682,7 +1682,7 @@ class UIHelper {
                   ),
                   const SizedBox(height: 40),
                   PrimaryAsyncButton(
-                    text: 'remove'.tr(),
+                    text: 'delete'.tr(),
                     onTap: () async {
                       await onRemove(walletAddress);
                       Navigator.of(context).pop();

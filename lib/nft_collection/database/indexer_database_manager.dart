@@ -124,14 +124,12 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
     for (final owner in owners) {
       final assetTokens =
           getAssetTokensByOwner(ownerAddress: owner, sortBy: sortBy);
+      if (assetTokens.isEmpty) {
+        log.info(
+            '[getGroupAssetTokensByOwnersGroupByAddress] No asset tokens for owner: $owner');
+        continue;
+      }
       final address = assetTokens.first.owner;
-      final compactedAssetTokens = assetTokens
-          .map(
-            (e) => CompactedAssetToken.fromAssetToken(
-              e,
-            ),
-          )
-          .toList();
       final walletAddress =
           injector<AddressService>().getWalletAddress(address);
       if (walletAddress == null) {
@@ -139,6 +137,14 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
             '[getGroupAssetTokensByOwnersGroupByAddress] Wallet address not found: $address');
         continue;
       }
+      final compactedAssetTokens = assetTokens
+          .map(
+            (e) => CompactedAssetToken.fromAssetToken(
+              e,
+            ),
+          )
+          .toList();
+
       groupByAddress.add(
         AddressAssetTokens(
           address: walletAddress,
