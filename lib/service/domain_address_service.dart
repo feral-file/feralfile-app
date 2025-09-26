@@ -57,7 +57,7 @@ class DomainAddressServiceImpl implements DomainAddressService {
 
   @override
   Future<String?> verifyTNS(String value) async {
-    return _domainService.getAddress(value, cryptoType: CryptoType.ETH);
+    return _domainService.getAddress(value, cryptoType: CryptoType.XTZ);
   }
 
   @override
