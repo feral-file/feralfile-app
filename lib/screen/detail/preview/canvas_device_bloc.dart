@@ -210,8 +210,7 @@ class CanvasDeviceState {
       deviceInfoMap[device.deviceId];
 
   bool isDeviceAlive(BaseDevice device) {
-    final isAlive =
-        deviceAliveMap[device.deviceId] == true && statusOf(device) != null;
+    final isAlive = deviceAliveMap[device.deviceId] == true;
     return isAlive;
   }
 
