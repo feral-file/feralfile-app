@@ -218,7 +218,8 @@ class FFBluetoothService {
           _connectCompleter = null;
         } catch (e, s) {
           log.warning(
-              '[onConnectionStateChanged] Failed to discover characteristics: $e');
+            '[onConnectionStateChanged] Failed to discover characteristics: $e',
+          );
           unawaited(
             Sentry.captureException(
               '[onConnectionStateChanged] Failed to discover characteristics: $e',
@@ -263,7 +264,8 @@ class FFBluetoothService {
         final value = event.value;
         if (characteristic.isWifiConnectCharacteristic) {
           log.info(
-              'WifiConnectCharacteristic receive data: ${value.join(', ')}');
+            'WifiConnectCharacteristic receive data: ${value.join(', ')}',
+          );
           BluetoothNotificationService().handleNotification(value, device);
         }
       },
@@ -366,7 +368,7 @@ class FFBluetoothService {
       await wifiChar.writeWithRetry(bytes);
 
       // Wait for reply with timeout
-      final res = (shouldWaitForReply)
+      final res = shouldWaitForReply
           ? await completer.future.timeout(
               timeout,
               onTimeout: () {
@@ -515,29 +517,36 @@ class FFBluetoothService {
   // completer for multi call connectToDevice
   Completer<void>? _multiConnectCompleter;
 
-  Future<void> scanAndConnect(FFBluetoothDevice device) async {
+  Future<void> scanAndConnect(
+    FFBluetoothDevice device, {
+    bool shouldShowError = true,
+    Duration timeout = const Duration(seconds: 30),
+  }) async {
+    FFBluetoothDevice blDevice = device;
     if (device.remoteId.str.isEmpty) {
-      log.warning('FF1 remoteId is empty');
-      throw Exception('FF1 remoteId is empty');
+      final result = await scanForName(name: device.deviceId);
+      if (result == null) {
+        log.warning('FF1 not found during scan');
+        throw Exception('FF1 not found during scan');
+      } else {
+        final newFF1 = device.copyWith(remoteID: result.remoteId.str);
+        await BluetoothDeviceManager().addDevice(newFF1);
+        blDevice = newFF1;
+      }
     }
 
-    final result = await scanForName(name: device.deviceId);
-    if (result == null) {
-      log.warning('FF1 not found during scan');
-      throw Exception('FF1 not found during scan');
-    } else {
-      final newFF1 = device.copyWith(remoteID: result.remoteId.str);
-      await BluetoothDeviceManager().addDevice(newFF1);
-    }
-    if (device.isDisconnected) {
-      await connectToDevice(device, timeout: const Duration(seconds: 20));
+    if (blDevice.isDisconnected) {
+      await connectToDevice(
+        blDevice,
+        shouldShowError: shouldShowError,
+        timeout: timeout,
+      );
     }
   }
 
   Future<void> connectToDevice(
     BluetoothDevice device, {
     bool shouldShowError = true,
-    bool? autoConnect,
     Duration timeout = const Duration(seconds: 30),
   }) async {
     if (_multiConnectCompleter?.isCompleted == false) {
@@ -579,8 +588,7 @@ class FFBluetoothService {
   }) async {
     log.info('_connectDevice');
     final isDisconnectedWithSuccess = (Object e) {
-      if (e is FFBluetoothDisconnectedError &&
-          (e as FFBluetoothDisconnectedError).disconnectReason?.code == 0) {
+      if (e is FFBluetoothDisconnectedError && e.disconnectReason?.code == 0) {
         return true;
       }
       return false;
@@ -599,8 +607,11 @@ class FFBluetoothService {
     } catch (e) {
       if (isDisconnectedWithSuccess(e)) {
         log.info("Connection is not stable, retrying...");
-        await _connect(device,
-            shouldShowError: (_) => shouldShowError, timeout: timeout);
+        await _connect(
+          device,
+          shouldShowError: (_) => shouldShowError,
+          timeout: timeout,
+        );
       } else {
         throw e;
       }
@@ -819,7 +830,8 @@ class FFBluetoothService {
               ?.call(devices..addAll(FlutterBluePlus.connectedDevices));
           if (shouldStopScan == true) {
             log.info(
-                'Scanned Times: ${DateTime.now().difference(now).inSeconds} seconds');
+              'Scanned Times: ${DateTime.now().difference(now).inSeconds} seconds',
+            );
             foundDevice = true;
             await FlutterBluePlus.stopScan();
           }
@@ -860,21 +872,22 @@ class FFBluetoothService {
 
   Future<void> factoryReset(FFBluetoothDevice device) async {
     if (device.isDisconnected) {
-      await connectToDevice(device, timeout: Duration(seconds: 10));
+      await scanAndConnect(device, timeout: Duration(seconds: 10));
     }
 
     final res = await sendCommand(
-        device: device,
-        command: BluetoothCommand.factoryReset,
-        request: FactoryResetRequest().toJson(),
-        timeout: const Duration(seconds: 30));
+      device: device,
+      command: BluetoothCommand.factoryReset,
+      request: FactoryResetRequest().toJson(),
+      timeout: const Duration(seconds: 30),
+    );
     log.info('[factoryReset] res: $res');
   }
 
   Future<void> sendLog(FFBluetoothDevice device, String? title) async {
     try {
       if (device.isDisconnected) {
-        await connectToDevice(device, timeout: Duration(seconds: 10));
+        await scanAndConnect(device, timeout: Duration(seconds: 10));
       }
       final userId = injector<AuthService>().getUserId();
       final message = title ?? device.getName;
@@ -882,10 +895,11 @@ class FFBluetoothService {
       final request =
           SendLogRequest(userId: userId!, title: message, apiKey: apiKey);
       final res = await sendCommand(
-          device: device,
-          command: BluetoothCommand.sendLog,
-          request: request.toJson(),
-          timeout: const Duration(seconds: 30));
+        device: device,
+        command: BluetoothCommand.sendLog,
+        request: request.toJson(),
+        timeout: const Duration(seconds: 30),
+      );
 
       log.info('[sendLog] res: $res');
     } catch (e) {
@@ -935,9 +949,11 @@ extension BluetoothCharacteristicExt on BluetoothCharacteristic {
             log.info('[writeWithRetry] Error code 14, ignoring');
             return;
           }
-          unawaited(Sentry.captureException(
-            'Failed to write after retry: $e',
-          ));
+          unawaited(
+            Sentry.captureException(
+              'Failed to write after retry: $e',
+            ),
+          );
           rethrow;
         }
       }
@@ -991,8 +1007,11 @@ class FactoryResetRequest extends BluetoothRequest {
 class FactoryResetResponse extends BluetoothResponse {}
 
 class SendLogRequest implements FF1Request {
-  SendLogRequest(
-      {required this.userId, required this.title, required this.apiKey});
+  SendLogRequest({
+    required this.userId,
+    required this.title,
+    required this.apiKey,
+  });
 
   factory SendLogRequest.fromJson(Map<String, dynamic> json) => SendLogRequest(
         userId: json['userId'] as String,
