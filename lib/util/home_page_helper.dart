@@ -98,6 +98,8 @@ class HomePageHelper {
       ),
     );
 
+    unawaited(NowDisplayingManager().updateDisplayingNow());
+
     context.read<HomeBloc>().add(CheckReviewAppEvent());
 
     // _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
