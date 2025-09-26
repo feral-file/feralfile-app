@@ -84,7 +84,8 @@ class NowDisplayingManager {
       }
 
       if (status == null) {
-        throw Exception('Failed to get Now Displaying');
+        _addStatus(NowDisplayingError(CannotGetNowDisplayingException()));
+        return;
       }
 
       if (status.castCommand == CastCommand.castDaily && status.items == null) {
