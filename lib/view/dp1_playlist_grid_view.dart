@@ -7,6 +7,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/pla
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
@@ -51,9 +52,12 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
   @override
   void didUpdateWidget(covariant PlaylistAssetGridView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.playlist.isItemsEqual(widget.playlist))
+    if (!oldWidget.playlist.isItemsEqual(widget.playlist)) {
       _playlistDetailsBloc
           .add(SetPlaylistDetailsEvent(playlist: widget.playlist));
+    } else {
+      log.info('PlaylistAssetGridView: didUpdateWidget no need to update');
+    }
   }
 
   @override
