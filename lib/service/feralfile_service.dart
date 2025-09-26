@@ -137,11 +137,16 @@ abstract class FeralFileService {
   static const int offset = 0;
   static const int limit = 300;
 
-  Future<FFSeries> getSeries(String id,
-      {String? exhibitionID, bool includeFirstArtwork = false});
+  Future<FFSeries> getSeries(
+    String id, {
+    String? exhibitionID,
+    bool includeFirstArtwork = false,
+  });
 
-  Future<List<FFSeries>> getListSeries(String exhibitionId,
-      {bool includeFirstArtwork = false});
+  Future<List<FFSeries>> getListSeries(
+    String exhibitionId, {
+    bool includeFirstArtwork = false,
+  });
 
   Future<Exhibition?> getExhibitionFromTokenID(String artworkID);
 
@@ -149,8 +154,10 @@ abstract class FeralFileService {
 
   Future<String?> getPartnerFullName(String exhibitionId);
 
-  Future<Exhibition> getExhibition(String id,
-      {bool includeFirstArtwork = false});
+  Future<Exhibition> getExhibition(
+    String id, {
+    bool includeFirstArtwork = false,
+  });
 
   Future<List<Exhibition>> getAllExhibitions({
     String sortBy = 'openAt',
@@ -173,8 +180,12 @@ abstract class FeralFileService {
   Future<List<Artwork>> getFeaturedArtworks();
 
   Future<FeralFileListResponse<Artwork>> getSeriesArtworks(
-      String seriesId, String exhibitionID,
-      {bool withSeries = false, int offset = offset, int limit = limit});
+    String seriesId,
+    String exhibitionID, {
+    bool withSeries = false,
+    int offset = offset,
+    int limit = limit,
+  });
 
   Future<Artwork?> getFirstViewableArtwork(String seriesId);
 
@@ -183,12 +194,6 @@ abstract class FeralFileService {
   Future<Artwork?> getSourceArtwork(String artworkId);
 
   Future<DailyToken?> getCurrentDailiesToken();
-
-  Future<List<DailyToken>> getUpcomingDailyTokens({
-    String? startDate,
-    int offset = 0,
-    int limit = 3,
-  });
 
   Future<FeralFileListResponse<FFSeries>> exploreArtworks({
     String? sortBy,
@@ -205,14 +210,15 @@ abstract class FeralFileService {
     Map<FilterType, FilterValue> filters = const {},
   });
 
-  Future<FeralFileListResponse<AlumniAccount>> getListAlumni(
-      {int limit = 20,
-      int offset = 0,
-      bool isArtist = false,
-      bool isCurator = false,
-      String keywork = '',
-      String orderBy = 'relevance',
-      String sortOrder = 'DESC'});
+  Future<FeralFileListResponse<AlumniAccount>> getListAlumni({
+    int limit = 20,
+    int offset = 0,
+    bool isArtist = false,
+    bool isCurator = false,
+    String keywork = '',
+    String orderBy = 'relevance',
+    String sortOrder = 'DESC',
+  });
 
   Future<AlumniAccount> getAlumniDetail(String alumniID);
 
@@ -233,27 +239,31 @@ abstract class FeralFileService {
 }
 
 class FeralFileServiceImpl extends FeralFileService {
+  FeralFileServiceImpl(
+    this._feralFileApi,
+    this._sourceExhibitionAPI,
+  );
   final FeralFileApi _feralFileApi;
   final SourceExhibitionAPI _sourceExhibitionAPI;
   Exhibition? sourceExhibition;
   List<BeforeMintingArtworkInfo> beforeMintingArtworkInfos = [];
 
-  FeralFileServiceImpl(
-    this._feralFileApi,
-    this._sourceExhibitionAPI,
-  );
-
   @override
-  Future<FFSeries> getSeries(String id,
-      {String? exhibitionID, bool includeFirstArtwork = false}) async {
+  Future<FFSeries> getSeries(
+    String id, {
+    String? exhibitionID,
+    bool includeFirstArtwork = false,
+  }) async {
     if (exhibitionID == SOURCE_EXHIBITION_ID) {
-      return await _getSourceSeries(
+      return _getSourceSeries(
         id,
         includeFirstArtwork: includeFirstArtwork,
       );
     }
     final series = (await _feralFileApi.getSeries(
-            seriesId: id, includeFirstArtwork: includeFirstArtwork))
+      seriesId: id,
+      includeFirstArtwork: includeFirstArtwork,
+    ))
         .result;
 
     if (includeFirstArtwork && series.artwork == null) {
@@ -273,13 +283,17 @@ class FeralFileServiceImpl extends FeralFileService {
   }
 
   @override
-  Future<Exhibition> getExhibition(String id,
-      {bool includeFirstArtwork = false}) async {
+  Future<Exhibition> getExhibition(
+    String id, {
+    bool includeFirstArtwork = false,
+  }) async {
     if (id == SOURCE_EXHIBITION_ID) {
       return getSourceExhibition();
     }
-    final resp = await _feralFileApi.getExhibition(id,
-        includeFirstArtwork: includeFirstArtwork);
+    final resp = await _feralFileApi.getExhibition(
+      id,
+      includeFirstArtwork: includeFirstArtwork,
+    );
     final exhibition = resp.result!;
 
     if (includeFirstArtwork &&
@@ -324,8 +338,11 @@ class FeralFileServiceImpl extends FeralFileService {
       return getExhibition(artwork.result.series?.exhibitionID ?? '');
     } catch (e) {
       log.info('[FeralFileService] Failed to get exhibition from token ID: $e');
-      unawaited(Sentry.captureException(
-          '[FeralFileService] getExhibitionFromTokenID: $e'));
+      unawaited(
+        Sentry.captureException(
+          '[FeralFileService] getExhibitionFromTokenID: $e',
+        ),
+      );
       return null;
     }
   }
@@ -395,12 +412,16 @@ class FeralFileServiceImpl extends FeralFileService {
   }
 
   Future<List<Artwork>> _getFakeSeriesArtworks(
-      Exhibition exhibition, FFSeries series, int offset, int limit) async {
+    Exhibition exhibition,
+    FFSeries series,
+    int offset,
+    int limit,
+  ) async {
     if (!series.shouldFakeArtwork) {
       return [];
     }
     if (exhibition.isJohnGerrardShow) {
-      return await _getJohnGerrardFakeArtworks(
+      return _getJohnGerrardFakeArtworks(
         series: series,
         offset: offset,
         limit: limit,
@@ -413,7 +434,11 @@ class FeralFileServiceImpl extends FeralFileService {
   }
 
   Future<List<Artwork>> _createFakeSeriesArtworks(
-      FFSeries series, Exhibition exhibition, int offset, int limit) async {
+    FFSeries series,
+    Exhibition exhibition,
+    int offset,
+    int limit,
+  ) async {
     final List<Artwork> artworks = [];
     final maxArtworks =
         min(offset + limit, series.settings?.maxArtwork ?? offset + limit);
@@ -454,10 +479,11 @@ class FeralFileServiceImpl extends FeralFileService {
     return artworks;
   }
 
-  String getFeralfileTokenId(
-      {required String seriesOnchainID,
-      required String exhibitionID,
-      required int artworkIndex}) {
+  String getFeralfileTokenId({
+    required String seriesOnchainID,
+    required String exhibitionID,
+    required int artworkIndex,
+  }) {
     final BigInt si = BigInt.parse(seriesOnchainID);
     final BigInt msi = si * BigInt.from(1000000) + BigInt.from(artworkIndex);
     final String part1 = exhibitionID.replaceAll('-', '');
@@ -469,21 +495,26 @@ class FeralFileServiceImpl extends FeralFileService {
     return tokenID;
   }
 
-  Future<String> previewArtCustomTokenID(
-      {required String seriesOnchainID,
-      required String exhibitionID,
-      required int artworkIndex}) async {
+  Future<String> previewArtCustomTokenID({
+    required String seriesOnchainID,
+    required String exhibitionID,
+    required int artworkIndex,
+  }) async {
     final String tokenID = getFeralfileTokenId(
-        seriesOnchainID: seriesOnchainID,
-        exhibitionID: exhibitionID,
-        artworkIndex: artworkIndex);
+      seriesOnchainID: seriesOnchainID,
+      exhibitionID: exhibitionID,
+      artworkIndex: artworkIndex,
+    );
     final Uint8List tokenIDBytes = utf8.encode(tokenID);
     final String tokenIDHash = sha256.convert(tokenIDBytes).toString();
     return '&token_id=$tokenID&token_id_hash=0x$tokenIDHash';
   }
 
   Future<String?> _getPreviewURI(
-      FFSeries series, int artworkIndex, Exhibition exhibition) async {
+    FFSeries series,
+    int artworkIndex,
+    Exhibition exhibition,
+  ) async {
     String? previewURI;
     if (!series.isMultiUnique) {
       previewURI = getFFUrl(series.previewFile?.uri ?? '');
@@ -525,8 +556,11 @@ class FeralFileServiceImpl extends FeralFileService {
           : series.thumbnailURI ?? '';
 
   Future<FeralFileListResponse<Artwork>> _fakeSeriesArtworks(
-      String seriesId, Exhibition exhibition,
-      {required int offset, required int limit}) async {
+    String seriesId,
+    Exhibition exhibition, {
+    required int offset,
+    required int limit,
+  }) async {
     final series = await getSeries(seriesId);
     final List<Artwork> seriesArtworks =
         await _getFakeSeriesArtworks(exhibition, series, offset, limit);
@@ -534,49 +568,61 @@ class FeralFileServiceImpl extends FeralFileService {
         ? series.maxEdition
         : series.latestRevealedArtworkIndex! + 1;
     return FeralFileListResponse(
-        result: seriesArtworks,
-        paging: Paging(offset: offset, limit: limit, total: total));
+      result: seriesArtworks,
+      paging: Paging(offset: offset, limit: limit, total: total),
+    );
   }
 
   @override
   Future<FeralFileListResponse<Artwork>> getSeriesArtworks(
-      String seriesId, String exhibitionID,
-      {bool withSeries = false,
-      int offset = FeralFileService.offset,
-      int limit = FeralFileService.limit}) async {
+    String seriesId,
+    String exhibitionID, {
+    bool withSeries = false,
+    int offset = FeralFileService.offset,
+    int limit = FeralFileService.limit,
+  }) async {
     if (exhibitionID == SOURCE_EXHIBITION_ID) {
       final artworks = await _getSourceSeriesArtworks(seriesId);
       return FeralFileListResponse(
-          result:
-              artworks.sublist(offset, min(artworks.length, offset + limit)),
-          paging: Paging(offset: 0, limit: limit, total: artworks.length));
+        result: artworks.sublist(offset, min(artworks.length, offset + limit)),
+        paging: Paging(offset: 0, limit: limit, total: artworks.length),
+      );
     }
     final exhibition = await getExhibition(exhibitionID);
 
     if (!exhibition.isMinted) {
-      return await _fakeSeriesArtworks(seriesId, exhibition,
-          offset: offset, limit: limit);
+      return _fakeSeriesArtworks(
+        seriesId,
+        exhibition,
+        offset: offset,
+        limit: limit,
+      );
     }
 
     final FeralFileListResponse<Artwork> artworksResponse;
     if (seriesId == CrawlHelper.mergeSeriesID) {
       artworksResponse = await _feralFileApi.getListArtworks(
-          seriesId: seriesId,
-          offset: offset,
-          limit: limit,
-          sortOrder: 'DESC',
-          filterBurned: true);
+        seriesId: seriesId,
+        offset: offset,
+        limit: limit,
+        sortOrder: 'DESC',
+        filterBurned: true,
+      );
     } else {
       artworksResponse = await _feralFileApi.getListArtworks(
-          seriesId: seriesId, offset: offset, limit: limit);
+        seriesId: seriesId,
+        offset: offset,
+        limit: limit,
+      );
     }
 
     if (withSeries) {
       final series = await getSeries(seriesId);
       artworksResponse.copyWith(
-          result: artworksResponse.result
-              .map((e) => e.copyWith(series: series))
-              .toList());
+        result: artworksResponse.result
+            .map((e) => e.copyWith(series: series))
+            .toList(),
+      );
     }
     log
       ..info(
@@ -632,14 +678,19 @@ class FeralFileServiceImpl extends FeralFileService {
   }
 
   @override
-  Future<List<FFSeries>> getListSeries(String exhibitionId,
-      {bool includeFirstArtwork = false}) async {
+  Future<List<FFSeries>> getListSeries(
+    String exhibitionId, {
+    bool includeFirstArtwork = false,
+  }) async {
     if (exhibitionId == SOURCE_EXHIBITION_ID) {
       final exhibition = await getSourceExhibition();
       return exhibition.series ?? [];
     }
     final response = await _feralFileApi.getListSeries(
-        exhibitionID: exhibitionId, sortBy: 'displayIndex', sortOrder: 'ASC');
+      exhibitionID: exhibitionId,
+      sortBy: 'displayIndex',
+      sortOrder: 'ASC',
+    );
     return response.result;
   }
 
@@ -678,8 +729,10 @@ class FeralFileServiceImpl extends FeralFileService {
     return sourceExhibition!;
   }
 
-  Future<FFSeries> _getSourceSeries(String seriesID,
-      {bool includeFirstArtwork = false}) async {
+  Future<FFSeries> _getSourceSeries(
+    String seriesID, {
+    bool includeFirstArtwork = false,
+  }) async {
     late List<FFSeries> listSeries;
     if (sourceExhibition != null && sourceExhibition!.series != null) {
       listSeries = sourceExhibition!.series!;
@@ -705,7 +758,8 @@ class FeralFileServiceImpl extends FeralFileService {
 
   // John Gerrard exhibition
   Future<List<BeforeMintingArtworkInfo>> _getBeforeMintingArtworkInfos(
-      FFSeries series) async {
+    FFSeries series,
+  ) async {
     if (beforeMintingArtworkInfos.isNotEmpty) {
       return beforeMintingArtworkInfos;
     }
@@ -753,7 +807,7 @@ class FeralFileServiceImpl extends FeralFileService {
       return [];
     }
 
-    List<Artwork> fakeArtworks = [];
+    final List<Artwork> fakeArtworks = [];
     for (var index = offset; index < endIndex; index++) {
       final fakeArtwork = await _getJohnGerrardArtworkByIndex(index, series);
       fakeArtworks.add(fakeArtwork);
@@ -763,7 +817,9 @@ class FeralFileServiceImpl extends FeralFileService {
   }
 
   Future<Artwork> _getJohnGerrardArtworkByIndex(
-      int index, FFSeries series) async {
+    int index,
+    FFSeries series,
+  ) async {
     final beforeMintingArtworkInfos =
         await _getBeforeMintingArtworkInfos(series);
     final artworkId = getFeralfileTokenId(
@@ -772,30 +828,31 @@ class FeralFileServiceImpl extends FeralFileService {
       artworkIndex: index,
     );
     return Artwork(
-        artworkId,
-        series.id,
-        index,
-        beforeMintingArtworkInfos[index].artworkTitle,
-        '',
-        null,
-        null,
-        null,
-        '',
-        false,
-        'previews/${series.id}/${series.previewFile?.version}/generated_images/crystal_${index + MAGIC_NUMBER}_img.jpg',
-        null,
-        'previews/${series.id}/${series.previewFile?.version}/nft.html?hourIdx=${index + MAGIC_NUMBER}',
-        {},
-        {
-          'viewableAt': beforeMintingArtworkInfos[index].viewableAt,
-        },
-        DateTime.now(),
-        DateTime.now(),
-        DateTime.now(),
-        null,
-        series,
-        null,
-        null);
+      artworkId,
+      series.id,
+      index,
+      beforeMintingArtworkInfos[index].artworkTitle,
+      '',
+      null,
+      null,
+      null,
+      '',
+      false,
+      'previews/${series.id}/${series.previewFile?.version}/generated_images/crystal_${index + MAGIC_NUMBER}_img.jpg',
+      null,
+      'previews/${series.id}/${series.previewFile?.version}/nft.html?hourIdx=${index + MAGIC_NUMBER}',
+      {},
+      {
+        'viewableAt': beforeMintingArtworkInfos[index].viewableAt,
+      },
+      DateTime.now(),
+      DateTime.now(),
+      DateTime.now(),
+      null,
+      series,
+      null,
+      null,
+    );
   }
 
   Future<List<DailyToken>> _fetchDailiesTokens() async {
@@ -810,9 +867,12 @@ class FeralFileServiceImpl extends FeralFileService {
 
   Future<List<DailyToken>> _fetchDailyTokenByDate(DateTime localTime) async {
     const defaultScheduleTime = 6;
-    final configScheduleTime = injector<RemoteConfigService>()
-        .getConfig<String>(ConfigGroup.daily, ConfigKey.scheduleTime,
-            defaultScheduleTime.toString());
+    final configScheduleTime =
+        injector<RemoteConfigService>().getConfig<String>(
+      ConfigGroup.daily,
+      ConfigKey.scheduleTime,
+      defaultScheduleTime.toString(),
+    );
 
     // the daily artwork change at configScheduleTime
     // so we will subtract configScheduleTime hours to get the correct date
@@ -821,28 +881,17 @@ class FeralFileServiceImpl extends FeralFileService {
     final dateFormatter = DateFormat('yyyy-MM-dd');
 
     final resp = await _feralFileApi.getDailiesTokenByDate(
-        date: dateFormatter.format(date));
+      date: dateFormatter.format(date),
+    );
     final dailiesTokens = resp.result;
     return dailiesTokens;
-  }
-
-  @override
-  Future<List<DailyToken>> getUpcomingDailyTokens({
-    String? startDate,
-    int offset = 0,
-    int limit = 3,
-  }) async {
-    final resp =
-        await _feralFileApi.getDailiesToken(limit: limit, startDate: startDate);
-    final dailyTokens = resp.result;
-    return dailyTokens;
   }
 
   @override
   Future<DailyToken?> getCurrentDailiesToken() async {
     // call nextDailies to make daily tokens up to date
     await _fetchDailiesTokens();
-    DailyToken? currentDailiesToken = DailiesHelper.currentDailies;
+    final DailyToken? currentDailiesToken = DailiesHelper.currentDailies;
     return currentDailiesToken;
   }
 
@@ -886,22 +935,24 @@ class FeralFileServiceImpl extends FeralFileService {
   }
 
   @override
-  Future<FeralFileListResponse<AlumniAccount>> getListAlumni(
-      {int limit = 20,
-      int offset = 0,
-      bool isArtist = false,
-      bool isCurator = false,
-      String keywork = '',
-      String orderBy = 'relevance',
-      String sortOrder = 'DESC'}) async {
+  Future<FeralFileListResponse<AlumniAccount>> getListAlumni({
+    int limit = 20,
+    int offset = 0,
+    bool isArtist = false,
+    bool isCurator = false,
+    String keywork = '',
+    String orderBy = 'relevance',
+    String sortOrder = 'DESC',
+  }) async {
     final res = await _feralFileApi.getListAlumni(
-        limit: limit,
-        offset: offset,
-        isArtist: isArtist,
-        isCurator: isCurator,
-        keyword: keywork,
-        sortOrder: sortOrder,
-        sortBy: orderBy);
+      limit: limit,
+      offset: offset,
+      isArtist: isArtist,
+      isCurator: isCurator,
+      keyword: keywork,
+      sortOrder: sortOrder,
+      sortBy: orderBy,
+    );
     return res;
   }
 
