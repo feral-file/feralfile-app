@@ -200,8 +200,9 @@ Type or paste an address into the command bar to load''',
                                             });
                                           },
                                           child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 12, vertical: 16),
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 16,
+                                            ),
                                             child: Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment.center,
