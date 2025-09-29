@@ -281,6 +281,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                             },
                             child: SuperTooltip(
                               popupDirection: TooltipDirection.down,
+                              hideTooltipOnTap: true,
                               popupDirectionBuilder: () =>
                                   TooltipDirection.down,
                               decorationBuilder: (context) => BoxDecoration(
@@ -338,6 +339,8 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                                               const SizedBox(height: 24),
                                               PrimaryButton(
                                                 onTap: () {
+                                                  tooltipController
+                                                      .hideTooltip();
                                                   injector<NavigationService>()
                                                       .navigateTo(
                                                     AppRouter.supportThreadPage,
