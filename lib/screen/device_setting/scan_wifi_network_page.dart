@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
+import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/service/bluetooth_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
@@ -67,12 +68,16 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
   }
 
   Future<void> _startScan() async {
-    final device = widget.payload.device;
+    var device = widget.payload.device;
     setState(() {
       _isScanning = true;
     });
     try {
-      await injector<FFBluetoothService>().connectToDevice(device);
+      if (device is FFBluetoothDevice && device.remoteID.isEmpty) {
+        device = await injector<FFBluetoothService>().scanAndConnect(device);
+      } else {
+        await injector<FFBluetoothService>().connectToDevice(device);
+      }
     } catch (e) {
       setState(() {
         _isScanning = false;

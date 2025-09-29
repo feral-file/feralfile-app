@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/error/bluetooth_response_error.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/customer_support/support_thread_page.dart';
@@ -145,15 +146,21 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                   onTap: () async {
                     final ssid = widget.payload.wifiAccessPoint.ssid;
                     final password = passwordController.text.trim();
-                    final bleDevice = widget.payload.device;
+                    var bleDevice = widget.payload.device;
                     setState(() {
                       _isProcessing = true;
                     });
                     try {
                       // Check if the device is connected
                       if (!bleDevice.isConnected) {
-                        await injector<FFBluetoothService>()
-                            .connectToDevice(bleDevice);
+                        if (bleDevice is FFBluetoothDevice &&
+                            bleDevice.remoteID.isEmpty) {
+                          bleDevice = await injector<FFBluetoothService>()
+                              .scanAndConnect(bleDevice);
+                        } else {
+                          await injector<FFBluetoothService>()
+                              .connectToDevice(bleDevice);
+                        }
                       }
                       final topicId = await injector<FFBluetoothService>()
                           .sendWifiCredentials(

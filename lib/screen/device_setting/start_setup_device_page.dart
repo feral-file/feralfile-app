@@ -138,12 +138,12 @@ class BluetoothDevicePortalPageState extends State<BluetoothDevicePortalPage>
                 child: PrimaryAsyncButton(
                   onTap: () async {
                     try {
-                      final device = widget.payload.device;
+                      var device = widget.payload.device;
                       if (device is FFBluetoothDevice &&
                           device.remoteID.isEmpty) {
                         log.info(
                             'Device ${device.name} has empty remoteID, scan and connect');
-                        await injector<FFBluetoothService>()
+                        device = await injector<FFBluetoothService>()
                             .scanAndConnect(device);
                       } else {
                         await injector<FFBluetoothService>()

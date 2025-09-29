@@ -517,12 +517,12 @@ class FFBluetoothService {
   // completer for multi call connectToDevice
   Completer<void>? _multiConnectCompleter;
 
-  Future<void> scanAndConnect(
+  Future<FFBluetoothDevice> scanAndConnect(
     FFBluetoothDevice device, {
     bool shouldShowError = true,
     Duration timeout = const Duration(seconds: 30),
   }) async {
-    FFBluetoothDevice blDevice = device;
+    var blDevice = device;
     if (device.remoteId.str.isEmpty) {
       final result = await scanForName(name: device.deviceId);
       if (result == null) {
@@ -542,6 +542,7 @@ class FFBluetoothService {
         timeout: timeout,
       );
     }
+    return blDevice;
   }
 
   Future<void> connectToDevice(
@@ -774,7 +775,7 @@ class FFBluetoothService {
       return;
     }
     final haftTimeout = timeout ~/ 2;
-    bool deviceFound = await _startScan(
+    var deviceFound = await _startScan(
       timeout: haftTimeout,
       onData: onData,
       onError: onError,
@@ -802,7 +803,7 @@ class FFBluetoothService {
     FutureOr<bool> Function(List<BluetoothDevice>)? onData,
     FutureOr<void> Function(dynamic)? onError,
   }) async {
-    bool foundDevice = false;
+    var foundDevice = false;
     try {
       await listenForAdapterState();
 
