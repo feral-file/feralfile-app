@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
+import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/error/bluetooth_response_error.dart';
 import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
@@ -138,8 +139,16 @@ class BluetoothDevicePortalPageState extends State<BluetoothDevicePortalPage>
                   onTap: () async {
                     try {
                       final device = widget.payload.device;
-                      await injector<FFBluetoothService>()
-                          .connectToDevice(device);
+                      if (device is FFBluetoothDevice &&
+                          device.remoteID.isEmpty) {
+                        log.info(
+                            'Device ${device.name} has empty remoteID, scan and connect');
+                        await injector<FFBluetoothService>()
+                            .scanAndConnect(device);
+                      } else {
+                        await injector<FFBluetoothService>()
+                            .connectToDevice(device);
+                      }
                       final canSkipNetworkSetup =
                           widget.payload.canSkipNetworkSetup;
                       if (canSkipNetworkSetup) {

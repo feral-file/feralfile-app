@@ -245,10 +245,10 @@ class BluetoothConnectedDeviceConfigState
                 _buildDeviceSwitcher(context),
                 BlocBuilder<CanvasDeviceBloc, CanvasDeviceState>(
                   bloc: injector<CanvasDeviceBloc>(),
-                  buildWhen: (previous, current) {
-                    return previous.isDeviceAlive(selectedDevice) !=
-                        current.isDeviceAlive(selectedDevice);
-                  },
+                  // buildWhen: (previous, current) {
+                  //   return previous.isDeviceAlive(selectedDevice) !=
+                  //       current.isDeviceAlive(selectedDevice);
+                  // },
                   builder: (context, state) {
                     return Container(
                       padding: const EdgeInsets.all(8),
@@ -497,10 +497,10 @@ class BluetoothConnectedDeviceConfigState
     return BlocConsumer<CanvasDeviceBloc, CanvasDeviceState>(
       bloc: injector<CanvasDeviceBloc>(),
       listener: (context, _) {},
-      buildWhen: (previous, current) {
-        return previous.isDeviceAlive(blDevice) !=
-            current.isDeviceAlive(blDevice);
-      },
+      // buildWhen: (previous, current) {
+      //   return previous.isDeviceAlive(blDevice) !=
+      //       current.isDeviceAlive(blDevice);
+      // },
       builder: (context, state) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -541,11 +541,11 @@ class BluetoothConnectedDeviceConfigState
     final blDevice = selectedDevice!;
     return BlocBuilder<CanvasDeviceBloc, CanvasDeviceState>(
       bloc: injector<CanvasDeviceBloc>(),
-      buildWhen: (previous, current) {
-        return previous.statusOf(blDevice)?.deviceSettings?.scaling !=
-                current.statusOf(blDevice)?.deviceSettings?.scaling ||
-            previous.isDeviceAlive(blDevice) != current.isDeviceAlive(blDevice);
-      },
+      // buildWhen: (previous, current) {
+      //   return previous.statusOf(blDevice)?.deviceSettings?.scaling !=
+      //           current.statusOf(blDevice)?.deviceSettings?.scaling ||
+      //       previous.isDeviceAlive(blDevice) != current.isDeviceAlive(blDevice);
+      // },
       builder: (context, state) {
         final deviceState = state.statusOf(blDevice);
         final artFramingIndex =
@@ -615,10 +615,10 @@ class BluetoothConnectedDeviceConfigState
   Widget _wifiConfig(BuildContext context) {
     return BlocBuilder<CanvasDeviceBloc, CanvasDeviceState>(
       bloc: injector<CanvasDeviceBloc>(),
-      buildWhen: (previous, current) {
-        return previous.isDeviceAlive(selectedDevice!) !=
-            current.isDeviceAlive(selectedDevice!);
-      },
+      // buildWhen: (previous, current) {
+      //   return previous.isDeviceAlive(selectedDevice!) !=
+      //       current.isDeviceAlive(selectedDevice!);
+      // },
       builder: (context, state) {
         final isEnabled =
             state.isDeviceAlive(selectedDevice!) && deviceStatus != null;
@@ -666,7 +666,7 @@ class BluetoothConnectedDeviceConfigState
   }
 
   FutureOr<void> onWifiSelected(WifiPoint accessPoint) {
-    final blDevice = selectedDevice!;
+    final blDevice = selectedDevice;
     log.info('onWifiSelected: $accessPoint');
     final payload = SendWifiCredentialsPagePayload(
       wifiAccessPoint: accessPoint,
@@ -717,9 +717,9 @@ class BluetoothConnectedDeviceConfigState
     return BlocConsumer<CanvasDeviceBloc, CanvasDeviceState>(
       bloc: injector<CanvasDeviceBloc>(),
       listener: (context, state) {},
-      buildWhen: (previous, current) {
-        return previous.isDeviceAlive(device) != current.isDeviceAlive(device);
-      },
+      // buildWhen: (previous, current) {
+      //   return previous.isDeviceAlive(device) != current.isDeviceAlive(device);
+      // },
       builder: (context, state) {
         final isBLEDeviceConnected = state.isDeviceAlive(device);
         return Column(
