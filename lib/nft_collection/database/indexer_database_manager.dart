@@ -106,7 +106,13 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
         .build();
     try {
       final results = query.find();
-      return results.map((e) => e.toAssetToken()).toList();
+      final allAssetTokens = results.map((e) => e.toAssetToken()).toList();
+      final filteredAssetTokens = allAssetTokens
+          .where((assetToken) =>
+              assetToken.owners[ownerAddress] != null &&
+              assetToken.owners[ownerAddress]! >= 0)
+          .toList();
+      return filteredAssetTokens;
     } catch (e) {
       log.info('Error getting asset tokens by owner: $e');
       return [];
@@ -124,11 +130,6 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
     for (final owner in owners) {
       final assetTokens =
           getAssetTokensByOwner(ownerAddress: owner, sortBy: sortBy);
-      if (assetTokens.isEmpty) {
-        log.info(
-            '[getGroupAssetTokensByOwnersGroupByAddress] No asset tokens for owner: $owner');
-        continue;
-      }
       final address = assetTokens.first.owner;
       final walletAddress =
           injector<AddressService>().getWalletAddress(address);
