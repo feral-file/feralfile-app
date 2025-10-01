@@ -76,20 +76,21 @@ class WorksBloc extends Bloc<WorksEvent, WorksState> {
         emit(state.copyWith(status: WorksStateStatus.loading));
       }
 
-      final channelId = injector<FeralFileDP1FeedService>()
-          .remoteConfigChannelUrls
-          ?.firstOrNull;
-      if (channelId == null) {
+      final remoteConfigChannels =
+          injector<FeralFileDP1FeedService>().remoteConfigChannels;
+      if (remoteConfigChannels == null || remoteConfigChannels.isEmpty) {
         emit(state.copyWith(
             status: WorksStateStatus.loaded,
             assetTokens: [],
             hasMore: false,
-            cursor: null));
+            cursor: null,
+            error: ''));
         return;
       }
 
-      final worksResponse = await _dp1PlaylistService.getPlaylistItemsOfChannel(
-        channelId: channelId,
+      final worksResponse =
+          await _dp1PlaylistService.getPlaylistItemsByListOfChannels(
+        channels: remoteConfigChannels,
         cursor: cursor,
         limit: _pageSize,
       );
