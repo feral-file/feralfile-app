@@ -42,7 +42,7 @@ class _ChannelDetailPageState extends State<ChannelDetailPage>
     _scrollController.addListener(_onScroll);
     _channelDetailBloc = ChannelDetailBloc(
       channel: widget.payload.channel,
-      dp1playlistService: injector<DP1FeedService>(),
+      dp1playlistService: injector<FeralFileDP1FeedService>(),
     );
     _channelDetailBloc.add(const LoadChannelPlaylistsEvent());
   }

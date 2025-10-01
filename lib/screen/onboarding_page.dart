@@ -13,7 +13,6 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/model/jwt.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/screen/dailies_work/dailies_work_bloc.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/bluetooth_service.dart';
 import 'package:autonomy_flutter/service/canvas_notification_manager.dart';
@@ -140,9 +139,7 @@ class _OnboardingPageState extends State<OnboardingPage>
           onError: (Object e) {
             log.info('Failed to load remote config: $e');
           },
-        ).whenComplete(() {
-          injector<DailyWorkBloc>().add(GetDailyAssetTokenEvent());
-        }),
+        ),
       );
       final countOpenApp = injector<ConfigurationService>().countOpenApp() ?? 0;
 

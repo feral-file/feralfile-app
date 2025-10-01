@@ -4,8 +4,10 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/intent.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/provenance.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/bloc/record_controller_bloc.dart';
+import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/audio_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
+import 'package:autonomy_flutter/service/domain_address_service.dart';
 import 'package:autonomy_flutter/service/mobile_controller_service.dart';
 import 'package:autonomy_flutter/widgetbook/mock_data/mock_mobile_controller.dart';
 
@@ -14,7 +16,9 @@ class MockRecordBloc extends RecordBloc {
     MobileControllerService service,
     AudioService audioService,
     ConfigurationService configurationService,
-  ) : super(service, audioService, configurationService);
+    DomainAddressService domainAddressService,
+    AddressService addressService,
+  ) : super(service, audioService, configurationService, domainAddressService, addressService);
 
   @override
   void add(RecordEvent event) {

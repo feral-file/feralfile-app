@@ -97,15 +97,6 @@ abstract class FeralFileApi {
     @Query('filterBurned') bool? filterBurned,
   });
 
-  // get list of dailies token
-  @GET('/api/dailies/upcoming')
-  Future<FeralFileListResponse<DailyToken>> getDailiesToken({
-    @Query('offset') int? offset = 0,
-    @Query('limit') int? limit = 1,
-    @Query('includeSuccessfulSwap') bool? includeSuccessfulSwap = true,
-    @Query('startDate') String? startDate,
-  });
-
   // get list daily token by date with local time
   @GET('/api/dailies/date/{date}')
   Future<FeralFileListResponse<DailyToken>> getDailiesTokenByDate({

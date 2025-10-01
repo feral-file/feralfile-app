@@ -94,7 +94,7 @@ class _PlaylistsPageState extends State<PlaylistsPage>
       scrollController: _scrollController,
       isFromPlaylistsPage: true,
       channel: playlists.isNotEmpty
-          ? injector<DP1FeedService>()
+          ? injector<FeralFileDP1FeedService>()
               .getChannelByPlaylistId(playlists.first.id)
           : null,
     );

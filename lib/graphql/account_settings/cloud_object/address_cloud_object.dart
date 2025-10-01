@@ -31,6 +31,11 @@ class WalletAddressCloudObject extends BaseCloudObject {
     return addresses;
   }
 
+  WalletAddress? getWalletAddress(String address) {
+    final addresses = getAllAddresses();
+    return addresses.where((element) => element.address == address).firstOrNull;
+  }
+
   Future<void> insertAddresses(List<WalletAddress> addresses,
       {OnConflict onConflict = OnConflict.override}) async {
     await db.write(addresses.map((address) => address.toKeyValue).toList(),

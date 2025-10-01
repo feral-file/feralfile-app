@@ -10,7 +10,7 @@ part 'channels_state.dart';
 
 class ChannelsBloc extends Bloc<ChannelsEvent, ChannelsState> {
   ChannelsBloc({
-    required DP1FeedService dp1FeedService,
+    required FeralFileDP1FeedService dp1FeedService,
   })  : _dp1FeedService = dp1FeedService,
         super(const ChannelsState()) {
     on<LoadChannelsEvent>(_onLoadChannels);
@@ -20,7 +20,7 @@ class ChannelsBloc extends Bloc<ChannelsEvent, ChannelsState> {
 
   static const int _pageSize = 10;
 
-  final DP1FeedService _dp1FeedService;
+  final FeralFileDP1FeedService _dp1FeedService;
 
   Future<void> _onLoadChannels(
     LoadChannelsEvent event,

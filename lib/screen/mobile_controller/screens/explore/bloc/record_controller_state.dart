@@ -30,6 +30,10 @@ class RecordState {
       );
 
   bool get isValid {
+    if (lastIntent?.action == AiAction.addAddress) {
+      return true;
+    }
+
     // check if the intent has type open_screen or dp1Call has items
     if ((lastIntent?.action == AiAction.openScreen &&
             (lastIntent?.entities?.any((e) =>
@@ -109,3 +113,34 @@ class RecordSuccessState extends RecordState {
   })  : _lastIntentNonNull = lastIntent,
         super(lastIntent: lastIntent, lastDP1Call: lastDP1Call);
 }
+
+class VerifyingAddressState extends RecordState {
+  VerifyingAddressState({required this.address});
+
+  final String address;
+}
+
+class ResolvingDomainState extends RecordState {
+  ResolvingDomainState({required this.ens});
+
+  final String ens;
+}
+
+class InvalidAddressState extends RecordState {
+  InvalidAddressState({required this.error});
+
+  final String error;
+}
+
+class AddingAddressState extends RecordState {
+  AddingAddressState({required this.address});
+
+  final String address;
+}
+
+class AddAddressErrorState extends RecordState {
+  AddAddressErrorState({required this.error});
+  final String error;
+}
+
+class AddAddressSuccessState extends RecordState {}

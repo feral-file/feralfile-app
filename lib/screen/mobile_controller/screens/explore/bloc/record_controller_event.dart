@@ -15,3 +15,9 @@ class SubmitTextEvent extends RecordEvent {
 }
 
 class ResetPlaylistEvent extends RecordEvent {}
+
+class AddAddressEvent extends RecordEvent {
+  AddAddressEvent(this.text);
+
+  final String text;
+}

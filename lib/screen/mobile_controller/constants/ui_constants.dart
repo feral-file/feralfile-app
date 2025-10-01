@@ -15,7 +15,8 @@ class UIConstants {
 }
 
 class MessageConstants {
-  static const String askAnythingText = 'Ask anything';
+  static const String askAnythingText =
+      'Search artists, playlists, or works...';
   static const String recordingText = 'Listening';
   static const String processingText = 'Processing';
   static const String recordTranscriptionText = 'Processing';

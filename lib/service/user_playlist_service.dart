@@ -18,7 +18,7 @@ import 'package:uuid/uuid.dart';
 class UserDp1PlaylistService {
   UserDp1PlaylistService(this._dp1FeedService, this._cloudManager);
 
-  final DP1FeedService _dp1FeedService;
+  final FeralFileDP1FeedService _dp1FeedService;
   final CloudManager _cloudManager;
 
   DP1Call? _cachedAllOwnedPlaylist;

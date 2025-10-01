@@ -671,6 +671,116 @@
       }
     }
   },
+  "IndexSubNav/base": {
+    "IndexSubNav": {
+      "activeColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.white}"
+      },
+      "inactiveColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.grey}"
+      },
+      "gap": {
+        "$type": "dimension",
+        "$value": "11px"
+      }
+    }
+  },
+  "PlaylistHeader/base": {
+    "PlaylistHeader": {
+      "moreIcon": {
+        "color": {
+          "$type": "color",
+          "$value": "{primitives.colors.white}"
+        },
+        "size": {
+          "$type": "dimension",
+          "$value": "18px"
+        }
+      },
+      "playlistTitleColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.white}"
+      },
+      "channelTitleColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.grey}"
+      },
+      "borderColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.black}"
+      },
+      "paddingHorizontal": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "paddingVertical": {
+        "$type": "dimension",
+        "$value": "16px"
+      },
+      "borderWeight": {
+        "$type": "dimension",
+        "$value": "1px"
+      }
+    }
+  },
+  "NoticeBanner/base": {
+    "NoticeBanner": {
+      "bgColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.black}"
+      },
+      "color": {
+        "$type": "color",
+        "$value": "{primitives.colors.white}"
+      },
+      "padding": {
+        "$type": "dimension",
+        "$value": "10px"
+      },
+      "cornerRadius": {
+        "$type": "dimension",
+        "$value": "10px"
+      },
+      "iconSize": {
+        "$type": "dimension",
+        "$value": "12px"
+      }
+    }
+  },
+  "CollectionItem/base": {
+    "CollectionItem": {
+      "color": {
+        "$type": "color",
+        "$value": "{primitives.colors.white}"
+      },
+      "borderColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.black}"
+      },
+      "paddingHorizontal": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "paddingVertical": {
+        "$type": "dimension",
+        "$value": "16px"
+      },
+      "iconWidth": {
+        "$type": "dimension",
+        "$value": "9px"
+      },
+      "iconHeight": {
+        "$type": "dimension",
+        "$value": "18px"
+      },
+      "deleteIconSize": {
+        "$type": "dimension",
+        "$value": "15px"
+      }
+    }
+  },
   "$themes": [],
   "$metadata": {
     "tokenSetOrder": [
@@ -683,7 +793,11 @@
       "SendButton/base",
       "PlayButton/base",
       "BackButton/base",
-      "Header/base"
+      "Header/base",
+      "IndexSubNav/base",
+      "PlaylistHeader/base",
+      "NoticeBanner/base",
+      "CollectionItem/base"
     ]
   }
 }

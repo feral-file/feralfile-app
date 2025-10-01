@@ -8,14 +8,20 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/screen/customer_support/support_thread_page.dart';
 import 'package:autonomy_flutter/screen/meili_search/meili_search_bloc.dart';
 import 'package:autonomy_flutter/screen/meili_search/widgets/meili_search_result_section.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
+import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/dp1_playlist_grid_view.dart';
+import 'package:autonomy_flutter/view/keyboard_visibility_padding.dart';
 import 'package:autonomy_flutter/view/loading.dart';
+import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -59,63 +65,87 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _bloc,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Expanded(
-            child: BlocBuilder<MeiliSearchBloc, MeiliSearchState>(
-              bloc: _bloc,
-              builder: (context, state) {
-                if (state.isLoading && !state.hasResults) {
-                  return Column(
-                    children: [
-                      LoadingWidget(),
+      child: KeyboardVisibilityPadding(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Expanded(
+              child: BlocBuilder<MeiliSearchBloc, MeiliSearchState>(
+                bloc: _bloc,
+                builder: (context, state) {
+                  if (state.isLoading && !state.hasResults) {
+                    return Column(
+                      children: [
+                        LoadingWidget(),
+                      ],
+                    );
+                  }
+
+                  if (state.hasError) {
+                    return _searchErrorView(context, state);
+                  }
+
+                  if (!state.hasResults && state.query.isNotEmpty) {
+                    return _searchEmptyView(context);
+                  }
+
+                  return CustomScrollView(
+                    shrinkWrap: true,
+                    controller: _scrollController,
+                    slivers: [
+                      ..._buildOrderedSections(context, state),
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: 250),
+                      ),
                     ],
                   );
-                }
-
-                if (state.hasError) {
-                  return _searchErrorView(context, state);
-                }
-
-                if (!state.hasResults && state.query.isNotEmpty) {
-                  return _searchEmptyView(context);
-                }
-
-                return CustomScrollView(
-                  shrinkWrap: true,
-                  controller: _scrollController,
-                  slivers: [
-                    ..._buildOrderedSections(context, state),
-                    // if (state.isLoading)
-                    //   const SliverPadding(
-                    //     padding: EdgeInsets.all(16.0),
-                    //     sliver: SliverToBoxAdapter(
-                    //       child: Center(child: LoadingWidget()),
-                    //     ),
-                    //   ),
-                    const SliverToBoxAdapter(
-                      child: SizedBox(height: 250),
-                    ),
-                  ],
-                );
-              },
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _searchEmptyView(BuildContext context) {
-    return Center(
+    final theme = Theme.of(context);
+    final textStyle = theme.textTheme.ppMori400White12;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 16),
           Text(
             'No results found',
-            style: Theme.of(context).textTheme.ppMori400White16,
+            style: textStyle.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Try exhibitions, playlists, artists, or curators. Collection search will return soon.',
+            style: textStyle,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Examples: Dmitri Cherniak artworks, generative art exhibitions, Maya Man',
+            style: textStyle,
+          ),
+          const SizedBox(height: 8),
+          Text('Didn’t find what you wanted? Tap Help to tell us.',
+              style: textStyle),
+          const SizedBox(height: 24),
+          PrimaryButton(
+            onTap: () {
+              injector<NavigationService>().navigateTo(
+                AppRouter.supportThreadPage,
+                arguments: NewIssuePayload(
+                  reportIssueType: ReportIssueType.Bug,
+                ),
+              );
+            },
+            text: 'Help',
           ),
         ],
       ),

@@ -1,63 +1,85 @@
-import 'dart:convert';
+// Removed: json import not needed after simplifying template extraction
+// import 'dart:convert';
+import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/service/dls_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+// Removed: services import not needed after simplifying template extraction
+// import 'package:flutter/services.dart';
 
 class HighlightController extends TextEditingController {
-  List<Map<String, dynamic>> _templates = [];
-  bool _templatesLoaded = false;
+  // Rotating placeholder support
+  final List<String> _rotatingPlaceholders;
+  final Duration _rotationInterval;
+  Timer? _placeholderTimer;
+  int _placeholderIndex = 0;
+  // Expose current placeholder for UI binding (e.g., ValueListenableBuilder)
+  final ValueNotifier<String?> placeholderNotifier =
+      ValueNotifier<String?>(null);
 
-  HighlightController({String? text}) : super(text: text) {
-    _loadTemplates();
+  HighlightController({
+    String? text,
+    List<String>? placeholders,
+    Duration rotationInterval = const Duration(seconds: 3),
+  })  : _rotatingPlaceholders = placeholders ?? const <String>[],
+        _rotationInterval = rotationInterval,
+        super(text: text) {
+    // Start rotating placeholders if provided and input is empty
+    addListener(_onTextChanged);
+    _maybeStartPlaceholderRotation();
   }
 
-  // Load DSL templates from assets
-  Future<void> _loadTemplates() async {
-    try {
-      final String jsonString =
-          await rootBundle.loadString('lib/dsl/templates_enriched.json');
-      final List<dynamic> jsonData = json.decode(jsonString) as List<dynamic>;
-      _templates = jsonData.cast<Map<String, dynamic>>();
-      _templatesLoaded = true;
-    } catch (e) {
-      print('Error loading templates: $e');
-      _templates = [];
-      _templatesLoaded =
-          true; // Set to true even on error to avoid infinite waiting
+  // Handle text changes to pause/resume placeholder rotation
+  void _onTextChanged() {
+    // When user types something, hide placeholder and stop timer
+    if (text.isNotEmpty) {
+      _stopPlaceholderRotation();
+      placeholderNotifier.value = null;
+    } else {
+      // Resume rotation only if we have placeholders
+      _maybeStartPlaceholderRotation();
     }
   }
 
-  // Extract keywords from input text using DSL regexp patterns
-  List<String> getKeywordsFromInput(String inputText) {
-    List<String> keywords = [];
+  void _maybeStartPlaceholderRotation() {
+    if (_rotatingPlaceholders.isEmpty) return;
+    if (text.isNotEmpty) return;
+    if (_placeholderTimer?.isActive == true) return;
 
-    if (!_templatesLoaded) {
-      return keywords;
-    }
-    return injector<DLSService>().extractIdentities(inputText);
+    // Immediately show current placeholder
+    placeholderNotifier.value =
+        _rotatingPlaceholders[_placeholderIndex % _rotatingPlaceholders.length];
 
-    for (var template in _templates) {
-      final String regex = template['regex'] as String;
-      final RegExp regExp = RegExp(regex, caseSensitive: false);
-
-      if (regExp.hasMatch(inputText)) {
-        final Match? match = regExp.firstMatch(inputText);
-        if (match != null) {
-          // Extract placeholder values (groups 1, 2, 3, etc.)
-          for (int i = 1; i <= match.groupCount; i++) {
-            final String? groupValue = match.group(i);
-            if (groupValue != null && groupValue.isNotEmpty) {
-              keywords.add(groupValue.trim());
-            }
-          }
-        }
+    _placeholderTimer = Timer.periodic(_rotationInterval, (_) {
+      if (text.isNotEmpty) {
+        // Safety: stop if user types while timer is running
+        _stopPlaceholderRotation();
+        return;
       }
-    }
+      _placeholderIndex =
+          (_placeholderIndex + 1) % _rotatingPlaceholders.length;
+      placeholderNotifier.value = _rotatingPlaceholders[_placeholderIndex];
+    });
+  }
 
-    return keywords;
+  void _stopPlaceholderRotation() {
+    _placeholderTimer?.cancel();
+    _placeholderTimer = null;
+  }
+
+  @override
+  void dispose() {
+    _stopPlaceholderRotation();
+    placeholderNotifier.dispose();
+    removeListener(_onTextChanged);
+    super.dispose();
+  }
+
+  // Extract keywords from input text using DLS service
+  List<String> getKeywordsFromInput(String inputText) {
+    return injector<DLSService>().extractIdentities(inputText);
   }
 
   // Return first matched keyword or full text if no match

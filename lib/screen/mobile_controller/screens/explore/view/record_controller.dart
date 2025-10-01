@@ -3,6 +3,7 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/screen/customer_support/support_thread_page.dart';
 import 'package:autonomy_flutter/screen/meili_search/meili_search_bloc.dart';
 import 'package:autonomy_flutter/screen/meili_search/meili_search_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
@@ -18,19 +19,25 @@ import 'package:autonomy_flutter/service/mobile_controller_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/util/au_icons.dart';
+import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:autonomy_flutter/view/animated_cycled_tooltip.dart';
 import 'package:autonomy_flutter/view/hight_light_tetx_controller.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/widgets/llm_text_input/llm_text_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:super_tooltip/super_tooltip.dart';
 
 class RecordControllerScreenPayload {
   RecordControllerScreenPayload({
     this.isListening = true,
+    this.text,
   });
   final bool isListening;
+  final String? text;
 }
 
 class RecordControllerScreen extends StatefulWidget {
@@ -60,11 +67,13 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
 
   late HighlightController textEditingController;
 
+  final SuperTooltipController tooltipController = SuperTooltipController();
+
   @override
   void initState() {
     recordBloc = context.read<RecordBloc>();
     meiliSearchBloc = context.read<MeiliSearchBloc>();
-    textEditingController = HighlightController();
+    textEditingController = HighlightController(text: widget.payload.text);
     super.initState();
     WidgetsBinding.instance.addObserver(this);
   }
@@ -134,6 +143,11 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
           if (state is RecordSuccessState) {
             final dp1Playlist = state.lastDP1Call;
 
+            if (state.lastIntent.action == AiAction.addAddress) {
+              recordBloc.add(AddAddressEvent(state.transcription));
+              return;
+            }
+
             if (dp1Playlist == null) {
               final entity = state.lastIntent.entities?.firstOrNull;
               if (entity == null) {
@@ -145,7 +159,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                   if (playlistId == null) {
                     return;
                   }
-                  injector<DP1FeedService>()
+                  injector<FeralFileDP1FeedService>()
                       .getPlaylistById(playlistId)
                       .then((value) {
                     final dp1Playlist = value;
@@ -165,7 +179,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                   if (channelId == null) {
                     return;
                   }
-                  injector<DP1FeedService>()
+                  injector<FeralFileDP1FeedService>()
                       .getChannelDetail(channelId)
                       .then((value) {
                     final channel = value;
@@ -198,15 +212,18 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
               ),
             );
           }
+
+          if (state is AddAddressSuccessState) {
+            injector<NavigationService>().openMyCollection();
+          }
         },
-        builder: (context, state) {
-          return _recordView(context, state);
-        },
+        builder: _recordView,
       ),
     );
   }
 
   Widget _recordView(BuildContext context, RecordState state) {
+    final textStyle = Theme.of(context).textTheme.ppMori400White12;
     return Stack(
       children: [
         Column(
@@ -226,7 +243,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                       injector<NavigationService>().goBack();
                     },
                     child: Container(
-                      constraints: BoxConstraints(
+                      constraints: const BoxConstraints(
                         minWidth: 44,
                         minHeight: 44,
                       ),
@@ -247,34 +264,156 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                 ],
               ),
             ),
-            (shouldShowMeiliSearch)
-                ? Expanded(
-                    child: Container(
-                    child: MeiliSearchPage(),
-                  ))
-                : Expanded(
-                    child: Column(
-                      children: [
-                        Center(
-                          child: GestureDetector(
-                            onTap: state is RecordProcessingState
-                                ? null
-                                : () {
-                                    context.read<RecordBloc>().add(
-                                          state is RecordRecordingState
-                                              ? StopRecordingEvent()
-                                              : StartRecordingEvent(),
-                                        );
-                                  },
-                            child: _recordButton(state),
+            if (shouldShowMeiliSearch)
+              const Expanded(child: MeiliSearchPage())
+            else
+              Expanded(
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              tooltipController.showTooltip();
+                            },
+                            child: SuperTooltip(
+                              popupDirection: TooltipDirection.down,
+                              hideTooltipOnTap: true,
+                              popupDirectionBuilder: () =>
+                                  TooltipDirection.down,
+                              decorationBuilder: (context) => BoxDecoration(
+                                color: AppColor.auGreyBackground,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: AppColor.primaryBlack,
+                                  width: 1,
+                                ),
+                              ),
+                              controller: tooltipController,
+                              child: Icon(
+                                AuIcon.help,
+                                color: AppColor.white,
+                              ),
+                              content: Builder(
+                                builder: (context) {
+                                  final mediaSize = MediaQuery.of(context).size;
+                                  final horizontalPadding =
+                                      24.0; // keep safe margin from screen edges
+                                  final maxWidth =
+                                      mediaSize.width - horizontalPadding * 2;
+                                  final maxHeight = mediaSize.height *
+                                      0.5; // avoid covering whole screen
+
+                                  return ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      maxWidth: maxWidth,
+                                      maxHeight: maxHeight,
+                                    ),
+                                    child: Material(
+                                      type: MaterialType.transparency,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(12),
+                                        child: SingleChildScrollView(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const SizedBox(height: 16),
+                                              Text(
+                                                'Try exhibitions, playlists, artists, or curators. Collection search will return soon.',
+                                                style: textStyle,
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                'Examples: Dmitri Cherniak artworks, generative art exhibitions, Maya Man',
+                                                style: textStyle,
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                'Have ideas? Tap Help to share.',
+                                                style: textStyle,
+                                              ),
+                                              const SizedBox(height: 24),
+                                              PrimaryButton(
+                                                onTap: () {
+                                                  tooltipController
+                                                      .hideTooltip();
+                                                  injector<NavigationService>()
+                                                      .navigateTo(
+                                                    AppRouter.supportThreadPage,
+                                                    arguments: NewIssuePayload(
+                                                      reportIssueType:
+                                                          ReportIssueType.Bug,
+                                                    ),
+                                                  );
+                                                },
+                                                text: 'Help',
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 105.52),
-                        _recordTranscribedText(context, state),
-                        _recordStatus(context, state),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
+                    Center(
+                      child: GestureDetector(
+                        onTap: state is RecordProcessingState
+                            ? null
+                            : () {
+                                context.read<RecordBloc>().add(
+                                      state is RecordRecordingState
+                                          ? StopRecordingEvent()
+                                          : StartRecordingEvent(),
+                                    );
+                              },
+                        child: _recordButton(state),
+                      ),
+                    ),
+                    Container(
+                      height: 105.52,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      // child: Center(
+                      //   child: AnimatedCycledTooltip(
+                      //     tooltips: [
+                      //       ToolTip(
+                      //         text:
+                      //             'Try exhibitions, playlists, artists, or curators. Collection search will return soon.',
+                      //         duration: const Duration(seconds: 3),
+                      //       ),
+                      //       ToolTip(
+                      //         text:
+                      //             'Examples: Dmitri Cherniak artworks, generative art exhibitions, Maya Man',
+                      //         duration: const Duration(seconds: 3),
+                      //       ),
+                      //       ToolTip(
+                      //         text: 'Have ideas? Tap Help to share.',
+                      //         duration: const Duration(seconds: 3),
+                      //       ),
+                      //     ],
+                      //     style: textStyle,
+                      //     alignment: Alignment.topCenter,
+                      //     transitionCurve: Curves.easeInOut,
+                      //     transitionDuration: const Duration(milliseconds: 300),
+                      //     textAlign: TextAlign.center,
+                      //     controller: AnimatedCycledTooltipController(),
+                      //   ),
+                      // ),
+                    ),
+                    _recordTranscribedText(context, state),
+                    _recordStatus(context, state),
+                  ],
+                ),
+              ),
           ],
         ),
         Positioned(
@@ -367,9 +506,12 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
           MessageConstants.recordingText,
         );
       case RecordProcessingState:
-        return _recordProcessingStatus(
-          (state as RecordProcessingState).status.message,
-        );
+        if ((state as RecordProcessingState).lastIntent?.action !=
+            AiAction.addAddress) {
+          return _recordProcessingStatus(
+            state.status.message,
+          );
+        }
       case RecordSuccessState:
         if (!state.isValid) {
           return _recordErrorStatus(
@@ -387,6 +529,32 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
             );
           }
         }
+
+      // Add Address
+      case VerifyingAddressState:
+        return _recordProcessingStatus(
+          'Verifying address...',
+        );
+      case ResolvingDomainState:
+        return _recordProcessingStatus(
+          'Resolving domain...',
+        );
+      case InvalidAddressState:
+        return _recordErrorStatus(
+          (state as InvalidAddressState).error,
+        );
+      case AddingAddressState:
+        return _recordProcessingStatus(
+          'Adding address...',
+        );
+      case AddAddressErrorState:
+        return _recordErrorStatus(
+          (state as AddAddressErrorState).error,
+        );
+      case AddAddressSuccessState:
+        return _recordProcessingStatus(
+          'Address added successfully',
+        );
     }
 
     return const SizedBox.shrink();

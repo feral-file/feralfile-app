@@ -58,6 +58,10 @@ class AddressService {
     return addresses;
   }
 
+  WalletAddress? getWalletAddress(String address) {
+    return _cloudObject.addressObject.getWalletAddress(address);
+  }
+
   Future<WalletAddress> insertAddress(
     WalletAddress address, {
     bool checkAddressDuplicated = true,

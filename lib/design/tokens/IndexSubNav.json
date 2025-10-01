@@ -1,0 +1,18 @@
+{
+  "IndexSubNav": {
+    "IndexSubNav": {
+      "activeColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.white}"
+      },
+      "inactiveColor": {
+        "$type": "color",
+        "$value": "{primitives.colors.grey}"
+      },
+      "gap": {
+        "$type": "dimension",
+        "$value": "11px"
+      }
+    }
+  }
+}

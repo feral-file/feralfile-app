@@ -40,4 +40,16 @@ extension TezosExtension on String {
       return false;
     }
   }
+
+  /// Check if the string is a Tezos address format
+  bool isTezosAddressFormat() {
+    final regex = RegExp(r'^(tz1|tz2|tz3|KT1)[1-9A-HJ-NP-Za-km-z]{33}$');
+    return regex.hasMatch(this);
+  }
+
+  /// Check if the string is a TNS format (Tezos Name Service)
+  bool isTNSFormat() {
+    final regex = RegExp(r'^[^\s]+\.tez$', caseSensitive: false);
+    return regex.hasMatch(this);
+  }
 }

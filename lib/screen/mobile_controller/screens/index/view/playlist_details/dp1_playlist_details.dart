@@ -76,7 +76,7 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen> {
   }
 
   Widget _body(BuildContext context) {
-    final channel = injector<DP1FeedService>()
+    final channel = injector<FeralFileDP1FeedService>()
         .getChannelByPlaylistId(widget.payload.playlist.id);
     final playlist = widget.payload.playlist;
 
