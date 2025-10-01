@@ -159,7 +159,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                   if (playlistId == null) {
                     return;
                   }
-                  injector<DP1FeedService>()
+                  injector<FeralFileDP1FeedService>()
                       .getPlaylistById(playlistId)
                       .then((value) {
                     final dp1Playlist = value;
@@ -179,7 +179,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                   if (channelId == null) {
                     return;
                   }
-                  injector<DP1FeedService>()
+                  injector<FeralFileDP1FeedService>()
                       .getChannelDetail(channelId)
                       .then((value) {
                     final channel = value;

@@ -6,7 +6,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/provenance.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 
-class MockDp1PlaylistService extends DP1FeedService {
+class MockDp1PlaylistService extends FeralFileDP1FeedService {
   MockDp1PlaylistService(super.api);
 
   @override

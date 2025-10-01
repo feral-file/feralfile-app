@@ -6,7 +6,7 @@ import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/widgetbook/mock_data/mock_mobile_controller.dart';
 
 class MockPlaylistsBloc extends PlaylistsBloc {
-  MockPlaylistsBloc({required DP1FeedService playlistService})
+  MockPlaylistsBloc({required FeralFileDP1FeedService playlistService})
       : super(playlistService: playlistService);
 
   @override

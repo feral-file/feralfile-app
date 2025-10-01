@@ -327,8 +327,8 @@ class MockInjector {
     }
 
     // DP1FeedService
-    if (!injector.isRegistered<DP1FeedService>()) {
-      injector.registerLazySingleton<DP1FeedService>(
+    if (!injector.isRegistered<FeralFileDP1FeedService>()) {
+      injector.registerLazySingleton<FeralFileDP1FeedService>(
         () => MockDp1PlaylistService(injector<DP1FeedApi>()),
       );
     }

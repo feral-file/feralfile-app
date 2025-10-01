@@ -446,8 +446,8 @@ Future<void> setupInjector() async {
 
   injector.registerSingleton<FeedCacheManager>(FeedCacheManager());
 
-  injector.registerLazySingleton<DP1FeedService>(
-    () => DP1FeedService(injector(), injector<FeedCacheManager>()),
+  injector.registerLazySingleton<FeralFileDP1FeedService>(
+    () => FeralFileDP1FeedService(injector(), injector<FeedCacheManager>()),
   );
 
   injector.registerFactory<WorksBloc>(

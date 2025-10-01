@@ -198,10 +198,10 @@ class FeedCacheManager {
   }
 
   Future<void> reloadCache() async {
-    final playlists =
-        await injector<DP1FeedService>().getAllPlaylists(usingCache: false);
-    final channels =
-        await injector<DP1FeedService>().getAllChannels(usingCache: false);
+    final playlists = await injector<FeralFileDP1FeedService>()
+        .getAllPlaylists(usingCache: false);
+    final channels = await injector<FeralFileDP1FeedService>()
+        .getAllChannels(usingCache: false);
     log.info(
         'Reloaded cache: ${channels.items.length} channels, ${playlists.items.length} playlists');
     clearAll();
