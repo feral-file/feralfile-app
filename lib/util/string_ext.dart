@@ -256,3 +256,31 @@ extension JsonChunkExtractor on String {
     return (jsons, substring(startIndex));
   }
 }
+
+extension StringUrlExtension on String {
+  String get origin {
+    final uri = Uri.tryParse(this);
+    if (uri == null) {
+      return this;
+    }
+    return uri.origin;
+  }
+}
+
+extension FeedUrlExtension on String {
+  String get playlistId {
+    final uri = Uri.tryParse(this);
+    if (uri == null) {
+      return this;
+    }
+    return uri.pathSegments.last;
+  }
+
+  String get channelId {
+    final uri = Uri.tryParse(this);
+    if (uri == null) {
+      return this;
+    }
+    return uri.pathSegments.last;
+  }
+}

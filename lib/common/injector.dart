@@ -57,7 +57,6 @@ import 'package:autonomy_flutter/service/device_info_service.dart';
 import 'package:autonomy_flutter/service/dls_service.dart';
 import 'package:autonomy_flutter/service/domain_address_service.dart';
 import 'package:autonomy_flutter/service/domain_service.dart';
-import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/ethereum_service.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
 import 'package:autonomy_flutter/service/meilisearch_service.dart';
@@ -75,7 +74,7 @@ import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/util/au_file_service.dart';
 import 'package:autonomy_flutter/util/dio_interceptors.dart';
 import 'package:autonomy_flutter/util/dio_manager.dart';
-import 'package:autonomy_flutter/util/feed_cache_manager.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -351,17 +350,8 @@ Future<void> setupInjector() async {
     DLSServiceImpl(),
   );
 
-  // injector.registerFactory<AddNewPlaylistBloc>(
-  //   () => AddNewPlaylistBloc(injector()),
-  // );
-  // injector.registerFactory<EditPlaylistBloc>(EditPlaylistBloc.new);
-  //
-  // injector.registerFactory<CollectionProBloc>(CollectionProBloc.new);
-  // injector.registerFactory<PredefinedCollectionBloc>(
-  //   PredefinedCollectionBloc.new,
-  // );
   final identityStore = IndexerIdentityStore();
-  await identityStore.init('');
+  await identityStore.init();
   injector.registerLazySingleton<IdentityBloc>(
     () => IdentityBloc(identityStore, injector()),
   );
@@ -385,7 +375,7 @@ Future<void> setupInjector() async {
   );
 
   injector.registerLazySingleton<AnnouncementStore>(AnnouncementStore.new);
-  await injector<AnnouncementStore>().init('');
+  await injector<AnnouncementStore>().init();
 
   injector.registerLazySingleton<AnnouncementService>(
     () => AnnouncementServiceImpl(injector(), injector(), injector()),
@@ -397,8 +387,6 @@ Future<void> setupInjector() async {
 
   injector.registerLazySingleton<CloudManager>(CloudManager.new);
   await injector<CloudManager>().init();
-
-  // injector.registerLazySingleton<ListPlaylistBloc>(ListPlaylistBloc.new);
 
   injector.registerLazySingleton<MobileControllerAPI>(
     () => MobileControllerAPI(
@@ -421,7 +409,7 @@ Future<void> setupInjector() async {
   );
 
   injector.registerFactory<PlaylistsBloc>(
-    () => PlaylistsBloc(playlistService: injector()),
+    () => PlaylistsBloc(),
   );
 
   injector.registerLazySingleton<UserAllOwnCollectionBloc>(
@@ -429,7 +417,7 @@ Future<void> setupInjector() async {
   );
 
   injector.registerFactory<ChannelsBloc>(
-    () => ChannelsBloc(dp1FeedService: injector()),
+    () => ChannelsBloc(),
   );
 
   injector.registerLazySingleton<DP1FeedApi>(
@@ -444,18 +432,15 @@ Future<void> setupInjector() async {
     ),
   );
 
-  injector.registerSingleton<FeedCacheManager>(FeedCacheManager());
-
-  injector.registerLazySingleton<FeralFileDP1FeedService>(
-    () => FeralFileDP1FeedService(injector(), injector<FeedCacheManager>()),
-  );
-
   injector.registerFactory<WorksBloc>(
     () => WorksBloc(
       dp1PlaylistService: injector(),
       indexerService: injector(),
     ),
   );
+
+  final feedManager = FeralFileFeedManager();
+  injector.registerSingleton<FeralFileFeedManager>(feedManager);
 
   injector.registerLazySingleton<RecordBloc>(
     () => RecordBloc(

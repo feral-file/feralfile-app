@@ -2,6 +2,7 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -77,7 +78,7 @@ class WorksBloc extends Bloc<WorksEvent, WorksState> {
       }
 
       final remoteConfigChannels =
-          injector<FeralFileDP1FeedService>().remoteConfigChannels;
+          injector<FeralFileFeedManager>().remoteConfigChannels;
       if (remoteConfigChannels == null || remoteConfigChannels.isEmpty) {
         emit(state.copyWith(
             status: WorksStateStatus.loaded,
@@ -88,8 +89,8 @@ class WorksBloc extends Bloc<WorksEvent, WorksState> {
         return;
       }
 
-      final worksResponse =
-          await _dp1PlaylistService.getPlaylistItemsByListOfChannels(
+      final worksResponse = await injector<FeralFileFeedManager>()
+          .getPlaylistItemsByListOfChannels(
         channels: remoteConfigChannels,
         cursor: cursor,
         limit: _pageSize,

@@ -11,7 +11,7 @@ class PlaylistListView extends StatelessWidget {
     required this.hasMore,
     required this.isLoadingMore,
     required this.scrollController,
-    this.channel,
+    required this.channels,
     this.channelVisible = true,
     this.isFromPlaylistsPage = false,
     super.key,
@@ -21,7 +21,7 @@ class PlaylistListView extends StatelessWidget {
   final bool hasMore;
   final bool isLoadingMore;
   final ScrollController scrollController;
-  final Channel? channel;
+  final List<Channel?> channels;
   final bool channelVisible;
   final bool isFromPlaylistsPage;
 
@@ -43,6 +43,7 @@ class PlaylistListView extends StatelessWidget {
         }
 
         final playlist = playlists[index];
+        final channel = channels[index];
 
         return Column(
           children: [

@@ -130,6 +130,11 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
     for (final owner in owners) {
       final assetTokens =
           getAssetTokensByOwner(ownerAddress: owner, sortBy: sortBy);
+      if (assetTokens.isEmpty) {
+        log.info(
+            '[getGroupAssetTokensByOwnersGroupByAddress] No asset tokens for owner: $owner');
+        continue;
+      }
       final address = assetTokens.first.owner;
       final walletAddress =
           injector<AddressService>().getWalletAddress(address);

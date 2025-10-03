@@ -131,7 +131,7 @@ class _ChannelDetailPageState extends State<ChannelDetailPage>
       hasMore: hasMore,
       isLoadingMore: isLoadingMore,
       scrollController: _scrollController,
-      channel: widget.payload.channel,
+      channels: [],
       channelVisible: false,
     );
   }

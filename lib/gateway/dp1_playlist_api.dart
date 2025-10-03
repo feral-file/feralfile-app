@@ -1,6 +1,7 @@
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
+import 'package:autonomy_flutter/util/dio_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
@@ -13,8 +14,9 @@ abstract class DP1FeedApi {
 
   // factory
   factory DP1FeedApi.dioBaseUrl(
-      {String baseUrl = 'https://api.feed.feralfile.com'}) {
-    return DP1FeedApi(Dio(BaseOptions(baseUrl: baseUrl)), baseUrl: baseUrl);
+      {String baseUrl = 'https://api.feed.feralfile.com', Dio? dio}) {
+    final defaultDio = DioManager().base(BaseOptions(baseUrl: baseUrl));
+    return DP1FeedApi(dio ?? defaultDio, baseUrl: baseUrl);
   }
 
   // PLAYLIST
