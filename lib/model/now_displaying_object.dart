@@ -24,5 +24,10 @@ class DP1NowDisplayingObject extends NowDisplayingObjectBase {
 
   DP1Item get playlistItem => dp1Items[index];
 
-  AssetToken get assetToken => assetTokens[index];
+  AssetToken get assetToken {
+    final item = dp1Items[index];
+    final indexId = item.indexId;
+    final assetToken = assetTokens.firstWhere((token) => token.id == indexId);
+    return assetToken;
+  }
 }
