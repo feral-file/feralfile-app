@@ -1,17 +1,17 @@
+import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/build/components/DisplayItem.dart';
 import 'package:autonomy_flutter/design/build/components/NowPlayingBar.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_event.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
+import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/now_playing_bar/display_item.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -29,7 +29,8 @@ class DisplayItemList extends StatefulWidget {
   State<DisplayItemList> createState() => _DisplayItemListState();
 }
 
-class _DisplayItemListState extends State<DisplayItemList> {
+class _DisplayItemListState extends State<DisplayItemList>
+    with AfterLayoutMixin {
   late PlaylistDetailsBloc _playlistDetailsBloc;
   bool _isLoadingMore = false;
   late final ScrollController _scrollController;
@@ -50,6 +51,8 @@ class _DisplayItemListState extends State<DisplayItemList> {
     if (widget.selectedIndex == null) return;
 
     final scrollPosition = calculateScrollPosition(widget.selectedIndex!);
+    log.info(
+        "Scroll to index: ${widget.selectedIndex}, position: $scrollPosition");
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -78,11 +81,16 @@ class _DisplayItemListState extends State<DisplayItemList> {
   void initState() {
     super.initState();
     _playlistDetailsBloc = PlaylistDetailsBloc(playlist: widget.playlist);
-    _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
+    _playlistDetailsBloc
+        .add(GetPlaylistDetailsEvent(size: (widget.selectedIndex ?? 0) + 10));
 
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
-    _scrollToSelectedIndex();
+  }
+
+  @override
+  void afterFirstLayout(BuildContext context) {
+    // _scrollToSelectedIndex();
   }
 
   @override
@@ -93,7 +101,8 @@ class _DisplayItemListState extends State<DisplayItemList> {
     if (oldWidget.playlist.items.length != widget.playlist.items.length) {
       _playlistDetailsBloc.close();
       _playlistDetailsBloc = PlaylistDetailsBloc(playlist: widget.playlist);
-      _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
+      _playlistDetailsBloc
+          .add(GetPlaylistDetailsEvent(size: (widget.selectedIndex ?? 0) + 10));
       _scrollToSelectedIndex();
     }
 
@@ -113,6 +122,13 @@ class _DisplayItemListState extends State<DisplayItemList> {
   Widget build(BuildContext context) {
     return BlocConsumer<PlaylistDetailsBloc, PlaylistDetailsState>(
       bloc: _playlistDetailsBloc,
+      listenWhen: (previous, current) {
+        if (current is PlaylistDetailsLoadedState &&
+            previous is! PlaylistDetailsLoadingMoreState) {
+          _scrollToSelectedIndex();
+        }
+        return true;
+      },
       listener: (context, state) {
         if (state is! PlaylistDetailsLoadingMoreState) {
           _isLoadingMore = false;
@@ -125,7 +141,8 @@ class _DisplayItemListState extends State<DisplayItemList> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             if (state is PlaylistDetailsInitialState ||
-                state is PlaylistDetailsLoadingState)
+                state is PlaylistDetailsLoadingState ||
+                state.assetTokens.length <= (widget.selectedIndex ?? 0))
               SliverToBoxAdapter(
                 child: _loadingView(context),
               )
@@ -137,37 +154,30 @@ class _DisplayItemListState extends State<DisplayItemList> {
               SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
-                    final item = widget.playlist.items[index];
-                    final assetToken = state.assetTokens.firstWhereOrNull(
-                      (token) => token.id == item.indexId,
-                    );
+                    final assetToken = state.assetTokens[index];
                     return Stack(
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (assetToken != null)
-                              DisplayItem(
-                                assetToken: assetToken,
-                                isPlaying: index == widget.selectedIndex,
-                                isInExpandedView: true,
-                                onTap: () {
-                                  final selectedDevice =
-                                      BluetoothDeviceManager()
-                                          .castingBluetoothDevice;
-                                  if (index != widget.selectedIndex &&
-                                      selectedDevice != null) {
-                                    injector<CanvasDeviceBloc>().add(
-                                      CanvasDeviceMoveToArtworkEvent(
-                                        selectedDevice,
-                                        index,
-                                      ),
-                                    );
-                                  }
-                                },
-                              )
-                            else
-                              SizedBox(),
+                            DisplayItem(
+                              assetToken: assetToken,
+                              isPlaying: index == widget.selectedIndex,
+                              isInExpandedView: true,
+                              onTap: () {
+                                final selectedDevice = BluetoothDeviceManager()
+                                    .castingBluetoothDevice;
+                                if (index != widget.selectedIndex &&
+                                    selectedDevice != null) {
+                                  injector<CanvasDeviceBloc>().add(
+                                    CanvasDeviceMoveToArtworkEvent(
+                                      selectedDevice,
+                                      index,
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
                             if (index != state.assetTokens.length - 1)
                               SizedBox(
                                 height: NowPlayingBarTokens

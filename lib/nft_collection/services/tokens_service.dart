@@ -263,7 +263,9 @@ class NftTokensServiceImpl extends NftTokensService {
   }) async {
     // get from database
     final assetTokenFromDatabase =
-        await _database.getAssetTokensByIndexIds(indexIds: indexerIds);
+        _database.getAssetTokensByIndexIds(indexIds: indexerIds).where((token) {
+      return token.owner.isEmpty;
+    });
     final res = [...assetTokenFromDatabase];
     final missingIds = indexerIds
         .where((id) => !assetTokenFromDatabase.any((e) => e.id == id))
