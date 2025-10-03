@@ -66,41 +66,6 @@ class DisplayItem extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // Positioned(
-                    //   left: (DisplayItemTokens.thumbWidth -
-                    //           DisplayItemTokens.thumbProgressBarWidth) /
-                    //       2,
-                    //   bottom: (DisplayItemTokens.thumbWidth -
-                    //           DisplayItemTokens.thumbProgressBarWidth) /
-                    //       2,
-                    //   child: Container(
-                    //     width: DisplayItemTokens.thumbProgressBarWidth,
-                    //     padding: EdgeInsets.symmetric(
-                    //       horizontal: DisplayItemTokens
-                    //           .thumbProgressBarPaddingHorizontal
-                    //           .toDouble(),
-                    //       vertical: DisplayItemTokens.thumbProgressBarPaddingBottom
-                    //           .toDouble(),
-                    //     ),
-                    //     decoration: BoxDecoration(
-                    //       color: DisplayItemTokens.thumbProgressBarBgColor,
-                    //       borderRadius: BorderRadius.circular(
-                    //         DisplayItemTokens.thumbProgressBarCornerRadius.toDouble(),
-                    //       ),
-                    //     ),
-                    //     child: LinearProgressIndicator(
-                    //       minHeight: DisplayItemTokens.thumbProgressBarStrokeWeight
-                    //           .toDouble(),
-                    //       value: 0.5,
-                    //       color: DisplayItemTokens.thumbProgressBarProgressColor,
-                    //       backgroundColor:
-                    //           DisplayItemTokens.thumbProgressBarBarBgColor,
-                    //       borderRadius: BorderRadius.circular(
-                    //         DisplayItemTokens.thumbProgressBarCornerRadius.toDouble(),
-                    //       ),
-                    //     ),
-                    //   ),
-                    // ),
                   ],
                 ),
               ),
