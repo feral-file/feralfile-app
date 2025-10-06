@@ -930,19 +930,10 @@ class NavigationService {
       if (CustomRouteObserver.bottomSheetVisibility.value) {
         Navigator.pop(navigatorKey.currentContext!);
       }
-
-      final tokenConfiguration = tokenId != null
-          ? await injector<NftIndexerService>().getTokenConfiguration(tokenId)
-          : null;
-
       unawaited(
         UIHelper.showRawDialog(
           navigatorKey.currentContext!,
-          NowDisplaySettingView(
-            tokenConfiguration: tokenConfiguration,
-            artistName: artistName,
-            tokenId: tokenId,
-          ),
+          NowDisplayingQuickSettingView(),
           title: 'FF1 Settings',
           name: UIHelper.artDisplaySettingModal,
           isRoundCorner: false,

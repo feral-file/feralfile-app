@@ -33,6 +33,7 @@ import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
 import 'package:autonomy_flutter/view/now_displaying/now_displaying_bar.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/llm_text_input/llm_text_input.dart';
+import 'package:autonomy_flutter/widgets/now_playing_bar/collapsed_now_playing_bar.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:floor/floor.dart';
 import 'package:flutter/material.dart';
@@ -287,6 +288,7 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
     _updateOverlayVisibility();
     isNowDisplayingBarExpanded.addListener(_updateOverlayVisibility);
     nowDisplayingShowing.addListener(_updateOverlayVisibility);
+    isNowDisplayingBarShowingQuickSetting.addListener(_updateOverlayVisibility);
   }
 
   void _updateAnimationBasedOnDisplayState() {
@@ -307,8 +309,9 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
   }
 
   void _updateOverlayVisibility() {
-    _shouldShowOverlay.value =
-        isNowDisplayingBarExpanded.value && nowDisplayingShowing.value;
+    _shouldShowOverlay.value = (isNowDisplayingBarExpanded.value ||
+            isNowDisplayingBarShowingQuickSetting.value) &&
+        nowDisplayingShowing.value;
   }
 
   @override
@@ -321,7 +324,8 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
         .removeListener(_updateAnimationBasedOnDisplayState);
     isNowDisplayingBarExpanded.removeListener(_updateOverlayVisibility);
     nowDisplayingShowing.removeListener(_updateOverlayVisibility);
-
+    isNowDisplayingBarShowingQuickSetting
+        .removeListener(_updateOverlayVisibility);
     _shouldShowOverlay.dispose();
     _nowDisplayingStreamSubscription?.cancel();
     _animationController.dispose();
@@ -402,6 +406,8 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                             onTap: () {
                               if (_isVisible) {
                                 DraggableSheetController.collapseSheet();
+                                isNowDisplayingBarShowingQuickSetting.value =
+                                    false;
                               }
                             },
                             child: AnimatedContainer(
