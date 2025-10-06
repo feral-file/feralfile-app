@@ -5,10 +5,8 @@ import 'package:autonomy_flutter/gateway/mobile_controller_api.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/intent.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/utils/json_stream.dart';
-import 'package:autonomy_flutter/util/eth_utils.dart';
 import 'package:autonomy_flutter/util/file_ext.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/util/xtz_utils.dart';
 
 class MobileControllerService {
   MobileControllerService(this.api);
@@ -66,15 +64,6 @@ class MobileControllerService {
       'command': command,
     };
     try {
-      // check if command is ethereum address or ens or tezos address or tns
-      if (command.isEthereumAddressFormat() ||
-          command.isENSFormat() ||
-          command.isTezosAddressFormat() ||
-          command.isTNSFormat()) {
-        // for this case, we shouldn't call the api,instead, we should validate the address or resolve the dns, then build and return the stream, simulate the api
-        return _simulateAddressOrDomainStream(command);
-      }
-
       final result = await api.getDP1CallFromTextStream(
         body,
       );

@@ -22,7 +22,6 @@ import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/view/animated_cycled_tooltip.dart';
 import 'package:autonomy_flutter/view/hight_light_tetx_controller.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/widgets/llm_text_input/llm_text_input.dart';
@@ -144,7 +143,11 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
             final dp1Playlist = state.lastDP1Call;
 
             if (state.lastIntent.action == AiAction.addAddress) {
-              recordBloc.add(AddAddressEvent(state.transcription));
+              final address = state.lastIntent.entities?.firstOrNull?.name;
+              if (address != null && address.trim().isNotEmpty) {
+                // Assuming the first entity is the address
+                recordBloc.add(AddAddressEvent(address));
+              }
               return;
             }
 

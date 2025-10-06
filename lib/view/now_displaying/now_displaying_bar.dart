@@ -100,7 +100,7 @@ class _NowDisplayingBarState extends State<NowDisplayingBar>
     final device = (status as DeviceDisconnected).device;
     final deviceName = device.name.isNotEmpty == true ? device.name : 'FF1';
     return NowPlayingStatusBar(
-      status: 'Device $deviceName is offline or disconnected.',
+      status: '$deviceName is offline or disconnected.',
     );
   }
 
