@@ -8,7 +8,7 @@ import 'package:autonomy_flutter/screen/indexer_collection/indexer_collection_pa
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/feralfile_alumni_ext.dart';
 import 'package:autonomy_flutter/util/indexer_collection_ext.dart';
-import 'package:autonomy_flutter/view/feralfile_cache_network_image.dart';
+import 'package:autonomy_flutter/view/ff_artwork_thumbnail_view.dart';
 import 'package:flutter/material.dart';
 
 class UserCollectionThumbnail extends StatefulWidget {
@@ -40,11 +40,10 @@ class _UserCollectionThumbnailState extends State<UserCollectionThumbnail> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Expanded(
-                  child: FFCacheNetworkImage(
-                    imageUrl: collection.thumbnailUrl,
+                  child: FFArtworkThumbnailView(
+                    url: collection.thumbnailUrl,
                     fit: BoxFit.fitWidth,
-                    errorWidget: (context, url, error) =>
-                        const NFTErrorWidget(),
+                    errorWidget: const NFTErrorWidget(),
                   ),
                 ),
               ],

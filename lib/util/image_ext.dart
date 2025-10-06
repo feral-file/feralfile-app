@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/view/feralfile_cache_network_image.dart';
 import 'package:autonomy_flutter/view/image_background.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +13,7 @@ extension ImageExt on CachedNetworkImage {
     int? memCacheWidth,
     int? maxWidthDiskCache,
     int? maxHeightDiskCache,
-    BaseCacheManager? cacheManager,
+    CacheManager? cacheManager,
     PlaceholderWidgetBuilder? placeholder,
     LoadingErrorWidgetBuilder? errorWidget,
     bool shouldRefreshCache = false,
@@ -37,7 +38,7 @@ extension ImageExt on CachedNetworkImage {
       );
     }
 
-    return CachedNetworkImage(
+    return FFCacheNetworkImage(
       imageUrl: src,
       fadeInDuration: Duration.zero,
       fit: BoxFit.cover,
