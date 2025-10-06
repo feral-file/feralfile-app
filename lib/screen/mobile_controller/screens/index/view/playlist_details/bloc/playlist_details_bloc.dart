@@ -45,7 +45,7 @@ class PlaylistDetailsBloc
     );
     try {
       final items = _playlist.items;
-      final pageItems = items.take(_pageSize).toList();
+      final pageItems = items.take(event.size).toList();
       final pageIndexIds =
           pageItems.map((item) => item.indexId).whereType<String>().toList();
 
@@ -64,9 +64,17 @@ class PlaylistDetailsBloc
         );
       }
 
+      final pageAssetTokens = pageIndexIds
+          .map(
+            (id) => assetTokens.firstWhere(
+              (t) => t.id == id,
+            ),
+          )
+          .toList();
+
       emit(
         PlaylistDetailsLoadedState(
-          assetTokens: assetTokens,
+          assetTokens: pageAssetTokens,
           hasMore: items.length > _pageSize,
           currentPage: 0,
         ),
@@ -110,12 +118,20 @@ class PlaylistDetailsBloc
       );
       final pageIndexIds =
           pageItems.map((item) => item.indexId).whereType<String>().toList();
+      pageIndexIds.map((e) => '"$e"').toList().join(', ');
       final assetTokens = await injector<NftTokensService>().getManualTokens(
         indexerIds: pageIndexIds,
       );
+      final pageAssetTokens = pageIndexIds
+          .map(
+            (id) => assetTokens.firstWhere(
+              (t) => t.id == id,
+            ),
+          )
+          .toList();
       emit(
         PlaylistDetailsLoadedState(
-          assetTokens: [...state.assetTokens, ...assetTokens],
+          assetTokens: [...state.assetTokens, ...pageAssetTokens],
           hasMore: end < items.length,
           currentPage: nextPage,
         ),

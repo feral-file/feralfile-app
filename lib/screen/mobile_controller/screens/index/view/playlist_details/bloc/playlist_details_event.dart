@@ -7,6 +7,9 @@ class SetPlaylistDetailsEvent extends PlaylistDetailsEvent {
   SetPlaylistDetailsEvent({required this.playlist});
 }
 
-class GetPlaylistDetailsEvent extends PlaylistDetailsEvent {}
+class GetPlaylistDetailsEvent extends PlaylistDetailsEvent {
+  final int size;
+  GetPlaylistDetailsEvent({int? size}) : size = size ?? 10;
+}
 
 class LoadMorePlaylistDetailsEvent extends PlaylistDetailsEvent {}

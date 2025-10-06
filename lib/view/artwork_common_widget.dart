@@ -1390,7 +1390,7 @@ class _DrawerItemState extends State<DrawerItem> {
     final theme = Theme.of(context);
     final item = widget.item;
     final color = widget.color;
-    final defaultTextStyle = theme.textTheme.ppMori400Black14;
+    final defaultTextStyle = theme.textTheme.ppMori400Black12;
     final customTextStyle = defaultTextStyle.copyWith(color: color);
     final defaultProcessingTextStyle =
         defaultTextStyle.copyWith(color: AppColor.disabledColor);
