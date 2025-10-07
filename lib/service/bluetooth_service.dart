@@ -815,7 +815,8 @@ class FFBluetoothService {
       final shouldStop = await onData?.call(connectedDevices);
       if (shouldStop == true) {
         log.info('BluetoothConnectEventScan startScan: already connected');
-        return true;
+        foundDevice = true;
+        return foundDevice;
       }
       StreamSubscription<List<ScanResult>>? scanSubscription;
 

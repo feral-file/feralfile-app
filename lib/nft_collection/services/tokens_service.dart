@@ -236,6 +236,7 @@ class NftTokensServiceImpl extends NftTokensService {
   Future<List<AssetToken>> fetchManualTokens(List<String> indexerIds) async {
     final request = QueryListTokensRequest(
       ids: indexerIds,
+      size: indexerIds.length,
     );
 
     final manuallyAssets = await _indexerService.getNftTokens(request);
