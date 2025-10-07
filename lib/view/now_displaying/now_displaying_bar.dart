@@ -78,7 +78,7 @@ class _NowDisplayingBarState extends State<NowDisplayingBar>
             header: (context, onUpdate, notifier) {
               final isExpanded = notifier.value;
               final minSize = (NowPlayingBarTokens.collapseHeight +
-                      (isExpanded ? 54 * 3 : 0)) /
+                      (isExpanded ? 56 * 3 : 0)) /
                   NowPlayingBarTokens.expandedHeight;
               return TwoStopDraggableSheet(
                 key: draggableSheetKey,
@@ -86,6 +86,8 @@ class _NowDisplayingBarState extends State<NowDisplayingBar>
                 maxSize: 1,
                 collapsedBuilder: (context, scrollController) {
                   return CollapsedNowPlayingBar(
+                      maxHeight: minSize *
+                          NowPlayingBarTokens.expandedHeight.toDouble(),
                       playingObject: nowPlayingObject,
                       isExpanded: isExpanded,
                       onToggle: onUpdate,

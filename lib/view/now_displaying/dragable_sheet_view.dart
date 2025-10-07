@@ -45,15 +45,13 @@ class _TwoStopDraggableSheetState extends State<TwoStopDraggableSheet> {
       return; // ignore snaps while we're programmatically adjusting size
     }
     final midSize = (widget.minSize + widget.maxSize) / 2;
-    _timer?.cancel();
-    _timer = Timer(const Duration(milliseconds: 0), () {
-      if (_controller.size > widget.minSize * 2 ||
-          _controller.size >= midSize) {
-        isNowDisplayingBarExpanded.value = true;
-      } else {
-        isNowDisplayingBarExpanded.value = false;
-      }
-    });
+    if (_controller.size > widget.minSize * 2 || _controller.size >= midSize) {
+      isNowDisplayingBarExpanded.value = true;
+    } else {
+      isNowDisplayingBarExpanded.value = false;
+    }
+    log.info(
+        "Sheet size: ${_controller.size}, isNowDisplayingBarExpanded: ${isNowDisplayingBarExpanded.value}, minSize: ${widget.minSize}, maxSize: ${widget.maxSize}");
   }
 
   Future<void> collapseSheet() async {

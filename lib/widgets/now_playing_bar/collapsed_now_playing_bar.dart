@@ -5,11 +5,11 @@ import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
+import 'package:autonomy_flutter/view/header_with_animated_below.dart';
 import 'package:autonomy_flutter/view/now_displaying/now_display_setting.dart';
 import 'package:autonomy_flutter/widgets/now_playing_bar/display_item.dart';
 import 'package:autonomy_flutter/widgets/now_playing_bar/top_line.dart';
 import 'package:flutter/material.dart';
-import 'package:autonomy_flutter/view/header_with_animated_below.dart';
 
 final ValueNotifier<bool> isNowDisplayingBarShowingQuickSetting =
     ValueNotifier(false);
@@ -20,11 +20,13 @@ class CollapsedNowPlayingBar extends StatefulWidget {
       this.isExpanded = false,
       this.onToggle,
       this.isShowingQuickSetting,
+      this.maxHeight,
       super.key});
   final DP1NowDisplayingObject playingObject;
   final bool isExpanded;
   final void Function()? onToggle;
   final ValueNotifier<bool>? isShowingQuickSetting;
+  final double? maxHeight;
 
   @override
   State<StatefulWidget> createState() => _CollapsedNowPlayingBarState();
@@ -57,7 +59,7 @@ class _CollapsedNowPlayingBarState extends State<CollapsedNowPlayingBar>
   @override
   Widget build(BuildContext context) {
     return Container(
-      // height: NowPlayingBarTokens.collapseHeight.toDouble(),
+      height: widget.maxHeight ?? NowPlayingBarTokens.collapseHeight.toDouble(),
       padding: EdgeInsets.only(
         top: NowPlayingBarTokens.paddingTop.toDouble(),
         right: NowPlayingBarTokens.paddingHorizontal.toDouble(),
@@ -71,8 +73,10 @@ class _CollapsedNowPlayingBarState extends State<CollapsedNowPlayingBar>
         ),
       ),
       child: HeaderWithAnimated(
+        maxHeight: widget.maxHeight,
         header: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
             const TopLine(),
             Row(
@@ -105,8 +109,6 @@ class _CollapsedNowPlayingBarState extends State<CollapsedNowPlayingBar>
         ),
         child: const NowDisplayingQuickSettingView(),
         isExpandedListenable: isShowingQuickSetting,
-        duration: const Duration(milliseconds: 150),
-        curve: Curves.linear,
       ),
     );
   }
