@@ -54,7 +54,8 @@ class _TwoStopDraggableSheetState extends State<TwoStopDraggableSheet> {
         "Sheet size: ${_controller.size}, isNowDisplayingBarExpanded: ${isNowDisplayingBarExpanded.value}, minSize: ${widget.minSize}, maxSize: ${widget.maxSize}");
   }
 
-  Future<void> collapseSheet() async {
+  Future<void> collapseSheet(
+      {Duration duration = const Duration(milliseconds: 150)}) async {
     log.info("Collapsing sheet from size: ${_controller.size}");
     log.info("Collapsing sheet to minSize: ${widget.minSize}");
     _isAdjustingSize = true;
@@ -63,18 +64,21 @@ class _TwoStopDraggableSheetState extends State<TwoStopDraggableSheet> {
       try {
         await _controller.animateTo(
           widget.minSize,
-          duration: const Duration(milliseconds: 150),
-          curve: Curves.linear,
+          duration: duration,
+          curve: Curves.easeOut,
         );
         log.info("Sheet collapsed to minSize: ${_controller.size}");
+      } catch (e) {
+        log.info("Error collapsing sheet: $e");
       } finally {
         _isAdjustingSize = false;
         if (!completer.isCompleted) {
           completer.complete();
         }
+        _snapSheet();
       }
     });
-    return completer.future;
+    await completer.future;
   }
 
   @override
@@ -85,12 +89,15 @@ class _TwoStopDraggableSheetState extends State<TwoStopDraggableSheet> {
     if (widget.minSize != oldWidget.minSize) {
       final bool isCurrentlyExpanded = isNowDisplayingBarExpanded.value;
 
-      if (!isCurrentlyExpanded) {
+      // Only adjust when collapsed or when current size is below new minSize
+      final bool shouldClampToMin =
+          !isCurrentlyExpanded || _controller.size < widget.minSize;
+
+      if (shouldClampToMin) {
         _isAdjustingSize = true;
-        // Jump immediately to the new min size to keep the visual state consistent
-        // without triggering a snap to expanded.
-        collapseSheet();
-        // Clear the adjusting flag after this frame so listener resumes normally
+        final double distance = (widget.minSize - _controller.size).abs();
+        final int ms = (120 + distance * 200).clamp(80, 300).toInt();
+        collapseSheet(duration: Duration(milliseconds: ms));
       }
     }
   }
@@ -105,6 +112,7 @@ class _TwoStopDraggableSheetState extends State<TwoStopDraggableSheet> {
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
+      // Avoid providing a new GlobalKey on each build; this preserves state
       controller: _controller,
       initialChildSize: widget.minSize,
       minChildSize: widget.minSize,

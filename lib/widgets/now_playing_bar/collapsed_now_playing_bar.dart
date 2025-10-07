@@ -17,16 +17,12 @@ final ValueNotifier<bool> isNowDisplayingBarShowingQuickSetting =
 class CollapsedNowPlayingBar extends StatefulWidget {
   const CollapsedNowPlayingBar(
       {required this.playingObject,
-      this.isExpanded = false,
       this.onToggle,
       this.isShowingQuickSetting,
-      this.maxHeight,
       super.key});
   final DP1NowDisplayingObject playingObject;
-  final bool isExpanded;
   final void Function()? onToggle;
   final ValueNotifier<bool>? isShowingQuickSetting;
-  final double? maxHeight;
 
   @override
   State<StatefulWidget> createState() => _CollapsedNowPlayingBarState();
@@ -41,7 +37,6 @@ class _CollapsedNowPlayingBarState extends State<CollapsedNowPlayingBar>
     super.initState();
     isShowingQuickSetting =
         widget.isShowingQuickSetting ?? ValueNotifier(false);
-    isShowingQuickSetting.value = widget.isExpanded;
   }
 
   @override
@@ -59,7 +54,6 @@ class _CollapsedNowPlayingBarState extends State<CollapsedNowPlayingBar>
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: widget.maxHeight ?? NowPlayingBarTokens.collapseHeight.toDouble(),
       padding: EdgeInsets.only(
         top: NowPlayingBarTokens.paddingTop.toDouble(),
         right: NowPlayingBarTokens.paddingHorizontal.toDouble(),
@@ -73,7 +67,7 @@ class _CollapsedNowPlayingBarState extends State<CollapsedNowPlayingBar>
         ),
       ),
       child: HeaderWithAnimated(
-        maxHeight: widget.maxHeight,
+        // maxHeight: widget.maxHeight,
         header: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.end,
@@ -95,7 +89,7 @@ class _CollapsedNowPlayingBarState extends State<CollapsedNowPlayingBar>
                 const SizedBox(width: 10),
                 GestureDetector(
                   child: Icon(
-                    widget.isExpanded ? AuIcon.close : AuIcon.drawer,
+                    isShowingQuickSetting.value ? AuIcon.close : AuIcon.drawer,
                     size: 24,
                     color: AppColor.white,
                   ),

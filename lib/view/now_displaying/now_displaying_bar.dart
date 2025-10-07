@@ -2,6 +2,7 @@ import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/design/build/components/NowPlayingBar.dart';
 import 'package:autonomy_flutter/model/error/now_displaying_error.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
+import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/now_displaying_manager.dart';
 import 'package:autonomy_flutter/view/expandable_with_option.dart';
 import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
@@ -85,11 +86,10 @@ class _NowDisplayingBarState extends State<NowDisplayingBar>
                 minSize: minSize,
                 maxSize: 1,
                 collapsedBuilder: (context, scrollController) {
+                  log.info(
+                      "NowDisplayingBar - minSize: $minSize, isExpanded: $isExpanded");
                   return CollapsedNowPlayingBar(
-                      maxHeight: minSize *
-                          NowPlayingBarTokens.expandedHeight.toDouble(),
                       playingObject: nowPlayingObject,
-                      isExpanded: isExpanded,
                       onToggle: onUpdate,
                       isShowingQuickSetting: notifier);
                 },

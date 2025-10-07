@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -7,13 +5,11 @@ class HeaderWithAnimated extends StatefulWidget {
   final Widget header;
   final Widget child;
   final ValueListenable<bool> isExpandedListenable;
-  final double? maxHeight;
 
   const HeaderWithAnimated({
     required this.header,
     required this.child,
     required this.isExpandedListenable,
-    this.maxHeight,
     super.key,
   });
 
@@ -83,37 +79,41 @@ class _HeaderWithAnimatedState extends State<HeaderWithAnimated>
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: widget.maxHeight,
-      child: Column(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Expanded(
-            child: AnimatedBuilder(
-              animation: _animation,
-              builder: (context, child) {
-                return SizedBox(
-                  height: widget.maxHeight! * (1 - _animation.value),
-                );
-              },
-            ),
-          ),
-          widget.header,
-          AnimatedBuilder(
-            animation: _animation,
-            builder: (context, child) {
-              return ClipRect(
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  heightFactor: _animation.value,
-                  child: widget.child,
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        widget.header,
+        ValueListenableBuilder<bool>(
+          valueListenable: widget.isExpandedListenable,
+          builder: (context, isExpanded, child) {
+            return ClipRect(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                heightFactor: isExpanded ? 1.0 : 0.0,
+                child: child,
+              ),
+            );
+          },
+          child: widget.child,
+        ),
+      ],
+    );
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        widget.header,
+        AnimatedBuilder(
+          animation: _animation,
+          builder: (context, child) {
+            return ClipRect(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                heightFactor: _animation.value,
+                child: widget.child,
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }
