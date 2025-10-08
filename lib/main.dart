@@ -391,31 +391,31 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                 },
               ),
               Visibility(
-                visible: _isVisible &&
-                    CustomRouteObserver.currentRoute.value?.settings.name ==
-                        AppRouter.homePage,
+                visible: _isVisible,
                 replacement: const SizedBox.shrink(),
                 child: Stack(
                   children: [
                     // gradient
-                    Positioned(
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          height: 195 + MediaQuery.of(context).padding.bottom,
-                          // gradient
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColor.auGreyBackground,
-                                Colors.transparent
-                              ],
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
+                    if (CustomRouteObserver.currentRoute.value?.settings.name ==
+                        AppRouter.homePage)
+                      Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            height: 195 + MediaQuery.of(context).padding.bottom,
+                            // gradient
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppColor.auGreyBackground,
+                                  Colors.transparent
+                                ],
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                              ),
                             ),
-                          ),
-                        )),
+                          )),
                     if (_isVisible)
                       ValueListenableBuilder(
                         valueListenable: isNowDisplayingBarExpanded,
