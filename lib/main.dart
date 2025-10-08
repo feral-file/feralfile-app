@@ -368,29 +368,6 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                     builder: (context) => Stack(
                       children: [
                         widget.child,
-                        if (_isVisible)
-                          ValueListenableBuilder(
-                            valueListenable: isNowDisplayingBarExpanded,
-                            builder: (context, value, child) {
-                              if (value) {
-                                return const SizedBox.shrink();
-                              }
-
-                              final paddingBottom =
-                                  MediaQuery.of(context).padding.bottom;
-                              return Positioned(
-                                bottom: paddingBottom +
-                                    UIConstants.nowDisplayingBarBottomPadding +
-                                    NowPlayingBarTokens.collapseHeight,
-                                left: 0,
-                                right: 0,
-                                child: const Material(
-                                  color: Colors.transparent,
-                                  child: LLMTextInput(),
-                                ),
-                              );
-                            },
-                          ),
                       ],
                     ),
                   ),
@@ -422,39 +399,86 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
               Visibility(
                 visible: _isVisible,
                 replacement: const SizedBox.shrink(),
-                child: ValueListenableBuilder(
-                  valueListenable: CustomRouteObserver.bottomSheetHeight,
-                  builder: (context, bottomSheetHeight, child) {
-                    final paddingBottom = MediaQuery.of(context).padding.bottom;
-                    return AnimatedPositioned(
-                      duration: const Duration(milliseconds: 150),
-                      bottom: bottomSheetHeight > 0
-                          ? bottomSheetHeight +
-                              UIConstants.nowDisplayingBarBottomPadding
-                          : paddingBottom +
-                              UIConstants.nowDisplayingBarBottomPadding,
-                      left: ResponsiveLayout.paddingHorizontal,
-                      right: ResponsiveLayout.paddingHorizontal,
-                      child: FadeTransition(
-                        opacity: _animationController,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: Offset(
-                              0,
-                              paddingBottom / kNowDisplayingHeight,
-                            ),
-                            end: Offset.zero,
-                          ).animate(
-                            CurvedAnimation(
-                              parent: _animationController,
-                              curve: Curves.easeOut,
+                child: Stack(
+                  children: [
+                    // gradient
+                    Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          height: 195 + MediaQuery.of(context).padding.bottom,
+                          // gradient
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColor.auGreyBackground,
+                                Colors.transparent
+                              ],
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
                             ),
                           ),
-                          child: const NowDisplayingBar(),
-                        ),
+                        )),
+                    if (_isVisible)
+                      ValueListenableBuilder(
+                        valueListenable: isNowDisplayingBarExpanded,
+                        builder: (context, value, child) {
+                          if (value) {
+                            return const SizedBox.shrink();
+                          }
+
+                          final paddingBottom =
+                              MediaQuery.of(context).padding.bottom;
+                          return Positioned(
+                            bottom: paddingBottom +
+                                UIConstants.nowDisplayingBarBottomPadding +
+                                NowPlayingBarTokens.collapseHeight,
+                            left: 0,
+                            right: 0,
+                            child: const Material(
+                              color: Colors.transparent,
+                              child: LLMTextInput(),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
+                    ValueListenableBuilder(
+                      valueListenable: CustomRouteObserver.bottomSheetHeight,
+                      builder: (context, bottomSheetHeight, child) {
+                        final paddingBottom =
+                            MediaQuery.of(context).padding.bottom;
+                        return AnimatedPositioned(
+                          duration: const Duration(milliseconds: 150),
+                          bottom: bottomSheetHeight > 0
+                              ? bottomSheetHeight +
+                                  UIConstants.nowDisplayingBarBottomPadding
+                              : paddingBottom +
+                                  UIConstants.nowDisplayingBarBottomPadding,
+                          left: ResponsiveLayout.paddingHorizontal,
+                          right: ResponsiveLayout.paddingHorizontal,
+                          child: FadeTransition(
+                            opacity: _animationController,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: Offset(
+                                  0,
+                                  paddingBottom / kNowDisplayingHeight,
+                                ),
+                                end: Offset.zero,
+                              ).animate(
+                                CurvedAnimation(
+                                  parent: _animationController,
+                                  curve: Curves.easeOut,
+                                ),
+                              ),
+                              child: const NowDisplayingBar(),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ),
             ],

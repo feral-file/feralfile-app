@@ -4,7 +4,6 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/service/dls_service.dart';
-import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:flutter/material.dart';
 // Removed: services import not needed after simplifying template extraction
 // import 'package:flutter/services.dart';
@@ -27,8 +26,8 @@ class HighlightController extends TextEditingController {
         _rotationInterval = rotationInterval,
         super(text: text) {
     // Start rotating placeholders if provided and input is empty
-    addListener(_onTextChanged);
-    _maybeStartPlaceholderRotation();
+    // addListener(_onTextChanged);
+    // _maybeStartPlaceholderRotation();
   }
 
   // Handle text changes to pause/resume placeholder rotation
@@ -71,9 +70,9 @@ class HighlightController extends TextEditingController {
 
   @override
   void dispose() {
-    _stopPlaceholderRotation();
+    // _stopPlaceholderRotation();
     placeholderNotifier.dispose();
-    removeListener(_onTextChanged);
+    // removeListener(_onTextChanged);
     super.dispose();
   }
 
@@ -89,59 +88,59 @@ class HighlightController extends TextEditingController {
     return matches;
   }
 
-  @override
-  TextSpan buildTextSpan({
-    required BuildContext context,
-    TextStyle? style,
-    required bool withComposing,
-  }) {
-    final text = this.text;
-    final List<TextSpan> children = [];
-
-    // Get keywords dynamically from input text using DSL patterns
-    final keywords = getKeywordsFromInput(text);
-
-    if (keywords.isEmpty) {
-      return TextSpan(text: text, style: style);
-    }
-
-    int start = 0;
-    final lowerText = text.toLowerCase();
-
-    while (start < text.length) {
-      int closestMatchIndex = text.length;
-      String? matchedWord;
-
-      for (var word in keywords) {
-        int index = lowerText.indexOf(word.toLowerCase(), start);
-        if (index >= 0 && index < closestMatchIndex) {
-          closestMatchIndex = index;
-          matchedWord = word;
-        }
-      }
-
-      if (matchedWord == null) {
-        children.add(TextSpan(text: text.substring(start), style: style));
-        break;
-      }
-
-      if (closestMatchIndex > start) {
-        children.add(TextSpan(
-            text: text.substring(start, closestMatchIndex), style: style));
-      }
-
-      children.add(TextSpan(
-        text: text.substring(
-            closestMatchIndex, closestMatchIndex + matchedWord.length),
-        style: style?.copyWith(
-          color: AppColor.feralFileHighlight,
-          fontWeight: FontWeight.bold,
-        ),
-      ));
-
-      start = closestMatchIndex + matchedWord.length;
-    }
-
-    return TextSpan(style: style, children: children);
-  }
+  // @override
+  // TextSpan buildTextSpan({
+  //   required BuildContext context,
+  //   TextStyle? style,
+  //   required bool withComposing,
+  // }) {
+  //   final text = this.text;
+  //   final List<TextSpan> children = [];
+  //
+  //   // Get keywords dynamically from input text using DSL patterns
+  //   final keywords = getKeywordsFromInput(text);
+  //
+  //   if (keywords.isEmpty) {
+  //     return TextSpan(text: text, style: style);
+  //   }
+  //
+  //   int start = 0;
+  //   final lowerText = text.toLowerCase();
+  //
+  //   while (start < text.length) {
+  //     int closestMatchIndex = text.length;
+  //     String? matchedWord;
+  //
+  //     for (var word in keywords) {
+  //       int index = lowerText.indexOf(word.toLowerCase(), start);
+  //       if (index >= 0 && index < closestMatchIndex) {
+  //         closestMatchIndex = index;
+  //         matchedWord = word;
+  //       }
+  //     }
+  //
+  //     if (matchedWord == null) {
+  //       children.add(TextSpan(text: text.substring(start), style: style));
+  //       break;
+  //     }
+  //
+  //     if (closestMatchIndex > start) {
+  //       children.add(TextSpan(
+  //           text: text.substring(start, closestMatchIndex), style: style));
+  //     }
+  //
+  //     children.add(TextSpan(
+  //       text: text.substring(
+  //           closestMatchIndex, closestMatchIndex + matchedWord.length),
+  //       style: style?.copyWith(
+  //         color: AppColor.feralFileHighlight,
+  //         fontWeight: FontWeight.bold,
+  //       ),
+  //     ));
+  //
+  //     start = closestMatchIndex + matchedWord.length;
+  //   }
+  //
+  //   return TextSpan(style: style, children: children);
+  // }
 }

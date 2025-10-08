@@ -17,5 +17,5 @@ class CommandDotTokens {
     static const iconColor = Color(0xFF000000);
     static const iconHeight = 12;
     static const iconWidth = 9.82;
-    static const size = 22;
+    static const size = 34;
 }
