@@ -391,7 +391,9 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                 },
               ),
               Visibility(
-                visible: _isVisible,
+                visible: _isVisible &&
+                    CustomRouteObserver.currentRoute.value?.settings.name ==
+                        AppRouter.homePage,
                 replacement: const SizedBox.shrink(),
                 child: Stack(
                   children: [

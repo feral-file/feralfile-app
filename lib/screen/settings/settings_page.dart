@@ -153,15 +153,6 @@ class _SettingsPageState extends State<SettingsPage>
                     },
                   ),
                   addOnlyDivider(),
-                  _settingItem(
-                    title: 'help_us_improve'.tr(),
-                    icon: const Icon(AuIcon.help_us),
-                    onTap: () async {
-                      await Navigator.of(context)
-                          .pushNamed(AppRouter.bugBountyPage);
-                    },
-                  ),
-                  addOnlyDivider(),
                 ],
               ),
               const Spacer(),
