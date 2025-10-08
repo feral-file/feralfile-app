@@ -50,7 +50,7 @@ class _TextFieldWidgetState extends State<TextFieldWidget> {
           visible: widget.labelText?.isNotEmpty ?? false,
           child: Text(
             widget.labelText ?? '',
-            style: theme.textTheme.atlasWhiteBold12,
+            style: theme.textTheme.ppMori700White12,
           ),
         ),
         TextFormField(

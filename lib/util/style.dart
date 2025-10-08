@@ -323,7 +323,7 @@ MarkdownStyleSheet markDownDetailPageStyle(
   final bodyText2 = theme.textTheme.ppMori400Black16.copyWith(color: textColor);
   return MarkdownStyleSheet(
     a: TextStyle(
-      fontFamily: AppTheme.atlasGrotesk,
+      fontFamily: AppTheme.ppMori,
       color: Colors.transparent,
       fontWeight: FontWeight.w500,
       shadows: [Shadow(color: textColor, offset: const Offset(0, -1))],
@@ -461,7 +461,7 @@ MarkdownStyleSheet markDownStyleTipCard(BuildContext context) {
   final bodyText2 = theme.textTheme.ppMori400Black14.copyWith(height: 1.7);
   return MarkdownStyleSheet(
     a: const TextStyle(
-      fontFamily: AppTheme.atlasGrotesk,
+      fontFamily: AppTheme.ppMori,
       color: Colors.transparent,
       fontWeight: FontWeight.w400,
       shadows: [Shadow(offset: Offset(0, -1))],

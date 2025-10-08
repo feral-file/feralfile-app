@@ -62,57 +62,6 @@ extension TextThemeExtension on TextTheme {
     );
   }
 
-  TextStyle get atlasGreyNormal14 {
-    final bool isLightMode =
-        SchedulerBinding.instance.platformDispatcher.platformBrightness ==
-            Brightness.light;
-    return TextStyle(
-      fontFamily: AppTheme.atlasGrotesk,
-      fontSize: 14,
-      color:
-          isLightMode ? AppColor.secondaryDimGrey : AppColor.secondaryDimGrey,
-      fontWeight: FontWeight.w300,
-    );
-  }
-
-  TextStyle get atlasWhiteBold12 {
-    final bool isLightMode =
-        SchedulerBinding.instance.platformDispatcher.platformBrightness ==
-            Brightness.light;
-    return TextStyle(
-      fontFamily: AppTheme.atlasGrotesk,
-      fontSize: 12,
-      color: isLightMode ? AppColor.white : AppColor.white,
-      fontWeight: FontWeight.bold,
-    );
-  }
-
-  TextStyle get atlasGreyNormal12 {
-    final bool isLightMode =
-        SchedulerBinding.instance.platformDispatcher.platformBrightness ==
-            Brightness.light;
-    return TextStyle(
-      color:
-          isLightMode ? AppColor.secondaryDimGrey : AppColor.secondaryDimGrey,
-      fontSize: 12,
-      fontWeight: FontWeight.w400,
-      fontFamily: AppTheme.atlasGrotesk,
-    );
-  }
-
-  TextStyle get atlasGreyBold12 {
-    final bool isLightMode =
-        SchedulerBinding.instance.platformDispatcher.platformBrightness ==
-            Brightness.light;
-    return TextStyle(
-      color:
-          isLightMode ? AppColor.secondaryDimGrey : AppColor.secondaryDimGrey,
-      fontSize: 12,
-      fontWeight: FontWeight.w700,
-      fontFamily: AppTheme.atlasGrotesk,
-    );
-  }
-
   TextStyle get linkStyle16 {
     final bool isLightMode =
         SchedulerBinding.instance.platformDispatcher.platformBrightness ==
@@ -120,7 +69,7 @@ extension TextThemeExtension on TextTheme {
     return TextStyle(
       color: isLightMode ? Colors.transparent : Colors.transparent,
       fontSize: 16,
-      fontFamily: AppTheme.atlasGrotesk,
+      fontFamily: AppTheme.ppMori,
       fontWeight: FontWeight.w400,
       shadows: const [Shadow(offset: Offset(0, -1))],
       decoration: TextDecoration.underline,
@@ -137,7 +86,7 @@ extension TextThemeExtension on TextTheme {
     return TextStyle(
       color: isLightMode ? Colors.transparent : Colors.transparent,
       fontSize: 14,
-      fontFamily: AppTheme.atlasGrotesk,
+      fontFamily: AppTheme.ppMori,
       fontWeight: FontWeight.w700,
       shadows: const [Shadow(offset: Offset(0, -1))],
       decoration: TextDecoration.underline,
@@ -199,19 +148,6 @@ extension TextThemeExtension on TextTheme {
       color: isLightMode ? AppColor.primaryBlack : AppColor.primaryBlack,
       fontSize: 16,
       fontFamily: AppTheme.ppMori,
-    );
-  }
-
-  TextStyle get atlasGreyBold14 {
-    final bool isLightMode =
-        SchedulerBinding.instance.platformDispatcher.platformBrightness ==
-            Brightness.light;
-    return TextStyle(
-      color:
-          isLightMode ? AppColor.secondaryDimGrey : AppColor.secondaryDimGrey,
-      fontSize: 14,
-      fontWeight: FontWeight.w700,
-      fontFamily: AppTheme.atlasGrotesk,
     );
   }
 
@@ -287,6 +223,19 @@ extension TextThemeExtension on TextTheme {
     return TextStyle(
       color: isLightMode ? AppColor.primaryBlack : AppColor.primaryBlack,
       fontSize: 14,
+      fontWeight: FontWeight.w700,
+      fontFamily: AppTheme.ppMori,
+      height: 1.4,
+    );
+  }
+
+  TextStyle get ppMori700Black12 {
+    final bool isLightMode =
+        SchedulerBinding.instance.platformDispatcher.platformBrightness ==
+            Brightness.light;
+    return TextStyle(
+      color: isLightMode ? AppColor.primaryBlack : AppColor.primaryBlack,
+      fontSize: 12,
       fontWeight: FontWeight.w700,
       fontFamily: AppTheme.ppMori,
       height: 1.4,
