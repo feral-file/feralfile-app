@@ -108,7 +108,7 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
       final results = query.find();
       final allAssetTokens = results.map((e) => e.toAssetToken()).toList();
       final filteredAssetTokens = allAssetTokens
-          .where((assetToken) => (assetToken.balance ?? 0) > 0 || true)
+          .where((assetToken) => (assetToken.balance ?? 0) > 0)
           .toList();
       return filteredAssetTokens;
     } catch (e) {

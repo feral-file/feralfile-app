@@ -125,7 +125,7 @@ class CanvasNotificationService {
         '[CanvasNotificationService] Device ${_device.name} scheduling reconnect');
     _reconnectTimer = Timer(const Duration(seconds: 5), () async {
       log.info(
-          '[CanvasNotificationService] Device ${_device.name} attempting to reconnect');
+          '[CanvasNotificationService] Device ${_device.name} attempting to reconnect to topic ${_device.topicId}');
       if (_reconnectTimer?.isActive ?? false) {
         await connect();
       }
