@@ -280,7 +280,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
     } else {
       log.info('Starting scan for FF1: $deviceName');
       resultDevice = await injector<FFBluetoothService>().scanForName(
-        timeout: const Duration(seconds: 30),
+        timeout: const Duration(seconds: 15),
         name: deviceName ?? 'FF1',
       );
 
