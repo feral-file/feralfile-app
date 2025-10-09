@@ -19,7 +19,6 @@ import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/dp1_playlist_grid_view.dart';
-import 'package:autonomy_flutter/view/keyboard_visibility_padding.dart';
 import 'package:autonomy_flutter/view/loading.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:flutter/material.dart';
@@ -65,47 +64,45 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _bloc,
-      child: KeyboardVisibilityPadding(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Expanded(
-              child: BlocBuilder<MeiliSearchBloc, MeiliSearchState>(
-                bloc: _bloc,
-                builder: (context, state) {
-                  if (state.isLoading && !state.hasResults) {
-                    return Column(
-                      children: [
-                        LoadingWidget(),
-                      ],
-                    );
-                  }
-
-                  if (state.hasError) {
-                    return _searchErrorView(context, state);
-                  }
-
-                  if (!state.hasResults && state.query.isNotEmpty) {
-                    return _searchEmptyView(context);
-                  }
-
-                  return CustomScrollView(
-                    shrinkWrap: true,
-                    controller: _scrollController,
-                    slivers: [
-                      ..._buildOrderedSections(context, state),
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: 250),
-                      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Expanded(
+            child: BlocBuilder<MeiliSearchBloc, MeiliSearchState>(
+              bloc: _bloc,
+              builder: (context, state) {
+                if (state.isLoading && !state.hasResults) {
+                  return Column(
+                    children: [
+                      LoadingWidget(),
                     ],
                   );
-                },
-              ),
+                }
+
+                if (state.hasError) {
+                  return _searchErrorView(context, state);
+                }
+
+                if (!state.hasResults && state.query.isNotEmpty) {
+                  return _searchEmptyView(context);
+                }
+
+                return CustomScrollView(
+                  shrinkWrap: true,
+                  controller: _scrollController,
+                  slivers: [
+                    ..._buildOrderedSections(context, state),
+                    const SliverToBoxAdapter(
+                      child: SizedBox(height: 250),
+                    ),
+                  ],
+                );
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
