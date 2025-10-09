@@ -65,7 +65,7 @@ abstract class DP1FeedWithChannelExtensionServiceBase
     bool usingCache = true,
   });
 
-  Future<Channel> getChannelDetail(String channelId, {bool usingCache = true});
+  Future<Channel?> getChannelDetail(String channelId, {bool usingCache = true});
 
   Future<List<Channel>> getChannelsByIds({
     required List<String> channelIds,
@@ -220,7 +220,7 @@ class FeralFileDP1FeedService extends BaseDP1FeedServiceImpl
   }
 
   @override
-  Future<Channel> getChannelDetail(
+  Future<Channel?> getChannelDetail(
     String channelId, {
     bool usingCache = true,
   }) async {
@@ -241,7 +241,7 @@ class FeralFileDP1FeedService extends BaseDP1FeedServiceImpl
       return getChannelDetail(id, usingCache: usingCache);
     });
     final channels = await Future.wait(futures);
-    return channels;
+    return channels.nonNulls.toList();
   }
 
   @override

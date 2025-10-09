@@ -135,6 +135,15 @@ class _OnboardingPageState extends State<OnboardingPage>
         injector<RemoteConfigService>().loadConfigs().then(
           (_) {
             log.info('Remote config loaded');
+            final channelUrls = List<String>.from(
+                injector<RemoteConfigService>().getConfig<List>(
+              ConfigGroup.dp1Playlist,
+              ConfigKey.dp1PlaylistChannelUrls,
+              [],
+            ));
+            injector<FeralFileFeedManager>().setupRemoteConfigChannels(
+              channelUrls,
+            );
             unawaited(injector<FeralFileFeedManager>().reloadAllCache());
           },
           onError: (Object e) {

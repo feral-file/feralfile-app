@@ -1,4 +1,3 @@
-import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:flutter/foundation.dart';
@@ -9,7 +8,7 @@ part 'channel_detail_state.dart';
 
 class ChannelDetailBloc extends Bloc<ChannelDetailEvent, ChannelDetailState> {
   ChannelDetailBloc({
-    required this.channel,
+    required this.channelId,
     required FeralFileDP1FeedService dp1playlistService,
   })  : _dp1playlistService = dp1playlistService,
         super(const ChannelDetailState()) {
@@ -20,8 +19,9 @@ class ChannelDetailBloc extends Bloc<ChannelDetailEvent, ChannelDetailState> {
 
   static const int _pageSize = 10;
 
-  final Channel channel;
-  final FeralFileDP1FeedService _dp1playlistService;
+  final String channelId;
+
+  FeralFileDP1FeedService _dp1playlistService;
 
   Future<void> _onLoadChannelPlaylists(
     LoadChannelPlaylistsEvent event,
@@ -76,7 +76,7 @@ class ChannelDetailBloc extends Bloc<ChannelDetailEvent, ChannelDetailState> {
 
       final playlistsResponse =
           await _dp1playlistService.getPlaylistsByChannelId(
-        channelId: channel.id,
+        channelId: channelId,
         limit: _pageSize,
         cursor: cursor,
       );

@@ -1,5 +1,4 @@
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:flutter/foundation.dart';
@@ -68,11 +67,11 @@ class ChannelsBloc extends Bloc<ChannelsEvent, ChannelsState> {
         emit(state.copyWith(status: ChannelsStateStatus.loading));
       }
 
-      final channels =
+      final channelReferences =
           await injector<FeralFileFeedManager>().getAllCachedChannels();
       emit(state.copyWith(
         status: ChannelsStateStatus.loaded,
-        channels: channels,
+        channelReferences: channelReferences,
         hasMore: false,
         cursor: null,
         error: '',

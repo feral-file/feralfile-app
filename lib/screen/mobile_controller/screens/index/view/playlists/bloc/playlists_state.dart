@@ -19,14 +19,14 @@ class PlaylistsState {
   });
 
   final PlaylistsStateStatus status;
-  final List<DP1Call> playlists;
+  final List<PlaylistReference> playlists;
   final bool hasMore;
   final String? cursor;
   final String? error;
 
   PlaylistsState copyWith({
     PlaylistsStateStatus? status,
-    List<DP1Call>? playlists,
+    List<PlaylistReference>? playlists,
     bool? hasMore,
     String? cursor,
     String? error,

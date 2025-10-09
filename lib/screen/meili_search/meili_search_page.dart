@@ -17,6 +17,7 @@ import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/constants.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/dp1_playlist_grid_view.dart';
 import 'package:autonomy_flutter/view/loading.dart';
@@ -184,6 +185,9 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
 
   Widget _buildChannelsSliver(BuildContext context, MeiliSearchState state) {
     final channels = state.channels;
+    final channelReferences = channels
+        .map((channel) => ChannelReference.fromFeralFileDP1Channel(channel))
+        .toList();
     return SliverToBoxAdapter(
       child: MeiliSearchResultSection<dynamic>(
         title: 'Channels',
@@ -193,7 +197,8 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             slivers: [
-              UIHelper.ChannelSliverListView(channels: channels),
+              UIHelper.ChannelSliverListView(
+                  channelReferences: channelReferences),
             ],
           );
         },
@@ -203,6 +208,9 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
 
   Widget _buildPlaylistsSliver(BuildContext context, MeiliSearchState state) {
     final playlists = state.playlists;
+    final playlistReferences = playlists
+        .map((playlist) => PlaylistReference.fromFeralFileDP1Call(playlist))
+        .toList();
     return SliverToBoxAdapter(
       child: MeiliSearchResultSection<dynamic>(
         title: 'Playlists',
@@ -212,7 +220,7 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             slivers: [
-              UIHelper.PlaylistSliverListView(playlists: playlists),
+              UIHelper.PlaylistSliverListView(playlists: playlistReferences),
             ],
           );
         },

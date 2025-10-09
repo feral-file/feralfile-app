@@ -1,7 +1,6 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
-import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,10 +10,8 @@ part 'works_state.dart';
 
 class WorksBloc extends Bloc<WorksEvent, WorksState> {
   WorksBloc({
-    required FeralFileDP1FeedService dp1PlaylistService,
     required NftIndexerService indexerService,
-  })  : _dp1PlaylistService = dp1PlaylistService,
-        _indexerService = indexerService,
+  })  : _indexerService = indexerService,
         super(const WorksState()) {
     on<LoadWorksEvent>(_onLoadWorks);
     on<LoadMoreWorksEvent>(_onLoadMoreWorks);
@@ -23,7 +20,6 @@ class WorksBloc extends Bloc<WorksEvent, WorksState> {
 
   static const int _pageSize = 10;
 
-  final FeralFileDP1FeedService _dp1PlaylistService;
   final NftIndexerService _indexerService;
 
   Future<void> _onLoadWorks(

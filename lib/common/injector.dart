@@ -57,6 +57,7 @@ import 'package:autonomy_flutter/service/device_info_service.dart';
 import 'package:autonomy_flutter/service/dls_service.dart';
 import 'package:autonomy_flutter/service/domain_address_service.dart';
 import 'package:autonomy_flutter/service/domain_service.dart';
+import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/ethereum_service.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
 import 'package:autonomy_flutter/service/meilisearch_service.dart';
@@ -434,13 +435,18 @@ Future<void> setupInjector() async {
 
   injector.registerFactory<WorksBloc>(
     () => WorksBloc(
-      dp1PlaylistService: injector(),
       indexerService: injector(),
     ),
   );
 
   final feedManager = FeralFileFeedManager();
   injector.registerSingleton<FeralFileFeedManager>(feedManager);
+
+  injector.registerLazySingleton<FeralFileDP1FeedService>(
+    () => FeralFileDP1FeedService(
+      baseUrl: Environment.dp1FeedUrl,
+    ),
+  );
 
   injector.registerLazySingleton<RecordBloc>(
     () => RecordBloc(

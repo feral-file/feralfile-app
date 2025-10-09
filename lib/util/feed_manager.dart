@@ -78,22 +78,24 @@ class FeedManager {
     }
   }
 
-  Future<List<DP1Call>> fetchAllPlaylists() async {
-    List<DP1Call> allPlaylists = [];
+  Future<List<PlaylistReference>> fetchAllPlaylists() async {
+    List<PlaylistReference> allPlaylists = [];
     for (final feedService in feedServices) {
       if (feedService is FeralFileDP1FeedService) {
         final playlists = await feedService.getAllPlaylists();
-        allPlaylists.addAll(playlists.items);
+        allPlaylists.addAll(playlists.items.map((item) =>
+            PlaylistReference(playlist: item, url: feedService.baseUrl)));
       }
     }
     return allPlaylists;
   }
 
-  Future<List<DP1Call>> getAllCachedPlaylists() async {
-    List<DP1Call> allPlaylists = [];
+  Future<List<PlaylistReference>> getAllCachedPlaylists() async {
+    List<PlaylistReference> allPlaylists = [];
     for (final feedService in feedServices) {
       final playlists = await feedService.getAllPlaylists(usingCache: true);
-      allPlaylists.addAll(playlists.items);
+      allPlaylists.addAll(playlists.items.map((item) =>
+          PlaylistReference(playlist: item, url: feedService.baseUrl)));
     }
     return allPlaylists;
   }
@@ -118,18 +120,7 @@ class FeralFileFeedManager extends FeedManager {
     _setupDefault();
   }
 
-  void _setupDefault() {
-    // final defaultUrl = Environment.dp1FeedUrl;
-    // final feralFileFeedService = FeralFileDP1FeedService(baseUrl: defaultUrl);
-    // addFeedService(feralFileFeedService);
-    addFeedServiceByUrls([
-      'https://dp1-feed-operator-api-dev.objkt-com.workers.dev',
-      // 'https://dp1-feed-operator-api-prod.autonomy-system.workers.dev'
-    ]);
-    if (_remoteConfigChannelUrls != null) {
-      setupRemoteConfigChannels(_remoteConfigChannelUrls!);
-    }
-  }
+  void _setupDefault() {}
 
   void setupRemoteConfigChannels(List<String> channelUrls) {
     final remoteConfigChannels = channelUrls.map((url) {
@@ -157,18 +148,6 @@ class FeralFileFeedManager extends FeedManager {
         'Setup remote config channels: ${remoteConfigChannels.map((e) => e.channelId).toList()}');
   }
 
-  List<String>? get remoteConfigChannelIds =>
-      remoteConfigChannels.map((channel) => channel.channelId).toList();
-
-  List<String>? get _remoteConfigChannelUrls => [
-        'https://dp1-feed-operator-api-prod.autonomy-system.workers.dev/api/v1/channels/dae709d7-26da-4b4c-b881-39cd681cc82f',
-        'https://dp1-feed-operator-api-dev.objkt-com.workers.dev/api/v1/channels/cb3455c2-7122-4414-a9f5-7ccbe434de21',
-        // 'https://dp1-feed-operator-api-dev.objkt-com.workers.dev/api/v1/channels/5b467722-202d-44d2-af77-4c438c7f2258',
-        // 'https://dp1-feed-operator-api-dev.objkt-com.workers.dev/api/v1/channels/21f9b1a1-7ad6-4752-ba2c-3f675c4dea63',
-        // 'https://dp1-feed-operator-api-dev.objkt-com.workers.dev/api/v1/channels/92c75624-10ee-403b-81eb-0da0011d4dde',
-        // 'https://dp1-feed-operator-api-dev.objkt-com.workers.dev/api/v1/channels/70930b59-04cc-49e0-a982-7ffc17210add',
-      ];
-
   List<RemoteConfigChannel> remoteConfigChannels = [];
 
   Future<List<Channel>> fetchAllChannels() async {
@@ -182,15 +161,29 @@ class FeralFileFeedManager extends FeedManager {
     return allChannels;
   }
 
-  Future<List<Channel>> getAllCachedChannels() async {
-    List<Channel> allChannels = [];
+  Future<List<ChannelReference>> getAllCachedChannels() async {
+    List<ChannelReference> allChannelReferences = [];
     for (final feedService in feedServices) {
       if (feedService is FeralFileDP1FeedService) {
         final channels = await feedService.getAllChannels(usingCache: true);
-        allChannels.addAll(channels.items);
+        allChannelReferences.addAll(channels.items.map((item) =>
+            ChannelReference(channel: item, url: feedService.baseUrl)));
       }
     }
-    return allChannels;
+    return allChannelReferences;
+  }
+
+  Future<ChannelReference?> getChannelReferenceByChannelId(
+      String channelId) async {
+    for (final feedService in feedServices) {
+      if (feedService is FeralFileDP1FeedService) {
+        final channel = await feedService.getChannelDetail(channelId);
+        if (channel != null) {
+          return ChannelReference(channel: channel, url: feedService.baseUrl);
+        }
+      }
+    }
+    return null;
   }
 
   Future<DP1PlaylistItemsResponse> getPlaylistItemsByListOfChannels({
@@ -282,4 +275,62 @@ class FeralFileFeedManager extends FeedManager {
       nextCursor,
     );
   }
+}
+
+class PlaylistReference {
+  PlaylistReference({required this.playlist, required this.url});
+  final DP1Call playlist;
+  final String url;
+
+  factory PlaylistReference.fromJson(Map<String, dynamic> json) =>
+      PlaylistReference(
+        playlist: DP1Call.fromJson(json['playlist'] as Map<String, dynamic>),
+        url: json['url'] as String,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'playlist': playlist.toJson(),
+        'url': url,
+      };
+
+  factory PlaylistReference.fromFeralFileDP1Call(DP1Call dp1Call) =>
+      PlaylistReference(playlist: dp1Call, url: Environment.dp1FeedUrl);
+}
+
+class ChannelReference {
+  ChannelReference({required this.channel, required this.url});
+  final Channel channel;
+  final String url;
+
+  factory ChannelReference.fromJson(Map<String, dynamic> json) =>
+      ChannelReference(
+        channel: Channel.fromJson(json['channel'] as Map<String, dynamic>),
+        url: json['url'] as String,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'channel': channel.toJson(),
+        'url': url,
+      };
+
+  factory ChannelReference.fromFeralFileDP1Channel(Channel channel) =>
+      ChannelReference(channel: channel, url: Environment.dp1FeedUrl);
+}
+
+class DP1PlaylistPlaylistReferenceResponse {
+  DP1PlaylistPlaylistReferenceResponse(this.items, this.hasMore, this.cursor);
+
+  factory DP1PlaylistPlaylistReferenceResponse.fromJson(
+          Map<String, dynamic> json) =>
+      DP1PlaylistPlaylistReferenceResponse(
+        (json['items'] as List<dynamic>)
+            .map((e) => PlaylistReference.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        json['hasMore'] as bool,
+        json['cursor'] as String?,
+      );
+
+  final List<PlaylistReference> items;
+  final bool hasMore;
+  final String? cursor;
 }

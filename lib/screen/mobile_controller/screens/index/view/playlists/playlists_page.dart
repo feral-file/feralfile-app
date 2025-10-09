@@ -85,19 +85,12 @@ class _PlaylistsPageState extends State<PlaylistsPage>
     final hasMore = state.hasMore;
     final isLoadingMore = state.isLoadingMore;
 
-    final channels = playlists.map((playlist) => null).toList();
-    // playlists
-    //     .map((playlist) => injector<FeralFileFeedManager>()
-    //         .getChannelByPlaylistId(playlist.id))
-    //     .toList();
-
     return PlaylistListView(
       playlists: playlists,
       hasMore: hasMore,
       isLoadingMore: isLoadingMore,
       scrollController: _scrollController,
       isFromPlaylistsPage: true,
-      channels: channels,
     );
   }
 

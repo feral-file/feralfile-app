@@ -1,7 +1,8 @@
-import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
+import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_item.dart';
+import 'package:autonomy_flutter/service/dp1_feed_service.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:flutter/material.dart';
 
@@ -11,17 +12,15 @@ class PlaylistListView extends StatelessWidget {
     required this.hasMore,
     required this.isLoadingMore,
     required this.scrollController,
-    required this.channels,
     this.channelVisible = true,
     this.isFromPlaylistsPage = false,
     super.key,
   });
 
-  final List<DP1Call> playlists;
+  final List<PlaylistReference> playlists;
   final bool hasMore;
   final bool isLoadingMore;
   final ScrollController scrollController;
-  final List<Channel?> channels;
   final bool channelVisible;
   final bool isFromPlaylistsPage;
 
@@ -43,13 +42,22 @@ class PlaylistListView extends StatelessWidget {
         }
 
         final playlist = playlists[index];
-        final channel = channels[index];
+        final service =
+            injector<FeralFileFeedManager>().getFeedServiceByUrl(playlist.url);
+        ChannelReference? channelReference = null;
+        if (service is FeralFileDP1FeedService) {
+          final channel = service.getChannelByPlaylistId(playlist.playlist.id);
+          if (channel != null) {
+            channelReference =
+                ChannelReference(channel: channel, url: playlist.url);
+          }
+        }
 
         return Column(
           children: [
             PlaylistItem(
-              playlist: playlist,
-              channel: channel,
+              playlistReference: playlist,
+              channelReference: channelReference,
               isFromPlaylistsPage: isFromPlaylistsPage,
               channelVisible: channelVisible,
             ),

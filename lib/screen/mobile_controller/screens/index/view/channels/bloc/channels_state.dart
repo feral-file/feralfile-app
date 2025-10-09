@@ -12,28 +12,28 @@ enum ChannelsStateStatus {
 class ChannelsState {
   const ChannelsState({
     this.status = ChannelsStateStatus.initial,
-    this.channels = const [],
+    this.channelReferences = const [],
     this.hasMore = true,
     this.cursor,
     this.error,
   });
 
   final ChannelsStateStatus status;
-  final List<Channel> channels;
   final bool hasMore;
+  final List<ChannelReference> channelReferences;
   final String? cursor;
   final String? error;
 
   ChannelsState copyWith({
     ChannelsStateStatus? status,
-    List<Channel>? channels,
+    List<ChannelReference>? channelReferences,
     bool? hasMore,
     String? cursor,
     String? error,
   }) {
     return ChannelsState(
       status: status ?? this.status,
-      channels: channels ?? this.channels,
+      channelReferences: channelReferences ?? this.channelReferences,
       hasMore: hasMore ?? this.hasMore,
       cursor: cursor ?? this.cursor,
       error: error ?? this.error,
@@ -45,7 +45,7 @@ class ChannelsState {
     if (identical(this, other)) return true;
     return other is ChannelsState &&
         other.status == status &&
-        other.channels == channels &&
+        other.channelReferences == channelReferences &&
         other.hasMore == hasMore &&
         other.cursor == cursor &&
         other.error == error;
@@ -54,7 +54,7 @@ class ChannelsState {
   @override
   int get hashCode {
     return status.hashCode ^
-        channels.hashCode ^
+        channelReferences.hashCode ^
         hasMore.hashCode ^
         cursor.hashCode ^
         error.hashCode;
