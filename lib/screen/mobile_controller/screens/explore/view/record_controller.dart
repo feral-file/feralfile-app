@@ -231,6 +231,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
       child: Stack(
         children: [
           Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
                 height: MediaQuery.of(context).padding.top,
@@ -278,28 +279,37 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                 const Expanded(child: MeiliSearchPage())
               else
                 Expanded(
-                  child: Column(
-                    children: [
-                      Center(
-                        child: GestureDetector(
-                          onTap: state is RecordProcessingState
-                              ? null
-                              : () {
-                                  context.read<RecordBloc>().add(
-                                        state is RecordRecordingState
-                                            ? StopRecordingEvent()
-                                            : StartRecordingEvent(),
-                                      );
-                                },
-                          child: _recordButton(state),
+                  child: CustomScrollView(
+                    physics: NeverScrollableScrollPhysics(),
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: Center(
+                          child: GestureDetector(
+                            onTap: state is RecordProcessingState
+                                ? null
+                                : () {
+                                    context.read<RecordBloc>().add(
+                                          state is RecordRecordingState
+                                              ? StopRecordingEvent()
+                                              : StartRecordingEvent(),
+                                        );
+                                  },
+                            child: _recordButton(state),
+                          ),
                         ),
                       ),
-                      Container(
-                        height: 105.52,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                      SliverToBoxAdapter(
+                        child: Container(
+                          height: 105.52,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
                       ),
-                      _recordTranscribedText(context, state),
-                      _recordStatus(context, state),
+                      SliverToBoxAdapter(
+                        child: _recordTranscribedText(context, state),
+                      ),
+                      SliverToBoxAdapter(
+                        child: _recordStatus(context, state),
+                      ),
                     ],
                   ),
                 ),
