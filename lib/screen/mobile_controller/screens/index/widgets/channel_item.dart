@@ -53,7 +53,9 @@ class ChannelItem extends StatelessWidget {
                   Text(
                     channelReference.channel.summary ?? '',
                     maxLines: maxLines,
-                    overflow: TextOverflow.ellipsis,
+                    overflow: maxLines != null
+                        ? TextOverflow.ellipsis
+                        : TextOverflow.visible,
                     style: theme.textTheme.ppMori400Grey12,
                   ),
                 ],
