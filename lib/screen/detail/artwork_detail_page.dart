@@ -589,7 +589,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                       ),
                       const SizedBox(height: 40),
                       artworkDetailsMetadataSection(context, asset, artistName),
-                      if (asset.fungible) ...[
+                      if (asset.fungible && asset.owner.isNotEmpty) ...[
                         tokenOwnership(
                           context,
                           asset,

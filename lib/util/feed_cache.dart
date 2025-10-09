@@ -166,7 +166,8 @@ class FeedCacheImpl extends BaseFeedCache {
 
   // get all playlists
   @override
-  List<DP1Call> getAllPlaylists() => _playlists.values.toList();
+  List<DP1Call> getAllPlaylists() =>
+      _playlists.values.toList().sortedBy((e) => e.created);
 
   /* 
   =======================================================================

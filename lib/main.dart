@@ -410,18 +410,21 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                               bottom: 0,
                               left: 0,
                               right: 0,
-                              child: Container(
-                                height:
-                                    195 + MediaQuery.of(context).padding.bottom,
-                                // gradient
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      AppColor.auGreyBackground,
-                                      Colors.transparent
-                                    ],
-                                    begin: Alignment.bottomCenter,
-                                    end: Alignment.topCenter,
+                              child: IgnorePointer(
+                                ignoring: true,
+                                child: Container(
+                                  height: 195 +
+                                      MediaQuery.of(context).padding.bottom,
+                                  // gradient
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        AppColor.auGreyBackground,
+                                        Colors.transparent
+                                      ],
+                                      begin: Alignment.bottomCenter,
+                                      end: Alignment.topCenter,
+                                    ),
                                   ),
                                 ),
                               ));
