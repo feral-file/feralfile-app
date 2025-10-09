@@ -39,13 +39,13 @@ class AuthService {
   );
 
   final HiveStoreObjectService<String?> _authServiceStore =
-      HiveStoreObjectServiceImpl<String?>()..init(_authServiceStoreKey);
+      HiveStoreObjectServiceImpl<String?>(key: _authServiceStoreKey);
 
   static const String _jwtKey = 'jwt';
   static const String _authServiceStoreKey = 'authServiceStoreKey';
 
   Future<void> init() async {
-    await _authServiceStore.init(_authServiceStoreKey);
+    await _authServiceStore.init();
     log.info('AuthService initialized');
   }
 

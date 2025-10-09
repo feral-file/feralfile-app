@@ -1,20 +1,22 @@
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channel_details/channel_detail.page.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:flutter/material.dart';
 
 class ChannelItem extends StatelessWidget {
   const ChannelItem({
-    required this.channel,
+    required this.channelReference,
     this.clickable = true,
+    this.maxLines,
     super.key,
   });
 
-  final Channel channel;
+  final ChannelReference channelReference;
   final bool clickable;
+  final int? maxLines;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +26,8 @@ class ChannelItem extends StatelessWidget {
         if (!clickable) return;
         Navigator.of(context).pushNamed(
           AppRouter.channelDetailPage,
-          arguments: ChannelDetailPagePayload(channel: channel),
+          arguments:
+              ChannelDetailPagePayload(channelReference: channelReference),
         );
       },
       child: Container(
@@ -41,14 +44,16 @@ class ChannelItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    channel.title,
+                    channelReference.channel.title,
                     style: theme.textTheme.ppMori400White12,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    channel.summary ?? '',
+                    channelReference.channel.summary ?? '',
+                    maxLines: maxLines,
+                    overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.ppMori400Grey12,
                   ),
                 ],

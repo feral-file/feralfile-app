@@ -18,7 +18,11 @@ abstract class HiveObject {
 }
 
 abstract class HiveStoreObjectService<T> {
-  Future<void> init(String key);
+  const HiveStoreObjectService({required this.key});
+
+  final String key;
+
+  Future<void> init();
 
   Future<void> save(T obj, String objId);
 
@@ -32,10 +36,15 @@ abstract class HiveStoreObjectService<T> {
 }
 
 class HiveStoreObjectServiceImpl<T> implements HiveStoreObjectService<T> {
-  late Box<T> _box;
+  HiveStoreObjectServiceImpl({required this.key});
 
   @override
-  Future<void> init(String key) async {
+  final String key;
+
+  late final Box<T> _box;
+
+  @override
+  Future<void> init() async {
     _box = await Hive.openBox<T>(key);
   }
 

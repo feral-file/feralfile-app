@@ -1,9 +1,7 @@
-import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_list_view.dart';
-import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -93,10 +91,6 @@ class _PlaylistsPageState extends State<PlaylistsPage>
       isLoadingMore: isLoadingMore,
       scrollController: _scrollController,
       isFromPlaylistsPage: true,
-      channel: playlists.isNotEmpty
-          ? injector<FeralFileDP1FeedService>()
-              .getChannelByPlaylistId(playlists.first.id)
-          : null,
     );
   }
 

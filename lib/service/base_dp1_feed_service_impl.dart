@@ -5,15 +5,25 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_respons
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_create_playlist_request.dart';
 import 'package:autonomy_flutter/service/base_dp1_feed_service.dart';
-import 'package:autonomy_flutter/util/feed_cache_manager.dart';
+import 'package:autonomy_flutter/util/feed_cache.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:meta/meta.dart';
 
 /// Base implementation of DP1 feed service containing common playlist and item methods
-abstract class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
-  BaseDP1FeedServiceImpl(this.api, this.feedCacheManager);
+class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
+  BaseDP1FeedServiceImpl({required String baseUrl}) : super(baseUrl: baseUrl) {
+    initializeApiAndCache(baseUrl);
+  }
 
-  final DP1FeedApi api;
-  final FeedCacheManager feedCacheManager;
+  late final DP1FeedApi api;
+  late final BaseFeedCache cache;
+
+  /// Initialize api and cache - can be overridden by subclasses
+  @protected
+  void initializeApiAndCache(String baseUrl) {
+    api = DP1FeedApi.dioBaseUrl(baseUrl: baseUrl);
+    cache = FeedCacheImpl(baseUrl: baseUrl);
+  }
 
   /*
   =======================================================================
@@ -58,7 +68,7 @@ abstract class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
   Future<DP1Call> getPlaylistById(String playlistId,
       {bool usingCache = true}) async {
     if (usingCache) {
-      final cachedPlaylist = feedCacheManager.getPlaylistById(playlistId);
+      final cachedPlaylist = cache.getPlaylistById(playlistId);
       if (cachedPlaylist != null) return cachedPlaylist;
     }
     final result = await api.getPlaylistById(playlistId);
@@ -72,14 +82,14 @@ abstract class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
     bool usingCache = true,
   }) async {
     if (usingCache) {
-      final cachedPlaylists = feedCacheManager.getAllPlaylists();
+      final cachedPlaylists = cache.getAllPlaylists();
       if (cachedPlaylists.isNotEmpty) {
         return DP1PlaylistResponse(cachedPlaylists, false, null);
       }
     }
 
     final resp = await api.getAllPlaylists(cursor: cursor, limit: limit);
-    feedCacheManager.addListPlaylistsToCache(resp.items);
+    cache.insertListPlaylists(resp.items);
     return resp;
   }
 
@@ -108,5 +118,25 @@ abstract class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
       cursor: cursor,
       limit: limit,
     );
+  }
+
+  /*
+  =======================================================================
+
+  CACHE
+
+  =======================================================================
+   */
+
+  Future<void> reloadCache() async {
+    final playlists = await getAllPlaylists(usingCache: false);
+    log.info('Reloaded cache:${playlists.items.length} playlists');
+    cache
+      ..clearAll()
+      ..insertListPlaylists(playlists.items);
+  }
+
+  void clearCache() {
+    cache.clearAll();
   }
 }

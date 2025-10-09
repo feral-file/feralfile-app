@@ -774,19 +774,8 @@ class FFBluetoothService {
     if (!injector<AuthService>().isBetaTester() && !forceScan) {
       return;
     }
-    final haftTimeout = timeout ~/ 2;
-    var deviceFound = await _startScan(
-      timeout: haftTimeout,
-      onData: onData,
-      onError: onError,
-    );
-
-    if (deviceFound) {
-      log.info('Device found during initial scan');
-      return;
-    }
-    deviceFound = await _startScan(
-      timeout: haftTimeout,
+    final deviceFound = await _startScan(
+      timeout: timeout,
       onData: onData,
       onError: onError,
     );

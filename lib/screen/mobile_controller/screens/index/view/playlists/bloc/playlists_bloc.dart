@@ -1,6 +1,6 @@
+import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
-import 'package:autonomy_flutter/service/dp1_feed_service.dart';
-import 'package:autonomy_flutter/util/feed_cache_manager.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -8,18 +8,13 @@ part 'playlists_event.dart';
 part 'playlists_state.dart';
 
 class PlaylistsBloc extends Bloc<PlaylistsEvent, PlaylistsState> {
-  PlaylistsBloc({
-    required FeralFileDP1FeedService playlistService,
-  })  : _playlistService = playlistService,
-        super(const PlaylistsState()) {
+  PlaylistsBloc() : super(const PlaylistsState()) {
     on<LoadPlaylistsEvent>(_onLoadPlaylists);
     on<LoadMorePlaylistsEvent>(_onLoadMorePlaylists);
     on<RefreshPlaylistsEvent>(_onRefreshPlaylists);
   }
 
   static const int _pageSize = 20;
-
-  final FeralFileDP1FeedService _playlistService;
 
   Future<void> _onLoadPlaylists(
     LoadPlaylistsEvent event,
@@ -72,28 +67,38 @@ class PlaylistsBloc extends Bloc<PlaylistsEvent, PlaylistsState> {
         emit(state.copyWith(status: PlaylistsStateStatus.loading));
       }
 
-      final playlistsResponse = await _playlistService.getAllPlaylists(
-        cursor: cursor,
-        limit: _pageSize,
-        usingCache: FeedCacheManager().hasCache,
-      );
+      final playlists =
+          await injector<FeralFileFeedManager>().getAllCachedPlaylists();
+      emit(state.copyWith(
+        status: PlaylistsStateStatus.loaded,
+        playlists: playlists,
+        hasMore: false,
+        cursor: null,
+        error: '',
+      ));
+      return;
+      // getAllPlaylist(
+      //   cursor: cursor,
+      //   limit: _pageSize,
+      //   usingCache: true,
+      // );
 
-      final List<DP1Call> newPlaylists;
-      if (isLoadMore) {
-        newPlaylists = [...state.playlists, ...playlistsResponse.items];
-      } else {
-        newPlaylists = playlistsResponse.items;
-      }
-
-      emit(
-        state.copyWith(
-          status: PlaylistsStateStatus.loaded,
-          playlists: newPlaylists,
-          hasMore: playlistsResponse.hasMore,
-          cursor: playlistsResponse.cursor,
-          error: '',
-        ),
-      );
+      // final List<DP1Call> newPlaylists;
+      // if (isLoadMore) {
+      //   newPlaylists = [...state.playlists, ...playlistsResponse.items];
+      // } else {
+      //   newPlaylists = playlistsResponse.items;
+      // }
+      //
+      // emit(
+      //   state.copyWith(
+      //     status: PlaylistsStateStatus.loaded,
+      //     playlists: newPlaylists,
+      //     hasMore: playlistsResponse.hasMore,
+      //     cursor: playlistsResponse.cursor,
+      //     error: '',
+      //   ),
+      // );
     } catch (e) {
       emit(
         state.copyWith(

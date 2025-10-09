@@ -68,11 +68,11 @@ class _ChannelsPageState extends State<ChannelsPage>
   }
 
   Widget _buildContent(ChannelsState state) {
-    if (state.isLoading && state.channels.isEmpty) {
+    if (state.isLoading && state.channelReferences.isEmpty) {
       return const LoadingView();
     }
 
-    if (state.isError && state.channels.isEmpty) {
+    if (state.isError && state.channelReferences.isEmpty) {
       return ErrorView(
         error: 'Error loading channels: ${state.error}',
         onRetry: () => _channelsBloc.add(const LoadChannelsEvent()),
@@ -83,7 +83,7 @@ class _ChannelsPageState extends State<ChannelsPage>
   }
 
   Widget _buildChannelsList(ChannelsState state) {
-    final channels = state.channels;
+    final channels = state.channelReferences;
     final hasMore = state.hasMore;
     final isLoadingMore = state.isLoadingMore;
 
@@ -108,7 +108,10 @@ class _ChannelsPageState extends State<ChannelsPage>
           children: [
             ColoredBox(
               color: Colors.transparent,
-              child: ChannelItem(channel: channel),
+              child: ChannelItem(
+                channelReference: channel,
+                maxLines: 3,
+              ),
             ),
             if (index == channels.length - 1 && !hasMore) const BottomSpacing(),
           ],

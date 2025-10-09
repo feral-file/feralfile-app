@@ -28,7 +28,7 @@ import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/dailies_helper.dart';
-import 'package:autonomy_flutter/util/feed_cache_manager.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/john_gerrard_helper.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/metric_helper.dart';
@@ -129,12 +129,21 @@ class _OnboardingPageState extends State<OnboardingPage>
       await injector<MetricClientService>().initService();
       await injector<FFBluetoothService>().init();
       await injector<DLSService>().init();
+      await injector<FeralFileFeedManager>().init();
 
       unawaited(
         injector<RemoteConfigService>().loadConfigs().then(
           (_) {
             log.info('Remote config loaded');
-            unawaited(injector<FeedCacheManager>().reloadCache());
+            final channelUrls = List<String>.from(
+                injector<RemoteConfigService>().getConfig<List>(
+              ConfigGroup.dp1Playlist,
+              ConfigKey.dp1PlaylistChannelUrls,
+              [],
+            ));
+            injector<FeralFileFeedManager>().setupRemoteConfigChannels(
+              channelUrls,
+            );
           },
           onError: (Object e) {
             log.info('Failed to load remote config: $e');

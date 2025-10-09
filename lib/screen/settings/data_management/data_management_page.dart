@@ -18,7 +18,7 @@ import 'package:autonomy_flutter/screen/settings/forget_exist/forget_exist_view.
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
-import 'package:autonomy_flutter/util/feed_cache_manager.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
@@ -142,14 +142,15 @@ class _DataManagementPageState extends State<DataManagementPage> {
           await injector<CacheManager>().emptyCache();
           await DefaultCacheManager().emptyCache();
           injector<UserAllOwnCollectionBloc>().add(ClearDataEvent());
-          injector<FeedCacheManager>().clearAll();
+          injector<FeralFileFeedManager>().clearAllCache();
 
           //redownload data
           await injector<UserDp1PlaylistService>()
               .createAllOwnedPlaylistIfNotExists();
           injector<UserAllOwnCollectionBloc>()
               .add(RefreshAssetTokens(shouldEmitLoading: true));
-          await injector<FeedCacheManager>().reloadCache();
+
+          await injector<FeralFileFeedManager>().reloadAllCache();
 
           if (!mounted) {
             return;

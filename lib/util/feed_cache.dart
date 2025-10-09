@@ -6,51 +6,85 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
-import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/dp1_store.dart';
-import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter_fgbg/flutter_fgbg.dart';
 
 /*
     This class is used to cache the data from the Feed Server.
   It is used to avoid making unnecessary API calls.
   It is used to cache the data from the API.
   */
-class FeedCacheManager {
-  FeedCacheManager._internal() {
-    // Listen to app foreground/background changes and reload cache on resume
-    _fgbgSubscription ??=
-        FGBGEvents.instance.stream.listen((FGBGType event) async {
-      if (event == FGBGType.foreground) {
-        if (injector<RemoteConfigService>().isLoaded) {
-          await reloadCache();
-        }
-      }
-    });
 
+abstract class BaseFeedCache {
+  final String baseUrl;
+
+  BaseFeedCache({required this.baseUrl});
+
+  Future<void> init();
+  /*
+  =======================================================================
+
+  Playlist operations
+
+  =======================================================================
+  */
+  DP1Call? getPlaylistById(String playlistId);
+  List<DP1Call> getAllPlaylists();
+  List<DP1Call> getPlaylistsOfChannel(String channelId);
+  void insertListPlaylists(List<DP1Call> playlists, {List<String>? urls});
+
+  /*
+  =======================================================================
+
+  Channel operations
+  */
+  Channel? getChannelById(String channelId);
+  List<Channel> getAllChannels();
+  Map<String, Channel> getChannelsByUrls(List<String> channelUrls);
+  Channel? getChannelByPlaylistId(String playlistId);
+  void insertListChannels(List<Channel> channels);
+
+  /*
+  =======================================================================
+  */
+  void clearAll();
+
+  /*
+  =======================================================================
+
+  URL operations
+  */
+}
+
+class FeedCacheImpl extends BaseFeedCache {
+  FeedCacheImpl({required String baseUrl}) : super(baseUrl: baseUrl) {
     // Initialize Hive stores and preload cached data
     _initializeStores();
   }
-  static final FeedCacheManager _instance = FeedCacheManager._internal();
-  factory FeedCacheManager() => _instance;
+
+  @override
+  Future<void> init() async {
+    await _initializeStores();
+  }
 
   // Cache: playlist URL -> playlistId (inverted map)
   final Map<String, String> _urlToPlaylistId = <String, String>{};
   final Map<String, Channel> _channels = <String, Channel>{};
   final Map<String, DP1Call> _playlists = <String, DP1Call>{};
-  StreamSubscription<FGBGType>? _fgbgSubscription;
 
-  final DP1PlaylistStore _playlistStore = DP1PlaylistStore();
-  final DP1ChannelStore _channelStore = DP1ChannelStore();
-  final DP1UrlToPlaylistMapStore _urlMapStore = DP1UrlToPlaylistMapStore();
+  late final DP1PlaylistStore _playlistStore;
+  late final DP1ChannelStore _channelStore;
+  late final DP1UrlToPlaylistMapStore _urlMapStore;
 
   Future<void> _initializeStores() async {
     try {
-      await _channelStore.init('');
-      await _playlistStore.init('');
-      await _urlMapStore.init('');
+      _playlistStore = DP1PlaylistStore(baseUrl: baseUrl);
+      _channelStore = DP1ChannelStore(baseUrl: baseUrl);
+      _urlMapStore = DP1UrlToPlaylistMapStore(baseUrl: baseUrl);
+      await _channelStore.init();
+      await _playlistStore.init();
+      await _urlMapStore.init();
 
       // Preload channels
       for (final String channelJson in _channelStore.getAll()) {
@@ -58,7 +92,7 @@ class FeedCacheManager {
           final Map<String, dynamic> data =
               json.decode(channelJson) as Map<String, dynamic>;
           final Channel channel = Channel.fromJson(data);
-          addChannelToCache(channel);
+          _insertChannel(channel);
         } catch (e) {
           log.info('Failed to load channel from Hive: $e');
         }
@@ -87,7 +121,7 @@ class FeedCacheManager {
           final Map<String, dynamic> data =
               json.decode(playlistJson) as Map<String, dynamic>;
           final DP1Call playlist = DP1Call.fromJson(data);
-          addPlaylistToCache(playlist);
+          _insertPlaylist(playlist);
         } catch (e) {
           log.info('Failed to load playlist from Hive: $e');
         }
@@ -119,9 +153,11 @@ class FeedCacheManager {
   */
 
   // get playlist by id
+  @override
   DP1Call? getPlaylistById(String playlistId) => _playlists[playlistId];
 
   // get playlists of channel
+  @override
   List<DP1Call> getPlaylistsOfChannel(String channelId) {
     final channel = getChannelById(channelId);
     if (channel == null) return [];
@@ -129,6 +165,7 @@ class FeedCacheManager {
   }
 
   // get all playlists
+  @override
   List<DP1Call> getAllPlaylists() => _playlists.values.toList();
 
   /* 
@@ -145,13 +182,21 @@ class FeedCacheManager {
     }
   }
 
+  void setChannelWithUrls(Channel channel, String url) {
+    _channels[url] = channel;
+    _persistUrlMap();
+  }
+
+  @override
   List<Channel> getAllChannels() => _channels.values.toList();
 
+  @override
   Channel? getChannelById(String channelId) => _channels[channelId];
 
+  @override
   Channel? getChannelByPlaylistId(String playlistId) {
-    return _channels.values
-        .firstWhereOrNull((channel) => channel.playlists.contains(playlistId));
+    return _channels.values.firstWhereOrNull(
+        (channel) => channel.playlists.any((url) => url.contains(playlistId)));
   }
 
   /*
@@ -163,7 +208,7 @@ class FeedCacheManager {
    */
 
   // add Channel to cache
-  void addChannelToCache(Channel channel) {
+  void _insertChannel(Channel channel) {
     _channels[channel.id] = channel;
     // Persist to Hive store
     try {
@@ -171,14 +216,16 @@ class FeedCacheManager {
     } catch (_) {}
   }
 
-  void addListChannelsToCache(List<Channel> channels) {
+  @override
+  void insertListChannels(List<Channel> channels) {
     for (final c in channels) {
-      addChannelToCache(c);
+      _insertChannel(c);
     }
+    _onCacheUpdated();
   }
 
   // add Playlist to cache
-  void addPlaylistToCache(DP1Call playlist, {String? url}) {
+  void _insertPlaylist(DP1Call playlist, {String? url}) {
     _playlists[playlist.id] = playlist;
     try {
       _playlistStore.save(json.encode(playlist.toJson()), playlist.id);
@@ -188,29 +235,18 @@ class FeedCacheManager {
       _urlToPlaylistId[url] = playlist.id;
       _persistUrlMap();
     }
-    // Persist to Hive store
   }
 
-  void addListPlaylistsToCache(List<DP1Call> playlists, {List<String>? urls}) {
+  @override
+  void insertListPlaylists(List<DP1Call> playlists, {List<String>? urls}) {
     for (int i = 0; i < playlists.length; i++) {
-      addPlaylistToCache(playlists[i], url: urls?[i]);
+      _insertPlaylist(playlists[i], url: urls?[i]);
     }
-  }
-
-  Future<void> reloadCache() async {
-    final playlists = await injector<FeralFileDP1FeedService>()
-        .getAllPlaylists(usingCache: false);
-    final channels = await injector<FeralFileDP1FeedService>()
-        .getAllChannels(usingCache: false);
-    log.info(
-        'Reloaded cache: ${channels.items.length} channels, ${playlists.items.length} playlists');
-    clearAll();
-    addListChannelsToCache(channels.items);
-    addListPlaylistsToCache(playlists.items);
     _onCacheUpdated();
   }
 
   // Clear operations (optional)
+  @override
   void clearAll() {
     _urlToPlaylistId.clear();
     _playlists.clear();
@@ -238,5 +274,15 @@ class FeedCacheManager {
     } catch (e) {
       // ignore failures
     }
+  }
+
+  @override
+  Map<String, Channel> getChannelsByUrls(List<String> channelUrls) {
+    final map = <String, Channel>{};
+    for (final url in channelUrls) {
+      if (_channels[url] == null) continue;
+      map[url] = _channels[url]!;
+    }
+    return map;
   }
 }

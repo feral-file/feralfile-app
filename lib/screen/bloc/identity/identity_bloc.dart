@@ -15,20 +15,19 @@ import 'package:autonomy_flutter/util/log.dart';
 part 'identity_state.dart';
 
 class IndexerIdentityStore extends HiveStoreObjectServiceImpl<IndexerIdentity> {
+  IndexerIdentityStore() : super(key: _key);
   static const String _key = 'indexerIdentityStoreKey';
 
   @override
-  Future<void> init(String key) async {
-    await super.init(_key);
+  final key = _key;
+
+  @override
+  Future<void> init() async {
+    await super.init();
   }
 }
 
 class IdentityBloc extends AuBloc<IdentityEvent, IdentityState> {
-  final IndexerIdentityStore _identityStore;
-  final NftIndexerService _indexerService;
-
-  static const localIdentityCacheDuration = Duration(days: 1);
-
   IdentityBloc(this._identityStore, this._indexerService)
       : super(IdentityState({})) {
     on<GetIdentityEvent>((event, emit) async {
@@ -126,6 +125,10 @@ class IdentityBloc extends AuBloc<IdentityEvent, IdentityState> {
       await _identityStore.clear();
     });
   }
+  final IndexerIdentityStore _identityStore;
+  final NftIndexerService _indexerService;
+
+  static const localIdentityCacheDuration = Duration(days: 1);
 
   Future<void> clear() async {
     await _identityStore.clear();

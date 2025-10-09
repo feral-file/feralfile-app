@@ -31,6 +31,7 @@ import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/inapp_notifications.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
@@ -1569,27 +1570,27 @@ class UIHelper {
 
   // Channel list as sliver for search and index pages
   static SliverList ChannelSliverListView({
-    required List<Channel> channels,
+    required List<ChannelReference> channelReferences,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
   }) {
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
-          final channel = channels[index];
+          final channel = channelReferences[index];
           return ColoredBox(
             color: Colors.transparent,
-            child: ChannelItem(channel: channel),
+            child: ChannelItem(channelReference: channel),
           );
         },
-        childCount: channels.length,
+        childCount: channelReferences.length,
       ),
     );
   }
 
   // Playlist list as sliver for search and index pages
   static SliverList PlaylistSliverListView({
-    required List<DP1Call> playlists,
-    Channel? channel,
+    required List<PlaylistReference> playlists,
+    ChannelReference? channelReference,
     bool channelVisible = true,
     bool isFromPlaylistsPage = false,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
@@ -1599,8 +1600,8 @@ class UIHelper {
         (context, index) {
           final playlist = playlists[index];
           return PlaylistItem(
-            playlist: playlist,
-            channel: channel,
+            playlistReference: playlist,
+            channelReference: channelReference,
             isFromPlaylistsPage: isFromPlaylistsPage,
             channelVisible: channelVisible,
           );

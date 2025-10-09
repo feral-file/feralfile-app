@@ -1,19 +1,18 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channel_details/channel_detail.page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/dp1_playlist_details.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:flutter/material.dart';
 
 class PlaylistItem extends StatelessWidget {
   const PlaylistItem({
-    required this.playlist,
-    this.channel,
+    required this.playlistReference,
+    this.channelReference,
     this.dividerColor = AppColor.primaryBlack,
     this.channelVisible = true,
     this.isFromPlaylistsPage = false,
@@ -21,8 +20,8 @@ class PlaylistItem extends StatelessWidget {
     super.key,
   });
 
-  final DP1Call playlist;
-  final Channel? channel;
+  final PlaylistReference playlistReference;
+  final ChannelReference? channelReference;
   final Color dividerColor;
   final bool channelVisible;
   final bool isFromPlaylistsPage;
@@ -31,14 +30,17 @@ class PlaylistItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final playlist = playlistReference.playlist;
     return GestureDetector(
       onTap: () {
         if (!clickable) return;
         injector<NavigationService>().navigateTo(
           AppRouter.dp1PlaylistDetailsPage,
           arguments: DP1PlaylistDetailsScreenPayload(
-            playlist: playlist,
-            backTitle: isFromPlaylistsPage ? 'Playlists' : channel?.title,
+            playlist: playlistReference,
+            backTitle: isFromPlaylistsPage
+                ? 'Playlists'
+                : channelReference?.channel.title,
             isFromFeedServer: true,
           ),
         );
@@ -63,13 +65,13 @@ class PlaylistItem extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (channel != null && channelVisible)
+                  if (channelReference != null && channelVisible)
                     GestureDetector(
                       onTap: () {
                         injector<NavigationService>().navigateTo(
                           AppRouter.channelDetailPage,
                           arguments: ChannelDetailPagePayload(
-                            channel: channel!,
+                            channelReference: channelReference!,
                             backTitle: isFromPlaylistsPage
                                 ? 'Playlists'
                                 : playlist.title,
@@ -77,7 +79,7 @@ class PlaylistItem extends StatelessWidget {
                         );
                       },
                       child: Text(
-                        channel!.title,
+                        channelReference!.channel.title,
                         style: theme.textTheme.ppMori400Grey12,
                       ),
                     ),

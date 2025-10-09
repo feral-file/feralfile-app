@@ -1,17 +1,34 @@
-import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/service/base_dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/base_dp1_feed_service_impl.dart';
-import 'package:autonomy_flutter/service/remote_config_service.dart';
+import 'package:autonomy_flutter/util/dio_manager.dart';
+import 'package:autonomy_flutter/util/feed_cache.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:dio/dio.dart';
 
-abstract class FeralFileDP1FeedServiceBase extends BaseDP1FeedService {
-  FeralFileDP1FeedServiceBase();
+class RemoteConfigChannel {
+  RemoteConfigChannel({
+    required this.endpoint,
+    required this.channelId,
+  });
+  final String endpoint;
+  final String channelId;
 
-  List<String>? get remoteConfigChannelIds;
+  String get url => '$endpoint/api/v1/channels/$channelId';
+}
+
+abstract class DP1FeedWithChannelExtensionServiceBase
+    extends BaseDP1FeedService {
+  DP1FeedWithChannelExtensionServiceBase({required super.baseUrl});
+
+  final List<String> _remoteConfigChannelIds = [];
+
+  void addRemoteConfigChannelIds(List<String> channelIds) {
+    _remoteConfigChannelIds.addAll(channelIds);
+  }
 
   /*
   =======================================================================
@@ -43,7 +60,12 @@ abstract class FeralFileDP1FeedServiceBase extends BaseDP1FeedService {
 
   Channel? getChannelByPlaylistId(String playlistId);
 
-  Future<Channel> getChannelDetail(String channelId, {bool usingCache = true});
+  Future<Map<String, Channel>> getChannelsByUrls({
+    required List<String> channelUrls,
+    bool usingCache = true,
+  });
+
+  Future<Channel?> getChannelDetail(String channelId, {bool usingCache = true});
 
   Future<List<Channel>> getChannelsByIds({
     required List<String> channelIds,
@@ -72,24 +94,32 @@ abstract class FeralFileDP1FeedServiceBase extends BaseDP1FeedService {
   });
 }
 
+abstract class FeralFileDP1FeedServiceBase
+    extends DP1FeedWithChannelExtensionServiceBase {
+  FeralFileDP1FeedServiceBase({required super.baseUrl});
+}
+
 class FeralFileDP1FeedService extends BaseDP1FeedServiceImpl
     implements FeralFileDP1FeedServiceBase {
-  FeralFileDP1FeedService(super.api, super.feedCacheManager) : super();
+  FeralFileDP1FeedService({required super.baseUrl});
 
   @override
-  List<String>? get remoteConfigChannelIds => injector<RemoteConfigService>()
-      .getConfig<List<dynamic>?>(
-        ConfigGroup.dp1Playlist,
-        ConfigKey.dp1PlaylistChannelIds,
-        null,
-      )
-      ?.cast<String>();
+  void initializeApiAndCache(String baseUrl) {
+    api = DP1FeedApi.dioBaseUrl(
+        baseUrl: baseUrl,
+        dio: DioManager().dp1Feed(BaseOptions(
+          followRedirects: true,
+          connectTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        )));
+    cache = FeedCacheImpl(baseUrl: baseUrl);
+  }
 
   /*
   =======================================================================
 
   PLAYLIST
-  
+
   =======================================================================
   */
 
@@ -100,8 +130,7 @@ class FeralFileDP1FeedService extends BaseDP1FeedServiceImpl
   }) async {
     // find in cache, if not found, fetch from api
     if (usingCache) {
-      final cachedPlaylists =
-          feedCacheManager.getPlaylistsOfChannel(channel.id);
+      final cachedPlaylists = cache.getPlaylistsOfChannel(channel.id);
       return cachedPlaylists;
     }
 
@@ -111,7 +140,7 @@ class FeralFileDP1FeedService extends BaseDP1FeedServiceImpl
         final response = await dio.get<Map<String, dynamic>>(playlistUrl);
         if (response.statusCode == 200 && response.data != null) {
           final playlist = DP1Call.fromJson(response.data!);
-          feedCacheManager.addPlaylistToCache(playlist, url: playlistUrl);
+          cache.insertListPlaylists([playlist], urls: [playlistUrl]);
           return playlist;
         }
       } catch (e) {
@@ -132,7 +161,7 @@ class FeralFileDP1FeedService extends BaseDP1FeedServiceImpl
     bool usingCache = true,
   }) async {
     if (usingCache) {
-      final cachedPlaylists = feedCacheManager.getPlaylistsOfChannel(channelId);
+      final cachedPlaylists = cache.getPlaylistsOfChannel(channelId);
       if (cachedPlaylists.isNotEmpty) {
         return DP1PlaylistResponse(cachedPlaylists, false, null);
       }
@@ -152,29 +181,26 @@ class FeralFileDP1FeedService extends BaseDP1FeedServiceImpl
     bool usingCache = true,
   }) async {
     if (usingCache) {
-      final cachedPlaylists = feedCacheManager.getAllPlaylists();
+      final cachedPlaylists = cache.getAllPlaylists();
       if (cachedPlaylists.isNotEmpty) {
         return DP1PlaylistResponse(cachedPlaylists, false, null);
       }
     }
 
-    final remoteChannelIds = remoteConfigChannelIds;
-
-    if (remoteChannelIds != null) {
-      final channels = await getChannelsByIds(
-        channelIds: remoteChannelIds,
-        usingCache: usingCache,
-      );
+    if (_remoteConfigChannelIds.isNotEmpty) {
+      final channels = (await getChannelsByIds(
+          channelIds: _remoteConfigChannelIds, usingCache: usingCache));
       final futures = channels.map((c) async {
         return getPlaylistsByChannel(c, usingCache: usingCache);
       });
       final results = await Future.wait(futures);
       final playlists = results.expand((list) => list).toList();
-      feedCacheManager.addListPlaylistsToCache(playlists);
+
+      cache.insertListPlaylists(playlists);
       return DP1PlaylistResponse(playlists, false, null);
     } else {
       final resp = await api.getAllPlaylists(cursor: cursor, limit: limit);
-      feedCacheManager.addListPlaylistsToCache(resp.items);
+      cache.insertListPlaylists(resp.items);
       return resp;
     }
   }
@@ -189,17 +215,17 @@ class FeralFileDP1FeedService extends BaseDP1FeedServiceImpl
 
   @override
   Channel? getChannelByPlaylistId(String playlistId) {
-    final channel = feedCacheManager.getChannelByPlaylistId(playlistId);
+    final channel = cache.getChannelByPlaylistId(playlistId);
     return channel;
   }
 
   @override
-  Future<Channel> getChannelDetail(
+  Future<Channel?> getChannelDetail(
     String channelId, {
     bool usingCache = true,
   }) async {
     if (usingCache) {
-      final cached = feedCacheManager.getChannelById(channelId);
+      final cached = cache.getChannelById(channelId);
       if (cached != null) return cached;
     }
     final channel = await api.getChannelById(channelId);
@@ -214,8 +240,45 @@ class FeralFileDP1FeedService extends BaseDP1FeedServiceImpl
     final futures = channelIds.map((id) async {
       return getChannelDetail(id, usingCache: usingCache);
     });
+    if (!usingCache) {
+      log.info('Fetching channels by IDs from API, not using cache');
+    }
     final channels = await Future.wait(futures);
-    return channels;
+    return channels.nonNulls.toList();
+  }
+
+  @override
+  Future<Map<String, Channel>> getChannelsByUrls({
+    required List<String> channelUrls,
+    bool usingCache = true,
+  }) async {
+    if (usingCache) {
+      final cachedChannels = cache.getChannelsByUrls(channelUrls);
+      if (cachedChannels.isNotEmpty) {
+        return cachedChannels;
+      }
+    }
+    final dio = Dio();
+    final futures = channelUrls.map((url) async {
+      try {
+        final response = await dio.get<Map<String, dynamic>>(url);
+        if (response.statusCode == 200 && response.data != null) {
+          final channel = Channel.fromJson(response.data!);
+          cache.insertListChannels([channel]);
+          return MapEntry(url, channel);
+        }
+      } catch (e) {
+        log.info('Error when get channel from url $url: $e');
+        return null;
+      }
+    });
+    final results = await Future.wait(futures);
+    final map = <String, Channel>{};
+    for (final result in results) {
+      if (result == null) continue;
+      map[result.key] = result.value;
+    }
+    return map;
   }
 
   @override
@@ -224,15 +287,10 @@ class FeralFileDP1FeedService extends BaseDP1FeedServiceImpl
     int? limit,
     bool usingCache = true,
   }) async {
-    final remoteChannelIds = remoteConfigChannelIds;
-
-    if (remoteChannelIds != null) {
+    if (_remoteConfigChannelIds.isNotEmpty) {
       final channels = await getChannelsByIds(
-        channelIds: remoteChannelIds,
-        usingCache: usingCache,
-      );
+          channelIds: _remoteConfigChannelIds, usingCache: usingCache);
       if (channels.isNotEmpty) {
-        feedCacheManager.addListChannelsToCache(channels);
         return DP1ChannelsResponse(
           channels,
           false, // hasMore is false because we fetched all remote config channels
@@ -245,7 +303,7 @@ class FeralFileDP1FeedService extends BaseDP1FeedServiceImpl
     String? currentCursor = cursor;
 
     if (usingCache) {
-      final cachedChannels = feedCacheManager.getAllChannels();
+      final cachedChannels = cache.getAllChannels();
       return DP1ChannelsResponse(
         cachedChannels,
         false, // hasMore is false because we fetched all remote config channels
@@ -263,10 +321,10 @@ class FeralFileDP1FeedService extends BaseDP1FeedServiceImpl
         ),
       );
       channels.items.removeWhere(
-        (channel) => !(remoteChannelIds?.contains(channel.id) ?? true),
+        (channel) => !(_remoteConfigChannelIds.any((c) => c == channel.id)),
       );
 
-      feedCacheManager.addListChannelsToCache(channels.items);
+      cache.insertListChannels(channels.items);
 
       return DP1ChannelsResponse(
         channels.items,
@@ -296,5 +354,31 @@ class FeralFileDP1FeedService extends BaseDP1FeedServiceImpl
       cursor: cursor,
       limit: limit,
     );
+  }
+
+  @override
+  List<String> _remoteConfigChannelIds = [];
+
+  @override
+  void addRemoteConfigChannelIds(List<String> channelIds) {
+    _remoteConfigChannelIds.addAll(channelIds);
+    reloadCache();
+  }
+
+  @override
+  Future<void> reloadCache() async {
+    log.info('Reloading cache for FeralFileDP1FeedService: $baseUrl');
+    final playlists = await getAllPlaylists(usingCache: false);
+    final channels = await getAllChannels(usingCache: false);
+    cache.clearAll();
+    cache
+      ..insertListPlaylists(playlists.items)
+      ..insertListChannels(channels.items);
+  }
+
+  @override
+  void clearCache() {
+    super.clearCache();
+    // _remoteConfigChannelIds.clear();
   }
 }

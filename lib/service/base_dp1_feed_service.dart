@@ -4,7 +4,10 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_create_play
 
 /// Base class for DP1 feed services containing common playlist and item methods
 abstract class BaseDP1FeedService {
-  BaseDP1FeedService();
+  BaseDP1FeedService({required this.baseUrl});
+
+  final String baseUrl;
+
   /*
   =======================================================================
 

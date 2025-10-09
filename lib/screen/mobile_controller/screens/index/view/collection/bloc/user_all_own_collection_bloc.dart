@@ -112,7 +112,9 @@ class UserAllOwnCollectionBloc
           emit(state.copyWith(
             status: UserAllOwnCollectionStatus.loaded,
           ));
-          add(ReloadAssetTokensFromIndexerDatabase());
+          if (tokens.isNotEmpty) {
+            add(ReloadAssetTokensFromIndexerDatabase());
+          }
         },
         onError: (Object error, StackTrace stackTrace) {
           log.info('[${event.runtimeType}] Stream error: $error');

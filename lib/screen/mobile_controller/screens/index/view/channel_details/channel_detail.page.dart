@@ -1,6 +1,5 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channel_details/bloc/channel_detail_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
@@ -8,17 +7,18 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_list_view.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ChannelDetailPagePayload {
   ChannelDetailPagePayload({
-    required this.channel,
+    required this.channelReference,
     this.backTitle = 'Channels',
   });
 
-  final Channel channel;
+  final ChannelReference channelReference;
   final String backTitle;
 }
 
@@ -40,9 +40,13 @@ class _ChannelDetailPageState extends State<ChannelDetailPage>
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+
+    final url = widget.payload.channelReference.url;
+    final feedService =
+        injector<FeralFileFeedManager>().getFeedServiceByUrl(url);
     _channelDetailBloc = ChannelDetailBloc(
-      channel: widget.payload.channel,
-      dp1playlistService: injector<FeralFileDP1FeedService>(),
+      channelId: widget.payload.channelReference.channel.id,
+      dp1playlistService: feedService as FeralFileDP1FeedService,
     );
     _channelDetailBloc.add(const LoadChannelPlaylistsEvent());
   }
@@ -77,7 +81,7 @@ class _ChannelDetailPageState extends State<ChannelDetailPage>
           children: [
             const SizedBox(height: UIConstants.detailPageHeaderPadding),
             ChannelItem(
-              channel: widget.payload.channel,
+              channelReference: widget.payload.channelReference,
               clickable: false,
             ),
             const SizedBox(height: UIConstants.detailPageHeaderPadding),
@@ -125,13 +129,17 @@ class _ChannelDetailPageState extends State<ChannelDetailPage>
     final playlists = state.playlists;
     final hasMore = state.hasMore;
     final isLoadingMore = state.isLoadingMore;
+    final channelReference = widget.payload.channelReference;
+    final url = channelReference.url;
+    final playlistReferences = playlists
+        .map((playlist) => PlaylistReference(playlist: playlist, url: url))
+        .toList();
 
     return PlaylistListView(
-      playlists: playlists,
+      playlists: playlistReferences,
       hasMore: hasMore,
       isLoadingMore: isLoadingMore,
       scrollController: _scrollController,
-      channel: widget.payload.channel,
       channelVisible: false,
     );
   }

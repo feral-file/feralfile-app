@@ -21,6 +21,7 @@ import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/util/constants.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/view/hight_light_tetx_controller.dart';
 import 'package:autonomy_flutter/view/keyboard_visibility_padding.dart';
@@ -170,10 +171,12 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                     if (dp1Playlist.items.isEmpty) {
                       return;
                     }
+                    final playlistReference =
+                        PlaylistReference.fromFeralFileDP1Call(dp1Playlist);
                     injector<NavigationService>().navigateTo(
                       AppRouter.dp1PlaylistDetailsPage,
                       arguments: DP1PlaylistDetailsScreenPayload(
-                        playlist: dp1Playlist,
+                        playlist: playlistReference,
                         backTitle: 'Index',
                       ),
                     );
@@ -187,13 +190,15 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                       .getChannelDetail(channelId)
                       .then((value) {
                     final channel = value;
-                    if (channel.playlists.isEmpty) {
+                    if (channel?.playlists.isEmpty ?? true) {
                       return;
                     }
+                    final channelReference =
+                        ChannelReference.fromFeralFileDP1Channel(channel!);
                     injector<NavigationService>().navigateTo(
                       AppRouter.channelDetailPage,
                       arguments: ChannelDetailPagePayload(
-                        channel: channel,
+                        channelReference: channelReference,
                       ),
                     );
                   });
@@ -208,10 +213,12 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
             if (dp1Playlist == null || dp1Playlist.items.isEmpty) {
               return;
             }
+            final playlistReference =
+                PlaylistReference.fromFeralFileDP1Call(dp1Playlist);
             injector<NavigationService>().navigateTo(
               AppRouter.dp1PlaylistDetailsPage,
               arguments: DP1PlaylistDetailsScreenPayload(
-                playlist: dp1Playlist,
+                playlist: playlistReference,
                 backTitle: 'Index',
               ),
             );

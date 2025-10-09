@@ -83,9 +83,11 @@ class DraftCustomerSupportStore
     extends HiveStoreObjectServiceImpl<DraftCustomerSupport> {
   static const String _key = 'draft.customer_support';
 
+  DraftCustomerSupportStore() : super(key: _key);
+
   @override
-  Future<void> init(String key) async {
-    await super.init(_key);
+  Future<void> init() async {
+    await super.init();
   }
 }
 
@@ -123,7 +125,7 @@ class CustomerSupportServiceImpl extends CustomerSupportService {
 
   @override
   Future<void> init() async {
-    await _draftCustomerSupportStore.init('');
+    await _draftCustomerSupportStore.init();
   }
 
   Future<List<Issue>> _getIssues() async {
