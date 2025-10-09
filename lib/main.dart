@@ -396,26 +396,34 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                 child: Stack(
                   children: [
                     // gradient
-                    if (CustomRouteObserver.currentRoute.value?.settings.name ==
-                        AppRouter.homePage)
-                      Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: Container(
-                            height: 195 + MediaQuery.of(context).padding.bottom,
-                            // gradient
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppColor.auGreyBackground,
-                                  Colors.transparent
-                                ],
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                              ),
-                            ),
-                          )),
+                    ValueListenableBuilder(
+                      valueListenable: CustomRouteObserver.currentRoute,
+                      builder: (context, value, child) {
+                        if (value?.settings.name == AppRouter.homePage) {
+                          return Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              child: Container(
+                                height:
+                                    195 + MediaQuery.of(context).padding.bottom,
+                                // gradient
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      AppColor.auGreyBackground,
+                                      Colors.transparent
+                                    ],
+                                    begin: Alignment.bottomCenter,
+                                    end: Alignment.topCenter,
+                                  ),
+                                ),
+                              ));
+                        }
+                        return Positioned.fill(child: SizedBox.shrink());
+                      },
+                    ),
+
                     if (_isVisible)
                       ValueListenableBuilder(
                         valueListenable: isNowDisplayingBarExpanded,
