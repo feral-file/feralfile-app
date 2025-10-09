@@ -31,7 +31,9 @@ class RecordState {
 
   bool get isValid {
     if (lastIntent?.action == AiAction.addAddress) {
-      return true;
+      return lastIntent?.entities?.any((e) =>
+              e.type == AiEntityType.address && e.name.trim().isNotEmpty) ??
+          false;
     }
 
     // check if the intent has type open_screen or dp1Call has items

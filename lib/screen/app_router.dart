@@ -19,7 +19,6 @@ import 'package:autonomy_flutter/screen/autonomy_security_page.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/subscription/subscription_bloc.dart';
-import 'package:autonomy_flutter/screen/bug_bounty_page.dart';
 import 'package:autonomy_flutter/screen/customer_support/support_customer_page.dart';
 import 'package:autonomy_flutter/screen/customer_support/support_list_page.dart';
 import 'package:autonomy_flutter/screen/customer_support/support_thread_page.dart';
@@ -108,7 +107,6 @@ class AppRouter {
   static const supportCustomerPage = 'support_customer_page';
   static const supportListPage = 'support_list_page';
   static const supportThreadPage = 'support_thread_page';
-  static const bugBountyPage = 'bug_bounty_page';
   static const githubDocPage = 'github_doc_page';
   static const preferencesPage = 'preferences_page';
   static const walletPage = 'wallet_page';
@@ -319,13 +317,6 @@ class AppRouter {
             payload: settings.arguments! as SupportThreadPayload,
           ),
         );
-
-      case bugBountyPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => const BugBountyPage(),
-        );
-
       case hiddenArtworksPage:
         return CupertinoPageRoute(
           settings: settings,

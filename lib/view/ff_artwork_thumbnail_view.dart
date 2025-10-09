@@ -14,6 +14,8 @@ class FFArtworkThumbnailView extends StatelessWidget {
     super.key,
     this.onTap,
     this.fit = BoxFit.cover,
+    this.placeholder,
+    this.errorWidget,
   });
 
   final String url;
@@ -21,6 +23,8 @@ class FFArtworkThumbnailView extends StatelessWidget {
   final int? cacheWidth;
   final int? cacheHeight;
   final BoxFit fit;
+  final Widget? placeholder;
+  final Widget? errorWidget;
 
   @override
   Widget build(BuildContext context) => GestureDetector(
@@ -32,9 +36,9 @@ class FFArtworkThumbnailView extends StatelessWidget {
                 height: cacheHeight?.toDouble(),
                 fit: BoxFit.cover,
                 placeholderBuilder: (context) =>
-                    const GalleryThumbnailPlaceholder(),
+                    placeholder ?? const GalleryThumbnailPlaceholder(),
                 errorBuilder: (context, error, stackTrace) =>
-                    const GalleryThumbnailErrorWidget(),
+                    errorWidget ?? const GalleryThumbnailErrorWidget(),
               )
             : FFCacheNetworkImage(
                 cacheManager: injector<CacheManager>(),
@@ -45,9 +49,9 @@ class FFArtworkThumbnailView extends StatelessWidget {
                 maxHeightDiskCache: cacheHeight,
                 fit: fit,
                 placeholder: (context, url) =>
-                    const GalleryThumbnailPlaceholder(),
+                    placeholder ?? const GalleryThumbnailPlaceholder(),
                 errorWidget: (context, url, error) =>
-                    const GalleryThumbnailErrorWidget(),
+                    errorWidget ?? const GalleryThumbnailErrorWidget(),
               ),
       );
 }

@@ -22,8 +22,8 @@ import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/view/animated_cycled_tooltip.dart';
 import 'package:autonomy_flutter/view/hight_light_tetx_controller.dart';
+import 'package:autonomy_flutter/view/keyboard_visibility_padding.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/widgets/llm_text_input/llm_text_input.dart';
 import 'package:flutter/material.dart';
@@ -144,7 +144,11 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
             final dp1Playlist = state.lastDP1Call;
 
             if (state.lastIntent.action == AiAction.addAddress) {
-              recordBloc.add(AddAddressEvent(state.transcription));
+              final address = state.lastIntent.entities?.firstOrNull?.name;
+              if (address != null && address.trim().isNotEmpty) {
+                // Assuming the first entity is the address
+                recordBloc.add(AddAddressEvent(address));
+              }
               return;
             }
 
@@ -223,7 +227,131 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
   }
 
   Widget _recordView(BuildContext context, RecordState state) {
-    final textStyle = Theme.of(context).textTheme.ppMori400White12;
+    return KeyboardVisibilityPadding(
+      child: Stack(
+        children: [
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).padding.top,
+              ),
+              SizedBox(
+                height: UIConstants.topControlsBarHeight,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _help(context),
+                        GestureDetector(
+                          onTap: () {
+                            // Handle back button tap
+                            injector<NavigationService>().goBack();
+                          },
+                          child: Container(
+                            constraints: const BoxConstraints(
+                              minWidth: 44,
+                              minHeight: 44,
+                            ),
+                            color: Colors.transparent,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: SvgPicture.asset(
+                                'assets/images/close.svg',
+                                width: 18.03,
+                                colorFilter: const ColorFilter.mode(
+                                  AppColor.white,
+                                  BlendMode.srcIn,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              if (shouldShowMeiliSearch)
+                const Expanded(child: MeiliSearchPage())
+              else
+                Expanded(
+                  child: CustomScrollView(
+                    physics: NeverScrollableScrollPhysics(),
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: Center(
+                          child: GestureDetector(
+                            onTap: state is RecordProcessingState
+                                ? null
+                                : () {
+                                    context.read<RecordBloc>().add(
+                                          state is RecordRecordingState
+                                              ? StopRecordingEvent()
+                                              : StartRecordingEvent(),
+                                        );
+                                  },
+                            child: _recordButton(state),
+                          ),
+                        ),
+                      ),
+                      SliverToBoxAdapter(
+                        child: Container(
+                          height: 105.52,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                      ),
+                      SliverToBoxAdapter(
+                        child: _recordTranscribedText(context, state),
+                      ),
+                      SliverToBoxAdapter(
+                        child: _recordStatus(context, state),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: MediaQuery.of(context).padding.bottom,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LLMTextInput(
+                  controller: textEditingController,
+                  active: true,
+                  enabled: !(state is RecordProcessingState ||
+                      state is RecordRecordingState),
+                  autoFocus: !widget.payload.isListening,
+                  onSend: (text) {
+                    recordBloc.add(
+                      SubmitTextEvent(text),
+                    );
+                    setState(() {
+                      shouldShowMeiliSearch = false;
+                    });
+                  },
+                  onChanged: (text) {
+                    final match = textEditingController.getMatchOrFull();
+                    setState(() {
+                      shouldShowMeiliSearch = text.isNotEmpty;
+                    });
+                    meiliSearchBloc.add(
+                      MeiliSearchQueryChanged(match),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
     return Stack(
       children: [
         Column(
@@ -233,33 +361,39 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
             ),
             SizedBox(
               height: UIConstants.topControlsBarHeight,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      // Handle back button tap
-                      injector<NavigationService>().goBack();
-                    },
-                    child: Container(
-                      constraints: const BoxConstraints(
-                        minWidth: 44,
-                        minHeight: 44,
-                      ),
-                      color: Colors.transparent,
-                      child: Padding(
-                        padding: const EdgeInsets.all(15),
-                        child: SvgPicture.asset(
-                          'assets/images/close.svg',
-                          width: 18.03,
-                          colorFilter: const ColorFilter.mode(
-                            AppColor.white,
-                            BlendMode.srcIn,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      _help(context),
+                      GestureDetector(
+                        onTap: () {
+                          // Handle back button tap
+                          injector<NavigationService>().goBack();
+                        },
+                        child: Container(
+                          constraints: const BoxConstraints(
+                            minWidth: 44,
+                            minHeight: 44,
+                          ),
+                          color: Colors.transparent,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: SvgPicture.asset(
+                              'assets/images/close.svg',
+                              width: 18.03,
+                              colorFilter: const ColorFilter.mode(
+                                AppColor.white,
+                                BlendMode.srcIn,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -270,101 +404,6 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
               Expanded(
                 child: Column(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              tooltipController.showTooltip();
-                            },
-                            child: SuperTooltip(
-                              popupDirection: TooltipDirection.down,
-                              hideTooltipOnTap: true,
-                              popupDirectionBuilder: () =>
-                                  TooltipDirection.down,
-                              decorationBuilder: (context) => BoxDecoration(
-                                color: AppColor.auGreyBackground,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: AppColor.primaryBlack,
-                                  width: 1,
-                                ),
-                              ),
-                              controller: tooltipController,
-                              child: Icon(
-                                AuIcon.help,
-                                color: AppColor.white,
-                              ),
-                              content: Builder(
-                                builder: (context) {
-                                  final mediaSize = MediaQuery.of(context).size;
-                                  final horizontalPadding =
-                                      24.0; // keep safe margin from screen edges
-                                  final maxWidth =
-                                      mediaSize.width - horizontalPadding * 2;
-                                  final maxHeight = mediaSize.height *
-                                      0.5; // avoid covering whole screen
-
-                                  return ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                      maxWidth: maxWidth,
-                                      maxHeight: maxHeight,
-                                    ),
-                                    child: Material(
-                                      type: MaterialType.transparency,
-                                      child: Container(
-                                        padding: const EdgeInsets.all(12),
-                                        child: SingleChildScrollView(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              const SizedBox(height: 16),
-                                              Text(
-                                                'Try exhibitions, playlists, artists, or curators. Collection search will return soon.',
-                                                style: textStyle,
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Text(
-                                                'Examples: Dmitri Cherniak artworks, generative art exhibitions, Maya Man',
-                                                style: textStyle,
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Text(
-                                                'Have ideas? Tap Help to share.',
-                                                style: textStyle,
-                                              ),
-                                              const SizedBox(height: 24),
-                                              PrimaryButton(
-                                                onTap: () {
-                                                  tooltipController
-                                                      .hideTooltip();
-                                                  injector<NavigationService>()
-                                                      .navigateTo(
-                                                    AppRouter.supportThreadPage,
-                                                    arguments: NewIssuePayload(
-                                                      reportIssueType:
-                                                          ReportIssueType.Bug,
-                                                    ),
-                                                  );
-                                                },
-                                                text: 'Help',
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                     Center(
                       child: GestureDetector(
                         onTap: state is RecordProcessingState
@@ -382,32 +421,6 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                     Container(
                       height: 105.52,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
-                      // child: Center(
-                      //   child: AnimatedCycledTooltip(
-                      //     tooltips: [
-                      //       ToolTip(
-                      //         text:
-                      //             'Try exhibitions, playlists, artists, or curators. Collection search will return soon.',
-                      //         duration: const Duration(seconds: 3),
-                      //       ),
-                      //       ToolTip(
-                      //         text:
-                      //             'Examples: Dmitri Cherniak artworks, generative art exhibitions, Maya Man',
-                      //         duration: const Duration(seconds: 3),
-                      //       ),
-                      //       ToolTip(
-                      //         text: 'Have ideas? Tap Help to share.',
-                      //         duration: const Duration(seconds: 3),
-                      //       ),
-                      //     ],
-                      //     style: textStyle,
-                      //     alignment: Alignment.topCenter,
-                      //     transitionCurve: Curves.easeInOut,
-                      //     transitionDuration: const Duration(milliseconds: 300),
-                      //     textAlign: TextAlign.center,
-                      //     controller: AnimatedCycledTooltipController(),
-                      //   ),
-                      // ),
                     ),
                     _recordTranscribedText(context, state),
                     _recordStatus(context, state),
@@ -632,6 +645,95 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
               color: PrimitivesTokens.colorsLightRed,
             ),
         textAlign: TextAlign.left,
+      ),
+    );
+  }
+
+  Widget _help(BuildContext context) {
+    final textStyle = Theme.of(context).textTheme.ppMori400White12;
+    return GestureDetector(
+      onTap: () {
+        tooltipController.showTooltip();
+      },
+      child: Container(
+        color: Colors.transparent,
+        padding: const EdgeInsets.all(12),
+        child: SuperTooltip(
+          popupDirection: TooltipDirection.down,
+          hideTooltipOnTap: true,
+          popupDirectionBuilder: () => TooltipDirection.down,
+          decorationBuilder: (context) => BoxDecoration(
+            color: AppColor.auGreyBackground,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: AppColor.primaryBlack,
+              width: 1,
+            ),
+          ),
+          controller: tooltipController,
+          child: Icon(
+            AuIcon.help,
+            color: AppColor.white,
+          ),
+          content: Builder(
+            builder: (context) {
+              final mediaSize = MediaQuery.of(context).size;
+              final horizontalPadding =
+                  24.0; // keep safe margin from screen edges
+              final maxWidth = mediaSize.width - horizontalPadding * 2;
+              final maxHeight =
+                  mediaSize.height * 0.5; // avoid covering whole screen
+
+              return ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: maxWidth,
+                  maxHeight: maxHeight,
+                ),
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 16),
+                          Text(
+                            'Try exhibitions, playlists, artists, or curators. Collection search will return soon.',
+                            style: textStyle,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Examples: Dmitri Cherniak artworks, generative art exhibitions, Maya Man',
+                            style: textStyle,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Have ideas? Tap Help to share.',
+                            style: textStyle,
+                          ),
+                          const SizedBox(height: 24),
+                          PrimaryButton(
+                            onTap: () {
+                              tooltipController.hideTooltip();
+                              injector<NavigationService>().navigateTo(
+                                AppRouter.supportThreadPage,
+                                arguments: NewIssuePayload(
+                                  reportIssueType: ReportIssueType.Bug,
+                                ),
+                              );
+                            },
+                            text: 'Help',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }

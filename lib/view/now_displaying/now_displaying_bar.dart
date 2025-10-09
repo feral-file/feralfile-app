@@ -2,7 +2,9 @@ import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/design/build/components/NowPlayingBar.dart';
 import 'package:autonomy_flutter/model/error/now_displaying_error.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
+import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/now_displaying_manager.dart';
+import 'package:autonomy_flutter/view/expandable_with_option.dart';
 import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
 import 'package:autonomy_flutter/widgets/now_playing_bar/collapsed_now_playing_bar.dart';
 import 'package:autonomy_flutter/widgets/now_playing_bar/expanded_now_playing_bar.dart';
@@ -72,20 +74,31 @@ class _NowDisplayingBarState extends State<NowDisplayingBar>
           constraints: BoxConstraints(
             maxHeight: NowPlayingBarTokens.expandedHeight.toDouble(),
           ),
-          child: TwoStopDraggableSheet(
-            key: draggableSheetKey,
-            minSize: NowPlayingBarTokens.collapseHeight /
-                NowPlayingBarTokens.expandedHeight,
-            maxSize: 1,
-            collapsedBuilder: (context, scrollController) {
-              return CollapsedNowPlayingBar(
-                playingObject: nowPlayingObject,
-              );
-            },
-            expandedBuilder:
-                (BuildContext context, ScrollController scrollController) {
-              return ExpandedNowPlayingBar(
-                playingObject: nowPlayingObject,
+          child: ExpandableWithOption(
+            isExpandedNotifier: isNowDisplayingBarShowingQuickSetting,
+            header: (context, onUpdate, notifier) {
+              final isExpanded = notifier.value;
+              final minSize = (NowPlayingBarTokens.collapseHeight +
+                      (isExpanded ? 56 * 3 : 0)) /
+                  NowPlayingBarTokens.expandedHeight;
+              return TwoStopDraggableSheet(
+                key: draggableSheetKey,
+                minSize: minSize,
+                maxSize: 1,
+                collapsedBuilder: (context, scrollController) {
+                  log.info(
+                      "NowDisplayingBar - minSize: $minSize, isExpanded: $isExpanded");
+                  return CollapsedNowPlayingBar(
+                      playingObject: nowPlayingObject,
+                      onToggle: onUpdate,
+                      isShowingQuickSetting: notifier);
+                },
+                expandedBuilder:
+                    (BuildContext context, ScrollController scrollController) {
+                  return ExpandedNowPlayingBar(
+                    playingObject: nowPlayingObject,
+                  );
+                },
               );
             },
           ),
@@ -100,7 +113,7 @@ class _NowDisplayingBarState extends State<NowDisplayingBar>
     final device = (status as DeviceDisconnected).device;
     final deviceName = device.name.isNotEmpty == true ? device.name : 'FF1';
     return NowPlayingStatusBar(
-      status: 'Device $deviceName is offline or disconnected.',
+      status: '$deviceName is offline or disconnected.',
     );
   }
 

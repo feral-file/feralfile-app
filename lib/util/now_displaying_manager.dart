@@ -132,8 +132,17 @@ class NowDisplayingManager {
   }
 
   Future<List<AssetToken>> _fetchAssetTokens(List<String> tokenIds) async {
+    final uniqueTokenIds = tokenIds.toSet().toList();
     final assetTokens = await injector<NftTokensService>()
-        .getManualTokens(indexerIds: tokenIds);
+        .getManualTokens(indexerIds: uniqueTokenIds);
+    final missingIds = uniqueTokenIds
+        .where((id) => !assetTokens.any((element) => element.id == id))
+        .toList();
+    if (missingIds.isNotEmpty) {
+      log.info('NowDisplayingManager: missingIds: $missingIds');
+      unawaited(Sentry.captureMessage(
+          'NowDisplayingManager: can not get asset token for missingIds: $missingIds'));
+    }
     return assetTokens;
   }
 }

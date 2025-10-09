@@ -85,16 +85,16 @@ class AuTextField extends StatelessWidget {
                           Text(
                             title,
                             style: ResponsiveLayout.isMobile
-                                ? theme.textTheme.atlasGreyBold12
-                                : theme.textTheme.atlasGreyBold14,
+                                ? theme.textTheme.ppMori700Black12
+                                : theme.textTheme.ppMori700Black14,
                           ),
                         ],
                         if (subTitleView != null)
                           Text(
                             ' | ',
                             style: ResponsiveLayout.isMobile
-                                ? theme.textTheme.atlasGreyNormal12
-                                : theme.textTheme.atlasGreyNormal14,
+                                ? theme.textTheme.ppMori700Black12
+                                : theme.textTheme.ppMori700Black14,
                           )
                         else
                           const SizedBox(),

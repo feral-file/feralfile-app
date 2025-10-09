@@ -8,6 +8,7 @@ package com.bitmark.autonomywallet
 
 import android.os.Build
 import android.os.Bundle
+import android.content.Intent
 import androidx.activity.enableEdgeToEdge
 import com.bitmark.autonomy_flutter.FileLogger
 import io.flutter.embedding.android.FlutterFragmentActivity
@@ -53,5 +54,10 @@ class MainActivity : FlutterFragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
     }
 }

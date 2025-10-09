@@ -815,7 +815,8 @@ class FFBluetoothService {
       final shouldStop = await onData?.call(connectedDevices);
       if (shouldStop == true) {
         log.info('BluetoothConnectEventScan startScan: already connected');
-        return true;
+        foundDevice = true;
+        return foundDevice;
       }
       StreamSubscription<List<ScanResult>>? scanSubscription;
 
@@ -872,12 +873,14 @@ class FFBluetoothService {
   }
 
   Future<void> factoryReset(FFBluetoothDevice device) async {
+    FFBluetoothDevice connectedDevice = device;
     if (device.isDisconnected) {
-      await scanAndConnect(device, timeout: Duration(seconds: 10));
+      connectedDevice =
+          await scanAndConnect(device, timeout: Duration(seconds: 10));
     }
 
     final res = await sendCommand(
-      device: device,
+      device: connectedDevice,
       command: BluetoothCommand.factoryReset,
       request: FactoryResetRequest().toJson(),
       timeout: const Duration(seconds: 30),
@@ -887,8 +890,10 @@ class FFBluetoothService {
 
   Future<void> sendLog(FFBluetoothDevice device, String? title) async {
     try {
+      FFBluetoothDevice connectedDevice = device;
       if (device.isDisconnected) {
-        await scanAndConnect(device, timeout: Duration(seconds: 10));
+        connectedDevice =
+            await scanAndConnect(device, timeout: Duration(seconds: 10));
       }
       final userId = injector<AuthService>().getUserId();
       final message = title ?? device.getName;
@@ -896,7 +901,7 @@ class FFBluetoothService {
       final request =
           SendLogRequest(userId: userId!, title: message, apiKey: apiKey);
       final res = await sendCommand(
-        device: device,
+        device: connectedDevice,
         command: BluetoothCommand.sendLog,
         request: request.toJson(),
         timeout: const Duration(seconds: 30),

@@ -176,12 +176,6 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   fonts:
-    - family: PPMori
-      fonts:
-        - asset: assets/fonts/PPMori/PPMori-Regular.ttf
-        - asset: assets/fonts/PPMori/PPMori-Bold.ttf
-        - asset: assets/fonts/PPMori/PPMori-SemiBold.ttf
-
     - family: AuIcon
       fonts:
         - asset: assets/fonts/AuIcon.ttf
@@ -189,6 +183,12 @@ flutter:
     - family: FFIcon
       fonts:
         - asset: assets/fonts/FFIcon.ttf
+
+    - family: PP Mori
+      fonts:
+        - asset: assets/fonts/PPMori/PPMori-Regular.ttf
+        - asset: assets/fonts/PPMori/PPMori-Bold.ttf
+        - asset: assets/fonts/PPMori/PPMori-SemiBold.ttf
 
     - family: MoMASans
       fonts:

@@ -179,7 +179,7 @@ enum ReplyError {
 
   String get message => switch (this) {
         ReplyError.overheating => '''
-Device temperature is too high. Playback paused to prevent damage.''',
+FF1 temperature is too high. Playback paused to prevent damage.''',
         ReplyError.unknown => 'FF1 is connected but cannot get now displaying',
       };
 }

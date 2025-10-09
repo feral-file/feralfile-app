@@ -236,6 +236,7 @@ class NftTokensServiceImpl extends NftTokensService {
   Future<List<AssetToken>> fetchManualTokens(List<String> indexerIds) async {
     final request = QueryListTokensRequest(
       ids: indexerIds,
+      size: indexerIds.length,
     );
 
     final manuallyAssets = await _indexerService.getNftTokens(request);
@@ -263,7 +264,9 @@ class NftTokensServiceImpl extends NftTokensService {
   }) async {
     // get from database
     final assetTokenFromDatabase =
-        await _database.getAssetTokensByIndexIds(indexIds: indexerIds);
+        _database.getAssetTokensByIndexIds(indexIds: indexerIds).where((token) {
+      return token.owner.isEmpty;
+    });
     final res = [...assetTokenFromDatabase];
     final missingIds = indexerIds
         .where((id) => !assetTokenFromDatabase.any((e) => e.id == id))

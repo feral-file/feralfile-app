@@ -1613,7 +1613,7 @@ class BluetoothConnectedDeviceConfigState
                           .removeDevice(device.deviceId);
                       injector<NavigationService>().goBack(result: true);
                     } catch (e) {
-                      injector<NavigationService>().goBack(result: e);
+                      // injector<NavigationService>().goBack(result: e);
                     }
                   },
                 ),

@@ -59,7 +59,7 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
       },
       child: Container(
         color: Colors.transparent,
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(12),
         child: IgnorePointer(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -96,7 +96,6 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 5),
                         Text(
                           title,
                           // italic

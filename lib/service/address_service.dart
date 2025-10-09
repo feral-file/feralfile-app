@@ -10,6 +10,7 @@ import 'dart:async';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
+import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
@@ -82,6 +83,7 @@ class AddressService {
     }
     final newAddress = address.copyWith(address: checkSumAddress);
     await _cloudObject.addressObject.insertAddresses([newAddress]);
+    await injector<NftTokensService>().reindexAddresses([newAddress.address]);
     await injector<UserDp1PlaylistService>()
         .insertAddressesToPlaylist([newAddress.address]);
     log.info('Inserted address: ${newAddress.address}');

@@ -18,7 +18,6 @@ final listRouteShouldNotShowNowDisplaying = [
   AppRouter.preferencesPage,
   AppRouter.hiddenArtworksPage,
   AppRouter.dataManagementPage,
-  AppRouter.bugBountyPage,
   AppRouter.nowDisplayingPage,
   AppRouter.onboardingPage,
   AppRouter.newOnboardingPage,
