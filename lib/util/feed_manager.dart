@@ -33,13 +33,16 @@ class FeedManager {
   Future<void> init() async {}
 
   Future<BaseDP1FeedServiceImpl> addFeedService(
-      BaseDP1FeedServiceImpl feedService) async {
+      BaseDP1FeedServiceImpl feedService,
+      {bool reloadCache = false}) async {
     if (isFeedServiceExists(feedService.baseUrl)) {
       log.info('Feed service already exists for url: ${feedService.baseUrl}');
       return getFeedServiceByUrl(feedService.baseUrl)!;
     }
     _feedServices.add(Pair(feedService.baseUrl, feedService));
-    await feedService.reloadCache();
+    if (reloadCache) {
+      await feedService.reloadCache();
+    }
     return feedService;
   }
 
@@ -131,21 +134,28 @@ class FeralFileFeedManager extends FeedManager {
       );
     }).toList();
     this.remoteConfigChannels = remoteConfigChannels;
-
+    final Map<String, List<String>> channelIdsByUrl = <String, List<String>>{};
     for (final channel in remoteConfigChannels) {
-      final existingService = getFeedServiceByUrl(channel.endpoint);
+      if (channelIdsByUrl[channel.endpoint] == null) {
+        channelIdsByUrl[channel.endpoint] = [];
+      }
+      channelIdsByUrl[channel.endpoint]!.add(channel.channelId);
+    }
+
+    for (final endpoint in channelIdsByUrl.keys) {
+      final existingService = getFeedServiceByUrl(endpoint);
       if (existingService != null) {
         (existingService as FeralFileDP1FeedService)
-            .addRemoteConfigChannelIds([channel.channelId]);
+            .addRemoteConfigChannelIds(channelIdsByUrl[endpoint]!);
         continue;
       } else {
-        final service = FeralFileDP1FeedService(baseUrl: channel.endpoint)
-          ..addRemoteConfigChannelIds([channel.channelId]);
-        addFeedService(service);
+        final service = FeralFileDP1FeedService(baseUrl: endpoint)
+          ..addRemoteConfigChannelIds(channelIdsByUrl[endpoint]!);
+        addFeedService(service, reloadCache: false);
       }
     }
     log.info(
-        'Setup remote config channels: ${remoteConfigChannels.map((e) => e.channelId).toList()}');
+        'Finish Setup remote config channels: ${remoteConfigChannels.map((e) => e.channelId).toList()}');
   }
 
   List<RemoteConfigChannel> remoteConfigChannels = [];

@@ -240,6 +240,9 @@ class FeralFileDP1FeedService extends BaseDP1FeedServiceImpl
     final futures = channelIds.map((id) async {
       return getChannelDetail(id, usingCache: usingCache);
     });
+    if (!usingCache) {
+      log.info('Fetching channels by IDs from API, not using cache');
+    }
     final channels = await Future.wait(futures);
     return channels.nonNulls.toList();
   }
@@ -359,6 +362,7 @@ class FeralFileDP1FeedService extends BaseDP1FeedServiceImpl
   @override
   void addRemoteConfigChannelIds(List<String> channelIds) {
     _remoteConfigChannelIds.addAll(channelIds);
+    reloadCache();
   }
 
   @override

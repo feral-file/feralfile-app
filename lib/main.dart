@@ -435,7 +435,7 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                         valueListenable: isNowDisplayingBarExpanded,
                         builder: (context, value, child) {
                           if (value) {
-                            return const SizedBox.shrink();
+                            return Positioned.fill(child: SizedBox.shrink());
                           }
 
                           final paddingBottom =

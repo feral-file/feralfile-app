@@ -195,8 +195,8 @@ class FeedCacheImpl extends BaseFeedCache {
 
   @override
   Channel? getChannelByPlaylistId(String playlistId) {
-    return _channels.values
-        .firstWhereOrNull((channel) => channel.playlists.contains(playlistId));
+    return _channels.values.firstWhereOrNull(
+        (channel) => channel.playlists.any((url) => url.contains(playlistId)));
   }
 
   /*
