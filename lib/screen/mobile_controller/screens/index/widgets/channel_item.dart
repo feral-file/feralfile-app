@@ -10,11 +10,13 @@ class ChannelItem extends StatelessWidget {
   const ChannelItem({
     required this.channelReference,
     this.clickable = true,
+    this.maxLines,
     super.key,
   });
 
   final ChannelReference channelReference;
   final bool clickable;
+  final int? maxLines;
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +52,8 @@ class ChannelItem extends StatelessWidget {
                   const SizedBox(height: 20),
                   Text(
                     channelReference.channel.summary ?? '',
+                    maxLines: maxLines,
+                    overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.ppMori400Grey12,
                   ),
                 ],

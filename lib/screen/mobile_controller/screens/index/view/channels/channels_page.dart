@@ -108,7 +108,10 @@ class _ChannelsPageState extends State<ChannelsPage>
           children: [
             ColoredBox(
               color: Colors.transparent,
-              child: ChannelItem(channelReference: channel),
+              child: ChannelItem(
+                channelReference: channel,
+                maxLines: 3,
+              ),
             ),
             if (index == channels.length - 1 && !hasMore) const BottomSpacing(),
           ],
