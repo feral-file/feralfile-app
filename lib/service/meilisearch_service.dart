@@ -22,10 +22,10 @@ import 'package:meilisearch/meilisearch.dart';
 
 /// Service for searching across multiple MeiliSearch indexes using the official MeiliSearch SDK
 class MeiliSearchService {
-  MeiliSearchService._internal({this.prefix = 'rag-dev'});
+  MeiliSearchService._internal({this.prefix = 'feed_prod'});
 
   /// Create a new instance with the specified prefix
-  factory MeiliSearchService({String prefix = 'rag-dev'}) =>
+  factory MeiliSearchService({String prefix = 'feed_prod'}) =>
       MeiliSearchService._internal(prefix: prefix);
 
   late final MeiliSearchClient _client;
