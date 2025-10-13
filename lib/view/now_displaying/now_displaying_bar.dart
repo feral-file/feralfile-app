@@ -87,11 +87,13 @@ class _NowDisplayingBarState extends State<NowDisplayingBar>
                 maxSize: 1,
                 collapsedBuilder: (context, scrollController) {
                   log.info(
-                      "NowDisplayingBar - minSize: $minSize, isExpanded: $isExpanded");
+                    'NowDisplayingBar - minSize: $minSize, isExpanded: $isExpanded',
+                  );
                   return CollapsedNowPlayingBar(
-                      playingObject: nowPlayingObject,
-                      onToggle: onUpdate,
-                      isShowingQuickSetting: notifier);
+                    playingObject: nowPlayingObject,
+                    onToggle: onUpdate,
+                    isShowingQuickSetting: notifier,
+                  );
                 },
                 expandedBuilder:
                     (BuildContext context, ScrollController scrollController) {
@@ -136,7 +138,7 @@ class _NowDisplayingBarState extends State<NowDisplayingBar>
 
     if (error is CheckCastingStatusException) {
       return NowPlayingStatusBar(
-        status: error.error.message,
+        status: error.error.getMessage(deviceName: error.device.name),
       );
     }
 

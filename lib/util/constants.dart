@@ -398,10 +398,10 @@ class Constants {
     'feralfile://navigation/',
   ];
 
-  static var appStoreUrl =
+  static String appStoreUrl =
       'https://apps.apple.com/us/app/feral-file/id1544022728';
 
-  static var playStoreUrl =
+  static String playStoreUrl =
       'https://play.google.com/store/apps/details?id=com.bitmark.autonomy_client';
 }
 
@@ -442,3 +442,5 @@ final chatPrivateBannerMessage = SystemMessage(
 );
 
 const googleChatSpaceUrl = 'https://chat.google.com/room/AAAApbjAbfs?cls=7';
+
+const ff1GroupIoUrl = 'https://groups.io/g/FF1/join';

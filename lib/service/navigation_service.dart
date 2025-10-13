@@ -16,7 +16,6 @@ import 'package:autonomy_flutter/model/jwt.dart';
 import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/model/play_list_model.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
-import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/screen/alumni_details/alumni_details_page.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/customer_support/support_thread_page.dart';
@@ -830,6 +829,10 @@ class NavigationService {
 
   void openGoogleChatSpace() {
     _browser.openUrl(googleChatSpaceUrl);
+  }
+
+  void openFF1GroupIo() {
+    _browser.openUrl(ff1GroupIoUrl);
   }
 
   Future<void> showLinkArtistSuccess() async {

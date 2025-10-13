@@ -177,11 +177,14 @@ enum ReplyError {
         ReplyError.unknown => 'unknown',
       };
 
-  String get message => switch (this) {
-        ReplyError.overheating => '''
-FF1 temperature is too high. Playback paused to prevent damage.''',
-        ReplyError.unknown => 'FF1 is connected but cannot get now displaying',
-      };
+  String getMessage({String? deviceName}) {
+    final name = deviceName ?? 'FF1';
+    return switch (this) {
+      ReplyError.overheating => '''
+$name temperature is too high. Playback paused to prevent damage.''',
+      ReplyError.unknown => '$name is connected but cannot get now displaying',
+    };
+  }
 }
 
 class Reply {
