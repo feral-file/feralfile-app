@@ -248,7 +248,7 @@ class MockDp1PlaylistService extends FeralFileDP1FeedService {
 
   @override
   Future<Channel> getChannelDetail(String channelId,
-      {bool usingCache = true}) async {
+      {bool fromCache = true}) async {
     // Mock channel detail
     return Channel(
       id: channelId,

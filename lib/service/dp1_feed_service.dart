@@ -57,7 +57,7 @@ abstract class DP1FeedWithChannelExtensionServiceBase
 
   Channel? getChannelByPlaylistId(String playlistId);
 
-  Future<Channel?> getChannelDetail(String channelId, {bool usingCache = true});
+  Future<Channel?> getChannelDetail(String channelId, {bool fromCache = true});
 
   Future<List<Channel>> getChannelsByIds({
     required List<String> channelIds,
@@ -224,9 +224,9 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
   @override
   Future<Channel?> getChannelDetail(
     String channelId, {
-    bool usingCache = true,
+    bool fromCache = true,
   }) async {
-    if (usingCache) {
+    if (fromCache) {
       final cached = cache.getChannelById(channelId);
       return cached;
     }
@@ -247,7 +247,7 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
     final channels = <Channel>[];
     for (final batch in channelIds.batch(batchSize)) {
       final futures = batch.map((id) async {
-        return getChannelDetail(id, usingCache: usingCache);
+        return getChannelDetail(id, fromCache: usingCache);
       }).toList();
       final results = await Future.wait(futures);
       channels.addAll(results.nonNulls.toList());
