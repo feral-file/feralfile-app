@@ -1,4 +1,6 @@
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/main.dart';
+import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/bluetooth_connected_device_config.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
@@ -8,6 +10,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/pla
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/works/works_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/header.dart';
 import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
+import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
@@ -31,7 +34,7 @@ class ListDirectoryPage extends StatefulWidget {
 }
 
 class ListDirectoryPageState extends State<ListDirectoryPage>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver, RouteAware {
   late PageController _pageController;
   int _selectedPageIndex = 0;
 
@@ -39,6 +42,27 @@ class ListDirectoryPageState extends State<ListDirectoryPage>
   void initState() {
     super.initState();
     _pageController = PageController();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void didPopNext() {
+    super.didPopNext();
+    if (_selectedPageIndex == 3) {
+      _reindexAllAddresses();
+    }
   }
 
   void openMyCollection() {
@@ -50,6 +74,14 @@ class ListDirectoryPageState extends State<ListDirectoryPage>
       _selectedPageIndex = index;
     });
     _pageController.jumpToPage(index);
+    if (index == 3) {
+      _reindexAllAddresses();
+    }
+  }
+
+  Future<void> _reindexAllAddresses() async {
+    final allAddresses = injector<AddressService>().getAllAddresses();
+    await injector<NftTokensService>().reindexAddresses(allAddresses);
   }
 
   @override

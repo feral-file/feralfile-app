@@ -87,7 +87,6 @@ class FeedManager {
       DateTime(2023, 1, 1).toString(),
     );
     final lastFeedUpdateAt = DateTime.parse(lastFeedUpdateAtString);
-    final now = DateTime.now();
     // we should update the cache if more than updateFeedDuration or lastFeedUpdateAt is before now
     final shouldUpdate = lastTimeRefreshFeeds
             .isBefore(DateTime.now().subtract(updateFeedDuration)) ||
