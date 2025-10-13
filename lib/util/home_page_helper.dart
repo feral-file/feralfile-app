@@ -110,7 +110,7 @@ class HomePageHelper {
         Timer.periodic(const Duration(minutes: 1), (_) async {
       try {
         final allOwnedPlaylist =
-            await injector<UserDp1PlaylistService>().cachedAllOwnedPlaylist;
+            injector<UserDp1PlaylistService>().cachedAllOwnedPlaylist;
         final dynamicQuery = allOwnedPlaylist.firstDynamicQuery;
         if (dynamicQuery != null) {
           injector<UserAllOwnCollectionBloc>().add(RefreshAssetTokens());
