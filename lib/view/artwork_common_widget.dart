@@ -841,19 +841,22 @@ Widget artworkDetailsMetadataSection(
           MetaDataItem(
             title: 'artist'.tr(),
             value: artistName,
-            onTap: () async {
-              if (!assetToken.isFeralfile) {
-                final uri = Uri.parse(
-                  assetToken.artistURL?.split(' & ').firstOrNull ?? '',
-                );
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
-              } else {
-                unawaited(
-                  injector<NavigationService>()
-                      .openFeralFileArtistPage(assetToken.artistID!),
-                );
-              }
-            },
+            onTap: (assetToken.isFeralfile && assetToken.artistID != null)
+                ? () {
+                    unawaited(
+                      injector<NavigationService>()
+                          .openFeralFileArtistPage(assetToken.artistID!),
+                    );
+                  }
+                : (assetToken.artistURL != null)
+                    ? () async {
+                        final uri = Uri.parse(
+                          assetToken.artistURL?.split(' & ').firstOrNull ?? '',
+                        );
+                        await launchUrl(uri,
+                            mode: LaunchMode.externalApplication);
+                      }
+                    : null,
             forceSafariVC: true,
           ),
         ],
