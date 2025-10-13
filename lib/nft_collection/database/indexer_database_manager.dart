@@ -77,6 +77,9 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
 
     tokenObject.asset.target = assetObject;
     try {
+      // we have to put the asset and provenance objects
+      assetBox.putAsync(tokenObject.asset.target!);
+      provenanceBox.putManyAsync(tokenObject.provenance);
       final tokenId = assetTokenBox.put(tokenObject);
       return tokenId;
     } catch (e) {
