@@ -30,7 +30,7 @@ abstract class BaseDP1FeedService {
   });
 
   /// Get playlist by ID
-  Future<DP1Call> getPlaylistById(String playlistId);
+  Future<DP1Call?> getPlaylistById(String playlistId);
 
   /// Get all playlists with pagination
   Future<DP1PlaylistResponse> getPlaylists({

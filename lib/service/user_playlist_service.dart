@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
@@ -52,6 +54,12 @@ class UserDp1PlaylistService {
     }
     final playlistId = allOwnedPlaylistIds.first;
     final playlist = await _dp1FeedService.getPlaylistById(playlistId);
+    if (playlist == null) {
+      unawaited(Sentry.captureMessage(
+          '[User Playlist Service] [allOwnedPlaylist] All owned playlist not found in DP1 service, id: $playlistId'));
+      throw DP1AllOwnCollectionEmptyError(
+          message: 'All owned playlist not found');
+    }
     return playlist;
   }
 
@@ -63,8 +71,15 @@ class UserDp1PlaylistService {
       final playlistId = allOwnedPlaylistIds.first;
       final playlist =
           await _dp1FeedService.getPlaylistById(playlistId, usingCache: false);
-      cachedAllOwnedPlaylist = playlist;
-      return playlist;
+      if (playlist != null) {
+        cachedAllOwnedPlaylist = playlist;
+        return playlist;
+      } else {
+        Sentry.captureMessage(
+            '[createAllOwnedPlaylistIfNotExists] All owned playlist not found in DP1 service, id: $playlistId');
+        // If the playlist ID exists in cloud but not found in DP1 service, remove it from cloud
+        _cloudManager.dp1FeedCloudObject.removeOwnedPlaylistId(playlistId);
+      }
     }
 
     final allOwnedAddresses = await _cloudManager.addressObject
@@ -94,7 +109,7 @@ class UserDp1PlaylistService {
     return created;
   }
 
-  Future<DP1Call> getPlaylistById(String id) async {
+  Future<DP1Call?> getPlaylistById(String id) async {
     final playlist = _dp1FeedService.getPlaylistById(id);
     return playlist;
   }
@@ -110,6 +125,12 @@ class UserDp1PlaylistService {
     }
     final playlistId = allOwnedPlaylistIds.first;
     final currentPlaylist = await _dp1FeedService.getPlaylistById(playlistId);
+    if (currentPlaylist == null) {
+      log.info(
+          '[insertAddressesToPlaylist] All owned playlist not found in DP1 service, id: $playlistId');
+      throw DP1AllOwnCollectionEmptyError(
+          message: 'All owned playlist not found');
+    }
     final request = DP1CreatePlaylistRequest(
       dpVersion: currentPlaylist.dpVersion,
       title: currentPlaylist.title,
@@ -136,6 +157,12 @@ class UserDp1PlaylistService {
     }
     final playlistId = allOwnedPlaylistIds.first;
     final currentPlaylist = await _dp1FeedService.getPlaylistById(playlistId);
+    if (currentPlaylist == null) {
+      log.info(
+          '[removeAddressesFromPlaylist] All owned playlist not found in DP1 service, id: $playlistId');
+      throw DP1AllOwnCollectionEmptyError(
+          message: 'All owned playlist not found');
+    }
     final request = DP1CreatePlaylistRequest(
       dpVersion: currentPlaylist.dpVersion,
       title: currentPlaylist.title,

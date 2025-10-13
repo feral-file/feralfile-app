@@ -228,7 +228,7 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
   }) async {
     if (usingCache) {
       final cached = cache.getChannelById(channelId);
-      if (cached != null) return cached;
+      return cached;
     }
     final channel = await api.getChannelById(channelId);
     return channel;

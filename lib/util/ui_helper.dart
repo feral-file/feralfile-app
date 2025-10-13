@@ -16,8 +16,6 @@ import 'package:autonomy_flutter/model/jwt.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_item_card.dart';
@@ -1579,7 +1577,10 @@ class UIHelper {
           final channel = channelReferences[index];
           return ColoredBox(
             color: Colors.transparent,
-            child: ChannelItem(channelReference: channel),
+            child: ChannelItem(
+              channelReference: channel,
+              maxLines: 3,
+            ),
           );
         },
         childCount: channelReferences.length,

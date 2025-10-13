@@ -201,10 +201,26 @@ class FeralFileFeedManager extends FeedManager {
       String channelId) async {
     for (final feedService in feedServices) {
       if (feedService is FeralFileDP1FeedService) {
-        final channel = await feedService.getChannelDetail(channelId);
-        if (channel != null) {
-          return ChannelReference(channel: channel, url: feedService.baseUrl);
+        try {
+          final channel = await feedService.getChannelDetail(channelId);
+          if (channel != null) {
+            return ChannelReference(channel: channel, url: feedService.baseUrl);
+          }
+        } catch (e) {
+          log.info(
+              'Error getting channel by ID $channelId: $e, service: ${feedService.baseUrl}');
         }
+      }
+    }
+    return null;
+  }
+
+  Future<PlaylistReference?> getPlaylistReferenceByPlaylistId(
+      String playlistId) async {
+    for (final feedService in feedServices) {
+      final playlist = await feedService.getPlaylistById(playlistId);
+      if (playlist != null) {
+        return PlaylistReference(playlist: playlist, url: feedService.baseUrl);
       }
     }
     return null;
