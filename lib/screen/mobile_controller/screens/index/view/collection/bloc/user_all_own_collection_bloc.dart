@@ -173,7 +173,7 @@ class UserAllOwnCollectionBloc
             .map(
               (e) => AddressAssetTokens(
                 address: e.address,
-                compactedAssetTokens: e.compactedAssetTokens,
+                assetTokens: e.assetTokens,
               ),
             )
             .toList(),

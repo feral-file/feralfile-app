@@ -81,6 +81,7 @@ class _WorksPageState extends State<WorksPage>
   }
 
   Widget _buildWorksGridView(WorksState state) {
+    final dp1Items = state.dp1Items;
     final assetTokens = state.assetTokens;
     final hasMore = state.hasMore;
     final isLoadingMore = state.isLoadingMore;
@@ -89,7 +90,7 @@ class _WorksPageState extends State<WorksPage>
       controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
-        UIHelper.assetTokenSliverGrid(context, assetTokens, 'Works'),
+        UIHelper.dp1ItemSliverGrid(context, dp1Items, assetTokens, 'Works'),
         if (hasMore || isLoadingMore)
           SliverToBoxAdapter(
             child: Padding(

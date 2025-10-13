@@ -121,8 +121,8 @@ class NowDisplayingManager {
     if (status.items?.isNotEmpty ?? false) {
       // DP1
       final index = status.index!;
-      final assetTokens =
-          await _fetchAssetTokens(status.items!.map((e) => e.indexId).toList());
+      final assetTokens = await _fetchAssetTokens(
+          status.items!.map((e) => e.indexId).nonNulls.toList());
 
       return DP1NowDisplayingObject(
         index: index,

@@ -3,6 +3,7 @@ import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
@@ -13,12 +14,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 class PlaylistItemCard extends StatefulWidget {
   const PlaylistItemCard({
-    required this.compactedAssetToken,
+    this.compactedAssetToken,
     this.playlistTitle,
+    required this.dp1Item,
     super.key,
   });
 
-  final CompactedAssetToken compactedAssetToken;
+  final CompactedAssetToken? compactedAssetToken;
+  final DP1Item dp1Item;
   final String? playlistTitle;
 
   @override
@@ -38,25 +41,30 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
     final listIdentities = <String>[];
     final assetToken = widget.compactedAssetToken;
 
-    listIdentities.addAll([assetToken.owner, assetToken.artistName ?? '']);
+    listIdentities
+        .addAll([assetToken?.owner ?? '', assetToken?.artistName ?? '']);
     identityBloc.add(GetIdentityEvent(listIdentities));
   }
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.compactedAssetToken.displayTitle ?? '';
+    final title = widget.dp1Item.title ??
+        widget.compactedAssetToken?.displayTitle ??
+        'Unknown Title';
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () {
-        injector<NavigationService>().navigateTo(
-          AppRouter.artworkDetailsPage,
-          arguments: ArtworkDetailPayload(
-            widget.compactedAssetToken.identity,
-            useIndexer: true,
-            backTitle: widget.playlistTitle,
-          ),
-        );
-      },
+      onTap: widget.compactedAssetToken != null
+          ? () {
+              injector<NavigationService>().navigateTo(
+                AppRouter.artworkDetailsPage,
+                arguments: ArtworkDetailPayload(
+                  widget.compactedAssetToken!.identity,
+                  useIndexer: true,
+                  backTitle: widget.playlistTitle,
+                ),
+              );
+            }
+          : null,
       child: Container(
         color: Colors.transparent,
         padding: const EdgeInsets.all(12),
@@ -69,11 +77,7 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
                 child: Center(
                   child: Builder(
                     builder: (context) {
-                      return FFArtworkThumbnailView(
-                        url: widget.compactedAssetToken.galleryThumbnailURL ??
-                            '',
-                        fit: BoxFit.fitWidth,
-                      );
+                      return _thumbnail(context);
                     },
                   ),
                 ),
@@ -83,9 +87,9 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
                   bloc: identityBloc,
                   builder: (context, identityState) {
                     final assetToken = widget.compactedAssetToken;
-                    final artistName = assetToken.artistName
+                    final artistName = assetToken?.artistName
                             ?.toIdentityOrMask(identityState.identityMap) ??
-                        assetToken.artistID ??
+                        assetToken?.artistID ??
                         '';
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,6 +117,14 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _thumbnail(BuildContext context) {
+    final url = widget.compactedAssetToken?.galleryThumbnailURL;
+    return FFArtworkThumbnailView(
+      url: url ?? '',
+      fit: BoxFit.fitWidth,
     );
   }
 }

@@ -146,18 +146,11 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
             '[getGroupAssetTokensByOwnersGroupByAddress] Wallet address not found: $address');
         continue;
       }
-      final compactedAssetTokens = assetTokens
-          .map(
-            (e) => CompactedAssetToken.fromAssetToken(
-              e,
-            ),
-          )
-          .toList();
 
       groupByAddress.add(
         AddressAssetTokens(
           address: walletAddress,
-          compactedAssetTokens: compactedAssetTokens,
+          assetTokens: assetTokens,
         ),
       );
     }
