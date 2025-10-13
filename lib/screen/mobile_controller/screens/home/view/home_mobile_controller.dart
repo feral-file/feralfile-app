@@ -1,6 +1,5 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/index.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
@@ -26,7 +25,6 @@ class _MobileControllerHomePageState
 
   final _channelsBloc = injector<ChannelsBloc>();
   final _playlistsBloc = injector<PlaylistsBloc>();
-  final _userAllOwnCollectionBloc = injector<UserAllOwnCollectionBloc>();
 
   @override
   void initState() {
@@ -37,15 +35,6 @@ class _MobileControllerHomePageState
     // load channel and playlist
     _channelsBloc.add(const LoadChannelsEvent());
     _playlistsBloc.add(const LoadPlaylistsEvent());
-
-    // final dynamicQuery = injector<UserAllOwnCollectionBloc>()
-    //     .state
-    //     .dynamicQuery
-    //     .copyWith(
-    //         params:
-    //             injector<UserAllOwnCollectionBloc>().state.dynamicQuery.params);
-    // _userAllOwnCollectionBloc.add(RefreshAssetTokenFromDynamicQuery());
-    // injector<MeiliSearchBloc>().add(MeiliSearchQueryChanged(''));
 
     HomePageHelper.instance.onHomePageInit(context, this);
   }
