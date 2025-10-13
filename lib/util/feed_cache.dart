@@ -8,6 +8,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/cha
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/service/dp1_store.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:collection/collection.dart';
 
 /*
@@ -30,9 +31,14 @@ abstract class BaseFeedCache {
   =======================================================================
   */
   DP1Call? getPlaylistById(String playlistId);
+
   List<DP1Call> getAllPlaylists();
+
   List<DP1Call> getPlaylistsOfChannel(String channelId);
-  void insertListPlaylists(List<DP1Call> playlists, {List<String>? urls});
+
+  void insertListPlaylists(List<DP1Call> playlists);
+
+  void removePlaylistById(String playlistId);
 
   /*
   =======================================================================
@@ -40,15 +46,23 @@ abstract class BaseFeedCache {
   Channel operations
   */
   Channel? getChannelById(String channelId);
+
   List<Channel> getAllChannels();
-  Map<String, Channel> getChannelsByUrls(List<String> channelUrls);
+
   Channel? getChannelByPlaylistId(String playlistId);
+
   void insertListChannels(List<Channel> channels);
+
+  void removeChannelById(String channelId);
 
   /*
   =======================================================================
   */
   void clearAll();
+
+  void clearPlaylists();
+
+  void clearChannels();
 
   /*
   =======================================================================
@@ -69,22 +83,18 @@ class FeedCacheImpl extends BaseFeedCache {
   }
 
   // Cache: playlist URL -> playlistId (inverted map)
-  final Map<String, String> _urlToPlaylistId = <String, String>{};
   final Map<String, Channel> _channels = <String, Channel>{};
   final Map<String, DP1Call> _playlists = <String, DP1Call>{};
 
   late final DP1PlaylistStore _playlistStore;
   late final DP1ChannelStore _channelStore;
-  late final DP1UrlToPlaylistMapStore _urlMapStore;
 
   Future<void> _initializeStores() async {
     try {
       _playlistStore = DP1PlaylistStore(baseUrl: baseUrl);
       _channelStore = DP1ChannelStore(baseUrl: baseUrl);
-      _urlMapStore = DP1UrlToPlaylistMapStore(baseUrl: baseUrl);
       await _channelStore.init();
       await _playlistStore.init();
-      await _urlMapStore.init();
 
       // Preload channels
       for (final String channelJson in _channelStore.getAll()) {
@@ -99,23 +109,6 @@ class FeedCacheImpl extends BaseFeedCache {
       }
 
       // Preload playlists
-      // Preload URL map
-      try {
-        final String? jsonMap =
-            _urlMapStore.get(DP1UrlToPlaylistMapStore.objectId);
-        if (jsonMap != null && jsonMap.isNotEmpty) {
-          final Map<String, dynamic> data =
-              json.decode(jsonMap) as Map<String, dynamic>;
-          _urlToPlaylistId.clear();
-          data.forEach((key, value) {
-            if (value is String) {
-              _urlToPlaylistId[key] = value;
-            }
-          });
-        }
-      } catch (e) {
-        log.info('Failed to load url->playlistId map from Hive: $e');
-      }
       for (final String playlistJson in _playlistStore.getAll()) {
         try {
           final Map<String, dynamic> data =
@@ -136,7 +129,7 @@ class FeedCacheImpl extends BaseFeedCache {
   // get playlist by url
   DP1Call? _getPlaylistByUrl(String url) {
     try {
-      final playlistId = _urlToPlaylistId[url];
+      final playlistId = url.playlistId;
       if (playlistId == null) return null;
       return getPlaylistById(playlistId);
     } catch (_) {
@@ -177,17 +170,6 @@ class FeedCacheImpl extends BaseFeedCache {
   =======================================================================
   */
 
-  void setChannels(List<Channel> channels) {
-    for (final c in channels) {
-      _channels[c.id] = c;
-    }
-  }
-
-  void setChannelWithUrls(Channel channel, String url) {
-    _channels[url] = channel;
-    _persistUrlMap();
-  }
-
   @override
   List<Channel> getAllChannels() => _channels.values.toList();
 
@@ -225,65 +207,63 @@ class FeedCacheImpl extends BaseFeedCache {
     _onCacheUpdated();
   }
 
+  @override
+  void removeChannelById(String channelId) {
+    _channels.remove(channelId);
+    // remove all playlists of channel
+    final playlists = getPlaylistsOfChannel(channelId);
+    for (final p in playlists) {
+      removePlaylistById(p.id);
+    }
+    _onCacheUpdated();
+  }
+
   // add Playlist to cache
-  void _insertPlaylist(DP1Call playlist, {String? url}) {
+  void _insertPlaylist(DP1Call playlist) {
     _playlists[playlist.id] = playlist;
     try {
       _playlistStore.save(json.encode(playlist.toJson()), playlist.id);
     } catch (_) {}
-
-    if (url != null) {
-      _urlToPlaylistId[url] = playlist.id;
-      _persistUrlMap();
-    }
   }
 
   @override
-  void insertListPlaylists(List<DP1Call> playlists, {List<String>? urls}) {
+  void insertListPlaylists(List<DP1Call> playlists) {
     for (int i = 0; i < playlists.length; i++) {
-      _insertPlaylist(playlists[i], url: urls?[i]);
+      _insertPlaylist(playlists[i]);
     }
+    _onCacheUpdated();
+  }
+
+  @override
+  void removePlaylistById(String playlistId) {
+    _playlists.remove(playlistId);
     _onCacheUpdated();
   }
 
   // Clear operations (optional)
   @override
   void clearAll() {
-    _urlToPlaylistId.clear();
+    clearPlaylists();
+    clearChannels();
+    _onCacheUpdated();
+  }
+
+  @override
+  void clearPlaylists() {
     _playlists.clear();
-    _channels.clear();
-    // Clear persistent stores as well
-    unawaited(_channelStore.clear());
     unawaited(_playlistStore.clear());
-    unawaited(_urlMapStore.clear());
+    _onCacheUpdated();
+  }
+
+  @override
+  void clearChannels() {
+    _channels.clear();
+    unawaited(_channelStore.clear());
     _onCacheUpdated();
   }
 
   void _onCacheUpdated() {
     injector<ChannelsBloc>().add(const LoadChannelsEvent());
     injector<PlaylistsBloc>().add(const LoadPlaylistsEvent());
-  }
-
-  void _persistUrlMap() {
-    try {
-      if (_urlToPlaylistId.isEmpty) {
-        _urlMapStore.delete(DP1UrlToPlaylistMapStore.objectId);
-        return;
-      }
-      final String jsonMap = json.encode(_urlToPlaylistId);
-      _urlMapStore.save(jsonMap, DP1UrlToPlaylistMapStore.objectId);
-    } catch (e) {
-      // ignore failures
-    }
-  }
-
-  @override
-  Map<String, Channel> getChannelsByUrls(List<String> channelUrls) {
-    final map = <String, Channel>{};
-    for (final url in channelUrls) {
-      if (_channels[url] == null) continue;
-      map[url] = _channels[url]!;
-    }
-    return map;
   }
 }

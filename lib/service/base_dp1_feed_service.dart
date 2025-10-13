@@ -30,17 +30,17 @@ abstract class BaseDP1FeedService {
   });
 
   /// Get playlist by ID
-  Future<DP1Call> getPlaylistById(
-    String playlistId, {
-    bool usingCache = true,
-  });
+  Future<DP1Call> getPlaylistById(String playlistId);
 
   /// Get all playlists with pagination
-  Future<DP1PlaylistResponse> getAllPlaylists({
+  Future<DP1PlaylistResponse> getPlaylists({
     String? cursor,
     int? limit,
-    bool usingCache = true,
   });
+
+  Future<List<DP1Call>> getAllPlaylists();
+
+  List<DP1Call> getAllCachedPlaylists();
 
   /// Delete a playlist
   Future<bool> deletePlaylist(String id);
@@ -57,6 +57,5 @@ abstract class BaseDP1FeedService {
   Future<DP1PlaylistItemsResponse> getPlaylistItems({
     String? cursor,
     int? limit,
-    bool usingCache = true,
   });
 }

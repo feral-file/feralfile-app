@@ -144,6 +144,7 @@ class _OnboardingPageState extends State<OnboardingPage>
             injector<FeralFileFeedManager>().setupRemoteConfigChannels(
               channelUrls,
             );
+            injector<FeralFileFeedManager>().reloadAllCache();
           },
           onError: (Object e) {
             log.info('Failed to load remote config: $e');

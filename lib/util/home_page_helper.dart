@@ -16,6 +16,7 @@ import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/shared.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/notifications/notification_handler.dart';
 import 'package:autonomy_flutter/util/now_displaying_manager.dart';
@@ -178,6 +179,7 @@ class HomePageHelper {
     unawaited(injector<VersionService>().checkForUpdate());
     await _remoteConfig.loadConfigs(forceRefresh: true);
     unawaited(NowDisplayingManager().updateDisplayingNow());
+    unawaited(injector<FeralFileFeedManager>().reloadAllCache());
 
     _triggerShowAnnouncement();
   }

@@ -156,7 +156,7 @@ DateTime? isShowErrorDialogWorking;
 
 Future showErrorDialog(BuildContext context, String title, String description,
     String defaultButton,
-    [Function()? defaultButtonOnPress,
+    [FutureOr Function()? defaultButtonOnPress,
     String? cancelButton,
     Function()? cancelButtonOnPress]) async {
   if (isShowErrorDialogWorking != null &&
@@ -203,12 +203,12 @@ Future showErrorDialog(BuildContext context, String title, String description,
                       style: theme.primaryTextTheme.ppMori400White14,
                     ),
                     const SizedBox(height: 40),
-                    PrimaryButton(
+                    PrimaryAsyncButton(
                       text: defaultButton,
-                      onTap: () {
+                      onTap: () async {
                         Navigator.of(context).pop();
                         if (defaultButtonOnPress != null) {
-                          defaultButtonOnPress();
+                          await defaultButtonOnPress();
                         }
                       },
                     ),

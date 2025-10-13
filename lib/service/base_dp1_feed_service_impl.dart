@@ -36,9 +36,10 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
 
   // create playlist
   @override
-  Future<DP1Call> createPlaylist(
-      {required DP1CreatePlaylistRequest request,
-      bool isSyncToCloud = true}) async {
+  Future<DP1Call> createPlaylist({
+    required DP1CreatePlaylistRequest request,
+    bool isSyncToCloud = true,
+  }) async {
     final created = await api.createPlaylist(request.toJson());
     try {
       if (isSyncToCloud) {
@@ -54,10 +55,11 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
 
   // update playlist
   @override
-  Future<DP1Call> updatePlaylist(
-      {required String playlistId,
-      required DP1CreatePlaylistRequest request,
-      bool isSyncToCloud = true}) async {
+  Future<DP1Call> updatePlaylist({
+    required String playlistId,
+    required DP1CreatePlaylistRequest request,
+    bool isSyncToCloud = true,
+  }) async {
     final updatedPlaylist =
         await api.updatePlaylist(playlistId, request.toJson());
     return updatedPlaylist;
@@ -65,8 +67,10 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
 
   // get playlist by id
   @override
-  Future<DP1Call> getPlaylistById(String playlistId,
-      {bool usingCache = true}) async {
+  Future<DP1Call> getPlaylistById(
+    String playlistId, {
+    bool usingCache = true,
+  }) async {
     if (usingCache) {
       final cachedPlaylist = cache.getPlaylistById(playlistId);
       if (cachedPlaylist != null) return cachedPlaylist;
@@ -76,26 +80,39 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
   }
 
   @override
-  Future<DP1PlaylistResponse> getAllPlaylists({
+  Future<DP1PlaylistResponse> getPlaylists({
     String? cursor,
     int? limit,
-    bool usingCache = true,
   }) async {
-    if (usingCache) {
-      final cachedPlaylists = cache.getAllPlaylists();
-      if (cachedPlaylists.isNotEmpty) {
-        return DP1PlaylistResponse(cachedPlaylists, false, null);
-      }
-    }
-
     final resp = await api.getAllPlaylists(cursor: cursor, limit: limit);
     cache.insertListPlaylists(resp.items);
     return resp;
   }
 
   @override
+  Future<List<DP1Call>> getAllPlaylists() async {
+    final playlists = <DP1Call>[];
+    var hasMore = true;
+    String? cursor;
+    const limit = 100;
+    while (hasMore) {
+      final resp = await api.getAllPlaylists(cursor: cursor, limit: limit);
+      playlists.addAll(resp.items);
+      hasMore = resp.hasMore;
+      cursor = resp.cursor;
+    }
+    return playlists;
+  }
+
+  @override
+  List<DP1Call> getAllCachedPlaylists() {
+    return cache.getAllPlaylists();
+  }
+
+  @override
   Future<bool> deletePlaylist(String id) async {
     await api.deletePlaylist(id);
+    cache.removePlaylistById(id);
     return true;
   }
 
@@ -112,7 +129,6 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
   Future<DP1PlaylistItemsResponse> getPlaylistItems({
     String? cursor,
     int? limit,
-    bool usingCache = true,
   }) async {
     return api.getPlaylistItems(
       cursor: cursor,
@@ -129,11 +145,16 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
    */
 
   Future<void> reloadCache() async {
-    final playlists = await getAllPlaylists(usingCache: false);
-    log.info('Reloaded cache:${playlists.items.length} playlists');
-    cache
-      ..clearAll()
-      ..insertListPlaylists(playlists.items);
+    bool hasMore = true;
+    String? cursor;
+    const limit = 100;
+    cache.clearAll();
+    while (hasMore) {
+      final resp = await api.getAllPlaylists(cursor: cursor, limit: limit);
+      cache.insertListPlaylists(resp.items);
+      hasMore = resp.hasMore;
+      cursor = resp.cursor;
+    }
   }
 
   void clearCache() {

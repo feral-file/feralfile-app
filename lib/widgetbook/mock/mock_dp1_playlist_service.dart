@@ -172,7 +172,7 @@ class MockDp1PlaylistService extends FeralFileDP1FeedService {
   }
 
   @override
-  Future<DP1PlaylistResponse> getAllPlaylists({
+  Future<DP1PlaylistResponse> getPlaylists({
     String? cursor,
     int? limit,
     bool usingCache = true,

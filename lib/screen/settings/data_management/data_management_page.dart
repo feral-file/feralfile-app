@@ -150,7 +150,8 @@ class _DataManagementPageState extends State<DataManagementPage> {
           injector<UserAllOwnCollectionBloc>()
               .add(RefreshAssetTokens(shouldEmitLoading: true));
 
-          await injector<FeralFileFeedManager>().reloadAllCache();
+          unawaited(
+              injector<FeralFileFeedManager>().reloadAllCache(force: true));
 
           if (!mounted) {
             return;

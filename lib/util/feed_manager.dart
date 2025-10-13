@@ -1,13 +1,19 @@
 import 'package:autonomy_flutter/common/environment.dart';
+import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/service/base_dp1_feed_service_impl.dart';
+import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
+import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 
 class FeedServerInfo {
   FeedServerInfo({required this.url, required this.createdAt});
@@ -32,30 +38,13 @@ class FeedManager {
 
   Future<void> init() async {}
 
-  Future<BaseDP1FeedServiceImpl> addFeedService(
-      BaseDP1FeedServiceImpl feedService,
-      {bool reloadCache = false}) async {
+  BaseDP1FeedServiceImpl addFeedService(BaseDP1FeedServiceImpl feedService) {
     if (isFeedServiceExists(feedService.baseUrl)) {
       log.info('Feed service already exists for url: ${feedService.baseUrl}');
       return getFeedServiceByUrl(feedService.baseUrl)!;
     }
     _feedServices.add(Pair(feedService.baseUrl, feedService));
-    if (reloadCache) {
-      await feedService.reloadCache();
-    }
     return feedService;
-  }
-
-  Future<void> addFeedServiceByUrls(List<String> urls) async {
-    final futures = urls.map((url) async {
-      if (isFeedServiceExists(url)) {
-        log.info('Feed service already exists for url: $url');
-        return;
-      }
-      final feedService = BaseDP1FeedServiceImpl(baseUrl: url);
-      await addFeedService(feedService);
-    });
-    await Future.wait(futures);
   }
 
   BaseDP1FeedServiceImpl? getFeedServiceByUrl(String url) {
@@ -75,29 +64,51 @@ class FeedManager {
   List<BaseDP1FeedServiceImpl> get feedServices =>
       [..._feedServices.map((e) => e.second)];
 
-  Future<void> reloadAllCache() async {
-    for (final feedService in feedServices) {
-      await feedService.reloadCache();
-    }
-  }
+  Future<void> reloadAllCache({
+    bool force = false,
+  }) async {
+    // local cache last refresh time
+    final lastTimeRefreshFeeds =
+        injector<ConfigurationService>().getLastTimeRefreshFeeds() ??
+            DateTime(1970, 1, 1);
+    final updateFeedDuration = injector<RemoteConfigService>().getConfig(
+      ConfigGroup.dp1Playlist,
+      ConfigKey.dp1FeedCacheDuration,
+      Duration(days: 1),
+    );
+    // remote config last update time
+    final lastFeedUpdateAt = injector<RemoteConfigService>().getConfig(
+      ConfigGroup.dp1Playlist,
+      ConfigKey.dp1FeedLastUpdated,
+      DateTime(2023, 1, 1),
+    );
 
-  Future<List<PlaylistReference>> fetchAllPlaylists() async {
-    List<PlaylistReference> allPlaylists = [];
-    for (final feedService in feedServices) {
-      if (feedService is FeralFileDP1FeedService) {
-        final playlists = await feedService.getAllPlaylists();
-        allPlaylists.addAll(playlists.items.map((item) =>
-            PlaylistReference(playlist: item, url: feedService.baseUrl)));
+    final now = DateTime.now();
+    // we should update the cache if more than updateFeedDuration or lastFeedUpdateAt is before now
+    final shouldUpdate = lastTimeRefreshFeeds
+            .isBefore(DateTime.now().subtract(updateFeedDuration)) ||
+        lastFeedUpdateAt.isBefore(now);
+    if (force || shouldUpdate || kDebugMode) {
+      for (final feedService in feedServices) {
+        await feedService.reloadCache();
       }
+      await injector<ConfigurationService>()
+          .setLastTimeRefreshFeeds(DateTime.now());
+      log.info(
+          'Reload all cache, last time refresh feeds: $lastTimeRefreshFeeds, duration: $updateFeedDuration, force: $force');
+      injector<PlaylistsBloc>().add(RefreshPlaylistsEvent());
+      injector<ChannelsBloc>().add(RefreshChannelsEvent());
+    } else {
+      log.info(
+          'Skip reload all cache, last time refresh feeds: $lastTimeRefreshFeeds, duration: $updateFeedDuration, force: $force');
     }
-    return allPlaylists;
   }
 
   Future<List<PlaylistReference>> getAllCachedPlaylists() async {
     List<PlaylistReference> allPlaylists = [];
     for (final feedService in feedServices) {
-      final playlists = await feedService.getAllPlaylists(usingCache: true);
-      allPlaylists.addAll(playlists.items.map((item) =>
+      final playlists = await feedService.getAllCachedPlaylists();
+      allPlaylists.addAll(playlists.map((item) =>
           PlaylistReference(playlist: item, url: feedService.baseUrl)));
     }
     return allPlaylists;
@@ -151,7 +162,7 @@ class FeralFileFeedManager extends FeedManager {
       } else {
         final service = FeralFileDP1FeedService(baseUrl: endpoint)
           ..addRemoteConfigChannelIds(channelIdsByUrl[endpoint]!);
-        addFeedService(service, reloadCache: false);
+        addFeedService(service);
       }
     }
     log.info(
@@ -164,7 +175,7 @@ class FeralFileFeedManager extends FeedManager {
     List<Channel> allChannels = [];
     for (final feedService in feedServices) {
       if (feedService is FeralFileDP1FeedService) {
-        final channels = await feedService.getAllChannels();
+        final channels = await feedService.getChannels();
         allChannels.addAll(channels.items);
       }
     }
@@ -175,8 +186,8 @@ class FeralFileFeedManager extends FeedManager {
     List<ChannelReference> allChannelReferences = [];
     for (final feedService in feedServices) {
       if (feedService is FeralFileDP1FeedService) {
-        final channels = await feedService.getAllChannels(usingCache: true);
-        allChannelReferences.addAll(channels.items.map((item) =>
+        final channels = feedService.getAllCachedChannels();
+        allChannelReferences.addAll(channels.map((item) =>
             ChannelReference(channel: item, url: feedService.baseUrl)));
       }
     }

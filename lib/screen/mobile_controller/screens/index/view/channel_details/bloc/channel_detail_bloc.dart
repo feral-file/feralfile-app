@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:flutter/foundation.dart';
@@ -74,11 +75,13 @@ class ChannelDetailBloc extends Bloc<ChannelDetailEvent, ChannelDetailState> {
         emit(state.copyWith(status: ChannelDetailStateStatus.loading));
       }
 
-      final playlistsResponse =
-          await _dp1playlistService.getPlaylistsByChannelId(
-        channelId: channelId,
-        limit: _pageSize,
-        cursor: cursor,
+      final playlists = await _dp1playlistService.getCachedPlaylistsByChannelId(
+        channelId,
+      );
+      final playlistsResponse = DP1PlaylistResponse(
+        playlists,
+        false,
+        null,
       );
 
       final List<DP1Call> newPlaylists;

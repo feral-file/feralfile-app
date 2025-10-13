@@ -150,15 +150,12 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
     'tester': {
       'beta_tester': <String>[],
     },
-    'dp1_playlist': {
-      "channel_urls": [
+    ConfigGroup.dp1Playlist.name: {
+      ConfigKey.dp1PlaylistChannelUrls.name: [
         "https://dp1-feed-operator-api-prod.autonomy-system.workers.dev/api/v1/channels/dae709d7-26da-4b4c-b881-39cd681cc82f",
-        "https://dp1-feed-operator-api-dev.objkt-com.workers.dev/api/v1/channels/cb3455c2-7122-4414-a9f5-7ccbe434de21",
-        "https://dp1-feed-operator-api-dev.objkt-com.workers.dev/api/v1/channels/5b467722-202d-44d2-af77-4c438c7f2258",
-        "https://dp1-feed-operator-api-dev.objkt-com.workers.dev/api/v1/channels/21f9b1a1-7ad6-4752-ba2c-3f675c4dea63",
-        "https://dp1-feed-operator-api-dev.objkt-com.workers.dev/api/v1/channels/92c75624-10ee-403b-81eb-0da0011d4dde",
-        "https://dp1-feed-operator-api-dev.objkt-com.workers.dev/api/v1/channels/70930b59-04cc-49e0-a982-7ffc17210add"
-      ]
+      ],
+      ConfigKey.dp1FeedCacheDuration.name: '86400',
+      ConfigKey.dp1FeedLastUpdated.name: '2025-01-01T00:00:00Z',
     },
     ConfigGroup.documentation.name: {
       ConfigKey.docsUrl.name: 'https://docs.feralfile.com/ff1?from=app',
@@ -332,6 +329,8 @@ enum ConfigKey {
   foreWord,
   betaTester,
   dp1PlaylistChannelUrls,
+  dp1FeedCacheDuration,
+  dp1FeedLastUpdated,
   docsUrl,
 }
 
@@ -419,6 +418,10 @@ extension ConfigKeyExtension on ConfigKey {
         return 'beta_tester';
       case ConfigKey.dp1PlaylistChannelUrls:
         return 'channel_urls';
+      case ConfigKey.dp1FeedCacheDuration:
+        return 'feed_cache_duration';
+      case ConfigKey.dp1FeedLastUpdated:
+        return 'feed_last_updated';
       case ConfigKey.docsUrl:
         return 'docs_url';
     }

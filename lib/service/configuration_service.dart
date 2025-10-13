@@ -170,6 +170,10 @@ abstract class ConfigurationService {
   Map<String, DateTime> getAddressLastRefreshedTime();
 
   Future<void> clearAddressLastRefreshedTime();
+
+  DateTime? getLastTimeRefreshFeeds();
+
+  Future<void> setLastTimeRefreshFeeds(DateTime time);
 }
 
 class ConfigurationServiceImpl implements ConfigurationService {
@@ -264,6 +268,8 @@ class ConfigurationServiceImpl implements ConfigurationService {
 
   static const String KEY_ADDRESS_LAST_REFRESHED_TIME =
       'address_last_refreshed_time';
+
+  static const String KEY_LAST_TIME_REFRESH_FEEDS = 'last_time_refresh_feeds';
 
   // Do at once
   static const String KEY_SENT_TEZOS_ARTWORK_METRIC =
@@ -690,6 +696,19 @@ class ConfigurationServiceImpl implements ConfigurationService {
       jsonEncode(timeJson),
     );
   }
+
+  @override
+  DateTime? getLastTimeRefreshFeeds() {
+    final time = _preferences.getString(KEY_LAST_TIME_REFRESH_FEEDS);
+    if (time == null) {
+      return null;
+    }
+    return DateTime.parse(time);
+  }
+
+  @override
+  Future<void> setLastTimeRefreshFeeds(DateTime time) => _preferences.setString(
+      KEY_LAST_TIME_REFRESH_FEEDS, time.toIso8601String());
 }
 
 enum ConflictAction {

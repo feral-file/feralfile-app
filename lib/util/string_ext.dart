@@ -268,12 +268,12 @@ extension StringUrlExtension on String {
 }
 
 extension FeedUrlExtension on String {
-  String get playlistId {
+  String? get playlistId {
     final uri = Uri.tryParse(this);
     if (uri == null) {
       return this;
     }
-    return uri.pathSegments.last;
+    return uri.pathSegments.lastOrNull;
   }
 
   String get channelId {
