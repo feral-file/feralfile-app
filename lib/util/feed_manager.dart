@@ -71,23 +71,27 @@ class FeedManager {
     final lastTimeRefreshFeeds =
         injector<ConfigurationService>().getLastTimeRefreshFeeds() ??
             DateTime(1970, 1, 1);
-    final updateFeedDuration = injector<RemoteConfigService>().getConfig(
+    final updateFeedDurationString =
+        injector<RemoteConfigService>().getConfig<String>(
       ConfigGroup.dp1Playlist,
       ConfigKey.dp1FeedCacheDuration,
-      Duration(days: 1),
+      Duration(days: 1).toString(),
     );
+    final updateFeedDuration =
+        Duration(seconds: int.parse(updateFeedDurationString));
     // remote config last update time
-    final lastFeedUpdateAt = injector<RemoteConfigService>().getConfig(
+    final lastFeedUpdateAtString =
+        injector<RemoteConfigService>().getConfig<String>(
       ConfigGroup.dp1Playlist,
       ConfigKey.dp1FeedLastUpdated,
-      DateTime(2023, 1, 1),
+      DateTime(2023, 1, 1).toString(),
     );
-
+    final lastFeedUpdateAt = DateTime.parse(lastFeedUpdateAtString);
     final now = DateTime.now();
     // we should update the cache if more than updateFeedDuration or lastFeedUpdateAt is before now
     final shouldUpdate = lastTimeRefreshFeeds
             .isBefore(DateTime.now().subtract(updateFeedDuration)) ||
-        lastFeedUpdateAt.isBefore(now);
+        lastFeedUpdateAt.isAfter(lastTimeRefreshFeeds);
     if (force || shouldUpdate || kDebugMode) {
       for (final feedService in feedServices) {
         await feedService.reloadCache();

@@ -150,15 +150,15 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
     'tester': {
       'beta_tester': <String>[],
     },
-    ConfigGroup.dp1Playlist.name: {
-      ConfigKey.dp1PlaylistChannelUrls.name: [
+    ConfigGroup.dp1Playlist.getString: {
+      ConfigKey.dp1PlaylistChannelUrls.getString: [
         "https://dp1-feed-operator-api-prod.autonomy-system.workers.dev/api/v1/channels/dae709d7-26da-4b4c-b881-39cd681cc82f",
       ],
-      ConfigKey.dp1FeedCacheDuration.name: '86400',
-      ConfigKey.dp1FeedLastUpdated.name: '2025-01-01T00:00:00Z',
+      ConfigKey.dp1FeedCacheDuration.getString: '86400',
+      ConfigKey.dp1FeedLastUpdated.getString: '2025-01-01T00:00:00Z',
     },
-    ConfigGroup.documentation.name: {
-      ConfigKey.docsUrl.name: 'https://docs.feralfile.com/ff1?from=app',
+    ConfigGroup.documentation.getString: {
+      ConfigKey.docsUrl.getString: 'https://docs.feralfile.com/ff1?from=app',
     },
   };
 
