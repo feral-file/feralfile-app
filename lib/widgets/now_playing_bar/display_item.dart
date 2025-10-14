@@ -3,6 +3,7 @@ import 'package:autonomy_flutter/design/build/components/DisplayItem.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
@@ -13,7 +14,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 class DisplayItem extends StatelessWidget {
   const DisplayItem({
-    required this.assetToken,
+    required this.dp1Item,
+    this.assetToken,
     this.deviceName,
     this.isPlaying = true,
     this.isInExpandedView = false,
@@ -21,7 +23,8 @@ class DisplayItem extends StatelessWidget {
     super.key,
   });
 
-  final AssetToken assetToken;
+  final DP1Item dp1Item;
+  final AssetToken? assetToken;
   final String? deviceName;
   final bool isPlaying;
   final bool isInExpandedView;
@@ -56,14 +59,7 @@ class DisplayItem extends StatelessWidget {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(0),
                         ),
-                        child: tokenGalleryThumbnailWidget(
-                          context,
-                          CompactedAssetToken.fromAssetToken(assetToken),
-                          DisplayItemTokens.thumbImageWidth.toInt(),
-                          ratio: DisplayItemTokens.thumbImageWidth /
-                              DisplayItemTokens.thumbImageHeight,
-                          useHero: false,
-                        ),
+                        child: _thumbnail(context),
                       ),
                     ),
                   ],
@@ -97,11 +93,11 @@ class DisplayItem extends StatelessWidget {
                         BlocBuilder<IdentityBloc, IdentityState>(
                           bloc: _identityBloc,
                           builder: (context, state) {
-                            final artistTitle = assetToken.artistName
+                            final artistTitle = assetToken?.artistName
                                     ?.toIdentityOrMask(state.identityMap) ??
-                                assetToken.artistName;
+                                assetToken?.artistName;
                             return Text(
-                              artistTitle ?? '',
+                              artistTitle ?? 'Unknown Artist',
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
                               style: Theme.of(context).textTheme.small,
@@ -114,7 +110,9 @@ class DisplayItem extends StatelessWidget {
                             DisplayItemTokens.textArtworkGap.toDouble(),
                           ),
                           child: Text(
-                            assetToken.displayTitle ?? '',
+                            dp1Item.title ??
+                                assetToken?.displayTitle ??
+                                'Unknown Title',
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
                             style: isInExpandedView
@@ -136,6 +134,20 @@ class DisplayItem extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _thumbnail(BuildContext context) {
+    final assetToken = this.assetToken;
+    if (assetToken == null) {
+      return const GalleryNoThumbnailWidget();
+    }
+    return tokenGalleryThumbnailWidget(
+      context,
+      CompactedAssetToken.fromAssetToken(assetToken),
+      DisplayItemTokens.thumbImageWidth.toInt(),
+      ratio: DisplayItemTokens.thumbImageWidth /
+          DisplayItemTokens.thumbImageHeight,
     );
   }
 }

@@ -94,21 +94,24 @@ class WorksBloc extends Bloc<WorksEvent, WorksState> {
         limit: _pageSize,
       );
 
-      final newWorksItems = worksResponse.items;
-      final assetTokens = await _indexerService.getAssetTokens(newWorksItems);
+      final items = worksResponse.items;
+      final assetTokens = await _indexerService.getAssetTokens(items);
 
       final List<AssetToken> newAssetTokens;
+      final List<DP1Item> newDP1Items;
       if (isLoadMore) {
         newAssetTokens = [...state.assetTokens, ...assetTokens];
+        newDP1Items = [...state.dp1Items, ...items];
       } else {
         newAssetTokens = assetTokens;
+        newDP1Items = items;
       }
 
       emit(
         state.copyWith(
           status: WorksStateStatus.loaded,
-          dp1Items: newWorksItems,
           assetTokens: newAssetTokens,
+          dp1Items: newDP1Items,
           cursor: worksResponse.cursor,
           hasMore: worksResponse.hasMore,
           error: '',

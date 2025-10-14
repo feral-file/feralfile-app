@@ -8,15 +8,16 @@ import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
+import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:autonomy_flutter/view/ff_artwork_thumbnail_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class PlaylistItemCard extends StatefulWidget {
   const PlaylistItemCard({
+    required this.dp1Item,
     this.compactedAssetToken,
     this.playlistTitle,
-    required this.dp1Item,
     super.key,
   });
 
@@ -90,7 +91,7 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
                     final artistName = assetToken?.artistName
                             ?.toIdentityOrMask(identityState.identityMap) ??
                         assetToken?.artistID ??
-                        '';
+                        'Unknown Artist';
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -122,8 +123,11 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
 
   Widget _thumbnail(BuildContext context) {
     final url = widget.compactedAssetToken?.galleryThumbnailURL;
+    if (url == null || url.isEmpty) {
+      return const GalleryNoThumbnailWidget();
+    }
     return FFArtworkThumbnailView(
-      url: url ?? '',
+      url: url,
       fit: BoxFit.fitWidth,
     );
   }
