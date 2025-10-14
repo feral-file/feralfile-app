@@ -26,46 +26,66 @@ class PlaylistListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
+    return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.zero,
       controller: scrollController,
-      itemCount: playlists.length + (hasMore ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index == playlists.length) {
-          return Column(
-            children: [
-              LoadMoreIndicator(isLoadingMore: isLoadingMore),
-              const BottomSpacing(),
-            ],
-          );
-        }
-
-        final playlist = playlists[index];
-        final service =
-            injector<FeralFileFeedManager>().getFeedServiceByUrl(playlist.url);
-        ChannelReference? channelReference = null;
-        if (service is FeralFileDP1FeedService) {
-          final channel = service.getChannelByPlaylistId(playlist.playlist.id);
-          if (channel != null) {
-            channelReference =
-                ChannelReference(channel: channel, url: playlist.url);
-          }
-        }
-
-        return Column(
-          children: [
-            PlaylistItem(
-              playlistReference: playlist,
-              channelReference: channelReference,
-              isFromPlaylistsPage: isFromPlaylistsPage,
-              channelVisible: channelVisible,
-            ),
-            if (index == playlists.length - 1 && !hasMore)
-              const BottomSpacing(),
-          ],
-        );
-      },
+      slivers: [
+        playlistSliverListView(
+          playlists: playlists,
+          hasMore: hasMore,
+          isLoadingMore: isLoadingMore,
+          scrollController: scrollController,
+          channelVisible: channelVisible,
+          isFromPlaylistsPage: isFromPlaylistsPage,
+        ),
+      ],
     );
   }
+}
+
+SliverList playlistSliverListView({
+  required List<PlaylistReference> playlists,
+  bool hasMore = false,
+  bool isLoadingMore = false,
+  ScrollController? scrollController,
+  bool channelVisible = true,
+  bool isFromPlaylistsPage = false,
+}) {
+  return SliverList.builder(
+    itemBuilder: (context, index) {
+      if (index == playlists.length) {
+        return Column(
+          children: [
+            LoadMoreIndicator(isLoadingMore: isLoadingMore),
+            const BottomSpacing(),
+          ],
+        );
+      }
+
+      final playlist = playlists[index];
+      final service =
+          injector<FeralFileFeedManager>().getFeedServiceByUrl(playlist.url);
+      ChannelReference? channelReference;
+      if (service is FeralFileDP1FeedService) {
+        final channel = service.getChannelByPlaylistId(playlist.playlist.id);
+        if (channel != null) {
+          channelReference =
+              ChannelReference(channel: channel, url: playlist.url);
+        }
+      }
+
+      return Column(
+        children: [
+          PlaylistItem(
+            playlistReference: playlist,
+            channelReference: channelReference,
+            isFromPlaylistsPage: isFromPlaylistsPage,
+            channelVisible: channelVisible,
+          ),
+          if (index == playlists.length - 1 && !hasMore) const BottomSpacing(),
+        ],
+      );
+    },
+    itemCount: playlists.length + (hasMore ? 1 : 0),
+  );
 }

@@ -77,33 +77,33 @@ class _ChannelDetailPageState extends State<ChannelDetailPage>
         backTitle: widget.payload.backTitle,
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: UIConstants.detailPageHeaderPadding),
-            ChannelItem(
-              channelReference: widget.payload.channelReference,
-              clickable: false,
-            ),
-            const SizedBox(height: UIConstants.detailPageHeaderPadding),
-            Expanded(
-              child: BlocBuilder<ChannelDetailBloc, ChannelDetailState>(
+        child: RefreshIndicator(
+          onRefresh: () async {
+            _channelDetailBloc.add(
+              const RefreshChannelPlaylistsEvent(),
+            );
+          },
+          backgroundColor: AppColor.primaryBlack,
+          color: AppColor.white,
+          child: CustomScrollView(
+            shrinkWrap: true,
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              const SliverToBoxAdapter(
+                  child: SizedBox(height: UIConstants.detailPageHeaderPadding)),
+              SliverToBoxAdapter(
+                  child: ChannelItem(
+                channelReference: widget.payload.channelReference,
+                clickable: false,
+              )),
+              const SliverToBoxAdapter(
+                  child: SizedBox(height: UIConstants.detailPageHeaderPadding)),
+              BlocBuilder<ChannelDetailBloc, ChannelDetailState>(
                 bloc: _channelDetailBloc,
-                builder: (context, state) => RefreshIndicator(
-                  onRefresh: () async {
-                    _channelDetailBloc.add(
-                      const RefreshChannelPlaylistsEvent(),
-                    );
-                    await _channelDetailBloc.stream.firstWhere(
-                      (state) => state.isLoaded || state.isError,
-                    );
-                  },
-                  backgroundColor: AppColor.primaryBlack,
-                  color: AppColor.white,
-                  child: _buildContent(context, state),
-                ),
+                builder: (context, state) => _buildContent(context, state),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -111,21 +111,22 @@ class _ChannelDetailPageState extends State<ChannelDetailPage>
 
   Widget _buildContent(BuildContext context, ChannelDetailState state) {
     if (state.isLoading && state.playlists.isEmpty) {
-      return const LoadingView();
+      return const SliverToBoxAdapter(child: LoadingView());
     }
 
     if (state.isError && state.playlists.isEmpty) {
-      return ErrorView(
+      return SliverToBoxAdapter(
+          child: ErrorView(
         error: 'Error loading playlists: ${state.error}',
         onRetry: () => _channelDetailBloc.add(
           const LoadChannelPlaylistsEvent(),
         ),
-      );
+      ));
     }
     return _buildPlaylists(state);
   }
 
-  Widget _buildPlaylists(ChannelDetailState state) {
+  SliverList _buildPlaylists(ChannelDetailState state) {
     final playlists = state.playlists;
     final hasMore = state.hasMore;
     final isLoadingMore = state.isLoadingMore;
@@ -135,7 +136,7 @@ class _ChannelDetailPageState extends State<ChannelDetailPage>
         .map((playlist) => PlaylistReference(playlist: playlist, url: url))
         .toList();
 
-    return PlaylistListView(
+    return playlistSliverListView(
       playlists: playlistReferences,
       hasMore: hasMore,
       isLoadingMore: isLoadingMore,
