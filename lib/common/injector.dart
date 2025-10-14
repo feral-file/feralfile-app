@@ -409,7 +409,7 @@ Future<void> setupInjector() async {
     AudioService.new,
   );
 
-  injector.registerFactory<PlaylistsBloc>(
+  injector.registerLazySingleton<PlaylistsBloc>(
     () => PlaylistsBloc(),
   );
 
@@ -417,7 +417,7 @@ Future<void> setupInjector() async {
     () => UserAllOwnCollectionBloc(injector()),
   );
 
-  injector.registerFactory<ChannelsBloc>(
+  injector.registerLazySingleton<ChannelsBloc>(
     () => ChannelsBloc(),
   );
 

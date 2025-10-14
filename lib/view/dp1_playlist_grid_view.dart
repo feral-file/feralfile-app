@@ -114,7 +114,7 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
                 child: _emptyView(context),
               )
             else
-              UIHelper.dp1ItemSliverGrid(context, widget.playlist.items,
+              UIHelper.dp1ItemSliverGrid(context, state.dp1Items,
                   state.assetTokens, widget.playlist.title),
             if (state is PlaylistDetailsLoadingMoreState)
               const SliverToBoxAdapter(

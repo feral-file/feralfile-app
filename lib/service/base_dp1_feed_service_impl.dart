@@ -99,7 +99,7 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
     final playlists = <DP1Call>[];
     var hasMore = true;
     String? cursor;
-    const limit = 100;
+    const limit = 50;
     while (hasMore) {
       final resp = await api.getAllPlaylists(cursor: cursor, limit: limit);
       playlists.addAll(resp.items);
@@ -152,7 +152,7 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
   Future<void> reloadCache() async {
     bool hasMore = true;
     String? cursor;
-    const limit = 100;
+    const limit = 50;
     cache.clearAll();
     while (hasMore) {
       final resp = await api.getAllPlaylists(cursor: cursor, limit: limit);

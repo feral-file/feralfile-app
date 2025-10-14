@@ -363,7 +363,7 @@ class FeralFileDP1FeedService extends DP1FeedWithChannelExtensionServiceImpl {
       final playlists = <DP1Call>[];
       bool hasMore = true;
       String? cursor = null;
-      int? limit = 100;
+      int? limit = 20;
       while (hasMore) {
         final response = await getAllPlaylistsByChannelIds(
           channelIds: _remoteConfigChannelIds,

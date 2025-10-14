@@ -75,6 +75,19 @@ class PlaylistDetailsBloc
           .nonNulls
           .toList();
 
+      if (assetTokens.length != pageItems.length) {
+        final missingTokens = pageItems
+            .where((item) => !assetTokens.any((t) => t.id == item.indexId))
+            .toList();
+        unawaited(
+          Sentry.captureException(
+            Exception(
+              'Can not get all tokens. Missing tokens:  ${missingTokens.join(', ')}',
+            ),
+          ),
+        );
+      }
+
       emit(
         PlaylistDetailsLoadedState(
           dp1Items: pageItems,
