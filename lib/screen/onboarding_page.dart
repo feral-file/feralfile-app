@@ -109,7 +109,47 @@ class _OnboardingPageState extends State<OnboardingPage>
       unawaited(Sentry.captureMessage('OnboardingPage loading more than 10s'));
     });
 
-    unawaited(setup(context).then((_) => _fetchRuntimeCache()));
+    unawaited(
+      setup(context)
+          .catchError((Object setupError) {
+            log.info('Failed to setup: $setupError');
+            unawaited(Sentry.captureException('Failed to setup: $setupError'));
+          })
+          .then(
+            (_) => _fetchRuntimeCache()
+                .catchError((Object fetchRuntimeCacheError) {
+              log.info(
+                'Failed to fetch runtime cache: $fetchRuntimeCacheError',
+              );
+              unawaited(
+                Sentry.captureException(
+                  'Failed to fetch runtime cache: $fetchRuntimeCacheError',
+                ),
+              );
+            }).then(
+              (_) {
+                log.info('OnboardingPage setup and fetch runtime cache done');
+                if (!mounted) {
+                  return;
+                }
+                _timer?.cancel();
+              },
+            ).catchError((Object fetchRuntimeCacheError) {
+              log.info(
+                'Failed to fetch runtime cache: $fetchRuntimeCacheError',
+              );
+              unawaited(
+                Sentry.captureException(
+                  'Failed to fetch runtime cache: $fetchRuntimeCacheError',
+                ),
+              );
+            }),
+          )
+          .catchError((Object setupError) {
+            log.info('Failed to setup: $setupError');
+            unawaited(Sentry.captureException('Failed to setup: $setupError'));
+          }),
+    );
   }
 
   Future<void> setup(BuildContext context) async {
@@ -136,11 +176,12 @@ class _OnboardingPageState extends State<OnboardingPage>
           (_) {
             log.info('Remote config loaded');
             final channelUrls = List<String>.from(
-                injector<RemoteConfigService>().getConfig<List>(
-              ConfigGroup.dp1Playlist,
-              ConfigKey.dp1PlaylistChannelUrls,
-              [],
-            ));
+              injector<RemoteConfigService>().getConfig<List>(
+                ConfigGroup.dp1Playlist,
+                ConfigKey.dp1PlaylistChannelUrls,
+                [],
+              ),
+            );
             injector<FeralFileFeedManager>().setupRemoteConfigChannels(
               channelUrls,
             );
@@ -167,9 +208,6 @@ class _OnboardingPageState extends State<OnboardingPage>
     } catch (e, s) {
       log.info('Setup error: $e');
       unawaited(Sentry.captureException('Setup error: $e', stackTrace: s));
-    }
-    if (_timer?.isActive ?? false) {
-      _timer?.cancel();
     }
   }
 
@@ -240,7 +278,8 @@ class _OnboardingPageState extends State<OnboardingPage>
     if (!mounted) {
       return;
     }
-    CanvasNotificationManager().start();
+    unawaited(CanvasNotificationManager().start());
+    log.info('Go to target screen');
     await _goToTargetScreen(context);
   }
 
