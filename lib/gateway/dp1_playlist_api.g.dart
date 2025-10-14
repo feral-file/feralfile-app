@@ -125,7 +125,7 @@ class _DP1FeedApi implements DP1FeedApi {
   }
 
   @override
-  Future<DP1Call> getPlaylistById(String playlistId) async {
+  Future<DP1Call?> getPlaylistById(String playlistId) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
@@ -147,12 +147,12 @@ class _DP1FeedApi implements DP1FeedApi {
           baseUrl,
         )));
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late DP1Call _value;
+    late DP1Call? _value;
     try {
       _value = DP1Call.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options);
-      rethrow;
+      return null;
     }
     return _value;
   }
