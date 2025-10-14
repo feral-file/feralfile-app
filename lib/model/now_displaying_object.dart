@@ -1,6 +1,7 @@
 import 'package:autonomy_flutter/model/device/base_device.dart';
 import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
+import 'package:collection/collection.dart';
 
 abstract class NowDisplayingObjectBase {
   NowDisplayingObjectBase({required this.connectedDevice});
@@ -24,10 +25,11 @@ class DP1NowDisplayingObject extends NowDisplayingObjectBase {
 
   DP1Item get playlistItem => dp1Items[index];
 
-  AssetToken get assetToken {
-    final item = dp1Items[index];
+  AssetToken? get assetToken {
+    final item = playlistItem;
     final indexId = item.indexId;
-    final assetToken = assetTokens.firstWhere((token) => token.id == indexId);
+    final assetToken =
+        assetTokens.firstWhereOrNull((token) => token.id == indexId);
     return assetToken;
   }
 }

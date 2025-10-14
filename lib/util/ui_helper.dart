@@ -16,8 +16,7 @@ import 'package:autonomy_flutter/model/jwt.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_item_card.dart';
@@ -43,8 +42,8 @@ import 'package:autonomy_flutter/view/passkey/passkey_login_view.dart';
 import 'package:autonomy_flutter/view/passkey/passkey_register_view.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
-import 'package:autonomy_flutter/view/sliver_expandable_sticky_header.dart';
 import 'package:card_swiper/card_swiper.dart';
+import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -1471,8 +1470,11 @@ class UIHelper {
     return jwt as JWT?;
   }
 
-  static SliverGrid assetTokenSliverGrid(BuildContext context,
-      List<CompactedAssetToken> compactedAssetTokens, String title) {
+  static SliverGrid dp1ItemSliverGrid(
+      BuildContext context,
+      List<DP1Item> dp1Items,
+      List<CompactedAssetToken> compactedAssetTokens,
+      String title) {
     return SliverGrid(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
@@ -1481,40 +1483,45 @@ class UIHelper {
       ),
       delegate: SliverChildBuilderDelegate(
         (context, index) {
-          final asset = compactedAssetTokens[index];
+          final dp1Item = dp1Items[index];
+          final indexId = dp1Item.indexId;
+          final asset = compactedAssetTokens
+              .firstWhereOrNull((token) => token.id == indexId);
           return PlaylistItemCard(
+            dp1Item: dp1Item,
             compactedAssetToken: asset,
             playlistTitle: title,
           );
         },
-        childCount: compactedAssetTokens.length,
+        childCount: dp1Items.length,
       ),
     );
   }
 
-  static GridView assetTokenGridView(BuildContext context,
-      List<CompactedAssetToken> compactedAssetTokens, String title) {
-    return GridView.builder(
-        physics: const NeverScrollableScrollPhysics(),
-        shrinkWrap: true,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 188 / 307,
-          crossAxisSpacing: 17,
-        ),
-        itemBuilder: (context, index) {
-          log.info('assetTokenGridView: $index');
-          final asset = compactedAssetTokens[index];
-          return PlaylistItemCard(
-            compactedAssetToken: asset,
-            playlistTitle: title,
-          );
-        },
-        itemCount: compactedAssetTokens.length);
-  }
+  // static GridView assetTokenGridView(BuildContext context,
+  //     List<CompactedAssetToken> compactedAssetTokens, String title) {
+  //   return GridView.builder(
+  //       physics: const NeverScrollableScrollPhysics(),
+  //       shrinkWrap: true,
+  //       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+  //         crossAxisCount: 2,
+  //         childAspectRatio: 188 / 307,
+  //         crossAxisSpacing: 17,
+  //       ),
+  //       itemBuilder: (context, index) {
+  //         log.info('assetTokenGridView: $index');
+  //         final asset = compactedAssetTokens[index];
+  //         return PlaylistItemCard(
+  //           compactedAssetToken: asset,
+  //           playlistTitle: title,
+  //         );
+  //       },
+  //       itemCount: compactedAssetTokens.length);
+  // }
 
   static ExpandableSliverStickyHeader assetTokenExpandableSliverStickyHeader(
     BuildContext context, {
+    required List<DP1Item> dp1Items,
     required List<CompactedAssetToken> compactedAssetTokens,
     required String title,
     bool isExpanded = false,
@@ -1527,46 +1534,46 @@ class UIHelper {
     return ExpandableSliverStickyHeader(
         header: header,
         initiallyExpanded: isExpanded,
-        sliver:
-            UIHelper.assetTokenSliverGrid(context, compactedAssetTokens, title),
+        sliver: UIHelper.dp1ItemSliverGrid(
+            context, dp1Items, compactedAssetTokens, title),
         onExpandedChanged: onExpandedChanged,
         scrollController: scrollController,
         slidableActions: slidableActions);
   }
 
-  static SliverExpandableStickyHeader assetTokenSliverExpandableStickyHeader(
-    BuildContext context, {
-    required List<CompactedAssetToken> compactedAssetTokens,
-    required String title,
-    bool isExpanded = false,
-    required void Function(bool) onExpandedChanged,
-  }) {
-    return SliverExpandableStickyHeader(
-      header: Text(title, style: Theme.of(context).textTheme.ppMori400White12),
-      initiallyExpanded: isExpanded,
-      sliverBuilder: (context) => SliverPadding(
-        padding: const EdgeInsets.all(8.0),
-        sliver: SliverGrid(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 188 / 307,
-            crossAxisSpacing: 17,
-          ),
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              final asset = compactedAssetTokens[index];
-              return PlaylistItemCard(
-                compactedAssetToken: asset,
-                playlistTitle: title,
-              );
-            },
-            childCount: compactedAssetTokens.length,
-          ),
-        ),
-      ),
-      onExpandedChanged: onExpandedChanged,
-    );
-  }
+  // static SliverExpandableStickyHeader assetTokenSliverExpandableStickyHeader(
+  //   BuildContext context, {
+  //   required List<CompactedAssetToken> compactedAssetTokens,
+  //   required String title,
+  //   bool isExpanded = false,
+  //   required void Function(bool) onExpandedChanged,
+  // }) {
+  //   return SliverExpandableStickyHeader(
+  //     header: Text(title, style: Theme.of(context).textTheme.ppMori400White12),
+  //     initiallyExpanded: isExpanded,
+  //     sliverBuilder: (context) => SliverPadding(
+  //       padding: const EdgeInsets.all(8.0),
+  //       sliver: SliverGrid(
+  //         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+  //           crossAxisCount: 2,
+  //           childAspectRatio: 188 / 307,
+  //           crossAxisSpacing: 17,
+  //         ),
+  //         delegate: SliverChildBuilderDelegate(
+  //           (context, index) {
+  //             final asset = compactedAssetTokens[index];
+  //             return PlaylistItemCard(
+  //               compactedAssetToken: asset,
+  //               playlistTitle: title,
+  //             );
+  //           },
+  //           childCount: compactedAssetTokens.length,
+  //         ),
+  //       ),
+  //     ),
+  //     onExpandedChanged: onExpandedChanged,
+  //   );
+  // }
 
   // Channel list as sliver for search and index pages
   static SliverList ChannelSliverListView({
@@ -1579,7 +1586,10 @@ class UIHelper {
           final channel = channelReferences[index];
           return ColoredBox(
             color: Colors.transparent,
-            child: ChannelItem(channelReference: channel),
+            child: ChannelItem(
+              channelReference: channel,
+              maxLines: 3,
+            ),
           );
         },
         childCount: channelReferences.length,

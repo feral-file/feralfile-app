@@ -12,6 +12,7 @@ enum WorksStateStatus {
 class WorksState {
   const WorksState({
     this.status = WorksStateStatus.initial,
+    this.dp1Items = const [],
     this.assetTokens = const [],
     this.hasMore = true,
     this.cursor,
@@ -19,6 +20,7 @@ class WorksState {
   });
 
   final WorksStateStatus status;
+  final List<DP1Item> dp1Items;
   final List<AssetToken> assetTokens;
   final bool hasMore;
   final String? cursor;
@@ -26,6 +28,7 @@ class WorksState {
 
   WorksState copyWith({
     WorksStateStatus? status,
+    List<DP1Item>? dp1Items,
     List<AssetToken>? assetTokens,
     bool? hasMore,
     String? cursor,
@@ -33,6 +36,7 @@ class WorksState {
   }) {
     return WorksState(
       status: status ?? this.status,
+      dp1Items: dp1Items ?? this.dp1Items,
       assetTokens: assetTokens ?? this.assetTokens,
       hasMore: hasMore ?? this.hasMore,
       cursor: cursor ?? this.cursor,

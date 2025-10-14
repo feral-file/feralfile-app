@@ -102,23 +102,14 @@ class BluetoothDevicePortalPageState extends State<BluetoothDevicePortalPage>
                     ),
                   ),
                   SliverToBoxAdapter(
-                    child: Center(
-                      child: Text(
-                        'FF1',
-                        style: Theme.of(context)
-                            .textTheme
-                            .ppMori700White24
-                            .copyWith(
-                                letterSpacing: 8.0,
-                                height: 0.8,
-                                color: AppColor.feralFileLightBlue,
-                                fontSize: 98),
-                      ),
+                    child: Text(
+                      'FF1 Art Computer',
+                      style: Theme.of(context).textTheme.h1,
                     ),
                   ),
                   const SliverToBoxAdapter(
                     child: SizedBox(
-                      height: 120,
+                      height: 150,
                     ),
                   ),
                   SliverToBoxAdapter(
@@ -343,14 +334,13 @@ class BluetoothDevicePortalPageState extends State<BluetoothDevicePortalPage>
                             text: '${'join_our'.tr()} ',
                           ),
                           TextSpan(
-                            text: 'google_chat_space'.tr(),
+                            text: 'Listserv'.tr(),
                             style: const TextStyle(
                               decoration: TextDecoration.underline,
                             ),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                injector<NavigationService>()
-                                    .openGoogleChatSpace();
+                                injector<NavigationService>().openFF1GroupIo();
                               },
                           ),
                           TextSpan(

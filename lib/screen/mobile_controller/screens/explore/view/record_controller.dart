@@ -14,7 +14,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/cha
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/dp1_playlist_details.dart';
 import 'package:autonomy_flutter/service/audio_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
-import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/mobile_controller_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
@@ -30,6 +29,7 @@ import 'package:autonomy_flutter/widgets/llm_text_input/llm_text_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:sentry/sentry.dart';
 import 'package:super_tooltip/super_tooltip.dart';
 
 class RecordControllerScreenPayload {
@@ -164,15 +164,20 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                   if (playlistId == null) {
                     return;
                   }
-                  injector<FeralFileDP1FeedService>()
-                      .getPlaylistById(playlistId)
+                  injector<FeralFileFeedManager>()
+                      .getPlaylistReferenceByPlaylistId(playlistId)
                       .then((value) {
-                    final dp1Playlist = value;
-                    if (dp1Playlist.items.isEmpty) {
+                    final playlistReference = value;
+                    if (playlistReference == null) {
+                      Sentry.captureMessage(
+                          '[RecordControllerScreen] Playlist not found in DP1 service, id: $playlistId');
                       return;
                     }
-                    final playlistReference =
-                        PlaylistReference.fromFeralFileDP1Call(dp1Playlist);
+                    if (playlistReference.playlist.items.isEmpty) {
+                      Sentry.captureMessage(
+                          '[RecordControllerScreen] Playlist items is empty, id: $playlistId');
+                      return;
+                    }
                     injector<NavigationService>().navigateTo(
                       AppRouter.dp1PlaylistDetailsPage,
                       arguments: DP1PlaylistDetailsScreenPayload(
@@ -186,15 +191,21 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                   if (channelId == null) {
                     return;
                   }
-                  injector<FeralFileDP1FeedService>()
-                      .getChannelDetail(channelId)
+                  injector<FeralFileFeedManager>()
+                      .getChannelReferenceByChannelId(channelId)
                       .then((value) {
-                    final channel = value;
-                    if (channel?.playlists.isEmpty ?? true) {
+                    final channelReference = value;
+                    if (channelReference == null) {
+                      Sentry.captureMessage(
+                          '[RecordControllerScreen] Channel not found in DP1 service, id: $channelId');
                       return;
                     }
-                    final channelReference =
-                        ChannelReference.fromFeralFileDP1Channel(channel!);
+                    final channel = channelReference.channel;
+                    if (channel.playlists.isEmpty) {
+                      Sentry.captureMessage(
+                          '[RecordControllerScreen] Channel playlists is empty, id: $channelId');
+                      return;
+                    }
                     injector<NavigationService>().navigateTo(
                       AppRouter.channelDetailPage,
                       arguments: ChannelDetailPagePayload(

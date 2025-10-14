@@ -2,25 +2,19 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
-import 'package:autonomy_flutter/model/ff_artwork.dart';
-import 'package:autonomy_flutter/model/ff_exhibition.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
-import 'package:autonomy_flutter/screen/dailies_work/dailies_work_page.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_bloc.dart';
-import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_state.dart';
 import 'package:autonomy_flutter/screen/detail/preview/keyboard_control_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
-import 'package:autonomy_flutter/util/feralfile_alumni_ext.dart';
 import 'package:autonomy_flutter/util/now_displaying_manager.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/style.dart';
@@ -80,22 +74,17 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
 
     if (object is DP1NowDisplayingObject) {
       final assetToken = object.assetToken;
-      _onUpdateAssetToken(assetToken);
-    }
-  }
+      if (assetToken == null) {
+        return;
+      }
+      final identitiesList = assetToken.provenance.map((e) => e.owner).toList();
+      if (assetToken.artistName != null && assetToken.artistName!.length > 20) {
+        identitiesList.add(assetToken.artistName!);
+      }
 
-  void _onUpdateAssetToken(AssetToken assetToken) {
-    final artworkIdentity = ArtworkIdentity(
-      assetToken.id,
-      assetToken.owner,
-    );
-    context.read<ArtworkDetailBloc>().add(
-          ArtworkDetailGetInfoEvent(
-            artworkIdentity,
-            withArtwork: true,
-            useIndexer: true,
-          ),
-        );
+      identitiesList.add(assetToken.owner);
+      context.read<IdentityBloc>().add(GetIdentityEvent(identitiesList));
+    }
   }
 
   String? getTokenId(NowDisplayingStatus? nowDisplayingStatus) {
@@ -125,25 +114,8 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
     return null;
   }
 
-  Artwork? getArtwork(NowDisplayingStatus? nowDisplayingStatus) {
-    return null;
-  }
-
-  bool get isArtist {
-    final artwork = getArtwork(nowDisplayingStatus);
-    if (artwork == null) {
-      return false;
-    }
-    final artistAddresses = artwork.series?.artistAlumni?.addressesList;
-    final isUserArtist = artistAddresses != null &&
-        injector<AuthService>().isLinkArtist(artistAddresses);
-    return isUserArtist;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final tokenId = getTokenId(nowDisplayingStatus);
-    final artistName = getArtistName(nowDisplayingStatus);
     return Scaffold(
       appBar: CustomAppBar(
         centeredTitle: 'now_displaying'.tr(),
@@ -151,14 +123,7 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
         actions: [
           IconButton(
             padding: EdgeInsets.zero,
-            onPressed: tokenId != null && isArtist
-                ? () => injector<NavigationService>().openArtistDisplaySetting(
-                      artwork: getArtwork(nowDisplayingStatus),
-                    )
-                : () => injector<NavigationService>().showDeviceSettings(
-                      tokenId: tokenId,
-                      artistName: artistName,
-                    ),
+            onPressed: () => injector<NavigationService>().showDeviceSettings(),
             constraints: const BoxConstraints(
               maxWidth: 44,
               maxHeight: 44,
@@ -189,22 +154,31 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
       case NowDisplayingSuccess:
         final object = (nowDisplayingStatus! as NowDisplayingSuccess).object;
         if (object is DP1NowDisplayingObject) {
-          return _tokenNowDisplaying(context);
+          return _tokenNowDisplaying(
+              context, nowDisplayingStatus! as NowDisplayingSuccess);
         }
         return const SizedBox();
       case DeviceDisconnected:
+        final device = (nowDisplayingStatus! as DeviceDisconnected).device;
         return Text(
-          'Device disconnected',
+          '${device.name} disconnected',
           style: theme.textTheme.ppMori400White14,
         );
       case ConnectionLost:
-        return Text('Connection lost', style: theme.textTheme.ppMori400White14);
+        final device = (nowDisplayingStatus! as ConnectionLost).device;
+        return Text(
+          '${device.name} connection lost',
+          style: theme.textTheme.ppMori400White14,
+        );
       default:
         return Text('Unknown state', style: theme.textTheme.ppMori400White14);
     }
   }
 
-  Widget _tokenNowDisplaying(BuildContext context) {
+  Widget _tokenNowDisplaying(
+    BuildContext context,
+    NowDisplayingSuccess nowDisplayingStatus,
+  ) {
     Theme.of(context);
     return BlocConsumer<ArtworkDetailBloc, ArtworkDetailState>(
       listener: (context, state) {
@@ -219,13 +193,12 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
         context.read<IdentityBloc>().add(GetIdentityEvent(identitiesList));
       },
       builder: (context, state) {
-        final assetToken = state.assetToken;
-        if (assetToken == null) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-        return TokenNowDisplaying(
+        final object = nowDisplayingStatus.object as DP1NowDisplayingObject;
+        final dp1Item = object.playlistItem;
+        final assetToken = object.assetToken;
+
+        return DP1NowDisplaying(
+          dp1Item: dp1Item,
           assetToken: assetToken,
         );
       },
@@ -263,28 +236,33 @@ Widget infoHeader(
   );
 }
 
-class TokenNowDisplaying extends StatefulWidget {
-  const TokenNowDisplaying({
-    required this.assetToken,
+class DP1NowDisplaying extends StatefulWidget {
+  const DP1NowDisplaying({
+    required this.dp1Item,
+    this.assetToken,
     super.key,
-    this.exhibition,
   });
 
   @override
-  State<TokenNowDisplaying> createState() => _TokenNowDisplayingState();
+  State<DP1NowDisplaying> createState() => _DP1NowDisplayingState();
 
-  final AssetToken assetToken;
-  final Exhibition? exhibition;
+  final DP1Item dp1Item;
+  final AssetToken? assetToken;
 }
 
-class _TokenNowDisplayingState extends State<TokenNowDisplaying> {
+class _DP1NowDisplayingState extends State<DP1NowDisplaying> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final assetToken = widget.assetToken;
     final identityState = context.watch<IdentityBloc>().state;
     final artistName =
-        assetToken.artistName?.toIdentityOrMask(identityState.identityMap);
+        assetToken?.artistName?.toIdentityOrMask(identityState.identityMap);
     return CustomScrollView(
       slivers: [
         const SliverToBoxAdapter(
@@ -295,64 +273,55 @@ class _TokenNowDisplayingState extends State<TokenNowDisplaying> {
         SliverToBoxAdapter(
           child: _tokenPreview(context, assetToken),
         ),
-        SliverToBoxAdapter(
-          child: infoHeader(context, assetToken, artistName),
-        ),
-        const SliverToBoxAdapter(
-          child: SizedBox(height: 16),
-        ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: HtmlWidget(
-              customStylesBuilder: auHtmlStyle,
-              assetToken.description ?? '',
-              textStyle: theme.textTheme.ppMori400White12,
-              onTapUrl: (url) async {
-                await launchUrl(
-                  Uri.parse(url),
-                  mode: LaunchMode.externalApplication,
-                );
-                return true;
-              },
-            ),
+        if (assetToken != null)
+          SliverToBoxAdapter(
+            child: infoHeader(context, assetToken, artistName),
           ),
-        ),
         const SliverToBoxAdapter(
           child: SizedBox(height: 16),
         ),
-        if (widget.exhibition != null)
+        if (assetToken != null)
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: HtmlWidget(
+                customStylesBuilder: auHtmlStyle,
+                assetToken.description ?? '',
+                textStyle: theme.textTheme.ppMori400White12,
+                onTapUrl: (url) async {
+                  await launchUrl(
+                    Uri.parse(url),
+                    mode: LaunchMode.externalApplication,
+                  );
+                  return true;
+                },
               ),
-              child: exhibitionInfo(
+            ),
+          ),
+        const SliverToBoxAdapter(
+          child: SizedBox(height: 16),
+        ),
+        if (assetToken != null)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: artworkDetailsMetadataSection(
                 context,
-                widget.exhibition!,
+                assetToken,
+                artistName,
               ),
             ),
           ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: artworkDetailsMetadataSection(
-              context,
-              assetToken,
-              artistName,
+        if (assetToken != null)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: artworkDetailsRightSection(
+                context,
+                assetToken,
+              ),
             ),
           ),
-        ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: artworkDetailsRightSection(
-              context,
-              assetToken,
-            ),
-          ),
-        ),
         const SliverToBoxAdapter(
           child: Padding(
             padding: EdgeInsets.only(bottom: 100),
@@ -363,7 +332,7 @@ class _TokenNowDisplayingState extends State<TokenNowDisplaying> {
     );
   }
 
-  Widget _tokenPreview(BuildContext context, AssetToken assetToken) {
+  Widget _tokenPreview(BuildContext context, AssetToken? assetToken) {
     final screenWidth = MediaQuery.of(context).size.width;
     return ColoredBox(
       color: AppColor.auGreyBackground,
@@ -371,17 +340,19 @@ class _TokenNowDisplayingState extends State<TokenNowDisplaying> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            child: tokenGalleryThumbnailWidget(
-              context,
-              CompactedAssetToken.fromAssetToken(assetToken),
-              screenWidth.toInt(),
-            ),
+            child: (assetToken != null)
+                ? tokenGalleryThumbnailWidget(
+                    context,
+                    CompactedAssetToken.fromAssetToken(assetToken),
+                    screenWidth.toInt(),
+                  )
+                : const GalleryNoThumbnailWidget(),
           ),
           const Divider(
             color: AppColor.primaryBlack,
             height: 1,
           ),
-          if (assetToken.canInteract)
+          if (assetToken != null && assetToken.canInteract)
             Container(
               padding: const EdgeInsets.all(16),
               child: _interactButton(context),

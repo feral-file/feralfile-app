@@ -277,12 +277,12 @@ class GalleryThumbnailErrorWidget extends StatelessWidget {
 }
 
 class GalleryNoThumbnailWidget extends StatelessWidget {
-  const GalleryNoThumbnailWidget({required this.assetToken, super.key});
+  const GalleryNoThumbnailWidget({this.assetToken, super.key});
 
-  final CompactedAssetToken assetToken;
+  final CompactedAssetToken? assetToken;
 
   String getAssetDefault() {
-    switch (assetToken.getMimeType) {
+    switch (assetToken?.getMimeType) {
       case RenderingType.modelViewer:
         return 'assets/images/icon_3d.svg';
       case RenderingType.webview:
@@ -296,30 +296,46 @@ class GalleryNoThumbnailWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     final theme = Theme.of(context);
-    return Container(
-      height: size.width,
-      width: size.width,
-      padding: const EdgeInsets.all(10),
-      color: theme.auLightGrey,
-      child: Stack(
-        children: [
-          Center(
-            child: SvgPicture.asset(
-              getAssetDefault(),
-              width: 24,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final side = constraints.biggest.shortestSide;
+        final dynamicPadding = min(10.0, side * 0.03);
+        final iconSize = min(24.0, side * 0.3);
+
+        return AspectRatio(
+          aspectRatio: 1,
+          child: Container(
+            padding: EdgeInsets.all(dynamicPadding),
+            color: theme.auLightGrey,
+            child: Stack(
+              children: [
+                if (iconSize > 0)
+                  Center(
+                    child: SvgPicture.asset(
+                      getAssetDefault(),
+                      width: iconSize,
+                    ),
+                  ),
+                Align(
+                  alignment: AlignmentDirectional.bottomStart,
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FittedBox(
+                      alignment: AlignmentDirectional.bottomStart,
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'no_thumbnail'.tr(),
+                        style: theme.textTheme.ppMori700QuickSilver8,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          Align(
-            alignment: AlignmentDirectional.bottomStart,
-            child: Text(
-              'no_thumbnail'.tr(),
-              style: theme.textTheme.ppMori700QuickSilver8,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

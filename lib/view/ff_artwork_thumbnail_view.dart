@@ -16,6 +16,7 @@ class FFArtworkThumbnailView extends StatelessWidget {
     this.fit = BoxFit.cover,
     this.placeholder,
     this.errorWidget,
+    this.cacheScale = 3.0,
   });
 
   final String url;
@@ -25,6 +26,7 @@ class FFArtworkThumbnailView extends StatelessWidget {
   final BoxFit fit;
   final Widget? placeholder;
   final Widget? errorWidget;
+  final double cacheScale;
 
   @override
   Widget build(BuildContext context) => GestureDetector(
@@ -52,6 +54,7 @@ class FFArtworkThumbnailView extends StatelessWidget {
                     placeholder ?? const GalleryThumbnailPlaceholder(),
                 errorWidget: (context, url, error) =>
                     errorWidget ?? const GalleryThumbnailErrorWidget(),
+                cacheScale: cacheScale,
               ),
       );
 }

@@ -37,7 +37,7 @@ abstract class DP1FeedApi {
   );
 
   @GET('/api/v1/playlists/{playlistId}')
-  Future<DP1Call> getPlaylistById(
+  Future<DP1Call?> getPlaylistById(
     @Path('playlistId') String playlistId,
   );
 

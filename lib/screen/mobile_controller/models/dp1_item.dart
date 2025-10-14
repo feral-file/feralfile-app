@@ -36,8 +36,8 @@ class DP1PlaylistDisplay {
 class DP1Item {
   DP1Item({
     required this.duration,
-    required this.provenance,
     this.title,
+    this.provenance,
     this.source,
     this.license,
     this.display,
@@ -60,9 +60,11 @@ class DP1Item {
             : DP1PlaylistDisplay.fromJson(
                 Map<String, dynamic>.from(json['display'] as Map),
               ),
-        provenance: DP1Provenance.fromJson(
-          Map<String, dynamic>.from(json['provenance'] as Map),
-        ),
+        provenance: json['provenance'] == null
+            ? null
+            : DP1Provenance.fromJson(
+                Map<String, dynamic>.from(json['provenance'] as Map),
+              ),
       );
     } catch (e) {
       rethrow;
@@ -74,7 +76,7 @@ class DP1Item {
   final int duration; // in seconds
   final ArtworkDisplayLicense? license;
   final DP1PlaylistDisplay? display;
-  final DP1Provenance provenance;
+  final DP1Provenance? provenance;
 
   Map<String, dynamic> toJson() {
     return {
@@ -83,7 +85,7 @@ class DP1Item {
       'duration': duration,
       'license': license?.value,
       'display': display?.toJson(),
-      'provenance': provenance.toJson(),
+      'provenance': provenance?.toJson(),
     };
   }
 }
@@ -114,7 +116,7 @@ enum ArtworkDisplayLicense {
 }
 
 extension DP1PlaylistItemExt on DP1Item {
-  String get indexId => provenance.indexId;
+  String? get indexId => provenance?.indexId;
 }
 
 /// Extension for removing duplicate items based on unique identifiers
@@ -126,7 +128,10 @@ extension DP1ItemListExtension on List<DP1Item> {
 
     for (final item in this) {
       // DP1Item doesn't have id field, use provenance contract info as unique identifier
-      final contract = item.provenance.contract;
+      final contract = item.provenance?.contract;
+      if (contract == null) {
+        continue;
+      }
       final uniqueId =
           '${contract.chain.value}-${contract.address ?? ''}-${contract.tokenId ?? ''}-${contract.seriesId ?? ''}';
 

@@ -38,6 +38,7 @@ class PlaylistDetailsBloc
   ) async {
     emit(
       PlaylistDetailsLoadingState(
+        dp1Items: state.dp1Items,
         assetTokens: state.assetTokens,
         hasMore: state.hasMore,
         currentPage: state.currentPage,
@@ -74,6 +75,7 @@ class PlaylistDetailsBloc
 
       emit(
         PlaylistDetailsLoadedState(
+          dp1Items: pageItems,
           assetTokens: pageAssetTokens,
           hasMore: items.length > _pageSize,
           currentPage: 0,
@@ -83,6 +85,7 @@ class PlaylistDetailsBloc
       emit(
         PlaylistDetailsErrorState(
           error: e.toString(),
+          dp1Items: state.dp1Items,
           assetTokens: state.assetTokens,
           hasMore: state.hasMore,
           currentPage: state.currentPage,
@@ -98,6 +101,7 @@ class PlaylistDetailsBloc
     if (!state.hasMore) return;
     emit(
       PlaylistDetailsLoadingMoreState(
+        dp1Items: state.dp1Items,
         assetTokens: state.assetTokens,
         hasMore: state.hasMore,
         currentPage: state.currentPage,
@@ -131,6 +135,7 @@ class PlaylistDetailsBloc
           .toList();
       emit(
         PlaylistDetailsLoadedState(
+          dp1Items: [...state.dp1Items, ...pageItems],
           assetTokens: [...state.assetTokens, ...pageAssetTokens],
           hasMore: end < items.length,
           currentPage: nextPage,
@@ -140,6 +145,7 @@ class PlaylistDetailsBloc
       emit(
         PlaylistDetailsErrorState(
           error: e.toString(),
+          dp1Items: state.dp1Items,
           assetTokens: state.assetTokens,
           hasMore: state.hasMore,
           currentPage: state.currentPage,

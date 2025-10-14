@@ -77,6 +77,7 @@ class _CollapsedNowPlayingBarState extends State<CollapsedNowPlayingBar>
               children: [
                 Expanded(
                   child: DisplayItem(
+                    dp1Item: playingObject.playlistItem,
                     deviceName: playingObject.connectedDevice.name,
                     assetToken: playingObject.assetToken,
                     onTap: () {

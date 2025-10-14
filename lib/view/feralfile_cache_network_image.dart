@@ -39,6 +39,7 @@ class FFCacheNetworkImage extends CachedNetworkImage {
     ImageRenderMethodForWeb imageRenderMethodForWeb =
         ImageRenderMethodForWeb.HtmlImage,
     double scale = 1.0,
+    this.cacheScale = 3.0,
   })  : image = CachedNetworkImageProvider(
           imageUrl,
           headers: httpHeaders,
@@ -53,22 +54,27 @@ class FFCacheNetworkImage extends CachedNetworkImage {
         super(cacheManager: cacheManager ?? injector.get<CacheManager>());
 
   final CachedNetworkImageProvider image;
+  final double cacheScale;
 
   @override
-  int? get memCacheWidth =>
-      super.memCacheWidth == null ? null : super.memCacheWidth! * 3;
+  int? get memCacheWidth => super.memCacheWidth == null
+      ? null
+      : (super.memCacheWidth! * cacheScale).toInt();
 
   @override
-  int? get memCacheHeight =>
-      super.memCacheHeight == null ? null : super.memCacheHeight! * 3;
+  int? get memCacheHeight => super.memCacheHeight == null
+      ? null
+      : (super.memCacheHeight! * cacheScale).toInt();
 
   @override
-  int? get maxWidthDiskCache =>
-      super.maxWidthDiskCache == null ? null : super.maxWidthDiskCache! * 3;
+  int? get maxWidthDiskCache => super.maxWidthDiskCache == null
+      ? null
+      : (super.maxWidthDiskCache! * cacheScale).toInt();
 
   @override
-  int? get maxHeightDiskCache =>
-      super.maxHeightDiskCache == null ? null : super.maxHeightDiskCache! * 3;
+  int? get maxHeightDiskCache => super.maxHeightDiskCache == null
+      ? null
+      : (super.maxHeightDiskCache! * cacheScale).toInt();
 
   @override
   Widget build(BuildContext context) {

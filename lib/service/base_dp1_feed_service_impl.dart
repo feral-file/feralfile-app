@@ -67,7 +67,7 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
 
   // get playlist by id
   @override
-  Future<DP1Call> getPlaylistById(
+  Future<DP1Call?> getPlaylistById(
     String playlistId, {
     bool usingCache = true,
   }) async {
@@ -75,8 +75,13 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
       final cachedPlaylist = cache.getPlaylistById(playlistId);
       if (cachedPlaylist != null) return cachedPlaylist;
     }
-    final result = await api.getPlaylistById(playlistId);
-    return result;
+    try {
+      final result = await api.getPlaylistById(playlistId);
+      return result;
+    } catch (e) {
+      log.info('Error fetching playlist by ID $playlistId: $e');
+      return null;
+    }
   }
 
   @override

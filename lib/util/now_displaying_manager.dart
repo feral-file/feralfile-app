@@ -61,10 +61,6 @@ class NowDisplayingManager {
         return;
       }
 
-      if (device.isAlive == null) {
-        return;
-      }
-
       if (!device.isAlive) {
         _addStatus(DeviceDisconnected(device));
         return;
@@ -80,11 +76,18 @@ class NowDisplayingManager {
       }
 
       if (status?.ok == false) {
-        throw CheckCastingStatusException(status?.error ?? ReplyError.unknown);
+        throw CheckCastingStatusException(
+          error: status?.error ?? ReplyError.unknown,
+          device: device,
+        );
       }
 
       if (status == null) {
-        _addStatus(NowDisplayingError(CannotGetNowDisplayingException()));
+        _addStatus(
+          NowDisplayingError(
+            CannotGetNowDisplayingException(device: device),
+          ),
+        );
         return;
       }
 
@@ -95,7 +98,7 @@ class NowDisplayingManager {
       final nowDisplaying = await getNowDisplayingObject(status, device);
       if (nowDisplaying == null) {
         final status = NowDisplayingError(
-          CannotGetNowDisplayingException(),
+          CannotGetNowDisplayingException(device: device),
         );
         _addStatus(status);
       } else {
@@ -118,8 +121,8 @@ class NowDisplayingManager {
     if (status.items?.isNotEmpty ?? false) {
       // DP1
       final index = status.index!;
-      final assetTokens =
-          await _fetchAssetTokens(status.items!.map((e) => e.indexId).toList());
+      final assetTokens = await _fetchAssetTokens(
+          status.items!.map((e) => e.indexId).nonNulls.toList());
 
       return DP1NowDisplayingObject(
         index: index,
@@ -140,8 +143,11 @@ class NowDisplayingManager {
         .toList();
     if (missingIds.isNotEmpty) {
       log.info('NowDisplayingManager: missingIds: $missingIds');
-      unawaited(Sentry.captureMessage(
-          'NowDisplayingManager: can not get asset token for missingIds: $missingIds'));
+      unawaited(
+        Sentry.captureMessage(
+          'NowDisplayingManager: can not get asset token for missingIds: $missingIds',
+        ),
+      );
     }
     return assetTokens;
   }

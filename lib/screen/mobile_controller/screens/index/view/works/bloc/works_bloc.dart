@@ -1,6 +1,7 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -75,10 +76,11 @@ class WorksBloc extends Bloc<WorksEvent, WorksState> {
 
       final remoteConfigChannels =
           injector<FeralFileFeedManager>().remoteConfigChannels;
-      if (remoteConfigChannels == null || remoteConfigChannels.isEmpty) {
+      if (remoteConfigChannels.isEmpty) {
         emit(state.copyWith(
             status: WorksStateStatus.loaded,
             assetTokens: [],
+            dp1Items: [],
             hasMore: false,
             cursor: null,
             error: ''));
@@ -92,20 +94,24 @@ class WorksBloc extends Bloc<WorksEvent, WorksState> {
         limit: _pageSize,
       );
 
-      final newWorksItems = worksResponse.items;
-      final assetTokens = await _indexerService.getAssetTokens(newWorksItems);
+      final items = worksResponse.items;
+      final assetTokens = await _indexerService.getAssetTokens(items);
 
       final List<AssetToken> newAssetTokens;
+      final List<DP1Item> newDP1Items;
       if (isLoadMore) {
         newAssetTokens = [...state.assetTokens, ...assetTokens];
+        newDP1Items = [...state.dp1Items, ...items];
       } else {
         newAssetTokens = assetTokens;
+        newDP1Items = items;
       }
 
       emit(
         state.copyWith(
           status: WorksStateStatus.loaded,
           assetTokens: newAssetTokens,
+          dp1Items: newDP1Items,
           cursor: worksResponse.cursor,
           hasMore: worksResponse.hasMore,
           error: '',

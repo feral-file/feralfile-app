@@ -4,11 +4,11 @@ enum UserAllOwnCollectionStatus { initial, loading, loaded, error }
 
 class AddressAssetTokens {
   final WalletAddress address;
-  final List<CompactedAssetToken> compactedAssetTokens;
+  final List<AssetToken> assetTokens;
 
   AddressAssetTokens({
     required this.address,
-    required this.compactedAssetTokens,
+    required this.assetTokens,
   });
 }
 

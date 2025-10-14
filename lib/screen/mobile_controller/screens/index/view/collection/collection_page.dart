@@ -4,6 +4,7 @@ import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_intent.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/view/record_controller.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
@@ -169,12 +170,16 @@ Type or paste an address into the command bar to load''',
                                 (addressAssetToken) {
                                   final address =
                                       addressAssetToken.address.address;
+                                  final dp1Items = addressAssetToken.assetTokens
+                                      .map((e) => DP1PlaylistItemExtension
+                                          .fromAssetToken(token: e))
+                                      .toList();
                                   return UIHelper
                                       .assetTokenExpandableSliverStickyHeader(
                                           context,
+                                          dp1Items: dp1Items,
                                           compactedAssetTokens:
-                                              addressAssetToken
-                                                  .compactedAssetTokens,
+                                              addressAssetToken.assetTokens,
                                           title: addressAssetToken.address.name,
                                           isExpanded:
                                               _expandedAddressesMap[address] ??

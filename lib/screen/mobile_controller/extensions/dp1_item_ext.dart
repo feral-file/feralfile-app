@@ -9,8 +9,8 @@ extension DP1PlaylistItemExtension on DP1Item {
     ArtworkDisplayLicense license = ArtworkDisplayLicense.open,
   }) {
     return DP1Item(
-      title: token.displayTitle!,
-      source: token.previewURL!,
+      title: token.displayTitle,
+      source: token.previewURL,
       duration: duration.inSeconds,
       license: license,
       provenance: token.dp1Provenance,
