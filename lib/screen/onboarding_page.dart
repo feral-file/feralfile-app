@@ -109,7 +109,19 @@ class _OnboardingPageState extends State<OnboardingPage>
       unawaited(Sentry.captureMessage('OnboardingPage loading more than 10s'));
     });
 
-    unawaited(setup(context).then((_) => _fetchRuntimeCache()));
+    unawaited(
+      setup(context).then(
+        (_) => _fetchRuntimeCache().then(
+          (_) {
+            log.info('OnboardingPage setup and fetch runtime cache done');
+            if (!mounted) {
+              return;
+            }
+            _timer?.cancel();
+          },
+        ),
+      ),
+    );
   }
 
   Future<void> setup(BuildContext context) async {
@@ -167,9 +179,6 @@ class _OnboardingPageState extends State<OnboardingPage>
     } catch (e, s) {
       log.info('Setup error: $e');
       unawaited(Sentry.captureException('Setup error: $e', stackTrace: s));
-    }
-    if (_timer?.isActive ?? false) {
-      _timer?.cancel();
     }
   }
 
@@ -240,7 +249,8 @@ class _OnboardingPageState extends State<OnboardingPage>
     if (!mounted) {
       return;
     }
-    CanvasNotificationManager().start();
+    unawaited(CanvasNotificationManager().start());
+    log.info('Go to target screen');
     await _goToTargetScreen(context);
   }
 

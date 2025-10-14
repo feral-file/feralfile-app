@@ -7,6 +7,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_event.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sentry/sentry.dart';
 
@@ -67,10 +68,11 @@ class PlaylistDetailsBloc
 
       final pageAssetTokens = pageIndexIds
           .map(
-            (id) => assetTokens.firstWhere(
+            (id) => assetTokens.firstWhereOrNull(
               (t) => t.id == id,
             ),
           )
+          .nonNulls
           .toList();
 
       emit(
