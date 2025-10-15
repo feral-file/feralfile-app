@@ -1,5 +1,6 @@
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
@@ -13,7 +14,6 @@ import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
 
 class FeedServerInfo {
   FeedServerInfo({required this.url, required this.createdAt});
@@ -91,7 +91,7 @@ class FeedManager {
     final shouldUpdate = lastTimeRefreshFeeds
             .isBefore(DateTime.now().subtract(updateFeedDuration)) ||
         lastFeedUpdateAt.isAfter(lastTimeRefreshFeeds);
-    if (force || shouldUpdate || kDebugMode) {
+    if (force || shouldUpdate) {
       for (final feedService in feedServices) {
         await feedService.reloadCache();
       }
@@ -170,9 +170,30 @@ class FeralFileFeedManager extends FeedManager {
     }
     log.info(
         'Finish Setup remote config channels: ${remoteConfigChannels.map((e) => e.channelId).toList()}');
+
+    final customFeedServers = injector<CloudManager>()
+        .dp1FeedCloudObject
+        .getCustomFeedServersByUrls();
+    for (final customFeedServer in customFeedServers) {
+      final service = BaseDP1FeedServiceImpl(baseUrl: customFeedServer);
+      addFeedService(service);
+    }
   }
 
   List<RemoteConfigChannel> remoteConfigChannels = [];
+
+  Future<void> addCustomFeedServices(
+      List<BaseDP1FeedServiceImpl> services) async {
+    for (final service in services) {
+      if (isFeedServiceExists(service.baseUrl)) {
+        continue;
+      }
+      addFeedService(service);
+      await injector<CloudManager>()
+          .dp1FeedCloudObject
+          .insertCustomFeedServersByUrls([service.baseUrl]);
+    }
+  }
 
   Future<List<Channel>> fetchAllChannels() async {
     List<Channel> allChannels = [];

@@ -9,11 +9,28 @@ class DP1FeedCloudObject extends BaseCloudObject {
 
   static const String _ownedIdsKey = 'owned_ids';
 
+  static const String _playlistKeyPrefix = 'playlist';
+
+  static const String _customFeedServerKeyPrefix = 'custom_feed_server';
+
+  String getPlaylistKey(String id) => '$_playlistKeyPrefix:$id';
+
+  String getCustomFeedServerKey(String url) =>
+      '$_customFeedServerKeyPrefix:$url';
+
+/*
+=======================================================================
+
+Playlist
+
+=======================================================================
+*/
+
   Future<void> insertPlaylists(List<DP1Call> playlists,
       {OnConflict onConflict = OnConflict.override}) async {
     final data = playlists
         .map((e) => {
-              'key': e.id,
+              'key': getPlaylistKey(e.id),
               'value': jsonEncode(e.toJson()),
             })
         .toList();
@@ -28,12 +45,12 @@ class DP1FeedCloudObject extends BaseCloudObject {
   }
 
   DP1Call? getPlaylistById(String id) {
-    final raw = db.query([id]).firstOrNull?['value'];
+    final raw = db.query([getPlaylistKey(id)]).firstOrNull?['value'];
     if (raw == null || raw.isEmpty) return null;
     return DP1Call.fromJson(jsonDecode(raw) as Map<String, dynamic>);
   }
 
-  Future<bool> deletePlaylistById(String id) => db.delete([id]);
+  Future<bool> deletePlaylistById(String id) => db.delete([getPlaylistKey(id)]);
 
   Future<bool> deletePlaylistsByIds(List<String> ids) => db.delete(ids);
 
@@ -69,4 +86,34 @@ class DP1FeedCloudObject extends BaseCloudObject {
       await setOwnedPlaylistIds(ids);
     }
   }
+
+/*
+=======================================================================
+
+Custom Feed Server
+
+=======================================================================
+*/
+
+  Future<void> insertCustomFeedServersByUrls(List<String> urls,
+      {OnConflict onConflict = OnConflict.override}) async {
+    final data = urls
+        .map((e) => {
+              'key': getCustomFeedServerKey(e),
+              'value': e,
+            })
+        .toList();
+    await db.write(data, onConflict: onConflict);
+  }
+
+  List<String> getCustomFeedServersByUrls() {
+    return db
+        .query([_customFeedServerKeyPrefix])
+        .map((e) => e['value'])
+        .nonNulls
+        .toList();
+  }
+
+  Future<bool> deleteCustomFeedServersByUrls(List<String> urls) =>
+      db.delete(urls);
 }

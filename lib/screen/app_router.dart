@@ -49,6 +49,7 @@ import 'package:autonomy_flutter/screen/github_doc.dart';
 import 'package:autonomy_flutter/screen/home/home_bloc.dart';
 import 'package:autonomy_flutter/screen/indexer_collection/indexer_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/indexer_collection/indexer_collection_page.dart';
+import 'package:autonomy_flutter/screen/local_feed_server/add_local_feed_server.dart';
 import 'package:autonomy_flutter/screen/meili_search/meili_search_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/bloc/record_controller_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/view/record_controller.dart';
@@ -150,6 +151,7 @@ class AppRouter {
   static const channelDetailPage = 'channel_detail_page';
   static const dp1PlaylistDetailsPage = 'do1_playlist_details_page';
   static const voiceCommandPage = 'voice_command_page';
+  static const addLocalFeedServerPage = 'add_local_feed_server_page';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     log.info('[onGenerateRoute] Route: ${settings.name}');
@@ -633,6 +635,12 @@ class AppRouter {
               payload: payload,
             ),
           ),
+        );
+
+      case addLocalFeedServerPage:
+        return CupertinoPageRoute(
+          settings: settings,
+          builder: (context) => const AddLocalFeedServerPage(),
         );
 
       default:

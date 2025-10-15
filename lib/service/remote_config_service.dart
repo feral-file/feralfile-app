@@ -170,6 +170,8 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
 
   @override
   Future<void> loadConfigs({bool forceRefresh = false}) async {
+    _configs = _defaults;
+    return;
     if ((_configs != null && !forceRefresh) || _isLoading) {
       return;
     }
