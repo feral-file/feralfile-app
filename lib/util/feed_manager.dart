@@ -75,7 +75,7 @@ class FeedManager {
         injector<RemoteConfigService>().getConfig<String>(
       ConfigGroup.dp1Playlist,
       ConfigKey.dp1FeedCacheDuration,
-      Duration(days: 1).toString(),
+      const Duration(days: 1).toString(),
     );
     final updateFeedDuration =
         Duration(seconds: int.parse(updateFeedDurationString));
@@ -99,12 +99,13 @@ class FeedManager {
           .setLastTimeRefreshFeeds(DateTime.now());
       log.info(
           'Reload all cache, last time refresh feeds: $lastTimeRefreshFeeds, duration: $updateFeedDuration, force: $force');
-      injector<PlaylistsBloc>().add(RefreshPlaylistsEvent());
-      injector<ChannelsBloc>().add(RefreshChannelsEvent());
+      await Future.delayed(const Duration(milliseconds: 500));
     } else {
       log.info(
           'Skip reload all cache, last time refresh feeds: $lastTimeRefreshFeeds, duration: $updateFeedDuration, force: $force');
     }
+    injector<PlaylistsBloc>().add(const RefreshPlaylistsEvent());
+    injector<ChannelsBloc>().add(const RefreshChannelsEvent());
   }
 
   Future<List<PlaylistReference>> getAllCachedPlaylists() async {
@@ -139,7 +140,7 @@ class FeralFileFeedManager extends FeedManager {
 
   void _setupDefault() {}
 
-  void setupRemoteConfigChannels(List<String> channelUrls) {
+  Future<void> setupRemoteConfigChannels(List<String> channelUrls) async {
     final remoteConfigChannels = channelUrls.map((url) {
       final uri = Uri.parse(url);
       return RemoteConfigChannel(
@@ -163,8 +164,9 @@ class FeralFileFeedManager extends FeedManager {
             .addRemoteConfigChannelIds(channelIdsByUrl[endpoint]!);
         continue;
       } else {
-        final service = FeralFileDP1FeedService(baseUrl: endpoint)
-          ..addRemoteConfigChannelIds(channelIdsByUrl[endpoint]!);
+        final service = FeralFileDP1FeedService(baseUrl: endpoint);
+        await service.init();
+        service.addRemoteConfigChannelIds(channelIdsByUrl[endpoint]!);
         addFeedService(service);
       }
     }
@@ -176,6 +178,7 @@ class FeralFileFeedManager extends FeedManager {
         .getCustomFeedServersByUrls();
     for (final customFeedServer in customFeedServers) {
       final service = BaseDP1FeedServiceImpl(baseUrl: customFeedServer);
+      await service.init();
       addFeedService(service);
     }
   }
@@ -185,13 +188,19 @@ class FeralFileFeedManager extends FeedManager {
   Future<void> addCustomFeedServices(
       List<BaseDP1FeedServiceImpl> services) async {
     for (final service in services) {
-      if (isFeedServiceExists(service.baseUrl)) {
-        continue;
+      try {
+        if (isFeedServiceExists(service.baseUrl)) {
+          log.info('Custom feed service already exists: ${service.baseUrl}');
+          continue;
+        }
+        addFeedService(service);
+        await injector<CloudManager>()
+            .dp1FeedCloudObject
+            .insertCustomFeedServersByUrls([service.baseUrl]);
+        log.info('Added custom feed service: ${service.baseUrl}');
+      } catch (e) {
+        log.info('Error adding custom feed service: ${service.baseUrl}: $e');
       }
-      addFeedService(service);
-      await injector<CloudManager>()
-          .dp1FeedCloudObject
-          .insertCustomFeedServersByUrls([service.baseUrl]);
     }
   }
 

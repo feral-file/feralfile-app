@@ -16,6 +16,10 @@ class LoadPlaylistsEvent extends AddLocalFeedServerEvent {
   List<Object?> get props => [url];
 }
 
+class LoadMorePlaylistsEvent extends AddLocalFeedServerEvent {
+  const LoadMorePlaylistsEvent();
+}
+
 class AddServerEvent extends AddLocalFeedServerEvent {
   const AddServerEvent();
 }

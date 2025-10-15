@@ -3,12 +3,14 @@ import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channel_details/bloc/channel_detail_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_list_view.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_item.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
+import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -147,4 +149,51 @@ class _ChannelDetailPageState extends State<ChannelDetailPage>
 
   @override
   bool get wantKeepAlive => true;
+}
+
+SliverList playlistSliverListView({
+  required List<PlaylistReference> playlists,
+  bool hasMore = false,
+  bool isLoadingMore = false,
+  ScrollController? scrollController,
+  bool channelVisible = true,
+  bool isFromPlaylistsPage = false,
+}) {
+  return SliverList.builder(
+    itemBuilder: (context, index) {
+      if (index == playlists.length) {
+        return Column(
+          children: [
+            LoadMoreIndicator(isLoadingMore: isLoadingMore),
+            const BottomSpacing(),
+          ],
+        );
+      }
+
+      final playlist = playlists[index];
+      final service =
+          injector<FeralFileFeedManager>().getFeedServiceByUrl(playlist.url);
+      ChannelReference? channelReference;
+      if (service is FeralFileDP1FeedService) {
+        final channel = service.getChannelByPlaylistId(playlist.playlist.id);
+        if (channel != null) {
+          channelReference =
+              ChannelReference(channel: channel, url: playlist.url);
+        }
+      }
+
+      return Column(
+        children: [
+          PlaylistItem(
+            playlistReference: playlist,
+            channelReference: channelReference,
+            isFromPlaylistsPage: isFromPlaylistsPage,
+            channelVisible: channelVisible,
+          ),
+          if (index == playlists.length - 1 && !hasMore) const BottomSpacing(),
+        ],
+      );
+    },
+    itemCount: playlists.length + (hasMore ? 1 : 0),
+  );
 }

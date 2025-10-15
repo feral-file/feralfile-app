@@ -1,16 +1,19 @@
+import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/local_feed_server/bloc/add_local_feed_server_event.dart';
 import 'package:autonomy_flutter/screen/local_feed_server/bloc/add_local_feed_server_state.dart';
 import 'package:autonomy_flutter/screen/local_feed_server/bloc/error.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
 import 'package:autonomy_flutter/service/base_dp1_feed_service_impl.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:bloc/bloc.dart';
 
 class AddLocalFeedServerBloc
-    extends Bloc<AddLocalFeedServerEvent, AddLocalFeedServerState> {
+    extends AuBloc<AddLocalFeedServerEvent, AddLocalFeedServerState> {
   AddLocalFeedServerBloc() : super(const AddLocalFeedServerState()) {
     on<LoadPlaylistsEvent>(_onLoadPlaylists);
+    on<LoadMorePlaylistsEvent>(_onLoadMorePlaylists);
     on<AddServerEvent>(_onAddServer);
     on<ClearErrorEvent>(_onClearError);
     on<ResetEvent>(_onReset);
@@ -63,20 +66,16 @@ class AddLocalFeedServerBloc
       status: AddLocalFeedServerStatus.loading,
       error: null,
       playlists: [],
+      serverUrl: url,
     ));
 
     try {
       // Create a temporary feed service to test the connection
       final tempService = BaseDP1FeedServiceImpl(baseUrl: url);
+      await tempService.init();
 
-      // Test connection by loading playlists
-      final response = await tempService.getPlaylists(limit: 20);
-
-      emit(state.copyWith(
-        status: AddLocalFeedServerStatus.loaded,
-        playlists: response.items,
-        serverUrl: url,
-      ));
+      final response = await _loadPlaylists(
+          emit: emit, tempService: tempService, cursor: null);
 
       log.info(
           'Successfully loaded ${response.items.length} playlists from $url');
@@ -106,6 +105,38 @@ class AddLocalFeedServerBloc
     }
   }
 
+  Future<void> _onLoadMorePlaylists(
+    LoadMorePlaylistsEvent event,
+    Emitter<AddLocalFeedServerState> emit,
+  ) async {
+    if (state.isLoading || state.isLoadingMore || !state.hasMore) {
+      return;
+    }
+
+    emit(state.copyWith(status: AddLocalFeedServerStatus.loadingMore));
+
+    final tempService = BaseDP1FeedServiceImpl(baseUrl: state.serverUrl!);
+    await tempService.init();
+    await _loadPlaylists(
+        emit: emit, tempService: tempService, cursor: state.cursor);
+  }
+
+  Future<DP1PlaylistResponse> _loadPlaylists({
+    required Emitter<AddLocalFeedServerState> emit,
+    required BaseDP1FeedServiceImpl tempService,
+    required String? cursor,
+  }) async {
+    final response = await tempService.getPlaylists(limit: 20, cursor: cursor);
+    final newPlaylists = [...state.playlists, ...response.items];
+    emit(state.copyWith(
+      status: AddLocalFeedServerStatus.loaded,
+      playlists: newPlaylists,
+      hasMore: response.hasMore,
+      cursor: response.cursor,
+    ));
+    return response;
+  }
+
   Future<void> _onAddServer(
     AddServerEvent event,
     Emitter<AddLocalFeedServerState> emit,
@@ -130,6 +161,7 @@ class AddLocalFeedServerBloc
 
       // Create and add the feed service
       final feedService = BaseDP1FeedServiceImpl(baseUrl: state.serverUrl!);
+      await feedService.init();
       await feedManager.addCustomFeedServices([feedService]);
 
       emit(state.copyWith(

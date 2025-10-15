@@ -186,13 +186,13 @@ class ListDirectoryPageState extends State<ListDirectoryPage>
           },
         ),
       OptionItem(
-        title: 'Add Local Feed Server',
+        title: 'Custom Feed Server',
         icon: const Icon(
           AuIcon.settings,
         ),
         onTap: () {
           injector<NavigationService>()
-              .navigateTo(AppRouter.addLocalFeedServerPage);
+              .navigateTo(AppRouter.customFeedServersPage);
           isNowDisplayingBarExpanded.value = false;
         },
       ),

@@ -94,7 +94,7 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
   DP1FeedWithChannelExtensionServiceImpl({required super.baseUrl});
 
   @override
-  void initializeApiAndCache(String baseUrl) {
+  Future<void> init() async {
     api = DP1FeedApi.dioBaseUrl(
       baseUrl: baseUrl,
       dio: DioManager().dp1Feed(
@@ -106,6 +106,7 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
       ),
     );
     cache = FeedCacheImpl(baseUrl: baseUrl);
+    await cache.init();
   }
 
   /*

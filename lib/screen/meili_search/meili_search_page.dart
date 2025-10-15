@@ -220,7 +220,7 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             slivers: [
-              UIHelper.PlaylistSliverListView(playlists: playlistReferences),
+              UIHelper.playlistSliverListView(playlists: playlistReferences),
             ],
           );
         },

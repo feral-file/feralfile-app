@@ -1,10 +1,11 @@
 import 'package:autonomy_flutter/screen/local_feed_server/bloc/add_local_feed_server_bloc.dart';
 import 'package:autonomy_flutter/screen/local_feed_server/bloc/add_local_feed_server_event.dart';
 import 'package:autonomy_flutter/screen/local_feed_server/bloc/add_local_feed_server_state.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_item.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
+import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
@@ -30,6 +31,12 @@ class _AddLocalFeedServerPageState extends State<AddLocalFeedServerPage> {
   void initState() {
     super.initState();
     _bloc = AddLocalFeedServerBloc();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels + 100 >=
+          _scrollController.position.maxScrollExtent) {
+        _bloc.add(const LoadMorePlaylistsEvent());
+      }
+    });
   }
 
   @override
@@ -74,7 +81,7 @@ class _AddLocalFeedServerPageState extends State<AddLocalFeedServerPage> {
         },
         child: Scaffold(
           backgroundColor: AppColor.auGreyBackground,
-          appBar: CustomAppBar(
+          appBar: const CustomAppBar(
             backTitle: 'Index',
           ),
           body: BlocBuilder<AddLocalFeedServerBloc, AddLocalFeedServerState>(
@@ -191,22 +198,28 @@ class _AddLocalFeedServerPageState extends State<AddLocalFeedServerPage> {
                     ),
                     const SizedBox(height: 8),
                     Expanded(
-                      child: ListView.builder(
+                      child: CustomScrollView(
                         controller: _scrollController,
-                        itemCount: state.playlists.length,
-                        itemBuilder: (context, index) {
-                          final playlist = state.playlists[index];
-                          final playlistReference = PlaylistReference(
-                            playlist: playlist,
-                            url: state.serverUrl!,
-                          );
-
-                          return PlaylistItem(
-                            playlistReference: playlistReference,
+                        shrinkWrap: true,
+                        slivers: [
+                          UIHelper.playlistSliverListView(
+                            playlists: state.playlists
+                                .map((playlist) => PlaylistReference(
+                                    playlist: playlist, url: state.serverUrl!))
+                                .toList(),
                             channelVisible: false,
-                            clickable: false, // Disable navigation for preview
-                          );
-                        },
+                          ),
+                          if (state.isLoadingMore)
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding:
+                                    ResponsiveLayout.pageHorizontalEdgeInsets,
+                                child: const Center(
+                                    child:
+                                        LoadMoreIndicator(isLoadingMore: true)),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ] else if (!state.isLoading && state.isInitial) ...[
@@ -216,7 +229,7 @@ class _AddLocalFeedServerPageState extends State<AddLocalFeedServerPage> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.music_note_outlined,
                               size: 64,
                               color: AppColor.disabledColor,

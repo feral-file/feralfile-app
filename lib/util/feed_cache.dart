@@ -74,7 +74,6 @@ abstract class BaseFeedCache {
 class FeedCacheImpl extends BaseFeedCache {
   FeedCacheImpl({required String baseUrl}) : super(baseUrl: baseUrl) {
     // Initialize Hive stores and preload cached data
-    _initializeStores();
   }
 
   @override
@@ -119,6 +118,7 @@ class FeedCacheImpl extends BaseFeedCache {
           log.info('Failed to load playlist from Hive: $e');
         }
       }
+      log.info('Loaded playlist from Hive for $baseUrl');
     } catch (e) {
       log.info('Failed to initialize DP1 stores: $e');
     }

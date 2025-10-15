@@ -108,12 +108,12 @@ Custom Feed Server
 
   List<String> getCustomFeedServersByUrls() {
     return db
-        .query([_customFeedServerKeyPrefix])
+        .queryContains(_customFeedServerKeyPrefix)
         .map((e) => e['value'])
         .nonNulls
         .toList();
   }
 
   Future<bool> deleteCustomFeedServersByUrls(List<String> urls) =>
-      db.delete(urls);
+      db.delete(urls.map((e) => getCustomFeedServerKey(e)).toList());
 }

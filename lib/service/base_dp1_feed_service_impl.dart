@@ -7,22 +7,19 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_create_play
 import 'package:autonomy_flutter/service/base_dp1_feed_service.dart';
 import 'package:autonomy_flutter/util/feed_cache.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:meta/meta.dart';
 
 /// Base implementation of DP1 feed service containing common playlist and item methods
 class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
-  BaseDP1FeedServiceImpl({required String baseUrl}) : super(baseUrl: baseUrl) {
-    initializeApiAndCache(baseUrl);
-  }
+  BaseDP1FeedServiceImpl({required String baseUrl}) : super(baseUrl: baseUrl) {}
 
   late final DP1FeedApi api;
   late final BaseFeedCache cache;
 
   /// Initialize api and cache - can be overridden by subclasses
-  @protected
-  void initializeApiAndCache(String baseUrl) {
+  Future<void> init() async {
     api = DP1FeedApi.dioBaseUrl(baseUrl: baseUrl);
     cache = FeedCacheImpl(baseUrl: baseUrl);
+    await cache.init();
   }
 
   /*
