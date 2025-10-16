@@ -33,75 +33,85 @@ class AddLocalFeedServerBloc
     LoadPlaylistsEvent event,
     Emitter<AddLocalFeedServerState> emit,
   ) async {
-    final url = event.url.trim();
-
-    // Validate URL
-    if (url.isEmpty) {
-      emit(state.copyWith(
-        status: AddLocalFeedServerStatus.error,
-        error: UrlEmptyError(),
-      ));
-      return;
-    }
-
-    if (!_isValidUrl(url)) {
-      emit(state.copyWith(
-        status: AddLocalFeedServerStatus.error,
-        error: UrlInvalidError(),
-      ));
-      return;
-    }
-
-    // Check if server already exists
-    final feedManager = injector<FeralFileFeedManager>();
-    if (feedManager.isFeedServiceExists(url)) {
-      emit(state.copyWith(
-        status: AddLocalFeedServerStatus.error,
-        error: UrlAlreadyAddedError(),
-      ));
-      return;
-    }
-
-    emit(state.copyWith(
-      status: AddLocalFeedServerStatus.loading,
-      error: null,
-      playlists: [],
-      serverUrl: url,
-    ));
-
     try {
-      // Create a temporary feed service to test the connection
-      final tempService = BaseDP1FeedServiceImpl(baseUrl: url);
-      await tempService.init();
+      final url = event.url.trim();
 
-      final response = await _loadPlaylists(
-          emit: emit, tempService: tempService, cursor: null);
+      // Validate URL
+      if (url.isEmpty) {
+        emit(state.copyWith(
+          status: AddLocalFeedServerStatus.error,
+          error: UrlEmptyError(),
+        ));
+        event.onError?.call(UrlEmptyError());
+        return;
+      }
 
-      log.info(
-          'Successfully loaded ${response.items.length} playlists from $url');
-    } catch (e) {
-      AddLocalFeedServerError error;
-      final msg = e.toString();
-      if (msg.contains('SocketException') || msg.contains('TimeoutException')) {
-        error = CannotConnectError();
-      } else if (msg.contains('FormatException')) {
-        error = InvalidResponseError();
-      } else if (msg.contains('404')) {
-        error = NotFoundError();
-      } else if (msg.contains('403')) {
-        error = AccessDeniedError();
-      } else if (msg.contains('500')) {
-        error = ServerError();
-      } else {
-        error = LoadPlaylistsFailedError(msg);
+      if (!_isValidUrl(url)) {
+        emit(state.copyWith(
+          status: AddLocalFeedServerStatus.error,
+          error: UrlInvalidError(),
+        ));
+        event.onError?.call(UrlInvalidError());
+        return;
+      }
+
+      // Check if server already exists
+      final feedManager = injector<FeralFileFeedManager>();
+      if (feedManager.isFeedServiceExists(url)) {
+        emit(state.copyWith(
+          status: AddLocalFeedServerStatus.error,
+          error: UrlAlreadyAddedError(),
+        ));
+        event.onError?.call(UrlAlreadyAddedError());
+        return;
       }
 
       emit(state.copyWith(
-        status: AddLocalFeedServerStatus.error,
-        error: error,
+        status: AddLocalFeedServerStatus.loading,
+        error: null,
+        playlists: [],
+        serverUrl: url,
       ));
 
-      log.info('Error loading playlists from $url: $e');
+      try {
+        // Create a temporary feed service to test the connection
+        final tempService = BaseDP1FeedServiceImpl(baseUrl: url);
+        await tempService.init();
+
+        final response = await _loadPlaylists(
+            emit: emit, tempService: tempService, cursor: null);
+
+        log.info(
+            'Successfully loaded ${response.items.length} playlists from $url');
+        event.onComplete?.call();
+      } catch (e) {
+        AddLocalFeedServerError error;
+        final msg = e.toString();
+        if (msg.contains('SocketException') ||
+            msg.contains('TimeoutException')) {
+          error = CannotConnectError();
+        } else if (msg.contains('FormatException')) {
+          error = InvalidResponseError();
+        } else if (msg.contains('404')) {
+          error = NotFoundError();
+        } else if (msg.contains('403')) {
+          error = AccessDeniedError();
+        } else if (msg.contains('500')) {
+          error = ServerError();
+        } else {
+          error = LoadPlaylistsFailedError(msg);
+        }
+
+        emit(state.copyWith(
+          status: AddLocalFeedServerStatus.error,
+          error: error,
+        ));
+
+        log.info('Error loading playlists from $url: $e');
+        event.onError?.call(error);
+      }
+    } catch (e) {
+      event.onError?.call(e);
     }
   }
 
@@ -170,12 +180,14 @@ class AddLocalFeedServerBloc
       ));
 
       log.info('Successfully added server: ${state.serverUrl}');
+      event.onComplete?.call();
     } catch (e) {
       emit(state.copyWith(
         status: AddLocalFeedServerStatus.error,
         error: AddServerFailedError(e.toString()),
       ));
       log.info('Error adding server to FeedManager: $e');
+      event.onError?.call(e);
     }
   }
 

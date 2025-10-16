@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:autonomy_flutter/screen/local_feed_server/bloc/add_local_feed_server_bloc.dart';
 import 'package:autonomy_flutter/screen/local_feed_server/bloc/add_local_feed_server_event.dart';
 import 'package:autonomy_flutter/screen/local_feed_server/bloc/add_local_feed_server_state.dart';
@@ -6,6 +8,8 @@ import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
+import 'package:autonomy_flutter/view/loading.dart';
+import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
@@ -47,17 +51,24 @@ class _AddLocalFeedServerPageState extends State<AddLocalFeedServerPage> {
     super.dispose();
   }
 
-  void _loadPlaylists() {
+  Future<void> _loadPlaylists() async {
+    final completer = Completer<void>();
     final url = _urlController.text.trim();
-    _bloc.add(LoadPlaylistsEvent(url));
+    _bloc.add(LoadPlaylistsEvent(url,
+        onComplete: completer.complete, onError: completer.complete));
+    await completer.future;
   }
 
-  void _addServer() {
-    _bloc.add(const AddServerEvent());
+  Future<void> _addServer() async {
+    final completer = Completer<void>();
+    _bloc.add(AddServerEvent(
+        onComplete: completer.complete, onError: completer.complete));
+    await completer.future;
   }
 
-  void _clearError() {
+  void _clearErrorAndReset() {
     _bloc.add(const ClearErrorEvent());
+    _bloc.add(const ResetEvent());
   }
 
   @override
@@ -69,14 +80,13 @@ class _AddLocalFeedServerPageState extends State<AddLocalFeedServerPage> {
       child: BlocListener<AddLocalFeedServerBloc, AddLocalFeedServerState>(
         listener: (context, state) {
           if (state.isAdded) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Successfully added server: ${state.serverUrl}'),
-                backgroundColor: AppColor.primaryBlack,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-            Navigator.of(context).pop();
+            UIHelper.showInfoDialog(context, 'Server added successfully',
+                    'Your server has been added successfully.')
+                .then((value) {
+              if (context.mounted) {
+                Navigator.of(context).pop();
+              }
+            });
           }
         },
         child: Scaffold(
@@ -125,46 +135,13 @@ class _AddLocalFeedServerPageState extends State<AddLocalFeedServerPage> {
                           ),
                           onSubmitted: (_) => _loadPlaylists(),
                           onChanged: (_) {
-                            if (state.hasError) {
-                              _clearError();
-                            }
+                            _clearErrorAndReset();
                           },
                         ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: state.isLoading ? null : _loadPlaylists,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColor.white,
-                              foregroundColor: AppColor.primaryBlack,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                            child: state.isLoading
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: AppColor.primaryBlack,
-                                    ),
-                                  )
-                                : Text(
-                                    'Load Playlists',
-                                    style: theme.textTheme.ppMori400Black14,
-                                  ),
-                          ),
-                        ),
                         if (state.hasError) ...[
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 16),
                           Container(
                             padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                  color: Colors.red.withOpacity(0.3)),
-                            ),
                             child: Text(
                               state.error!.message,
                               style: theme.textTheme.ppMori400Grey12.copyWith(
@@ -173,29 +150,24 @@ class _AddLocalFeedServerPageState extends State<AddLocalFeedServerPage> {
                             ),
                           ),
                         ],
+                        const SizedBox(height: 16),
+                        if (state.isInitial ||
+                            state.isLoading ||
+                            state.isError) ...[
+                          SizedBox(
+                            width: double.infinity,
+                            child: PrimaryAsyncButton(
+                              text: 'Load Playlists',
+                              onTap: state.isLoading ? null : _loadPlaylists,
+                            ),
+                          ),
+                        ]
                       ],
                     ),
                   ),
 
                   // Playlists Preview Section
                   if (state.hasPlaylists) ...[
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: ResponsiveLayout.paddingHorizontal),
-                      child: Row(
-                        children: [
-                          Text(
-                            'Found ${state.playlists.length} playlists',
-                            style: theme.textTheme.ppMori400White14,
-                          ),
-                          const Spacer(),
-                          Text(
-                            'Preview',
-                            style: theme.textTheme.ppMori400Grey12,
-                          ),
-                        ],
-                      ),
-                    ),
                     const SizedBox(height: 8),
                     Expanded(
                       child: CustomScrollView(
@@ -244,6 +216,23 @@ class _AddLocalFeedServerPageState extends State<AddLocalFeedServerPage> {
                         ),
                       ),
                     ),
+                  ] else if (state.isLoading) ...[
+                    const SizedBox(height: 16),
+                    LoadingWidget(backgroundColor: AppColor.auGreyBackground),
+                  ] else if (state.isError) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      'Error loading playlists',
+                      style: theme.textTheme.ppMori400Grey14,
+                      textAlign: TextAlign.center,
+                    ),
+                  ] else if (state.playlists.isEmpty) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      'No playlists found',
+                      style: theme.textTheme.ppMori400Grey14,
+                      textAlign: TextAlign.center,
+                    ),
                   ],
 
                   // Add Server Button
@@ -253,27 +242,9 @@ class _AddLocalFeedServerPageState extends State<AddLocalFeedServerPage> {
                           EdgeInsets.all(ResponsiveLayout.paddingHorizontal),
                       child: SizedBox(
                         width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: state.isAdding ? null : _addServer,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColor.primaryBlack,
-                            foregroundColor: AppColor.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            side: const BorderSide(color: AppColor.white),
-                          ),
-                          child: state.isAdding
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColor.white,
-                                  ),
-                                )
-                              : Text(
-                                  'Add Server to Feral File',
-                                  style: theme.textTheme.ppMori400White14,
-                                ),
+                        child: PrimaryAsyncButton(
+                          text: 'Add',
+                          onTap: state.isAdding ? null : _addServer,
                         ),
                       ),
                     ),

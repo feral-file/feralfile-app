@@ -1,6 +1,6 @@
+import 'package:autonomy_flutter/screen/local_feed_server/bloc/error.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:equatable/equatable.dart';
-import 'error.dart';
 
 enum AddLocalFeedServerStatus {
   initial,
