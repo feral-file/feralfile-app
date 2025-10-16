@@ -165,8 +165,18 @@ class FeralFileFeedManager extends FeedManager {
         continue;
       } else {
         final service = FeralFileDP1FeedService(baseUrl: endpoint);
-        await service.init();
+        dynamic error;
+        await service.init(onPlaylistError: (error) {
+          error = error;
+        }, onChannelError: (error) {
+          error = error;
+        });
+
         service.addRemoteConfigChannelIds(channelIdsByUrl[endpoint]!);
+        if (error is Object) {
+          log.info('Error initializing feed service: $error');
+          await service.reloadCache();
+        }
         addFeedService(service);
       }
     }
@@ -177,8 +187,18 @@ class FeralFileFeedManager extends FeedManager {
         .dp1FeedCloudObject
         .getCustomFeedServersByUrls();
     for (final customFeedServer in customFeedServers) {
-      final service = BaseDP1FeedServiceImpl(baseUrl: customFeedServer);
-      await service.init();
+      final service = BaseDP1FeedServiceImpl(
+          baseUrl: customFeedServer, isExternalFeedService: true);
+      dynamic error;
+      await service.init(onPlaylistError: (error) {
+        error = error;
+      }, onChannelError: (error) {
+        error = error;
+      });
+      if (error is Object) {
+        log.info('Error initializing feed service: $error');
+        await service.reloadCache();
+      }
       addFeedService(service);
     }
   }
@@ -348,9 +368,6 @@ class FeralFileFeedManager extends FeedManager {
 }
 
 class PlaylistReference {
-  PlaylistReference({required this.playlist, required this.url});
-  final DP1Call playlist;
-  final String url;
 
   factory PlaylistReference.fromJson(Map<String, dynamic> json) =>
       PlaylistReference(
@@ -358,19 +375,25 @@ class PlaylistReference {
         url: json['url'] as String,
       );
 
+  factory PlaylistReference.fromFeralFileDP1Call(DP1Call dp1Call) =>
+      PlaylistReference(playlist: dp1Call, url: Environment.dp1FeedUrl);
+  PlaylistReference({required this.playlist, required this.url});
+  final DP1Call playlist;
+  final String url;
+
   Map<String, dynamic> toJson() => {
         'playlist': playlist.toJson(),
         'url': url,
       };
 
-  factory PlaylistReference.fromFeralFileDP1Call(DP1Call dp1Call) =>
-      PlaylistReference(playlist: dp1Call, url: Environment.dp1FeedUrl);
+  bool get isExternalFeedService =>
+      injector<FeralFileFeedManager>()
+          .getFeedServiceByUrl(url)
+          ?.isExternalFeedService ??
+      false;
 }
 
 class ChannelReference {
-  ChannelReference({required this.channel, required this.url});
-  final Channel channel;
-  final String url;
 
   factory ChannelReference.fromJson(Map<String, dynamic> json) =>
       ChannelReference(
@@ -378,13 +401,16 @@ class ChannelReference {
         url: json['url'] as String,
       );
 
+  factory ChannelReference.fromFeralFileDP1Channel(Channel channel) =>
+      ChannelReference(channel: channel, url: Environment.dp1FeedUrl);
+  ChannelReference({required this.channel, required this.url});
+  final Channel channel;
+  final String url;
+
   Map<String, dynamic> toJson() => {
         'channel': channel.toJson(),
         'url': url,
       };
-
-  factory ChannelReference.fromFeralFileDP1Channel(Channel channel) =>
-      ChannelReference(channel: channel, url: Environment.dp1FeedUrl);
 }
 
 class DP1PlaylistPlaylistReferenceResponse {

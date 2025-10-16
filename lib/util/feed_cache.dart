@@ -22,7 +22,10 @@ abstract class BaseFeedCache {
 
   BaseFeedCache({required this.baseUrl});
 
-  Future<void> init();
+  Future<void> init({
+    required FutureOr<void> Function(Object)? onPlaylistError,
+    required FutureOr<void> Function(Object)? onChannelError,
+  });
   /*
   =======================================================================
 
@@ -77,8 +80,14 @@ class FeedCacheImpl extends BaseFeedCache {
   }
 
   @override
-  Future<void> init() async {
-    await _initializeStores();
+  Future<void> init({
+    required FutureOr<void> Function(Object)? onPlaylistError,
+    required FutureOr<void> Function(Object)? onChannelError,
+  }) async {
+    await _initializeStores(
+      onPlaylistError: onPlaylistError,
+      onChannelError: onChannelError,
+    );
   }
 
   // Cache: playlist URL -> playlistId (inverted map)
@@ -88,7 +97,12 @@ class FeedCacheImpl extends BaseFeedCache {
   late final DP1PlaylistStore _playlistStore;
   late final DP1ChannelStore _channelStore;
 
-  Future<void> _initializeStores() async {
+  Future<void> _initializeStores({
+    required FutureOr<void> Function(Object)? onPlaylistError,
+    required FutureOr<void> Function(Object)? onChannelError,
+  }) async {
+    Object? playlistError;
+    Object? channelError;
     try {
       _playlistStore = DP1PlaylistStore(baseUrl: baseUrl);
       _channelStore = DP1ChannelStore(baseUrl: baseUrl);
@@ -103,6 +117,7 @@ class FeedCacheImpl extends BaseFeedCache {
           final Channel channel = Channel.fromJson(data);
           _insertChannel(channel);
         } catch (e) {
+          channelError = e;
           log.info('Failed to load channel from Hive: $e');
         }
       }
@@ -115,12 +130,23 @@ class FeedCacheImpl extends BaseFeedCache {
           final DP1Call playlist = DP1Call.fromJson(data);
           _insertPlaylist(playlist);
         } catch (e) {
+          playlistError = e;
           log.info('Failed to load playlist from Hive: $e');
         }
       }
       log.info('Loaded playlist from Hive for $baseUrl');
     } catch (e) {
       log.info('Failed to initialize DP1 stores: $e');
+      playlistError ??= e;
+      channelError ??= e;
+    } finally {
+      if (playlistError != null) {
+        log.info('Failed to load playlist from Hive: $playlistError');
+        onPlaylistError?.call(playlistError);
+      }
+      if (channelError != null) {
+        onChannelError?.call(channelError);
+      }
     }
   }
 

@@ -8,6 +8,8 @@ abstract class BaseDP1FeedService {
 
   final String baseUrl;
 
+  bool get isExternalFeedService => false;
+
   /*
   =======================================================================
 

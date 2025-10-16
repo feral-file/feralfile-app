@@ -170,8 +170,8 @@ class _OnboardingPageState extends State<OnboardingPage>
       await injector<MetricClientService>().initService();
       await injector<FFBluetoothService>().init();
       await injector<DLSService>().init();
-      await injector<FeralFileDP1FeedService>().init();
       await injector<FeralFileFeedManager>().init();
+      await injector<FeralFileDP1FeedService>().init();
 
       unawaited(
         injector<RemoteConfigService>().loadConfigs().then(

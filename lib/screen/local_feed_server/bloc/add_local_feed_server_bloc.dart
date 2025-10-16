@@ -160,7 +160,8 @@ class AddLocalFeedServerBloc
       }
 
       // Create and add the feed service
-      final feedService = BaseDP1FeedServiceImpl(baseUrl: state.serverUrl!);
+      final feedService = BaseDP1FeedServiceImpl(
+          baseUrl: state.serverUrl!, isExternalFeedService: true);
       await feedService.init();
       await feedManager.addCustomFeedServices([feedService]);
 

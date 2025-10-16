@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
 import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
@@ -10,16 +12,25 @@ import 'package:autonomy_flutter/util/log.dart';
 
 /// Base implementation of DP1 feed service containing common playlist and item methods
 class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
-  BaseDP1FeedServiceImpl({required String baseUrl}) : super(baseUrl: baseUrl) {}
+  BaseDP1FeedServiceImpl(
+      {required String baseUrl, this.isExternalFeedService = false})
+      : super(baseUrl: baseUrl) {}
+
+  @override
+  final bool isExternalFeedService;
 
   late final DP1FeedApi api;
   late final BaseFeedCache cache;
 
   /// Initialize api and cache - can be overridden by subclasses
-  Future<void> init() async {
+  Future<void> init({
+    FutureOr<void> Function(Object)? onPlaylistError,
+    FutureOr<void> Function(Object)? onChannelError,
+  }) async {
     api = DP1FeedApi.dioBaseUrl(baseUrl: baseUrl);
     cache = FeedCacheImpl(baseUrl: baseUrl);
-    await cache.init();
+    await cache.init(
+        onPlaylistError: onPlaylistError, onChannelError: onChannelError);
   }
 
   /*
@@ -146,16 +157,24 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
   =======================================================================
    */
 
+  bool _isReloadingCache = false;
+
   Future<void> reloadCache() async {
-    bool hasMore = true;
-    String? cursor;
-    const limit = 50;
-    cache.clearAll();
-    while (hasMore) {
-      final resp = await api.getAllPlaylists(cursor: cursor, limit: limit);
-      cache.insertListPlaylists(resp.items);
-      hasMore = resp.hasMore;
-      cursor = resp.cursor;
+    if (_isReloadingCache) return;
+    _isReloadingCache = true;
+    try {
+      bool hasMore = true;
+      String? cursor;
+      const limit = 50;
+      cache.clearAll();
+      while (hasMore) {
+        final resp = await api.getAllPlaylists(cursor: cursor, limit: limit);
+        cache.insertListPlaylists(resp.items);
+        hasMore = resp.hasMore;
+        cursor = resp.cursor;
+      }
+    } finally {
+      _isReloadingCache = false;
     }
   }
 

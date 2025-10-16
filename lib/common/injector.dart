@@ -59,6 +59,7 @@ import 'package:autonomy_flutter/service/domain_address_service.dart';
 import 'package:autonomy_flutter/service/domain_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/ethereum_service.dart';
+import 'package:autonomy_flutter/service/feed_registry_service.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
 import 'package:autonomy_flutter/service/meilisearch_service.dart';
 import 'package:autonomy_flutter/service/metric_client_service.dart';
@@ -388,6 +389,10 @@ Future<void> setupInjector() async {
 
   injector.registerLazySingleton<CloudManager>(CloudManager.new);
   await injector<CloudManager>().init();
+
+  injector.registerLazySingleton<FeedRegistryService>(
+    () => FeedRegistryServiceImpl(),
+  );
 
   injector.registerLazySingleton<MobileControllerAPI>(
     () => MobileControllerAPI(
