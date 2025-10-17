@@ -21,6 +21,7 @@ dependencies:
 
   connectivity_plus: 6.1.4
   crypto: ^3.0.5
+  cryptography: ^2.7.0
   device_info_plus: ^11.1.1
   dio: ^5.7.0
   dio_smart_retry: ^7.0.1
@@ -70,6 +71,7 @@ dependencies:
   shake: ^3.0.0
   share_plus: ^11.0.0
   shared_preferences: ^2.0.0
+  flutter_secure_storage: ^9.2.2
   synchronized: ^3.0.0+2
   system_date_time_format:
   #  tezart:

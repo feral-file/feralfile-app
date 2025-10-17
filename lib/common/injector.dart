@@ -69,6 +69,7 @@ import 'package:autonomy_flutter/service/network_issue_manager.dart';
 import 'package:autonomy_flutter/service/network_service.dart';
 import 'package:autonomy_flutter/service/passkey_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
+import 'package:autonomy_flutter/service/secure_storage_server.dart';
 import 'package:autonomy_flutter/service/settings_data_service.dart';
 import 'package:autonomy_flutter/service/user_interactivity_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
@@ -391,7 +392,7 @@ Future<void> setupInjector() async {
   await injector<CloudManager>().init();
 
   injector.registerLazySingleton<FeedRegistryService>(
-    () => FeedRegistryServiceImpl(),
+    FeedRegistryServiceImpl.new,
   );
 
   injector.registerLazySingleton<MobileControllerAPI>(
@@ -415,7 +416,7 @@ Future<void> setupInjector() async {
   );
 
   injector.registerLazySingleton<PlaylistsBloc>(
-    () => PlaylistsBloc(),
+    PlaylistsBloc.new,
   );
 
   injector.registerLazySingleton<UserAllOwnCollectionBloc>(
@@ -423,7 +424,7 @@ Future<void> setupInjector() async {
   );
 
   injector.registerLazySingleton<ChannelsBloc>(
-    () => ChannelsBloc(),
+    ChannelsBloc.new,
   );
 
   injector.registerLazySingleton<DP1FeedApi>(
@@ -474,4 +475,8 @@ Future<void> setupInjector() async {
   );
 
   injector.registerFactory<MeiliSearchBloc>(() => MeiliSearchBloc(injector()));
+
+  injector.registerLazySingleton<SecureStorageServer>(
+    SecureStorageServerImpl.new,
+  );
 }
