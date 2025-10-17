@@ -281,24 +281,10 @@ class CanvasDeviceBloc extends AuBloc<CanvasDeviceEvent, CanvasDeviceState> {
     on<CanvasDeviceRotateEvent>((event, emit) async {
       final device = event.device;
       try {
-        final response = await _canvasClientServiceV2.rotateCanvas(
+        await _canvasClientServiceV2.rotateCanvas(
           device,
           clockwise: event.clockwise,
         );
-        if (response != null) {
-          final newStatusMap = state.canvasDeviceStatus.copy();
-          final currentStatus = newStatusMap[device.deviceId];
-          if (currentStatus != null) {
-            newStatusMap[device.deviceId] = currentStatus.copyWith(
-              deviceSettings: currentStatus.deviceSettings?.copyWith(
-                screenOrientation: response,
-              ),
-            );
-          }
-
-          emit(state.copyWith(controllingDeviceStatus: newStatusMap));
-        }
-
         await event.onDoneCallback?.call();
       } catch (e, s) {
         log.info('CanvasDeviceBloc: error while rotate device: $e', s);
@@ -341,9 +327,6 @@ class CanvasDeviceBloc extends AuBloc<CanvasDeviceEvent, CanvasDeviceState> {
         if (currentDeviceState == null) {
           throw Exception('Device not found');
         }
-        //  must get the current device status before calling nextArtwork
-        final currentDeviceStatus = state.canvasDeviceStatus[device.deviceId];
-
         await _canvasClientServiceV2.nextArtwork(device);
       } catch (_) {}
     });
@@ -357,8 +340,6 @@ class CanvasDeviceBloc extends AuBloc<CanvasDeviceEvent, CanvasDeviceState> {
         if (currentDeviceState == null) {
           throw Exception('Device not found');
         }
-        // must get the current device status before calling previousArtwork
-        final currentDeviceStatus = state.canvasDeviceStatus[device.deviceId];
 
         await _canvasClientServiceV2.previousArtwork(device);
       } catch (_) {}
