@@ -122,7 +122,10 @@ Future<void> setupInjector() async {
   );
   final dio = DioManager().base(dioOptions);
 
-  await ObjectBox.create();
+  // Initialize ObjectBox store only if not already initialized
+  if (!ObjectBox.isInitialized) {
+    await ObjectBox.create();
+  }
 
   await NftCollection.initNftCollection(
     indexerUrl: Environment.indexerURL,

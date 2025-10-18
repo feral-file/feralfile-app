@@ -11,6 +11,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:autonomy_flutter/common/database.dart';
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/build/components/NowPlayingBar.dart';
@@ -98,14 +99,20 @@ void main() async {
         },
       );
     }, (Object error, StackTrace stackTrace) async {
+      unawaited(Sentry.captureException('Error in main: $error',
+          stackTrace: stackTrace));
+
       /// Check error is Database issue
-      if (error.toString().contains('DatabaseException')) {
+      if (error.toString().contains('DatabaseException') ||
+          error.toString().contains('OBX_ERROR code 10001')) {
         log.info('[DatabaseException] Remove local database and resume app');
 
+        await _cleanupObjectBox();
         await _deleteLocalDatabase();
 
         /// Need to setup app again
         Future.delayed(const Duration(milliseconds: 200), () async {
+          log.info('Setup app again');
           await _setupApp();
         });
       } else {
@@ -205,6 +212,23 @@ Future<void> _deleteLocalDatabase() async {
       await sqfliteDatabaseFactory.getDatabasePath('app_database_testnet.db');
   await sqfliteDatabaseFactory.deleteDatabase(appDatabaseMainnet);
   await sqfliteDatabaseFactory.deleteDatabase(appDatabaseTestnet);
+}
+
+Future<void> _cleanupObjectBox() async {
+  try {
+    await ObjectBox.close();
+    log.info('ObjectBox store closed successfully');
+  } catch (e) {
+    log.info('Error closing ObjectBox store: $e');
+  }
+
+  // Also try to delete stale lock file
+  try {
+    await ObjectBox.deleteStaleLock();
+  } catch (e) {
+    unawaited(Sentry.captureException('Error deleting stale lock file: $e'));
+    log.info('Error deleting stale lock file: $e');
+  }
 }
 
 class AutonomyApp extends StatelessWidget {
