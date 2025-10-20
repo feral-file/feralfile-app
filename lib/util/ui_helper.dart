@@ -14,9 +14,8 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/ff_account.dart';
 import 'package:autonomy_flutter/model/jwt.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
-import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
+// import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_item.dart';
@@ -47,7 +46,7 @@ import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:card_swiper/card_swiper.dart';
-import 'package:collection/collection.dart';
+import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -1474,11 +1473,8 @@ class UIHelper {
     return jwt as JWT?;
   }
 
-  static SliverGrid dp1ItemSliverGrid(
-      BuildContext context,
-      List<DP1Item> dp1Items,
-      List<CompactedAssetToken> compactedAssetTokens,
-      String title) {
+  static SliverGrid dp1ItemSliverGrid(BuildContext context,
+      List<DP1NowDisplayingItem> nowDisplayingItems, String title) {
     return SliverGrid(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
@@ -1487,17 +1483,13 @@ class UIHelper {
       ),
       delegate: SliverChildBuilderDelegate(
         (context, index) {
-          final dp1Item = dp1Items[index];
-          final indexId = dp1Item.indexId;
-          final asset = compactedAssetTokens
-              .firstWhereOrNull((token) => token.id == indexId);
+          final item = nowDisplayingItems[index];
           return PlaylistItemCard(
-            dp1Item: dp1Item,
-            compactedAssetToken: asset,
+            nowDisplayingItem: item,
             playlistTitle: title,
           );
         },
-        childCount: dp1Items.length,
+        childCount: nowDisplayingItems.length,
       ),
     );
   }
@@ -1552,8 +1544,7 @@ class UIHelper {
 
   static ExpandableSliverStickyHeader assetTokenExpandableSliverStickyHeader(
     BuildContext context, {
-    required List<DP1Item> dp1Items,
-    required List<CompactedAssetToken> compactedAssetTokens,
+    required List<DP1NowDisplayingItem> nowDisplayingItems,
     required String title,
     bool isExpanded = false,
     void Function(bool)? onExpandedChanged,
@@ -1565,8 +1556,7 @@ class UIHelper {
     return ExpandableSliverStickyHeader(
         header: header,
         initiallyExpanded: isExpanded,
-        sliver: UIHelper.dp1ItemSliverGrid(
-            context, dp1Items, compactedAssetTokens, title),
+        sliver: UIHelper.dp1ItemSliverGrid(context, nowDisplayingItems, title),
         onExpandedChanged: onExpandedChanged,
         scrollController: scrollController,
         slidableActions: slidableActions);

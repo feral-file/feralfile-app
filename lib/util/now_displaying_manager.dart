@@ -5,18 +5,16 @@ import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/device/base_device.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
-import 'package:autonomy_flutter/model/dp1/dp1_manifest.dart';
 import 'package:autonomy_flutter/model/error/now_displaying_error.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
-import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
-import 'package:autonomy_flutter/util/dio_manager.dart';
+import 'package:autonomy_flutter/util/dp1_manifest_helper.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:dio/dio.dart';
+import 'package:collection/collection.dart';
 import 'package:sentry/sentry.dart';
 
 class NowDisplayingManager {
@@ -127,15 +125,32 @@ class NowDisplayingManager {
       final index = status.index!;
       final assetTokens = await _fetchAssetTokens(
           status.items!.map((e) => e.indexId).nonNulls.toList());
+      final refs = status.items!.map((e) => e.ref).nonNulls.toSet().toList();
+      final manifests =
+          await DP1ManifestHelper.instance.fetchDP1Manifests(refs);
+
+      final items = status.items!.map((e) {
+        final assetToken =
+            assetTokens.firstWhereOrNull((token) => token.id == e.indexId);
+        final dp1Manifest = manifests[e.ref] ?? null;
+        return DP1NowDisplayingItem(
+          dp1Item: e,
+          assetToken: assetToken,
+          dp1Manifest: dp1Manifest,
+        );
+      }).toList();
 
       return DP1NowDisplayingObject(
         index: index,
-        dp1Items: status.items!,
-        assetTokens: assetTokens,
+        items: items,
         connectedDevice: device,
       );
+    } else {
+      log.info('NowDisplayingManager: no items to display');
+      unawaited(
+          Sentry.captureMessage('NowDisplayingManager: no items to display'));
+      return null;
     }
-    return null;
   }
 
   Future<List<AssetToken>> _fetchAssetTokens(List<String> tokenIds) async {
@@ -154,40 +169,6 @@ class NowDisplayingManager {
       );
     }
     return assetTokens;
-  }
-
-  // fetch DP1 manifest
-  Future<List<DP1Manifest>> _fetchDP1Manifests(List<String> refs) async {
-    // fetch DP1 manifests from refs, using dio (from dioManager)
-    final dio = DioManager().base(BaseOptions());
-
-    // get by batch 10 items
-    final manifests = <DP1Manifest>[];
-    for (final batch in refs.batch(10)) {
-      final futures = batch.map((ref) async {
-        try {
-          final res = await dio.get<Map<String, dynamic>>(ref);
-          if (res.statusCode == 200 && res.data != null) {
-            return DP1Manifest.fromJson(res.data!);
-          }
-          throw Exception(
-            'Failed to fetch DP1 manifest: ${res.statusCode}',
-          );
-        } catch (e) {
-          log.info('Failed to fetch DP1 manifest: $e');
-          unawaited(
-            Sentry.captureException(
-              'Failed to fetch DP1 manifest for ref: $ref, error: $e',
-            ),
-          );
-          return null;
-        }
-      });
-
-      final results = await Future.wait(futures);
-      manifests.addAll(results.nonNulls);
-    }
-    return manifests;
   }
 }
 

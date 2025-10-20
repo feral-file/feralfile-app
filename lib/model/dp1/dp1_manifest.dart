@@ -7,578 +7,658 @@
 
 /// DP1 Manifest model following Display Protocol specification
 /// Reference: https://github.com/display-protocol/dp1/blob/main/docs/ref-manifest.md
+///
+/// The DP1 manifest is a JSON document that describes how to display a work.
+/// It contains metadata, display controls, and internationalization information.
 class DP1Manifest {
-  /// The version of the DP1 manifest specification
-  final String dp1Version;
+  /// Semantic version of manifest schema (required)
+  /// Must be a valid semantic version string (e.g., "0.1.0")
+  final String refVersion;
 
-  /// Unique identifier for the manifest
+  /// Unique identifier for caching purposes (required)
+  /// Should be a UUID or other unique string
   final String id;
 
-  /// Human-readable name of the display content
-  final String name;
+  /// RFC3339 timestamp when manifest was created (required)
+  /// Format: YYYY-MM-DDTHH:MM:SSZ
+  final String created;
 
-  /// Description of the display content
-  final String? description;
+  /// Default locale for the manifest (required)
+  /// Should be a valid BCP 47 language tag (e.g., "en", "en-US")
+  final String locale;
 
-  /// Version of the content
-  final String? version;
+  /// Metadata block - human-readable information about the work
+  final DP1ManifestMetadata? metadata;
 
-  /// Author information
-  final DP1Author? author;
+  /// Controls block - display preferences and settings
+  final DP1Controls? controls;
 
-  /// Creation timestamp
-  final DateTime? createdAt;
-
-  /// Last update timestamp
-  final DateTime? updatedAt;
-
-  /// Display settings and configuration
-  final DP1DisplaySettings? display;
-
-  /// Resources (assets) used in the display
-  final List<DP1Resource>? resources;
-
-  /// Layout definitions
-  final List<DP1Layout>? layouts;
-
-  /// Interaction definitions
-  final List<DP1Interaction>? interactions;
-
-  /// Metadata and custom properties
-  final Map<String, dynamic>? metadata;
-
-  /// Tags for categorization
-  final List<String>? tags;
-
-  /// License information
-  final String? license;
-
-  /// Thumbnail URL for the display content
-  final String? thumbnail;
-
-  /// Preview URL for the display content
-  final String? preview;
+  /// Internationalization block - localized text overrides
+  final DP1I18n? i18n;
 
   DP1Manifest({
-    required this.dp1Version,
+    required this.refVersion,
     required this.id,
-    required this.name,
-    this.description,
-    this.version,
-    this.author,
-    this.createdAt,
-    this.updatedAt,
-    this.display,
-    this.resources,
-    this.layouts,
-    this.interactions,
+    required this.created,
+    required this.locale,
     this.metadata,
-    this.tags,
-    this.license,
-    this.thumbnail,
-    this.preview,
+    this.controls,
+    this.i18n,
   });
 
   factory DP1Manifest.fromJson(Map<String, dynamic> json) {
     return DP1Manifest(
-      dp1Version: json['dp1_version'] as String,
+      refVersion: json['refVersion'] as String,
       id: json['id'] as String,
-      name: json['name'] as String,
-      description: json['description'] as String?,
-      version: json['version'] as String?,
-      author: json['author'] != null
-          ? DP1Author.fromJson(json['author'] as Map<String, dynamic>)
-          : null,
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
-          : null,
-      updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'] as String)
-          : null,
-      display: json['display'] != null
-          ? DP1DisplaySettings.fromJson(json['display'] as Map<String, dynamic>)
-          : null,
-      resources: json['resources'] != null
-          ? (json['resources'] as List)
-              .map((e) => DP1Resource.fromJson(e as Map<String, dynamic>))
-              .toList()
-          : null,
-      layouts: json['layouts'] != null
-          ? (json['layouts'] as List)
-              .map((e) => DP1Layout.fromJson(e as Map<String, dynamic>))
-              .toList()
-          : null,
-      interactions: json['interactions'] != null
-          ? (json['interactions'] as List)
-              .map((e) => DP1Interaction.fromJson(e as Map<String, dynamic>))
-              .toList()
-          : null,
+      created: json['created'] as String,
+      locale: json['locale'] as String,
       metadata: json['metadata'] != null
-          ? Map<String, dynamic>.from(json['metadata'] as Map)
+          ? DP1ManifestMetadata.fromJson(
+              json['metadata'] as Map<String, dynamic>)
           : null,
-      tags:
-          json['tags'] != null ? List<String>.from(json['tags'] as List) : null,
-      license: json['license'] as String?,
-      thumbnail: json['thumbnail'] as String?,
-      preview: json['preview'] as String?,
+      controls: json['controls'] != null
+          ? DP1Controls.fromJson(json['controls'] as Map<String, dynamic>)
+          : null,
+      i18n: json['i18n'] != null
+          ? DP1I18n.fromJson(json['i18n'] as Map<String, dynamic>)
+          : null,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'dp1_version': dp1Version,
+      'refVersion': refVersion,
       'id': id,
-      'name': name,
-      'description': description,
-      'version': version,
-      'author': author?.toJson(),
-      'created_at': createdAt?.toIso8601String(),
-      'updated_at': updatedAt?.toIso8601String(),
-      'display': display?.toJson(),
-      'resources': resources?.map((e) => e.toJson()).toList(),
-      'layouts': layouts?.map((e) => e.toJson()).toList(),
-      'interactions': interactions?.map((e) => e.toJson()).toList(),
-      'metadata': metadata,
-      'tags': tags,
-      'license': license,
-      'thumbnail': thumbnail,
-      'preview': preview,
+      'created': created,
+      'locale': locale,
+      if (metadata != null) 'metadata': metadata!.toJson(),
+      if (controls != null) 'controls': controls!.toJson(),
+      if (i18n != null) 'i18n': i18n!.toJson(),
     };
   }
 
   /// Create a minimal manifest with required fields
   factory DP1Manifest.minimal({
     required String id,
-    required String name,
-    String dp1Version = '1.0.0',
+    String refVersion = '0.1.0',
+    String locale = 'en',
   }) =>
       DP1Manifest(
-        dp1Version: dp1Version,
+        refVersion: refVersion,
         id: id,
-        name: name,
-        createdAt: DateTime.now(),
+        created: DateTime.now().toIso8601String(),
+        locale: locale,
       );
 
-  /// Validate the manifest structure
+  /// Validate the manifest structure according to DP1 specification
   bool get isValid {
-    return dp1Version.isNotEmpty && id.isNotEmpty && name.isNotEmpty;
+    return _isValidRefVersion(refVersion) &&
+        id.isNotEmpty &&
+        _isValidRfc3339Timestamp(created) &&
+        _isValidLocale(locale);
+  }
+
+  /// Validate semantic version format (e.g., "0.1.0", "1.0.0")
+  static bool _isValidRefVersion(String version) {
+    final versionRegex = RegExp(r'^\d+\.\d+\.\d+$');
+    return versionRegex.hasMatch(version);
+  }
+
+  /// Validate RFC3339 timestamp format
+  static bool _isValidRfc3339Timestamp(String timestamp) {
+    try {
+      DateTime.parse(timestamp);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Validate BCP 47 language tag format
+  static bool _isValidLocale(String locale) {
+    // Basic validation for BCP 47 language tags
+    final localeRegex = RegExp(r'^[a-z]{2}(-[A-Z]{2})?$');
+    return localeRegex.hasMatch(locale);
+  }
+
+  /// Get the maximum recommended manifest size in bytes (64 KB)
+  static int get maxRecommendedSize => 64 * 1024;
+
+  /// Check if manifest size is within recommended limits
+  bool get isWithinSizeLimit {
+    final jsonString = toJson().toString();
+    return jsonString.length <= maxRecommendedSize;
   }
 }
 
-/// Author information for the manifest
-class DP1Author {
-  /// Author name
-  final String name;
+/// Metadata block - carries human-readable information about the work
+/// This block contains descriptive information that helps users understand
+/// what the work is about and who created it.
+class DP1ManifestMetadata {
+  /// Work title - the name of the work being displayed
+  final String? title;
 
-  /// Author email
-  final String? email;
+  /// List of artists who created the work
+  /// Each artist can have a name, optional ID, and optional URL
+  final List<DP1Artist>? artists;
 
-  /// Author website
-  final String? website;
+  /// Credit line - attribution information for the work
+  /// Should include copyright information and proper attribution
+  final String? creditLine;
 
-  /// Author social media handles
-  final Map<String, String>? social;
+  /// Description - detailed information about the work
+  /// Can include context, background, or additional details
+  final String? description;
 
-  DP1Author({
-    required this.name,
-    this.email,
-    this.website,
-    this.social,
+  /// Tags - keywords or categories associated with the work
+  /// Used for categorization and search purposes
+  final List<String>? tags;
+
+  /// Thumbnails with different sizes for preview purposes
+  /// Includes small, large, xlarge, and default thumbnail options
+  final DP1Thumbnails? thumbnails;
+
+  DP1ManifestMetadata({
+    this.title,
+    this.artists,
+    this.creditLine,
+    this.description,
+    this.tags,
+    this.thumbnails,
   });
 
-  factory DP1Author.fromJson(Map<String, dynamic> json) {
-    return DP1Author(
-      name: json['name'] as String,
-      email: json['email'] as String?,
-      website: json['website'] as String?,
-      social: json['social'] != null
-          ? Map<String, String>.from(json['social'] as Map)
+  factory DP1ManifestMetadata.fromJson(Map<String, dynamic> json) {
+    return DP1ManifestMetadata(
+      title: json['title'] as String?,
+      artists: json['artists'] != null
+          ? (json['artists'] as List)
+              .map((e) => DP1Artist.fromJson(e as Map<String, dynamic>))
+              .toList()
+          : null,
+      creditLine: json['creditLine'] as String?,
+      description: json['description'] as String?,
+      tags:
+          json['tags'] != null ? List<String>.from(json['tags'] as List) : null,
+      thumbnails: json['thumbnails'] != null
+          ? DP1Thumbnails.fromJson(json['thumbnails'] as Map<String, dynamic>)
           : null,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'name': name,
-      'email': email,
-      'website': website,
-      'social': social,
+      if (title != null) 'title': title,
+      if (artists != null) 'artists': artists!.map((e) => e.toJson()).toList(),
+      if (creditLine != null) 'creditLine': creditLine,
+      if (description != null) 'description': description,
+      if (tags != null) 'tags': tags,
+      if (thumbnails != null) 'thumbnails': thumbnails!.toJson(),
     };
   }
 }
 
-/// Display settings and configuration
-class DP1DisplaySettings {
-  /// Display dimensions
-  final DP1Dimensions? dimensions;
+/// Artist information - represents a creator of the work
+/// Each artist has a required name and optional ID and URL fields
+class DP1Artist {
+  /// Artist name - the display name of the artist (required)
+  final String name;
 
-  /// Background color or image
+  /// Artist ID - unique identifier for the artist (optional)
+  /// Can be used for linking to artist profiles or databases
+  final String? id;
+
+  /// Artist URL - web address for the artist (optional)
+  /// Can link to artist's website, portfolio, or social media
+  final String? url;
+
+  DP1Artist({
+    required this.name,
+    this.id,
+    this.url,
+  });
+
+  factory DP1Artist.fromJson(Map<String, dynamic> json) {
+    return DP1Artist(
+      name: json['name'] as String,
+      id: json['id'] as String?,
+      url: json['url'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      if (id != null) 'id': id,
+      if (url != null) 'url': url,
+    };
+  }
+}
+
+/// Thumbnails container - holds different sized thumbnail images
+/// Provides multiple resolution options for different display contexts
+class DP1Thumbnails {
+  /// Small thumbnail - typically 150x150 pixels or smaller
+  /// Used for small previews, lists, or mobile interfaces
+  final DP1Thumbnail? small;
+
+  /// Large thumbnail - typically 300x300 pixels or larger
+  /// Used for detailed previews or desktop interfaces
+  final DP1Thumbnail? large;
+
+  /// Extra large thumbnail - typically 600x600 pixels or larger
+  /// Used for high-resolution displays or detailed views
+  final DP1Thumbnail? xlarge;
+
+  /// Default thumbnail - fallback option when specific size not available
+  /// Should be a reasonable size for general use
+  final DP1Thumbnail? defaultThumbnail;
+
+  DP1Thumbnails({
+    this.small,
+    this.large,
+    this.xlarge,
+    this.defaultThumbnail,
+  });
+
+  factory DP1Thumbnails.fromJson(Map<String, dynamic> json) {
+    return DP1Thumbnails(
+      small: json['small'] != null
+          ? DP1Thumbnail.fromJson(json['small'] as Map<String, dynamic>)
+          : null,
+      large: json['large'] != null
+          ? DP1Thumbnail.fromJson(json['large'] as Map<String, dynamic>)
+          : null,
+      xlarge: json['xlarge'] != null
+          ? DP1Thumbnail.fromJson(json['xlarge'] as Map<String, dynamic>)
+          : null,
+      defaultThumbnail: json['default'] != null
+          ? DP1Thumbnail.fromJson(json['default'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (small != null) 'small': small!.toJson(),
+      if (large != null) 'large': large!.toJson(),
+      if (xlarge != null) 'xlarge': xlarge!.toJson(),
+      if (defaultThumbnail != null) 'default': defaultThumbnail!.toJson(),
+    };
+  }
+}
+
+/// Individual thumbnail - represents a single thumbnail image
+/// Contains URI, dimensions, and optional integrity check
+class DP1Thumbnail {
+  /// URI to the thumbnail image (required)
+  /// Should be a valid HTTP/HTTPS URL or data URI
+  final String uri;
+
+  /// Width in pixels (required)
+  /// Specifies the horizontal dimension of the thumbnail
+  final int? w;
+
+  /// Height in pixels (required)
+  /// Specifies the vertical dimension of the thumbnail
+  final int? h;
+
+  /// SHA256 checksum for integrity verification (optional)
+  /// Used to verify the thumbnail hasn't been tampered with
+  final String? sha256;
+
+  DP1Thumbnail({
+    required this.uri,
+    this.w,
+    this.h,
+    this.sha256,
+  });
+
+  factory DP1Thumbnail.fromJson(Map<String, dynamic> json) {
+    return DP1Thumbnail(
+      uri: json['uri'] as String,
+      w: json['w'] as int?,
+      h: json['h'] as int?,
+      sha256: json['sha256'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'uri': uri,
+      if (w != null) 'w': w,
+      if (h != null) 'h': h,
+      if (sha256 != null) 'sha256': sha256,
+    };
+  }
+}
+
+/// Controls block - defines display preferences and safety settings
+/// This block controls how the work is displayed and any safety constraints
+class DP1Controls {
+  /// Display settings - controls visual presentation
+  /// Includes scaling, margins, background, and interaction settings
+  final DP1Display? display;
+
+  /// Safety settings - defines resource limits and constraints
+  /// Includes orientation support and resource usage limits
+  final DP1Safety? safety;
+
+  DP1Controls({
+    this.display,
+    this.safety,
+  });
+
+  factory DP1Controls.fromJson(Map<String, dynamic> json) {
+    return DP1Controls(
+      display: json['display'] != null
+          ? DP1Display.fromJson(json['display'] as Map<String, dynamic>)
+          : null,
+      safety: json['safety'] != null
+          ? DP1Safety.fromJson(json['safety'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (display != null) 'display': display!.toJson(),
+      if (safety != null) 'safety': safety!.toJson(),
+    };
+  }
+}
+
+/// Display settings - controls visual presentation of the work
+/// Defines how the work should be scaled, positioned, and interacted with
+class DP1Display {
+  /// Scaling mode - how the work should be scaled to fit the display
+  /// Values: "fit" (maintain aspect ratio, fit within bounds) or "fill" (fill entire display)
+  final String? scaling;
+
+  /// Margin - spacing around the work
+  /// Can be specified as CSS margin values (e.g., "10px", "1em")
+  final String? margin;
+
+  /// Background color - color to display behind the work
+  /// Should be a valid CSS color value (e.g., "#000000", "rgb(0,0,0)", "black")
   final String? background;
 
-  /// Display duration in seconds
-  final int? duration;
+  /// Autoplay setting - whether media should start playing automatically
+  /// true = start playing immediately, false = wait for user interaction
+  final bool? autoplay;
 
-  /// Auto-play settings
-  final bool? autoPlay;
-
-  /// Loop settings
+  /// Loop setting - whether media should repeat when finished
+  /// true = repeat indefinitely, false = play once
   final bool? loop;
 
-  /// Transition effects
-  final List<String>? transitions;
+  /// Interaction settings - defines user interaction capabilities
+  /// Includes keyboard shortcuts and mouse interaction options
+  final DP1Interaction? interaction;
 
-  /// Display orientation
-  final String? orientation;
-
-  DP1DisplaySettings({
-    this.dimensions,
+  DP1Display({
+    this.scaling,
+    this.margin,
     this.background,
-    this.duration,
-    this.autoPlay,
+    this.autoplay,
     this.loop,
-    this.transitions,
-    this.orientation,
+    this.interaction,
   });
 
-  factory DP1DisplaySettings.fromJson(Map<String, dynamic> json) {
-    return DP1DisplaySettings(
-      dimensions: json['dimensions'] != null
-          ? DP1Dimensions.fromJson(json['dimensions'] as Map<String, dynamic>)
-          : null,
+  factory DP1Display.fromJson(Map<String, dynamic> json) {
+    return DP1Display(
+      scaling: json['scaling'] as String?,
+      margin: json['margin'] as String?,
       background: json['background'] as String?,
-      duration: json['duration'] as int?,
-      autoPlay: json['auto_play'] as bool?,
+      autoplay: json['autoplay'] as bool?,
       loop: json['loop'] as bool?,
-      transitions: json['transitions'] != null
-          ? List<String>.from(json['transitions'] as List)
-          : null,
-      orientation: json['orientation'] as String?,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'dimensions': dimensions?.toJson(),
-      'background': background,
-      'duration': duration,
-      'auto_play': autoPlay,
-      'loop': loop,
-      'transitions': transitions,
-      'orientation': orientation,
-    };
-  }
-}
-
-/// Display dimensions
-class DP1Dimensions {
-  /// Width in pixels
-  final int width;
-
-  /// Height in pixels
-  final int height;
-
-  /// Aspect ratio
-  final String? aspectRatio;
-
-  DP1Dimensions({
-    required this.width,
-    required this.height,
-    this.aspectRatio,
-  });
-
-  factory DP1Dimensions.fromJson(Map<String, dynamic> json) {
-    return DP1Dimensions(
-      width: json['width'] as int,
-      height: json['height'] as int,
-      aspectRatio: json['aspect_ratio'] as String?,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'width': width,
-      'height': height,
-      'aspect_ratio': aspectRatio,
-    };
-  }
-}
-
-/// Resource definition for assets
-class DP1Resource {
-  /// Unique identifier for the resource
-  final String id;
-
-  /// Resource type (image, video, audio, text, etc.)
-  final String type;
-
-  /// Resource URL or path
-  final String url;
-
-  /// Resource metadata
-  final Map<String, dynamic>? metadata;
-
-  /// Resource dimensions
-  final DP1Dimensions? dimensions;
-
-  /// File size in bytes
-  final int? size;
-
-  /// MIME type
-  final String? mimeType;
-
-  /// Checksum for integrity verification
-  final String? checksum;
-
-  /// Alternative text for accessibility
-  final String? altText;
-
-  DP1Resource({
-    required this.id,
-    required this.type,
-    required this.url,
-    this.metadata,
-    this.dimensions,
-    this.size,
-    this.mimeType,
-    this.checksum,
-    this.altText,
-  });
-
-  factory DP1Resource.fromJson(Map<String, dynamic> json) {
-    return DP1Resource(
-      id: json['id'] as String,
-      type: json['type'] as String,
-      url: json['url'] as String,
-      metadata: json['metadata'] != null
-          ? Map<String, dynamic>.from(json['metadata'] as Map)
-          : null,
-      dimensions: json['dimensions'] != null
-          ? DP1Dimensions.fromJson(json['dimensions'] as Map<String, dynamic>)
-          : null,
-      size: json['size'] as int?,
-      mimeType: json['mime_type'] as String?,
-      checksum: json['checksum'] as String?,
-      altText: json['alt_text'] as String?,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'type': type,
-      'url': url,
-      'metadata': metadata,
-      'dimensions': dimensions?.toJson(),
-      'size': size,
-      'mime_type': mimeType,
-      'checksum': checksum,
-      'alt_text': altText,
-    };
-  }
-}
-
-/// Layout definition
-class DP1Layout {
-  /// Layout identifier
-  final String id;
-
-  /// Layout name
-  final String name;
-
-  /// Layout type
-  final String type;
-
-  /// Layout configuration
-  final Map<String, dynamic>? config;
-
-  /// Resources used in this layout
-  final List<String>? resources;
-
-  /// Layout positioning
-  final DP1Position? position;
-
-  /// Layout styling
-  final Map<String, dynamic>? style;
-
-  DP1Layout({
-    required this.id,
-    required this.name,
-    required this.type,
-    this.config,
-    this.resources,
-    this.position,
-    this.style,
-  });
-
-  factory DP1Layout.fromJson(Map<String, dynamic> json) {
-    return DP1Layout(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      type: json['type'] as String,
-      config: json['config'] != null
-          ? Map<String, dynamic>.from(json['config'] as Map)
-          : null,
-      resources: json['resources'] != null
-          ? List<String>.from(json['resources'] as List)
-          : null,
-      position: json['position'] != null
-          ? DP1Position.fromJson(json['position'] as Map<String, dynamic>)
-          : null,
-      style: json['style'] != null
-          ? Map<String, dynamic>.from(json['style'] as Map)
+      interaction: json['interaction'] != null
+          ? DP1Interaction.fromJson(json['interaction'] as Map<String, dynamic>)
           : null,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'name': name,
-      'type': type,
-      'config': config,
-      'resources': resources,
-      'position': position?.toJson(),
-      'style': style,
+      if (scaling != null) 'scaling': scaling,
+      if (margin != null) 'margin': margin,
+      if (background != null) 'background': background,
+      if (autoplay != null) 'autoplay': autoplay,
+      if (loop != null) 'loop': loop,
+      if (interaction != null) 'interaction': interaction!.toJson(),
     };
   }
 }
 
-/// Position information
-class DP1Position {
-  /// X coordinate
-  final double x;
-
-  /// Y coordinate
-  final double y;
-
-  /// Z index for layering
-  final int? z;
-
-  /// Rotation in degrees
-  final double? rotation;
-
-  /// Scale factor
-  final double? scale;
-
-  DP1Position({
-    required this.x,
-    required this.y,
-    this.z,
-    this.rotation,
-    this.scale,
-  });
-
-  factory DP1Position.fromJson(Map<String, dynamic> json) {
-    return DP1Position(
-      x: (json['x'] as num).toDouble(),
-      y: (json['y'] as num).toDouble(),
-      z: json['z'] as int?,
-      rotation: json['rotation'] != null
-          ? (json['rotation'] as num).toDouble()
-          : null,
-      scale: json['scale'] != null ? (json['scale'] as num).toDouble() : null,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'x': x,
-      'y': y,
-      'z': z,
-      'rotation': rotation,
-      'scale': scale,
-    };
-  }
-}
-
-/// Interaction definition
+/// Interaction settings - defines user interaction capabilities
+/// Controls how users can interact with the work using keyboard and mouse
 class DP1Interaction {
-  /// Interaction identifier
-  final String id;
+  /// Keyboard interactions - list of supported keyboard shortcuts
+  /// Each string represents a key combination (e.g., "space", "ctrl+s", "arrow-left")
+  final List<String>? keyboard;
 
-  /// Interaction type (click, hover, touch, etc.)
-  final String type;
-
-  /// Target element or resource
-  final String? target;
-
-  /// Interaction action
-  final String? action;
-
-  /// Interaction parameters
-  final Map<String, dynamic>? params;
-
-  /// Interaction conditions
-  final Map<String, dynamic>? conditions;
+  /// Mouse interactions - defines mouse interaction capabilities
+  /// Can include click, drag, scroll, and other mouse-based interactions
+  final Map<String, dynamic>? mouse;
 
   DP1Interaction({
-    required this.id,
-    required this.type,
-    this.target,
-    this.action,
-    this.params,
-    this.conditions,
+    this.keyboard,
+    this.mouse,
   });
 
   factory DP1Interaction.fromJson(Map<String, dynamic> json) {
     return DP1Interaction(
-      id: json['id'] as String,
-      type: json['type'] as String,
-      target: json['target'] as String?,
-      action: json['action'] as String?,
-      params: json['params'] != null
-          ? Map<String, dynamic>.from(json['params'] as Map)
+      keyboard: json['keyboard'] != null
+          ? List<String>.from(json['keyboard'] as List)
           : null,
-      conditions: json['conditions'] != null
-          ? Map<String, dynamic>.from(json['conditions'] as Map)
+      mouse: json['mouse'] != null
+          ? Map<String, dynamic>.from(json['mouse'] as Map)
           : null,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'type': type,
-      'target': target,
-      'action': action,
-      'params': params,
-      'conditions': conditions,
+      if (keyboard != null) 'keyboard': keyboard,
+      if (mouse != null) 'mouse': mouse,
     };
   }
 }
 
-/// Extension methods for DP1Manifest
+/// Safety settings - defines resource limits and constraints
+/// Ensures the work doesn't exceed system capabilities or cause issues
+class DP1Safety {
+  /// Supported orientations - which screen orientations are supported
+  /// Values can include: "portrait", "landscape", "portrait-upsidedown", "landscape-left", "landscape-right"
+  final List<String>? orientation;
+
+  /// Maximum CPU percentage - maximum CPU usage allowed (0-100)
+  /// Helps prevent the work from consuming too many system resources
+  final int? maxCpuPct;
+
+  /// Maximum memory in MB - maximum memory usage allowed
+  /// Helps prevent the work from consuming too much system memory
+  final int? maxMemMB;
+
+  DP1Safety({
+    this.orientation,
+    this.maxCpuPct,
+    this.maxMemMB,
+  });
+
+  factory DP1Safety.fromJson(Map<String, dynamic> json) {
+    return DP1Safety(
+      orientation: json['orientation'] != null
+          ? List<String>.from(json['orientation'] as List)
+          : null,
+      maxCpuPct: json['maxCpuPct'] as int?,
+      maxMemMB: json['maxMemMB'] as int?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (orientation != null) 'orientation': orientation,
+      if (maxCpuPct != null) 'maxCpuPct': maxCpuPct,
+      if (maxMemMB != null) 'maxMemMB': maxMemMB,
+    };
+  }
+}
+
+/// Internationalization block - provides localized text overrides
+/// Allows the same work to be displayed with different text in different languages
+class DP1I18n {
+  /// Localized content by language code
+  /// Keys are BCP 47 language tags (e.g., "en", "en-US", "fr", "ja")
+  /// Values contain the localized versions of text fields
+  final Map<String, DP1LocalizedContent>? locales;
+
+  DP1I18n({
+    this.locales,
+  });
+
+  factory DP1I18n.fromJson(Map<String, dynamic> json) {
+    return DP1I18n(
+      locales: json.isNotEmpty
+          ? json.map((key, value) => MapEntry(
+                key,
+                DP1LocalizedContent.fromJson(value as Map<String, dynamic>),
+              ))
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return locales?.map((key, value) => MapEntry(key, value.toJson())) ?? {};
+  }
+}
+
+/// Localized content for a specific language
+/// Contains translated versions of text fields from the metadata block
+class DP1LocalizedContent {
+  /// Localized title - translated version of the work title
+  final String? title;
+
+  /// Localized description - translated version of the work description
+  final String? description;
+
+  /// Localized credit line - translated version of the credit line
+  final String? creditLine;
+
+  /// Additional localized fields - any other localized text content
+  /// Can include custom fields specific to the work or application
+  final Map<String, dynamic>? additional;
+
+  DP1LocalizedContent({
+    this.title,
+    this.description,
+    this.creditLine,
+    this.additional,
+  });
+
+  factory DP1LocalizedContent.fromJson(Map<String, dynamic> json) {
+    return DP1LocalizedContent(
+      title: json['title'] as String?,
+      description: json['description'] as String?,
+      creditLine: json['creditLine'] as String?,
+      additional: json.isNotEmpty ? Map<String, dynamic>.from(json) : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (title != null) 'title': title,
+      if (description != null) 'description': description,
+      if (creditLine != null) 'creditLine': creditLine,
+      if (additional != null) ...additional!,
+    };
+  }
+}
+
+/// Extension methods for DP1Manifest - provides convenient helper methods
+/// These methods make it easier to work with DP1 manifests in common scenarios
 extension DP1ManifestExtension on DP1Manifest {
-  /// Get resource by ID
-  DP1Resource? getResourceById(String id) {
-    return resources?.firstWhere(
-      (resource) => resource.id == id,
-      orElse: () => throw StateError('Resource not found'),
-    );
+  /// Check if manifest has metadata block
+  bool get hasMetadata => metadata != null;
+
+  /// Check if manifest has controls block
+  bool get hasControls => controls != null;
+
+  /// Check if manifest has internationalization block
+  bool get hasI18n => i18n != null;
+
+  /// Get localized content for a specific locale
+  /// Returns null if the locale is not available
+  DP1LocalizedContent? getLocalizedContent(String locale) {
+    return i18n?.locales?[locale];
   }
 
-  /// Get layout by ID
-  DP1Layout? getLayoutById(String id) {
-    return layouts?.firstWhere(
-      (layout) => layout.id == id,
-      orElse: () => throw StateError('Layout not found'),
-    );
+  /// Get Artists
+  /// Returns a list of artist
+  List<String> get artistNames {
+    if (metadata?.artists == null) return [];
+    return metadata!.artists!.map((artist) => artist.name).toList();
   }
 
-  /// Get interaction by ID
-  DP1Interaction? getInteractionById(String id) {
-    return interactions?.firstWhere(
-      (interaction) => interaction.id == id,
-      orElse: () => throw StateError('Interaction not found'),
-    );
+  /// Get thumbnail by size preference
+  /// Returns the best available thumbnail for the requested size
+  DP1Thumbnail? getThumbnail(String size) {
+    switch (size.toLowerCase()) {
+      case 'small':
+        return metadata?.thumbnails?.small;
+      case 'large':
+        return metadata?.thumbnails?.large;
+      case 'xlarge':
+        return metadata?.thumbnails?.xlarge;
+      case 'default':
+        return metadata?.thumbnails?.defaultThumbnail;
+      default:
+        // Return default thumbnail as fallback
+        return metadata?.thumbnails?.defaultThumbnail;
+    }
   }
 
-  /// Check if manifest has resources
-  bool get hasResources => resources != null && resources!.isNotEmpty;
+  /// Get the best available thumbnail (prefers default, then large, then small)
+  DP1Thumbnail? getBestThumbnail() {
+    return metadata?.thumbnails?.defaultThumbnail ??
+        metadata?.thumbnails?.large ??
+        metadata?.thumbnails?.small ??
+        metadata?.thumbnails?.xlarge;
+  }
 
-  /// Check if manifest has layouts
-  bool get hasLayouts => layouts != null && layouts!.isNotEmpty;
+  /// Check if the manifest supports a specific orientation
+  bool supportsOrientation(String orientation) {
+    return controls?.safety?.orientation?.contains(orientation) ?? true;
+  }
 
-  /// Check if manifest has interactions
-  bool get hasInteractions => interactions != null && interactions!.isNotEmpty;
+  /// Get the effective title (localized if available, otherwise default)
+  String? getEffectiveTitle(String? preferredLocale) {
+    if (preferredLocale != null) {
+      final localized = getLocalizedContent(preferredLocale);
+      if (localized?.title != null) {
+        return localized!.title;
+      }
+    }
+    return metadata?.title;
+  }
+
+  /// Get the effective description (localized if available, otherwise default)
+  String? getEffectiveDescription(String? preferredLocale) {
+    if (preferredLocale != null) {
+      final localized = getLocalizedContent(preferredLocale);
+      if (localized?.description != null) {
+        return localized!.description;
+      }
+    }
+    return metadata?.description;
+  }
+
+  /// Get the effective credit line (localized if available, otherwise default)
+  String? getEffectiveCreditLine(String? preferredLocale) {
+    if (preferredLocale != null) {
+      final localized = getLocalizedContent(preferredLocale);
+      if (localized?.creditLine != null) {
+        return localized!.creditLine;
+      }
+    }
+    return metadata?.creditLine;
+  }
 }

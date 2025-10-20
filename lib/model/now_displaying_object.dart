@@ -1,35 +1,35 @@
 import 'package:autonomy_flutter/model/device/base_device.dart';
+import 'package:autonomy_flutter/model/dp1/dp1_manifest.dart';
 import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
-import 'package:collection/collection.dart';
 
 abstract class NowDisplayingObjectBase {
   NowDisplayingObjectBase({required this.connectedDevice});
 
   final BaseDevice connectedDevice;
-
-  List<AssetToken> get assetTokens;
 }
 
 class DP1NowDisplayingObject extends NowDisplayingObjectBase {
   DP1NowDisplayingObject({
     required super.connectedDevice,
     required this.index,
-    required this.dp1Items,
-    required this.assetTokens,
+    required this.items,
   });
 
   final int index;
-  final List<DP1Item> dp1Items;
-  final List<AssetToken> assetTokens;
+  final List<DP1NowDisplayingItem> items;
 
-  DP1Item get playlistItem => dp1Items[index];
+  DP1NowDisplayingItem get currentItem => items[index];
+}
 
-  AssetToken? get assetToken {
-    final item = playlistItem;
-    final indexId = item.indexId;
-    final assetToken =
-        assetTokens.firstWhereOrNull((token) => token.id == indexId);
-    return assetToken;
-  }
+class DP1NowDisplayingItem {
+  DP1NowDisplayingItem({
+    required this.dp1Item,
+    this.assetToken,
+    this.dp1Manifest,
+  });
+
+  final DP1Item dp1Item;
+  final AssetToken? assetToken;
+  final DP1Manifest? dp1Manifest;
 }
