@@ -282,25 +282,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                       : CustomAppBar(
                           backTitle: widget.payload.backTitle ?? '',
                           actions: [
-                            IconButton(
-                              padding: EdgeInsets.zero,
-                              onPressed: () async => _showArtworkOptionsDialog(
-                                context,
-                                assetToken,
-                                canvasState,
-                              ),
-                              constraints: const BoxConstraints(
-                                maxWidth: 44,
-                                maxHeight: 44,
-                                minWidth: 44,
-                                minHeight: 44,
-                              ),
-                              icon: SvgPicture.asset(
-                                'assets/images/more_circle.svg',
-                                width: 22,
-                                height: 22,
-                              ),
-                            ),
                             FFCastButton(
                               // displayKey: _getDisplayKey(assetToken),
                               onDeviceSelected: (device) async {
@@ -491,6 +472,25 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                                 .openFeralFileArtistPage(asset.artistID!),
                           )
                       : null,
+                ),
+              ),
+              IconButton(
+                padding: EdgeInsets.zero,
+                onPressed: () async => _showArtworkOptionsDialog(
+                  context,
+                  asset,
+                  canvasState,
+                ),
+                constraints: const BoxConstraints(
+                  maxWidth: 44,
+                  maxHeight: 44,
+                  minWidth: 44,
+                  minHeight: 44,
+                ),
+                icon: SvgPicture.asset(
+                  'assets/images/more_circle.svg',
+                  width: 22,
+                  height: 22,
                 ),
               ),
               _artworkInfoIcon(),
