@@ -1541,40 +1541,6 @@ class UIHelper {
         slidableActions: slidableActions);
   }
 
-  // static SliverExpandableStickyHeader assetTokenSliverExpandableStickyHeader(
-  //   BuildContext context, {
-  //   required List<CompactedAssetToken> compactedAssetTokens,
-  //   required String title,
-  //   bool isExpanded = false,
-  //   required void Function(bool) onExpandedChanged,
-  // }) {
-  //   return SliverExpandableStickyHeader(
-  //     header: Text(title, style: Theme.of(context).textTheme.ppMori400White12),
-  //     initiallyExpanded: isExpanded,
-  //     sliverBuilder: (context) => SliverPadding(
-  //       padding: const EdgeInsets.all(8.0),
-  //       sliver: SliverGrid(
-  //         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-  //           crossAxisCount: 2,
-  //           childAspectRatio: 188 / 307,
-  //           crossAxisSpacing: 17,
-  //         ),
-  //         delegate: SliverChildBuilderDelegate(
-  //           (context, index) {
-  //             final asset = compactedAssetTokens[index];
-  //             return PlaylistItemCard(
-  //               compactedAssetToken: asset,
-  //               playlistTitle: title,
-  //             );
-  //           },
-  //           childCount: compactedAssetTokens.length,
-  //         ),
-  //       ),
-  //     ),
-  //     onExpandedChanged: onExpandedChanged,
-  //   );
-  // }
-
   // Channel list as sliver for search and index pages
   static SliverList ChannelSliverListView({
     required List<ChannelReference> channelReferences,
