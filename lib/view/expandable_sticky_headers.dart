@@ -46,7 +46,6 @@ class _ExpandableSliverStickyHeaderState
       controller: StickyCollapsablePanelController(),
       headerBuilder:
           (BuildContext context, SliverStickyCollapsablePanelStatus status) {
-        final turn = !status.isExpanded ? 0 : 3;
         final noSlidableHeader = Column(
           children: [
             Container(
@@ -86,7 +85,16 @@ class _ExpandableSliverStickyHeaderState
         return header;
       },
       sliverPanel: widget.sliver,
-      expandCallback: widget.onExpandedChanged,
+      expandCallback: (expanded) {
+        widget.onExpandedChanged?.call(expanded);
+        // Clamp negative offsets that can occur during the collapse animation
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final c = widget.scrollController;
+          if (c.hasClients && c.offset < 0) {
+            c.jumpTo(0);
+          }
+        });
+      },
     );
   }
 }

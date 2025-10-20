@@ -25,7 +25,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class CollectionPage extends StatefulWidget {
@@ -43,7 +42,6 @@ class _CollectionPageState extends State<CollectionPage>
   Timer? _autoRefreshTimer;
 
   late final ScrollController _scrollController;
-  late final StickyHeaderController _stickyHeaderController;
 
   final Map<String, bool> _expandedAddressesMap = {};
 
@@ -51,9 +49,15 @@ class _CollectionPageState extends State<CollectionPage>
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    _stickyHeaderController = StickyHeaderController();
     _collectionBloc = injector<UserAllOwnCollectionBloc>();
     _addressBloc = ViewExistingAddressBloc(injector(), injector());
+    // Clamp negative scroll offsets that can occur during header collapse animations
+    _scrollController.addListener(() {
+      final offset = _scrollController.offset;
+      if (offset < 0) {
+        _scrollController.jumpTo(0);
+      }
+    });
   }
 
   @override
@@ -63,6 +67,7 @@ class _CollectionPageState extends State<CollectionPage>
   void dispose() {
     _autoRefreshTimer?.cancel();
     _addressBloc.close();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -161,89 +166,107 @@ Type or paste an address into the command bar to load''',
                   } else {
                     return Stack(
                       children: [
-                        CustomScrollView(
-                          controller: _scrollController,
-                          shrinkWrap: true,
-                          slivers: [
-                            if (collectionState.addressAssetTokens.isNotEmpty)
-                              ...collectionState.addressAssetTokens.map(
-                                (addressAssetToken) {
-                                  final address =
-                                      addressAssetToken.address.address;
-                                  final dp1Items = addressAssetToken.assetTokens
-                                      .map((e) => DP1PlaylistItemExtension
-                                          .fromAssetToken(token: e))
-                                      .toList();
-                                  return UIHelper
-                                      .assetTokenExpandableSliverStickyHeader(
-                                          context,
-                                          dp1Items: dp1Items,
-                                          compactedAssetTokens:
-                                              addressAssetToken.assetTokens,
-                                          title: addressAssetToken.address.name,
-                                          isExpanded:
-                                              _expandedAddressesMap[address] ??
+                        ClipRect(
+                          child: PrimaryScrollController(
+                            controller: _scrollController,
+                            child: CustomScrollView(
+                              controller: _scrollController,
+                              physics: const ClampingScrollPhysics(),
+                              slivers: [
+                                if (collectionState
+                                    .addressAssetTokens.isNotEmpty)
+                                  ...collectionState.addressAssetTokens.map(
+                                    (addressAssetToken) {
+                                      final address =
+                                          addressAssetToken.address.address;
+                                      final dp1Items = addressAssetToken
+                                          .assetTokens
+                                          .map((e) => DP1PlaylistItemExtension
+                                              .fromAssetToken(token: e))
+                                          .toList();
+                                      return UIHelper
+                                          .assetTokenExpandableSliverStickyHeader(
+                                              context,
+                                              dp1Items: dp1Items,
+                                              compactedAssetTokens:
+                                                  addressAssetToken.assetTokens,
+                                              title: addressAssetToken
+                                                  .address.name,
+                                              isExpanded: _expandedAddressesMap[
+                                                      address] ??
                                                   false,
-                                          onExpandedChanged: (isExpanded) {
-                                    _expandedAddressesMap[address] = isExpanded;
-                                  },
-                                          scrollController: _scrollController,
-                                          slidableActions: [
-                                        CustomSlidableAction(
-                                          backgroundColor:
-                                              AppColor.primaryBlack,
-                                          padding: EdgeInsets.zero,
-                                          onPressed:
-                                              (BuildContext context) async {
-                                            final address =
-                                                addressAssetToken.address;
-                                            UIHelper
-                                                .showDeleteAccountConfirmation(
-                                                    address, (address) async {
-                                              await injector<AddressService>()
-                                                  .deleteAddress(address);
-                                            });
-                                          },
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 16,
-                                            ),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                SvgPicture.asset(
-                                                  'assets/images/trash.svg',
-                                                  height: 15,
+                                              onExpandedChanged: (isExpanded) {
+                                        WidgetsBinding.instance
+                                            .addPostFrameCallback((_) {
+                                          _expandedAddressesMap[address] =
+                                              isExpanded;
+                                        });
+                                      },
+                                              scrollController:
+                                                  _scrollController,
+                                              slidableActions: [
+                                            CustomSlidableAction(
+                                              backgroundColor:
+                                                  AppColor.primaryBlack,
+                                              padding: EdgeInsets.zero,
+                                              onPressed:
+                                                  (BuildContext context) async {
+                                                final address =
+                                                    addressAssetToken.address;
+                                                UIHelper
+                                                    .showDeleteAccountConfirmation(
+                                                        address,
+                                                        (address) async {
+                                                  await injector<
+                                                          AddressService>()
+                                                      .deleteAddress(address);
+                                                });
+                                              },
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  vertical: 16,
                                                 ),
-                                                const SizedBox(width: 12),
-                                                Text(
-                                                  'Delete',
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .ppMori400White12,
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    SvgPicture.asset(
+                                                      'assets/images/trash.svg',
+                                                      height: 15,
+                                                    ),
+                                                    const SizedBox(width: 12),
+                                                    Text(
+                                                      'Delete',
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .ppMori400White12,
+                                                    ),
+                                                  ],
                                                 ),
-                                              ],
+                                              ),
                                             ),
-                                          ),
-                                        ),
-                                      ]);
-                                },
-                              ).toList(),
-                            if (collectionState.isLazyLoading &&
-                                collectionState.addressAssetTokens.isNotEmpty)
-                              SliverToBoxAdapter(
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 16),
-                                  child: Center(
-                                      child: LoadMoreIndicator(
-                                          isLoadingMore: true)),
-                                ),
-                              ),
-                            const SliverToBoxAdapter(
-                              child: BottomSpacing(),
-                            )
-                          ],
+                                          ]);
+                                    },
+                                  ).toList(),
+                                if (collectionState.isLazyLoading &&
+                                    collectionState
+                                        .addressAssetTokens.isNotEmpty)
+                                  SliverToBoxAdapter(
+                                    child: Padding(
+                                      padding:
+                                          EdgeInsets.symmetric(vertical: 16),
+                                      child: Center(
+                                          child: LoadMoreIndicator(
+                                              isLoadingMore: true)),
+                                    ),
+                                  ),
+                                const SliverToBoxAdapter(
+                                  child: BottomSpacing(),
+                                )
+                              ],
+                            ),
+                          ),
                         ),
                         // Loading overlay when loading and no tokens yet
                         if (collectionState.isLazyLoading &&
