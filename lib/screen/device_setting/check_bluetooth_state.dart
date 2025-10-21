@@ -87,8 +87,11 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
     if (path.startsWith('/')) {
       path = path.substring(1); // Remove leading slash if present
     }
+    // Decode percent-encoded characters (e.g. '%7C' for '|') before splitting.
+    // This fixes a case on some Android camera apps (e.g., Google Pixel default camera)
+    // where the scanned deeplink path includes encoded separators.
     final encodedPath = Uri.decodeFull(path);
-    final data = path.split('|');
+    final data = encodedPath.split('|');
     // Dont remove empty elements, as they are used to indicate the absence of a value
     // ..removeWhere(
     //   (element) => element.isEmpty,
@@ -303,9 +306,9 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
         {
           if (topicId != null && topicId.isNotEmpty) {
             // add device to canvas
-            final device = resultDevice!.toFFBluetoothDevice(
+            final device = resultDevice.toFFBluetoothDevice(
               topicId: topicId,
-              deviceId: resultDevice!.advName,
+              deviceId: resultDevice.advName,
               branchName: branchName,
             );
             await BluetoothDeviceManager().addDevice(
@@ -315,7 +318,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
           await injector<NavigationService>().navigateTo(
             AppRouter.bluetoothDevicePortalPage,
             arguments: BluetoothDevicePortalPagePayload(
-              device: resultDevice!,
+              device: resultDevice,
               canSkipNetworkSetup: isConnectedToInternet,
               branchName: branchName,
             ),
@@ -323,8 +326,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
         }
 
         log.info(
-          'Bluetooth device setup completed. Disconnecting from FF1: ${resultDevice!.name}',
-        );
+            'Bluetooth device setup completed. Disconnecting from FF1: ${resultDevice.name}');
         unawaited(_resultDevice?.disconnect());
       } else {
         log.info('FF1 not found after scanning: $deviceName');

@@ -37,7 +37,8 @@
 
         <meta-data
             android:name="com.onesignal.NotificationServiceExtension"
-            android:value="com.bitmark.autonomy_flutter.service.NotificationServiceExtension" /> <!-- Branch init -->
+            android:value="com.bitmark.autonomy_flutter.service.NotificationServiceExtension" /> <!--
+        Branch init -->
 
 
         <activity
@@ -45,7 +46,7 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:exported="true"
             android:hardwareAccelerated="true"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:screenOrientation="portrait"
             android:theme="@style/LaunchTheme"
             android:windowSoftInputMode="adjustResize">
