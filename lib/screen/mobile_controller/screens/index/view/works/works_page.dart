@@ -32,7 +32,6 @@ class _WorksPageState extends State<WorksPage>
   @override
   void dispose() {
     _scrollController.dispose();
-    _worksBloc.close();
     super.dispose();
   }
 

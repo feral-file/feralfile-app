@@ -33,7 +33,6 @@ class _ChannelsPageState extends State<ChannelsPage>
     _scrollController
       ..removeListener(_onScroll)
       ..dispose();
-    _channelsBloc.close();
     super.dispose();
   }
 

@@ -31,7 +31,6 @@ class _PlaylistsPageState extends State<PlaylistsPage>
     _scrollController
       ..removeListener(_onScroll)
       ..dispose();
-    _playlistsBloc.close();
     super.dispose();
   }
 
