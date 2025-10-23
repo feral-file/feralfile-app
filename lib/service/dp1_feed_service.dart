@@ -345,8 +345,8 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
       final playlists = await getAllPlaylists();
       cache.clearAll();
       cache
-        ..insertListPlaylists(playlists)
-        ..insertListChannels(channels);
+        ..insertListChannels(channels)
+        ..insertListPlaylists(playlists);
       _isReloadingCache = false;
     } catch (e) {
       log.info('Failed to reload cache for FeralFileDP1FeedService: $e');

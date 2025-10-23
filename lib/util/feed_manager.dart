@@ -166,10 +166,10 @@ class FeralFileFeedManager extends FeedManager {
       } else {
         final service = FeralFileDP1FeedService(baseUrl: endpoint);
         dynamic error;
-        await service.init(onPlaylistError: (error) {
-          error = error;
-        }, onChannelError: (error) {
-          error = error;
+        await service.init(onPlaylistError: (e) {
+          error = e;
+        }, onChannelError: (e) {
+          error = e;
         });
 
         service.addRemoteConfigChannelIds(channelIdsByUrl[endpoint]!);
@@ -190,10 +190,10 @@ class FeralFileFeedManager extends FeedManager {
       final service = BaseDP1FeedServiceImpl(
           baseUrl: customFeedServer, isExternalFeedService: true);
       dynamic error;
-      await service.init(onPlaylistError: (error) {
-        error = error;
-      }, onChannelError: (error) {
-        error = error;
+      await service.init(onPlaylistError: (e) {
+        error = e;
+      }, onChannelError: (e) {
+        error = e;
       });
       if (error is Object) {
         log.info('Error initializing feed service: $error');
@@ -368,7 +368,6 @@ class FeralFileFeedManager extends FeedManager {
 }
 
 class PlaylistReference {
-
   factory PlaylistReference.fromJson(Map<String, dynamic> json) =>
       PlaylistReference(
         playlist: DP1Call.fromJson(json['playlist'] as Map<String, dynamic>),
@@ -394,7 +393,6 @@ class PlaylistReference {
 }
 
 class ChannelReference {
-
   factory ChannelReference.fromJson(Map<String, dynamic> json) =>
       ChannelReference(
         channel: Channel.fromJson(json['channel'] as Map<String, dynamic>),
