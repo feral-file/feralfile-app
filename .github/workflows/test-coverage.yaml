@@ -2,13 +2,9 @@ name: Test Coverage
 
 on:
   push:
-    branches: [
-      '*'
-    ]
+    branches: ["*"]
   pull_request:
-    branches: [
-      '*'
-    ]
+    branches: ["*"]
   workflow_dispatch:
 
 jobs:
@@ -85,7 +81,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const summary = fs.readFileSync('coverage/summary.txt', 'utf8');
+            const summary = fs.readFileSync('test/coverage/summary.txt', 'utf8');
 
             const comment = `## 📊 Test Coverage Report
 
