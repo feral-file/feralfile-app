@@ -59,7 +59,7 @@ fi
 
 # Create coverage directory
 echo "📁 Creating coverage directory..."
-mkdir -p coverage
+mkdir -p test/coverage
 
 # Make scripts executable
 echo "🔧 Making scripts executable..."
@@ -68,26 +68,19 @@ chmod +x scripts/pre-commit-coverage-check.sh
 
 # Create .gitignore entries for coverage files
 echo "📝 Updating .gitignore for coverage files..."
-if ! grep -q "coverage/" .gitignore; then
+if ! grep -q "test/coverage/" .gitignore; then
     echo "" >> .gitignore
     echo "# Coverage files" >> .gitignore
-    echo "coverage/" >> .gitignore
+    echo "test/coverage/" >> .gitignore
     echo "lcov.info" >> .gitignore
     echo "*.lcov" >> .gitignore
 fi
 
 # Create initial coverage baseline
 echo "📊 Creating initial coverage baseline..."
-if [ ! -f "coverage/previous_lcov.info" ]; then
+if [ ! -f "test/coverage/lcov.info" ]; then
     echo "Running initial coverage check..."
-    flutter test --coverage --coverage-path=coverage/lcov.info
-    flutter test test/goldens/ --coverage --coverage-path=coverage/golden_lcov.info
-    
-    # Merge coverage files
-    lcov --add-tracefile coverage/lcov.info --add-tracefile coverage/golden_lcov.info --output-file coverage/merged_lcov.info
-    
-    # Save as baseline
-    cp coverage/merged_lcov.info coverage/previous_lcov.info
+    flutter test --coverage --coverage-path=test/coverage/lcov.info
     
     echo "✅ Initial coverage baseline created"
 else
@@ -119,7 +112,6 @@ coverage:
   # Coverage paths to include
   include:
     - "lib/**/*.dart"
-    - "test/**/*.dart"
   
   # Coverage paths to exclude
   exclude:
@@ -136,7 +128,7 @@ coverage:
     - json
   
   # Coverage report output directory
-  output_dir: "coverage"
+  output_dir: "test/coverage"
   
   # Coverage badge configuration
   badge:
@@ -160,7 +152,7 @@ This document describes the test coverage setup for the Feral File mobile app.
 
 - **Minimum Threshold**: 80% (Orbit 1 quality guardrails)
 - **Target**: 90%+ for excellent coverage
-- **Measurement**: Line coverage for unit tests and golden tests
+- **Measurement**: Line coverage for unit tests only
 
 ## Running Coverage Reports
 
@@ -187,9 +179,9 @@ Coverage reports are automatically generated in CI:
 
 ## Coverage Reports
 
-- **HTML Report**: \`coverage/html/index.html\`
-- **LCOV Data**: \`coverage/merged_lcov.info\`
-- **Summary**: \`coverage/summary.txt\`
+- **HTML Report**: \`test/coverage/html/index.html\`
+- **LCOV Data**: \`test/coverage/lcov.info\`
+- **Summary**: \`test/coverage/summary.txt\`
 
 ## Coverage Badge
 

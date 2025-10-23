@@ -1,143 +1,137 @@
 name: Test Coverage
 
 on:
-    push:
-        branches: [main, develop]
-    pull_request:
-        branches: [main, develop]
-    workflow_dispatch:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
 
 jobs:
-    test-coverage:
-        runs-on: [self-hosted, macOS]
+  test-coverage:
+    runs-on: [self-hosted, macOS]
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
-              with:
-                  fetch-depth: 0 # Needed for coverage reporting
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed for coverage reporting
 
-            - name: Setup Flutter
-              uses: subosito/flutter-action@v2
-              with:
-                  flutter-version: "3.24.0"
-                  channel: stable
-                  cache: true
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.0"
+          channel: stable
+          cache: true
 
-            - name: Install dependencies
-              run: flutter pub get
+      - name: Install dependencies
+        run: flutter pub get
 
-            - name: Run tests with coverage
-              run: |
-                  # Run unit tests with coverage
-                  flutter test --coverage --coverage-path=coverage/lcov.info
+      - name: Run unit tests with coverage
+        run: |
+          # Run unit tests with coverage
+          flutter test --coverage --coverage-path=test/coverage/lcov.info
 
-                  # Run golden tests with coverage
-                  flutter test test/goldens/ --coverage --coverage-path=coverage/golden_lcov.info
+      - name: Generate coverage report
+        run: |
+          # Generate HTML coverage report
+          genhtml test/coverage/lcov.info -o test/coverage/html --ignore-errors source
 
-                  # Merge coverage files
-                  lcov --add-tracefile coverage/lcov.info --add-tracefile coverage/golden_lcov.info --output-file coverage/merged_lcov.info
+          # Generate coverage summary
+          lcov --summary test/coverage/lcov.info > test/coverage/summary.txt
 
-            - name: Generate coverage report
-              run: |
-                  # Generate HTML coverage report
-                  genhtml coverage/merged_lcov.info -o coverage/html --ignore-errors source
+          # Extract coverage percentage for threshold check
+          COVERAGE_PERCENT=$(lcov --summary test/coverage/lcov.info | grep -o '[0-9.]*%' | head -1 | sed 's/%//')
+          echo "COVERAGE_PERCENT=$COVERAGE_PERCENT" >> $GITHUB_ENV
+          echo "Current coverage: $COVERAGE_PERCENT%"
 
-                  # Generate coverage summary
-                  lcov --summary coverage/merged_lcov.info > coverage/summary.txt
+      - name: Check coverage threshold
+        run: |
+          # Set minimum coverage threshold (80% as per Orbit 1 quality guardrails)
+          MIN_COVERAGE=80
 
-                  # Extract coverage percentage for threshold check
-                  COVERAGE_PERCENT=$(lcov --summary coverage/merged_lcov.info | grep -o '[0-9.]*%' | head -1 | sed 's/%//')
-                  echo "COVERAGE_PERCENT=$COVERAGE_PERCENT" >> $GITHUB_ENV
-                  echo "Current coverage: $COVERAGE_PERCENT%"
+          if (( $(echo "$COVERAGE_PERCENT < $MIN_COVERAGE" | bc -l) )); then
+            echo "❌ Coverage $COVERAGE_PERCENT% is below minimum threshold of $MIN_COVERAGE%"
+            echo "Please add more tests to improve coverage."
+            exit 1
+          else
+            echo "✅ Coverage $COVERAGE_PERCENT% meets minimum threshold of $MIN_COVERAGE%"
+          fi
 
-            - name: Check coverage threshold
-              run: |
-                  # Set minimum coverage threshold (80% as per Orbit 1 quality guardrails)
-                  MIN_COVERAGE=80
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            test/coverage/html/
+            test/coverage/lcov.info
+            test/coverage/summary.txt
 
-                  if (( $(echo "$COVERAGE_PERCENT < $MIN_COVERAGE" | bc -l) )); then
-                    echo "❌ Coverage $COVERAGE_PERCENT% is below minimum threshold of $MIN_COVERAGE%"
-                    echo "Please add more tests to improve coverage."
-                    exit 1
-                  else
-                    echo "✅ Coverage $COVERAGE_PERCENT% meets minimum threshold of $MIN_COVERAGE%"
-                  fi
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: test/coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
 
-            - name: Upload coverage reports
-              uses: actions/upload-artifact@v4
-              with:
-                  name: coverage-report
-                  path: |
-                      coverage/html/
-                      coverage/merged_lcov.info
-                      coverage/summary.txt
+      - name: Comment PR with coverage
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('coverage/summary.txt', 'utf8');
 
-            - name: Upload coverage to Codecov
-              uses: codecov/codecov-action@v4
-              with:
-                  file: coverage/merged_lcov.info
-                  flags: unittests
-                  name: codecov-umbrella
-                  fail_ci_if_error: false
+            const comment = `## 📊 Test Coverage Report
 
-            - name: Comment PR with coverage
-              if: github.event_name == 'pull_request'
-              uses: actions/github-script@v7
-              with:
-                  script: |
-                      const fs = require('fs');
-                      const summary = fs.readFileSync('coverage/summary.txt', 'utf8');
+            **Current Coverage: ${process.env.COVERAGE_PERCENT}%**
 
-                      const comment = `## 📊 Test Coverage Report
+            <details>
+            <summary>Coverage Summary</summary>
 
-                      **Current Coverage: ${process.env.COVERAGE_PERCENT}%**
+            \`\`\`
+            ${summary}
+            \`\`\`
 
-                      <details>
-                      <summary>Coverage Summary</summary>
+            </details>
 
-                      \`\`\`
-                      ${summary}
-                      \`\`\`
+            📈 [View detailed coverage report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-                      </details>
+            ---
+            *Coverage threshold: 80% (Orbit 1 quality guardrails)*`;
 
-                      📈 [View detailed coverage report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
 
-                      ---
-                      *Coverage threshold: 80% (Orbit 1 quality guardrails)*`;
+      - name: Update coverage badge
+        if: github.ref == 'refs/heads/main'
+        run: |
+          # Create coverage badge
+          COVERAGE_COLOR="red"
+          if (( $(echo "$COVERAGE_PERCENT >= 90" | bc -l) )); then
+            COVERAGE_COLOR="brightgreen"
+          elif (( $(echo "$COVERAGE_PERCENT >= 80" | bc -l) )); then
+            COVERAGE_COLOR="yellow"
+          fi
 
-                      github.rest.issues.createComment({
-                        issue_number: context.issue.number,
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        body: comment
-                      });
+          # Update coverage badge in README
+          BADGE_URL="https://img.shields.io/badge/coverage-${COVERAGE_PERCENT}%25-${COVERAGE_COLOR}"
+          echo "Coverage badge URL: $BADGE_URL"
 
-            - name: Update coverage badge
-              if: github.ref == 'refs/heads/main'
-              run: |
-                  # Create coverage badge
-                  COVERAGE_COLOR="red"
-                  if (( $(echo "$COVERAGE_PERCENT >= 90" | bc -l) )); then
-                    COVERAGE_COLOR="brightgreen"
-                  elif (( $(echo "$COVERAGE_PERCENT >= 80" | bc -l) )); then
-                    COVERAGE_COLOR="yellow"
-                  fi
-
-                  # Update coverage badge in README
-                  BADGE_URL="https://img.shields.io/badge/coverage-${COVERAGE_PERCENT}%25-${COVERAGE_COLOR}"
-                  echo "Coverage badge URL: $BADGE_URL"
-
-            - name: Notify on failure
-              if: failure()
-              uses: ravsamhq/notify-slack-action@v2
-              with:
-                  status: ${{ job.status }}
-                  notify_when: "failure"
-                  notification_title: "Test Coverage Failed - {workflow}"
-                  message_format: "❌ Test coverage failed in <{repo_url}|{repo}@{branch}> on commit <{commit_url}|{commit_sha}>"
-                  footer: "<{run_url}|View Run>"
-                  mention_users: "U03NZ7JU8KC"
-              env:
-                  SLACK_WEBHOOK_URL: ${{ secrets.WEBHOOK_LOCAL_BITMARKVN_CI_SLACK }}
+      - name: Notify on failure
+        if: failure()
+        uses: ravsamhq/notify-slack-action@v2
+        with:
+          status: ${{ job.status }}
+          notify_when: "failure"
+          notification_title: "Test Coverage Failed - {workflow}"
+          message_format: "❌ Test coverage failed in <{repo_url}|{repo}@{branch}> on commit <{commit_url}|{commit_sha}>"
+          footer: "<{run_url}|View Run>"
+          mention_users: "U03NZ7JU8KC"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.WEBHOOK_LOCAL_BITMARKVN_CI_SLACK }}

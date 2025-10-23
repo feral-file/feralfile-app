@@ -15,19 +15,14 @@ echo "🔍 Generating coverage badge..."
 
 # Run tests with coverage
 echo "Running tests with coverage..."
-flutter test --coverage --coverage-path=coverage/lcov.info
-flutter test test/goldens/ --coverage --coverage-path=coverage/golden_lcov.info
-
-# Merge coverage files
-echo "Merging coverage files..."
-lcov --add-tracefile coverage/lcov.info --add-tracefile coverage/golden_lcov.info --output-file coverage/merged_lcov.info
+flutter test --coverage --coverage-path=test/coverage/lcov.info
 
 # Generate HTML report
 echo "Generating HTML coverage report..."
-genhtml coverage/merged_lcov.info -o coverage/html --ignore-errors source
+genhtml test/coverage/lcov.info -o test/coverage/html --ignore-errors source
 
 # Extract coverage percentage
-COVERAGE_PERCENT=$(lcov --summary coverage/merged_lcov.info | grep -o '[0-9.]*%' | head -1 | sed 's/%//')
+COVERAGE_PERCENT=$(lcov --summary test/coverage/lcov.info | grep -o '[0-9.]*%' | head -1 | sed 's/%//')
 
 echo "📊 Current coverage: ${COVERAGE_PERCENT}%"
 
@@ -73,11 +68,11 @@ fi
 
 # Generate coverage summary
 echo "📋 Generating coverage summary..."
-lcov --summary coverage/merged_lcov.info > coverage/summary.txt
-cat coverage/summary.txt
+lcov --summary test/coverage/lcov.info > test/coverage/summary.txt
+cat test/coverage/summary.txt
 
 echo "🎉 Coverage badge generation complete!"
 echo "📁 Coverage reports saved to:"
-echo "   - HTML report: coverage/html/index.html"
-echo "   - LCOV data: coverage/merged_lcov.info"
-echo "   - Summary: coverage/summary.txt"
+echo "   - HTML report: test/coverage/html/index.html"
+echo "   - LCOV data: test/coverage/lcov.info"
+echo "   - Summary: test/coverage/summary.txt"

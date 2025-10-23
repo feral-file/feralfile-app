@@ -90,19 +90,13 @@ jobs:
       - name: Run tests with coverage
         run: |
           # Run unit tests with coverage
-          flutter test --coverage --coverage-path=coverage/lcov.info
-
-          # Run golden tests with coverage
-          flutter test test/goldens/ --coverage --coverage-path=coverage/golden_lcov.info
-
-          # Merge coverage files
-          lcov --add-tracefile coverage/lcov.info --add-tracefile coverage/golden_lcov.info --output-file coverage/merged_lcov.info
+          flutter test --coverage --coverage-path=test/coverage/lcov.info
 
           # Generate coverage summary
-          lcov --summary coverage/merged_lcov.info > coverage/summary.txt
+          lcov --summary test/coverage/lcov.info > test/coverage/summary.txt
 
           # Extract coverage percentage for threshold check
-          COVERAGE_PERCENT=$(lcov --summary coverage/merged_lcov.info | grep -o '[0-9.]*%' | head -1 | sed 's/%//')
+          COVERAGE_PERCENT=$(lcov --summary test/coverage/lcov.info | grep -o '[0-9.]*%' | head -1 | sed 's/%//')
           echo "COVERAGE_PERCENT=$COVERAGE_PERCENT" >> $GITHUB_ENV
           echo "Current coverage: $COVERAGE_PERCENT%"
 
@@ -124,9 +118,9 @@ jobs:
         with:
           name: coverage-report-ios
           path: |
-            coverage/html/
-            coverage/merged_lcov.info
-            coverage/summary.txt
+            test/coverage/html/
+            test/coverage/lcov.info
+            test/coverage/summary.txt
 
       # Build app
       - name: Build to IPA inhouse app

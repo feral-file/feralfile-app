@@ -16,31 +16,23 @@ echo -e "${BLUE}🧪 Running Flutter tests with coverage...${NC}"
 
 # Clean previous coverage data
 echo "🧹 Cleaning previous coverage data..."
-rm -rf coverage/
-mkdir -p coverage
+rm -rf test/coverage/
+mkdir -p test/coverage
 
 # Run unit tests with coverage
 echo "📊 Running unit tests with coverage..."
-flutter test --coverage --coverage-path=coverage/lcov.info
-
-# Run golden tests with coverage
-echo "🖼️  Running golden tests with coverage..."
-flutter test test/goldens/ --coverage --coverage-path=coverage/golden_lcov.info
-
-# Merge coverage files
-echo "🔗 Merging coverage files..."
-lcov --add-tracefile coverage/lcov.info --add-tracefile coverage/golden_lcov.info --output-file coverage/merged_lcov.info
+flutter test --coverage --coverage-path=test/coverage/lcov.info
 
 # Generate HTML coverage report
 echo "📈 Generating HTML coverage report..."
-genhtml coverage/merged_lcov.info -o coverage/html --ignore-errors source
+genhtml test/coverage/lcov.info -o test/coverage/html --ignore-errors source
 
 # Generate coverage summary
 echo "📋 Generating coverage summary..."
-lcov --summary coverage/merged_lcov.info > coverage/summary.txt
+lcov --summary test/coverage/lcov.info > test/coverage/summary.txt
 
 # Extract coverage percentage
-COVERAGE_PERCENT=$(lcov --summary coverage/merged_lcov.info | grep -o '[0-9.]*%' | head -1 | sed 's/%//')
+COVERAGE_PERCENT=$(lcov --summary test/coverage/lcov.info | grep -o '[0-9.]*%' | head -1 | sed 's/%//')
 
 echo ""
 echo -e "${BLUE}📊 Coverage Results:${NC}"
@@ -63,9 +55,9 @@ fi
 
 echo ""
 echo -e "${BLUE}📁 Coverage Reports Generated:${NC}"
-echo "   📊 HTML Report: coverage/html/index.html"
-echo "   📄 LCOV Data: coverage/merged_lcov.info"
-echo "   📋 Summary: coverage/summary.txt"
+echo "   📊 HTML Report: test/coverage/html/index.html"
+echo "   📄 LCOV Data: test/coverage/lcov.info"
+echo "   📋 Summary: test/coverage/summary.txt"
 
 # Open HTML report if on macOS
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -73,7 +65,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     read -p "🌐 Open HTML coverage report in browser? (y/N): " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        open coverage/html/index.html
+        open test/coverage/html/index.html
     fi
 fi
 
