@@ -328,6 +328,7 @@ extension ArtworkExt on Artwork {
                 : DP1ProvenanceStandard.other);
 
     return DP1Item(
+        id: this.id,
         title: this.name,
         source: previewURL,
         duration: 5 * 60,

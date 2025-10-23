@@ -20,6 +20,8 @@ import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/device_info_service.dart';
 import 'package:autonomy_flutter/service/dls_service.dart';
+import 'package:autonomy_flutter/service/dp1_feed_service.dart';
+import 'package:autonomy_flutter/service/feed_registry_service.dart';
 import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/passkey_service.dart';
@@ -170,22 +172,12 @@ class _OnboardingPageState extends State<OnboardingPage>
       await injector<FFBluetoothService>().init();
       await injector<DLSService>().init();
       await injector<FeralFileFeedManager>().init();
+      await injector<FeralFileDP1FeedService>().init();
 
       unawaited(
         injector<RemoteConfigService>().loadConfigs().then(
           (_) {
             log.info('Remote config loaded');
-            final channelUrls = List<String>.from(
-              injector<RemoteConfigService>().getConfig<List>(
-                ConfigGroup.dp1Playlist,
-                ConfigKey.dp1PlaylistChannelUrls,
-                [],
-              ),
-            );
-            injector<FeralFileFeedManager>().setupRemoteConfigChannels(
-              channelUrls,
-            );
-            injector<FeralFileFeedManager>().reloadAllCache();
           },
           onError: (Object e) {
             log.info('Failed to load remote config: $e');
@@ -264,6 +256,35 @@ class _OnboardingPageState extends State<OnboardingPage>
       log.info('Failed to create owned playlist: $e');
       unawaited(Sentry.captureException(e, stackTrace: s));
     }
+
+    try {
+      await injector<FeedRegistryService>().ensureUserEcdsaKeypair();
+    } catch (e, s) {
+      log.info('Failed to ensure user ECDSA keypair: $e');
+      unawaited(Sentry.captureException(e, stackTrace: s));
+    }
+
+    unawaited(
+      injector<RemoteConfigService>().loadConfigs().then(
+        (_) async {
+          log.info('Remote config loaded');
+          final channelUrls = List<String>.from(
+            injector<RemoteConfigService>().getConfig<List>(
+              ConfigGroup.dp1Playlist,
+              ConfigKey.dp1PlaylistChannelUrls,
+              [],
+            ),
+          );
+          await injector<FeralFileFeedManager>().setupRemoteConfigChannels(
+            channelUrls,
+          );
+          await injector<FeralFileFeedManager>().reloadAllCache();
+        },
+        onError: (Object e) {
+          log.info('Failed to load remote config: $e');
+        },
+      ),
+    );
 
     if (injector<ConfigurationService>().isNotificationEnabled()) {
       unawaited(_registerPushNotifications());

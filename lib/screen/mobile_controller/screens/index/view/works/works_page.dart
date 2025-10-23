@@ -65,11 +65,11 @@ class _WorksPageState extends State<WorksPage>
   }
 
   Widget _buildContent(WorksState state) {
-    if (state.isLoading && state.assetTokens.isEmpty) {
+    if (state.isLoading && state.nowDisplayingItems.isEmpty) {
       return const LoadingView();
     }
 
-    if (state.isError && state.assetTokens.isEmpty) {
+    if (state.isError && state.nowDisplayingItems.isEmpty) {
       return ErrorView(
         error: 'Error loading works: ${state.error}',
         onRetry: () => _worksBloc.add(const LoadWorksEvent()),
@@ -80,8 +80,7 @@ class _WorksPageState extends State<WorksPage>
   }
 
   Widget _buildWorksGridView(WorksState state) {
-    final dp1Items = state.dp1Items;
-    final assetTokens = state.assetTokens;
+    final nowDisplayingItems = state.nowDisplayingItems;
     final hasMore = state.hasMore;
     final isLoadingMore = state.isLoadingMore;
 
@@ -89,7 +88,7 @@ class _WorksPageState extends State<WorksPage>
       controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
-        UIHelper.dp1ItemSliverGrid(context, dp1Items, assetTokens, 'Works'),
+        UIHelper.dp1ItemSliverGrid(context, nowDisplayingItems, 'Works'),
         if (hasMore || isLoadingMore)
           SliverToBoxAdapter(
             child: Padding(

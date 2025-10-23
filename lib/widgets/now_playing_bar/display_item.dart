@@ -1,21 +1,20 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/build/components/DisplayItem.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
-import 'package:autonomy_flutter/nft_collection/models/models.dart';
+import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
-import 'package:autonomy_flutter/util/asset_token_ext.dart';
+import 'package:autonomy_flutter/util/dp1_now_displaying_item_ext.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/text_style_ext.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
+import 'package:autonomy_flutter/view/ff_artwork_thumbnail_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class DisplayItem extends StatelessWidget {
   const DisplayItem({
-    required this.dp1Item,
-    this.assetToken,
+    required this.nowDisplayingItem,
     this.deviceName,
     this.isPlaying = true,
     this.isInExpandedView = false,
@@ -23,8 +22,7 @@ class DisplayItem extends StatelessWidget {
     super.key,
   });
 
-  final DP1Item dp1Item;
-  final AssetToken? assetToken;
+  final DP1NowDisplayingItem nowDisplayingItem;
   final String? deviceName;
   final bool isPlaying;
   final bool isInExpandedView;
@@ -93,9 +91,9 @@ class DisplayItem extends StatelessWidget {
                         BlocBuilder<IdentityBloc, IdentityState>(
                           bloc: _identityBloc,
                           builder: (context, state) {
-                            final artistTitle = assetToken?.artistName
-                                    ?.toIdentityOrMask(state.identityMap) ??
-                                assetToken?.artistName;
+                            final artistTitle = nowDisplayingItem
+                                .artists.firstOrNull?.name
+                                .toIdentityOrMask(state.identityMap);
                             return Text(
                               artistTitle ?? 'Unknown Artist',
                               overflow: TextOverflow.ellipsis,
@@ -110,9 +108,7 @@ class DisplayItem extends StatelessWidget {
                             DisplayItemTokens.textArtworkGap.toDouble(),
                           ),
                           child: Text(
-                            dp1Item.title ??
-                                assetToken?.displayTitle ??
-                                'Unknown Title',
+                            nowDisplayingItem.title ?? 'Unknown Title',
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
                             style: isInExpandedView
@@ -138,16 +134,14 @@ class DisplayItem extends StatelessWidget {
   }
 
   Widget _thumbnail(BuildContext context) {
-    final assetToken = this.assetToken;
-    if (assetToken == null) {
+    final thumbnail = this.nowDisplayingItem.thumbnail;
+    if (thumbnail == null) {
       return const GalleryNoThumbnailWidget();
     }
-    return tokenGalleryThumbnailWidget(
-      context,
-      CompactedAssetToken.fromAssetToken(assetToken),
-      DisplayItemTokens.thumbImageWidth.toInt(),
-      ratio: DisplayItemTokens.thumbImageWidth /
-          DisplayItemTokens.thumbImageHeight,
+    return FFArtworkThumbnailView(
+      url: thumbnail.uri,
+      cacheWidth: DisplayItemTokens.thumbImageWidth.toInt(),
+      cacheHeight: DisplayItemTokens.thumbImageHeight,
     );
   }
 }

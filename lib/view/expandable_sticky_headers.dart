@@ -44,6 +44,7 @@ class _ExpandableSliverStickyHeaderState
     return SliverStickyCollapsablePanel(
       scrollController: widget.scrollController,
       controller: StickyCollapsablePanelController(),
+      defaultExpanded: widget.initiallyExpanded,
       headerBuilder:
           (BuildContext context, SliverStickyCollapsablePanelStatus status) {
         final noSlidableHeader = Column(

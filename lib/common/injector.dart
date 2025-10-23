@@ -59,6 +59,7 @@ import 'package:autonomy_flutter/service/domain_address_service.dart';
 import 'package:autonomy_flutter/service/domain_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/ethereum_service.dart';
+import 'package:autonomy_flutter/service/feed_registry_service.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
 import 'package:autonomy_flutter/service/meilisearch_service.dart';
 import 'package:autonomy_flutter/service/metric_client_service.dart';
@@ -68,6 +69,7 @@ import 'package:autonomy_flutter/service/network_issue_manager.dart';
 import 'package:autonomy_flutter/service/network_service.dart';
 import 'package:autonomy_flutter/service/passkey_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
+import 'package:autonomy_flutter/service/secure_storage_server.dart';
 import 'package:autonomy_flutter/service/settings_data_service.dart';
 import 'package:autonomy_flutter/service/user_interactivity_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
@@ -392,6 +394,10 @@ Future<void> setupInjector() async {
   injector.registerLazySingleton<CloudManager>(CloudManager.new);
   await injector<CloudManager>().init();
 
+  injector.registerLazySingleton<FeedRegistryService>(
+    FeedRegistryServiceImpl.new,
+  );
+
   injector.registerLazySingleton<MobileControllerAPI>(
     () => MobileControllerAPI(
       DioManager().mobileController(
@@ -413,7 +419,7 @@ Future<void> setupInjector() async {
   );
 
   injector.registerLazySingleton<PlaylistsBloc>(
-    () => PlaylistsBloc(),
+    PlaylistsBloc.new,
   );
 
   injector.registerLazySingleton<UserAllOwnCollectionBloc>(
@@ -421,7 +427,7 @@ Future<void> setupInjector() async {
   );
 
   injector.registerLazySingleton<ChannelsBloc>(
-    () => ChannelsBloc(),
+    ChannelsBloc.new,
   );
 
   injector.registerLazySingleton<DP1FeedApi>(
@@ -472,4 +478,8 @@ Future<void> setupInjector() async {
   );
 
   injector.registerFactory<MeiliSearchBloc>(() => MeiliSearchBloc(injector()));
+
+  injector.registerLazySingleton<SecureStorageServer>(
+    SecureStorageServerImpl.new,
+  );
 }

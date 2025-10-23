@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
@@ -179,22 +180,22 @@ Type or paste an address into the command bar to load''',
                                     (addressAssetToken) {
                                       final address =
                                           addressAssetToken.address.address;
-                                      final dp1Items = addressAssetToken
-                                          .assetTokens
-                                          .map((e) => DP1PlaylistItemExtension
-                                              .fromAssetToken(token: e))
+                                      final dp1NowDisplayingItems =
+                                      addressAssetToken.assetTokens
+                                          .map((e) => DP1NowDisplayingItem(
+                                          dp1Item: DP1PlaylistItemExtension
+                                              .fromAssetToken(token: e),
+                                          assetToken: e))
                                           .toList();
                                       return UIHelper
                                           .assetTokenExpandableSliverStickyHeader(
-                                              context,
-                                              dp1Items: dp1Items,
-                                              compactedAssetTokens:
-                                                  addressAssetToken.assetTokens,
-                                              title: addressAssetToken
-                                                  .address.name,
-                                              isExpanded: _expandedAddressesMap[
-                                                      address] ??
-                                                  false,
+                                          context,
+                                          nowDisplayingItems:
+                                          dp1NowDisplayingItems,
+                                          title: addressAssetToken.address.name,
+                                          isExpanded:
+                                          _expandedAddressesMap[address] ??
+                                              false,
                                               onExpandedChanged: (isExpanded) {
                                         WidgetsBinding.instance
                                             .addPostFrameCallback((_) {
