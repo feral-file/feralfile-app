@@ -185,17 +185,17 @@ class ListDirectoryPageState extends State<ListDirectoryPage>
             isNowDisplayingBarExpanded.value = false;
           },
         ),
-      OptionItem(
-        title: 'Custom Feed Server',
-        icon: const Icon(
-          AuIcon.settings,
-        ),
-        onTap: () {
-          injector<NavigationService>()
-              .navigateTo(AppRouter.customFeedServersPage);
-          isNowDisplayingBarExpanded.value = false;
-        },
-      ),
+      // OptionItem(
+      //   title: 'Custom Feed Server',
+      //   icon: const Icon(
+      //     AuIcon.settings,
+      //   ),
+      //   onTap: () {
+      //     injector<NavigationService>()
+      //         .navigateTo(AppRouter.customFeedServersPage);
+      //     isNowDisplayingBarExpanded.value = false;
+      //   },
+      // ),
       OptionItem(
         title: 'App Settings',
         icon: const Icon(

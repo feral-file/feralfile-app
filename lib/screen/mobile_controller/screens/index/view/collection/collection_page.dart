@@ -181,21 +181,24 @@ Type or paste an address into the command bar to load''',
                                       final address =
                                           addressAssetToken.address.address;
                                       final dp1NowDisplayingItems =
-                                      addressAssetToken.assetTokens
-                                          .map((e) => DP1NowDisplayingItem(
-                                          dp1Item: DP1PlaylistItemExtension
-                                              .fromAssetToken(token: e),
-                                          assetToken: e))
-                                          .toList();
+                                          addressAssetToken.assetTokens
+                                              .map((e) => DP1NowDisplayingItem(
+                                                  dp1Item:
+                                                      DP1PlaylistItemExtension
+                                                          .fromAssetToken(
+                                                              token: e),
+                                                  assetToken: e))
+                                              .toList();
                                       return UIHelper
                                           .assetTokenExpandableSliverStickyHeader(
-                                          context,
-                                          nowDisplayingItems:
-                                          dp1NowDisplayingItems,
-                                          title: addressAssetToken.address.name,
-                                          isExpanded:
-                                          _expandedAddressesMap[address] ??
-                                              false,
+                                              context,
+                                              nowDisplayingItems:
+                                                  dp1NowDisplayingItems,
+                                              title: addressAssetToken
+                                                  .address.name,
+                                              isExpanded: _expandedAddressesMap[
+                                                      address] ??
+                                                  false,
                                               onExpandedChanged: (isExpanded) {
                                         WidgetsBinding.instance
                                             .addPostFrameCallback((_) {
