@@ -26,6 +26,17 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Create env file
+        run: |
+          touch .env
+          echo -e "${{ secrets.PRODUCTION_ENV_VARS }}" | sed 's/\\n/\n/g' >> .env
+          cat .env
+
+      - name: Submodules update
+        run: git -c submodule.auto-test.update=none submodule update --init --recursive
+      - run: flutter pub cache repair
+      - run: flutter pub get
+
       - name: Run unit tests with coverage
         run: |
           # Run unit tests with coverage
