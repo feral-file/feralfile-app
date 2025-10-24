@@ -21,21 +21,27 @@ flutter test --coverage --coverage-path=test/coverage/lcov.info
 echo "Generating HTML coverage report..."
 genhtml test/coverage/lcov.info -o test/coverage/html --ignore-errors source
 
+# Read threshold from coverage config
+MIN_COVERAGE=$(grep "threshold:" coverage_config.yaml | sed 's/.*threshold: *//' | sed 's/ *$//')
+if [ -z "$MIN_COVERAGE" ]; then
+    MIN_COVERAGE=80  # Default fallback
+fi
+
 # Extract coverage percentage
 COVERAGE_PERCENT=$(lcov --summary test/coverage/lcov.info | grep -o '[0-9.]*%' | head -1 | sed 's/%//')
 
-echo "📊 Current coverage: ${COVERAGE_PERCENT}%"
+echo "📊 Current coverage: ${COVERAGE_PERCENT}% (threshold: ${MIN_COVERAGE}%)"
 
 # Determine badge color
 COVERAGE_COLOR="red"
 if (( $(echo "$COVERAGE_PERCENT >= 90" | bc -l) )); then
     COVERAGE_COLOR="brightgreen"
     echo -e "${GREEN}✅ Excellent coverage!${NC}"
-elif (( $(echo "$COVERAGE_PERCENT >= 80" | bc -l) )); then
+elif (( $(echo "$COVERAGE_PERCENT >= $MIN_COVERAGE" | bc -l) )); then
     COVERAGE_COLOR="yellow"
     echo -e "${YELLOW}⚠️  Good coverage, but could be better${NC}"
 else
-    echo -e "${RED}❌ Coverage below threshold (80%)${NC}"
+    echo -e "${RED}❌ Coverage below threshold (${MIN_COVERAGE}%)${NC}"
 fi
 
 # Generate badge URL

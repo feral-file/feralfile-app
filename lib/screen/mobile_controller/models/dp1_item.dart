@@ -280,13 +280,7 @@ extension DP1ItemListExtension on List<DP1Item> {
     final uniqueItems = <DP1Item>[];
 
     for (final item in this) {
-      // DP1Item doesn't have id field, use provenance contract info as unique identifier
-      final contract = item.provenance?.contract;
-      if (contract == null) {
-        continue;
-      }
-      final uniqueId =
-          '${contract.chain.value}-${contract.address ?? ''}-${contract.tokenId ?? ''}-${contract.seriesId ?? ''}';
+      final uniqueId = item.id;
 
       if (!seenIds.contains(uniqueId)) {
         seenIds.add(uniqueId);
