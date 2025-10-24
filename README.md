@@ -1,3 +1,4 @@
+![Coverage](https://img.shields.io/badge/coverage-1.0%25-red)
 # Feral File: the way to collect art
 
 

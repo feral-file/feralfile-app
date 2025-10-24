@@ -6,7 +6,12 @@
 set -e
 
 # Configuration
-MIN_COVERAGE=80
+# Read threshold from coverage config
+MIN_COVERAGE=$(grep "threshold:" coverage_config.yaml | sed 's/.*threshold: *//' | sed 's/ *$//')
+if [ -z "$MIN_COVERAGE" ]; then
+    MIN_COVERAGE=80  # Default fallback
+fi
+
 COVERAGE_FILE="coverage/merged_lcov.info"
 PREVIOUS_COVERAGE_FILE="coverage/previous_lcov.info"
 
