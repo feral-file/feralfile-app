@@ -59,7 +59,10 @@ class DisplayItem extends StatelessWidget {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(0),
                         ),
-                        child: _thumbnail(context),
+                        child: IgnorePointer(
+                          child: _thumbnail(context),
+                          ignoring: true,
+                        ),
                       ),
                     ),
                   ],
