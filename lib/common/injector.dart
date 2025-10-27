@@ -7,7 +7,6 @@
 
 // ignore_for_file: cascade_invocations
 
-import 'package:autonomy_flutter/common/database.dart';
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/gateway/customer_support_api.dart';
 import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
@@ -106,6 +105,7 @@ Future<void> setupLogger() async {
 }
 
 Future<void> setupInjector() async {
+  // Initialize ObjectBox store only if not already initialized
   final sharedPreferences = await SharedPreferences.getInstance();
 
   injector.registerLazySingleton(NavigationService.new);
@@ -121,11 +121,6 @@ Future<void> setupInjector() async {
     receiveTimeout: const Duration(seconds: 3),
   );
   final dio = DioManager().base(dioOptions);
-
-  // Initialize ObjectBox store only if not already initialized
-  if (!ObjectBox.isInitialized) {
-    await ObjectBox.create();
-  }
 
   await NftCollection.initNftCollection(
     indexerUrl: Environment.indexerURL,
