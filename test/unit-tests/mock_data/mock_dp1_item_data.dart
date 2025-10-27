@@ -197,6 +197,8 @@ class MockDP1ItemData {
       type: DP1ProvenanceType.offChainURI,
       contract: DP1Contract(
         chain: DP1ProvenanceChain.evm,
+        address: '0x0000000000000000000000000000000000000000',
+        tokenId: '0',
         uri: 'https://example.com/metadata.json',
       ),
     );
