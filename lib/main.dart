@@ -105,7 +105,8 @@ void main() async {
       /// Check error is Database issue
       if (error.toString().contains('DatabaseException') ||
           error.toString().contains('OBX_ERROR code 10001')) {
-        log.info('[DatabaseException] Remove local database and resume app');
+        log.info(
+            '[DatabaseException] Remove local database and resume app $error');
 
         await _cleanupObjectBox();
         await _deleteLocalDatabase();
@@ -182,6 +183,10 @@ Future<void> _setupApp() async {
   } catch (e) {
     log.info('Error in setupLogger: $e');
     Sentry.captureException(e);
+  }
+
+  if (!ObjectBox.isInitialized) {
+    await ObjectBox.create();
   }
   await setupInjector();
   unawaited(injector<DeeplinkService>().setup());

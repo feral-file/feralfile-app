@@ -1,6 +1,8 @@
 import 'dart:io';
+
 import 'package:autonomy_flutter/objectbox.g.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:objectbox/objectbox.dart' as obx;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sentry/sentry.dart';
@@ -30,6 +32,7 @@ class ObjectBox {
   }
 
   static Future<ObjectBox> create() async {
+    log.info('creating ObjectBox store');
     // Check if store is already initialized
     if (_isInitialized && _store != null) {
       return ObjectBox._create(_store!);
@@ -44,8 +47,22 @@ class ObjectBox {
     await deleteStaleLock();
 
     final docsDir = await getApplicationDocumentsDirectory();
-    final store =
-        await openStore(directory: p.join(docsDir.path, objectboxDBFile));
+    final directory = p.join(docsDir.path, objectboxDBFile);
+    final isOpening = Store.isOpen(directory);
+    try {
+      if (isOpening) {
+        Sentry.captureMessage(
+            'ObjectBox store is already open, closing existing store');
+        log.info('ObjectBox store is already open, closing existing store');
+        obx.Store.attach(getObjectBoxModel(), directory).close();
+        log.info('Existing ObjectBox store closed');
+      }
+    } catch (e) {
+      log.severe('Error checking if ObjectBox store is open: $e');
+      Sentry.captureException('Error checking if ObjectBox store is open: $e');
+    }
+    final store = await openStore(directory: directory);
+    log.info('ObjectBox store opened at ${docsDir.path}');
     return ObjectBox._create(store);
   }
 
@@ -55,6 +72,9 @@ class ObjectBox {
       _store!.close();
       _store = null;
       _isInitialized = false;
+      log.info('ObjectBox store closed.');
+    } else {
+      log.info('ObjectBox store is not initialized or already closed.');
     }
   }
 
@@ -71,6 +91,8 @@ class ObjectBox {
         // Double-check no process holds it (safe in most cases)
         await lockFile.delete();
         log.info('Deleted stale ObjectBox lock file');
+      } else {
+        log.info('No stale ObjectBox lock file found');
       }
     } catch (e) {
       // Ignore errors when deleting lock file
