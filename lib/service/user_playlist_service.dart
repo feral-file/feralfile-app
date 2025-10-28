@@ -13,11 +13,25 @@ import 'package:autonomy_flutter/util/log.dart';
 import 'package:sentry/sentry.dart';
 import 'package:uuid/uuid.dart';
 
+abstract class UserPlaylistService {
+  Future<DP1Call> allOwnedPlaylist();
+  Future<DP1Call> createAllOwnedPlaylistIfNotExists();
+  Future<DP1Call?> getPlaylistById(String id);
+  Future<DP1Call> insertAddressesToPlaylist(List<String> addresses);
+  Future<DP1Call> removeAddressesFromPlaylist(List<String> addresses);
+  Future<bool> deleteAllPlaylists();
+  Future<bool> deletePlaylist(String id);
+  Future<void> updateAddressLastRefreshedTime(
+      {required List<String> addresses, DateTime? dateTime});
+  DateTime getAddressOldestLastRefreshedTime({required List<String> addresses});
+  Future<void> clearData();
+}
+
 /// A high-level service to manage a user's DP1 playlists.
 ///
 /// This service coordinates between the remote DP1 feed API (via DP1FeedService)
 /// and local cloud storage (via CloudManager.dp1FeedCloudObject).
-class UserDp1PlaylistService {
+class UserDp1PlaylistService implements UserPlaylistService {
   UserDp1PlaylistService(this._dp1FeedService, this._cloudManager);
 
   final FeralFileDP1FeedService _dp1FeedService;
@@ -45,6 +59,7 @@ class UserDp1PlaylistService {
     bloc.add(UpdateDynamicQueryEvent(dynamicQuery: dynamicQuery));
   }
 
+  @override
   Future<DP1Call> allOwnedPlaylist() async {
     final allOwnedPlaylistIds =
         _cloudManager.dp1FeedCloudObject.getOwnedPlaylistIds();
@@ -64,6 +79,7 @@ class UserDp1PlaylistService {
   }
 
   /// Create a new playlist remotely and cache it locally under owned playlists.
+  @override
   Future<DP1Call> createAllOwnedPlaylistIfNotExists() async {
     final allOwnedPlaylistIds =
         _cloudManager.dp1FeedCloudObject.getOwnedPlaylistIds();
@@ -109,11 +125,13 @@ class UserDp1PlaylistService {
     return created;
   }
 
+  @override
   Future<DP1Call?> getPlaylistById(String id) async {
     final playlist = _dp1FeedService.getPlaylistById(id);
     return playlist;
   }
 
+  @override
   Future<DP1Call> insertAddressesToPlaylist(List<String> addresses) async {
     log.info('Insert addresses to playlist: $addresses');
     final allOwnedPlaylistIds =
@@ -147,6 +165,7 @@ class UserDp1PlaylistService {
     return playlist;
   }
 
+  @override
   Future<DP1Call> removeAddressesFromPlaylist(List<String> addresses) async {
     final allOwnedPlaylistIds =
         _cloudManager.dp1FeedCloudObject.getOwnedPlaylistIds();
@@ -179,6 +198,7 @@ class UserDp1PlaylistService {
     return playlist;
   }
 
+  @override
   Future<bool> deleteAllPlaylists() async {
     final allOwnedPlaylistIds =
         _cloudManager.dp1FeedCloudObject.getOwnedPlaylistIds();
@@ -196,6 +216,7 @@ class UserDp1PlaylistService {
     return true;
   }
 
+  @override
   Future<bool> deletePlaylist(String id) async {
     try {
       log.info('Delete playlist: $id');
@@ -209,6 +230,7 @@ class UserDp1PlaylistService {
     }
   }
 
+  @override
   Future<void> updateAddressLastRefreshedTime({
     required List<String> addresses,
     DateTime? dateTime,
@@ -224,6 +246,7 @@ class UserDp1PlaylistService {
         .setAddressLastRefreshedTime(addressLastRefreshedTime);
   }
 
+  @override
   DateTime getAddressOldestLastRefreshedTime({
     required List<String> addresses,
   }) {
@@ -246,6 +269,7 @@ class UserDp1PlaylistService {
         .reduce((a, b) => a.isBefore(b) ? a : b);
   }
 
+  @override
   Future<void> clearData() async {
     await injector<ConfigurationService>().clearAddressLastRefreshedTime();
     cachedAllOwnedPlaylist = null;
