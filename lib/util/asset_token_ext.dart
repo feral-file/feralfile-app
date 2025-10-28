@@ -12,7 +12,6 @@ import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/int_ext.dart';
 import 'package:autonomy_flutter/util/john_gerrard_helper.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:crypto/crypto.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:web3dart/crypto.dart';
@@ -67,11 +66,7 @@ extension AssetTokenExtension on AssetToken {
   }
 
   String? getPreviewUrl() {
-    if (previewURL != null) {
-      final url = replaceIPFSPreviewURL(previewURL!);
-      return url;
-    }
-    return null;
+    return previewURL;
   }
 
   void updatePostcardCID(String cid) {
@@ -315,7 +310,7 @@ extension CompactedAssetTokenExtension on CompactedAssetToken {
 
     if (usingThumbnailID) {
       if (thumbnailID == null || thumbnailID!.isEmpty) {
-        return replaceIPFS(galleryThumbnailURL!); // return null;
+        return galleryThumbnailURL;
       }
       return _refineToCloudflareURL(
         galleryThumbnailURL!,
@@ -324,7 +319,7 @@ extension CompactedAssetTokenExtension on CompactedAssetToken {
       );
     }
 
-    return replaceIPFS(galleryThumbnailURL!);
+    return galleryThumbnailURL;
   }
 
   String get displayKey => id.hashCode.toString();
@@ -358,27 +353,9 @@ extension CompactedAssetTokenExtension on CompactedAssetToken {
   }
 }
 
-String replaceIPFSPreviewURL(String url) {
-  final newUrl =
-      url.replacePrefix(IPFS_PREFIX, '${Environment.autonomyIpfsPrefix}/ipfs/');
-  return newUrl.replacePrefix(
-    DEFAULT_IPFS_PREFIX,
-    Environment.autonomyIpfsPrefix,
-  );
-}
-
-String replaceIPFS(String url) {
-  final newUrl =
-      url.replacePrefix(IPFS_PREFIX, '${Environment.autonomyIpfsPrefix}/ipfs/');
-  return newUrl.replacePrefix(
-    DEFAULT_IPFS_PREFIX,
-    Environment.autonomyIpfsPrefix,
-  );
-}
-
 String _refineToCloudflareURL(String url, String thumbnailID, String variant) {
   final cloudFlareImageUrlPrefix = Environment.cloudFlareImageUrlPrefix;
   return thumbnailID.isEmpty
-      ? replaceIPFS(url)
+      ? url
       : '$cloudFlareImageUrlPrefix$thumbnailID/$variant';
 }

@@ -5,10 +5,8 @@ import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:autonomy_flutter/common/environment.dart';
-import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/mime_type.dart';
-import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
@@ -203,28 +201,21 @@ class AuFileService extends FileService {
         _taskId2Info.values.firstWhereOrNull((element) => element.url == url);
     if (info == null) {
       final fileInfo = await getFileInfo(url);
-      String? fallbackUrl;
-      if (fileInfo.size <= 0 &&
-          url.startsWith(Environment.autonomyIpfsPrefix)) {
-        fallbackUrl = url.replacePrefix(
-          Environment.autonomyIpfsPrefix,
-          DEFAULT_IPFS_PREFIX,
-        );
-      }
-      if (!(Uri.tryParse(fallbackUrl ?? url)?.hasAbsolutePath ?? false)) {
+
+      if (!(Uri.tryParse(url)?.hasAbsolutePath ?? false)) {
         unawaited(Sentry.captureMessage('[AuFileService] Invalid url $url'));
         return Future.error(Exception('Invalid url $url'));
       }
 
       final fileName = '${md5.convert(utf8.encode(url))}.${fileInfo.extension}';
       final taskId = await FlutterDownloader.enqueue(
-        url: fallbackUrl ?? url,
+        url: url,
         headers: headers ?? {},
         savedDir: _saveDir,
         fileName: fileName,
         showNotification: kDebugMode,
         openFileFromNotification: kDebugMode,
-        timeout: 5000,
+        timeout: 15000,
       );
       if (taskId == null) {
         unawaited(

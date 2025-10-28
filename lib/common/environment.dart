@@ -46,7 +46,6 @@ class Environment {
       'CUSTOMER_SUPPORT_URL',
       'CURRENCY_EXCHANGE_URL',
       'AUTONOMY_PUBDOC_URL',
-      'AUTONOMY_IPFS_PREFIX',
       // 'APP_TESTNET_CONFIG', ignore this key
       // 'IRL_WHITELIST_URL', // this key is not set
       'CLOUD_FLARE_IMAGE_URL_PREFIX',
@@ -153,8 +152,6 @@ class Environment {
   static String get pubdocURL => _readKey('AUTONOMY_PUBDOC_URL', '');
 
   static String get remoteConfigURL => _readKey('REMOTE_CONFIG_URL', '');
-
-  static String get autonomyIpfsPrefix => _readKey('AUTONOMY_IPFS_PREFIX', '');
 
   static int? get pendingTokenExpireMs =>
       int.tryParse(_readKey('PENDING_TOKEN_EXPIRE_MS', ''));
