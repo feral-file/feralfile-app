@@ -8,7 +8,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class PlaylistsPage extends StatefulWidget {
-  const PlaylistsPage({super.key});
+  PlaylistsPage({super.key, ScrollController? scrollController})
+      : scrollController = scrollController ?? ScrollController(),
+        _isExternalController = scrollController != null;
+
+  final ScrollController scrollController;
+  final bool _isExternalController;
 
   @override
   State<PlaylistsPage> createState() => _PlaylistsPageState();
@@ -16,7 +21,7 @@ class PlaylistsPage extends StatefulWidget {
 
 class _PlaylistsPageState extends State<PlaylistsPage>
     with AutomaticKeepAliveClientMixin, RouteAware {
-  final ScrollController _scrollController = ScrollController();
+  ScrollController get _scrollController => widget.scrollController;
   late final PlaylistsBloc _playlistsBloc;
 
   @override
@@ -29,9 +34,10 @@ class _PlaylistsPageState extends State<PlaylistsPage>
 
   @override
   void dispose() {
-    _scrollController
-      ..removeListener(_onScroll)
-      ..dispose();
+    _scrollController.removeListener(_onScroll);
+    if (!widget._isExternalController) {
+      _scrollController.dispose();
+    }
     super.dispose();
   }
 

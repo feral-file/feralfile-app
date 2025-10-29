@@ -379,7 +379,7 @@ void main() {
 
     test('should get playlist items with different durations', () async {
       // Arrange
-      const cursor = null;
+      const String? cursor = null;
       const limit = 100;
       final mockResponse =
           DP1FeedMockData.createPlaylistItemsResponseWithDifferentDurations();

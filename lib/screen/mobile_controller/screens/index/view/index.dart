@@ -36,17 +36,20 @@ class ListDirectoryPage extends StatefulWidget {
 class ListDirectoryPageState extends State<ListDirectoryPage>
     with AutomaticKeepAliveClientMixin, WidgetsBindingObserver, RouteAware {
   late PageController _pageController;
+  late ScrollController _scrollController;
   int _selectedPageIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+    _scrollController = ScrollController();
     WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
+    _scrollController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -87,66 +90,114 @@ class ListDirectoryPageState extends State<ListDirectoryPage>
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
-    final pages = [
-      const PlaylistsPage(),
-      const ChannelsPage(),
-      const WorksPage(),
-      const CollectionPage(),
+
+    Widget buildPage(int index, ScrollController scrollController, Key key) {
+      switch (index) {
+        case 0:
+          return PlaylistsPage(scrollController: scrollController, key: key);
+        case 1:
+          return ChannelsPage(scrollController: scrollController, key: key);
+        case 2:
+          return WorksPage(scrollController: scrollController, key: key);
+        case 3:
+          return CollectionPage(scrollController: scrollController, key: key);
+        default:
+          return const SizedBox.shrink();
+      }
+    }
+
+    final pageBuilders = [
+      (ScrollController scrollController, Key key) =>
+          PlaylistsPage(scrollController: scrollController, key: key),
+      (ScrollController scrollController, Key key) =>
+          ChannelsPage(scrollController: scrollController, key: key),
+      (ScrollController scrollController, Key key) =>
+          WorksPage(scrollController: scrollController, key: key),
+      (ScrollController scrollController, Key key) =>
+          CollectionPage(scrollController: scrollController, key: key),
     ];
-    return Center(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            height: MediaQuery.of(context).padding.top,
-          ),
-          SizedBox(
-            height: 154,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    // Handle back button tap
-                    UIHelper.showCenterMenu(context, options: _defaultOptions);
-                  },
-                  child: Container(
-                    color: Colors.transparent,
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                          right: 15, top: 16, left: 15, bottom: 16),
-                      child: SvgPicture.asset(
-                        'assets/images/icon_drawer.svg',
-                        width: 22,
-                        colorFilter: const ColorFilter.mode(
-                          AppColor.white,
-                          BlendMode.srcIn,
+
+    // return NestedPageViewExample();
+
+    return NestedScrollView(
+      controller: _scrollController,
+      headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+        return <Widget>[
+          SliverAppBar(
+            expandedHeight: 154.0 + MediaQuery.of(context).padding.top,
+            floating: true,
+            snap: true,
+            pinned: false,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            automaticallyImplyLeading: false,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).padding.top,
+                  ),
+                  SizedBox(
+                    height: 154,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            // Handle back button tap
+                            UIHelper.showCenterMenu(context,
+                                options: _defaultOptions);
+                          },
+                          child: Container(
+                            color: Colors.transparent,
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                  right: 15, top: 16, left: 15, bottom: 16),
+                              child: SvgPicture.asset(
+                                'assets/images/icon_drawer.svg',
+                                width: 22,
+                                colorFilter: const ColorFilter.mode(
+                                  AppColor.white,
+                                  BlendMode.srcIn,
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
+                ],
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                HeaderWidget(
+                  selectedIndex: _selectedPageIndex,
+                  onPageChanged: _onPageChanged,
                 ),
+                const SizedBox(height: UIConstants.detailPageHeaderPadding),
               ],
             ),
           ),
-          HeaderWidget(
-            selectedIndex: _selectedPageIndex,
-            onPageChanged: _onPageChanged,
-          ),
-          const SizedBox(height: UIConstants.detailPageHeaderPadding),
-          // _myCollectionButton(context),
-          Expanded(
-            child: PageView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              controller: _pageController,
-              itemCount: pages.length,
-              itemBuilder: (context, index) {
-                return pages[index];
-              },
-            ),
-          ),
-        ],
+        ];
+      },
+      body: PageView.builder(
+        controller: _pageController,
+        itemCount: pageBuilders.length,
+        itemBuilder: (context, index) {
+          return Builder(
+            builder: (context) {
+              final innerController = PrimaryScrollController.of(context);
+              return pageBuilders[index](
+                  innerController, PageStorageKey('page_$index'));
+            },
+          );
+        },
       ),
     );
   }
@@ -246,4 +297,90 @@ class ListDirectoryPageState extends State<ListDirectoryPage>
 
   @override
   bool get wantKeepAlive => true;
+}
+
+class NestedPageViewExample extends StatefulWidget {
+  @override
+  _NestedPageViewExampleState createState() => _NestedPageViewExampleState();
+}
+
+class _NestedPageViewExampleState extends State<NestedPageViewExample> {
+  late PageController _pageController;
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: NestedScrollView(
+        controller: _scrollController,
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          return [
+            SliverAppBar(
+              title: const Text('Nested Scroll + PageView'),
+              expandedHeight: 200,
+              pinned: true,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Image.network(
+                  'https://picsum.photos/800/400',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ];
+        },
+        body: PageView(
+          controller: _pageController,
+          children: [
+            // Each page gets its own Builder
+            Builder(
+              builder: (context) => _buildCustomScrollView(
+                  context, "Page 1", Colors.blue.shade50),
+            ),
+            Builder(
+              builder: (context) => _buildCustomScrollView(
+                  context, "Page 2", Colors.green.shade50),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCustomScrollView(
+      BuildContext context, String title, Color color) {
+    // ✅ Now this context is correct (inside NestedScrollView body)
+    final innerController = PrimaryScrollController.of(context);
+
+    return CustomScrollView(
+      controller: innerController,
+      key: PageStorageKey(title),
+      slivers: List.generate(
+        100,
+        (index) => SliverToBoxAdapter(
+          child: Container(
+            height: 100,
+            color: color,
+            alignment: Alignment.center,
+            child: Text(
+              '$title - Item $index',
+              style: const TextStyle(fontSize: 24, color: Colors.amber),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
