@@ -147,16 +147,32 @@ EOF
 run_coverage() {
     local test_file="$1"
     
+    # Allow tests to fail but still continue to generate reports
+    set +e
     if [ -n "$test_file" ]; then
         echo "🔍 Running tests with coverage for: $test_file"
         flutter test --coverage --coverage-path=test/coverage/lcov.info "test/$test_file"
+        TEST_EXIT_CODE=$?
     else
         echo "🔍 Running tests with coverage for all test files..."
         flutter test --coverage --coverage-path=test/coverage/lcov.info
+        TEST_EXIT_CODE=$?
+    fi
+    set -e
+
+    if [ $TEST_EXIT_CODE -ne 0 ]; then
+        echo -e "${YELLOW}⚠️ Tests failed, attempting to generate coverage report from partial data...${NC}"
+    else
+        echo -e "${GREEN}✅ Tests passed. Generating coverage report...${NC}"
     fi
 
     # Get overall coverage
-    OVERALL_COVERAGE=$(lcov --summary test/coverage/lcov.info | grep -o '[0-9.]*%' | head -1)
+    if [ -f "test/coverage/lcov.info" ]; then
+        OVERALL_COVERAGE=$(lcov --summary test/coverage/lcov.info | grep -o '[0-9.]*%' | head -1)
+    else
+        echo -e "${RED}❌ coverage file not found at test/coverage/lcov.info${NC}"
+        OVERALL_COVERAGE="0%"
+    fi
     echo ""
     echo "📊 Coverage Analysis Report"
     echo "=========================="
@@ -165,7 +181,11 @@ run_coverage() {
 
     # Generate HTML report
     echo "📊 Generating detailed HTML report..."
-    genhtml test/coverage/lcov.info -o test/coverage/html --ignore-errors source --quiet
+    if [ -f "test/coverage/lcov.info" ]; then
+        genhtml test/coverage/lcov.info -o test/coverage/html --ignore-errors source --quiet
+    else
+        echo -e "${RED}❌ Skipping HTML generation due to missing lcov.info${NC}"
+    fi
 
     # Extract files with coverage using a simple approach
     echo -e "${CYAN}📋 Files with Coverage (hit > 0):${NC}"
