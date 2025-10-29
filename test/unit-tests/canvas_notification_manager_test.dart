@@ -10,7 +10,7 @@ import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'mock_data/mock_device_data.dart';
+import '../mock_data/mock_device_data.dart';
 
 class MockAuthService extends Mock implements AuthService {}
 

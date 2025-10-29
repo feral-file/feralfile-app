@@ -1,120 +1,93 @@
+import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/canvas_notification.dart';
+import 'package:autonomy_flutter/model/device/device_status.dart';
 
-/// Mock data factory for NotificationRelayerMessage objects
+import './mock_check_casting_status_reply.dart';
+import './mock_device_status.dart';
+
+/// Utilities to create mock NotificationRelayerMessage instances for tests.
+///
+/// Covers all RelayerMessageType values and common RelayerNotificationType cases.
 class MockNotificationRelayerMessage {
-  /// Create a basic NotificationRelayerMessage object
-  static NotificationRelayerMessage create({
-    RelayerMessageType type = RelayerMessageType.notification,
-    RelayerNotificationType notificationType = RelayerNotificationType.status,
-    Map<String, dynamic>? message,
+  /// Create a generic notification message with a specific notification type
+  /// and custom message payload.
+  static NotificationRelayerMessage notification({
+    required RelayerNotificationType notificationType,
+    Map<String, dynamic> message = const <String, dynamic>{},
     DateTime? timestamp,
   }) {
     return NotificationRelayerMessage(
-      type: type,
-      message: message ??
-          {
-            'ok': true,
-            'index': 0,
-            'isPaused': false,
-          },
+      type: RelayerMessageType.notification,
+      message: message,
       notificationType: notificationType,
       timestamp: timestamp ?? DateTime.now(),
     );
   }
 
-  /// Create a status notification
-  static NotificationRelayerMessage createStatusNotification({
-    int? index,
-    bool? isPaused,
+  /// player_status notification
+  static NotificationRelayerMessage status({
+    CheckCastingStatusReply? reply,
     DateTime? timestamp,
   }) {
-    return NotificationRelayerMessage(
-      type: RelayerMessageType.notification,
-      message: {
-        'ok': true,
-        if (index != null) 'index': index,
-        if (isPaused != null) 'isPaused': isPaused,
-      },
+    final r = reply ?? MockCheckCastingStatusReply.basic();
+    return notification(
       notificationType: RelayerNotificationType.status,
-      timestamp: timestamp ?? DateTime.now(),
+      message: r.toJson(),
+      timestamp: timestamp,
     );
   }
 
-  /// Create a device status notification
-  static NotificationRelayerMessage createDeviceStatusNotification({
-    Map<String, dynamic>? deviceStatusData,
+  /// device_status notification
+  static NotificationRelayerMessage deviceStatus({
+    DeviceStatus? status,
     DateTime? timestamp,
   }) {
-    return NotificationRelayerMessage(
-      type: RelayerMessageType.notification,
-      message: deviceStatusData ??
-          {
-            'screenRotation': 'landscape',
-            'connectedWifi': 'Test WiFi',
-            'installedVersion': '1.0.0',
-            'latestVersion': '1.0.0',
-          },
+    final s = status ?? MockDeviceStatusData.basic();
+    return notification(
       notificationType: RelayerNotificationType.deviceStatus,
-      timestamp: timestamp ?? DateTime.now(),
+      message: s.toJson(),
+      timestamp: timestamp,
     );
   }
 
-  /// Create a connection notification
-  static NotificationRelayerMessage createConnectionNotification({
+  /// connection notification
+  static NotificationRelayerMessage connection({
     bool isConnected = true,
     DateTime? timestamp,
   }) {
-    return NotificationRelayerMessage(
-      type: RelayerMessageType.notification,
-      message: {
-        'isConnected': isConnected,
-      },
+    return notification(
       notificationType: RelayerNotificationType.connection,
-      timestamp: timestamp ?? DateTime.now(),
+      message: <String, dynamic>{'isConnected': isConnected},
+      timestamp: timestamp,
     );
   }
 
-  /// Create list of notifications
-  static List<NotificationRelayerMessage> createList({
-    int count = 3,
-    RelayerNotificationType notificationType = RelayerNotificationType.status,
+  /// Create a mock RelayerMessage of type RPC in the format compatible with
+  /// NotificationRelayerMessage.fromJson. Even though RPC is not a
+  /// NotificationRelayerMessage semantically, tests may still want a JSON map
+  /// that can be parsed via fromJson for negative/edge cases.
+  static Map<String, dynamic> rpcJson({
+    Map<String, dynamic> payload = const <String, dynamic>{'method': 'noop'},
+    DateTime? timestamp,
   }) {
-    return List.generate(count, (index) {
-      return create(
-        notificationType: notificationType,
-        timestamp: DateTime.now().add(Duration(seconds: index)),
-      );
-    });
+    return <String, dynamic>{
+      'type': RelayerMessageType.rpc.value,
+      'message': payload,
+      // For rpc we keep notification_type to a valid value to satisfy parser
+      // in NotificationRelayerMessage.fromJson for edge-case tests
+      'notification_type': RelayerNotificationType.status.value,
+      'timestamp': (timestamp ?? DateTime.now()).millisecondsSinceEpoch,
+    };
   }
 
-  /// Create notification with older timestamp
-  static NotificationRelayerMessage createWithOlderTimestamp({
-    Duration offset = const Duration(seconds: -10),
-  }) {
-    return create(timestamp: DateTime.now().add(offset));
-  }
-
-  /// Create notification with newer timestamp
-  static NotificationRelayerMessage createWithNewerTimestamp({
-    Duration offset = const Duration(seconds: 10),
-  }) {
-    return create(timestamp: DateTime.now().add(offset));
-  }
-
-  /// Create empty notification
-  static NotificationRelayerMessage createEmpty({
-    RelayerNotificationType notificationType = RelayerNotificationType.status,
-  }) {
-    return NotificationRelayerMessage(
-      type: RelayerMessageType.notification,
-      message: {},
-      notificationType: notificationType,
-      timestamp: DateTime.now(),
-    );
-  }
-
-  /// Create notification from JSON
-  static NotificationRelayerMessage fromJson(Map<String, dynamic> json) {
-    return NotificationRelayerMessage.fromJson(json);
+  /// Convenience: build JSON map for a notification entry that can be parsed
+  /// by NotificationRelayerMessage.fromJson.
+  static Map<String, dynamic> toJson(NotificationRelayerMessage message) {
+    return <String, dynamic>{
+      'type': message.type.value,
+      'message': message.message,
+      'notification_type': message.notificationType.value,
+      'timestamp': message.timestamp.millisecondsSinceEpoch,
+    };
   }
 }

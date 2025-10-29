@@ -9,7 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-import 'mock_data/mock_device_data.dart';
+import '../mock_data/mock_device_data.dart';
 
 class MockAuthService extends Mock implements AuthService {}
 

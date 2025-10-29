@@ -6,9 +6,9 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:mocktail/mocktail.dart';
-import '../mock_data/mock_channel_data.dart';
-import '../mock_data/mock_playlist_data.dart';
-import '../mock_data/mock_dp1_item_data.dart';
+import '../../mock_data/mock_channel_data.dart';
+import '../../mock_data/mock_playlist_data.dart';
+import '../../mock_data/mock_dp1_item_data.dart';
 import 'meilisearch_mocks.dart';
 
 class MeiliSearchMockData {

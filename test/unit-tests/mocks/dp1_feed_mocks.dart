@@ -5,7 +5,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/util/feed_cache.dart';
 import 'package:mocktail/mocktail.dart';
 
-import '../mock_data/mock_dp1_item_data.dart';
+import '../../mock_data/mock_dp1_item_data.dart';
 
 /// Mock for DP1FeedApi using mocktail
 class MockDP1FeedApi extends Mock implements DP1FeedApi {}
