@@ -14,7 +14,13 @@ import 'package:autonomy_flutter/util/now_displaying_manager.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 
 class CanvasNotificationManager {
-  factory CanvasNotificationManager() => _instance;
+  factory CanvasNotificationManager({
+    CanvasNotificationService Function(BaseDevice device)? serviceFactory,
+  }) {
+    _instance._serviceFactory =
+        serviceFactory ?? ((device) => CanvasNotificationService(device));
+    return _instance;
+  }
 
   CanvasNotificationManager._internal();
 
@@ -24,6 +30,9 @@ class CanvasNotificationManager {
 
   // Map to hold connected CanvasNotificationService instances
   final Map<String, CanvasNotificationService> _services = {};
+
+  // Factory to create services (test seam)
+  CanvasNotificationService Function(BaseDevice device)? _serviceFactory;
 
   // Map to hold subscriptions for each service's stream
   final Map<String, StreamSubscription<NotificationRelayerMessage>>
@@ -149,7 +158,8 @@ class CanvasNotificationManager {
     var service = _services[device.deviceId];
 
     if (service == null) {
-      final newService = CanvasNotificationService(device);
+      final newService = (_serviceFactory ??
+          ((BaseDevice d) => CanvasNotificationService(d)))(device);
       _services[device.deviceId] = newService;
       // Subscribe to the new service's stream and add to the combined stream
       _subscriptions[device.deviceId] = newService.notificationStream.listen(
