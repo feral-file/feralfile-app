@@ -1,0 +1,35 @@
+# Cursor Rules for FeralFile App
+
+# This file helps Cursor understand the codebase context
+
+# Additional codebases to index
+
+additional_codebases:
+
+- path: /Users/nguyenphuocsang/Bitmark/ff-indexer-v2
+  name: FF Indexer Server (Go)
+  languages: [go]
+
+## Project Context
+
+This is a Flutter mobile app that communicates with a Go-based indexer server.
+The server API documentation and models are in the ff-indexer-v2 repository.
+
+## Code Style
+
+- Always use Feral File engineering voice for messages/UI
+- Write all code and comments in English
+- Respond to users in Vietnamese
+
+## Important Directories
+
+- lib/gateway/: API clients for communicating with backend
+- lib/service/: Business logic layer
+- lib/model/: Data models that should match server types
+- lib/screen/: UI screens and views
+
+## Testing
+
+- Unit tests in test/unit-tests/
+- Use mocktail for mocking
+- Follow existing test patterns in test/unit-tests/
