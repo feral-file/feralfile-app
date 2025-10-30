@@ -1,34 +1,40 @@
 import 'dart:async';
 import 'dart:convert';
 
+// removed unused imports
+
 import 'package:autonomy_flutter/common/injector.dart' as injector_module;
 import 'package:autonomy_flutter/graphql/account_settings/account_settings_db.dart';
 import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
-import 'package:autonomy_flutter/model/canvas_notification.dart';
-import 'package:autonomy_flutter/model/device/base_device.dart';
+// removed unused imports
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
+import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
+import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
+import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
-import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
+import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
 import 'package:autonomy_flutter/service/canvas_notification_manager.dart';
-import 'package:autonomy_flutter/service/canvas_notification_service.dart';
+// removed unused import
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/settings_data_service.dart';
+import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
+import 'package:autonomy_flutter/util/now_displaying_manager.dart';
 import 'package:autonomy_flutter/view/now_displaying/now_displaying_bar.dart';
+// removed unused import
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
+import 'package:mocktail/mocktail.dart';
 
 import '../mock_data/mock_dp1_item_data.dart';
 import '../unit-tests/mock_data/mock_check_casting_status_reply.dart';
-import '../unit-tests/mock_data/mock_notification_relayer_message.dart';
 import '../unit-tests/mock_data/mock_ff_bluetooth_device.dart';
-import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
-import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
-import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
+import '../unit-tests/mock_data/mock_notification_relayer_message.dart';
+import 'fakes/fake_canvas_notification_service.dart';
+import 'helper.dart' as test_helper;
 
 class MockNavigationService extends Mock implements NavigationService {}
 
@@ -54,35 +60,10 @@ class _FakeBuildContext extends Fake implements BuildContext {}
 
 class _FakeCanvasDeviceEvent extends Fake implements CanvasDeviceEvent {}
 
-class FakeCanvasNotificationService extends CanvasNotificationService {
-  FakeCanvasNotificationService(BaseDevice device)
-      : _controller = StreamController<NotificationRelayerMessage>.broadcast(),
-        super(device);
+const String prefix = 'now_displaying';
 
-  final StreamController<NotificationRelayerMessage> _controller;
-  bool _connected = false;
-
-  void emit(NotificationRelayerMessage message) => _controller.add(message);
-
-  @override
-  Stream<NotificationRelayerMessage> get notificationStream =>
-      _controller.stream;
-
-  @override
-  Future<bool> connect() async {
-    _connected = true;
-    return true;
-  }
-
-  @override
-  Future<void> disconnect() async {
-    _connected = false;
-    await _controller.close();
-  }
-
-  @override
-  bool get isConnected => _connected;
-}
+final test_helper.ScreenCapture screenCapture =
+    test_helper.ScreenCapture(prefix);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -182,30 +163,89 @@ void main() {
     when(() => mockIdentityBloc.stream)
         .thenAnswer((_) => identityStateController.stream);
 
-    // // When bloc receives any event, simulate the real handler side-effect by
-    // // triggering NowDisplayingManager update automatically.
-    // when(() => canvasDeviceBloc.add(any())).thenAnswer((invocation) async {
-    //   await NowDisplayingManager().updateDisplayingNow(addStatusOnError: true);
-    // });
+    // Note: Do not stub CanvasDeviceBloc.add on a real bloc to avoid executing
+    // real add() during stubbing. We'll trigger updates explicitly in test.
   });
 
   tearDown(() async {
+    // Close test-created streams
     await identityStateController.close();
+
+    // Disconnect all canvas notification services and clear subscriptions
+    await CanvasNotificationManager().disconnectAll();
+
+    // Reset current casting device and related state
+    await BluetoothDeviceManager().resetDevice();
+
+    // Clear bloc in-memory state
+    canvasDeviceBloc.clear();
+
+    // Unregister singletons to avoid leaking state across tests
+    if (injector_module.injector.isRegistered<CanvasDeviceBloc>()) {
+      injector_module.injector.unregister<CanvasDeviceBloc>();
+    }
+    if (injector_module.injector.isRegistered<CloudManager>()) {
+      injector_module.injector.unregister<CloudManager>();
+    }
+    if (injector_module.injector.isRegistered<NftTokensService>()) {
+      injector_module.injector.unregister<NftTokensService>();
+    }
+    if (injector_module.injector.isRegistered<IdentityBloc>()) {
+      injector_module.injector.unregister<IdentityBloc>();
+    }
+    if (injector_module.injector.isRegistered<AuthService>()) {
+      injector_module.injector.unregister<AuthService>();
+    }
+    if (injector_module.injector.isRegistered<ConfigurationService>()) {
+      injector_module.injector.unregister<ConfigurationService>();
+    }
+    if (injector_module.injector.isRegistered<SettingsDataService>()) {
+      injector_module.injector.unregister<SettingsDataService>();
+    }
   });
 
   Widget _buildTestWidget() => MaterialApp(
         home: BlocProvider<CanvasDeviceBloc>.value(
           value: canvasDeviceBloc,
-          child: const Scaffold(body: NowDisplayingBar()),
+          child: RepaintBoundary(
+            key: const Key('shotRoot'),
+            child: const Scaffold(body: NowDisplayingBar()),
+          ),
         ),
       );
 
-  testGoldens('FF1 connected and get now displaying successful',
-      (tester) async {
+  testWidgets('No device available shows initial state', (tester) async {
     await loadAppFonts();
+    when(() => cloudDB.values).thenReturn(<String>[]);
+
     await tester.pumpWidget(_buildTestWidget());
     await tester.pumpAndSettle();
-    await screenMatchesGolden(tester, 'now_displaying_step_1_initial');
+
+    final manager = CanvasNotificationManager();
+    // Ensure manager knows the active device before any events
+    await manager.start();
+
+    await NowDisplayingManager().updateDisplayingNow();
+
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    });
+
+    await screenCapture.capture(tester, 'no_device_initial');
+
+    expect(find.byType(NowDisplayingBar), findsOneWidget);
+    expect(
+        find.textContaining(
+            'Pair an FF1 to display your collection and curated art on any screen.'),
+        findsOneWidget);
+  });
+
+  testWidgets('FF1 connected and get now displaying successful',
+      (tester) async {
+    await loadAppFonts();
+    when(() => cloudDB.values)
+        .thenReturn(<String>[jsonEncode(device.toJson())]);
+    await tester.pumpWidget(_buildTestWidget());
 
     final items = MockDP1ItemData.createList(count: 20);
     final index = 10;
@@ -216,33 +256,158 @@ void main() {
     final manager = CanvasNotificationManager(
       serviceFactory: (_) => fakeService,
     );
+    // Ensure manager knows the active device before any events
+    await manager.start();
+    await manager.connect(device);
+
+    // Emit messages in order, pumping between steps
+    fakeService
+        .emit(MockNotificationRelayerMessage.connection(isConnected: true));
+
+    fakeService.emit(MockNotificationRelayerMessage.status(reply: status));
+
+    await tester.pumpAndSettle();
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    });
+
+    await screenCapture.capture(tester, 'successful_step_1');
+
+    // Assert the item title at the selected index maps correctly in state
+    final expectedTitle = items[index].title ?? '';
+    expect(find.byType(NowDisplayingBar), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(NowDisplayingBar),
+        matching: find.textContaining(expectedTitle),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Connected is false should show disconnected/idle state',
+      (tester) async {
+    await loadAppFonts();
+    await tester.pumpWidget(_buildTestWidget());
+    await tester.pumpAndSettle();
+
+    final fakeService = FakeCanvasNotificationService(device);
+    final manager = CanvasNotificationManager(
+      serviceFactory: (_) => fakeService,
+    );
 
     await manager.start();
     await manager.connect(device);
 
-    // Emit 3 messages: connection, deviceStatus, status
+    // Emit connection = false
+    fakeService.emit(
+      MockNotificationRelayerMessage.connection(isConnected: false),
+    );
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    });
+    await tester.pumpAndSettle();
+
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    });
+
+    await screenCapture.capture(
+        tester, 'connected_is_false_show_disconnected_state');
+
+    expect(find.byType(NowDisplayingBar), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(NowDisplayingBar),
+        matching: find.textContaining('is offline or disconnected.'),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testGoldens('Connected is true but no status emitted', (tester) async {
+    await loadAppFonts();
+    await tester.pumpWidget(_buildTestWidget());
+    await tester.pumpAndSettle();
+
+    final fakeService = FakeCanvasNotificationService(device);
+    final manager = CanvasNotificationManager(
+      serviceFactory: (_) => fakeService,
+    );
+
+    await manager.start();
+    await manager.connect(device);
+
+    // Emit connection = true, but no status afterwards
+    fakeService.emit(
+      MockNotificationRelayerMessage.connection(isConnected: true),
+    );
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    });
+    await tester.pumpAndSettle();
+
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    });
+
+    await screenCapture.capture(
+        tester, 'connected_is_true_but_no_status_emitted');
+
+    expect(find.byType(NowDisplayingBar), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(NowDisplayingBar),
+        matching:
+            find.textContaining('is connected but cannot get now displaying'),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Connected but invalid status (empty items)', (tester) async {
+    await loadAppFonts();
+    await tester.pumpWidget(_buildTestWidget());
+    await tester.pumpAndSettle();
+    await screenCapture.capture(
+        tester, 'now_displaying_invalid_status_empty_items_step_1_initial');
+
+    final fakeService = FakeCanvasNotificationService(device);
+    final manager = CanvasNotificationManager(
+      serviceFactory: (_) => fakeService,
+    );
+
+    await manager.start();
+    await manager.connect(device);
+
     fakeService.emit(
       MockNotificationRelayerMessage.connection(isConnected: true),
     );
     await tester.pump(const Duration(milliseconds: 50));
-    await screenMatchesGolden(tester, 'now_displaying_step_2_connection');
 
+    // Emit invalid status with empty items
+    final emptyStatus =
+        MockCheckCastingStatusReply.withItems(items: const [], index: 0);
     fakeService.emit(
-      MockNotificationRelayerMessage.deviceStatus(),
-    );
-    await tester.pump(const Duration(milliseconds: 50));
-    await screenMatchesGolden(tester, 'now_displaying_step_3_device_status');
-
-    fakeService.emit(
-      MockNotificationRelayerMessage.status(reply: status),
+      MockNotificationRelayerMessage.status(reply: emptyStatus),
     );
 
-    await tester.pump(const Duration(milliseconds: 400));
-    await screenMatchesGolden(tester, 'now_displaying_step_4_status_ok');
+    await tester.pumpAndSettle();
+
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    });
+    await screenCapture.capture(
+        tester, 'connected_but_invalid_status_empty_items');
+
     expect(find.byType(NowDisplayingBar), findsOneWidget);
-
-    // Assert the item title at the selected index maps correctly in state
-    // final expectedTitle = items[index].title ?? '';
-    // expect(find.text(expectedTitle), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(NowDisplayingBar),
+        matching:
+            find.textContaining('is connected but cannot get now displaying'),
+      ),
+      findsOneWidget,
+    );
   });
 }
