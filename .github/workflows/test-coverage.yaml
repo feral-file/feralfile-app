@@ -53,18 +53,38 @@ jobs:
         continue-on-error: true
         run: |
           # Run unit tests with coverage
-          flutter test --coverage --coverage-path=test/coverage/lcov.info
+          mkdir -p test/coverage
+          set -o pipefail
+          flutter test --coverage --coverage-path=test/coverage/lcov.info | tee test/coverage/test_output.txt || true
+
+      - name: Collect failed tests summary
+        run: |
+          mkdir -p test/coverage
+          if [ -f test/coverage/test_output.txt ]; then
+            # Strip ANSI color codes
+            sed -E 's/\x1B\[[0-9;]*[a-zA-Z]//g' test/coverage/test_output.txt > test/coverage/test_output_clean.txt || true
+            # Extract failure lines (common markers: ✖, FAIL, FAILED)
+            grep -E "^\s*✖|^\s*FAIL|^\s*FAILED" test/coverage/test_output_clean.txt | head -n 200 > test/coverage/failed_tests.txt || true
+            if [ ! -s test/coverage/failed_tests.txt ]; then
+              echo "No failed tests." > test/coverage/failed_tests.txt
+            fi
+          else
+            echo "No test output captured." > test/coverage/failed_tests.txt
+          fi
 
       - name: Generate coverage report
         run: |
-          # Generate HTML coverage report
-          genhtml test/coverage/lcov.info -o test/coverage/html --ignore-errors source
-
-          # Generate coverage summary
-          lcov --summary test/coverage/lcov.info > test/coverage/summary.txt
-
-          # Extract coverage percentage for threshold check
-          COVERAGE_PERCENT=$(lcov --summary test/coverage/lcov.info | grep -o '[0-9.]*%' | head -1 | sed 's/%//')
+          # Generate HTML coverage report and summary if lcov exists
+          if [ -f test/coverage/lcov.info ]; then
+            genhtml test/coverage/lcov.info -o test/coverage/html --ignore-errors source
+            lcov --summary test/coverage/lcov.info > test/coverage/summary.txt
+            COVERAGE_PERCENT=$(lcov --summary test/coverage/lcov.info | grep -o '[0-9.]*%' | head -1 | sed 's/%//')
+          else
+            echo "No coverage file found; skipping report generation."
+            mkdir -p test/coverage/html
+            echo "No coverage generated." > test/coverage/summary.txt
+            COVERAGE_PERCENT=0
+          fi
           echo "COVERAGE_PERCENT=$COVERAGE_PERCENT" >> $GITHUB_ENV
           echo "Current coverage: $COVERAGE_PERCENT%"
 
@@ -88,14 +108,11 @@ jobs:
             test/coverage/html/
             test/coverage/lcov.info
             test/coverage/summary.txt
+            test/coverage/test_output.txt
+            test/coverage/failed_tests.txt
+          if-no-files-found: warn
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          file: test/coverage/lcov.info
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: false
+      # Removed Codecov upload step as per requirement to only generate report and comment
 
       - name: Comment PR with coverage
         if: github.event_name == 'pull_request'
@@ -104,6 +121,8 @@ jobs:
           script: |
             const fs = require('fs');
             const summary = fs.readFileSync('test/coverage/summary.txt', 'utf8');
+            let failedTests = 'No failed tests.';
+            try { failedTests = fs.readFileSync('test/coverage/failed_tests.txt', 'utf8'); } catch (e) {}
 
             const comment = `## 📊 Test Coverage Report
 
@@ -114,6 +133,15 @@ jobs:
 
             \`\`\`
             ${summary}
+            \`\`\`
+
+            </details>
+
+            <details>
+            <summary>❗ Failed Tests</summary>
+
+            \`\`\`
+            ${failedTests}
             \`\`\`
 
             </details>
