@@ -4,13 +4,18 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class WorksPage extends StatefulWidget {
-  const WorksPage({super.key});
+  WorksPage({super.key, ScrollController? scrollController})
+      : scrollController = scrollController ?? ScrollController(),
+        _isExternalController = scrollController != null;
+  final ScrollController scrollController;
+  final bool _isExternalController;
 
   @override
   State<WorksPage> createState() => _WorksPageState();
@@ -18,12 +23,13 @@ class WorksPage extends StatefulWidget {
 
 class _WorksPageState extends State<WorksPage>
     with AutomaticKeepAliveClientMixin {
-  final ScrollController _scrollController = ScrollController();
+  ScrollController get _scrollController => widget.scrollController;
   late final WorksBloc _worksBloc;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_keyListener);
     _scrollController.addListener(_onScroll);
     _worksBloc = injector<WorksBloc>();
     _worksBloc.add(const LoadWorksEvent());
@@ -31,8 +37,15 @@ class _WorksPageState extends State<WorksPage>
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    _scrollController.removeListener(_onScroll);
+    if (!widget._isExternalController) {
+      _scrollController.dispose();
+    }
     super.dispose();
+  }
+
+  void _keyListener() {
+    log.info('key listener');
   }
 
   void _onScroll() {
@@ -85,7 +98,7 @@ class _WorksPageState extends State<WorksPage>
     final isLoadingMore = state.isLoadingMore;
 
     return CustomScrollView(
-      controller: _scrollController,
+      // controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
         UIHelper.dp1ItemSliverGrid(context, nowDisplayingItems, 'Works'),

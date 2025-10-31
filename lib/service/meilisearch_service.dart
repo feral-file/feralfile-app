@@ -22,19 +22,29 @@ import 'package:meilisearch/meilisearch.dart';
 
 /// Service for searching across multiple MeiliSearch indexes using the official MeiliSearch SDK
 class MeiliSearchService {
-  MeiliSearchService._internal({this.prefix = 'feed_prod'});
+  MeiliSearchService._internal(
+      {this.prefix = 'feed_prod', MeiliSearchClient? testClient})
+      : _testClient = testClient;
 
   /// Create a new instance with the specified prefix
-  factory MeiliSearchService({String prefix = 'feed_prod'}) =>
-      MeiliSearchService._internal(prefix: prefix);
+  factory MeiliSearchService(
+          {String prefix = 'feed_prod', MeiliSearchClient? testClient}) =>
+      MeiliSearchService._internal(prefix: prefix, testClient: testClient);
 
   late final MeiliSearchClient _client;
   final String prefix;
+  final MeiliSearchClient? _testClient;
 
   // late CustomMeiliSDK _customClient;
 
   /// Initialize the service with MeiliSearch configuration
   void initialize() {
+    // Use test client if provided, otherwise create real client
+    if (_testClient != null) {
+      _client = _testClient;
+      return;
+    }
+
     // _customClient = CustomMeiliSDK(prefix: prefix)..initialize();
     final ioAdapter = IOHttpClientAdapter();
     ioAdapter.createHttpClient = () {
@@ -193,98 +203,4 @@ class MeiliSearchService {
         'MeiliSearchService.searchAll completed in ${DateTime.now().difference(start).inMilliseconds} ms with total hits: ${result.totalHits}');
     return result;
   }
-
-  // Removed: _safeSearch helper (no longer used)
-
-  Future<Searcheable<Map<String, dynamic>>> _search(
-      String text, String suffix, SearchQuery query) async {
-    final indexName = '${prefix}_$suffix';
-    final idx = _client.index(indexName);
-    final res = await timerMetric(
-        'Meili Search $indexName', () async => idx.search(text, query));
-    return res;
-  }
-
-  /// Search channels only
-  Future<List<Channel>> searchChannels({
-    required String text,
-    int limit = 20,
-    int offset = 0,
-    List<String>? filters,
-  }) async {
-    const suffix = 'channels';
-    final searchQuery = SearchQuery(
-      offset: offset,
-      limit: limit,
-    );
-
-    final result = await _search(text, suffix, searchQuery);
-
-    return result.hits.map((hit) {
-      try {
-        final json = Map<String, dynamic>.from(hit as Map);
-        return Channel.fromJson(json);
-      } catch (e) {
-        log.warning('Failed to parse channel: $e');
-        rethrow;
-      }
-    }).toList();
-  }
-
-  /// Search playlists only
-  Future<List<DP1Call>> searchPlaylists({
-    required String text,
-    int limit = 20,
-    int offset = 0,
-    List<String>? filters,
-  }) async {
-    const suffix = 'playlists';
-    final searchQuery = SearchQuery(
-      offset: offset,
-      limit: limit,
-    );
-
-    final result = await _search(text, suffix, searchQuery);
-
-    return result.hits.map((hit) {
-      try {
-        final json = Map<String, dynamic>.from(hit as Map);
-        return DP1Call.fromJson(json);
-      } catch (e) {
-        log.warning('Failed to parse playlist: $e');
-        rethrow;
-      }
-    }).toList();
-  }
-
-  /// Search playlist items only
-  Future<List<DP1Item>> searchPlaylistItems({
-    required String text,
-    int limit = 20,
-    int offset = 0,
-    List<String>? filters,
-  }) async {
-    const suffix = 'playlist_items';
-    final searchQuery = SearchQuery(
-      offset: offset,
-      limit: limit,
-    );
-
-    final result = await _search(text, suffix, searchQuery);
-
-    return result.hits.map((hit) {
-      try {
-        final json = Map<String, dynamic>.from(hit as Map);
-        return DP1Item.fromJson(json);
-      } catch (e) {
-        log.warning('Failed to parse playlist item: $e');
-        rethrow;
-      }
-    }).toList();
-  }
-
-  // Old search methods removed in favor of channels/playlists/playlist_items
 }
-
-/// Result class for MeiliSearch operations
-// MeiliSearchResult moved to meilisearch_models.dart

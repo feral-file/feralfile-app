@@ -24,7 +24,7 @@ class PlaylistListView extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      controller: scrollController,
+      // controller: scrollController,
       slivers: [
         UIHelper.playlistSliverListView(
           playlists: playlists,

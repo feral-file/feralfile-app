@@ -8,7 +8,7 @@ on:
   # - develop
 jobs:
   build:
-    runs-on: [ self-hosted, macOS ]
+    runs-on: [self-hosted, macOS]
     steps:
       # Checkout code and get packages.
       - name: Checkout code
@@ -85,6 +85,43 @@ jobs:
         run: git submodule update --init --recursive
       - run: flutter pub cache repair
       - run: flutter pub get
+
+      # Run tests with coverage
+      - name: Run tests with coverage
+        run: |
+          # Run unit tests with coverage
+          flutter test --coverage --coverage-path=test/coverage/lcov.info
+
+          # Generate coverage summary
+          lcov --summary test/coverage/lcov.info > test/coverage/summary.txt
+
+          # Extract coverage percentage for threshold check
+          COVERAGE_PERCENT=$(lcov --summary test/coverage/lcov.info | grep -o '[0-9.]*%' | head -1 | sed 's/%//')
+          echo "COVERAGE_PERCENT=$COVERAGE_PERCENT" >> $GITHUB_ENV
+          echo "Current coverage: $COVERAGE_PERCENT%"
+
+      - name: Check coverage threshold
+        run: |
+          # Set minimum coverage threshold (80% as per Orbit 1 quality guardrails)
+          MIN_COVERAGE=80
+
+          if (( $(echo "$COVERAGE_PERCENT < $MIN_COVERAGE" | bc -l) )); then
+            echo "❌ Coverage $COVERAGE_PERCENT% is below minimum threshold of $MIN_COVERAGE%"
+            echo "Please add more tests to improve coverage."
+            exit 1
+          else
+            echo "✅ Coverage $COVERAGE_PERCENT% meets minimum threshold of $MIN_COVERAGE%"
+          fi
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-ios
+          path: |
+            test/coverage/html/
+            test/coverage/lcov.info
+            test/coverage/summary.txt
+
       # Build app
       - name: Build to IPA inhouse app
         run: flutter build ipa --flavor inhouse --export-options-plist ios/ExportOptions-Inhouse.plist

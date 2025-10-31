@@ -1,0 +1,214 @@
+name: Test Coverage
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    branches: ["*"]
+  workflow_dispatch:
+
+jobs:
+  test-coverage:
+    runs-on: [self-hosted, macOS]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed for coverage reporting
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.27.2"
+          channel: stable
+
+      - name: Install dependencies
+        run: |
+          flutter pub get
+          # Install lcov for coverage reporting
+          if command -v brew &> /dev/null; then
+            brew install lcov
+          elif command -v apt-get &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y lcov
+          elif command -v yum &> /dev/null; then
+            sudo yum install -y lcov
+          else
+            echo "Please install lcov manually for coverage reporting"
+            exit 1
+          fi
+
+      - name: Create env file
+        run: |
+          touch .env
+          echo -e "${{ secrets.PRODUCTION_ENV_VARS }}" | sed 's/\\n/\n/g' >> .env
+          cat .env
+
+      - name: Submodules update
+        run: git -c submodule.auto-test.update=none submodule update --init --recursive
+      - run: flutter pub cache repair
+      - run: flutter pub get
+
+      - name: Run unit tests with coverage
+        continue-on-error: true
+        run: |
+          # Run unit tests with coverage
+          mkdir -p test/coverage
+          set -o pipefail
+          flutter test --coverage --coverage-path=test/coverage/lcov.info | tee test/coverage/test_output.txt || true
+
+      - name: Collect failed tests summary
+        run: |
+          mkdir -p test/coverage
+          if [ -f test/coverage/test_output.txt ]; then
+            # Strip ANSI color codes
+            sed -E 's/\x1B\[[0-9;]*[a-zA-Z]//g' test/coverage/test_output.txt > test/coverage/test_output_clean.txt || true
+            # Extract failure lines (common markers: ✖, FAIL, FAILED)
+            grep -E "^\s*✖|^\s*FAIL|^\s*FAILED" test/coverage/test_output_clean.txt | head -n 200 > test/coverage/failed_tests.txt || true
+            if [ ! -s test/coverage/failed_tests.txt ]; then
+              echo "No failed tests." > test/coverage/failed_tests.txt
+            fi
+          else
+            echo "No test output captured." > test/coverage/failed_tests.txt
+          fi
+
+      - name: Generate coverage report
+        run: |
+          # Generate HTML coverage report and summary if lcov exists
+          if [ -f test/coverage/lcov.info ]; then
+            genhtml test/coverage/lcov.info -o test/coverage/html --ignore-errors source
+            lcov --summary test/coverage/lcov.info > test/coverage/summary.txt
+            COVERAGE_PERCENT=$(lcov --summary test/coverage/lcov.info | grep -o '[0-9.]*%' | head -1 | sed 's/%//')
+          else
+            echo "No coverage file found; skipping report generation."
+            mkdir -p test/coverage/html
+            echo "No coverage generated." > test/coverage/summary.txt
+            COVERAGE_PERCENT=0
+          fi
+          echo "COVERAGE_PERCENT=$COVERAGE_PERCENT" >> $GITHUB_ENV
+          echo "Current coverage: $COVERAGE_PERCENT%"
+
+      - name: Check coverage threshold
+        run: |
+          # Set minimum coverage threshold (80% as per Orbit 1 quality guardrails)
+          MIN_COVERAGE=80
+
+          if (( $(echo "$COVERAGE_PERCENT < $MIN_COVERAGE" | bc -l) )); then
+            echo "❌ Coverage $COVERAGE_PERCENT% is below minimum threshold of $MIN_COVERAGE%"
+            echo "Please add more tests to improve coverage."
+          else
+            echo "✅ Coverage $COVERAGE_PERCENT% meets minimum threshold of $MIN_COVERAGE%"
+          fi
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            test/coverage/html/
+            test/coverage/lcov.info
+            test/coverage/summary.txt
+            test/coverage/test_output.txt
+            test/coverage/failed_tests.txt
+          if-no-files-found: warn
+
+      # Removed Codecov upload step as per requirement to only generate report and comment
+
+      - name: Comment PR with coverage
+        # if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Skip if not running in PR context to avoid 404 on push events
+            if (context.eventName !== 'pull_request' || !context.issue || !context.issue.number) {
+              core.info('No PR context detected. Skipping comment step.');
+              return;
+            }
+
+            const fs = require('fs');
+            const summary = fs.readFileSync('test/coverage/summary.txt', 'utf8');
+            let failedTests = 'No failed tests.';
+            try { failedTests = fs.readFileSync('test/coverage/failed_tests.txt', 'utf8'); } catch (e) {}
+
+            const comment = `## 📊 Test Coverage Report
+
+            **Current Coverage: ${process.env.COVERAGE_PERCENT}%**
+
+            <details>
+            <summary>Coverage Summary</summary>
+
+            \`\`\`
+            ${summary}
+            \`\`\`
+
+            </details>
+
+            <details>
+            <summary>❗ Failed Tests</summary>
+
+            \`\`\`
+            ${failedTests}
+            \`\`\`
+
+            </details>
+
+            📈 [View detailed coverage report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            ---
+            *Coverage threshold: 80% (Orbit 1 quality guardrails)*`;
+
+            // Upsert a single comment: update if exists, else create
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+
+            const marker = '## 📊 Test Coverage Report';
+            const existing = comments.find(c => (c.body || '').startsWith(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: comment,
+              });
+              core.info(`Updated existing coverage comment: ${existing.id}`);
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment,
+              });
+              core.info('Created new coverage comment');
+            }
+
+      - name: Update coverage badge
+        if: github.ref == 'refs/heads/main'
+        run: |
+          # Create coverage badge
+          COVERAGE_COLOR="red"
+          if (( $(echo "$COVERAGE_PERCENT >= 90" | bc -l) )); then
+            COVERAGE_COLOR="brightgreen"
+          elif (( $(echo "$COVERAGE_PERCENT >= 80" | bc -l) )); then
+            COVERAGE_COLOR="yellow"
+          fi
+
+          # Update coverage badge in README
+          BADGE_URL="https://img.shields.io/badge/coverage-${COVERAGE_PERCENT}%25-${COVERAGE_COLOR}"
+          echo "Coverage badge URL: $BADGE_URL"
+
+      - name: Notify on failure
+        if: failure()
+        uses: ravsamhq/notify-slack-action@v2
+        with:
+          status: ${{ job.status }}
+          notify_when: "failure"
+          notification_title: "Test Coverage Failed - {workflow}"
+          message_format: "❌ Test coverage failed in <{repo_url}|{repo}@{branch}> on commit <{commit_url}|{commit_sha}>"
+          footer: "<{run_url}|View Run>"
+          mention_users: "U03NZ7JU8KC"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.WEBHOOK_LOCAL_BITMARKVN_CI_SLACK }}

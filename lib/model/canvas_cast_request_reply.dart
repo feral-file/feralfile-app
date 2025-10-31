@@ -12,7 +12,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ex
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_intent.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/intent.dart';
 import 'package:flutter/material.dart';
 
 enum CastCommand {
@@ -456,6 +455,7 @@ class CheckCastingStatusReply extends ReplyWithOK {
         'deviceSettings': deviceSettings?.toJson(),
         'castCommand': castCommand?.toString(),
         'error': super.error?.jsonString,
+        'items': items?.map((item) => item.toJson()).toList(),
       };
 
   // copyWith method

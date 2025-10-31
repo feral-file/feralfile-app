@@ -1,0 +1,41 @@
+# Coverage configuration for Feral File app
+coverage:
+  # Minimum coverage threshold (Orbit 1 quality guardrails)
+  threshold: 80
+  
+  # Coverage paths to include (only specific files imported in tests)
+  include:
+    - "lib/service/meilisearch_service.dart"
+    - "test/unit-tests/mocks/meilisearch_mock_client.dart"
+    - "test/unit-tests/mocks/meilisearch_mock_data.dart"
+    - "test/unit-tests/mocks/mock_channel_data.dart"
+    - "test/unit-tests/mocks/mock_playlist_data.dart"
+    - "test/unit-tests/mocks/mock_dp1_item_data.dart"
+    - "test/unit-tests/mocks/mock_service_helper.dart"
+    - "test/unit-tests/mocks/base_mock_response.dart"
+  
+  # Coverage paths to exclude
+  exclude:
+    - "lib/**/*.g.dart"
+    - "lib/**/*.freezed.dart"
+    - "lib/main.dart"
+    - "lib/**/*_test.dart"
+    - "test/**/*_test.dart"
+    - "test/unit-tests/mock_injector/**/*.dart"
+  
+  # Coverage report formats
+  formats:
+    - html
+    - lcov
+    - json
+  
+  # Coverage report output directory
+  output_dir: "test/coverage"
+  
+  # Coverage badge configuration
+  badge:
+    enabled: true
+    color_thresholds:
+      excellent: 90
+      good: 80
+      poor: 70

@@ -9,7 +9,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ChannelsPage extends StatefulWidget {
-  const ChannelsPage({super.key});
+  ChannelsPage({super.key, ScrollController? scrollController})
+      : scrollController = scrollController ?? ScrollController(),
+        _isExternalController = scrollController != null;
+  final ScrollController scrollController;
+  final bool _isExternalController;
 
   @override
   State<ChannelsPage> createState() => _ChannelsPageState();
@@ -17,8 +21,9 @@ class ChannelsPage extends StatefulWidget {
 
 class _ChannelsPageState extends State<ChannelsPage>
     with AutomaticKeepAliveClientMixin {
-  final ScrollController _scrollController = ScrollController();
   late final ChannelsBloc _channelsBloc;
+
+  ScrollController get _scrollController => widget.scrollController;
 
   @override
   void initState() {
@@ -30,9 +35,10 @@ class _ChannelsPageState extends State<ChannelsPage>
 
   @override
   void dispose() {
-    _scrollController
-      ..removeListener(_onScroll)
-      ..dispose();
+    _scrollController.removeListener(_onScroll);
+    if (!widget._isExternalController) {
+      _scrollController.dispose();
+    }
     super.dispose();
   }
 
@@ -89,7 +95,7 @@ class _ChannelsPageState extends State<ChannelsPage>
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.zero,
-      controller: _scrollController,
+      // controller: _scrollController,
       itemCount: channels.length + (hasMore ? 1 : 0),
       itemBuilder: (context, index) {
         if (index == channels.length) {

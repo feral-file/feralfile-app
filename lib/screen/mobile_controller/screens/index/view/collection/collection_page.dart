@@ -29,7 +29,11 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class CollectionPage extends StatefulWidget {
-  const CollectionPage({super.key});
+  CollectionPage({super.key, ScrollController? scrollController})
+      : scrollController = scrollController ?? ScrollController(),
+        _isExternalController = scrollController != null;
+  final ScrollController scrollController;
+  final bool _isExternalController;
 
   @override
   State<CollectionPage> createState() => _CollectionPageState();
@@ -42,23 +46,24 @@ class _CollectionPageState extends State<CollectionPage>
   bool _isNoticeBannerVisible = true;
   Timer? _autoRefreshTimer;
 
-  late final ScrollController _scrollController;
+  ScrollController get _scrollController => widget.scrollController;
 
   final Map<String, bool> _expandedAddressesMap = {};
 
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController();
     _collectionBloc = injector<UserAllOwnCollectionBloc>();
     _addressBloc = ViewExistingAddressBloc(injector(), injector());
     // Clamp negative scroll offsets that can occur during header collapse animations
-    _scrollController.addListener(() {
-      final offset = _scrollController.offset;
-      if (offset < 0) {
-        _scrollController.jumpTo(0);
-      }
-    });
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    final offset = _scrollController.offset;
+    if (offset < 0) {
+      _scrollController.jumpTo(0);
+    }
   }
 
   @override
@@ -68,7 +73,10 @@ class _CollectionPageState extends State<CollectionPage>
   void dispose() {
     _autoRefreshTimer?.cancel();
     _addressBloc.close();
-    _scrollController.dispose();
+    _scrollController.removeListener(_onScroll);
+    if (!widget._isExternalController) {
+      _scrollController.dispose();
+    }
     super.dispose();
   }
 
