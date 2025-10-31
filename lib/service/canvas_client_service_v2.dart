@@ -144,20 +144,6 @@ class CanvasClientServiceV2 {
     }
   }
 
-  Future<bool> castListArtwork(
-    BaseDevice device,
-    List<DP1Item> artworks,
-  ) async {
-    try {
-      final intent = DP1Intent.displayNow();
-      final dp1Call = DP1CallExtension.fromItems(items: artworks);
-      return await castPlaylist(device, dp1Call, intent);
-    } catch (e) {
-      log.info('CanvasClientService: castListArtwork error: $e');
-      return false;
-    }
-  }
-
   Future<bool> pauseCasting(
     BaseDevice device,
   ) async {
