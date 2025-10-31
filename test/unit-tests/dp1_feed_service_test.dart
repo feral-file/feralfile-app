@@ -5,8 +5,8 @@ import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'mock_data/mock_channel_data.dart';
-import 'mock_data/mock_playlist_data.dart';
+import '../mock_data/mock_channel_data.dart';
+import '../mock_data/mock_playlist_data.dart';
 import 'mocks/dp1_feed_mocks.dart';
 
 void main() {

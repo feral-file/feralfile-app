@@ -10,9 +10,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:meilisearch/meilisearch.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'mock_data/mock_channel_data.dart';
-import 'mock_data/mock_dp1_item_data.dart';
-import 'mock_data/mock_playlist_data.dart';
+import '../mock_data/mock_channel_data.dart';
+import '../mock_data/mock_dp1_item_data.dart';
+import '../mock_data/mock_playlist_data.dart';
 import 'mock_injector/mock_injector.dart';
 import 'mocks/meilisearch_mock_data.dart';
 import 'mocks/meilisearch_mocks.dart';

@@ -9,10 +9,45 @@ import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-class CanvasNotificationService {
-  CanvasNotificationService(this._device);
+abstract class NotificationSocket {
+  Stream<dynamic> get stream;
+  StreamSink<dynamic> get sink;
+}
 
-  WebSocketChannel? _channel;
+class WebSocketNotificationSocket implements NotificationSocket {
+  WebSocketNotificationSocket(WebSocketChannel inner) : _inner = inner;
+  final WebSocketChannel _inner;
+  @override
+  Stream<dynamic> get stream => _inner.stream;
+  @override
+  StreamSink<dynamic> get sink => _inner.sink;
+}
+
+typedef NotificationSocketFactory = NotificationSocket Function(Uri uri);
+
+Uri _defaultUriBuilder(BaseDevice device, String userId) {
+  final apiKey = Environment.tvKey;
+  final topicId = device.topicId;
+  final clientId = userId;
+  final wsUrl = '${Environment.tvNotificationUrl}/api/notification?'
+      'apiKey=$apiKey&topicID=$topicId&clientId=$clientId';
+  return Uri.parse(wsUrl);
+}
+
+class CanvasNotificationService {
+  CanvasNotificationService(
+    this._device, {
+    NotificationSocketFactory? channelFactory,
+    Uri Function(BaseDevice device, String userId)? uriBuilder,
+  })  : _socketFactory = channelFactory ??
+            ((uri) => WebSocketNotificationSocket(
+                  WebSocketChannel.connect(uri),
+                )),
+        _uriBuilder = uriBuilder ?? _defaultUriBuilder;
+
+  NotificationSocket? _socket;
+  final NotificationSocketFactory _socketFactory;
+  final Uri Function(BaseDevice device, String userId) _uriBuilder;
   final _notificationController =
       StreamController<NotificationRelayerMessage>.broadcast();
   final _authService = injector<AuthService>();
@@ -39,20 +74,14 @@ class CanvasNotificationService {
       _reconnectTimer?.cancel();
       _stopPingTimer();
 
-      final apiKey = Environment.tvKey;
-      final topicId = _device.topicId;
-      final clientId = userId;
+      final uri = _uriBuilder(_device, userId);
 
-      final wsUrl = '${Environment.tvNotificationUrl}/api/notification?'
-          'apiKey=$apiKey&topicID=$topicId&clientId=$clientId';
+      _socket = _socketFactory(uri);
 
-      _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
-
-      log.info(
-          '[CanvasNotificationService] Device ${_device.name} connecting to ${wsUrl.replaceAll(apiKey, '***')}');
+      log.info('[CanvasNotificationService] Device ${_device.name} connecting');
 
       final completer = Completer<bool>();
-      _channel!.stream.listen(
+      _socket!.stream.listen(
         (message) {
           if (!completer.isCompleted) {
             completer.complete(true);
@@ -134,16 +163,16 @@ class CanvasNotificationService {
 
   void _sendPing() {
     // if (_isConnected) {
-    //   _channel?.sink.add(jsonEncode({'type': 'ping'}));
+    //   _socket?.sink.add(jsonEncode({'type': 'ping'}));
     // }
   }
 
   Future<void> disconnect() async {
-    await _channel?.sink.close();
-    await Future.delayed(const Duration(milliseconds: 100));
+    await _socket?.sink.close();
+    await Future<void>.delayed(const Duration(milliseconds: 100));
     _stopPingTimer();
     _reconnectTimer?.cancel();
-    _channel = null;
+    _socket = null;
     _isConnected = false;
     log.info(
         '[CanvasNotificationService] Device ${_device.name} called disconnect');
