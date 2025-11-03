@@ -63,7 +63,8 @@ ValueNotifier<bool> nowDisplayingShowing = ValueNotifier<bool>(false);
 
 final keyboardVisibilityController = KeyboardVisibilityController();
 final ValueNotifier<bool> shouldHideKeyboardOnTap = ValueNotifier<bool>(
-    true); // This value notifies if keyboard should be hidden on tap
+  true,
+); // This value notifies if keyboard should be hidden on tap
 
 // this value is used for specific case in a screen with pageview and scrollview
 final ValueNotifier<bool> shouldHideDisplayingBar = ValueNotifier<bool>(false);
@@ -99,8 +100,12 @@ void main() async {
         },
       );
     }, (Object error, StackTrace stackTrace) async {
-      unawaited(Sentry.captureException('Error in main: $error',
-          stackTrace: stackTrace));
+      unawaited(
+        Sentry.captureException(
+          'Error in main: $error',
+          stackTrace: stackTrace,
+        ),
+      );
 
       /// Check error is Database issue
       if (error.toString().contains('DatabaseException') ||
@@ -422,7 +427,6 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
               ),
               Visibility(
                 visible: _isVisible,
-                replacement: const SizedBox.shrink(),
                 child: Stack(
                   children: [
                     // gradient
@@ -431,29 +435,29 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                       builder: (context, value, child) {
                         if (value?.settings.name == AppRouter.homePage) {
                           return Positioned(
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              child: IgnorePointer(
-                                ignoring: true,
-                                child: Container(
-                                  height: 195 +
-                                      MediaQuery.of(context).padding.bottom,
-                                  // gradient
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        AppColor.auGreyBackground,
-                                        Colors.transparent
-                                      ],
-                                      begin: Alignment.bottomCenter,
-                                      end: Alignment.topCenter,
-                                    ),
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            child: IgnorePointer(
+                              child: Container(
+                                height:
+                                    195 + MediaQuery.of(context).padding.bottom,
+                                // gradient
+                                decoration: const BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      AppColor.auGreyBackground,
+                                      Colors.transparent,
+                                    ],
+                                    begin: Alignment.bottomCenter,
+                                    end: Alignment.topCenter,
                                   ),
                                 ),
-                              ));
+                              ),
+                            ),
+                          );
                         }
-                        return Positioned.fill(child: SizedBox.shrink());
+                        return const Positioned.fill(child: SizedBox.shrink());
                       },
                     ),
 
@@ -462,7 +466,8 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                         valueListenable: isNowDisplayingBarExpanded,
                         builder: (context, value, child) {
                           if (value) {
-                            return Positioned.fill(child: SizedBox.shrink());
+                            return const Positioned.fill(
+                                child: SizedBox.shrink());
                           }
 
                           final paddingBottom =

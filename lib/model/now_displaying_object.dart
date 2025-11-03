@@ -1,6 +1,6 @@
 import 'package:autonomy_flutter/model/device/base_device.dart';
 import 'package:autonomy_flutter/model/dp1/dp1_manifest.dart';
-import 'package:autonomy_flutter/nft_collection/models/models.dart';
+import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 
 abstract class NowDisplayingObjectBase {

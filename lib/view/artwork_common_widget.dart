@@ -4,19 +4,10 @@ import 'dart:math';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/model/ff_artwork.dart';
-import 'package:autonomy_flutter/model/ff_exhibition.dart';
-import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
-import 'package:autonomy_flutter/nft_collection/models/provenance.dart';
+import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_rendering/nft_rendering_widget.dart';
-import 'package:autonomy_flutter/nft_rendering/svg_image.dart';
-import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/royalty/royalty_bloc.dart';
-import 'package:autonomy_flutter/screen/exhibition_details/exhibition_detail_page.dart';
-import 'package:autonomy_flutter/service/configuration_service.dart';
-import 'package:autonomy_flutter/service/feralfile_service.dart';
 import 'package:autonomy_flutter/service/metric_client_service.dart';
-import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/color_extension.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
@@ -24,10 +15,6 @@ import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/datetime_ext.dart';
-import 'package:autonomy_flutter/util/exhibition_ext.dart';
-import 'package:autonomy_flutter/util/feralfile_alumni_ext.dart';
-import 'package:autonomy_flutter/util/image_ext.dart';
-import 'package:autonomy_flutter/util/series_ext.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
@@ -36,30 +23,25 @@ import 'package:autonomy_flutter/view/loading.dart';
 import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-// import 'package:flutter_vibrate/flutter_vibrate.dart';
-import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
-import 'package:uuid/uuid.dart';
 
-String getEditionSubTitle(AssetToken token) {
-  if (token.editionName != null && token.editionName != '') {
-    return token.editionName!;
-  }
-  if (token.edition == 0) {
-    return '';
-  }
-  return token.maxEdition != null && token.maxEdition! >= 1
-      ? tr(
-          'edition_of',
-          args: [token.edition.toString(), token.maxEdition.toString()],
-        )
-      : '${tr('edition')} ${token.edition}';
-}
+// String getEditionSubTitle(AssetToken token) {
+//   if (token.editionName != null && token.editionName != '') {
+//     return token.editionName!;
+//   }
+//   if (token.edition == 0) {
+//     return '';
+//   }
+//   return token.maxEdition != null && token.maxEdition! >= 1
+//       ? tr(
+//           'edition_of',
+//           args: [token.edition.toString(), token.maxEdition.toString()],
+//         )
+//       : '${tr('edition')} ${token.edition}';
+// }
 
 class MintTokenWidget extends StatelessWidget {
   const MintTokenWidget({super.key, this.thumbnail, this.tokenId});
@@ -96,7 +78,7 @@ final Map<String, Future<bool>> _cachingStates = {};
 
 Widget tokenGalleryThumbnailWidget(
   BuildContext context,
-  CompactedAssetToken token,
+  AssetToken token,
   int cachedImageSize, {
   bool usingThumbnailID = true,
   String variant = 'thumbnail',
@@ -134,79 +116,6 @@ Widget tokenGalleryThumbnailWidget(
       cacheHeight: memCacheHeight,
       placeholder:
           galleryThumbnailPlaceholder ?? const GalleryThumbnailPlaceholder(),
-    ),
-  );
-
-  final cacheManager = injector<CacheManager>();
-
-  final cachingState = _cachingStates[thumbnailUrl] ??
-      // ignore: discarded_futures
-      cacheManager.store.retrieveCacheData(thumbnailUrl).then((cachedObject) {
-        final isCached = cachedObject != null;
-        if (isCached) {
-          _cachingStates[thumbnailUrl] = Future.value(true);
-        }
-        return isCached;
-      });
-
-  final ext = p.extension(thumbnailUrl);
-  final shouldRefreshCache = token.shouldRefreshThumbnailCache;
-  return Semantics(
-    label: 'gallery_artwork_${token.id}',
-    child: Hero(
-      tag: useHero
-          ? 'gallery_thumbnail_${token.id}_${token.owner}'
-          : const Uuid().v4(),
-      key: const Key('Artwork_Thumbnail'),
-      child: ext == '.svg'
-          ? SvgImage(
-              url: thumbnailUrl,
-              loadingWidgetBuilder: (_) => const GalleryThumbnailPlaceholder(),
-              errorWidgetBuilder: (_) => const GalleryThumbnailErrorWidget(),
-              unsupportWidgetBuilder: (context) =>
-                  const GalleryUnSupportThumbnailWidget(),
-            )
-          : ImageExt.customNetwork(
-              thumbnailUrl,
-              fadeInDuration: Duration.zero,
-              fit: BoxFit.cover,
-              memCacheHeight: memCacheHeight,
-              memCacheWidth: memCacheWidth,
-              maxWidthDiskCache: cachedImageSize,
-              maxHeightDiskCache: cachedImageSize,
-              cacheManager: cacheManager,
-              placeholder: (context, index) => FutureBuilder<bool>(
-                future: cachingState,
-                builder: (context, snapshot) =>
-                    galleryThumbnailPlaceholder ??
-                    GalleryThumbnailPlaceholder(
-                      loading: !(snapshot.data ?? true),
-                    ),
-              ),
-              errorWidget: (context, url, error) {
-                return ImageExt.customNetwork(
-                  token.getGalleryThumbnailUrl(usingThumbnailID: false) ?? '',
-                  fadeInDuration: Duration.zero,
-                  fit: BoxFit.cover,
-                  memCacheHeight: cachedImageSize,
-                  memCacheWidth: cachedImageSize,
-                  maxWidthDiskCache: cachedImageSize,
-                  maxHeightDiskCache: cachedImageSize,
-                  cacheManager: cacheManager,
-                  placeholder: (context, index) => FutureBuilder<bool>(
-                    future: cachingState,
-                    builder: (context, snapshot) =>
-                        galleryThumbnailPlaceholder ??
-                        GalleryThumbnailPlaceholder(
-                          loading: !(snapshot.data ?? true),
-                        ),
-                  ),
-                  errorWidget: (context, url, error) =>
-                      const GalleryThumbnailErrorWidget(),
-                );
-              },
-              shouldRefreshCache: shouldRefreshCache,
-            ),
     ),
   );
 }
@@ -279,7 +188,7 @@ class GalleryThumbnailErrorWidget extends StatelessWidget {
 class GalleryNoThumbnailWidget extends StatelessWidget {
   const GalleryNoThumbnailWidget({this.assetToken, super.key});
 
-  final CompactedAssetToken? assetToken;
+  final AssetToken? assetToken;
 
   String getAssetDefault() {
     switch (assetToken?.getMimeType) {
@@ -477,71 +386,14 @@ class _PreviewPlaceholderState extends State<PreviewPlaceholder> {
   Widget build(BuildContext context) => const LoadingWidget();
 }
 
-Widget debugInfoWidget(BuildContext context, AssetToken? token) {
-  final theme = Theme.of(context);
-
-  if (token == null) {
-    return const SizedBox();
-  }
-
-  return FutureBuilder<bool>(
-    // ignore: discarded_futures
-    future: isAppCenterBuild().then((value) {
-      if (!value) {
-        return Future.value(false);
-      }
-
-      return injector<ConfigurationService>().showTokenDebugInfo();
-    }),
-    builder: (context, snapshot) {
-      if (snapshot.data == false) {
-        return const SizedBox();
-      }
-
-      TextButton buildInfo(String text, String value) => TextButton(
-            onPressed: () async {
-              // Vibrate.feedback(FeedbackType.light);
-              final uri = Uri.tryParse(value);
-              if (uri != null && await canLaunchUrl(uri)) {
-                await launchUrl(uri, mode: LaunchMode.inAppWebView);
-              } else {
-                await Clipboard.setData(ClipboardData(text: value));
-              }
-            },
-            child: Text(
-              '$text:  $value',
-              style: theme.textTheme.ppMori400White12,
-            ),
-          );
-
-      return Column(
-        children: [
-          addDivider(),
-          Text(
-            'debug_info'.tr(),
-            style: theme.textTheme.ppMori400White12,
-          ),
-          buildInfo('IndexerID', token.id),
-          buildInfo(
-            'galleryThumbnailURL',
-            token.getGalleryThumbnailUrl() ?? '',
-          ),
-          buildInfo('previewURL', token.getPreviewUrl() ?? ''),
-          addDivider(),
-        ],
-      );
-    },
-  );
-}
-
 Widget artworkDetailsRightSection(BuildContext context, AssetToken assetToken) {
-  final artworkID = assetToken.feralfileArtworkId;
-  if (assetToken.shouldShowFeralfileRight) {
-    return ArtworkRightsView(
-      contractAddress: assetToken.contractAddress,
-      artworkID: artworkID,
-    );
-  }
+  // if (assetToken.shouldShowFeralfileRight) {
+  //   final artworkID = assetToken.feralfileArtworkId;
+  //   return ArtworkRightsView(
+  //     contractAddress: assetToken.contractAddress,
+  //     artworkID: artworkID,
+  //   );
+  // }
   return const SizedBox();
 }
 
@@ -721,126 +573,11 @@ class _SectionExpandedWidgetState extends State<SectionExpandedWidget> {
   }
 }
 
-class ArtworkAttributesText extends StatelessWidget {
-  const ArtworkAttributesText({required this.artwork, super.key, this.color});
-
-  final Artwork artwork;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Text(
-      artwork.attributesString ?? '',
-      style: theme.textTheme.ppMori400FFQuickSilver12.copyWith(
-        color: color ?? AppColor.feralFileMediumGrey,
-      ),
-    );
-  }
-}
-
-class FFArtworkDetailsMetadataSection extends StatelessWidget {
-  const FFArtworkDetailsMetadataSection({required this.artwork, super.key});
-
-  final Artwork artwork;
-
-  @override
-  Widget build(BuildContext context) {
-    const divider = artworkDataDivider;
-    final contract = artwork.getContract(artwork.series!.exhibition);
-    return SectionExpandedWidget(
-      header: 'metadata'.tr(),
-      padding: const EdgeInsets.only(bottom: 23),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          MetaDataItem(
-            title: 'title'.tr(),
-            value: artwork.series!.displayTitle,
-          ),
-          if (artwork.series!.artistAlumni?.alias != null) ...[
-            divider,
-            MetaDataItem(
-              title: 'artist'.tr(),
-              value: artwork.series!.artistAlumni!.displayAlias,
-              onTap: () async {
-                if (artwork.series!.artistAlumni!.slug != null) {
-                  await injector<NavigationService>().openFeralFileArtistPage(
-                    artwork.series!.artistAlumni!.slug!,
-                  );
-                }
-              },
-            ),
-          ],
-          divider,
-          MetaDataItem(
-            title: 'edition'.tr(),
-            value: artwork.name,
-          ),
-          divider,
-          MetaDataItem(
-            title: 'token'.tr(),
-            value: polishSource('feralfile'),
-            tapLink: feralFileArtworkUrl(artwork.id),
-            forceSafariVC: true,
-          ),
-          if (artwork.series!.exhibition != null) ...[
-            divider,
-            MetaDataItem(
-              title: 'exhibition'.tr(),
-              value: artwork.series!.exhibition!.title,
-              onTap: () {
-                unawaited(
-                  Navigator.of(context).pushNamed(
-                    AppRouter.exhibitionDetailPage,
-                    arguments: ExhibitionDetailPayload(
-                      exhibitions: [artwork.series!.exhibition!],
-                      index: 0,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-          divider,
-          MetaDataItem(
-            title: 'medium'.tr(),
-            value: artwork.series!.medium.capitalize(),
-          ),
-          if (contract != null) ...[
-            divider,
-            MetaDataItem(
-              title: 'contract'.tr(),
-              value: contract.blockchainType.capitalize(),
-              tapLink: contract.getBlockchainUrl(),
-              forceSafariVC: true,
-            ),
-          ],
-          if (artwork.mintedAt != null) ...[
-            divider,
-            MetaDataItem(
-              title: 'date_minted'.tr(),
-              value: localTimeString(artwork.mintedAt!),
-            ),
-          ],
-          const SizedBox(
-            height: 32,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 Widget artworkDetailsMetadataSection(
   BuildContext context,
   AssetToken assetToken,
   String? artistName,
 ) {
-  final artworkID =
-      ((assetToken.swapped ?? false) && assetToken.originTokenInfoId != null)
-          ? assetToken.originTokenInfoId ?? ''
-          : assetToken.id.split('-').last;
   const divider = artworkDataDivider;
   return SectionExpandedWidget(
     header: 'metadata'.tr(),
@@ -857,109 +594,29 @@ Widget artworkDetailsMetadataSection(
           MetaDataItem(
             title: 'artist'.tr(),
             value: artistName,
-            onTap: (assetToken.isFeralfile && assetToken.artistID != null)
-                ? () {
-                    unawaited(
-                      injector<NavigationService>()
-                          .openFeralFileArtistPage(assetToken.artistID!),
-                    );
-                  }
-                : (assetToken.artistURL != null)
-                    ? () async {
-                        final uri = Uri.parse(
-                          assetToken.artistURL?.split(' & ').firstOrNull ?? '',
-                        );
-                        await launchUrl(uri,
-                            mode: LaunchMode.externalApplication);
-                      }
-                    : null,
+            onTap: null,
             forceSafariVC: true,
           ),
         ],
-        if (!assetToken.fungible)
-          Column(
-            children: [
-              divider,
-              _getEditionNameRow(context, assetToken),
-            ],
-          )
-        else
-          const SizedBox(),
         divider,
         MetaDataItem(
           title: 'token'.tr(),
-          value: polishSource(assetToken.source ?? ''),
-          tapLink: assetToken.isAirdrop ? null : assetToken.assetURL,
+          value: assetToken.publisher?.name ?? '',
+          tapLink: assetToken.publisher?.url,
           forceSafariVC: true,
         ),
         divider,
-        if (assetToken.source == 'feralfile' && artworkID.isNotEmpty)
-          FutureBuilder<Exhibition?>(
-            future: injector<FeralFileService>()
-                // ignore: discarded_futures
-                .getExhibitionFromTokenID(artworkID),
-            builder: (context, snapshot) {
-              if (snapshot.data != null) {
-                return Column(
-                  children: [
-                    MetaDataItem(
-                      title: 'exhibition'.tr(),
-                      value: snapshot.data!.title,
-                      onTap: () {
-                        unawaited(
-                          Navigator.of(context).pushNamed(
-                            AppRouter.exhibitionDetailPage,
-                            arguments: ExhibitionDetailPayload(
-                              exhibitions: [snapshot.data!],
-                              index: 0,
-                            ),
-                          ),
-                        );
-                      },
-                      forceSafariVC: true,
-                    ),
-                    divider,
-                  ],
-                );
-              } else {
-                return const SizedBox();
-              }
-            },
-          )
-        else
-          const SizedBox(),
         MetaDataItem(
           title: 'contract'.tr(),
-          value: assetToken.blockchain.capitalize(),
-          tapLink: assetToken.getBlockchainUrl(),
+          value: assetToken.contractAddress,
+          tapLink: null,
           forceSafariVC: true,
         ),
-        divider,
-        MetaDataItem(
-          title: 'medium'.tr(),
-          value: assetToken.medium?.capitalize() ?? '',
-        ),
-        if (assetToken.mintedAt != null) ...[
-          divider,
-          MetaDataItem(
-            title: 'date_minted'.tr(),
-            value: assetToken.mintedAt != null
-                ? localTimeString(assetToken.mintedAt!)
-                : '',
-          ),
-        ],
-        if (assetToken.assetData != null && assetToken.assetData!.isNotEmpty)
-          Column(
-            children: [
-              const Divider(height: 32),
-              MetaDataItem(
-                title: 'artwork_data'.tr(),
-                value: assetToken.assetData!,
-              ),
-            ],
-          )
-        else
-          const SizedBox(),
+        // divider,
+        // MetaDataItem(
+        //   title: 'medium'.tr(),
+        //   value: assetToken.medium?.capitalize() ?? '',
+        // ),
         const SizedBox(
           height: 32,
         ),
@@ -968,27 +625,16 @@ Widget artworkDetailsMetadataSection(
   );
 }
 
-Widget _getEditionNameRow(BuildContext context, AssetToken assetToken) {
-  if (assetToken.editionName != null && assetToken.editionName != '') {
-    return MetaDataItem(
-      title: 'edition'.tr(),
-      value: assetToken.editionName!,
-    );
-  }
-  return MetaDataItem(
-    title: 'edition'.tr(),
-    value: assetToken.edition.toString(),
-  );
-}
-
 Widget tokenOwnership(
   BuildContext context,
   AssetToken assetToken,
   String alias,
 ) {
-  final ownedTokens = assetToken.balance ?? 0;
-  final ownerAddress = assetToken.owner;
-  final tapLink = assetToken.tokenURL;
+  final ownerAddress = assetToken.currentOwner ?? '';
+  final ownedTokens = assetToken.owners?.items
+      .firstWhereOrNull((element) => element.ownerAddress == ownerAddress)
+      ?.quantity;
+  final tapLink = assetToken.secondaryMarketURL;
 
   const divider = artworkDataDivider;
 
@@ -999,27 +645,20 @@ Widget tokenOwnership(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 32),
-        if ((assetToken.maxEdition ?? 0) > 0) ...[
-          MetaDataItem(
-            title: 'editions'.tr(),
-            value: '${assetToken.maxEdition}',
-            tapLink: assetToken.tokenURL,
-            forceSafariVC: true,
-          ),
-          divider,
-        ],
         MetaDataItem(
           title: 'token_holder'.tr(),
           value: alias.isNotEmpty ? alias : ownerAddress.maskOnly(5),
           forceSafariVC: true,
         ),
-        divider,
-        MetaDataItem(
-          title: 'token_held'.tr(),
-          value: ownedTokens.toString(),
-          tapLink: tapLink,
-          forceSafariVC: true,
-        ),
+        if (ownedTokens != null) ...[
+          divider,
+          MetaDataItem(
+            title: 'token_held'.tr(),
+            value: ownedTokens.toString(),
+            tapLink: tapLink,
+            forceSafariVC: true,
+          ),
+        ],
       ],
     ),
   );
@@ -1216,7 +855,7 @@ class ProvenanceItem extends StatelessWidget {
 
 Widget artworkDetailsProvenanceSectionNotEmpty(
   BuildContext context,
-  List<Provenance> provenances,
+  List<ProvenanceEvent> provenances,
   HashSet<String> youAddresses,
   Map<String, String> identityMap,
 ) =>
@@ -1230,23 +869,24 @@ Widget artworkDetailsProvenanceSectionNotEmpty(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ...provenances.map((el) {
-                final identity = identityMap[el.owner];
-                final identityTitle = el.owner.toIdentityOrMask(identityMap);
+                final identity = identityMap[el.toAddress];
+                final identityTitle =
+                    el.toAddress?.toIdentityOrMask(identityMap) ?? '';
                 final youTitle =
-                    youAddresses.contains(el.owner) ? '_you'.tr() : '';
+                    youAddresses.contains(el.toAddress) ? '_you'.tr() : '';
                 return Column(
                   children: [
                     ProvenanceItem(
-                      title: (identityTitle ?? '') + youTitle,
+                      title: (identityTitle) + youTitle,
                       value: localTimeString(el.timestamp),
                       // subTitle: el.blockchain.toUpperCase(),
-                      tapLink: el.txURL,
+                      tapLink: el.txHash,
                       onNameTap: () => identity != null
                           ? unawaited(
                               UIHelper.showIdentityDetailDialog(
                                 context,
                                 name: identity,
-                                address: el.owner,
+                                address: el.toAddress ?? '',
                               ),
                             )
                           : null,

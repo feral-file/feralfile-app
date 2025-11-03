@@ -7,7 +7,7 @@ class IndexerClient {
   final String _baseUrl;
 
   GraphQLClient get client {
-    final httpLink = HttpLink('$_baseUrl/v2/graphql');
+    final httpLink = HttpLink('$_baseUrl/graphql');
     final authLink = AuthLink(getToken: _getToken);
     final link = authLink.concat(httpLink);
 

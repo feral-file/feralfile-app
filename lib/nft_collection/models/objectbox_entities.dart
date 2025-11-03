@@ -8,9 +8,7 @@
 
 import 'dart:convert';
 
-import 'package:autonomy_flutter/nft_collection/models/asset.dart';
-import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
-import 'package:autonomy_flutter/nft_collection/models/origin_token_info.dart';
+import 'package:autonomy_flutter/model/token.dart' as v2;
 import 'package:autonomy_flutter/nft_collection/models/provenance.dart';
 import 'package:objectbox/objectbox.dart';
 
@@ -22,265 +20,90 @@ abstract class ObjectboxEntity {
   ObjectboxEntity() : uniqueId = '';
 }
 
-/// ObjectBox persistence model for Asset
+/// ObjectBox persistence model for Token (v2)
 @Entity()
-class AssetObject extends ObjectboxEntity {
-  /// ObjectBox internal id (auto-increment). Keep 0 for new objects.
+class TokenObject extends ObjectboxEntity {
   int id;
-
-  String? indexID;
 
   @override
   @Unique()
   String uniqueId;
 
-  String? thumbnailID;
-  @Property(type: PropertyType.date)
-  DateTime? lastRefreshedTime;
-  String? artistID;
-  String? artistName;
-  String? artistURL;
-  String? artists;
-  String? assetID;
-  String? title;
-  String? mimeType;
-  String? medium;
-  String? source;
-  String? thumbnailURL;
-  String? galleryThumbnailURL;
-
-  // Extended fields from Asset
-  String? description;
-  int? maxEdition;
-  String? sourceURL;
-  String? previewURL;
-  String? assetData;
-  String? assetURL;
-  bool? isFeralfileFrame;
-  String? initialSaleModel;
-  String? originalFileURL;
-  String? artworkMetadata;
-
-  AssetObject({
-    this.id = 0,
-    this.indexID,
-    this.thumbnailID,
-    this.lastRefreshedTime,
-    this.artistID,
-    this.artistName,
-    this.artistURL,
-    this.artists,
-    this.assetID,
-    this.title,
-    this.mimeType,
-    this.medium,
-    this.source,
-    this.thumbnailURL,
-    this.galleryThumbnailURL,
-    this.description,
-    this.maxEdition,
-    this.sourceURL,
-    this.previewURL,
-    this.assetData,
-    this.assetURL,
-    this.isFeralfileFrame,
-    this.initialSaleModel,
-    this.originalFileURL,
-    this.artworkMetadata,
-  }) : uniqueId = '$indexID';
-
-  factory AssetObject.fromAsset(Asset asset) => AssetObject(
-        indexID: asset.indexID,
-        thumbnailID: asset.thumbnailID,
-        lastRefreshedTime: asset.lastRefreshedTime,
-        artistID: asset.artistID,
-        artistName: asset.artistName,
-        artistURL: asset.artistURL,
-        artists: asset.artists,
-        assetID: asset.assetID,
-        title: asset.title,
-        mimeType: asset.mimeType,
-        medium: asset.medium,
-        source: asset.source,
-        thumbnailURL: asset.thumbnailURL,
-        galleryThumbnailURL: asset.galleryThumbnailURL,
-        description: asset.description,
-        maxEdition: asset.maxEdition,
-        sourceURL: asset.sourceURL,
-        previewURL: asset.previewURL,
-        assetData: asset.assetData,
-        assetURL: asset.assetURL,
-        isFeralfileFrame: asset.isFeralfileFrame,
-        initialSaleModel: asset.initialSaleModel,
-        originalFileURL: asset.originalFileURL,
-        artworkMetadata: asset.artworkMetadata,
-      );
-
-  Asset toAsset() => Asset(
-        indexID: indexID,
-        thumbnailID: thumbnailID,
-        lastRefreshedTime: lastRefreshedTime,
-        artistID: artistID,
-        artistName: artistName,
-        artistURL: artistURL,
-        artists: artists,
-        assetID: assetID,
-        title: title,
-        mimeType: mimeType,
-        medium: medium,
-        source: source,
-        thumbnailURL: thumbnailURL,
-        galleryThumbnailURL: galleryThumbnailURL,
-        description: description,
-        maxEdition: maxEdition,
-        sourceURL: sourceURL,
-        previewURL: previewURL,
-        assetData: assetData,
-        assetURL: assetURL,
-        isFeralfileFrame: isFeralfileFrame,
-        initialSaleModel: initialSaleModel,
-        originalFileURL: originalFileURL,
-        artworkMetadata: artworkMetadata,
-      );
-}
-
-/// ObjectBox persistence model for AssetToken
-/// Many AssetTokenObject -> One AssetObject (via ToOne relation)
-@Entity()
-class AssetTokenObject extends ObjectboxEntity {
-  int id;
-
-  // Core identifying fields
   @Index()
-  String indexID; // same as AssetToken.id
-
-  @Index()
-  String owner;
-
-  @override
-  @Unique()
-  String uniqueId;
-
-  int edition;
-  String blockchain;
-  bool fungible;
-  String contractType;
-  String? contractAddress;
-  String? tokenId;
-  String? editionName;
-  DateTime? mintedAt;
-  int? balance;
-
-  // store owners map as JSON string
-  String ownersJson;
-
-  // status/info fields
+  String cid;
+  String chain;
+  String standard;
+  String contractAddress;
+  String tokenNumber;
+  String? currentOwner;
+  bool burned;
   @Property(type: PropertyType.date)
-  DateTime lastActivityTime;
+  DateTime createdAt;
   @Property(type: PropertyType.date)
-  DateTime lastRefreshedTime;
-  bool? swapped;
-  bool? burned;
-  bool? ipfsPinned;
-  bool? pending;
-  bool? isDebugged;
-  String? originTokenInfoId;
+  DateTime updatedAt;
 
-  // Relation to AssetObject
-  final ToOne<AssetObject> asset;
-  // 1 AssetTokenObject -> many ProvenanceObject
-  final ToMany<ProvenanceObject> provenance;
+  // store metadata JSON as string for flexibility
+  String? metadataJson;
 
-  AssetTokenObject({
+  TokenObject({
     this.id = 0,
-    required this.indexID,
-    required this.owner,
-    required this.edition,
-    required this.blockchain,
-    required this.fungible,
-    required this.contractType,
-    this.contractAddress,
-    this.tokenId,
-    this.editionName,
-    this.mintedAt,
-    this.balance,
-    required this.ownersJson,
-    required this.lastActivityTime,
-    required this.lastRefreshedTime,
-    this.swapped,
-    this.burned,
-    this.ipfsPinned,
-    this.pending,
-    this.isDebugged,
-    this.originTokenInfoId,
-  })  : asset = ToOne<AssetObject>(),
-        provenance = ToMany<ProvenanceObject>(),
-        uniqueId = '$indexID-$owner';
+    required this.cid,
+    required this.chain,
+    required this.standard,
+    required this.contractAddress,
+    required this.tokenNumber,
+    this.currentOwner,
+    required this.burned,
+    required this.createdAt,
+    required this.updatedAt,
+    this.metadataJson,
+  }) : uniqueId = cid;
 
-  factory AssetTokenObject.fromAssetToken(AssetToken token) {
-    final obj = AssetTokenObject(
-      indexID: token.id,
-      owner: token.owner,
-      edition: token.edition,
-      blockchain: token.blockchain,
-      fungible: token.fungible,
-      contractType: token.contractType,
-      contractAddress: token.contractAddress,
-      tokenId: token.tokenId,
-      editionName: token.editionName,
-      mintedAt: token.mintedAt,
-      balance: token.balance,
-      ownersJson: json.encode(token.owners),
-      lastActivityTime: token.lastActivityTime,
-      lastRefreshedTime: token.lastRefreshedTime,
-      swapped: token.swapped,
-      burned: token.burned,
-      ipfsPinned: token.ipfsPinned,
-      pending: token.pending,
-      isDebugged: token.isDebugged,
-      originTokenInfoId: token.originTokenInfoId,
-    );
-    if (token.asset != null) {
-      obj.asset.target = AssetObject.fromAsset(token.asset!);
-    }
-    // set provenance relation
-    if (token.provenance.isNotEmpty) {
-      obj.provenance.addAll(
-        token.provenance
-            .map((p) => ProvenanceObject.fromProvenance(p))
-            .toList(),
+  factory TokenObject.fromToken(v2.AssetToken token) => TokenObject(
+        cid: token.cid,
+        chain: token.chain,
+        standard: token.standard,
+        contractAddress: token.contractAddress,
+        tokenNumber: token.tokenNumber,
+        currentOwner: token.currentOwner,
+        burned: token.burned,
+        createdAt: token.createdAt,
+        updatedAt: token.updatedAt,
+        metadataJson: token.metadata != null
+            ? json.encode({
+                'token_id': token.metadata!.tokenId,
+                'origin_json': token.metadata!.originJson,
+                'latest_json': token.metadata!.latestJson,
+                'latest_hash': token.metadata!.latestHash,
+                'enrichment_level': token.metadata!.enrichmentLevel,
+                'last_refreshed_at':
+                    token.metadata!.lastRefreshedAt?.toIso8601String(),
+                'image_url': token.metadata!.imageUrl,
+                'animation_url': token.metadata!.animationUrl,
+                'name': token.metadata!.name,
+                'description': token.metadata!.description,
+                'artists':
+                    token.metadata!.artists?.map((a) => a.toMap()).toList(),
+                'publisher': token.metadata!.publisher?.toMap(),
+              })
+            : null,
       );
-    }
-    return obj;
-  }
 
-  AssetToken toAssetToken() => AssetToken(
-        id: indexID,
-        edition: edition,
-        editionName: editionName,
-        blockchain: blockchain,
-        fungible: fungible,
-        mintedAt: mintedAt,
-        contractType: contractType,
-        tokenId: tokenId,
+  v2.AssetToken toToken() => v2.AssetToken(
+        cid: cid,
+        chain: chain,
+        standard: standard,
         contractAddress: contractAddress,
-        balance: balance,
-        owner: owner,
-        owners: Map<String, int>.from(json.decode(ownersJson) as Map),
-        lastActivityTime: lastActivityTime,
-        lastRefreshedTime: lastRefreshedTime,
-        provenance:
-            provenance.map((p) => p.toProvenance()).toList(growable: false),
-        originTokenInfo: <OriginTokenInfo>[],
-        swapped: swapped,
-        attributes: null,
+        tokenNumber: tokenNumber,
+        currentOwner: currentOwner,
         burned: burned,
-        pending: pending,
-        isManual: isDebugged,
-        originTokenInfoId: originTokenInfoId,
-        ipfsPinned: ipfsPinned,
-        asset: asset.target?.toAsset(),
-        isDebugged: isDebugged,
+        createdAt: createdAt,
+        updatedAt: updatedAt,
+        metadata: metadataJson != null
+            ? v2.TokenMetadata.fromMap(
+                Map<String, dynamic>.from(json.decode(metadataJson!) as Map),
+              )
+            : null,
       );
 }
 
@@ -302,7 +125,7 @@ class ProvenanceObject extends ObjectboxEntity {
   @Property(type: PropertyType.date)
   DateTime timestamp;
   String txURL;
-  String tokenID; // indexer token id (matches AssetTokenObject.indexID)
+  String tokenID; // matches TokenObject.cid
   int? blockNumber;
 
   ProvenanceObject({

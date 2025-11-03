@@ -1,7 +1,7 @@
-import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
+import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/utils/constants.dart';
 
-class QueryListTokensResponse<T extends CompactedAssetToken> {
+class QueryListTokensResponse<T extends AssetToken> {
   QueryListTokensResponse({
     required this.tokens,
   });

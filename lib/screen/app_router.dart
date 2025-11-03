@@ -6,15 +6,8 @@
 //
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/model/ff_exhibition.dart';
+import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
-import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
-import 'package:autonomy_flutter/screen/account/test_artwork_screen.dart';
-import 'package:autonomy_flutter/screen/alumni_details/alumni_details_bloc.dart';
-import 'package:autonomy_flutter/screen/alumni_details/alumni_details_page.dart';
-import 'package:autonomy_flutter/screen/alumni_details/alumni_exhibitions_page.dart';
-import 'package:autonomy_flutter/screen/alumni_details/alumni_posts_page.dart';
-import 'package:autonomy_flutter/screen/alumni_details/alumni_works_page.dart';
 import 'package:autonomy_flutter/screen/autonomy_security_page.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
@@ -22,8 +15,6 @@ import 'package:autonomy_flutter/screen/bloc/subscription/subscription_bloc.dart
 import 'package:autonomy_flutter/screen/customer_support/support_customer_page.dart';
 import 'package:autonomy_flutter/screen/customer_support/support_list_page.dart';
 import 'package:autonomy_flutter/screen/customer_support/support_thread_page.dart';
-import 'package:autonomy_flutter/screen/dailies_work/dailies_work_bloc.dart';
-import 'package:autonomy_flutter/screen/dailies_work/dailies_work_page.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
@@ -37,18 +28,8 @@ import 'package:autonomy_flutter/screen/device_setting/enter_wifi_password.dart'
 import 'package:autonomy_flutter/screen/device_setting/now_displaying_page.dart';
 import 'package:autonomy_flutter/screen/device_setting/scan_wifi_network_page.dart';
 import 'package:autonomy_flutter/screen/device_setting/start_setup_device_page.dart';
-import 'package:autonomy_flutter/screen/exhibition_custom_note/exhibition_custom_note_page.dart';
-import 'package:autonomy_flutter/screen/exhibition_details/exhibition_detail_bloc.dart';
-import 'package:autonomy_flutter/screen/exhibition_details/exhibition_detail_page.dart';
-import 'package:autonomy_flutter/screen/feralfile_artwork_preview/feralfile_artwork_preview_bloc.dart';
-import 'package:autonomy_flutter/screen/feralfile_artwork_preview/feralfile_artwork_preview_page.dart';
-import 'package:autonomy_flutter/screen/feralfile_home/feralfile_home.dart';
-import 'package:autonomy_flutter/screen/feralfile_series/feralfile_series_bloc.dart';
-import 'package:autonomy_flutter/screen/feralfile_series/feralfile_series_page.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
 import 'package:autonomy_flutter/screen/home/home_bloc.dart';
-import 'package:autonomy_flutter/screen/indexer_collection/indexer_collection_bloc.dart';
-import 'package:autonomy_flutter/screen/indexer_collection/indexer_collection_page.dart';
 import 'package:autonomy_flutter/screen/local_feed_server/add_local_feed_server.dart';
 import 'package:autonomy_flutter/screen/local_feed_server/custom_feed_servers_page.dart';
 import 'package:autonomy_flutter/screen/meili_search/meili_search_bloc.dart';
@@ -79,30 +60,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:page_transition/page_transition.dart';
 
-GlobalKey<FeralfileHomePageState> feralFileHomeKey = GlobalKey();
-final GlobalKey<DailyWorkPageState> dailyWorkKey = GlobalKey();
-
 class AppRouter {
-  static const createPlayListPage = 'create_playlist_page';
-  static const viewPlayListPage = 'view_playlist_page';
-  static const editPlayListPage = 'edit_playlist_page';
   static const previewPrimerPage = 'preview_primer_page';
   static const onboardingPage = 'onboarding_page';
-  static const newOnboardingPage = 'new_onboarding_page';
   static const nameLinkedAccountPage = 'name_linked_account_page';
   static const homePage = 'home_page';
-  static const oldHomePage = 'old_home_page';
   static const recordControllerPage = 'record_controller_page';
-  static const enterCommandPage = 'enter_command_page';
   static const artworkDetailsPage = 'artwork_details_page';
-  static const galleryPage = 'gallery_page';
   static const settingsPage = 'settings_page';
-  static const connectionDetailsPage = 'connection_details_page';
-  static const linkedWalletDetailsPage = 'linked_wallet_details_page';
   static const scanQRPage = 'scan_qr_page';
-  static const globalReceivePage = 'global_receive_page';
   static const recoveryPhrasePage = 'recovery_phrase_page';
-  static const testArtwork = 'test_artwork';
   static const autonomySecurityPage = 'security_page';
   static const releaseNotesPage = 'release_notes_page';
   static const hiddenArtworksPage = 'hidden_artworks_page';
@@ -115,32 +82,9 @@ class AppRouter {
   static const dataManagementPage = 'data_management_page';
   static const keyboardControlPage = 'keyboard_control_page';
   static const touchPadPage = 'touch_pad_page';
-  static const predefinedCollectionPage = 'predefined_collection_page';
-  static const addToCollectionPage = 'add_to_collection_page';
-  static const exhibitionDetailPage = 'exhibition_detail_page';
-  static const ffArtworkPreviewPage = 'ff_artwork_preview_page';
-  static const feralFileSeriesPage = 'feral_file_series_page';
-  static const indexerCollectionPage = 'indexer_collection_page';
   static const viewExistingAddressPage = 'view_existing_address_page';
-  static const selectAddressesPage = 'select_addresses_page';
-  static const addressAliasPage = 'address_alias_page';
   static const accessMethodPage = 'access_method_page';
   static const collectionPage = 'collection_page';
-  static const organizePage = 'organize_page';
-  static const exhibitionsPage = 'exhibitions_page';
-  static const explorePage = 'explore_page';
-  static const artistsListPage = 'artists_list_page';
-  static const exhibitionCustomNote = 'exhibition_custom_note';
-  static const dailyWorkPage = 'daily_work_page';
-  static const alumniDetailsPage = 'alumni_details_page';
-  static const alumniWorksPage = 'alumni_works_page';
-  static const alumniExhibitionsPage = 'alumni_exhibitions_page';
-  static const alumniPostPage = 'alumni_posts_page';
-  static const featuredPage = 'featured_page';
-  static const artworksPage = 'artworks_page';
-  static const artistsPage = 'artists_page';
-  static const curatorsPage = 'curators_page';
-  static const playlistActivationPage = 'playlist_activation_page';
   static const bluetoothDevicePortalPage = 'bluetooth_device_portal_page';
   static const scanWifiNetworkPage = 'scan_wifi_network_page';
   static const sendWifiCredentialPage = 'send_wifi_credential_page';
@@ -202,12 +146,6 @@ class AppRouter {
             ],
             child: const MobileControllerHomePage(),
           ),
-        );
-
-      case AppRouter.testArtwork:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => const TestArtworkScreen(),
         );
 
       case AppRouter.recoveryPhrasePage:
@@ -337,77 +275,6 @@ class AppRouter {
           ),
         );
 
-      case exhibitionDetailPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => MultiBlocProvider(
-            providers: [
-              BlocProvider(
-                create: (_) => ExhibitionDetailBloc(injector()),
-              ),
-              BlocProvider.value(
-                value: canvasDeviceBloc,
-              ),
-              BlocProvider.value(
-                value: subscriptionBloc,
-              ),
-              BlocProvider(create: (_) => FFArtworkPreviewBloc()),
-            ],
-            child: ExhibitionDetailPage(
-              payload: settings.arguments! as ExhibitionDetailPayload,
-            ),
-          ),
-        );
-      case ffArtworkPreviewPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => MultiBlocProvider(
-            providers: [
-              BlocProvider.value(
-                value: royaltyBloc,
-              ),
-              BlocProvider.value(
-                value: subscriptionBloc,
-              ),
-              BlocProvider(create: (_) => FFArtworkPreviewBloc()),
-            ],
-            child: FeralFileArtworkPreviewPage(
-              payload:
-                  settings.arguments! as FeralFileArtworkPreviewPagePayload,
-            ),
-          ),
-        );
-
-      case feralFileSeriesPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => MultiBlocProvider(
-            providers: [
-              BlocProvider(
-                create: (_) => FeralFileSeriesBloc(injector()),
-              ),
-            ],
-            child: FeralFileSeriesPage(
-              payload: settings.arguments! as FeralFileSeriesPagePayload,
-            ),
-          ),
-        );
-
-      case indexerCollectionPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => MultiBlocProvider(
-            providers: [
-              BlocProvider(
-                create: (_) => IndexerCollectionBloc(injector()),
-              ),
-            ],
-            child: IndexerCollectionPage(
-              payload: settings.arguments! as IndexerCollectionPagePayload,
-            ),
-          ),
-        );
-
       case githubDocPage:
         return CupertinoPageRoute(
           settings: settings,
@@ -472,63 +339,6 @@ class AppRouter {
               payload: payload,
             );
           },
-        );
-
-      case exhibitionCustomNote:
-        return MaterialPageRoute(
-          builder: (context) => ExhibitionCustomNotePage(
-            info: settings.arguments! as CustomExhibitionNote,
-          ),
-        );
-
-      case dailyWorkPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => MultiBlocProvider(
-            providers: [
-              BlocProvider(
-                create: (_) => injector<DailyWorkBloc>(),
-              ),
-              BlocProvider.value(value: canvasDeviceBloc),
-            ],
-            child: const DailyWorkPage(),
-          ),
-        );
-
-      case alumniDetailsPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => MultiBlocProvider(
-            providers: [
-              BlocProvider(create: (_) => AlumniDetailsBloc()),
-            ],
-            child: AlumniDetailsPage(
-              payload: settings.arguments! as AlumniDetailsPagePayload,
-            ),
-          ),
-        );
-      case alumniWorksPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => AlumniWorksPage(
-            payload: settings.arguments! as AlumniWorksPagePayload,
-          ),
-        );
-
-      case alumniExhibitionsPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => AlumniExhibitionsPage(
-            payload: settings.arguments! as AlumniExhibitionsPagePayload,
-          ),
-        );
-
-      case alumniPostPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => AlumniPostsPage(
-            payload: settings.arguments! as AlumniPostsPagePayload,
-          ),
         );
 
       case bluetoothDevicePortalPage:

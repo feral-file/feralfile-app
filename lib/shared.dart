@@ -1,5 +1,3 @@
-import 'package:autonomy_flutter/screen/app_router.dart';
-
 MemoryValues memoryValues = MemoryValues();
 
 class MemoryValues {
@@ -21,24 +19,4 @@ class MemoryValues {
       MemoryValues(
         scopedPersona: scopedPersona ?? this.scopedPersona,
       );
-}
-
-enum HomeNavigatorTab {
-  daily,
-  explore,
-  collection,
-  menu;
-
-  String get routeName {
-    switch (this) {
-      case HomeNavigatorTab.daily:
-        return AppRouter.dailyWorkPage;
-      case HomeNavigatorTab.explore:
-        return AppRouter.explorePage;
-      case HomeNavigatorTab.collection:
-        return AppRouter.organizePage;
-      case HomeNavigatorTab.menu:
-        return 'Menu';
-    }
-  }
 }

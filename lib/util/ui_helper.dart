@@ -16,7 +16,6 @@ import 'package:autonomy_flutter/model/jwt.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-// import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_item.dart';
@@ -26,7 +25,6 @@ import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
-import 'package:autonomy_flutter/service/user_interactivity_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/color_extension.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
@@ -53,7 +51,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart'; // import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:jiffy/jiffy.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 
 enum ActionState { notRequested, loading, error, done }
@@ -1396,37 +1393,6 @@ class UIHelper {
       key: const Key('subscription_upgraded'),
       content: 'upgraded_notification_body'.tr(),
       // vibrateFeedbackType: FeedbackType.warning,
-    );
-  }
-
-  static Future<dynamic> showNotificationPrompt(
-    EnableNotificationPromptType type,
-  ) async {
-    final context = injector<NavigationService>().context;
-    if (!context.mounted) {
-      return null;
-    }
-    return await showCenterDialog(
-      context,
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(type.title, style: Theme.of(context).textTheme.ppMori700White24),
-          const SizedBox(height: 20),
-          Text(
-            type.description,
-            style: Theme.of(context).textTheme.ppMori400White14,
-          ),
-          const SizedBox(height: 20),
-          PrimaryButton(
-            onTap: () async {
-              Navigator.of(context).pop(true);
-              openAppSettings();
-            },
-            text: 'go_to_notifications'.tr(),
-          ),
-        ],
-      ),
     );
   }
 

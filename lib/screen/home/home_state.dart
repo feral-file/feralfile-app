@@ -5,8 +5,8 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
-import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 
 abstract class HomeEvent {}
 

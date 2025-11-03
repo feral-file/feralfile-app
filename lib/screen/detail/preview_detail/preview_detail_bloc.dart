@@ -10,9 +10,9 @@ import 'dart:convert';
 
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
-import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/screen/detail/preview_detail/preview_detail_state.dart';
 import 'package:autonomy_flutter/service/ethereum_service.dart';
@@ -34,42 +34,38 @@ class ArtworkPreviewDetailBloc
 
       if (event.useIndexer) {
         final request = QueryListTokensRequest(
-          ids: [event.identity.id],
+          ids: [event.identity.cid],
         );
         final tokens = await _indexerService.getNftTokens(request);
         if (tokens.isNotEmpty) {
           assetToken = tokens.first;
         }
       } else {
-        assetToken = _database.findAssetTokenByIdAndOwner(
-          event.identity.id,
-          event.identity.owner,
+        assetToken = _database.findTokenByCid(
+          event.identity.cid,
         );
       }
       String? overriddenHtml;
-      if (assetToken != null && assetToken.isFeralfileFrame == true) {
-        overriddenHtml = await _fetchFeralFileFramePreview(assetToken);
-      }
 
-      if (assetToken != null &&
-          assetToken.asset != null &&
-          (assetToken.mimeType?.isEmpty ?? true)) {
-        final uri = Uri.tryParse(assetToken.previewURL ?? '');
-        if (uri != null) {
-          try {
-            final res = await http
-                .head(uri)
-                .timeout(const Duration(milliseconds: 10000));
-            assetToken.asset!.mimeType = res.headers['content-type'];
-            _database.insertAssetToken(assetToken);
-          } catch (error) {
-            log.info(
-              'ArtworkPreviewDetailGetAssetTokenEvent: preview url error',
-              error,
-            );
-          }
-        }
-      }
+      // if (assetToken != null &&
+      //     assetToken.asset != null &&
+      //     (assetToken.mimeType?.isEmpty ?? true)) {
+      //   final uri = Uri.tryParse(assetToken.previewURL ?? '');
+      //   if (uri != null) {
+      //     try {
+      //       final res = await http
+      //           .head(uri)
+      //           .timeout(const Duration(milliseconds: 10000));
+      //       assetToken.asset!.mimeType = res.headers['content-type'];
+      //       _database.insertAssetToken(assetToken);
+      //     } catch (error) {
+      //       log.info(
+      //         'ArtworkPreviewDetailGetAssetTokenEvent: preview url error',
+      //         error,
+      //       );
+      //     }
+      //   }
+      // }
       emit(
         ArtworkPreviewDetailLoadedState(
           assetToken: assetToken,
@@ -82,10 +78,6 @@ class ArtworkPreviewDetailBloc
       await Future.delayed(const Duration(milliseconds: 500)); // Delay 0.5s
       final asset = event.assetToken;
       String? overriddenHtml;
-      if (asset.isFeralfileFrame == true) {
-        overriddenHtml = await _fetchFeralFileFramePreview(asset);
-      }
-
       emit(
         ArtworkPreviewDetailLoadedState(
           assetToken: asset,
@@ -98,11 +90,6 @@ class ArtworkPreviewDetailBloc
   final EthereumService _ethereumService;
   final NftIndexerService _indexerService;
   final IndexerDatabaseAbstract _database;
-
-  Future<String?> _fetchFeralFileFramePreview(AssetToken token) async {
-    if (token.contractAddress == null) return '';
-    return fetchFeralFileFramePreview(token.contractAddress!, token.tokenId);
-  }
 }
 
 Future<String?> fetchFeralFileFramePreview(

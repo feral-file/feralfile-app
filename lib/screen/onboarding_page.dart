@@ -29,7 +29,6 @@ import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/constants.dart';
-import 'package:autonomy_flutter/util/dailies_helper.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/john_gerrard_helper.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -194,8 +193,6 @@ class _OnboardingPageState extends State<OnboardingPage>
           .setVersionInfo(packageInfo.version);
 
       await disableLandscapeMode();
-      unawaited(JohnGerrardHelper.updateJohnGerrardLatestRevealIndex());
-      DailiesHelper.updateDailies([]);
       didRunSetup = true;
     } catch (e, s) {
       log.info('Setup error: $e');

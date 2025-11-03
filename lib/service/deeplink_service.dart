@@ -116,8 +116,6 @@ class DeeplinkServiceImpl extends DeeplinkService {
       switch (handlerType) {
         case DeepLinkHandlerType.navigation:
           await _handleNavigationDeeplink(link);
-        case DeepLinkHandlerType.homeWidget:
-          await _handleHomeWidgetDeeplink(link);
         case DeepLinkHandlerType.bluetoothConnect:
           await _handleBluetoothConnectDeeplink(
             link,
@@ -148,36 +146,6 @@ class DeeplinkServiceImpl extends DeeplinkService {
     if (callingNavigationPrefix != null) {
       final navigationPath = link.replaceFirst(callingNavigationPrefix, '');
       await _navigationService.navigatePath(navigationPath);
-      return true;
-    }
-    return false;
-  }
-
-  Future<bool> _handleHomeWidgetDeeplink(String link) async {
-    log.info('[DeeplinkService] _handleHomeWidgetDeeplink');
-    final homeWidgetPrefix = Constants.homeWidgetDeepLinks
-        .firstWhereOrNull((prefix) => link.startsWith(prefix));
-    if (homeWidgetPrefix != null) {
-      final urlDecode = Uri.decodeFull(link.replaceFirst(homeWidgetPrefix, ''));
-      final uri = Uri.tryParse(urlDecode);
-      if (uri == null) {
-        return false;
-      }
-
-      final widget = uri.queryParameters['widget'];
-      switch (widget) {
-        case 'daily':
-          try {
-            await _navigationService.navigatePath(
-              AppRouter.dailyWorkPage,
-            );
-          } catch (e) {
-            log.info('[DeeplinkService] navigatePath to dailyPage error: $e');
-          }
-
-        default:
-          break;
-      }
       return true;
     }
     return false;
@@ -269,7 +237,6 @@ class DeeplinkServiceImpl extends DeeplinkService {
 
 enum DeepLinkHandlerType {
   navigation,
-  homeWidget,
   bluetoothConnect,
   linkArtist,
   unknown,
@@ -279,11 +246,6 @@ enum DeepLinkHandlerType {
     if (Constants.navigationPrefixes
         .any((prefix) => value.startsWith(prefix))) {
       return DeepLinkHandlerType.navigation;
-    }
-
-    if (Constants.homeWidgetDeepLinks
-        .any((prefix) => value.startsWith(prefix))) {
-      return DeepLinkHandlerType.homeWidget;
     }
 
     if (Constants.bluetoothConnectDeepLinks

@@ -31,14 +31,10 @@ extension DP1NowDisplayingItemExt on DP1NowDisplayingItem {
       return manifestArtists;
     }
 
-    final indexerArtist = assetToken?.artist;
-
-    if (indexerArtist == null) {
-      return [];
-    }
-    final artist = DP1Artist(
-        name: indexerArtist.name, url: indexerArtist.url, id: indexerArtist.id);
-    return [artist];
+    final artists = assetToken?.getArtists
+        .map((e) => DP1Artist(name: e.name, url: null, id: e.did))
+        .toList();
+    return artists ?? [];
   }
 
   bool get canInteract {

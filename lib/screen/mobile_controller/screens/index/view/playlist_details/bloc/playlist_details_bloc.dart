@@ -49,14 +49,14 @@ class PlaylistDetailsBloc
     try {
       final items = _playlist.items;
       final pageItems = items.take(event.size).toList();
-      final pageIndexIds =
-          pageItems.map((item) => item.indexId).whereType<String>().toList();
+      final cids =
+          pageItems.map((item) => item.cid).whereType<String>().toList();
 
-      final assetTokens = await injector<NftTokensService>()
-          .getManualTokens(indexerIds: pageIndexIds);
+      final assetTokens =
+          await injector<NftTokensService>().getManualTokens(cids: cids);
       if (assetTokens.length != pageItems.length) {
         final missingTokens = pageItems
-            .where((item) => !assetTokens.any((t) => t.id == item.indexId))
+            .where((item) => !assetTokens.any((t) => t.cid == item.cid))
             .toList();
         unawaited(
           Sentry.captureException(
@@ -67,10 +67,10 @@ class PlaylistDetailsBloc
         );
       }
 
-      final pageAssetTokens = pageIndexIds
+      final pageAssetTokens = cids
           .map(
-            (id) => assetTokens.firstWhereOrNull(
-              (t) => t.id == id,
+            (cid) => assetTokens.firstWhereOrNull(
+              (t) => t.cid == cid,
             ),
           )
           .nonNulls
@@ -78,7 +78,7 @@ class PlaylistDetailsBloc
 
       if (assetTokens.length != pageItems.length) {
         final missingTokens = pageItems
-            .where((item) => !assetTokens.any((t) => t.id == item.indexId))
+            .where((item) => !assetTokens.any((t) => t.cid == item.cid))
             .toList();
         unawaited(
           Sentry.captureException(
@@ -156,16 +156,17 @@ class PlaylistDetailsBloc
         start,
         end > items.length ? items.length : end,
       );
-      final pageIndexIds =
-          pageItems.map((item) => item.indexId).whereType<String>().toList();
-      pageIndexIds.map((e) => '"$e"').toList().join(', ');
+      final pageCids =
+          pageItems.map((item) => item.cid).whereType<String>().toList();
+
+      pageCids.map((e) => '"$e"').toList().join(', ');
       final assetTokens = await injector<NftTokensService>().getManualTokens(
-        indexerIds: pageIndexIds,
+        cids: pageCids,
       );
-      final pageAssetTokens = pageIndexIds
+      final pageAssetTokens = pageCids
           .map(
-            (id) => assetTokens.firstWhere(
-              (t) => t.id == id,
+            (cid) => assetTokens.firstWhere(
+              (t) => t.cid == cid,
             ),
           )
           .toList();

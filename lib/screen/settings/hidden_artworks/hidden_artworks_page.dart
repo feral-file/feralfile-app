@@ -8,9 +8,10 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
+import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/nft_rendering/svg_image.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/settings/hidden_artworks/hidden_artworks_bloc.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/settings_data_service.dart';
@@ -53,7 +54,7 @@ class _HiddenArtworksPageState extends State<HiddenArtworksPage> {
             getBackAppBar(context, title: 'hidden_artwork'.tr(), onBack: () {
           Navigator.of(context).pop();
         }),
-        body: BlocBuilder<HiddenArtworksBloc, List<CompactedAssetToken>>(
+        body: BlocBuilder<HiddenArtworksBloc, List<AssetToken>>(
             builder: (context, state) => Container(
                   child: state.isEmpty
                       ? _emptyHiddenArtwork(context)
@@ -112,7 +113,7 @@ class _HiddenArtworksPageState extends State<HiddenArtworksPage> {
     );
   }
 
-  Widget _assetsWidget(List<CompactedAssetToken> tokens) {
+  Widget _assetsWidget(List<AssetToken> tokens) {
     const int cellPerRowPhone = 3;
     const int cellPerRowTablet = 6;
     const double cellSpacing = 3;
@@ -154,7 +155,7 @@ class _HiddenArtworksPageState extends State<HiddenArtworksPage> {
                         )
                       else
                         Hero(
-                          tag: asset.id,
+                          tag: asset.cid,
                           child: ext == '.svg'
                               ? SvgImage(
                                   url: thumbnailUrl,
@@ -196,10 +197,12 @@ class _HiddenArtworksPageState extends State<HiddenArtworksPage> {
                   onTap: () async {
                     const isHidden = true;
                     await injector<ConfigurationService>()
-                        .updateTempStorageHiddenTokenIDs([asset.id], !isHidden);
+                        .updateTempStorageHiddenTokenIDs(
+                            [asset.cid], !isHidden);
                     unawaited(
                         injector<SettingsDataService>().backupUserSettings());
-                    NftCollectionBloc.eventController.add(ReloadEvent());
+                    injector<UserAllOwnCollectionBloc>()
+                        .add(ReloadAssetTokensFromIndexerDatabase());
 
                     if (!context.mounted) {
                       return;

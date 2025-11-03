@@ -3,13 +3,11 @@ import 'dart:async';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/model/additional_data/additional_data.dart';
-import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/home/home_bloc.dart';
 import 'package:autonomy_flutter/screen/home/home_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/service/announcement/announcement_service.dart';
-import 'package:autonomy_flutter/service/client_token_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/deeplink_service.dart';
@@ -61,9 +59,6 @@ class HomePageHelper {
   final _remoteConfig = injector<RemoteConfigService>();
 
   void onHomePageInit(BuildContext context, ObservingState state) {
-    final nftBloc = injector<ClientTokenService>().nftBloc;
-    final clientTokenService = injector<ClientTokenService>();
-
     unawaited(injector<CustomerSupportService>().getChatThreads());
 
     // NftCollectionBloc.eventController.stream.listen((event) async {
@@ -93,13 +88,11 @@ class HomePageHelper {
         }
       },
     );
-    unawaited(
-      clientTokenService.refreshTokens(syncAddresses: true).then(
-        (_) {
-          nftBloc.add(GetTokensByOwnerEvent(pageKey: PageKey.init()));
-        },
-      ),
-    );
+    // unawaited(
+    //   clientTokenService.refreshTokens(syncAddresses: true).then(
+    //         (_) {},
+    //       ),
+    // );
 
     unawaited(NowDisplayingManager().updateDisplayingNow());
 
@@ -127,9 +120,6 @@ class HomePageHelper {
           '${openedResult.notification.additionalData}');
       final additionalData =
           AdditionalData.fromJson(openedResult.notification.additionalData!);
-      final id = additionalData.announcementContentId ??
-          openedResult.notification.notificationId;
-      final body = openedResult.notification.body;
       await _announcementService.fetchAnnouncements();
       if (!context.mounted) {
         return;

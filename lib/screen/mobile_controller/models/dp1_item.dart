@@ -269,7 +269,7 @@ enum ArtworkDisplayLicense {
 }
 
 extension DP1PlaylistItemExt on DP1Item {
-  String? get indexId => provenance?.indexId;
+  String? get cid => provenance?.cid;
 }
 
 /// Extension for removing duplicate items based on unique identifiers

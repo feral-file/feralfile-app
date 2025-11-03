@@ -6,12 +6,11 @@
 //
 
 import 'package:autonomy_flutter/au_bloc.dart';
+import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
-import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 
-class HiddenArtworksBloc
-    extends AuBloc<HiddenArtworksEvent, List<CompactedAssetToken>> {
+class HiddenArtworksBloc extends AuBloc<HiddenArtworksEvent, List<AssetToken>> {
   final ConfigurationService configurationService;
   final IndexerDatabaseAbstract database;
 
@@ -19,14 +18,11 @@ class HiddenArtworksBloc
     on<HiddenArtworksEvent>((event, emit) async {
       final hiddenArtworks =
           configurationService.getTempStorageHiddenTokenIDs();
-      final assets =
-          database.getAssetTokensByIndexIds(indexIds: hiddenArtworks);
-      final compactedAssetToken =
-          assets.map((e) => CompactedAssetToken.fromAssetToken(e)).toList();
+      final tokens = database.getTokensByCIDs(cids: hiddenArtworks);
 
-      compactedAssetToken.removeWhere((element) =>
-          !hiddenArtworks.contains(element.id) || element.balance == 0);
-      emit(compactedAssetToken);
+      tokens.removeWhere(
+          (element) => !hiddenArtworks.contains(element.cid) || element.burned);
+      emit(tokens);
     });
   }
 }

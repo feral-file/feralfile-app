@@ -361,7 +361,9 @@ class FFBluetoothService {
       final wifiChar = device.wifiConnectCharacteristic;
       if (wifiChar == null) {
         log.warning('Command characteristic not found');
-        unawaited(Sentry.captureMessage('Command characteristic not found'));
+        unawaited(Sentry.captureMessage(
+          'Command characteristic not found',
+        ));
         throw Exception('Command characteristic not found');
       }
 

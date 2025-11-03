@@ -8,17 +8,8 @@
 enum NotificationType {
   announcement,
   supportMessage,
-  dailyArtworkReminders,
-  galleryNewNft,
   customerSupportNewMessage,
   customerSupportCloseIssue,
-  artworkCreated,
-  artworkReceived,
-  jgCrystallineWorkHasArrived,
-  jgCrystallineWorkGenerated,
-  exhibitionViewingOpening,
-  exhibitionSalesOpening,
-  exhibitionSaleClosing,
   navigate,
   general,
   ;
@@ -31,28 +22,10 @@ enum NotificationType {
         return 'announcement';
       case NotificationType.supportMessage:
         return 'support_messages';
-      case NotificationType.dailyArtworkReminders:
-        return 'daily_artwork_reminders';
-      case NotificationType.galleryNewNft:
-        return 'gallery_new_nft';
       case NotificationType.customerSupportNewMessage:
         return 'customer_support_new_message';
       case NotificationType.customerSupportCloseIssue:
         return 'customer_support_close_issue';
-      case NotificationType.artworkCreated:
-        return 'artwork_created';
-      case NotificationType.artworkReceived:
-        return 'artwork_received';
-      case NotificationType.jgCrystallineWorkHasArrived:
-        return 'jg_artwork_solar_day_arrived';
-      case NotificationType.jgCrystallineWorkGenerated:
-        return 'jg_artwork_generated';
-      case NotificationType.exhibitionViewingOpening:
-        return 'exhibition_view_opening';
-      case NotificationType.exhibitionSalesOpening:
-        return 'exhibition_sale_opening';
-      case NotificationType.exhibitionSaleClosing:
-        return 'exhibition_sale_closing';
       case NotificationType.navigate:
         return 'navigate';
       case NotificationType.general:
@@ -67,28 +40,10 @@ enum NotificationType {
         return NotificationType.announcement;
       case 'support_messages':
         return NotificationType.supportMessage;
-      case 'daily_artwork_reminders':
-        return NotificationType.dailyArtworkReminders;
-      case 'gallery_new_nft':
-        return NotificationType.galleryNewNft;
       case 'customer_support_new_message':
         return NotificationType.customerSupportNewMessage;
       case 'customer_support_close_issue':
         return NotificationType.customerSupportCloseIssue;
-      case 'artwork_created':
-        return NotificationType.artworkCreated;
-      case 'artwork_received':
-        return NotificationType.artworkReceived;
-      case 'jg_artwork_solar_day_arrived':
-        return NotificationType.jgCrystallineWorkHasArrived;
-      case 'jg_artwork_generated':
-        return NotificationType.jgCrystallineWorkGenerated;
-      case 'exhibition_view_opening':
-        return NotificationType.exhibitionViewingOpening;
-      case 'exhibition_sale_opening':
-        return NotificationType.exhibitionSalesOpening;
-      case 'exhibition_sale_closing':
-        return NotificationType.exhibitionSaleClosing;
       case 'navigate':
         return NotificationType.navigate;
       default:

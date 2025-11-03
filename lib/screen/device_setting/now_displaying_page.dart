@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
+import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
@@ -85,12 +86,16 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
       }
 
       if (assetToken != null) {
-        identitiesList.addAll(assetToken.provenance.map((e) => e.owner));
-        if (assetToken.artistName != null &&
-            assetToken.artistName!.length > 20) {
-          identitiesList.add(assetToken.artistName!);
-        }
-        identitiesList.add(assetToken.owner);
+        final provenanceIdentities = assetToken.provenance
+            .map((e) => e.toAddress)
+            .nonNulls
+            .toSet()
+            .toList();
+
+        final artistIdentities =
+            assetToken.getArtists.map((e) => e.name).toList();
+        identitiesList.addAll(provenanceIdentities);
+        identitiesList.addAll(artistIdentities);
       }
 
       context.read<IdentityBloc>().add(GetIdentityEvent(identitiesList));
@@ -165,14 +170,17 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
     Theme.of(context);
     return BlocConsumer<ArtworkDetailBloc, ArtworkDetailState>(
       listener: (context, state) {
-        final identitiesList =
-            state.assetToken?.provenance.map((e) => e.owner).toList() ?? [];
-        if (state.assetToken?.artistName != null &&
-            state.assetToken!.artistName!.length > 20) {
-          identitiesList.add(state.assetToken!.artistName!);
-        }
-
-        identitiesList.add(state.assetToken?.owner ?? '');
+        final provenanceIdentities = state.assetToken?.provenance
+                .map((e) => e.toAddress)
+                .nonNulls
+                .toSet()
+                .toList() ??
+            [];
+        final artistIdentities =
+            state.assetToken?.getArtists.map((e) => e.name).toList() ?? [];
+        final identitiesList = <String>[];
+        identitiesList.addAll(provenanceIdentities);
+        identitiesList.addAll(artistIdentities);
         context.read<IdentityBloc>().add(GetIdentityEvent(identitiesList));
       },
       builder: (context, state) {
@@ -204,12 +212,7 @@ Widget infoHeader(
           child: ArtworkDetailsHeader(
             title: asset.displayTitle ?? '',
             subTitle: subTitle,
-            onSubTitleTap: asset.artistID != null && asset.isFeralfile
-                ? () => unawaited(
-                      injector<NavigationService>()
-                          .openFeralFileArtistPage(asset.artistID!),
-                    )
-                : null,
+            onSubTitleTap: null,
           ),
         ),
       ],
@@ -240,8 +243,8 @@ class _DP1NowDisplayingState extends State<DP1NowDisplaying> {
     final theme = Theme.of(context);
     final assetToken = widget.nowDisplayingItem.assetToken;
     final identityState = context.watch<IdentityBloc>().state;
-    final artistName =
-        assetToken?.artistName?.toIdentityOrMask(identityState.identityMap);
+    final artistName = assetToken?.getArtists.firstOrNull?.name
+        .toIdentityOrMask(identityState.identityMap);
     return CustomScrollView(
       slivers: [
         const SliverToBoxAdapter(
@@ -265,7 +268,7 @@ class _DP1NowDisplayingState extends State<DP1NowDisplaying> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: HtmlWidget(
                 customStylesBuilder: auHtmlStyle,
-                assetToken.description ?? '',
+                assetToken.displayDescription,
                 textStyle: theme.textTheme.ppMori400White12,
                 onTapUrl: (url) async {
                   await launchUrl(

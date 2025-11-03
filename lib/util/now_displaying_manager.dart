@@ -7,7 +7,7 @@ import 'package:autonomy_flutter/model/device/base_device.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/error/now_displaying_error.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
-import 'package:autonomy_flutter/nft_collection/models/models.dart';
+import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
@@ -124,15 +124,16 @@ class NowDisplayingManager {
       // DP1
       final index = status.index!;
       final assetTokens = await _fetchAssetTokens(
-          status.items!.map((e) => e.indexId).nonNulls.toList());
+        status.items!.map((e) => e.cid).nonNulls.toList(),
+      );
       final refs = status.items!.map((e) => e.ref).nonNulls.toSet().toList();
       final manifests =
           await DP1ManifestHelper.instance.fetchDP1Manifests(refs);
 
       final items = status.items!.map((e) {
         final assetToken =
-            assetTokens.firstWhereOrNull((token) => token.id == e.indexId);
-        final dp1Manifest = manifests[e.ref] ?? null;
+            assetTokens.firstWhereOrNull((token) => token.cid == e.cid);
+        final dp1Manifest = manifests[e.ref];
         return DP1NowDisplayingItem(
           dp1Item: e,
           assetToken: assetToken,
@@ -148,17 +149,18 @@ class NowDisplayingManager {
     } else {
       log.info('NowDisplayingManager: no items to display');
       unawaited(
-          Sentry.captureMessage('NowDisplayingManager: no items to display'));
+        Sentry.captureMessage('NowDisplayingManager: no items to display'),
+      );
       return null;
     }
   }
 
-  Future<List<AssetToken>> _fetchAssetTokens(List<String> tokenIds) async {
-    final uniqueTokenIds = tokenIds.toSet().toList();
-    final assetTokens = await injector<NftTokensService>()
-        .getManualTokens(indexerIds: uniqueTokenIds);
-    final missingIds = uniqueTokenIds
-        .where((id) => !assetTokens.any((element) => element.id == id))
+  Future<List<AssetToken>> _fetchAssetTokens(List<String> cids) async {
+    final uniqueCids = cids.toSet().toList();
+    final assetTokens =
+        await injector<NftTokensService>().getManualTokens(cids: uniqueCids);
+    final missingIds = uniqueCids
+        .where((cid) => !assetTokens.any((element) => element.cid == cid))
         .toList();
     if (missingIds.isNotEmpty) {
       log.info('NowDisplayingManager: missingIds: $missingIds');

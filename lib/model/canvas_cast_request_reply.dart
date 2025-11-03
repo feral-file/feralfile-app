@@ -6,13 +6,11 @@ import 'dart:math';
 
 import 'package:autonomy_flutter/model/device/device_display_setting.dart';
 import 'package:autonomy_flutter/model/device/device_status.dart';
-import 'package:autonomy_flutter/screen/bloc/artist_artwork_display_settings/artist_artwork_display_setting_bloc.dart';
 import 'package:autonomy_flutter/screen/device_setting/bluetooth_connected_device_config.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_intent.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/intent.dart';
 import 'package:flutter/material.dart';
 
 enum CastCommand {
@@ -35,7 +33,6 @@ enum CastCommand {
   tapGesture,
   dragGesture,
   showPairingQRCode,
-  updateDisplaySettings,
   shutdown,
   reboot,
   deviceMetrics;
@@ -80,8 +77,6 @@ enum CastCommand {
         return CastCommand.dragGesture;
       case 'showPairingQRCode':
         return CastCommand.showPairingQRCode;
-      case 'updateDisplaySettings':
-        return CastCommand.updateDisplaySettings;
       case 'shutdown':
         return CastCommand.shutdown;
       case 'reboot':
@@ -133,8 +128,6 @@ enum CastCommand {
         return CastCommand.dragGesture;
       case const (ShowPairingQRCodeRequest):
         return CastCommand.showPairingQRCode;
-      case const (UpdateDisplaySettingsRequest):
-        return CastCommand.updateDisplaySettings;
       case const (SafeShutdownRequest):
         return CastCommand.shutdown;
       case const (SafeRestartRequest):
@@ -519,14 +512,16 @@ class CastDP1JsonPlaylistRequest implements CastDP1PlaylistRequestAbstract {
 }
 
 class CastDP1UrlPlaylistRequest implements CastDP1PlaylistRequestAbstract {
+  CastDP1UrlPlaylistRequest({required this.playlistUrl, required this.intent});
   factory CastDP1UrlPlaylistRequest.fromDp1Playlist(
-      DP1Call dp1Call, DP1Intent intent) {
+    DP1Call dp1Call,
+    DP1Intent intent,
+  ) {
     return CastDP1UrlPlaylistRequest(
       playlistUrl: dp1Call.url,
       intent: intent,
     );
   }
-  CastDP1UrlPlaylistRequest({required this.playlistUrl, required this.intent});
   final String playlistUrl; // url of the playlist
   @override
   final DP1Intent intent;
@@ -1027,32 +1022,6 @@ class ShowPairingQRCodeReply extends Reply {
       };
 }
 
-class UpdateDisplaySettingsRequest implements FF1Request {
-  UpdateDisplaySettingsRequest({
-    required this.tokenId,
-    required this.setting,
-    this.isSaved = true,
-  });
-
-  final String tokenId;
-  final ArtistDisplaySetting setting;
-  final bool isSaved;
-
-  @override
-  Map<String, dynamic> toJson() => {
-        'isSaved': isSaved,
-        ...setting.toJson(),
-        'tokenId': tokenId,
-      };
-}
-
-class UpdateDisplaySettingsReply extends ReplyWithOK {
-  UpdateDisplaySettingsReply({required super.ok});
-
-  factory UpdateDisplaySettingsReply.fromJson(Map<String, dynamic> json) =>
-      UpdateDisplaySettingsReply(ok: json['ok'] as bool);
-}
-
 class SafeShutdownRequest implements FF1Request {
   SafeShutdownRequest();
 
@@ -1154,7 +1123,7 @@ class DeviceCpu {
 
   double? get cpuUsage {
     if (currentFrequency != null && maxFrequency != null) {
-      return min(((currentFrequency! / maxFrequency!) * 100), 100);
+      return min((currentFrequency! / maxFrequency!) * 100, 100);
     }
     return null;
   }
@@ -1196,7 +1165,7 @@ class DeviceGpu {
 
   double? get gpuUsage {
     if (currentFrequency != null && maxFrequency != null) {
-      return min(((currentFrequency! / maxFrequency!) * 100), 100);
+      return min((currentFrequency! / maxFrequency!) * 100, 100);
     }
     return null;
   }
@@ -1226,7 +1195,7 @@ class DeviceMemory {
 
   double? get memoryUsage {
     if (maxCapacity != null && usedCapacity != null) {
-      return ((usedCapacity! / maxCapacity!) * 100);
+      return (usedCapacity! / maxCapacity!) * 100;
     }
     return null;
   }

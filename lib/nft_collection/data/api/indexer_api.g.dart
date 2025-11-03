@@ -19,31 +19,6 @@ class _IndexerApi implements IndexerApi {
   String? baseUrl;
 
   @override
-  Future<List<AssetToken>> getNFTTokens(offset) async {
-    const _extra = <String, dynamic>{};
-    final queryParameters = <String, dynamic>{r'offset': offset};
-    final _headers = <String, dynamic>{};
-    final Map<String, dynamic>? _data = null;
-    final _result = await _dio
-        .fetch<List<dynamic>>(_setStreamType<List<AssetToken>>(Options(
-      method: 'POST',
-      headers: _headers,
-      extra: _extra,
-    )
-            .compose(
-              _dio.options,
-              '/v2/nft/query',
-              queryParameters: queryParameters,
-              data: _data,
-            )
-            .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
-    var value = _result.data!
-        .map((dynamic i) => AssetToken.fromJson(i as Map<String, dynamic>))
-        .toList();
-    return value;
-  }
-
-  @override
   Future<dynamic> requestIndex(payload) async {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
@@ -89,28 +64,6 @@ class _IndexerApi implements IndexerApi {
     return value;
   }
 
-  @override
-  Future<dynamic> numberNft(owner) async {
-    const _extra = <String, dynamic>{};
-    final queryParameters = <String, dynamic>{r'owner': owner};
-    final _headers = <String, dynamic>{};
-    final Map<String, dynamic>? _data = null;
-    final _result = await _dio.fetch(_setStreamType<dynamic>(Options(
-      method: 'GET',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          '/v2/nft/count',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
-    final value = _result.data;
-    return value;
-  }
-
   RequestOptions _setStreamType<T>(RequestOptions requestOptions) {
     if (T != dynamic &&
         !(requestOptions.responseType == ResponseType.bytes ||
@@ -122,58 +75,5 @@ class _IndexerApi implements IndexerApi {
       }
     }
     return requestOptions;
-  }
-
-  @override
-  Future<List<UserCollection>> getCollection(creator, size) async {
-    const _extra = <String, dynamic>{};
-    final queryParameters = <String, dynamic>{
-      r'creators': creator,
-      r'size': size
-    };
-    final _headers = <String, dynamic>{};
-    final Map<String, dynamic>? _data = null;
-    final _result = await _dio
-        .fetch<List<dynamic>>(_setStreamType<List<UserCollection>>(Options(
-      method: 'GET',
-      headers: _headers,
-      extra: _extra,
-    )
-            .compose(
-              _dio.options,
-              '/v2/collections',
-              queryParameters: queryParameters,
-              data: _data,
-            )
-            .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
-    var value = _result.data!
-        .map((dynamic i) => UserCollection.fromJson(i as Map<String, dynamic>))
-        .toList();
-    return value;
-  }
-
-  @override
-  Future<List<AssetToken>> getCollectionListToken(collectionId) async {
-    const _extra = <String, dynamic>{};
-    final queryParameters = <String, dynamic>{};
-    final _headers = <String, dynamic>{};
-    final Map<String, dynamic>? _data = null;
-    final _result = await _dio.fetch<Map<String, dynamic>>(Options(
-      method: 'GET',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          '/v2/collections/$collectionId',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl));
-    var value = (_result.data?['data']?['token'] as List?)
-        ?.map<AssetToken>((dynamic i) =>
-            AssetToken.fromJson(Map<String, dynamic>.from(i as Map)))
-        .toList();
-    return value ?? <AssetToken>[];
   }
 }

@@ -9,23 +9,13 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/model/device/base_device.dart';
-import 'package:autonomy_flutter/model/ff_artwork.dart';
-import 'package:autonomy_flutter/model/ff_exhibition.dart';
 import 'package:autonomy_flutter/model/jwt.dart';
 import 'package:autonomy_flutter/model/pair.dart';
-import 'package:autonomy_flutter/model/play_list_model.dart';
-import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
-import 'package:autonomy_flutter/screen/alumni_details/alumni_details_page.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/customer_support/support_thread_page.dart';
-import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
-import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
-import 'package:autonomy_flutter/screen/feralfile_home/feralfile_home.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/index.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
-import 'package:autonomy_flutter/shared.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_ext.dart';
@@ -34,20 +24,15 @@ import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/custom_route_observer.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
 import 'package:autonomy_flutter/util/feral_file_custom_tab.dart';
-import 'package:autonomy_flutter/util/feral_file_helper.dart';
 import 'package:autonomy_flutter/util/gesture_constrain_widget.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
-import 'package:autonomy_flutter/view/artist_display_setting.dart';
-import 'package:autonomy_flutter/view/how_to_install_daily_widget_build.dart';
 import 'package:autonomy_flutter/view/now_displaying/now_display_setting.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
-import 'package:autonomy_flutter/view/stream_device_view.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart'; // import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:open_settings_plus/open_settings_plus.dart';
 import 'package:sentry/sentry.dart';
@@ -367,28 +352,6 @@ class NavigationService {
     }
   }
 
-  Future<void> popToCollection() async {
-    popUntilHome();
-    await injector<NavigationService>().openCollection();
-  }
-
-  Future<void> gotoArtworkDetailsPage(String indexID) async {
-    popUntilHome();
-    final tokens = injector<IndexerDatabaseAbstract>()
-        .getAssetTokensByIndexIds(indexIds: [indexID]);
-    final owner = tokens.first.owner;
-    final artworkDetailPayload =
-        ArtworkDetailPayload(ArtworkIdentity(indexID, owner));
-    if (context.mounted) {
-      unawaited(
-        Navigator.of(context).pushNamed(
-          AppRouter.artworkDetailsPage,
-          arguments: artworkDetailPayload,
-        ),
-      );
-    }
-  }
-
   Future<void> openAutonomyDocument(String href, String title) async {
     if (navigatorKey.currentContext != null &&
         navigatorKey.currentState?.mounted == true) {
@@ -407,89 +370,18 @@ class NavigationService {
     }
   }
 
-  Future<void> openFeralFileArtistPage(String id) async {
-    if (id.contains(',') || id.isEmpty) {
-      return;
-    }
-    await Navigator.of(navigatorKey.currentContext!).pushNamed(
-      AppRouter.alumniDetailsPage,
-      arguments: AlumniDetailsPagePayload(alumniID: id),
-    );
-  }
-
-  Future<void> openFeralFileCuratorPage(String id) async {
-    if (id.contains(',') || id.isEmpty) {
-      return;
-    }
-    await Navigator.of(navigatorKey.currentContext!).pushNamed(
-      AppRouter.alumniDetailsPage,
-      arguments: AlumniDetailsPagePayload(alumniID: id),
-    );
-  }
-
-  Future<void> openFeralFileExhibitionNotePage(String exhibitionSlug) async {
-    if (exhibitionSlug.isEmpty) {
-      return;
-    }
-    final url = FeralFileHelper.getExhibitionNoteUrl(exhibitionSlug);
-    await _browser.openUrl(url);
-  }
-
-  Future<void> openCollection() async {
-    await navigateTo(AppRouter.collectionPage);
-  }
-
-  Future<void> openFeralFilePostPage(Post post, String exhibitionID) async {
-    if (post.slug.isEmpty || exhibitionID.isEmpty) {
-      return;
-    }
-    final url = FeralFileHelper.getPostUrl(post, exhibitionID);
-    await _browser.openUrl(url);
-  }
-
   Future<void> navigatePath(String? path) async {
     final pair = _resolvePath(path);
     if (pair == null) {
       return;
     }
     late String route;
-    HomeNavigatorTab? homeNavigationTab;
-    FeralfileHomeTab? exploreTab;
-
     switch (pair.first) {
-      case AppRouter.dailyWorkPage:
-        route = AppRouter.homePage;
-        homeNavigationTab = HomeNavigatorTab.daily;
-      case AppRouter.featuredPage:
-        route = AppRouter.homePage;
-        homeNavigationTab = HomeNavigatorTab.explore;
-        exploreTab = FeralfileHomeTab.featured;
-      case AppRouter.artworksPage:
-        route = AppRouter.homePage;
-        homeNavigationTab = HomeNavigatorTab.explore;
-        exploreTab = FeralfileHomeTab.artworks;
-      case AppRouter.exhibitionsPage:
-        route = AppRouter.homePage;
-        homeNavigationTab = HomeNavigatorTab.explore;
-        exploreTab = FeralfileHomeTab.exhibitions;
-      case AppRouter.artistsPage:
-        route = AppRouter.homePage;
-        homeNavigationTab = HomeNavigatorTab.explore;
-        exploreTab = FeralfileHomeTab.artists;
-      case AppRouter.curatorsPage:
-        route = AppRouter.homePage;
-        homeNavigationTab = HomeNavigatorTab.explore;
-        exploreTab = FeralfileHomeTab.curators;
-      case AppRouter.organizePage:
-        route = AppRouter.homePage;
-        homeNavigationTab = HomeNavigatorTab.collection;
       default:
         route = pair.first;
         unawaited(navigateTo(route, arguments: pair.second));
         return;
     }
-
-    popUntilHome();
   }
 
   Pair<String, dynamic>? _resolvePath(String? path) {
@@ -527,51 +419,6 @@ class NavigationService {
     }
   }
 
-  Future<void> openPlaylist({required PlayListModel playlist}) async {
-    // if (navigatorKey.currentState?.mounted != true ||
-    //     navigatorKey.currentContext == null) {
-    //   return;
-    // }
-    // await navigatorKey.currentState?.pushNamed(
-    //   AppRouter.viewPlayListPage,
-    //   arguments: ViewPlaylistScreenPayload(playListModel: playlist),
-    // );
-  }
-
-  Future<void> showALreadyClaimPlaylist({
-    required PlayListModel playlist,
-  }) async {
-    if (navigatorKey.currentState?.mounted != true ||
-        navigatorKey.currentContext == null) {
-      return;
-    }
-    await UIHelper.showMessageActionNew(
-      context,
-      'already_claimed_playlist'.tr(),
-      'already_claimed_playlist_desc'.tr(),
-      onClose: () => UIHelper.hideInfoDialog(context),
-      isDismissible: true,
-      actionButton: 'view_playlist'.tr(),
-      onAction: () {
-        goBack();
-        openPlaylist(playlist: playlist);
-      },
-    );
-  }
-
-  Future<void>? showPlaylistActivationExpired() async {
-    if (navigatorKey.currentState?.mounted != true ||
-        navigatorKey.currentContext == null) {
-      return;
-    }
-    await UIHelper.showMessageActionNew(
-      context,
-      'activation_expired'.tr(),
-      'activation_expired_desc'.tr(),
-      isDismissible: true,
-    );
-  }
-
   Future<void> showFlexibleDialog(
     Widget content, {
     bool isDismissible = false,
@@ -588,31 +435,6 @@ class NavigationService {
       backgroundColor: backgroundColor,
       autoDismissAfter: autoDismissAfter,
       // feedback: feedback,
-    );
-  }
-
-  Future<void> showStreamAction(
-    String displayKey,
-    FutureOr<void> Function(BaseDevice device)? onDeviceSelected,
-  ) async {
-    await injector<NavigationService>().showFlexibleDialog(
-      BlocProvider.value(
-        value: injector<CanvasDeviceBloc>(),
-        child: StreamDeviceView(
-          displayKey: displayKey,
-          onDeviceSelected: (canvasDevice) {
-            onDeviceSelected?.call(canvasDevice);
-          },
-        ),
-      ),
-      isDismissible: true,
-    );
-  }
-
-  Future<void> showHowToInstallDailyWidget() async {
-    await injector<NavigationService>().showFlexibleDialog(
-      const HowToInstallDailyWidget(),
-      isDismissible: true,
     );
   }
 
@@ -859,22 +681,6 @@ class NavigationService {
           },
         ),
         onClose: () => UIHelper.hideInfoDialog(context),
-      );
-    }
-  }
-
-  Future<void> openArtistDisplaySetting({Artwork? artwork}) async {
-    // show a dialog with ArtistDisplaySettingWidget
-    if (context.mounted) {
-      UIHelper.showCustomDialog<void>(
-        context: context,
-        child: ArtistDisplaySettingWidget(
-          artwork: artwork,
-          artistDisplaySetting: null,
-          onSettingChanged: (ArtistDisplaySetting) {},
-        ),
-        isDismissible: true,
-        name: UIHelper.artistArtworkDisplaySettingModal,
       );
     }
   }

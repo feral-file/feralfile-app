@@ -8,6 +8,7 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
@@ -118,7 +119,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
           create: (_) => ForgetExistBloc(
             injector(),
             injector(),
-            injector<NftCollectionBloc>().database,
+            injector<IndexerDatabaseAbstract>(),
             injector(),
           ),
           child: const ForgetExistView(),

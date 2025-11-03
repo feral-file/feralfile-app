@@ -205,14 +205,14 @@ enum DP1ProvenanceStandard {
 }
 
 extension DP1ContractExt on DP1Contract {
-  String get indexId {
+  String get cid {
     final prefix = chain.prefix;
-    final contractAddress = chain == DP1ProvenanceChain.bitmark ? '' : address;
-
-    return '$prefix-$contractAddress-$tokenId';
+    final standard = this.standard?.value;
+    final contractAddress = this.address;
+    return "prefix:$standard:$contractAddress:$tokenId";
   }
 }
 
 extension DP1ProvenanceExt on DP1Provenance {
-  String get indexId => contract.indexId;
+  String get cid => contract.cid;
 }

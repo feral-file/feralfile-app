@@ -87,324 +87,70 @@ type Query {
  */
 
 const String getTokens = r'''
-  query getTokens($owners: [String!]! = [],$ids: [String!]! = [], $size: Int64! = 50, $lastUpdatedAt: Time, $offset: Int64! = 0, $burnedIncluded: Boolean! = false) {
-  tokens(owners: $owners,ids: $ids, size: $size, lastUpdatedAt: $lastUpdatedAt, offset: $offset, burnedIncluded: $burnedIncluded) {
-    id
-    blockchain
-    fungible
-    contractType
-    contractAddress
-    edition
-    editionName
-    mintedAt
-    balance
-    owner
-    owners {
-      address
-      balance
-    }
-    indexID
-    source
-    swapped
-    burned
-    lastActivityTime
-    originTokenInfo {
-      id
-      blockchain
-      fungible
-      contractType
-      contractAddress
-    }
-    provenance {
-      type
-      owner
-      blockchain
-      blockNumber
-      timestamp
-      txID
-      txURL
-    }
-    lastRefreshedTime
-    asset{
-      indexID
-      thumbnailID
-      lastRefreshedTime
-      attributes{
-        configuration {
-          scaling
-          backgroundColor
-          marginLeft
-          marginRight
-          marginTop
-          marginBottom
-          autoPlay
-          looping
-          interactable
-          overridable
-        }
-      }
-      metadata{
-        project{
-          origin{
-            artistID
-            artistName
-            artistURL
-            artists{
+  query getTokens($owners: [String!]!) {
+    tokens(
+      owner: $owners
+      expand: [
+        "provenance_events",
+        "owners",
+        "metadata_media_asset",
+        "enrichment_source_media_asset",
+        "enrichment_source"
+      ]
+      provenance_events_order: desc
+    ) {
+      items {
+        id
+        chain
+        contract_address
+        standard
+        token_cid
+        token_number
+        current_owner
+        metadata {
+          name
+          description
+          artists {
             name
-            id
-            url
-            }
-            assetID
-            title
-            description
-            mimeType
-            medium
-            maxEdition
-            baseCurrency
-            basePrice
-            source
-            sourceURL
-            previewURL
-            thumbnailURL
-            galleryThumbnailURL
-            assetData
-            assetURL
-            artworkMetadata
+            did
           }
-          latest{
-            artistID
-            artistName
-            artistURL
-            artists{
+          publisher {
             name
-            id
             url
-            }
-            assetID
-            title
-            description
-            mimeType
-            medium
-            maxEdition
-            baseCurrency
-            basePrice
-            source
-            sourceURL
-            previewURL
-            thumbnailURL
-            galleryThumbnailURL
-            assetData
-            assetURL
-            artworkMetadata
           }
         }
-      }
-    }
-
-  }
-}
-''';
-
-const String getCompactedTokens = r'''
-  query getCompactedTokens($owners: [String!]! = [],$ids: [String!]! = [], $size: Int64! = 50, $lastUpdatedAt: Time, $offset: Int64! = 0, $burnedIncluded: Boolean! = false) {
-  tokens(owners: $owners,ids: $ids, size: $size, lastUpdatedAt: $lastUpdatedAt, offset: $offset, burnedIncluded: $burnedIncluded) {
-    id
-    blockchain
-    edition
-    editionName
-    mintedAt
-    balance
-    owner
-    owners {
-      address
-      balance
-    }
-    indexID
-    lastActivityTime
-    lastRefreshedTime
-    asset{
-      indexID
-      thumbnailID
-      lastRefreshedTime
-      metadata{
-        project{
-          latest{
-            artistID
-            artistName
-            artistURL
-            artists{
-            name
-            id
-            url
-            }
-            assetID
-            title
-            description
-            mimeType
-            medium
-            maxEdition
-            baseCurrency
-            basePrice
-            source
-            sourceURL
-            previewURL
-            thumbnailURL
-            galleryThumbnailURL
-            assetData
-            assetURL
-            artworkMetadata
+        owners {
+          items {
+            quantity
+            owner_address
           }
         }
+        provenance_events {
+          items {
+            event_type
+            from_address
+            to_address
+            tx_hash
+            timestamp
+            chain
+          }
+        }
+        enrichment_source {
+          name
+        }
+        metadata_media_assets {
+          source_url
+          mime_type
+          variant_urls
+        }
+        enrichment_source_media_assets {
+          source_url
+          mime_type
+          variant_urls
+        }
       }
+      offset
+      total
     }
   }
-}
 ''';
-
-const String getColectionTokenQuery = r'''
-query getCollectionToken($collectionID: String!,
-$offset: Int64! = 0,
-    $size: Int64! = 50) {
-  tokens(
-    collectionID: $collectionID,
-    offset: $offset,
-    size: $size,
-  ) {
-    id
-    blockchain
-    fungible
-    contractType
-    contractAddress
-    edition
-    editionName
-    mintedAt
-    balance
-    owner
-    owners {
-      address
-      balance
-    }
-    indexID
-    source
-    swapped
-    burned
-    lastActivityTime
-    originTokenInfo {
-      id
-      blockchain
-      fungible
-      contractType
-      contractAddress
-    }
-    provenance {
-      type
-      owner
-      blockchain
-      blockNumber
-      timestamp
-      txID
-      txURL
-    }
-    lastRefreshedTime
-    asset{
-      indexID
-      thumbnailID
-      lastRefreshedTime
-      attributes{
-        configuration {
-          scaling
-          backgroundColor
-          marginLeft
-          marginRight
-          marginTop
-          marginBottom
-          autoPlay
-          looping
-          overridable
-        }
-      }
-      metadata{
-        project{
-          origin{
-            artistID
-            artistName
-            artistURL
-            artists{
-            name
-            id
-            url
-            }
-            assetID
-            title
-            description
-            mimeType
-            medium
-            maxEdition
-            baseCurrency
-            basePrice
-            source
-            sourceURL
-            previewURL
-            thumbnailURL
-            galleryThumbnailURL
-            assetData
-            assetURL
-            artworkMetadata
-          }
-          latest{
-            artistID
-            artistName
-            artistURL
-            artists{
-            name
-            id
-            url
-            }
-            assetID
-            title
-            description
-            mimeType
-            medium
-            maxEdition
-            baseCurrency
-            basePrice
-            source
-            sourceURL
-            previewURL
-            thumbnailURL
-            galleryThumbnailURL
-            assetData
-            assetURL
-            artworkMetadata
-          }
-        }
-      }
-    }
-  }
-}
-''';
-
-const String getTokenConfigurations = r'''
-  query getTokensConfigurations($tokenId: String!) {
-  tokens(ids: [$tokenId]) {
-    asset {
-      attributes {
-        configuration {
-          scaling
-          backgroundColor
-          marginLeft
-          marginRight
-          marginTop
-          marginBottom
-          autoPlay
-          looping
-          interactable
-          overridable
-        }
-      }
-    }
-  }
-}
-''';
-
-// query documents to query tokens by owners

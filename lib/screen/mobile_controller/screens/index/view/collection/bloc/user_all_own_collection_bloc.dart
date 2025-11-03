@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
-import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
@@ -17,8 +17,7 @@ part 'user_all_own_collection_state.dart';
 
 class UserAllOwnCollectionBloc
     extends Bloc<UserAllOwnCollectionEvent, UserAllOwnCollectionState> {
-  final Map<Type, StreamSubscription<List<CompactedAssetToken>>?>
-      _tokensStreamSubs = {};
+  final Map<Type, StreamSubscription<List<AssetToken>>?> _tokensStreamSubs = {};
   final Map<Type, Completer<void>?> _activeCompleters = {};
   DynamicQuery? _dynamicQuery;
   UserAllOwnCollectionBloc(this._tokensService)
@@ -103,7 +102,7 @@ class UserAllOwnCollectionBloc
         // lastUpdatedAt: lastUpdatedAt,
       );
 
-      final List<CompactedAssetToken> collected = [];
+      final List<AssetToken> collected = [];
 
       _tokensStreamSubs[subType] = stream.listen(
         (tokens) {

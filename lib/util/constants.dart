@@ -381,9 +381,6 @@ class Constants {
   static const paddingMobile = EdgeInsets.symmetric(horizontal: 14);
   static const paddingTablet = EdgeInsets.symmetric(horizontal: 20);
   static const paddingTabletLandScape = EdgeInsets.symmetric(horizontal: 32);
-  static const homeWidgetDeepLinks = [
-    'home-widget://',
-  ];
 
   static const bluetoothConnectDeepLinks = [
     'feralfile://device_connect',

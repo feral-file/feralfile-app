@@ -51,10 +51,6 @@ abstract class TvCastService {
     UpdateArtFramingRequest request,
   );
 
-  Future<UpdateDisplaySettingsReply> updateDisplaySettings(
-    UpdateDisplaySettingsRequest request,
-  );
-
   Future<UpdateToLatestVersionReply> updateToLatestVersion(
     UpdateToLatestVersionRequest request,
   );
@@ -211,14 +207,6 @@ abstract class BaseTvCastService implements TvCastService {
   ) async {
     final result = await _sendData(_getBody(request));
     return UpdateArtFramingReply.fromJson(result);
-  }
-
-  @override
-  Future<UpdateDisplaySettingsReply> updateDisplaySettings(
-    UpdateDisplaySettingsRequest request,
-  ) async {
-    final result = await _sendData(_getBody(request));
-    return UpdateDisplaySettingsReply.fromJson(result);
   }
 
   @override

@@ -15,7 +15,7 @@ class UpdateDynamicQueryEvent extends UserAllOwnCollectionEvent {
 
 class ReloadAssetTokensFromIndexerDatabase extends UserAllOwnCollectionEvent {
   ReloadAssetTokensFromIndexerDatabase(
-      {this.sortBy = IndexerDatabaseSortBy.lastActivityTime});
+      {this.sortBy = IndexerDatabaseSortBy.updatedAt});
 
   final IndexerDatabaseSortBy sortBy;
 }

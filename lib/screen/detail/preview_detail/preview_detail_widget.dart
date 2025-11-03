@@ -135,7 +135,7 @@ class ArtworkPreviewWidgetState extends State<ArtworkPreviewWidget>
               if (assetToken != null) {
                 return Builder(
                   builder: (context) {
-                    final previewURL = assetToken.getPreviewUrl() ?? '';
+                    final previewURL = assetToken.previewUrl ?? '';
 
                     switch (assetToken.getMimeType) {
                       case RenderingType.image:
@@ -202,7 +202,7 @@ class ArtworkPreviewWidgetState extends State<ArtworkPreviewWidget>
                           key: _artworkKey,
                           previewURL: previewURL,
                           isMute: widget.isMute,
-                          thumbnailURL: assetToken.galleryThumbnailURL,
+                          thumbnailURL: assetToken.getGalleryThumbnailUrl(),
                         );
                         return Center(
                           child: _currentRenderingWidget,

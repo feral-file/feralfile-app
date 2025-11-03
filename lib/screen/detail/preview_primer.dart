@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
+import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_rendering/feralfile_webview.dart';
 import 'package:autonomy_flutter/nft_rendering/webview_controller_ext.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
@@ -145,12 +145,12 @@ class _PreviewPrimerPageState extends State<PreviewPrimerPage>
                       ),
                       BlocBuilder<IdentityBloc, IdentityState>(
                         bloc: identityBloc
-                          ..add(GetIdentityEvent([
-                            token.artistName ?? '',
-                          ])),
+                          ..add(GetIdentityEvent(
+                            token.getArtists.map((e) => e.name).toList(),
+                          )),
                         builder: (context, state) {
-                          final artistName = token.artistName
-                              ?.toIdentityOrMask(state.identityMap);
+                          final artistName = token.getArtists.firstOrNull?.name
+                              .toIdentityOrMask(state.identityMap);
                           if (artistName != null) {
                             return Row(
                               children: [

@@ -6,9 +6,8 @@
 //
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/model/token.dart' as v2;
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
-import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
-import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/nft_collection/models/objectbox_entities.dart';
 import 'package:autonomy_flutter/objectbox.g.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
@@ -18,106 +17,63 @@ import 'package:sentry/sentry.dart';
 
 /// Simple manager wrapping ObjectBox operations for Indexer persistence.
 class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
-  IndexerDataBaseObjectBox(this.store)
-      : assetTokenBox = store.box<AssetTokenObject>(),
-        assetBox = store.box<AssetObject>(),
-        provenanceBox = store.box<ProvenanceObject>();
+  IndexerDataBaseObjectBox(this.store) : tokenBox = store.box<TokenObject>();
 
   final Store store;
-  final Box<AssetTokenObject> assetTokenBox;
-  final Box<AssetObject> assetBox;
-  final Box<ProvenanceObject> provenanceBox;
+  final Box<TokenObject> tokenBox;
 
-  QueryProperty<AssetTokenObject, dynamic> convertSortByToQueryProperty(
+  QueryProperty<TokenObject, dynamic> convertSortByToQueryProperty(
       IndexerDatabaseSortBy sortBy) {
     switch (sortBy) {
-      case IndexerDatabaseSortBy.lastActivityTime:
-        return AssetTokenObject_.lastActivityTime;
+      case IndexerDatabaseSortBy.updatedAt:
+        return TokenObject_.updatedAt;
     }
   }
 
-  /// Insert or update an AssetToken (domain) into ObjectBox as AssetTokenObject.
-  /// If the token contains an Asset, it will be stored first and linked via ToOne.
-  /// Returns the ObjectBox id of the stored AssetTokenObject.
+  /// Insert or update a Token (v2) into ObjectBox as TokenObject.
   @override
-  int insertAssetToken(AssetToken assetToken) {
-    final tokenObject = AssetTokenObject.fromAssetToken(
-      assetToken,
-    );
-
-    var assetObject = tokenObject.asset.target;
-    if (assetObject != null) {
-      final existingAssetObject = assetBox
-          .query(AssetObject_.uniqueId.equals(assetObject.uniqueId))
-          .build()
-          .findFirst();
-      if (existingAssetObject != null) {
-        assetObject.id = existingAssetObject.id;
-      }
-    }
-
-    var provenanceObjects = tokenObject.provenance;
-    for (var provenanceObject in provenanceObjects) {
-      final existingProvenanceObject = provenanceBox
-          .query(ProvenanceObject_.uniqueId.equals(provenanceObject.uniqueId))
-          .build()
-          .findFirst();
-      if (existingProvenanceObject != null) {
-        provenanceObject.id = existingProvenanceObject.id;
-      }
-    }
-
-    final existingTokenObject = assetTokenBox
-        .query(AssetTokenObject_.uniqueId.equals(tokenObject.uniqueId))
+  int insertToken(v2.AssetToken token) {
+    final tokenObject = TokenObject.fromToken(token);
+    final existing = tokenBox
+        .query(TokenObject_.uniqueId.equals(tokenObject.uniqueId))
         .build()
         .findFirst();
-    if (existingTokenObject != null) {
-      tokenObject.id = existingTokenObject.id;
+    if (existing != null) {
+      tokenObject.id = existing.id;
     }
-
-    tokenObject.asset.target = assetObject;
     try {
-      // we have to put the asset and provenance objects
-      if (tokenObject.asset.target != null) {
-        assetBox.put(tokenObject.asset.target!);
-      }
-      provenanceBox.putMany(tokenObject.provenance);
-      final tokenId = assetTokenBox.put(tokenObject);
+      final tokenId = tokenBox.put(tokenObject);
       return tokenId;
     } catch (e) {
-      log.info('Error inserting asset token: $e');
-      Sentry.captureException('Error inserting asset token: $e');
+      log.info('Error inserting token: $e');
+      Sentry.captureException('Error inserting token: $e');
       rethrow;
     }
   }
 
-  // insert asset tokens
   @override
-  void insertAssetTokens(List<AssetToken> tokens) {
+  void insertTokens(List<v2.AssetToken> tokens) {
     for (final token in tokens) {
-      insertAssetToken(token);
+      insertToken(token);
     }
   }
 
-  /// Get all AssetTokens owned by a specific owner address.
+  /// Get all Tokens owned by a specific owner address.
   @override
-  List<AssetToken> getAssetTokensByOwner(
-      {required String ownerAddress,
-      IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.lastActivityTime}) {
+  List<v2.AssetToken> getTokensByOwner({
+    required String ownerAddress,
+    IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt,
+  }) {
     final sortByProperty = convertSortByToQueryProperty(sortBy);
-    final query = assetTokenBox
-        .query(AssetTokenObject_.owner.equals(ownerAddress))
+    final query = tokenBox
+        .query(TokenObject_.currentOwner.equals(ownerAddress))
         .order(sortByProperty, flags: Order.descending)
         .build();
     try {
       final results = query.find();
-      final allAssetTokens = results.map((e) => e.toAssetToken()).toList();
-      final filteredAssetTokens = allAssetTokens
-          .where((assetToken) => (assetToken.balance ?? 0) > 0)
-          .toList();
-      return filteredAssetTokens;
+      return results.map((e) => e.toToken()).toList();
     } catch (e) {
-      log.info('Error getting asset tokens by owner: $e');
+      log.info('Error getting tokens by owner: $e');
       return [];
     } finally {
       query.close();
@@ -127,18 +83,17 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
   @override
   List<AddressAssetTokens> getGroupAssetTokensByOwnersGroupByAddress(
       {required List<String> owners,
-      IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.lastActivityTime}) {
+      IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt}) {
     final groupByAddress = <AddressAssetTokens>[];
     log.info('[getGroupAssetTokensByOwnersGroupByAddress] Owners: $owners');
     for (final owner in owners) {
-      final assetTokens =
-          getAssetTokensByOwner(ownerAddress: owner, sortBy: sortBy);
+      final assetTokens = getTokensByOwner(ownerAddress: owner, sortBy: sortBy);
       if (assetTokens.isEmpty) {
         log.info(
             '[getGroupAssetTokensByOwnersGroupByAddress] No asset tokens for owner: $owner');
         continue;
       }
-      final address = assetTokens.first.owner;
+      final address = owner;
       final walletAddress =
           injector<AddressService>().getWalletAddress(address);
       if (walletAddress == null) {
@@ -157,21 +112,22 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
     return groupByAddress;
   }
 
-  /// get asset tokens by token ids
+  /// get tokens by CIDs
   @override
-  List<AssetToken> getAssetTokensByIndexIds(
-      {required List<String> indexIds,
-      IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.lastActivityTime}) {
+  List<v2.AssetToken> getTokensByCIDs({
+    required List<String> cids,
+    IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt,
+  }) {
     final sortByProperty = convertSortByToQueryProperty(sortBy);
-    final query = assetTokenBox
-        .query(AssetTokenObject_.indexID.oneOf(indexIds))
+    final query = tokenBox
+        .query(TokenObject_.cid.oneOf(cids))
         .order(sortByProperty, flags: Order.descending)
         .build();
     try {
       final results = query.find();
-      return results.map((e) => e.toAssetToken()).toList();
+      return results.map((e) => e.toToken()).toList();
     } catch (e) {
-      log.info('Error getting asset tokens by index ids: $e');
+      log.info('Error getting tokens by cids: $e');
       return [];
     } finally {
       query.close();
@@ -180,23 +136,24 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
 
   @override
   void clearAll() {
-    assetTokenBox.removeAll();
+    tokenBox.removeAll();
   }
 
   @override
-  List<AssetToken> getAssetTokensByOwners(
-      {required List<String> owners,
-      IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.lastActivityTime}) {
+  List<v2.AssetToken> getTokensByOwners({
+    required List<String> owners,
+    IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt,
+  }) {
     final sortByProperty = convertSortByToQueryProperty(sortBy);
-    final query = assetTokenBox
-        .query(AssetTokenObject_.owner.oneOf(owners))
+    final query = tokenBox
+        .query(TokenObject_.currentOwner.oneOf(owners))
         .order(sortByProperty, flags: Order.descending)
         .build();
     try {
       final results = query.find();
-      return results.map((e) => e.toAssetToken()).toList();
+      return results.map((e) => e.toToken()).toList();
     } catch (e) {
-      log.info('Error getting asset tokens by owners: $e');
+      log.info('Error getting tokens by owners: $e');
       return [];
     } finally {
       query.close();
@@ -204,17 +161,13 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
   }
 
   @override
-  AssetToken? findAssetTokenByIdAndOwner(String id, String owner) {
-    final query = assetTokenBox
-        .query(AssetTokenObject_.indexID
-            .equals(id)
-            .and(AssetTokenObject_.owner.equals(owner)))
-        .build();
+  v2.AssetToken? findTokenByCid(String cid) {
+    final query = tokenBox.query(TokenObject_.cid.equals(cid)).build();
     try {
       final results = query.find();
-      return results.firstOrNull?.toAssetToken();
+      return results.isNotEmpty ? results.first.toToken() : null;
     } catch (e) {
-      log.info('Error getting asset token by id and owner: $e');
+      log.info('Error getting token by cid: $e');
       return null;
     } finally {
       query.close();

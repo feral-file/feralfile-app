@@ -14,13 +14,11 @@ final listRouteShouldNotShowNowDisplaying = [
   AppRouter.supportListPage,
   AppRouter.supportThreadPage,
   AppRouter.walletPage,
-  AppRouter.linkedWalletDetailsPage,
   AppRouter.preferencesPage,
   AppRouter.hiddenArtworksPage,
   AppRouter.dataManagementPage,
   AppRouter.nowDisplayingPage,
   AppRouter.onboardingPage,
-  AppRouter.newOnboardingPage,
   AppRouter.bluetoothConnectedDeviceConfig,
   AppRouter.bluetoothDevicePortalPage,
   AppRouter.handleBluetoothDeviceScanDeeplinkScreen,
@@ -29,7 +27,6 @@ final listRouteShouldNotShowNowDisplaying = [
   AppRouter.viewExistingAddressPage,
   AppRouter.nameLinkedAccountPage,
   UIHelper.artistArtworkDisplaySettingModal,
-  AppRouter.oldHomePage,
   AppRouter.voiceCommandPage,
 ];
 
@@ -55,29 +52,27 @@ class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {
   Timer? _timer;
 
   void onCurrentRouteChanged() {
-    if (currentRoute != null) {
-      final routeName = currentRoute.value?.settings.name;
-      if (routeName == null ||
-          routeName == UIHelper.ignoreBackLayerPopUpRouteName ||
-          routeName == UIHelper.artDisplaySettingModal) {
-        return;
-      }
-      if (listRouteShouldNotShowNowDisplaying.contains(routeName)) {
+    final routeName = currentRoute.value?.settings.name;
+    if (routeName == null ||
+        routeName == UIHelper.ignoreBackLayerPopUpRouteName ||
+        routeName == UIHelper.artDisplaySettingModal) {
+      return;
+    }
+    if (listRouteShouldNotShowNowDisplaying.contains(routeName)) {
+      _timer?.cancel();
+      _timer = Timer.periodic(const Duration(milliseconds: 50), (_) {
         _timer?.cancel();
-        _timer = Timer.periodic(Duration(milliseconds: 50), (_) {
-          _timer?.cancel();
-          shouldShowNowDisplaying.value = false;
-        });
-      } else {
-        log.info('shouldShowNowDisplaying.value = true');
+        shouldShowNowDisplaying.value = false;
+      });
+    } else {
+      log.info('shouldShowNowDisplaying.value = true');
+      _timer?.cancel();
+      _timer = Timer.periodic(const Duration(milliseconds: 50), (_) {
         _timer?.cancel();
-        _timer = Timer.periodic(Duration(milliseconds: 50), (_) {
-          _timer?.cancel();
-          shouldShowNowDisplaying.value = true;
-          nowDisplayingVisibility.value = true;
-        });
-        // shouldShowNowDisplaying.value = true;
-      }
+        shouldShowNowDisplaying.value = true;
+        nowDisplayingVisibility.value = true;
+      });
+      // shouldShowNowDisplaying.value = true;
     }
   }
 
@@ -101,7 +96,8 @@ class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {
     // Add route to the screen stack
     _screenStack.add(route);
     log.info(
-        'Route pushed: ${route.settings.name}, Stack size: ${_screenStack.length}');
+      'Route pushed: ${route.settings.name}, Stack size: ${_screenStack.length}',
+    );
 
     currentRoute.value = route;
     onCurrentRouteChanged();
@@ -115,7 +111,8 @@ class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {
     if (_screenStack.isNotEmpty && _screenStack.last == route) {
       _screenStack.removeLast();
       log.info(
-          'Route popped: ${route.settings.name}, Stack size: ${_screenStack.length}');
+        'Route popped: ${route.settings.name}, Stack size: ${_screenStack.length}',
+      );
     }
 
     currentRoute.value = previousRoute;
@@ -135,7 +132,8 @@ class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {
     // Remove route from the screen stack
     _screenStack.remove(route);
     log.info(
-        'Route removed: ${route.settings.name}, Stack size: ${_screenStack.length}');
+      'Route removed: ${route.settings.name}, Stack size: ${_screenStack.length}',
+    );
 
     currentRoute.value = previousRoute;
     onCurrentRouteChanged();
@@ -156,7 +154,8 @@ class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {
       if (index != -1) {
         _screenStack[index] = newRoute;
         log.info(
-            'Route replaced: ${oldRoute.settings.name} -> ${newRoute.settings.name}, Stack size: ${_screenStack.length}');
+          'Route replaced: ${oldRoute.settings.name} -> ${newRoute.settings.name}, Stack size: ${_screenStack.length}',
+        );
       }
     }
 
@@ -198,6 +197,6 @@ extension RouterExtension on Route<dynamic> {
 
   // isArtDisplaySettingModalShowing
   bool get isArtDisplaySettingModalShowing {
-    return this.settings.name == UIHelper.artDisplaySettingModal;
+    return settings.name == UIHelper.artDisplaySettingModal;
   }
 }
