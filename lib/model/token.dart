@@ -34,7 +34,7 @@ class TokenMetadata {
   final List<Artist>? artists;
   final Publisher? publisher;
 
-  factory TokenMetadata.fromMap(Map<String, dynamic> json) => TokenMetadata(
+  factory TokenMetadata.fromJson(Map<String, dynamic> json) => TokenMetadata(
         tokenId: '${json['token_id']}',
         originJson: json['origin_json'] as Map<String, dynamic>?,
         latestJson: json['latest_json'] as Map<String, dynamic>?,
@@ -48,14 +48,31 @@ class TokenMetadata {
         name: json['name'] as String?,
         description: json['description'] as String?,
         artists: (json['artists'] as List?)
-            ?.map((e) => Artist.fromMap(Map<String, dynamic>.from(e as Map)))
+            ?.map((e) => Artist.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList(),
         publisher: json['publisher'] != null
-            ? Publisher.fromMap(
+            ? Publisher.fromJson(
                 Map<String, dynamic>.from(json['publisher'] as Map),
               )
             : null,
       );
+
+  Map<String, dynamic> toJson() => {
+        'token_id': tokenId,
+        if (originJson != null) 'origin_json': originJson,
+        if (latestJson != null) 'latest_json': latestJson,
+        if (latestHash != null) 'latest_hash': latestHash,
+        'enrichment_level': enrichmentLevel,
+        if (lastRefreshedAt != null)
+          'last_refreshed_at': lastRefreshedAt!.toIso8601String(),
+        if (imageUrl != null) 'image_url': imageUrl,
+        if (animationUrl != null) 'animation_url': animationUrl,
+        if (name != null) 'name': name,
+        if (description != null) 'description': description,
+        if (artists != null)
+          'artists': artists!.map((a) => a.toJson()).toList(),
+        if (publisher != null) 'publisher': publisher!.toJson(),
+      };
 }
 
 class AssetToken {
@@ -104,33 +121,33 @@ class AssetToken {
         createdAt: DateTime.parse(json['created_at'] as String),
         updatedAt: DateTime.parse(json['updated_at'] as String),
         metadata: json['metadata'] != null
-            ? TokenMetadata.fromMap(
+            ? TokenMetadata.fromJson(
                 Map<String, dynamic>.from(json['metadata'] as Map),
               )
             : null,
         owners: json['owners'] != null
-            ? PaginatedOwners.fromMap(
+            ? PaginatedOwners.fromJson(
                 Map<String, dynamic>.from(json['owners'] as Map),
               )
             : null,
         provenanceEvents: json['provenance_events'] != null
-            ? PaginatedProvenanceEvents.fromMap(
+            ? PaginatedProvenanceEvents.fromJson(
                 Map<String, dynamic>.from(json['provenance_events'] as Map),
               )
             : null,
         enrichmentSource: json['enrichment_source'] != null
-            ? EnrichmentSource.fromMap(
+            ? EnrichmentSource.fromJson(
                 Map<String, dynamic>.from(json['enrichment_source'] as Map),
               )
             : null,
         metadataMediaAssets: (json['metadata_media_assets'] as List?)
             ?.map(
-                (e) => MediaAsset.fromMap(Map<String, dynamic>.from(e as Map)))
+                (e) => MediaAsset.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList(),
         enrichmentSourceMediaAssets: (json['enrichment_source_media_assets']
                 as List?)
             ?.map(
-                (e) => MediaAsset.fromMap(Map<String, dynamic>.from(e as Map)))
+                (e) => MediaAsset.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList(),
       );
 
@@ -145,33 +162,33 @@ class AssetToken {
         createdAt: DateTime.parse(json['created_at'] as String),
         updatedAt: DateTime.parse(json['updated_at'] as String),
         metadata: json['metadata'] != null
-            ? TokenMetadata.fromMap(
+            ? TokenMetadata.fromJson(
                 Map<String, dynamic>.from(json['metadata'] as Map),
               )
             : null,
         owners: json['owners'] != null
-            ? PaginatedOwners.fromMap(
+            ? PaginatedOwners.fromJson(
                 Map<String, dynamic>.from(json['owners'] as Map),
               )
             : null,
         provenanceEvents: json['provenance_events'] != null
-            ? PaginatedProvenanceEvents.fromMap(
+            ? PaginatedProvenanceEvents.fromJson(
                 Map<String, dynamic>.from(json['provenance_events'] as Map),
               )
             : null,
         enrichmentSource: json['enrichment_source'] != null
-            ? EnrichmentSource.fromMap(
+            ? EnrichmentSource.fromJson(
                 Map<String, dynamic>.from(json['enrichment_source'] as Map),
               )
             : null,
         metadataMediaAssets: (json['metadata_media_assets'] as List?)
             ?.map(
-                (e) => MediaAsset.fromMap(Map<String, dynamic>.from(e as Map)))
+                (e) => MediaAsset.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList(),
         enrichmentSourceMediaAssets: (json['enrichment_source_media_assets']
                 as List?)
             ?.map(
-                (e) => MediaAsset.fromMap(Map<String, dynamic>.from(e as Map)))
+                (e) => MediaAsset.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList(),
       );
 }
@@ -182,12 +199,12 @@ class Artist {
   final String did;
   final String name;
 
-  factory Artist.fromMap(Map<String, dynamic> json) => Artist(
+  factory Artist.fromJson(Map<String, dynamic> json) => Artist(
         did: json['did'] as String? ?? '',
         name: json['name'] as String? ?? '',
       );
 
-  Map<String, dynamic> toMap() => {
+  Map<String, dynamic> toJson() => {
         'did': did,
         'name': name,
       };
@@ -199,12 +216,12 @@ class Publisher {
   final String? name;
   final String? url;
 
-  factory Publisher.fromMap(Map<String, dynamic> json) => Publisher(
+  factory Publisher.fromJson(Map<String, dynamic> json) => Publisher(
         name: json['name'] as String?,
         url: json['url'] as String?,
       );
 
-  Map<String, dynamic> toMap() => {
+  Map<String, dynamic> toJson() => {
         if (name != null) 'name': name,
         if (url != null) 'url': url,
       };
@@ -223,12 +240,19 @@ class Owner {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  factory Owner.fromMap(Map<String, dynamic> json) => Owner(
+  factory Owner.fromJson(Map<String, dynamic> json) => Owner(
         ownerAddress: json['owner_address'] as String,
         quantity: json['quantity'] as String,
         createdAt: DateTime.parse(json['created_at'] as String),
         updatedAt: DateTime.parse(json['updated_at'] as String),
       );
+
+  Map<String, dynamic> toJson() => {
+        'owner_address': ownerAddress,
+        'quantity': quantity,
+        'created_at': createdAt.toIso8601String(),
+        'updated_at': updatedAt.toIso8601String(),
+      };
 }
 
 class PaginatedOwners {
@@ -238,13 +262,20 @@ class PaginatedOwners {
   final String? offset; // Uint64 as string
   final String total; // Uint64 as string
 
-  factory PaginatedOwners.fromMap(Map<String, dynamic> json) => PaginatedOwners(
+  factory PaginatedOwners.fromJson(Map<String, dynamic> json) =>
+      PaginatedOwners(
         items: (json['items'] as List)
-            .map((e) => Owner.fromMap(Map<String, dynamic>.from(e as Map)))
+            .map((e) => Owner.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList(),
         offset: json['offset']?.toString(),
         total: json['total'].toString(),
       );
+
+  Map<String, dynamic> toJson() => {
+        'items': items.map((e) => e.toJson()).toList(),
+        if (offset != null) 'offset': offset,
+        'total': total,
+      };
 }
 
 class ProvenanceEvent {
@@ -280,7 +311,8 @@ class ProvenanceEvent {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  factory ProvenanceEvent.fromMap(Map<String, dynamic> json) => ProvenanceEvent(
+  factory ProvenanceEvent.fromJson(Map<String, dynamic> json) =>
+      ProvenanceEvent(
         id: json['id'].toString(),
         tokenId: json['token_id'].toString(),
         chain: json['chain'] as String,
@@ -296,6 +328,23 @@ class ProvenanceEvent {
         createdAt: DateTime.parse(json['created_at'] as String),
         updatedAt: DateTime.parse(json['updated_at'] as String),
       );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'token_id': tokenId,
+        'chain': chain,
+        'event_type': eventType,
+        if (fromAddress != null) 'from_address': fromAddress,
+        if (toAddress != null) 'to_address': toAddress,
+        if (quantity != null) 'quantity': quantity,
+        if (txHash != null) 'tx_hash': txHash,
+        if (blockNumber != null) 'block_number': blockNumber,
+        if (blockHash != null) 'block_hash': blockHash,
+        'timestamp': timestamp.toIso8601String(),
+        if (raw != null) 'raw': raw,
+        'created_at': createdAt.toIso8601String(),
+        'updated_at': updatedAt.toIso8601String(),
+      };
 }
 
 class PaginatedProvenanceEvents {
@@ -309,15 +358,21 @@ class PaginatedProvenanceEvents {
   final String? offset; // Uint64 as string
   final String total; // Uint64 as string
 
-  factory PaginatedProvenanceEvents.fromMap(Map<String, dynamic> json) =>
+  factory PaginatedProvenanceEvents.fromJson(Map<String, dynamic> json) =>
       PaginatedProvenanceEvents(
         items: (json['items'] as List)
             .map((e) =>
-                ProvenanceEvent.fromMap(Map<String, dynamic>.from(e as Map)))
+                ProvenanceEvent.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList(),
         offset: json['offset']?.toString(),
         total: json['total'].toString(),
       );
+
+  Map<String, dynamic> toJson() => {
+        'items': items.map((e) => e.toJson()).toList(),
+        if (offset != null) 'offset': offset,
+        'total': total,
+      };
 }
 
 class EnrichmentSource {
@@ -349,7 +404,7 @@ class EnrichmentSource {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  factory EnrichmentSource.fromMap(Map<String, dynamic> json) =>
+  factory EnrichmentSource.fromJson(Map<String, dynamic> json) =>
       EnrichmentSource(
         tokenId: json['token_id'].toString(),
         vendor: json['vendor'] as String,
@@ -360,12 +415,28 @@ class EnrichmentSource {
         name: json['name'] as String?,
         description: json['description'] as String?,
         artists: (json['artists'] as List?)
-            ?.map((e) => Artist.fromMap(Map<String, dynamic>.from(e as Map)))
+            ?.map((e) => Artist.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList(),
         mimeType: json['mime_type'] as String?,
         createdAt: DateTime.parse(json['created_at'] as String),
         updatedAt: DateTime.parse(json['updated_at'] as String),
       );
+
+  Map<String, dynamic> toJson() => {
+        'token_id': tokenId,
+        'vendor': vendor,
+        if (vendorJson != null) 'vendor_json': vendorJson,
+        if (vendorHash != null) 'vendor_hash': vendorHash,
+        if (imageUrl != null) 'image_url': imageUrl,
+        if (animationUrl != null) 'animation_url': animationUrl,
+        if (name != null) 'name': name,
+        if (description != null) 'description': description,
+        if (artists != null)
+          'artists': artists!.map((a) => a.toJson()).toList(),
+        if (mimeType != null) 'mime_type': mimeType,
+        'created_at': createdAt.toIso8601String(),
+        'updated_at': updatedAt.toIso8601String(),
+      };
 }
 
 class MediaAsset {
@@ -393,7 +464,7 @@ class MediaAsset {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  factory MediaAsset.fromMap(Map<String, dynamic> json) => MediaAsset(
+  factory MediaAsset.fromJson(Map<String, dynamic> json) => MediaAsset(
         id: json['id'] as int,
         sourceUrl: json['source_url'] as String,
         mimeType: json['mime_type'] as String?,
@@ -407,4 +478,17 @@ class MediaAsset {
         createdAt: DateTime.parse(json['created_at'] as String),
         updatedAt: DateTime.parse(json['updated_at'] as String),
       );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'source_url': sourceUrl,
+        if (mimeType != null) 'mime_type': mimeType,
+        if (fileSizeBytes != null) 'file_size_bytes': fileSizeBytes,
+        'provider': provider,
+        if (providerAssetId != null) 'provider_asset_id': providerAssetId,
+        if (providerMetadata != null) 'provider_metadata': providerMetadata,
+        'variant_urls': variantUrls,
+        'created_at': createdAt.toIso8601String(),
+        'updated_at': updatedAt.toIso8601String(),
+      };
 }

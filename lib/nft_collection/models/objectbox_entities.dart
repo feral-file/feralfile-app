@@ -9,7 +9,6 @@
 import 'dart:convert';
 
 import 'package:autonomy_flutter/model/token.dart' as v2;
-import 'package:autonomy_flutter/nft_collection/models/provenance.dart';
 import 'package:objectbox/objectbox.dart';
 
 /// Base class for ObjectBox entities
@@ -44,6 +43,12 @@ class TokenObject extends ObjectboxEntity {
 
   // store metadata JSON as string for flexibility
   String? metadataJson;
+  // store related collections as JSON for flexibility
+  String? ownersJson;
+  String? provenanceEventsJson;
+  String? enrichmentSourceJson;
+  String? metadataMediaAssetsJson;
+  String? enrichmentSourceMediaAssetsJson;
 
   TokenObject({
     this.id = 0,
@@ -57,6 +62,11 @@ class TokenObject extends ObjectboxEntity {
     required this.createdAt,
     required this.updatedAt,
     this.metadataJson,
+    this.ownersJson,
+    this.provenanceEventsJson,
+    this.enrichmentSourceJson,
+    this.metadataMediaAssetsJson,
+    this.enrichmentSourceMediaAssetsJson,
   }) : uniqueId = cid;
 
   factory TokenObject.fromToken(v2.AssetToken token) => TokenObject(
@@ -70,23 +80,29 @@ class TokenObject extends ObjectboxEntity {
         createdAt: token.createdAt,
         updatedAt: token.updatedAt,
         metadataJson: token.metadata != null
-            ? json.encode({
-                'token_id': token.metadata!.tokenId,
-                'origin_json': token.metadata!.originJson,
-                'latest_json': token.metadata!.latestJson,
-                'latest_hash': token.metadata!.latestHash,
-                'enrichment_level': token.metadata!.enrichmentLevel,
-                'last_refreshed_at':
-                    token.metadata!.lastRefreshedAt?.toIso8601String(),
-                'image_url': token.metadata!.imageUrl,
-                'animation_url': token.metadata!.animationUrl,
-                'name': token.metadata!.name,
-                'description': token.metadata!.description,
-                'artists':
-                    token.metadata!.artists?.map((a) => a.toMap()).toList(),
-                'publisher': token.metadata!.publisher?.toMap(),
-              })
+            ? json.encode(token.metadata!.toJson())
             : null,
+        ownersJson:
+            token.owners != null ? json.encode(token.owners!.toJson()) : null,
+        provenanceEventsJson: token.provenanceEvents != null
+            ? json.encode(token.provenanceEvents!.toJson())
+            : null,
+        enrichmentSourceJson: token.enrichmentSource != null
+            ? json.encode(token.enrichmentSource!.toJson())
+            : null,
+        metadataMediaAssetsJson: token.metadataMediaAssets != null
+            ? json.encode(
+                token.metadataMediaAssets!.map((m) => m.toJson()).toList(),
+              )
+            : null,
+        enrichmentSourceMediaAssetsJson:
+            token.enrichmentSourceMediaAssets != null
+                ? json.encode(
+                    token.enrichmentSourceMediaAssets!
+                        .map((m) => m.toJson())
+                        .toList(),
+                  )
+                : null,
       );
 
   v2.AssetToken toToken() => v2.AssetToken(
@@ -100,73 +116,40 @@ class TokenObject extends ObjectboxEntity {
         createdAt: createdAt,
         updatedAt: updatedAt,
         metadata: metadataJson != null
-            ? v2.TokenMetadata.fromMap(
+            ? v2.TokenMetadata.fromJson(
                 Map<String, dynamic>.from(json.decode(metadataJson!) as Map),
               )
             : null,
-      );
-}
-
-//ProvenanceObject
-@Entity()
-class ProvenanceObject extends ObjectboxEntity {
-  int id;
-
-  String provenanceId; // same as Provenance.id
-
-  @override
-  @Unique()
-  String uniqueId;
-
-  String txID;
-  String type;
-  String blockchain;
-  String owner;
-  @Property(type: PropertyType.date)
-  DateTime timestamp;
-  String txURL;
-  String tokenID; // matches TokenObject.cid
-  int? blockNumber;
-
-  ProvenanceObject({
-    this.id = 0,
-    required this.provenanceId,
-    required this.txID,
-    required this.type,
-    required this.blockchain,
-    required this.owner,
-    required this.timestamp,
-    required this.txURL,
-    required this.tokenID,
-    this.blockNumber,
-  }) : uniqueId = '$txID-$type-$owner';
-
-  factory ProvenanceObject.fromProvenance(
-    Provenance provenance,
-  ) {
-    final obj = ProvenanceObject(
-      provenanceId: provenance.id,
-      txID: provenance.txID,
-      type: provenance.type,
-      blockchain: provenance.blockchain,
-      owner: provenance.owner,
-      timestamp: provenance.timestamp,
-      txURL: provenance.txURL,
-      tokenID: provenance.tokenID,
-      blockNumber: provenance.blockNumber,
-    );
-    return obj;
-  }
-
-  Provenance toProvenance() => Provenance(
-        id: provenanceId,
-        type: type,
-        blockchain: blockchain,
-        txID: txID,
-        owner: owner,
-        timestamp: timestamp,
-        txURL: txURL,
-        tokenID: tokenID,
-        blockNumber: blockNumber,
+        owners: ownersJson != null
+            ? v2.PaginatedOwners.fromJson(
+                Map<String, dynamic>.from(json.decode(ownersJson!) as Map),
+              )
+            : null,
+        provenanceEvents: provenanceEventsJson != null
+            ? v2.PaginatedProvenanceEvents.fromJson(
+                Map<String, dynamic>.from(
+                  json.decode(provenanceEventsJson!) as Map,
+                ),
+              )
+            : null,
+        enrichmentSource: enrichmentSourceJson != null
+            ? v2.EnrichmentSource.fromJson(
+                Map<String, dynamic>.from(
+                  json.decode(enrichmentSourceJson!) as Map,
+                ),
+              )
+            : null,
+        metadataMediaAssets: metadataMediaAssetsJson != null
+            ? (json.decode(metadataMediaAssetsJson!) as List)
+                .map((e) =>
+                    v2.MediaAsset.fromJson(Map<String, dynamic>.from(e as Map)))
+                .toList()
+            : null,
+        enrichmentSourceMediaAssets: enrichmentSourceMediaAssetsJson != null
+            ? (json.decode(enrichmentSourceMediaAssetsJson!) as List)
+                .map((e) =>
+                    v2.MediaAsset.fromJson(Map<String, dynamic>.from(e as Map)))
+                .toList()
+            : null,
       );
 }
