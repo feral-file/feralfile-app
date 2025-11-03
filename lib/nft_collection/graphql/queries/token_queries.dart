@@ -110,6 +110,9 @@ const String getTokens = r'''
         metadata {
           name
           description
+          image_url
+          animation_url
+          mime_type
           artists {
             name
             did
@@ -137,6 +140,14 @@ const String getTokens = r'''
         }
         enrichment_source {
           name
+          description
+          image_url
+          animation_url
+          mime_type
+          artists {
+            name
+            did
+          }
         }
         metadata_media_assets {
           source_url

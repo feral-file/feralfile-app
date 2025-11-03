@@ -35,11 +35,6 @@ class TokenObject extends ObjectboxEntity {
   String contractAddress;
   String tokenNumber;
   String? currentOwner;
-  bool burned;
-  @Property(type: PropertyType.date)
-  DateTime createdAt;
-  @Property(type: PropertyType.date)
-  DateTime updatedAt;
 
   // store metadata JSON as string for flexibility
   String? metadataJson;
@@ -58,9 +53,6 @@ class TokenObject extends ObjectboxEntity {
     required this.contractAddress,
     required this.tokenNumber,
     this.currentOwner,
-    required this.burned,
-    required this.createdAt,
-    required this.updatedAt,
     this.metadataJson,
     this.ownersJson,
     this.provenanceEventsJson,
@@ -76,9 +68,6 @@ class TokenObject extends ObjectboxEntity {
         contractAddress: token.contractAddress,
         tokenNumber: token.tokenNumber,
         currentOwner: token.currentOwner,
-        burned: token.burned,
-        createdAt: token.createdAt,
-        updatedAt: token.updatedAt,
         metadataJson: token.metadata != null
             ? json.encode(token.metadata!.toJson())
             : null,
@@ -112,9 +101,6 @@ class TokenObject extends ObjectboxEntity {
         contractAddress: contractAddress,
         tokenNumber: tokenNumber,
         currentOwner: currentOwner,
-        burned: burned,
-        createdAt: createdAt,
-        updatedAt: updatedAt,
         metadata: metadataJson != null
             ? v2.TokenMetadata.fromJson(
                 Map<String, dynamic>.from(json.decode(metadataJson!) as Map),
