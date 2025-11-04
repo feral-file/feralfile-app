@@ -1,0 +1,30 @@
+---
+alwaysApply: false
+---
+# Cursor Rule: Figma MCP → Flutter
+
+## Purpose
+Generate Flutter widgets directly from Figma nodes with pixel-accurate layout and styling.
+
+## Scope
+- Flutter mobile app only. Ignore web-specific stacks or utilities.
+- Input must include a Figma node URL.
+
+## Generation Rules
+- Extract properties strictly from Figma. Do not infer or add unspecified styles.
+- Preserve exact dimensions/positions when provided by the design.
+- Avoid hardcoding width and height in general layouts; only apply fixed sizes to images, icons, and logos.
+- Use built design tokens from `/lib/design/build` and `/lib/design/build/components`. If no token exists and Figma specifies a concrete value, use that value; otherwise, omit the style.
+- Variable linking: when a Figma Variable is linked for these properties — width, height, gap, padding, margin, fontSize, fontWeight, fontFamily, lineHeight, letterSpacing, color, backgroundColor, borderRadius, borderWidth, borderColor, opacity, boxShadow — map to design tokens first; if none, use the explicit Figma value. If no variable/value is specified, skip.
+- Do not introduce responsive patterns beyond what the design specifies. Follow constraints and safe areas as appropriate for Flutter.
+- Export grouped images/vectors as single assets when intended.
+- Default font is PP Mori; set `fontFamily` only when different in the design.
+- Break complex views into small, reusable widgets with clear names. Keep code clean and modular; avoid unnecessary comments.
+
+## Output
+- Dart widgets that match the Figma layout and style.
+- Token-first styling; fall back to explicit Figma values only when tokens are unavailable and the design specifies a value.
+- No extra behaviors or styles beyond the design.
+
+## Stack
+- Flutter
