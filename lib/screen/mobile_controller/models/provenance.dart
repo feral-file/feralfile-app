@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/model/blockchain.dart';
 import 'package:autonomy_flutter/util/eth_utils.dart';
 
 class DP1Provenance {
@@ -138,6 +139,17 @@ enum DP1ProvenanceChain {
         return DP1ProvenanceChain.other;
       default:
         throw ArgumentError('Unknown provenance chain: $value');
+    }
+  }
+
+  static DP1ProvenanceChain fromBlockchain(Blockchain blockchain) {
+    switch (blockchain) {
+      case Blockchain.ETHEREUM:
+        return DP1ProvenanceChain.evm;
+      case Blockchain.TEZOS:
+        return DP1ProvenanceChain.tezos;
+      default:
+        throw ArgumentError('Unknown blockchain: $blockchain');
     }
   }
 

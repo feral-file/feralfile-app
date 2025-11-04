@@ -123,20 +123,6 @@ Future<void> setupInjector() async {
     await ObjectBox.create();
   }
 
-  await NftCollection.initNftCollection(
-    indexerUrl: Environment.indexerURL,
-    logger: log,
-    apiLogger: apiLog,
-    dio: dio,
-  );
-  injector.registerLazySingleton<NftTokensService>(
-    () => NftCollection.tokenService,
-  );
-  injector.registerLazySingleton(() => NftCollection.prefs);
-  injector.registerLazySingleton<IndexerDatabaseAbstract>(
-    () => NftCollection.database,
-  );
-
   final authenticatedDio = DioManager()
       .base(dioOptions); // Authenticated dio instance for AU servers
   authenticatedDio.interceptors.add(AutonomyAuthInterceptor());
@@ -212,6 +198,20 @@ Future<void> setupInjector() async {
     ),
   );
 
+  await NftCollection.initNftCollection(
+    indexerUrl: Environment.indexerURL,
+    logger: log,
+    apiLogger: apiLog,
+    dio: dio,
+  );
+  injector.registerLazySingleton<NftTokensService>(
+    () => NftCollection.tokenService,
+  );
+  injector.registerLazySingleton(() => NftCollection.prefs);
+  injector.registerLazySingleton<IndexerDatabaseAbstract>(
+    () => NftCollection.database,
+  );
+
   injector.registerLazySingleton<FFBluetoothService>(
     FFBluetoothService.new,
   );
@@ -276,9 +276,12 @@ Future<void> setupInjector() async {
     () => IndexerApi(dio, baseUrl: Environment.indexerURL),
   );
 
-  final indexerClient = IndexerClient(Environment.indexerURL);
+  final indexerClient = IndexerClient(
+    Environment.indexerURL,
+    authService: injector<AuthService>(),
+  );
   injector.registerLazySingleton<NftIndexerService>(
-    () => NftIndexerService(indexerClient, injector()),
+    () => NftIndexerService(indexerClient),
   );
 
   injector.registerLazySingleton<EthereumService>(

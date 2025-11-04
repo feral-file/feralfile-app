@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/model/token.dart';
-import 'package:autonomy_flutter/nft_collection/data/api/indexer_api.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/clients/indexer_client.dart';
+import 'package:autonomy_flutter/nft_collection/graphql/model/get_changes.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/model/identity.dart';
+import 'package:autonomy_flutter/nft_collection/graphql/queries/mutations.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/queries/queries.dart';
+import 'package:autonomy_flutter/nft_collection/graphql/queries/workflow_queries.dart';
 import 'package:autonomy_flutter/nft_collection/models/identity.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 
@@ -23,13 +25,39 @@ abstract class NftIndexerServiceBase {
     int pageSize = 50,
     DateTime? lastUpdatedAt,
   });
+
+  /// Trigger indexing for a list of addresses
+  /// Returns the workflow_id and run_id from the indexing operation
+  Future<TriggerIndexingResult> indexAddresses(List<String> addresses);
+
+  /// Trigger indexing for a list of token CIDs
+  /// Returns the workflow_id and run_id from the indexing operation
+  Future<TriggerIndexingResult> indexTokens(List<String> tokenCids);
+
+  /// Get workflow status by workflow ID and run ID
+  /// Returns the status of a Temporal workflow execution
+  Future<WorkflowStatus> getWorkflowStatus(String workflowId, String runId);
+
+  /// Get changes with filters
+  /// Returns a paginated list of changes
+  Future<ChangeList> getChanges(QueryChangesRequest request);
+
+  /// Get a single token by CID (with optional expansions and pagination params)
+  Future<AssetToken?> getTokenByCid(
+    String cid, {
+    List<String> expand = const [],
+    int ownersLimit = 10,
+    int ownersOffset = 0,
+    int provenanceEventsLimit = 10,
+    int provenanceEventsOffset = 0,
+    Order provenanceEventsOrder = Order.desc,
+  });
 }
 
 class NftIndexerService implements NftIndexerServiceBase {
-  NftIndexerService(this._client, this._indexerApi);
+  NftIndexerService(this._client);
 
   final IndexerClient _client;
-  final IndexerApi _indexerApi;
 
   /*
   getNftTokens
@@ -187,8 +215,214 @@ class NftIndexerService implements NftIndexerServiceBase {
     }
   }
 
-  Future<void> indexTokenHistory(String indexID) {
-    final map = {'indexID': indexID};
-    return _indexerApi.indexTokenHistory(map);
+  /// Trigger indexing for a list of addresses
+  /// This will index all tokens owned by the provided addresses
+  ///
+  /// [addresses] - List of owner addresses to index
+  ///
+  /// Returns TriggerIndexingResult with workflow_id and run_id
+  @override
+  Future<TriggerIndexingResult> indexAddresses(List<String> addresses) async {
+    if (addresses.isEmpty) {
+      throw ArgumentError('Addresses list cannot be empty');
+    }
+
+    final result = await _client.mutate(
+      doc: triggerIndexing,
+      vars: {
+        'addresses': addresses,
+      },
+      withToken: true,
+    );
+
+    if (result == null || result['triggerIndexing'] == null) {
+      throw Exception('Failed to trigger indexing for addresses');
+    }
+
+    final data = result['triggerIndexing'] as Map<String, dynamic>;
+    return TriggerIndexingResult.fromJson(data);
   }
+
+  /// Trigger indexing for a list of token CIDs
+  /// This will index the specified tokens by their CIDs
+  ///
+  /// [tokenCids] - List of token CIDs to index
+  ///
+  /// Returns TriggerIndexingResult with workflow_id and run_id
+  @override
+  Future<TriggerIndexingResult> indexTokens(List<String> tokenCids) async {
+    if (tokenCids.isEmpty) {
+      throw ArgumentError('Token CIDs list cannot be empty');
+    }
+
+    final result = await _client.mutate(
+      doc: triggerIndexing,
+      vars: {
+        'token_cids': tokenCids,
+      },
+      withToken: true,
+    );
+
+    if (result == null || result['triggerIndexing'] == null) {
+      throw Exception('Failed to trigger indexing for tokens');
+    }
+
+    final data = result['triggerIndexing'] as Map<String, dynamic>;
+    return TriggerIndexingResult.fromJson(data);
+  }
+
+  /// Get workflow status by workflow ID and run ID
+  /// This retrieves the status of a Temporal workflow execution
+  ///
+  /// [workflowId] - The workflow ID
+  /// [runId] - The run ID
+  ///
+  /// Returns WorkflowStatus with status, start_time, close_time, and execution_time_ms
+  @override
+  Future<WorkflowStatus> getWorkflowStatus(
+      String workflowId, String runId) async {
+    if (workflowId.isEmpty || runId.isEmpty) {
+      throw ArgumentError('Workflow ID and Run ID cannot be empty');
+    }
+
+    final result = await _client.query(
+      doc: workflowStatusQuery,
+      vars: {
+        'workflow_id': workflowId,
+        'run_id': runId,
+      },
+    );
+
+    if (result == null || result['workflowStatus'] == null) {
+      throw Exception('Failed to get workflow status');
+    }
+
+    final data = result['workflowStatus'] as Map<String, dynamic>;
+    return WorkflowStatus.fromJson(data);
+  }
+
+  /// Get changes with filters
+  /// This retrieves a paginated list of changes from the change journal
+  ///
+  /// [request] - QueryChangesRequest with filters and pagination
+  ///
+  /// Returns ChangeList with items, offset, and total
+  @override
+  Future<ChangeList> getChanges(QueryChangesRequest request) async {
+    final vars = request.toJson();
+    final result = await _client.query(
+      doc: getChangesQuery,
+      vars: vars,
+    );
+
+    if (result == null || result['changes'] == null) {
+      throw Exception('Failed to get changes');
+    }
+
+    final data = result['changes'] as Map<String, dynamic>;
+    return ChangeList.fromJson(data);
+  }
+
+  /// Get a single token by CID
+  @override
+  Future<AssetToken?> getTokenByCid(
+    String cid, {
+    List<String> expand = const [],
+    int ownersLimit = 10,
+    int ownersOffset = 0,
+    int provenanceEventsLimit = 10,
+    int provenanceEventsOffset = 0,
+    Order provenanceEventsOrder = Order.desc,
+  }) async {
+    final result = await _client.query(
+      doc: getTokenByCidQuery,
+      vars: {
+        'cid': cid,
+        'expand': expand,
+        'owners_limit': ownersLimit,
+        'owners_offset': ownersOffset,
+        'provenance_events_limit': provenanceEventsLimit,
+        'provenance_events_offset': provenanceEventsOffset,
+        'provenance_events_order': provenanceEventsOrder.toJson(),
+      },
+    );
+
+    if (result == null) {
+      return null;
+    }
+
+    final tokenJson = result['token'];
+    if (tokenJson == null) {
+      return null;
+    }
+
+    return AssetToken.fromGraphQL(
+      Map<String, dynamic>.from(tokenJson as Map),
+    );
+  }
+}
+
+/// Result from triggering indexing operation
+class TriggerIndexingResult {
+  TriggerIndexingResult({
+    required this.workflowId,
+    required this.runId,
+  });
+
+  final String workflowId;
+  final String runId;
+
+  factory TriggerIndexingResult.fromJson(Map<String, dynamic> json) =>
+      TriggerIndexingResult(
+        workflowId: json['workflow_id'] as String,
+        runId: json['run_id'] as String,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'workflow_id': workflowId,
+        'run_id': runId,
+      };
+}
+
+/// Workflow status information from Temporal workflow execution
+class WorkflowStatus {
+  WorkflowStatus({
+    required this.workflowId,
+    required this.runId,
+    required this.status,
+    this.startTime,
+    this.closeTime,
+    this.executionTimeMs,
+  });
+
+  final String workflowId;
+  final String runId;
+  final String status;
+  final DateTime? startTime;
+  final DateTime? closeTime;
+  final int? executionTimeMs;
+
+  factory WorkflowStatus.fromJson(Map<String, dynamic> json) => WorkflowStatus(
+        workflowId: json['workflow_id'] as String,
+        runId: json['run_id'] as String,
+        status: json['status'] as String,
+        startTime: json['start_time'] != null
+            ? DateTime.tryParse(json['start_time'] as String)
+            : null,
+        closeTime: json['close_time'] != null
+            ? DateTime.tryParse(json['close_time'] as String)
+            : null,
+        executionTimeMs: json['execution_time_ms'] != null
+            ? int.tryParse(json['execution_time_ms'].toString())
+            : null,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'workflow_id': workflowId,
+        'run_id': runId,
+        'status': status,
+        'start_time': startTime?.toIso8601String(),
+        'close_time': closeTime?.toIso8601String(),
+        'execution_time_ms': executionTimeMs,
+      };
 }

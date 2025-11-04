@@ -10,14 +10,10 @@ import 'dart:async';
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
-import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_state.dart';
-import 'package:autonomy_flutter/service/feralfile_service.dart';
-import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:http/http.dart' as http;
 import 'package:sentry/sentry.dart';
 
 class ArtworkDetailBloc extends AuBloc<ArtworkDetailEvent, ArtworkDetailState> {
@@ -28,13 +24,9 @@ class ArtworkDetailBloc extends AuBloc<ArtworkDetailEvent, ArtworkDetailState> {
   ArtworkDetailBloc() : super(ArtworkDetailState()) {
     on<ArtworkDetailGetInfoEvent>((event, emit) async {
       if (event.useIndexer) {
-        final request = QueryListTokensRequest(
-          ids: [event.identity.cid],
-        );
-        final assetToken = await indexerService.getNftTokens(request);
+        final token = await indexerService.getTokenByCid(event.identity.cid);
 
-        if (assetToken.isNotEmpty) {
-          final token = assetToken.first;
+        if (token != null) {
           emit(
             ArtworkDetailState(
               assetToken: token,
@@ -58,7 +50,7 @@ class ArtworkDetailBloc extends AuBloc<ArtworkDetailEvent, ArtworkDetailState> {
 
   Future<void> _indexHistory(String cid) async {
     try {
-      await indexerService.indexTokenHistory(cid);
+      // await indexerService.indexTokenHistory(cid);
     } catch (e) {
       log.info('index history error: $e');
       unawaited(

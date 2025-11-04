@@ -5,4 +5,19 @@
 //  that can be found in the LICENSE file.
 //
 
-enum Blockchain { BITMARK, ETHEREUM, TEZOS }
+enum Blockchain {
+  ETHEREUM,
+  TEZOS;
+
+  static Blockchain fromChain(String value) {
+    final chain = value.split(':')[0];
+    switch (chain) {
+      case "eip155":
+        return Blockchain.ETHEREUM;
+      case "tezos":
+        return Blockchain.TEZOS;
+      default:
+        throw Exception('Invalid blockchain: $value');
+    }
+  }
+}

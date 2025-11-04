@@ -1,4 +1,5 @@
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/model/blockchain.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_rendering/nft_rendering_widget.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
@@ -108,6 +109,8 @@ extension AssetTokenExtension on AssetToken {
     //       return mimeType ?? RenderingType.webview;
     //   }
   }
+
+  Blockchain get blockchain => Blockchain.fromChain(chain);
 
   bool get canInteract {
     final notSupportInteractMedium = [

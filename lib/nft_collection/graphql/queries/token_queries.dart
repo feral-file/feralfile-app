@@ -107,6 +107,7 @@ const String getTokens = r'''
         token_cid
         token_number
         current_owner
+        updated_at
         metadata {
           name
           description
@@ -162,6 +163,89 @@ const String getTokens = r'''
       }
       offset
       total
+    }
+  }
+''';
+
+const String getTokenByCidQuery = r'''
+  query getToken(
+    $cid: String!
+    $expand: [String!]
+    $owners_limit: Uint8 = 10
+    $owners_offset: Uint64 = 0
+    $provenance_events_limit: Uint8 = 10
+    $provenance_events_offset: Uint64 = 0
+    $provenance_events_order: Order = desc
+  ) {
+    token(
+      cid: $cid
+      expand: $expand
+      owners_limit: $owners_limit
+      owners_offset: $owners_offset
+      provenance_events_limit: $provenance_events_limit
+      provenance_events_offset: $provenance_events_offset
+      provenance_events_order: $provenance_events_order
+    ) {
+      id
+      chain
+      contract_address
+      standard
+      token_cid
+      token_number
+      current_owner
+      updated_at
+      metadata {
+        name
+        description
+        image_url
+        animation_url
+        mime_type
+        artists {
+          name
+          did
+        }
+        publisher {
+          name
+          url
+        }
+      }
+      owners {
+        items {
+          quantity
+          owner_address
+        }
+      }
+      provenance_events {
+        items {
+          event_type
+          from_address
+          to_address
+          tx_hash
+          timestamp
+          chain
+        }
+      }
+      enrichment_source {
+        name
+        description
+        image_url
+        animation_url
+        mime_type
+        artists {
+          name
+          did
+        }
+      }
+      metadata_media_assets {
+        source_url
+        mime_type
+        variant_urls
+      }
+      enrichment_source_media_assets {
+        source_url
+        mime_type
+        variant_urls
+      }
     }
   }
 ''';

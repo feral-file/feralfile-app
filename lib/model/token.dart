@@ -60,6 +60,7 @@ class AssetToken {
     required this.contractAddress,
     required this.tokenNumber,
     this.currentOwner,
+    this.updatedAt,
     this.metadata,
     this.owners,
     this.provenanceEvents,
@@ -74,6 +75,7 @@ class AssetToken {
   final String contractAddress;
   final String tokenNumber;
   final String? currentOwner;
+  final DateTime? updatedAt;
   final TokenMetadata? metadata;
   final PaginatedOwners? owners;
   final PaginatedProvenanceEvents? provenanceEvents;
@@ -88,6 +90,9 @@ class AssetToken {
         contractAddress: json['contract_address'] as String,
         tokenNumber: json['token_number'] as String,
         currentOwner: json['current_owner'] as String?,
+        updatedAt: (json['updated_at'] != null)
+            ? DateTime.tryParse(json['updated_at'] as String)
+            : null,
         metadata: json['metadata'] != null
             ? TokenMetadata.fromJson(
                 Map<String, dynamic>.from(json['metadata'] as Map),
@@ -126,6 +131,9 @@ class AssetToken {
         contractAddress: json['contract_address'] as String,
         tokenNumber: json['token_number'] as String,
         currentOwner: json['current_owner'] as String?,
+        updatedAt: (json['updated_at'] != null)
+            ? DateTime.tryParse(json['updated_at'] as String)
+            : null,
         metadata: json['metadata'] != null
             ? TokenMetadata.fromJson(
                 Map<String, dynamic>.from(json['metadata'] as Map),

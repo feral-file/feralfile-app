@@ -20,9 +20,10 @@ class DP1CreatePlaylistRequest {
   Map<String, dynamic> toJson() => {
         'dpVersion': dpVersion,
         'title': title,
-        'defaults': defaults,
+        if (defaults != null) 'defaults': defaults,
         'items': items.map((e) => e.toJson()).toList(),
-        'dynamicQueries': dynamicQueries?.map((e) => e.toJson()).toList(),
+        if (dynamicQueries != null)
+          'dynamicQueries': dynamicQueries?.map((e) => e.toJson()).toList(),
       };
 
   factory DP1CreatePlaylistRequest.fromDP1Call(DP1Call dp1Call) =>

@@ -10,7 +10,7 @@ extension DP1PlaylistItemExtension on DP1Item {
     ArtworkDisplayLicense license = ArtworkDisplayLicense.open,
   }) {
     final dp1Contract = DP1Contract(
-        chain: DP1ProvenanceChain.fromString(token.chain),
+        chain: DP1ProvenanceChain.fromBlockchain(token.blockchain),
         standard: DP1ProvenanceStandard.fromString(token.standard),
         address: token.contractAddress,
         tokenId: token.tokenNumber);

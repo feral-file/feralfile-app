@@ -21,7 +21,6 @@ import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/device_info_service.dart';
 import 'package:autonomy_flutter/service/dls_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
-import 'package:autonomy_flutter/service/feed_registry_service.dart';
 import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/passkey_service.dart';
@@ -30,7 +29,6 @@ import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
-import 'package:autonomy_flutter/util/john_gerrard_helper.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/metric_helper.dart';
 import 'package:autonomy_flutter/util/notification_util.dart';
@@ -254,12 +252,12 @@ class _OnboardingPageState extends State<OnboardingPage>
       unawaited(Sentry.captureException(e, stackTrace: s));
     }
 
-    try {
-      await injector<FeedRegistryService>().ensureUserEcdsaKeypair();
-    } catch (e, s) {
-      log.info('Failed to ensure user ECDSA keypair: $e');
-      unawaited(Sentry.captureException(e, stackTrace: s));
-    }
+    // try {
+    //   await injector<FeedRegistryService>().ensureUserEcdsaKeypair();
+    // } catch (e, s) {
+    //   log.info('Failed to ensure user ECDSA keypair: $e');
+    //   unawaited(Sentry.captureException(e, stackTrace: s));
+    // }
 
     unawaited(
       injector<RemoteConfigService>().loadConfigs().then(

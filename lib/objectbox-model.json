@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:8785770107812140676",
-      "lastPropertyId": "17:6507761636191984416",
+      "lastPropertyId": "18:3607900808077485092",
       "name": "TokenObject",
       "properties": [
         {
@@ -54,21 +54,6 @@
           "type": 9
         },
         {
-          "id": "9:1585894623012193859",
-          "name": "burned",
-          "type": 1
-        },
-        {
-          "id": "10:1043666627485565459",
-          "name": "createdAt",
-          "type": 10
-        },
-        {
-          "id": "11:2653960096876875255",
-          "name": "updatedAt",
-          "type": 10
-        },
-        {
           "id": "12:1841365891659981081",
           "name": "metadataJson",
           "type": 9
@@ -97,6 +82,11 @@
           "id": "17:6507761636191984416",
           "name": "enrichmentSourceMediaAssetsJson",
           "type": 9
+        },
+        {
+          "id": "18:3607900808077485092",
+          "name": "updatedAt",
+          "type": 10
         }
       ],
       "relations": []
@@ -110,7 +100,11 @@
   "modelVersionParserMinimum": 5,
   "retiredEntityUids": [],
   "retiredIndexUids": [],
-  "retiredPropertyUids": [],
+  "retiredPropertyUids": [
+    1585894623012193859,
+    1043666627485565459,
+    2653960096876875255
+  ],
   "retiredRelationUids": [],
   "version": 1
 }
