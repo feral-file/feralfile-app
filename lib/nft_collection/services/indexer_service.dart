@@ -168,7 +168,7 @@ class NftIndexerService implements NftIndexerServiceBase {
         owners: addresses,
         offset: offset,
         size: pageSize,
-        lastUpdatedAt: lastUpdatedAt,
+        // lastUpdatedAt: lastUpdatedAt,
       );
 
       final tokens = await getNftTokens(request);

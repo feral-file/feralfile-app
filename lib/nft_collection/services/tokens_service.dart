@@ -392,9 +392,9 @@ class NftTokensServiceImpl extends NftTokensService {
             final request = QueryListTokensRequest(
               owners: addresses[lastRefreshedTime] ?? [],
               offset: offsetMap[lastRefreshedTime] ?? 0,
-              lastUpdatedAt: lastRefreshedTime != 0
-                  ? DateTime.fromMillisecondsSinceEpoch(lastRefreshedTime)
-                  : null,
+              // lastUpdatedAt: lastRefreshedTime != 0
+              //     ? DateTime.fromMillisecondsSinceEpoch(lastRefreshedTime)
+              //     : null,
             );
 
             final assets = await isolateIndexerService.getNftTokens(request);
@@ -457,7 +457,7 @@ class NftTokensServiceImpl extends NftTokensService {
           owners: addresses,
           offset: offset,
           size: pageSize,
-          lastUpdatedAt: lastUpdatedAt,
+          // lastUpdatedAt: lastUpdatedAt,
         );
 
         final tokens = await isolateIndexerService.getNftTokens(request);

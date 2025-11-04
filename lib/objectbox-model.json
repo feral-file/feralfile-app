@@ -4,393 +4,113 @@
   "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
   "entities": [
     {
-      "id": "5:9121764917203472736",
-      "lastPropertyId": "26:2119658136783413238",
-      "name": "AssetObject",
+      "id": "1:8785770107812140676",
+      "lastPropertyId": "17:6507761636191984416",
+      "name": "TokenObject",
       "properties": [
         {
-          "id": "1:2154100950845947826",
+          "id": "1:2152673203633054074",
           "name": "id",
           "type": 6,
           "flags": 1
         },
         {
-          "id": "2:637822972188724080",
-          "name": "indexID",
-          "type": 9
-        },
-        {
-          "id": "3:2686313886126480436",
-          "name": "thumbnailID",
-          "type": 9
-        },
-        {
-          "id": "4:5507343500553163255",
-          "name": "lastRefreshedTime",
-          "type": 10
-        },
-        {
-          "id": "5:4582973139529217764",
-          "name": "artistID",
-          "type": 9
-        },
-        {
-          "id": "6:8381542082545405883",
-          "name": "artistName",
-          "type": 9
-        },
-        {
-          "id": "7:6877959713264537806",
-          "name": "artistURL",
-          "type": 9
-        },
-        {
-          "id": "8:8225717972469556467",
-          "name": "artists",
-          "type": 9
-        },
-        {
-          "id": "9:8695153191566378055",
-          "name": "assetID",
-          "type": 9
-        },
-        {
-          "id": "10:6414356855140929392",
-          "name": "title",
-          "type": 9
-        },
-        {
-          "id": "11:2249074958909502597",
-          "name": "mimeType",
-          "type": 9
-        },
-        {
-          "id": "12:2520272030012956889",
-          "name": "medium",
-          "type": 9
-        },
-        {
-          "id": "13:2909439249825683686",
-          "name": "source",
-          "type": 9
-        },
-        {
-          "id": "14:4519147404572573778",
-          "name": "thumbnailURL",
-          "type": 9
-        },
-        {
-          "id": "15:3434944693071120110",
-          "name": "galleryThumbnailURL",
-          "type": 9
-        },
-        {
-          "id": "16:1907062241656649352",
-          "name": "description",
-          "type": 9
-        },
-        {
-          "id": "17:8842073985806645272",
-          "name": "maxEdition",
-          "type": 6
-        },
-        {
-          "id": "18:4483932031648563699",
-          "name": "sourceURL",
-          "type": 9
-        },
-        {
-          "id": "19:6461089795330442494",
-          "name": "previewURL",
-          "type": 9
-        },
-        {
-          "id": "20:622659291317229904",
-          "name": "assetData",
-          "type": 9
-        },
-        {
-          "id": "21:1325936739877630782",
-          "name": "assetURL",
-          "type": 9
-        },
-        {
-          "id": "22:2513354758043714915",
-          "name": "isFeralfileFrame",
-          "type": 1
-        },
-        {
-          "id": "23:2484756882202349649",
-          "name": "initialSaleModel",
-          "type": 9
-        },
-        {
-          "id": "24:8478144627846300117",
-          "name": "originalFileURL",
-          "type": 9
-        },
-        {
-          "id": "25:1006665434378091429",
-          "name": "artworkMetadata",
-          "type": 9
-        },
-        {
-          "id": "26:2119658136783413238",
+          "id": "2:4298635337776257820",
           "name": "uniqueId",
           "type": 9,
           "flags": 2080,
-          "indexId": "7:8141939759143461103"
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "6:768055645286842371",
-      "lastPropertyId": "23:8650214023243238913",
-      "name": "AssetTokenObject",
-      "properties": [
-        {
-          "id": "1:275273747922195895",
-          "name": "id",
-          "type": 6,
-          "flags": 1
+          "indexId": "1:1037869124098185174"
         },
         {
-          "id": "2:8998927899387537492",
-          "name": "indexID",
+          "id": "3:8791417915566643013",
+          "name": "cid",
           "type": 9,
           "flags": 2048,
-          "indexId": "3:8540577488980236051"
+          "indexId": "2:1458197781980648048"
         },
         {
-          "id": "3:8929594438647314911",
-          "name": "owner",
-          "type": 9,
-          "flags": 2048,
-          "indexId": "4:5995663130876612321"
-        },
-        {
-          "id": "4:590527097259758951",
-          "name": "edition",
-          "type": 6
-        },
-        {
-          "id": "5:7042258863301286835",
-          "name": "blockchain",
+          "id": "4:8702876953287691070",
+          "name": "chain",
           "type": 9
         },
         {
-          "id": "6:5800598753397608456",
-          "name": "fungible",
-          "type": 1
-        },
-        {
-          "id": "7:6350767447149629539",
-          "name": "contractType",
+          "id": "5:3207296672527401195",
+          "name": "standard",
           "type": 9
         },
         {
-          "id": "8:1065837856713649153",
+          "id": "6:8615917607975718880",
           "name": "contractAddress",
           "type": 9
         },
         {
-          "id": "9:9051627684470240654",
-          "name": "tokenId",
+          "id": "7:2837370537871558437",
+          "name": "tokenNumber",
           "type": 9
         },
         {
-          "id": "10:570954957576072711",
-          "name": "editionName",
+          "id": "8:4962567785251355659",
+          "name": "currentOwner",
           "type": 9
         },
         {
-          "id": "11:1923824067874981920",
-          "name": "mintedAt",
-          "type": 10
-        },
-        {
-          "id": "12:1224778594283280056",
-          "name": "balance",
-          "type": 6
-        },
-        {
-          "id": "13:8048325481936326628",
-          "name": "ownersJson",
-          "type": 9
-        },
-        {
-          "id": "14:3223849334691315883",
-          "name": "lastActivityTime",
-          "type": 10
-        },
-        {
-          "id": "15:5701899438432671498",
-          "name": "lastRefreshedTime",
-          "type": 10
-        },
-        {
-          "id": "16:8261472116328059168",
-          "name": "swapped",
-          "type": 1
-        },
-        {
-          "id": "17:4430465474769205227",
+          "id": "9:1585894623012193859",
           "name": "burned",
           "type": 1
         },
         {
-          "id": "18:6235501104972755809",
-          "name": "ipfsPinned",
-          "type": 1
-        },
-        {
-          "id": "19:4227576982016727661",
-          "name": "pending",
-          "type": 1
-        },
-        {
-          "id": "20:3080006071728239482",
-          "name": "isDebugged",
-          "type": 1
-        },
-        {
-          "id": "21:6473828222567945991",
-          "name": "originTokenInfoId",
-          "type": 9
-        },
-        {
-          "id": "22:3688922902700582816",
-          "name": "assetId",
-          "type": 11,
-          "flags": 520,
-          "indexId": "5:6849648735860605912",
-          "relationTarget": "AssetObject"
-        },
-        {
-          "id": "23:8650214023243238913",
-          "name": "uniqueId",
-          "type": 9,
-          "flags": 2080,
-          "indexId": "8:4342564864780720707"
-        }
-      ],
-      "relations": [
-        {
-          "id": "1:4480229473099763885",
-          "name": "provenance",
-          "targetId": "7:1829843208606867060"
-        }
-      ]
-    },
-    {
-      "id": "7:1829843208606867060",
-      "lastPropertyId": "11:7259616555571793378",
-      "name": "ProvenanceObject",
-      "properties": [
-        {
-          "id": "1:5928604402732136567",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "2:446505263569461009",
-          "name": "provenanceId",
-          "type": 9
-        },
-        {
-          "id": "3:4426499261764439980",
-          "name": "txID",
-          "type": 9
-        },
-        {
-          "id": "4:2570299214081486438",
-          "name": "type",
-          "type": 9
-        },
-        {
-          "id": "5:5651151757126249999",
-          "name": "blockchain",
-          "type": 9
-        },
-        {
-          "id": "6:8291663310622297510",
-          "name": "owner",
-          "type": 9
-        },
-        {
-          "id": "7:2981455231783579716",
-          "name": "timestamp",
+          "id": "10:1043666627485565459",
+          "name": "createdAt",
           "type": 10
         },
         {
-          "id": "8:6787460858322477909",
-          "name": "txURL",
+          "id": "11:2653960096876875255",
+          "name": "updatedAt",
+          "type": 10
+        },
+        {
+          "id": "12:1841365891659981081",
+          "name": "metadataJson",
           "type": 9
         },
         {
-          "id": "9:3262720642570168366",
-          "name": "tokenID",
+          "id": "13:7820093520451817506",
+          "name": "ownersJson",
           "type": 9
         },
         {
-          "id": "10:8663056925435548024",
-          "name": "blockNumber",
-          "type": 6
+          "id": "14:663540667962612769",
+          "name": "provenanceEventsJson",
+          "type": 9
         },
         {
-          "id": "11:7259616555571793378",
-          "name": "uniqueId",
-          "type": 9,
-          "flags": 2080,
-          "indexId": "9:6783878973126291135"
+          "id": "15:7040337735420530751",
+          "name": "enrichmentSourceJson",
+          "type": 9
+        },
+        {
+          "id": "16:6195398151728164133",
+          "name": "metadataMediaAssetsJson",
+          "type": 9
+        },
+        {
+          "id": "17:6507761636191984416",
+          "name": "enrichmentSourceMediaAssetsJson",
+          "type": 9
         }
       ],
       "relations": []
     }
   ],
-  "lastEntityId": "7:1829843208606867060",
-  "lastIndexId": "9:6783878973126291135",
-  "lastRelationId": "1:4480229473099763885",
+  "lastEntityId": "1:8785770107812140676",
+  "lastIndexId": "2:1458197781980648048",
+  "lastRelationId": "0:0",
   "lastSequenceId": "0:0",
   "modelVersion": 5,
   "modelVersionParserMinimum": 5,
-  "retiredEntityUids": [
-    3545671819156561601,
-    3699075574402622260,
-    1005553247711674799,
-    5815070005230898589
-  ],
-  "retiredIndexUids": [
-    5042876510331899459
-  ],
-  "retiredPropertyUids": [
-    3766269381233881871,
-    5605060947817876347,
-    5469044788118803694,
-    5908046236401052457,
-    8142450773936588127,
-    8220924498347096201,
-    8917084034397599361,
-    5431218458790902201,
-    6617403950842871541,
-    6021759305910841352,
-    6559457832299594712,
-    3636663615958270973,
-    8229241486535930688,
-    5881703805512781879,
-    5697303813667306313,
-    3307529772053226121,
-    5534290915890030959,
-    2799396780689758937,
-    5481394537630207359,
-    3392403387181069637,
-    5302331128225242522,
-    928975233396538713,
-    8241112144675205140,
-    1136402464830326995
-  ],
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [],
   "retiredRelationUids": [],
   "version": 1
 }

@@ -20,8 +20,7 @@ class HiddenArtworksBloc extends AuBloc<HiddenArtworksEvent, List<AssetToken>> {
           configurationService.getTempStorageHiddenTokenIDs();
       final tokens = database.getTokensByCIDs(cids: hiddenArtworks);
 
-      tokens.removeWhere(
-          (element) => !hiddenArtworks.contains(element.cid) || element.burned);
+      tokens.removeWhere((element) => !hiddenArtworks.contains(element.cid));
       emit(tokens);
     });
   }
