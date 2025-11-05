@@ -18,7 +18,6 @@ import 'package:autonomy_flutter/screen/detail/preview_detail/preview_detail_sta
 import 'package:autonomy_flutter/service/ethereum_service.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:http/http.dart' as http;
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -33,12 +32,11 @@ class ArtworkPreviewDetailBloc
       AssetToken? assetToken;
 
       if (event.useIndexer) {
-        final request = QueryListTokensRequest(
-          ids: [event.identity.cid],
+        final token = await _indexerService.getTokenByCid(
+          QueryGetTokenByCidRequest(cid: event.identity.cid),
         );
-        final tokens = await _indexerService.getNftTokens(request);
-        if (tokens.isNotEmpty) {
-          assetToken = tokens.first;
+        if (token != null) {
+          assetToken = token;
         }
       } else {
         assetToken = _database.findTokenByCid(

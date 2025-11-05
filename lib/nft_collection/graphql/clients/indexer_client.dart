@@ -38,8 +38,8 @@ class IndexerClient {
     bool withToken = false,
     String? subKey,
   }) async {
-    return Map<String, dynamic>.from(
-        mockdata); // Temporary mock data to avoid indexer issues
+    // return Map<String, dynamic>.from(
+    //     mockdata); // Temporary mock data to avoid indexer issues
     try {
       final options = QueryOptions(
         document: gql(doc),
@@ -77,8 +77,10 @@ class IndexerClient {
         document: gql(doc),
         variables: vars,
       );
-
       final result = await clientToUse.mutate(options);
+      if (result.exception != null) {
+        throw result.exception!;
+      }
       return result.data;
     } catch (e) {
       NftCollection.logger.info('Error mutating: $e');
@@ -106,7 +108,8 @@ class IndexerClient {
   Future<String> _getToken() async {
     try {
       if (_getTokenOverride != null) {
-        return await _getTokenOverride!();
+        final authToken = await _getTokenOverride();
+        return authToken;
       }
       if (_authService == null) return '';
       final jwt = await _authService.getAuthToken();

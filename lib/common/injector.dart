@@ -202,7 +202,6 @@ Future<void> setupInjector() async {
     indexerUrl: Environment.indexerURL,
     logger: log,
     apiLogger: apiLog,
-    dio: dio,
   );
   injector.registerLazySingleton<NftTokensService>(
     () => NftCollection.tokenService,

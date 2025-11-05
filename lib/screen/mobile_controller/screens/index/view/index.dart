@@ -60,9 +60,9 @@ class ListDirectoryPageState extends State<ListDirectoryPage>
   @override
   void didPopNext() {
     super.didPopNext();
-    if (_selectedPageIndex == 3) {
-      _reindexAllAddresses();
-    }
+    // if (_selectedPageIndex == 3) {
+    //   _reindexAllAddresses();
+    // }
   }
 
   void openMyCollection() {
@@ -74,9 +74,9 @@ class ListDirectoryPageState extends State<ListDirectoryPage>
       _selectedPageIndex = index;
     });
     _pageController.jumpToPage(index);
-    if (index == 3) {
-      _reindexAllAddresses();
-    }
+    // if (index == 3) {
+    //   _reindexAllAddresses();
+    // }
   }
 
   Future<void> _reindexAllAddresses() async {

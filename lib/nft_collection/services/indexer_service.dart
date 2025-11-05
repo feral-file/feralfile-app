@@ -5,9 +5,7 @@ import 'package:autonomy_flutter/nft_collection/graphql/clients/indexer_client.d
 import 'package:autonomy_flutter/nft_collection/graphql/model/get_changes.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/model/identity.dart';
-import 'package:autonomy_flutter/nft_collection/graphql/queries/mutations.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/queries/queries.dart';
-import 'package:autonomy_flutter/nft_collection/graphql/queries/workflow_queries.dart';
 import 'package:autonomy_flutter/nft_collection/models/identity.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 
@@ -42,16 +40,10 @@ abstract class NftIndexerServiceBase {
   /// Returns a paginated list of changes
   Future<ChangeList> getChanges(QueryChangesRequest request);
 
-  /// Get a single token by CID (with optional expansions and pagination params)
+  /// Get a single token by CID
   Future<AssetToken?> getTokenByCid(
-    String cid, {
-    List<String> expand = const [],
-    int ownersLimit = 10,
-    int ownersOffset = 0,
-    int provenanceEventsLimit = 10,
-    int provenanceEventsOffset = 0,
-    Order provenanceEventsOrder = Order.desc,
-  });
+    QueryGetTokenByCidRequest request,
+  );
 }
 
 class NftIndexerService implements NftIndexerServiceBase {
@@ -167,7 +159,7 @@ class NftIndexerService implements NftIndexerServiceBase {
   Future<List<AssetToken>> getAssetTokens(List<DP1Item> items) async {
     final indexIds = items.map((item) => item.cid).whereType<String>().toList();
     final assetTokens = await getNftTokens(
-      QueryListTokensRequest(ids: indexIds),
+      QueryListTokensRequest(tokenIds: indexIds),
     );
     return List<AssetToken>.from(assetTokens).toList();
   }
@@ -195,7 +187,7 @@ class NftIndexerService implements NftIndexerServiceBase {
       final request = QueryListTokensRequest(
         owners: addresses,
         offset: offset,
-        size: pageSize,
+        limit: pageSize,
         // lastUpdatedAt: lastUpdatedAt,
       );
 
@@ -326,25 +318,11 @@ class NftIndexerService implements NftIndexerServiceBase {
   /// Get a single token by CID
   @override
   Future<AssetToken?> getTokenByCid(
-    String cid, {
-    List<String> expand = const [],
-    int ownersLimit = 10,
-    int ownersOffset = 0,
-    int provenanceEventsLimit = 10,
-    int provenanceEventsOffset = 0,
-    Order provenanceEventsOrder = Order.desc,
-  }) async {
+    QueryGetTokenByCidRequest request,
+  ) async {
     final result = await _client.query(
       doc: getTokenByCidQuery,
-      vars: {
-        'cid': cid,
-        'expand': expand,
-        'owners_limit': ownersLimit,
-        'owners_offset': ownersOffset,
-        'provenance_events_limit': provenanceEventsLimit,
-        'provenance_events_offset': provenanceEventsOffset,
-        'provenance_events_order': provenanceEventsOrder.toJson(),
-      },
+      vars: request.toJson(),
     );
 
     if (result == null) {

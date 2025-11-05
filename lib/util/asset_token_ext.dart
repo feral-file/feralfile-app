@@ -1,12 +1,16 @@
+import 'dart:async';
+
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/blockchain.dart';
 import 'package:autonomy_flutter/model/token.dart';
+import 'package:autonomy_flutter/nft_collection/graphql/model/get_changes.dart';
 import 'package:autonomy_flutter/nft_rendering/nft_rendering_widget.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/john_gerrard_helper.dart';
 import 'package:collection/collection.dart';
+import 'package:sentry/sentry.dart';
 
 extension AssetTokenExtension on AssetToken {
   ArtworkIdentity get identity => ArtworkIdentity(cid);
@@ -45,69 +49,71 @@ extension AssetTokenExtension on AssetToken {
 
   bool get isFeralfile => publisher?.name == 'Feralfile';
 
+  String? get _mimeType {
+    return enrichmentSource?.mimeType ?? metadata?.mimeType;
+  }
+
   String get getMimeType {
-    return RenderingType.image;
-    //TODO: implement this
-    //   switch (mimeType) {
-    //     case 'image/avif':
-    //     case 'image/bmp':
-    //     case 'image/jpeg':
-    //     case 'image/jpg':
-    //     case 'image/png':
-    //     case 'image/tiff':
-    //       return RenderingType.image;
+    switch (_mimeType) {
+      case 'image/avif':
+      case 'image/bmp':
+      case 'image/jpeg':
+      case 'image/jpg':
+      case 'image/png':
+      case 'image/tiff':
+        return RenderingType.image;
 
-    //     case 'image/svg+xml':
-    //       return RenderingType.svg;
+      case 'image/svg+xml':
+        return RenderingType.svg;
 
-    //     case 'image/gif':
-    //     case 'image/vnd.mozilla.apng':
-    //       return RenderingType.gif;
+      case 'image/gif':
+      case 'image/vnd.mozilla.apng':
+        return RenderingType.gif;
 
-    //     case 'audio/aac':
-    //     case 'audio/midi':
-    //     case 'audio/x-midi':
-    //     case 'audio/mpeg':
-    //     case 'audio/ogg':
-    //     case 'audio/opus':
-    //     case 'audio/wav':
-    //     case 'audio/webm':
-    //     case 'audio/3gpp':
-    //     case 'audio/vnd.wave':
-    //       return RenderingType.audio;
+      case 'audio/aac':
+      case 'audio/midi':
+      case 'audio/x-midi':
+      case 'audio/mpeg':
+      case 'audio/ogg':
+      case 'audio/opus':
+      case 'audio/wav':
+      case 'audio/webm':
+      case 'audio/3gpp':
+      case 'audio/vnd.wave':
+        return RenderingType.audio;
 
-    //     case 'video/x-msvideo':
-    //     case 'video/3gpp':
-    //     case 'video/mp4':
-    //     case 'video/mpeg':
-    //     case 'video/ogg':
-    //     case 'video/3gpp2':
-    //     case 'video/quicktime':
-    //     case 'application/x-mpegURL':
-    //     case 'video/x-flv':
-    //     case 'video/MP2T':
-    //     case 'video/webm':
-    //     case 'application/octet-stream':
-    //       return RenderingType.video;
+      case 'video/x-msvideo':
+      case 'video/3gpp':
+      case 'video/mp4':
+      case 'video/mpeg':
+      case 'video/ogg':
+      case 'video/3gpp2':
+      case 'video/quicktime':
+      case 'application/x-mpegURL':
+      case 'video/x-flv':
+      case 'video/MP2T':
+      case 'video/webm':
+      case 'application/octet-stream':
+        return RenderingType.video;
 
-    //     case 'application/pdf':
-    //       return RenderingType.pdf;
+      case 'application/pdf':
+        return RenderingType.pdf;
 
-    //     case 'model/gltf-binary':
-    //       return RenderingType.modelViewer;
+      case 'model/gltf-binary':
+        return RenderingType.modelViewer;
 
-    //     default:
-    //       if (mimeType?.isNotEmpty ?? false) {
-    //         unawaited(
-    //           Sentry.captureMessage(
-    //             'Unsupport mimeType: $mimeType',
-    //             level: SentryLevel.warning,
-    //             params: [id],
-    //           ),
-    //         );
-    //       }
-    //       return mimeType ?? RenderingType.webview;
-    //   }
+      default:
+        if (_mimeType?.isNotEmpty ?? false) {
+          unawaited(
+            Sentry.captureMessage(
+              'Unsupport mimeType: $_mimeType',
+              level: SentryLevel.warning,
+              params: [cid],
+            ),
+          );
+        }
+        return _mimeType ?? RenderingType.webview;
+    }
   }
 
   Blockchain get blockchain => Blockchain.fromChain(chain);
@@ -207,8 +213,11 @@ extension AssetTokenExtension on AssetToken {
       final enrichmentSourceMediaAsset =
           enrichmentSourceMediaAssets.firstWhereOrNull(
               (mediaAsset) => mediaAsset.sourceUrl == animationUrl);
-      return enrichmentSourceMediaAsset?.variantUrls.values.firstOrNull
-          as String?;
+      final variantUrl =
+          enrichmentSourceMediaAsset?.variantUrls.values.firstOrNull as String?;
+      if (variantUrl != null) {
+        return variantUrl;
+      }
     }
 
     // fallback to metadataMediaAssets
@@ -216,14 +225,141 @@ extension AssetTokenExtension on AssetToken {
     if (metadataMediaAssets != null) {
       final metadataMediaAsset = metadataMediaAssets.firstWhereOrNull(
           (mediaAsset) => mediaAsset.sourceUrl == animationUrl);
-      return metadataMediaAsset?.variantUrls.values.firstOrNull as String?;
+
+      final variantUrl =
+          metadataMediaAsset?.variantUrls.values.firstOrNull as String?;
+      if (variantUrl != null) {
+        return variantUrl;
+      }
     }
 
-    return null;
+    return animationUrl;
   }
 
   List<ProvenanceEvent> get provenance {
     return provenanceEvents?.items ?? [];
+  }
+
+  /// Apply ChangeMeta to this token and return updated token
+  AssetToken applyChangeMeta(ChangeMeta changeMeta, DateTime? changedAt) {
+    if (changeMeta is ProvenanceChangeMeta) {
+      return _applyProvenanceChangeMeta(changeMeta, changedAt);
+    } else if (changeMeta is MetadataChangeMeta) {
+      return _applyMetadataChangeMeta(changeMeta, changedAt);
+    }
+    return this;
+  }
+
+  AssetToken _applyProvenanceChangeMeta(
+    ProvenanceChangeMeta meta,
+    DateTime? changedAt,
+  ) {
+    // Update currentOwner if 'to' address is provided
+    String? newOwner = meta.to ?? currentOwner;
+
+    // Update owners list if needed
+    PaginatedOwners? newOwners = owners;
+    if (meta.to != null && meta.quantity != null) {
+      final existingOwners = owners?.items ?? [];
+      final updatedOwners = <Owner>[];
+      bool found = false;
+
+      // Update existing owner or add new one
+      for (final owner in existingOwners) {
+        if (owner.ownerAddress == meta.to) {
+          updatedOwners.add(
+            owner.copyWith(quantity: meta.quantity!),
+          );
+          found = true;
+        } else {
+          updatedOwners.add(owner);
+        }
+      }
+
+      if (!found) {
+        updatedOwners.add(
+          Owner(
+            ownerAddress: meta.to!,
+            quantity: meta.quantity!,
+          ),
+        );
+      }
+
+      newOwners = owners?.copyWith(items: updatedOwners) ??
+          PaginatedOwners(items: updatedOwners);
+    }
+
+    return copyWith(
+      currentOwner: newOwner,
+      updatedAt: changedAt ?? updatedAt,
+      owners: newOwners,
+    );
+  }
+
+  AssetToken _applyMetadataChangeMeta(
+    MetadataChangeMeta meta,
+    DateTime? changedAt,
+  ) {
+    // Merge metadata fields: use new values, fallback to old if new is null
+    final newMetadataFields = meta.new_;
+    final oldMetadataFields = meta.old;
+
+    // Convert ChangeArtist to Artist
+    List<Artist>? convertArtists(List<ChangeArtist>? changeArtists) {
+      if (changeArtists == null) return null;
+      return changeArtists
+          .map((a) => Artist(did: a.did, name: a.name))
+          .toList();
+    }
+
+    // Convert ChangePublisher to Publisher
+    Publisher? convertPublisher(ChangePublisher? changePublisher) {
+      if (changePublisher == null || changePublisher.name == null) {
+        return null;
+      }
+      return Publisher(
+        name: changePublisher.name,
+        url: changePublisher.url,
+      );
+    }
+
+    // Build new metadata by merging old and new, using copyWith if metadata exists
+    final existingMetadata = metadata;
+    final mergedMetadata = existingMetadata != null
+        ? existingMetadata.copyWith(
+            imageUrl: newMetadataFields.imageUrl ??
+                oldMetadataFields.imageUrl ??
+                existingMetadata.imageUrl,
+            animationUrl: newMetadataFields.animationUrl ??
+                oldMetadataFields.animationUrl ??
+                existingMetadata.animationUrl,
+            mimeType: newMetadataFields.mimeType ??
+                oldMetadataFields.mimeType ??
+                existingMetadata.mimeType,
+            artists: convertArtists(newMetadataFields.artists) ??
+                convertArtists(oldMetadataFields.artists) ??
+                existingMetadata.artists,
+            publisher: convertPublisher(newMetadataFields.publisher) ??
+                convertPublisher(oldMetadataFields.publisher) ??
+                existingMetadata.publisher,
+          )
+        : TokenMetadata(
+            name: null,
+            description: null,
+            imageUrl: newMetadataFields.imageUrl ?? oldMetadataFields.imageUrl,
+            animationUrl: newMetadataFields.animationUrl ??
+                oldMetadataFields.animationUrl,
+            mimeType: newMetadataFields.mimeType ?? oldMetadataFields.mimeType,
+            artists: convertArtists(newMetadataFields.artists) ??
+                convertArtists(oldMetadataFields.artists),
+            publisher: convertPublisher(newMetadataFields.publisher) ??
+                convertPublisher(oldMetadataFields.publisher),
+          );
+
+    return copyWith(
+      updatedAt: changedAt ?? updatedAt,
+      metadata: mergedMetadata,
+    );
   }
 }
 

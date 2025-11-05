@@ -66,7 +66,9 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
   }) {
     final sortByProperty = convertSortByToQueryProperty(sortBy);
     final query = tokenBox
-        .query(TokenObject_.currentOwner.equals(ownerAddress))
+        .query(TokenObject_.currentOwner
+            .equals(ownerAddress)
+            .or(TokenObject_.ownersJson.contains(ownerAddress)))
         .order(sortByProperty, flags: Order.descending)
         .build();
     try {

@@ -22,41 +22,61 @@ class QueryListTokensResponse<T extends AssetToken> {
   List<T> tokens;
 }
 
+enum ExpandField {
+  provenanceEvents,
+  owners,
+  metadataMediaAsset,
+  enrichmentSourceMediaAsset,
+  enrichmentSource,
+}
+
+extension ExpandFieldJson on ExpandField {
+  String toJson() {
+    switch (this) {
+      case ExpandField.provenanceEvents:
+        return 'provenance_events';
+      case ExpandField.owners:
+        return 'owners';
+      case ExpandField.metadataMediaAsset:
+        return 'metadata_media_asset';
+      case ExpandField.enrichmentSourceMediaAsset:
+        return 'enrichment_source_media_asset';
+      case ExpandField.enrichmentSource:
+        return 'enrichment_source';
+    }
+  }
+}
+
 class QueryListTokensRequest {
   QueryListTokensRequest({
     this.owners = const [], // backward-compat; maps to `owner`
-    this.ids =
-        const [], // backward-compat; maps to `token_id` when tokenIds empty
     this.offset = 0,
-    this.size =
-        indexerTokensPageSize, // backward-compat; maps to `limit` when limit not set
-    this.sortBy = IndexerAssetTokenSortBy.lastActivityTime, // unused in new API
-    // New API fields
     this.chains = const [],
     this.contractAddresses = const [],
     this.tokenIds = const [],
-    this.limit,
-    this.expand = const [],
+    this.limit = indexerTokensPageSize,
+    this.expand = const [
+      ExpandField.provenanceEvents,
+      ExpandField.owners,
+      ExpandField.metadataMediaAsset,
+      ExpandField.enrichmentSourceMediaAsset,
+      ExpandField.enrichmentSource,
+    ],
     this.ownersLimit = 10,
     this.ownersOffset = 0,
     this.provenanceEventsLimit = 10,
     this.provenanceEventsOffset = 0,
     this.provenanceEventsOrder = Order.desc,
-  }) : burnedIncluded = ids.any((id) => id.startsWith('bmk'));
+  });
 
   final List<String> owners;
-  final List<String> ids;
   final int offset;
-  final int size;
-  final bool burnedIncluded;
-  final IndexerAssetTokenSortBy sortBy;
-
   // New API fields
   final List<String> chains;
   final List<String> contractAddresses;
   final List<String> tokenIds;
   final int? limit;
-  final List<String> expand;
+  final List<ExpandField> expand;
   final int ownersLimit;
   final int ownersOffset;
   final int provenanceEventsLimit;
@@ -65,13 +85,9 @@ class QueryListTokensRequest {
 
   Map<String, dynamic> toJson() {
     // Provide both new and legacy keys to maintain compatibility with current queries
-    final tokenIdValue = tokenIds.isNotEmpty ? tokenIds : ids;
-    final limitValue = limit ?? size;
+    final tokenIdValue = tokenIds;
+    final limitValue = limit;
     return <String, dynamic>{
-      // Legacy keys
-      'owners': owners,
-      'ids': ids,
-      'size': size,
       // New API keys
       'owner': owners,
       'chain': chains,
@@ -79,17 +95,51 @@ class QueryListTokensRequest {
       'token_id': tokenIdValue,
       'limit': limitValue,
       'offset': offset,
-      'expand': expand,
+      'expand': expand.map((e) => e.toJson()).toList(),
       'owners_limit': ownersLimit,
       'owners_offset': ownersOffset,
       'provenance_events_limit': provenanceEventsLimit,
       'provenance_events_offset': provenanceEventsOffset,
       'provenance_events_order': provenanceEventsOrder.toJson(),
       // Fields below are not used by the new API but kept for compatibility flags
-      'burnedIncluded': burnedIncluded,
-      'sortBy': sortBy.toJson(),
     };
   }
+}
+
+class QueryGetTokenByCidRequest {
+  QueryGetTokenByCidRequest({
+    required this.cid,
+    this.expand = const [
+      ExpandField.provenanceEvents,
+      ExpandField.owners,
+      ExpandField.metadataMediaAsset,
+      ExpandField.enrichmentSourceMediaAsset,
+      ExpandField.enrichmentSource,
+    ],
+    this.ownersLimit = 10,
+    this.ownersOffset = 0,
+    this.provenanceEventsLimit = 10,
+    this.provenanceEventsOffset = 0,
+    this.provenanceEventsOrder = Order.desc,
+  });
+
+  final String cid;
+  final List<ExpandField> expand;
+  final int ownersLimit;
+  final int ownersOffset;
+  final int provenanceEventsLimit;
+  final int provenanceEventsOffset;
+  final Order provenanceEventsOrder;
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'cid': cid,
+        'expand': expand.map((e) => e.toJson()).toList(),
+        'owners_limit': ownersLimit,
+        'owners_offset': ownersOffset,
+        'provenance_events_limit': provenanceEventsLimit,
+        'provenance_events_offset': provenanceEventsOffset,
+        'provenance_events_order': provenanceEventsOrder.toJson(),
+      };
 }
 
 enum Order { asc, desc }

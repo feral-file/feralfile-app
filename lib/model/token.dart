@@ -50,6 +50,26 @@ class TokenMetadata {
           'artists': artists!.map((a) => a.toJson()).toList(),
         if (publisher != null) 'publisher': publisher!.toJson(),
       };
+
+  TokenMetadata copyWith({
+    String? name,
+    String? description,
+    String? imageUrl,
+    String? animationUrl,
+    String? mimeType,
+    List<Artist>? artists,
+    Publisher? publisher,
+  }) {
+    return TokenMetadata(
+      name: name ?? this.name,
+      description: description ?? this.description,
+      imageUrl: imageUrl ?? this.imageUrl,
+      animationUrl: animationUrl ?? this.animationUrl,
+      mimeType: mimeType ?? this.mimeType,
+      artists: artists ?? this.artists,
+      publisher: publisher ?? this.publisher,
+    );
+  }
 }
 
 class AssetToken {
@@ -164,6 +184,39 @@ class AssetToken {
                 (e) => MediaAsset.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList(),
       );
+
+  AssetToken copyWith({
+    String? cid,
+    String? chain,
+    String? standard,
+    String? contractAddress,
+    String? tokenNumber,
+    String? currentOwner,
+    DateTime? updatedAt,
+    TokenMetadata? metadata,
+    PaginatedOwners? owners,
+    PaginatedProvenanceEvents? provenanceEvents,
+    EnrichmentSource? enrichmentSource,
+    List<MediaAsset>? metadataMediaAssets,
+    List<MediaAsset>? enrichmentSourceMediaAssets,
+  }) {
+    return AssetToken(
+      cid: cid ?? this.cid,
+      chain: chain ?? this.chain,
+      standard: standard ?? this.standard,
+      contractAddress: contractAddress ?? this.contractAddress,
+      tokenNumber: tokenNumber ?? this.tokenNumber,
+      currentOwner: currentOwner ?? this.currentOwner,
+      updatedAt: updatedAt ?? this.updatedAt,
+      metadata: metadata ?? this.metadata,
+      owners: owners ?? this.owners,
+      provenanceEvents: provenanceEvents ?? this.provenanceEvents,
+      enrichmentSource: enrichmentSource ?? this.enrichmentSource,
+      metadataMediaAssets: metadataMediaAssets ?? this.metadataMediaAssets,
+      enrichmentSourceMediaAssets:
+          enrichmentSourceMediaAssets ?? this.enrichmentSourceMediaAssets,
+    );
+  }
 }
 
 class Artist {
@@ -181,6 +234,16 @@ class Artist {
         'did': did,
         'name': name,
       };
+
+  Artist copyWith({
+    String? did,
+    String? name,
+  }) {
+    return Artist(
+      did: did ?? this.did,
+      name: name ?? this.name,
+    );
+  }
 }
 
 class Publisher {
@@ -198,6 +261,16 @@ class Publisher {
         if (name != null) 'name': name,
         if (url != null) 'url': url,
       };
+
+  Publisher copyWith({
+    String? name,
+    String? url,
+  }) {
+    return Publisher(
+      name: name ?? this.name,
+      url: url ?? this.url,
+    );
+  }
 }
 
 class Owner {
@@ -218,6 +291,16 @@ class Owner {
         'owner_address': ownerAddress,
         'quantity': quantity,
       };
+
+  Owner copyWith({
+    String? ownerAddress,
+    String? quantity,
+  }) {
+    return Owner(
+      ownerAddress: ownerAddress ?? this.ownerAddress,
+      quantity: quantity ?? this.quantity,
+    );
+  }
 }
 
 class PaginatedOwners {
@@ -235,6 +318,14 @@ class PaginatedOwners {
   Map<String, dynamic> toJson() => {
         'items': items.map((e) => e.toJson()).toList(),
       };
+
+  PaginatedOwners copyWith({
+    List<Owner>? items,
+  }) {
+    return PaginatedOwners(
+      items: items ?? this.items,
+    );
+  }
 }
 
 class ProvenanceEvent {
@@ -332,6 +423,24 @@ class EnrichmentSource {
         if (artists != null)
           'artists': artists!.map((a) => a.toJson()).toList(),
       };
+
+  EnrichmentSource copyWith({
+    String? name,
+    String? description,
+    String? imageUrl,
+    String? animationUrl,
+    String? mimeType,
+    List<Artist>? artists,
+  }) {
+    return EnrichmentSource(
+      name: name ?? this.name,
+      description: description ?? this.description,
+      imageUrl: imageUrl ?? this.imageUrl,
+      animationUrl: animationUrl ?? this.animationUrl,
+      mimeType: mimeType ?? this.mimeType,
+      artists: artists ?? this.artists,
+    );
+  }
 }
 
 class MediaAsset {

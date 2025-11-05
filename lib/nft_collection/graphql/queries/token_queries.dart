@@ -87,17 +87,33 @@ type Query {
  */
 
 const String getTokens = r'''
-  query getTokens($owners: [String!]!) {
+  query getTokens(
+    $owners: [String!]
+    $chain: [String!]
+    $contract_address: [String!]
+    $token_id: [String!]
+    $limit: Uint8 = 20
+    $offset: Uint64 = 0
+    $expand: [String!]
+    $owners_limit: Uint8 = 10
+    $owners_offset: Uint64 = 0
+    $provenance_events_limit: Uint8 = 10
+    $provenance_events_offset: Uint64 = 0
+    $provenance_events_order: Order = desc
+  ) {
     tokens(
       owner: $owners
-      expand: [
-        "provenance_events",
-        "owners",
-        "metadata_media_asset",
-        "enrichment_source_media_asset",
-        "enrichment_source"
-      ]
-      provenance_events_order: desc
+      chain: $chain
+      contract_address: $contract_address
+      token_id: $token_id
+      limit: $limit
+      offset: $offset
+      expand: $expand
+      owners_limit: $owners_limit
+      owners_offset: $owners_offset
+      provenance_events_limit: $provenance_events_limit
+      provenance_events_offset: $provenance_events_offset
+      provenance_events_order: $provenance_events_order
     ) {
       items {
         id

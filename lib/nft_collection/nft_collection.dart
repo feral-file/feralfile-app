@@ -5,7 +5,6 @@ import 'package:autonomy_flutter/nft_collection/database/indexer_database_manage
 import 'package:autonomy_flutter/nft_collection/services/configuration_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
-import 'package:dio/dio.dart';
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -25,10 +24,10 @@ class NftCollection {
     String databaseFileName = 'nft_collection_v2.db',
     Logger? logger,
     Logger? apiLogger,
-    Dio? dio,
   }) async {
     if (logger != null) {
       NftCollection.logger = logger;
+      NftCollection.apiLog = logger;
     }
 
     final store = ObjectBox.store;
@@ -36,7 +35,6 @@ class NftCollection {
     prefs = NftCollectionPrefs(await SharedPreferences.getInstance());
     final authService = injector<AuthService>();
 
-    tokenService =
-        NftTokensServiceImpl(indexerUrl, database, prefs, authService, dio);
+    tokenService = NftTokensServiceImpl(indexerUrl, database, prefs);
   }
 }

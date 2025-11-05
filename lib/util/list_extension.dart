@@ -6,3 +6,14 @@ extension Unique<E, Id> on List<E> {
     return list;
   }
 }
+
+extension ListGroupBy<T extends Object> on List<T> {
+  Map<String, List<T>> groupBy(String Function(T change) param0) {
+    final map = <String, List<T>>{};
+    for (final item in this) {
+      final key = param0(item);
+      map[key] = (map[key] ?? []).toList()..add(item);
+    }
+    return map;
+  }
+}
