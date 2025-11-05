@@ -21,3 +21,15 @@ class ReloadAssetTokensFromIndexerDatabase extends UserAllOwnCollectionEvent {
 }
 
 class ClearDataEvent extends UserAllOwnCollectionEvent {}
+
+class PollWorkflowStatus extends UserAllOwnCollectionEvent {
+  PollWorkflowStatus({
+    required this.addresses,
+    this.workflowId,
+    this.runId,
+  });
+
+  final List<String> addresses;
+  final String? workflowId;
+  final String? runId;
+}

@@ -12,16 +12,55 @@ class AddressAssetTokens {
   });
 }
 
+class IndexingOperation {
+  const IndexingOperation({
+    required this.addresses,
+    this.workflowId,
+    this.runId,
+  });
+
+  final List<String> addresses;
+  final String? workflowId;
+  final String? runId;
+
+  IndexingOperation copyWith({
+    List<String>? addresses,
+    String? workflowId,
+    String? runId,
+    bool clearWorkflowIds = false,
+  }) {
+    return IndexingOperation(
+      addresses: addresses ?? this.addresses,
+      workflowId: clearWorkflowIds ? null : (workflowId ?? this.workflowId),
+      runId: clearWorkflowIds ? null : (runId ?? this.runId),
+    );
+  }
+
+  String get key => addresses.join(',');
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is IndexingOperation &&
+          runtimeType == other.runtimeType &&
+          key == other.key;
+
+  @override
+  int get hashCode => key.hashCode;
+}
+
 class UserAllOwnCollectionState {
   const UserAllOwnCollectionState({
     this.status = UserAllOwnCollectionStatus.initial,
     this.addressAssetTokens = const <AddressAssetTokens>[],
     this.error = '',
+    this.indexingOperations = const <IndexingOperation>[],
   });
 
   final UserAllOwnCollectionStatus status;
   final List<AddressAssetTokens> addressAssetTokens;
   final String error;
+  final List<IndexingOperation> indexingOperations;
 
   bool get isLazyLoading => status == UserAllOwnCollectionStatus.loading;
   bool get isLoaded => status == UserAllOwnCollectionStatus.loaded;
@@ -31,11 +70,13 @@ class UserAllOwnCollectionState {
     UserAllOwnCollectionStatus? status,
     List<AddressAssetTokens>? addressAssetTokens,
     String? error,
+    List<IndexingOperation>? indexingOperations,
   }) {
     return UserAllOwnCollectionState(
       status: status ?? this.status,
       addressAssetTokens: addressAssetTokens ?? this.addressAssetTokens,
       error: error ?? this.error,
+      indexingOperations: indexingOperations ?? this.indexingOperations,
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
+import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
@@ -19,6 +20,7 @@ class UserAllOwnCollectionBloc
     extends Bloc<UserAllOwnCollectionEvent, UserAllOwnCollectionState> {
   final Map<Type, StreamSubscription<List<AssetToken>>?> _tokensStreamSubs = {};
   final Map<Type, Completer<void>?> _activeCompleters = {};
+  final Map<String, Timer> _workflowStatusTimers = {};
   DynamicQuery? _dynamicQuery;
   UserAllOwnCollectionBloc(this._tokensService)
       : super(const UserAllOwnCollectionState()) {
@@ -27,6 +29,7 @@ class UserAllOwnCollectionBloc
     on<ReloadAssetTokensFromIndexerDatabase>(
         _onReloadAssetTokensFromIndexerDatabase);
     on<ClearDataEvent>(_onClearData);
+    on<PollWorkflowStatus>(_onPollWorkflowStatus);
   }
 
   final NftTokensService _tokensService;
@@ -184,6 +187,11 @@ class UserAllOwnCollectionBloc
     ClearDataEvent event,
     Emitter<UserAllOwnCollectionState> emit,
   ) async {
+    // Cancel all timers
+    for (final timer in _workflowStatusTimers.values) {
+      timer.cancel();
+    }
+    _workflowStatusTimers.clear();
     _tokensStreamSubs.clear();
     _activeCompleters.clear();
     _dynamicQuery = null;
@@ -194,10 +202,136 @@ class UserAllOwnCollectionBloc
       _tokensStreamSubs[RefreshAssetTokens] != null ||
       _activeCompleters[RefreshAssetTokens]?.isCompleted == false;
 
+  Future<void> _onPollWorkflowStatus(
+    PollWorkflowStatus event,
+    Emitter<UserAllOwnCollectionState> emit,
+  ) async {
+    final operationKey = event.addresses.join(',');
+
+    // Cancel existing timer for these addresses if any
+    _workflowStatusTimers[operationKey]?.cancel();
+    _workflowStatusTimers.remove(operationKey);
+
+    // Create indexing operation with workflowId and runId if provided
+    final operation = IndexingOperation(
+      addresses: event.addresses,
+      workflowId: event.workflowId,
+      runId: event.runId,
+    );
+
+    final currentOperations =
+        List<IndexingOperation>.from(state.indexingOperations);
+
+    // Remove existing operation with same addresses if any
+    currentOperations.removeWhere((op) => op.key == operationKey);
+
+    // Add new operation
+    currentOperations.add(operation);
+
+    // Emit state with operation (workflowId/runId may be null if not provided yet)
+    emit(state.copyWith(
+      indexingOperations: currentOperations,
+    ));
+
+    // If workflowId and runId are not provided, just emit state and return
+    // (caller should call again with workflowId/runId after getting them)
+    if (event.workflowId == null || event.runId == null) {
+      log.info(
+        '[PollWorkflowStatus] Waiting for workflowId and runId for addresses: ${event.addresses}',
+      );
+      return;
+    }
+
+    // Start polling workflow status
+    final indexerService = injector<NftIndexerService>();
+    final startTime = DateTime.now();
+    const timeoutDuration = Duration(minutes: 10);
+    const pollInterval = Duration(seconds: 5);
+
+    log.info(
+      '[PollWorkflowStatus] Starting poll for workflowId: ${event.workflowId}, runId: ${event.runId}',
+    );
+
+    // Poll workflow status every 5 seconds
+    final timer = Timer.periodic(pollInterval, (timer) async {
+      try {
+        // Check timeout
+        if (DateTime.now().difference(startTime) >= timeoutDuration) {
+          timer.cancel();
+          _workflowStatusTimers.remove(operationKey);
+          log.info(
+            '[PollWorkflowStatus] Timeout after 10 minutes, stopping poll for workflowId: ${event.workflowId}, runId: ${event.runId}',
+          );
+
+          // Remove operation from state (just stop polling, don't emit error)
+          final finalOperations =
+              List<IndexingOperation>.from(state.indexingOperations);
+          finalOperations.removeWhere((op) => op.key == operationKey);
+
+          emit(state.copyWith(
+            indexingOperations: finalOperations,
+          ));
+          return;
+        }
+
+        // Get workflow status
+        final workflowStatus = await indexerService.getWorkflowStatus(
+          event.workflowId!,
+          event.runId!,
+        );
+
+        log.info(
+          '[PollWorkflowStatus] Status: ${workflowStatus.status.toJson()} for workflowId: ${event.workflowId}, runId: ${event.runId}',
+        );
+
+        // Check if workflow is done
+        if (workflowStatus.status.isDone) {
+          timer.cancel();
+          _workflowStatusTimers.remove(operationKey);
+          log.info(
+            '[PollWorkflowStatus] Workflow done with status: ${workflowStatus.status.toJson()}',
+          );
+
+          // Remove operation from state
+          final finalOperations =
+              List<IndexingOperation>.from(state.indexingOperations);
+          finalOperations.removeWhere((op) => op.key == operationKey);
+
+          // If completed successfully, refresh tokens
+          if (workflowStatus.status.isSuccess) {
+            emit(state.copyWith(
+              indexingOperations: finalOperations,
+            ));
+            add(RefreshAssetTokens(shouldEmitLoading: true));
+          } else {
+            emit(state.copyWith(
+              status: UserAllOwnCollectionStatus.error,
+              error: 'Workflow ${workflowStatus.status.toJson().toLowerCase()}',
+              indexingOperations: finalOperations,
+            ));
+          }
+        }
+      } catch (e, stackTrace) {
+        log.info('[PollWorkflowStatus] Error: $e');
+        Sentry.captureException(
+          'Failed to poll workflow status: $e',
+          stackTrace: stackTrace,
+        );
+        // Don't cancel timer on error, continue polling
+      }
+    });
+
+    _workflowStatusTimers[operationKey] = timer;
+  }
+
   @override
   Future<void> close() {
     log.info('UserAllOwnCollectionBloc closing, cancelling streams');
-    // TODO: implement close
+    // Cancel all timers
+    for (final timer in _workflowStatusTimers.values) {
+      timer.cancel();
+    }
+    _workflowStatusTimers.clear();
     return super.close();
   }
 }

@@ -362,6 +362,81 @@ class TriggerIndexingResult {
       };
 }
 
+/// Workflow execution status enum
+/// Based on Temporal workflow execution status values
+enum WorkflowExecutionStatus {
+  running,
+  completed,
+  failed,
+  canceled,
+  terminated,
+  timedOut,
+  continuedAsNew,
+  unknown;
+
+  String toJson() {
+    switch (this) {
+      case WorkflowExecutionStatus.running:
+        return 'RUNNING';
+      case WorkflowExecutionStatus.completed:
+        return 'COMPLETED';
+      case WorkflowExecutionStatus.failed:
+        return 'FAILED';
+      case WorkflowExecutionStatus.canceled:
+        return 'CANCELED';
+      case WorkflowExecutionStatus.terminated:
+        return 'TERMINATED';
+      case WorkflowExecutionStatus.timedOut:
+        return 'TIMED_OUT';
+      case WorkflowExecutionStatus.continuedAsNew:
+        return 'CONTINUED_AS_NEW';
+      case WorkflowExecutionStatus.unknown:
+        return 'UNKNOWN';
+    }
+  }
+
+  static WorkflowExecutionStatus fromJson(String? value) {
+    if (value == null) return WorkflowExecutionStatus.unknown;
+    // Handle both formats: "RUNNING" and "WORKFLOW_EXECUTION_STATUS_RUNNING"
+    final normalized = value.toUpperCase().replaceFirst(
+          'WORKFLOW_EXECUTION_STATUS_',
+          '',
+        );
+    switch (normalized) {
+      case 'RUNNING':
+        return WorkflowExecutionStatus.running;
+      case 'COMPLETED':
+        return WorkflowExecutionStatus.completed;
+      case 'FAILED':
+        return WorkflowExecutionStatus.failed;
+      case 'CANCELED':
+        return WorkflowExecutionStatus.canceled;
+      case 'TERMINATED':
+        return WorkflowExecutionStatus.terminated;
+      case 'TIMED_OUT':
+      case 'TIMEDOUT': // Handle variant without underscore
+        return WorkflowExecutionStatus.timedOut;
+      case 'CONTINUED_AS_NEW':
+      case 'CONTINUEDASNEW': // Handle variant without underscores
+        return WorkflowExecutionStatus.continuedAsNew;
+      default:
+        return WorkflowExecutionStatus.unknown;
+    }
+  }
+
+  bool get isDone {
+    return this == WorkflowExecutionStatus.completed ||
+        this == WorkflowExecutionStatus.failed ||
+        this == WorkflowExecutionStatus.canceled ||
+        this == WorkflowExecutionStatus.terminated ||
+        this == WorkflowExecutionStatus.timedOut;
+  }
+
+  bool get isSuccess {
+    return this == WorkflowExecutionStatus.completed;
+  }
+}
+
 /// Workflow status information from Temporal workflow execution
 class WorkflowStatus {
   WorkflowStatus({
@@ -375,7 +450,7 @@ class WorkflowStatus {
 
   final String workflowId;
   final String runId;
-  final String status;
+  final WorkflowExecutionStatus status;
   final DateTime? startTime;
   final DateTime? closeTime;
   final int? executionTimeMs;
@@ -383,7 +458,7 @@ class WorkflowStatus {
   factory WorkflowStatus.fromJson(Map<String, dynamic> json) => WorkflowStatus(
         workflowId: json['workflow_id'] as String,
         runId: json['run_id'] as String,
-        status: json['status'] as String,
+        status: WorkflowExecutionStatus.fromJson(json['status'] as String?),
         startTime: json['start_time'] != null
             ? DateTime.tryParse(json['start_time'] as String)
             : null,
@@ -398,7 +473,7 @@ class WorkflowStatus {
   Map<String, dynamic> toJson() => {
         'workflow_id': workflowId,
         'run_id': runId,
-        'status': status,
+        'status': status.toJson(),
         'start_time': startTime?.toIso8601String(),
         'close_time': closeTime?.toIso8601String(),
         'execution_time_ms': executionTimeMs,

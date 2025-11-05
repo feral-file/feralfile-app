@@ -43,7 +43,7 @@ abstract class NftTokensService {
     Map<int, List<String>> addresses,
   );
 
-  Future<void> reindexAddresses(List<String> addresses);
+  Future<TriggerIndexingResult> reindexAddresses(List<String> addresses);
 
   Future<Stream<List<AssetToken>>> updateTokensInIsolate(
     List<String> addresses,
@@ -89,7 +89,8 @@ class NftTokensServiceImpl extends NftTokensService {
   @override
   bool get isRefreshAllTokensListen =>
       _refreshAllTokensWorker?.hasListener ?? false;
-  final Map<String, Completer<void>> _reindexAddressesCompleters = {};
+  final Map<String, Completer<TriggerIndexingResult>>
+      _reindexAddressesCompleters = {};
   final Map<String, StreamController<List<AssetToken>>> _streamControllers = {};
 
   Future<void> get isolateReady => _isolateReady.future;
@@ -179,11 +180,11 @@ class NftTokensServiceImpl extends NftTokensService {
   }
 
   @override
-  Future<void> reindexAddresses(List<String> addresses) async {
+  Future<TriggerIndexingResult> reindexAddresses(List<String> addresses) async {
     await startIsolateOrWait();
 
     final uuid = const Uuid().v4();
-    final completer = Completer<dynamic>();
+    final completer = Completer<TriggerIndexingResult>();
     _reindexAddressesCompleters[uuid] = completer;
 
     _sendPort?.send([REINDEX_ADDRESSES, uuid, addresses]);
@@ -370,8 +371,19 @@ class NftTokensServiceImpl extends NftTokensService {
     }
 
     if (result is ReindexAddressesDone) {
-      _reindexAddressesCompleters[result.uuid]?.complete();
-      NftCollection.logger.info('[reindexAddresses][end]');
+      _reindexAddressesCompleters[result.uuid]?.complete(result.result);
+      _reindexAddressesCompleters.remove(result.uuid);
+      NftCollection.logger.info(
+        '[reindexAddresses][end] workflowId: ${result.result.workflowId}, runId: ${result.result.runId}',
+      );
+    }
+
+    if (result is ReindexAddressesFailure) {
+      _reindexAddressesCompleters[result.uuid]?.completeError(result.exception);
+      _reindexAddressesCompleters.remove(result.uuid);
+      NftCollection.logger.info(
+        '[reindexAddresses][error] ${result.uuid}: ${result.exception}',
+      );
     }
 
     if (result is StreamTokensSuccess) {
@@ -578,13 +590,22 @@ class NftTokensServiceImpl extends NftTokensService {
 
   static Future<void> _reindexAddressesInIndexer(
       String uuid, List<String> addresses) async {
-    final indexerService = _isolateScopeInjector<NftIndexerService>();
-    for (final address in addresses) {
-      if (address.startsWith('tz') || address.startsWith('0x')) {
-        await indexerService.indexAddresses([address]);
-      }
+    try {
+      final indexerService = _isolateScopeInjector<NftIndexerService>();
+      TriggerIndexingResult? lastResult;
+
+      lastResult = await indexerService.indexAddresses(addresses);
+
+      // Send the last result, or create a default one if no addresses were indexed
+      final result = lastResult ??
+          TriggerIndexingResult(
+            workflowId: '',
+            runId: '',
+          );
+      _isolateSendPort?.send(ReindexAddressesDone(uuid, result));
+    } catch (e) {
+      _isolateSendPort?.send(ReindexAddressesFailure(uuid, e));
     }
-    _isolateSendPort?.send(ReindexAddressesDone(uuid));
   }
 
   static Future<void> _getAssetTokensStreamInIsolate(
@@ -740,9 +761,17 @@ class FetchTokenFailure extends TokensServiceResult {
 }
 
 class ReindexAddressesDone extends TokensServiceResult {
-  ReindexAddressesDone(this.uuid);
+  ReindexAddressesDone(this.uuid, this.result);
 
   final String uuid;
+  final TriggerIndexingResult result;
+}
+
+class ReindexAddressesFailure extends TokensServiceResult {
+  ReindexAddressesFailure(this.uuid, this.exception);
+
+  final String uuid;
+  final Object exception;
 }
 
 class StreamTokensSuccess extends TokensServiceResult {

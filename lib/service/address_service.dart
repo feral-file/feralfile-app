@@ -84,6 +84,7 @@ class AddressService {
     final newAddress = address.copyWith(address: checkSumAddress);
     await _cloudObject.addressObject.insertAddresses([newAddress]);
     await injector<NftTokensService>().reindexAddresses([newAddress.address]);
+
     await injector<UserDp1PlaylistService>()
         .insertAddressesToPlaylist([newAddress.address]);
     log.info('Inserted address: ${newAddress.address}');
