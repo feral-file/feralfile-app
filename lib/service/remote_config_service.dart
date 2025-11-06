@@ -111,7 +111,7 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
       }
     },
     'dApp_urls': {
-      'deny_dApp_list': [],
+      'deny_dApp_list': <String>[],
       'tezos_nodes': [
         'https://mainnet.api.tez.ie',
         'https://rpc.tzbeta.net',
@@ -159,6 +159,11 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
     },
     ConfigGroup.documentation.getString: {
       ConfigKey.docsUrl.getString: 'https://docs.feralfile.com/ff1?from=app',
+    },
+    // Token metadata rebuild policy
+    'token_metadata_rebuild': {
+      'cache_valid_duration': '86400', // seconds (1 day)
+      'last_force_update_time': '2025-01-01T00:00:00Z',
     },
   };
 
@@ -244,6 +249,7 @@ enum ConfigGroup {
   tester,
   dp1Playlist,
   documentation,
+  tokenMetadataRebuild,
 }
 
 // ConfigGroup getString extension
@@ -284,6 +290,8 @@ extension ConfigGroupExtension on ConfigGroup {
         return 'dp1_playlist';
       case ConfigGroup.documentation:
         return 'documentation';
+      case ConfigGroup.tokenMetadataRebuild:
+        return 'token_metadata_rebuild';
     }
   }
 }
@@ -332,6 +340,8 @@ enum ConfigKey {
   dp1FeedCacheDuration,
   dp1FeedLastUpdated,
   docsUrl,
+  cacheValidDuration,
+  lastForceUpdateTime,
 }
 
 // ConfigKey getString extension
@@ -424,6 +434,10 @@ extension ConfigKeyExtension on ConfigKey {
         return 'feed_last_updated';
       case ConfigKey.docsUrl:
         return 'docs_url';
+      case ConfigKey.cacheValidDuration:
+        return 'cache_valid_duration';
+      case ConfigKey.lastForceUpdateTime:
+        return 'last_force_update_time';
     }
   }
 }

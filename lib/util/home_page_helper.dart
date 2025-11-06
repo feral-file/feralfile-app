@@ -9,6 +9,7 @@ import 'package:autonomy_flutter/screen/home/home_bloc.dart';
 import 'package:autonomy_flutter/screen/home/home_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
+import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/service/announcement/announcement_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
@@ -22,6 +23,7 @@ import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/notifications/notification_handler.dart';
 import 'package:autonomy_flutter/util/now_displaying_manager.dart';
+import 'package:autonomy_flutter/model/token.dart' as v2;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -67,7 +69,7 @@ class HomePageHelper {
     unawaited(injector<VersionService>().checkForUpdate());
     BluetoothDeviceManager().castingDeviceStatus.addListener(
       () async {
-        await Future.delayed(const Duration(milliseconds: 1000));
+        await Future<void>.delayed(const Duration(milliseconds: 1000));
         final castingDevice = BluetoothDeviceManager().castingBluetoothDevice;
         final isAlive = castingDevice != null &&
             injector<CanvasDeviceBloc>().state.isDeviceAlive(castingDevice);
@@ -83,7 +85,7 @@ class HomePageHelper {
     );
 
     _reindexAllAddresses();
-    _fetchAllTokenForAddressesWithoutLastUpdatedTime();
+    _refreshAddressesNeedingFetch();
 
     unawaited(NowDisplayingManager().updateDisplayingNow());
 
@@ -97,9 +99,14 @@ class HomePageHelper {
             injector<UserDp1PlaylistService>().cachedAllOwnedPlaylist;
         final dynamicQuery = allOwnedPlaylist.firstDynamicQuery;
         if (dynamicQuery != null) {
-          log.info('Refreshing tokens for ${dynamicQuery.params.owners}');
-          injector<UserAllOwnCollectionBloc>().add(
-              UpdateTokensOfAddresses(addresses: dynamicQuery.params.owners));
+          final owners = dynamicQuery.params.owners;
+          final lastUpdatedTime = injector<UserDp1PlaylistService>()
+              .getAddressOldestLastRefreshedTime(addresses: owners);
+          final addressesToRefresh =
+              owners.where((e) => lastUpdatedTime[e] != null).toList();
+          log.info('Refreshing tokens for ${addressesToRefresh}');
+          injector<UserAllOwnCollectionBloc>()
+              .add(UpdateTokensOfAddresses(addresses: addressesToRefresh));
         } else {
           log.info('No dynamic query found');
         }
@@ -152,19 +159,81 @@ class HomePageHelper {
     }
   }
 
-  Future<void> _fetchAllTokenForAddressesWithoutLastUpdatedTime() async {
-    // list address that need to fetch tokens from indexer; this is a list of addresses which dont have last updated time;
-    final listAddresses = <String>[];
-    final allAddresses = injector<AddressService>().getAllAddresses();
-    for (final address in allAddresses) {
-      final lastUpdatedTime = await injector<UserDp1PlaylistService>()
-          .getAddressOldestLastRefreshedTime(addresses: [address]);
-      if (lastUpdatedTime == null) {
-        listAddresses.add(address);
+  Future<void> _refreshAddressesNeedingFetch() async {
+    try {
+      // Load remote config if needed
+      final rc = injector<RemoteConfigService>();
+      if (!rc.isLoaded) {
+        await rc.loadConfigs();
       }
-    }
-    if (listAddresses.isNotEmpty) {
-      await injector<NftTokensService>().fetchTokensInIsolate(listAddresses);
+
+      // Read cache policy
+      final cacheValidSeconds = int.tryParse(
+            rc.getConfig<String>(
+              ConfigGroup.tokenMetadataRebuild,
+              ConfigKey.cacheValidDuration,
+              '86400',
+            ),
+          ) ??
+          86400;
+      final lastForceUpdateIso = rc.getConfig<String>(
+        ConfigGroup.tokenMetadataRebuild,
+        ConfigKey.lastForceUpdateTime,
+        '2025-01-01T00:00:00Z',
+      );
+      final lastForceUpdateTime =
+          DateTime.tryParse(lastForceUpdateIso)?.toUtc();
+
+      // Compute candidates
+      final now = DateTime.now().toUtc();
+      final threshold = Duration(seconds: cacheValidSeconds);
+      final addresses = injector<AddressService>().getAllAddresses();
+      final refreshedMap = injector<UserDp1PlaylistService>()
+          .getAddressOldestLastRefreshedTime(addresses: addresses);
+
+      final toRefresh = <String>{};
+      for (final addr in addresses) {
+        final last = refreshedMap[addr]?.toUtc();
+        final isMissing = last == null;
+        final isExpired = last != null && now.difference(last) > threshold;
+        final isBeforeForced = lastForceUpdateTime != null &&
+            (last == null || last.isBefore(lastForceUpdateTime));
+        if (isMissing || isExpired || isBeforeForced) {
+          toRefresh.add(addr);
+        }
+      }
+
+      log.info('Addresses to refresh: ${toRefresh.toList()}');
+
+      if (toRefresh.isNotEmpty) {
+        log.info('Clearing recent refreshed time for ${toRefresh.toList()}');
+
+        // clear recent refreshed time for these addresses
+        final refreshedMap = injector<UserDp1PlaylistService>()
+            .getAddressOldestLastRefreshedTime(addresses: toRefresh.toList());
+        for (final addr in refreshedMap.keys) {
+          refreshedMap[addr] = null;
+        }
+        injector<UserDp1PlaylistService>()
+            .updateAddressLastRefreshedTime(addresses: refreshedMap);
+
+        log.info('Clearing cached tokens for ${toRefresh.toList()}');
+
+        // Clear cached tokens for these addresses before fetching
+        final db = injector<IndexerDatabaseAbstract>();
+        final tokens = db.getTokensByOwners(owners: toRefresh.toList());
+        if (tokens.isNotEmpty) {
+          final cids = tokens.map((v2.AssetToken t) => t.cid).toList();
+          db.deleteTokens(cids);
+        }
+
+        log.info('Fetching tokens for ${toRefresh.toList()}');
+
+        await injector<NftTokensService>()
+            .fetchTokensInIsolate(toRefresh.toList());
+      }
+    } catch (_) {
+      // ignore errors in background refresh
     }
   }
 
@@ -189,6 +258,8 @@ class HomePageHelper {
     unawaited(injector<FeralFileFeedManager>().reloadAllCache());
 
     _triggerShowAnnouncement();
+    // refresh stale/missing addresses when app resume
+    unawaited(_refreshAddressesNeedingFetch());
   }
 
   void _handleBackground() {

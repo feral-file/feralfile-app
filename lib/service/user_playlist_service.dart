@@ -69,14 +69,30 @@ class UserDp1PlaylistService {
         _cloudManager.dp1FeedCloudObject.getOwnedPlaylistIds();
     if (allOwnedPlaylistIds.isNotEmpty) {
       final playlistId = allOwnedPlaylistIds.first;
-      final playlist =
+      DP1Call? playlist =
           await _dp1FeedService.getPlaylistById(playlistId, usingCache: false);
       if (playlist != null) {
+        // migrate from old indexer to new indexer
+        final oldIndexerUrl = 'https://indexer.autonomy.io';
+        if (playlist.dynamicQueries.any((e) => e.endpoint == oldIndexerUrl)) {
+          final newIndexerUrl = Environment.indexerURL;
+          final newPlaylist = playlist.copyWith(
+            dynamicQueries: playlist.dynamicQueries
+                .map((e) => e.copyWith(endpoint: newIndexerUrl))
+                .toList(),
+          );
+          final updatePlaylistRequest =
+              DP1CreatePlaylistRequest.fromDP1Call(newPlaylist);
+          playlist = await _dp1FeedService.updatePlaylist(
+            playlistId: playlistId,
+            request: updatePlaylistRequest,
+          );
+        }
         cachedAllOwnedPlaylist = playlist;
         return playlist;
       } else {
-        Sentry.captureMessage(
-            '[createAllOwnedPlaylistIfNotExists] All owned playlist not found in DP1 service, id: $playlistId');
+        unawaited(Sentry.captureMessage(
+            '[createAllOwnedPlaylistIfNotExists] All owned playlist not found in DP1 service, id: $playlistId'));
         // If the playlist ID exists in cloud but not found in DP1 service, remove it from cloud
         _cloudManager.dp1FeedCloudObject.removeOwnedPlaylistId(playlistId);
       }
@@ -219,7 +235,13 @@ class UserDp1PlaylistService {
       if (entry.value == null) {
         addressLastRefreshedTime.remove(entry.key);
       } else {
-        addressLastRefreshedTime[entry.key] = entry.value!;
+        final candidate = entry.value!.toUtc();
+        final current = addressLastRefreshedTime[entry.key];
+        if (current == null || candidate.isAfter(current)) {
+          addressLastRefreshedTime[entry.key] = candidate;
+        } else {
+          addressLastRefreshedTime[entry.key] = current;
+        }
       }
     }
     await injector<ConfigurationService>()
