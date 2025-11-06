@@ -1,12 +1,12 @@
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
+import 'package:autonomy_flutter/util/dp1_now_displaying_item_ext.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:autonomy_flutter/view/ff_artwork_thumbnail_view.dart';
@@ -15,14 +15,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 class PlaylistItemCard extends StatefulWidget {
   const PlaylistItemCard({
-    required this.dp1Item,
-    this.compactedAssetToken,
+    required this.nowDisplayingItem,
     this.playlistTitle,
     super.key,
   });
 
-  final CompactedAssetToken? compactedAssetToken;
-  final DP1Item dp1Item;
+  final DP1NowDisplayingItem nowDisplayingItem;
   final String? playlistTitle;
 
   @override
@@ -40,26 +38,27 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
 
   void _fetchIdentity() {
     final listIdentities = <String>[];
-    final assetToken = widget.compactedAssetToken;
+    final primaryArtistName = widget.nowDisplayingItem.artists.isNotEmpty
+        ? widget.nowDisplayingItem.artists.first.name
+        : null;
 
-    listIdentities
-        .addAll([assetToken?.owner ?? '', assetToken?.artistName ?? '']);
+    listIdentities.addAll([
+      primaryArtistName ?? '',
+    ]);
     identityBloc.add(GetIdentityEvent(listIdentities));
   }
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.dp1Item.title ??
-        widget.compactedAssetToken?.displayTitle ??
-        'Unknown Title';
+    final title = widget.nowDisplayingItem.title ?? 'Unknown Title';
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: widget.compactedAssetToken != null
+      onTap: widget.nowDisplayingItem.assetToken != null
           ? () {
               injector<NavigationService>().navigateTo(
                 AppRouter.artworkDetailsPage,
                 arguments: ArtworkDetailPayload(
-                  widget.compactedAssetToken!.identity,
+                  widget.nowDisplayingItem.assetToken!.identity,
                   useIndexer: true,
                   backTitle: widget.playlistTitle,
                 ),
@@ -87,16 +86,19 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
               BlocBuilder<IdentityBloc, IdentityState>(
                   bloc: identityBloc,
                   builder: (context, identityState) {
-                    final assetToken = widget.compactedAssetToken;
-                    final artistName = assetToken?.artistName
-                            ?.toIdentityOrMask(identityState.identityMap) ??
-                        assetToken?.artistID ??
-                        'Unknown Artist';
+                    final artist = widget.nowDisplayingItem.artists.isNotEmpty
+                        ? widget.nowDisplayingItem.artists.first
+                        : null;
+                    final artistName = (artist?.name ?? '')
+                        .toIdentityOrMask(identityState.identityMap);
+                    final displayArtist = (artistName?.isNotEmpty ?? false)
+                        ? artistName!
+                        : 'Unknown Artist';
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          artistName,
+                          displayArtist,
                           style: Theme.of(context).textTheme.ppMori700White12,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -122,7 +124,7 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
   }
 
   Widget _thumbnail(BuildContext context) {
-    final url = widget.compactedAssetToken?.galleryThumbnailURL;
+    final url = widget.nowDisplayingItem.thumbnail?.uri;
     if (url == null || url.isEmpty) {
       return const GalleryNoThumbnailWidget();
     }

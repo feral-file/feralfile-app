@@ -13,7 +13,7 @@ class ExpandedNowPlayingBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final playlist = DP1CallExtension.fromItems(
-      items: playingObject.dp1Items,
+      items: playingObject.items.map((e) => e.dp1Item).toList(),
     );
     final selectedIndex = playingObject.index;
 

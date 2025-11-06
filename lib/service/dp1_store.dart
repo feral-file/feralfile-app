@@ -6,7 +6,9 @@ import 'package:autonomy_flutter/service/hive_store_service.dart';
 /// Use `save(jsonString, playlistId)` and `get(playlistId)` to retrieve.
 class DP1PlaylistStore extends HiveStoreObjectServiceImpl<String> {
   DP1PlaylistStore({required this.baseUrl})
-      : super(key: "${_key}.${baseUrl.replaceFirst('https://', '')}");
+      : super(
+            key:
+                "${_key}.${baseUrl.replaceFirst('https://', '').replaceFirst('http://', '')}");
   static const String _key = 'dp1.playlists.store';
 
   final String baseUrl;

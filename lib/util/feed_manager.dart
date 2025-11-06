@@ -1,5 +1,6 @@
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
@@ -13,7 +14,6 @@ import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
 
 class FeedServerInfo {
   FeedServerInfo({required this.url, required this.createdAt});
@@ -75,7 +75,7 @@ class FeedManager {
         injector<RemoteConfigService>().getConfig<String>(
       ConfigGroup.dp1Playlist,
       ConfigKey.dp1FeedCacheDuration,
-      Duration(days: 1).toString(),
+      const Duration(days: 1).toString(),
     );
     final updateFeedDuration =
         Duration(seconds: int.parse(updateFeedDurationString));
@@ -91,7 +91,7 @@ class FeedManager {
     final shouldUpdate = lastTimeRefreshFeeds
             .isBefore(DateTime.now().subtract(updateFeedDuration)) ||
         lastFeedUpdateAt.isAfter(lastTimeRefreshFeeds);
-    if (force || shouldUpdate || kDebugMode) {
+    if (force || shouldUpdate) {
       for (final feedService in feedServices) {
         await feedService.reloadCache();
       }
@@ -99,12 +99,13 @@ class FeedManager {
           .setLastTimeRefreshFeeds(DateTime.now());
       log.info(
           'Reload all cache, last time refresh feeds: $lastTimeRefreshFeeds, duration: $updateFeedDuration, force: $force');
-      injector<PlaylistsBloc>().add(RefreshPlaylistsEvent());
-      injector<ChannelsBloc>().add(RefreshChannelsEvent());
+      await Future.delayed(const Duration(milliseconds: 500));
     } else {
       log.info(
           'Skip reload all cache, last time refresh feeds: $lastTimeRefreshFeeds, duration: $updateFeedDuration, force: $force');
     }
+    injector<PlaylistsBloc>().add(const RefreshPlaylistsEvent());
+    injector<ChannelsBloc>().add(const RefreshChannelsEvent());
   }
 
   Future<List<PlaylistReference>> getAllCachedPlaylists() async {
@@ -139,7 +140,7 @@ class FeralFileFeedManager extends FeedManager {
 
   void _setupDefault() {}
 
-  void setupRemoteConfigChannels(List<String> channelUrls) {
+  Future<void> setupRemoteConfigChannels(List<String> channelUrls) async {
     final remoteConfigChannels = channelUrls.map((url) {
       final uri = Uri.parse(url);
       return RemoteConfigChannel(
@@ -163,16 +164,65 @@ class FeralFileFeedManager extends FeedManager {
             .addRemoteConfigChannelIds(channelIdsByUrl[endpoint]!);
         continue;
       } else {
-        final service = FeralFileDP1FeedService(baseUrl: endpoint)
-          ..addRemoteConfigChannelIds(channelIdsByUrl[endpoint]!);
+        final service = FeralFileDP1FeedService(baseUrl: endpoint);
+        dynamic error;
+        await service.init(onPlaylistError: (e) {
+          error = e;
+        }, onChannelError: (e) {
+          error = e;
+        });
+
+        service.addRemoteConfigChannelIds(channelIdsByUrl[endpoint]!);
+        if (error is Object) {
+          log.info('Error initializing feed service: $error');
+          await service.reloadCache();
+        }
         addFeedService(service);
       }
     }
     log.info(
         'Finish Setup remote config channels: ${remoteConfigChannels.map((e) => e.channelId).toList()}');
+
+    final customFeedServers = injector<CloudManager>()
+        .dp1FeedCloudObject
+        .getCustomFeedServersByUrls();
+    for (final customFeedServer in customFeedServers) {
+      final service = BaseDP1FeedServiceImpl(
+          baseUrl: customFeedServer, isExternalFeedService: true);
+      dynamic error;
+      await service.init(onPlaylistError: (e) {
+        error = e;
+      }, onChannelError: (e) {
+        error = e;
+      });
+      if (error is Object) {
+        log.info('Error initializing feed service: $error');
+        await service.reloadCache();
+      }
+      addFeedService(service);
+    }
   }
 
   List<RemoteConfigChannel> remoteConfigChannels = [];
+
+  Future<void> addCustomFeedServices(
+      List<BaseDP1FeedServiceImpl> services) async {
+    for (final service in services) {
+      try {
+        if (isFeedServiceExists(service.baseUrl)) {
+          log.info('Custom feed service already exists: ${service.baseUrl}');
+          continue;
+        }
+        addFeedService(service);
+        await injector<CloudManager>()
+            .dp1FeedCloudObject
+            .insertCustomFeedServersByUrls([service.baseUrl]);
+        log.info('Added custom feed service: ${service.baseUrl}');
+      } catch (e) {
+        log.info('Error adding custom feed service: ${service.baseUrl}: $e');
+      }
+    }
+  }
 
   Future<List<Channel>> fetchAllChannels() async {
     List<Channel> allChannels = [];
@@ -318,43 +368,47 @@ class FeralFileFeedManager extends FeedManager {
 }
 
 class PlaylistReference {
-  PlaylistReference({required this.playlist, required this.url});
-  final DP1Call playlist;
-  final String url;
-
   factory PlaylistReference.fromJson(Map<String, dynamic> json) =>
       PlaylistReference(
         playlist: DP1Call.fromJson(json['playlist'] as Map<String, dynamic>),
         url: json['url'] as String,
       );
 
+  factory PlaylistReference.fromFeralFileDP1Call(DP1Call dp1Call) =>
+      PlaylistReference(playlist: dp1Call, url: Environment.dp1FeedUrl);
+  PlaylistReference({required this.playlist, required this.url});
+  final DP1Call playlist;
+  final String url;
+
   Map<String, dynamic> toJson() => {
         'playlist': playlist.toJson(),
         'url': url,
       };
 
-  factory PlaylistReference.fromFeralFileDP1Call(DP1Call dp1Call) =>
-      PlaylistReference(playlist: dp1Call, url: Environment.dp1FeedUrl);
+  bool get isExternalFeedService =>
+      injector<FeralFileFeedManager>()
+          .getFeedServiceByUrl(url)
+          ?.isExternalFeedService ??
+      false;
 }
 
 class ChannelReference {
-  ChannelReference({required this.channel, required this.url});
-  final Channel channel;
-  final String url;
-
   factory ChannelReference.fromJson(Map<String, dynamic> json) =>
       ChannelReference(
         channel: Channel.fromJson(json['channel'] as Map<String, dynamic>),
         url: json['url'] as String,
       );
 
+  factory ChannelReference.fromFeralFileDP1Channel(Channel channel) =>
+      ChannelReference(channel: channel, url: Environment.dp1FeedUrl);
+  ChannelReference({required this.channel, required this.url});
+  final Channel channel;
+  final String url;
+
   Map<String, dynamic> toJson() => {
         'channel': channel.toJson(),
         'url': url,
       };
-
-  factory ChannelReference.fromFeralFileDP1Channel(Channel channel) =>
-      ChannelReference(channel: channel, url: Environment.dp1FeedUrl);
 }
 
 class DP1PlaylistPlaylistReferenceResponse {

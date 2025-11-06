@@ -122,7 +122,7 @@ class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {
     onCurrentRouteChanged();
 
     /// this must be put after super.didPop
-    if (route is ModalBottomSheetRoute) {
+    if (currentRoute.value is! ModalBottomSheetRoute) {
       bottomSheetVisibility.value = false;
       bottomSheetHeight.value = 0;
     }
@@ -140,7 +140,7 @@ class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {
     currentRoute.value = previousRoute;
     onCurrentRouteChanged();
 
-    if (route is ModalBottomSheetRoute) {
+    if (currentRoute.value is! ModalBottomSheetRoute) {
       bottomSheetVisibility.value = false;
       bottomSheetHeight.value = 0;
     }
@@ -163,7 +163,7 @@ class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {
     currentRoute.value = newRoute;
     onCurrentRouteChanged();
 
-    if (oldRoute is ModalBottomSheetRoute) {
+    if (currentRoute.value is! ModalBottomSheetRoute) {
       bottomSheetVisibility.value = false;
       bottomSheetHeight.value = 0;
     }

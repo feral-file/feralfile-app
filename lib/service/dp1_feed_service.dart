@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
@@ -23,7 +25,10 @@ class RemoteConfigChannel {
 
 abstract class DP1FeedWithChannelExtensionServiceBase
     extends BaseDP1FeedService {
-  DP1FeedWithChannelExtensionServiceBase({required super.baseUrl});
+  DP1FeedWithChannelExtensionServiceBase(
+      {required super.baseUrl, this.isExternalFeedService = false});
+
+  final bool isExternalFeedService;
 
   /*
   =======================================================================
@@ -94,7 +99,10 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
   DP1FeedWithChannelExtensionServiceImpl({required super.baseUrl});
 
   @override
-  void initializeApiAndCache(String baseUrl) {
+  Future<void> init({
+    FutureOr<void> Function(Object)? onPlaylistError,
+    FutureOr<void> Function(Object)? onChannelError,
+  }) async {
     api = DP1FeedApi.dioBaseUrl(
       baseUrl: baseUrl,
       dio: DioManager().dp1Feed(
@@ -106,9 +114,11 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
       ),
     );
     cache = FeedCacheImpl(baseUrl: baseUrl);
+    await cache.init(
+        onPlaylistError: onPlaylistError, onChannelError: onChannelError);
   }
 
-  /*
+  /*  
   =======================================================================
 
   PLAYLIST
@@ -323,15 +333,26 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
     );
   }
 
+  bool _isReloadingCache = false;
+
   @override
   Future<void> reloadCache() async {
-    log.info('Reloading cache for FeralFileDP1FeedService: $baseUrl');
-    final channels = await getAllChannels();
-    final playlists = await getAllPlaylists();
-    cache.clearAll();
-    cache
-      ..insertListPlaylists(playlists)
-      ..insertListChannels(channels);
+    if (_isReloadingCache) return;
+    _isReloadingCache = true;
+    try {
+      log.info('Reloading cache for FeralFileDP1FeedService: $baseUrl');
+      final channels = await getAllChannels();
+      final playlists = await getAllPlaylists();
+      cache.clearAll();
+      cache
+        ..insertListChannels(channels)
+        ..insertListPlaylists(playlists);
+      _isReloadingCache = false;
+    } catch (e) {
+      log.info('Failed to reload cache for FeralFileDP1FeedService: $e');
+      _isReloadingCache = false;
+      rethrow;
+    }
   }
 
   @override

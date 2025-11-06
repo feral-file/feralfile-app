@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_event.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
+import 'package:autonomy_flutter/util/dp1_manifest_helper.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sentry/sentry.dart';
@@ -39,8 +41,7 @@ class PlaylistDetailsBloc
   ) async {
     emit(
       PlaylistDetailsLoadingState(
-        dp1Items: state.dp1Items,
-        assetTokens: state.assetTokens,
+        nowDisplayingItems: state.nowDisplayingItems,
         hasMore: state.hasMore,
         currentPage: state.currentPage,
       ),
@@ -88,10 +89,32 @@ class PlaylistDetailsBloc
         );
       }
 
+      // Fetch DP1 manifests
+      final refs =
+          pageItems.map((item) => item.ref).whereType<String>().toList();
+      final manifests =
+          await DP1ManifestHelper.instance.fetchDP1Manifests(refs);
+
+      // Create DP1NowDisplayingItem list by combining dp1Items, assetTokens, and manifests
+      final nowDisplayingItems = <DP1NowDisplayingItem>[];
+      for (int i = 0; i < pageItems.length; i++) {
+        final dp1Item = pageItems[i];
+        final assetToken =
+            i < pageAssetTokens.length ? pageAssetTokens[i] : null;
+        final dp1Manifest = dp1Item.ref != null ? manifests[dp1Item.ref] : null;
+
+        nowDisplayingItems.add(
+          DP1NowDisplayingItem(
+            dp1Item: dp1Item,
+            assetToken: assetToken,
+            dp1Manifest: dp1Manifest,
+          ),
+        );
+      }
+
       emit(
         PlaylistDetailsLoadedState(
-          dp1Items: pageItems,
-          assetTokens: pageAssetTokens,
+          nowDisplayingItems: nowDisplayingItems,
           hasMore: items.length > _pageSize,
           currentPage: 0,
         ),
@@ -100,8 +123,7 @@ class PlaylistDetailsBloc
       emit(
         PlaylistDetailsErrorState(
           error: e.toString(),
-          dp1Items: state.dp1Items,
-          assetTokens: state.assetTokens,
+          nowDisplayingItems: state.nowDisplayingItems,
           hasMore: state.hasMore,
           currentPage: state.currentPage,
         ),
@@ -116,8 +138,7 @@ class PlaylistDetailsBloc
     if (!state.hasMore) return;
     emit(
       PlaylistDetailsLoadingMoreState(
-        dp1Items: state.dp1Items,
-        assetTokens: state.assetTokens,
+        nowDisplayingItems: state.nowDisplayingItems,
         hasMore: state.hasMore,
         currentPage: state.currentPage,
       ),
@@ -148,10 +169,36 @@ class PlaylistDetailsBloc
             ),
           )
           .toList();
+
+      // Fetch DP1 manifests
+      final refs =
+          pageItems.map((item) => item.ref).whereType<String>().toList();
+      final manifests =
+          await DP1ManifestHelper.instance.fetchDP1Manifests(refs);
+
+      // Create DP1NowDisplayingItem list by combining dp1Items, assetTokens, and manifests
+      final newNowDisplayingItems = <DP1NowDisplayingItem>[];
+      for (int i = 0; i < pageItems.length; i++) {
+        final dp1Item = pageItems[i];
+        final assetToken =
+            i < pageAssetTokens.length ? pageAssetTokens[i] : null;
+        final dp1Manifest = dp1Item.ref != null ? manifests[dp1Item.ref] : null;
+
+        newNowDisplayingItems.add(
+          DP1NowDisplayingItem(
+            dp1Item: dp1Item,
+            assetToken: assetToken,
+            dp1Manifest: dp1Manifest,
+          ),
+        );
+      }
+
       emit(
         PlaylistDetailsLoadedState(
-          dp1Items: [...state.dp1Items, ...pageItems],
-          assetTokens: [...state.assetTokens, ...pageAssetTokens],
+          nowDisplayingItems: [
+            ...state.nowDisplayingItems,
+            ...newNowDisplayingItems
+          ],
           hasMore: end < items.length,
           currentPage: nextPage,
         ),
@@ -160,8 +207,7 @@ class PlaylistDetailsBloc
       emit(
         PlaylistDetailsErrorState(
           error: e.toString(),
-          dp1Items: state.dp1Items,
-          assetTokens: state.assetTokens,
+          nowDisplayingItems: state.nowDisplayingItems,
           hasMore: state.hasMore,
           currentPage: state.currentPage,
         ),

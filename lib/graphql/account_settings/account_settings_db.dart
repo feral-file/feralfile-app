@@ -10,6 +10,8 @@ abstract class CloudDB {
 
   List<Map<String, String>> query(List<String> keys);
 
+  List<Map<String, String>> queryContains(String key);
+
   Future<void> write(List<Map<String, String>> settings,
       {OnConflict onConflict = OnConflict.override});
 
@@ -85,6 +87,12 @@ class CloudDBImpl implements CloudDB {
       .map((key) => {'key': key, 'value': _caches[key]})
       .where((element) => element['value'] != null)
       .map((e) => {'key': e['key']!, 'value': e['value']!})
+      .toList();
+
+  @override
+  List<Map<String, String>> queryContains(String key) => _caches.entries
+      .where((element) => element.key.contains(key))
+      .map((e) => {'key': e.key, 'value': e.value})
       .toList();
 
   @override

@@ -324,6 +324,12 @@ extension CompactedAssetTokenExtension on CompactedAssetToken {
 
   String get displayKey => id.hashCode.toString();
 
+  Artist? get artist {
+    if (artistName == null) return null;
+
+    return Artist(name: artistName!, id: artistID, url: artistURL);
+  }
+
   List<Artist> get getArtists {
     final lst = jsonDecode(artists ?? '[]') as List<dynamic>;
     if (lst.length <= 1) {

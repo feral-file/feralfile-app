@@ -12,32 +12,28 @@ enum WorksStateStatus {
 class WorksState {
   const WorksState({
     this.status = WorksStateStatus.initial,
-    this.dp1Items = const [],
-    this.assetTokens = const [],
+    this.nowDisplayingItems = const [],
     this.hasMore = true,
     this.cursor,
     this.error,
   });
 
   final WorksStateStatus status;
-  final List<DP1Item> dp1Items;
-  final List<AssetToken> assetTokens;
+  final List<DP1NowDisplayingItem> nowDisplayingItems;
   final bool hasMore;
   final String? cursor;
   final String? error;
 
   WorksState copyWith({
     WorksStateStatus? status,
-    List<DP1Item>? dp1Items,
-    List<AssetToken>? assetTokens,
+    List<DP1NowDisplayingItem>? nowDisplayingItems,
     bool? hasMore,
     String? cursor,
     String? error,
   }) {
     return WorksState(
       status: status ?? this.status,
-      dp1Items: dp1Items ?? this.dp1Items,
-      assetTokens: assetTokens ?? this.assetTokens,
+      nowDisplayingItems: nowDisplayingItems ?? this.nowDisplayingItems,
       hasMore: hasMore ?? this.hasMore,
       cursor: cursor ?? this.cursor,
       error: error ?? this.error,
@@ -49,7 +45,7 @@ class WorksState {
     if (identical(this, other)) return true;
     return other is WorksState &&
         other.status == status &&
-        other.assetTokens == assetTokens &&
+        other.nowDisplayingItems == nowDisplayingItems &&
         other.hasMore == hasMore &&
         other.cursor == cursor &&
         other.error == error;
@@ -58,7 +54,7 @@ class WorksState {
   @override
   int get hashCode {
     return status.hashCode ^
-        assetTokens.hashCode ^
+        nowDisplayingItems.hashCode ^
         hasMore.hashCode ^
         cursor.hashCode ^
         error.hashCode;

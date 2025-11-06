@@ -9,16 +9,17 @@ import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_state.dart';
 import 'package:autonomy_flutter/screen/detail/preview/keyboard_control_page.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
+import 'package:autonomy_flutter/util/dp1_now_displaying_item_ext.dart';
 import 'package:autonomy_flutter/util/now_displaying_manager.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
+import 'package:autonomy_flutter/view/ff_artwork_thumbnail_view.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -73,45 +74,27 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
     final object = nowDisplayingStatus.object;
 
     if (object is DP1NowDisplayingObject) {
-      final assetToken = object.assetToken;
-      if (assetToken == null) {
-        return;
-      }
-      final identitiesList = assetToken.provenance.map((e) => e.owner).toList();
-      if (assetToken.artistName != null && assetToken.artistName!.length > 20) {
-        identitiesList.add(assetToken.artistName!);
+      final nowDisplayingItem = object.currentItem;
+      final dP1Manifest = nowDisplayingItem.dp1Manifest;
+      final assetToken = nowDisplayingItem.assetToken;
+
+      final identitiesList = <String>[];
+
+      if (dP1Manifest != null) {
+        // TODO: add dP1Manifest identities
       }
 
-      identitiesList.add(assetToken.owner);
+      if (assetToken != null) {
+        identitiesList.addAll(assetToken.provenance.map((e) => e.owner));
+        if (assetToken.artistName != null &&
+            assetToken.artistName!.length > 20) {
+          identitiesList.add(assetToken.artistName!);
+        }
+        identitiesList.add(assetToken.owner);
+      }
+
       context.read<IdentityBloc>().add(GetIdentityEvent(identitiesList));
     }
-  }
-
-  String? getTokenId(NowDisplayingStatus? nowDisplayingStatus) {
-    if (nowDisplayingStatus == null ||
-        nowDisplayingStatus is! NowDisplayingSuccess) {
-      return null;
-    }
-    final object = nowDisplayingStatus.object;
-    if (object is DP1NowDisplayingObject) {
-      return object.playlistItem.indexId;
-    }
-
-    return null;
-  }
-
-  String? getArtistName(NowDisplayingStatus? nowDisplayingStatus) {
-    if (nowDisplayingStatus == null ||
-        nowDisplayingStatus is! NowDisplayingSuccess) {
-      return null;
-    }
-
-    final object = nowDisplayingStatus.object;
-    if (object is DP1NowDisplayingObject) {
-      return object.playlistItem.title;
-    }
-
-    return null;
   }
 
   @override
@@ -194,12 +177,10 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
       },
       builder: (context, state) {
         final object = nowDisplayingStatus.object as DP1NowDisplayingObject;
-        final dp1Item = object.playlistItem;
-        final assetToken = object.assetToken;
+        final nowDisplayingItem = object.currentItem;
 
         return DP1NowDisplaying(
-          dp1Item: dp1Item,
-          assetToken: assetToken,
+          nowDisplayingItem: nowDisplayingItem,
         );
       },
     );
@@ -238,16 +219,14 @@ Widget infoHeader(
 
 class DP1NowDisplaying extends StatefulWidget {
   const DP1NowDisplaying({
-    required this.dp1Item,
-    this.assetToken,
+    required this.nowDisplayingItem,
     super.key,
   });
 
   @override
   State<DP1NowDisplaying> createState() => _DP1NowDisplayingState();
 
-  final DP1Item dp1Item;
-  final AssetToken? assetToken;
+  final DP1NowDisplayingItem nowDisplayingItem;
 }
 
 class _DP1NowDisplayingState extends State<DP1NowDisplaying> {
@@ -259,7 +238,7 @@ class _DP1NowDisplayingState extends State<DP1NowDisplaying> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final assetToken = widget.assetToken;
+    final assetToken = widget.nowDisplayingItem.assetToken;
     final identityState = context.watch<IdentityBloc>().state;
     final artistName =
         assetToken?.artistName?.toIdentityOrMask(identityState.identityMap);
@@ -271,7 +250,7 @@ class _DP1NowDisplayingState extends State<DP1NowDisplaying> {
           ),
         ),
         SliverToBoxAdapter(
-          child: _tokenPreview(context, assetToken),
+          child: _tokenPreview(context, widget.nowDisplayingItem),
         ),
         if (assetToken != null)
           SliverToBoxAdapter(
@@ -332,7 +311,9 @@ class _DP1NowDisplayingState extends State<DP1NowDisplaying> {
     );
   }
 
-  Widget _tokenPreview(BuildContext context, AssetToken? assetToken) {
+  Widget _tokenPreview(
+      BuildContext context, DP1NowDisplayingItem nowDisplayingItem) {
+    final thumbnail = nowDisplayingItem.thumbnail;
     final screenWidth = MediaQuery.of(context).size.width;
     return ColoredBox(
       color: AppColor.auGreyBackground,
@@ -340,11 +321,9 @@ class _DP1NowDisplayingState extends State<DP1NowDisplaying> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            child: (assetToken != null)
-                ? tokenGalleryThumbnailWidget(
-                    context,
-                    CompactedAssetToken.fromAssetToken(assetToken),
-                    screenWidth.toInt(),
+            child: (thumbnail != null)
+                ? FFArtworkThumbnailView(
+                    url: thumbnail.uri,
                   )
                 : const GalleryNoThumbnailWidget(),
           ),
@@ -352,7 +331,7 @@ class _DP1NowDisplayingState extends State<DP1NowDisplaying> {
             color: AppColor.primaryBlack,
             height: 1,
           ),
-          if (assetToken != null && assetToken.canInteract)
+          if (nowDisplayingItem.canInteract)
             Container(
               padding: const EdgeInsets.all(16),
               child: _interactButton(context),

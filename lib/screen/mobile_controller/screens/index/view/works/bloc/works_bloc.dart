@@ -1,8 +1,8 @@
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
+import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
+import 'package:autonomy_flutter/util/dp1_manifest_helper.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -79,8 +79,7 @@ class WorksBloc extends Bloc<WorksEvent, WorksState> {
       if (remoteConfigChannels.isEmpty) {
         emit(state.copyWith(
             status: WorksStateStatus.loaded,
-            assetTokens: [],
-            dp1Items: [],
+            nowDisplayingItems: [],
             hasMore: false,
             cursor: null,
             error: ''));
@@ -97,21 +96,40 @@ class WorksBloc extends Bloc<WorksEvent, WorksState> {
       final items = worksResponse.items;
       final assetTokens = await _indexerService.getAssetTokens(items);
 
-      final List<AssetToken> newAssetTokens;
-      final List<DP1Item> newDP1Items;
+      // Fetch DP1 manifests for page items
+      final refs = items.map((e) => e.ref).whereType<String>().toList();
+      final manifests =
+          await DP1ManifestHelper.instance.fetchDP1Manifests(refs);
+
+      // Build nowDisplayingItems list
+      final pageNowDisplayingItems = <DP1NowDisplayingItem>[];
+      for (int i = 0; i < items.length; i++) {
+        final dp1Item = items[i];
+        final assetToken = i < assetTokens.length ? assetTokens[i] : null;
+        final dp1Manifest = dp1Item.ref != null ? manifests[dp1Item.ref] : null;
+        pageNowDisplayingItems.add(
+          DP1NowDisplayingItem(
+            dp1Item: dp1Item,
+            assetToken: assetToken,
+            dp1Manifest: dp1Manifest,
+          ),
+        );
+      }
+
+      final List<DP1NowDisplayingItem> newNowDisplayingItems;
       if (isLoadMore) {
-        newAssetTokens = [...state.assetTokens, ...assetTokens];
-        newDP1Items = [...state.dp1Items, ...items];
+        newNowDisplayingItems = [
+          ...state.nowDisplayingItems,
+          ...pageNowDisplayingItems
+        ];
       } else {
-        newAssetTokens = assetTokens;
-        newDP1Items = items;
+        newNowDisplayingItems = pageNowDisplayingItems;
       }
 
       emit(
         state.copyWith(
           status: WorksStateStatus.loaded,
-          assetTokens: newAssetTokens,
-          dp1Items: newDP1Items,
+          nowDisplayingItems: newNowDisplayingItems,
           cursor: worksResponse.cursor,
           hasMore: worksResponse.hasMore,
           error: '',

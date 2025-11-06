@@ -12,7 +12,9 @@ import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
+import 'package:autonomy_flutter/util/dp1_manifest_helper.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:collection/collection.dart';
 import 'package:sentry/sentry.dart';
 
 class NowDisplayingManager {
@@ -123,15 +125,32 @@ class NowDisplayingManager {
       final index = status.index!;
       final assetTokens = await _fetchAssetTokens(
           status.items!.map((e) => e.indexId).nonNulls.toList());
+      final refs = status.items!.map((e) => e.ref).nonNulls.toSet().toList();
+      final manifests =
+          await DP1ManifestHelper.instance.fetchDP1Manifests(refs);
+
+      final items = status.items!.map((e) {
+        final assetToken =
+            assetTokens.firstWhereOrNull((token) => token.id == e.indexId);
+        final dp1Manifest = manifests[e.ref] ?? null;
+        return DP1NowDisplayingItem(
+          dp1Item: e,
+          assetToken: assetToken,
+          dp1Manifest: dp1Manifest,
+        );
+      }).toList();
 
       return DP1NowDisplayingObject(
         index: index,
-        dp1Items: status.items!,
-        assetTokens: assetTokens,
+        items: items,
         connectedDevice: device,
       );
+    } else {
+      log.info('NowDisplayingManager: no items to display');
+      unawaited(
+          Sentry.captureMessage('NowDisplayingManager: no items to display'));
+      return null;
     }
-    return null;
   }
 
   Future<List<AssetToken>> _fetchAssetTokens(List<String> tokenIds) async {

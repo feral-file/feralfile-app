@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
@@ -14,7 +15,7 @@ class PlaylistsPage extends StatefulWidget {
 }
 
 class _PlaylistsPageState extends State<PlaylistsPage>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, RouteAware {
   final ScrollController _scrollController = ScrollController();
   late final PlaylistsBloc _playlistsBloc;
 
@@ -32,6 +33,18 @@ class _PlaylistsPageState extends State<PlaylistsPage>
       ..removeListener(_onScroll)
       ..dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void didPopNext() {
+    super.didPopNext();
+    _playlistsBloc.add(const RefreshPlaylistsEvent());
   }
 
   void _onScroll() {
