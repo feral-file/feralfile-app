@@ -107,24 +107,16 @@ class FeedRegistryServiceImpl extends FeedRegistryService {
 
   @override
   Future<Uint8List> signWithUserKey(Uint8List message) async {
+    // Ensure keypair exists before attempting to read keys
+    await ensureUserEcdsaKeypair();
+
     final privB64 = await _secureStorage.readString(key: _kPrivKey);
     final pub = await getEcdsaPublicKey();
+
     if (privB64 == null) {
-      await ensureUserEcdsaKeypair();
-      final privAfterInit = await _secureStorage.readString(key: _kPrivKey);
-      if (privAfterInit == null) {
-        throw StateError('Failed to initialize ECDSA private key');
-      }
-      final privateKeyBytes = Uint8List.fromList(base64Decode(privAfterInit));
-      final publicKey = SimplePublicKey(pub, type: KeyPairType.p256);
-      final keyPair = SimpleKeyPairData(
-        privateKeyBytes,
-        publicKey: publicKey,
-        type: KeyPairType.p256,
-      );
-      final signature = await _ecdsa.sign(message, keyPair: keyPair);
-      return Uint8List.fromList(signature.bytes);
+      throw StateError('Failed to read ECDSA private key after initialization');
     }
+
     final privateKeyBytes = Uint8List.fromList(base64Decode(privB64));
     final publicKey = SimplePublicKey(pub, type: KeyPairType.p256);
     final keyPair = SimpleKeyPairData(
