@@ -3,14 +3,18 @@ import 'dart:async';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/model/additional_data/additional_data.dart';
+import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/home/home_bloc.dart';
 import 'package:autonomy_flutter/screen/home/home_state.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/announcement/announcement_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
+import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/shared.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
@@ -59,16 +63,7 @@ class HomePageHelper {
   void onHomePageInit(BuildContext context, ObservingState state) {
     unawaited(injector<CustomerSupportService>().getChatThreads());
 
-    // NftCollectionBloc.eventController.stream.listen((event) async {
-    //   switch (event.runtimeType) {
-    //     case const (ReloadEvent):
-    //     case const (GetTokensByOwnerEvent):
-    //     case const (UpdateTokensEvent):
-    //     case const (GetTokensBeforeByOwnerEvent):
-    //       nftBloc.add(event);
-    //     default:
-    //   }
-    // });
+    // check for version compatibility
     unawaited(injector<VersionService>().checkForUpdate());
     BluetoothDeviceManager().castingDeviceStatus.addListener(
       () async {
@@ -86,30 +81,32 @@ class HomePageHelper {
         }
       },
     );
-    // unawaited(
-    //   clientTokenService.refreshTokens(syncAddresses: true).then(
-    //         (_) {},
-    //       ),
-    // );
+
+    _reindexAllAddresses();
+    _fetchAllTokenForAddressesWithoutLastUpdatedTime();
 
     unawaited(NowDisplayingManager().updateDisplayingNow());
 
     context.read<HomeBloc>().add(CheckReviewAppEvent());
 
     _collectionRefreshTimer?.cancel();
-    // _collectionRefreshTimer =
-    //     Timer.periodic(const Duration(minutes: 1), (_) async {
-    //   try {
-    //     final allOwnedPlaylist =
-    //         injector<UserDp1PlaylistService>().cachedAllOwnedPlaylist;
-    //     final dynamicQuery = allOwnedPlaylist.firstDynamicQuery;
-    //     if (dynamicQuery != null) {
-    //       injector<UserAllOwnCollectionBloc>().add(RefreshAssetTokens());
-    //     }
-    //   } catch (_) {
-    //     // Silently ignore refresh errors
-    //   }
-    // });
+    _collectionRefreshTimer =
+        Timer.periodic(const Duration(seconds: 15), (_) async {
+      try {
+        final allOwnedPlaylist =
+            injector<UserDp1PlaylistService>().cachedAllOwnedPlaylist;
+        final dynamicQuery = allOwnedPlaylist.firstDynamicQuery;
+        if (dynamicQuery != null) {
+          log.info('Refreshing tokens for ${dynamicQuery.params.owners}');
+          injector<UserAllOwnCollectionBloc>().add(
+              UpdateTokensOfAddresses(addresses: dynamicQuery.params.owners));
+        } else {
+          log.info('No dynamic query found');
+        }
+      } catch (_) {
+        // Silently ignore refresh errors
+      }
+    });
 
     _triggerShowAnnouncement();
 
@@ -146,6 +143,29 @@ class HomePageHelper {
         );
       }),
     );
+  }
+
+  Future<void> _reindexAllAddresses() async {
+    final allAddresses = injector<AddressService>().getAllAddresses();
+    if (allAddresses.isNotEmpty) {
+      await injector<NftTokensService>().reindexAddresses(allAddresses);
+    }
+  }
+
+  Future<void> _fetchAllTokenForAddressesWithoutLastUpdatedTime() async {
+    // list address that need to fetch tokens from indexer; this is a list of addresses which dont have last updated time;
+    final listAddresses = <String>[];
+    final allAddresses = injector<AddressService>().getAllAddresses();
+    for (final address in allAddresses) {
+      final lastUpdatedTime = await injector<UserDp1PlaylistService>()
+          .getAddressOldestLastRefreshedTime(addresses: [address]);
+      if (lastUpdatedTime == null) {
+        listAddresses.add(address);
+      }
+    }
+    if (listAddresses.isNotEmpty) {
+      await injector<NftTokensService>().fetchTokensInIsolate(listAddresses);
+    }
   }
 
   Future<void> _handleForeBackground(FGBGType event) async {

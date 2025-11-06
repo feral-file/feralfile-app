@@ -147,8 +147,11 @@ extension AssetTokenExtension on AssetToken {
             ?.variantUrls
             .values
             .firstOrNull as String?;
+    if (thumbnailUrl?.isNotEmpty ?? false) {
+      return thumbnailUrl;
+    }
 
-    return thumbnailUrl;
+    return null;
   }
 
   String get displayKey => cid.hashCode.toString();
@@ -215,7 +218,7 @@ extension AssetTokenExtension on AssetToken {
               (mediaAsset) => mediaAsset.sourceUrl == animationUrl);
       final variantUrl =
           enrichmentSourceMediaAsset?.variantUrls.values.firstOrNull as String?;
-      if (variantUrl != null) {
+      if (variantUrl != null && variantUrl.isNotEmpty) {
         return variantUrl;
       }
     }
@@ -228,12 +231,16 @@ extension AssetTokenExtension on AssetToken {
 
       final variantUrl =
           metadataMediaAsset?.variantUrls.values.firstOrNull as String?;
-      if (variantUrl != null) {
+      if (variantUrl != null && variantUrl.isNotEmpty) {
         return variantUrl;
       }
     }
 
-    return animationUrl;
+    if (animationUrl.isNotEmpty) {
+      return animationUrl;
+    }
+
+    return getGalleryThumbnailUrl();
   }
 
   List<ProvenanceEvent> get provenance {
@@ -255,38 +262,48 @@ extension AssetTokenExtension on AssetToken {
     DateTime? changedAt,
   ) {
     // Update currentOwner if 'to' address is provided
-    String? newOwner = meta.to ?? currentOwner;
+    String? newOwner = (currentOwner == meta.from) ? meta.to : currentOwner;
 
     // Update owners list if needed
     PaginatedOwners? newOwners = owners;
-    if (meta.to != null && meta.quantity != null) {
-      final existingOwners = owners?.items ?? [];
-      final updatedOwners = <Owner>[];
-      bool found = false;
+    if (meta.quantity != null) {
+      final delta = _safeParseBigInt(meta.quantity!);
+      final existingOwners = List<Owner>.from(owners?.items ?? []);
+      final updated = <Owner>[];
 
-      // Update existing owner or add new one
+      bool toUpdated = false;
+
       for (final owner in existingOwners) {
-        if (owner.ownerAddress == meta.to) {
-          updatedOwners.add(
-            owner.copyWith(quantity: meta.quantity!),
-          );
-          found = true;
-        } else {
-          updatedOwners.add(owner);
+        // Subtract from 'from' address
+        if (meta.from != null && owner.ownerAddress == meta.from) {
+          final currentQty = _safeParseBigInt(owner.quantity);
+          final next = currentQty - delta;
+          if (next > BigInt.zero) {
+            updated.add(owner.copyWith(quantity: next.toString()));
+          }
+          continue;
         }
+
+        // Add to 'to' address
+        if (meta.to != null && owner.ownerAddress == meta.to) {
+          final currentQty = _safeParseBigInt(owner.quantity);
+          final next = currentQty + delta;
+          updated.add(owner.copyWith(quantity: next.toString()));
+          toUpdated = true;
+          continue;
+        }
+
+        // Keep unchanged owners
+        updated.add(owner);
       }
 
-      if (!found) {
-        updatedOwners.add(
-          Owner(
-            ownerAddress: meta.to!,
-            quantity: meta.quantity!,
-          ),
-        );
+      // If 'to' address not found, add it with delta
+      if (meta.to != null && !toUpdated) {
+        updated.add(Owner(ownerAddress: meta.to!, quantity: delta.toString()));
       }
 
-      newOwners = owners?.copyWith(items: updatedOwners) ??
-          PaginatedOwners(items: updatedOwners);
+      newOwners =
+          (owners?.copyWith(items: updated)) ?? PaginatedOwners(items: updated);
     }
 
     return copyWith(
@@ -360,6 +377,14 @@ extension AssetTokenExtension on AssetToken {
       updatedAt: changedAt ?? updatedAt,
       metadata: mergedMetadata,
     );
+  }
+}
+
+BigInt _safeParseBigInt(String value) {
+  try {
+    return BigInt.parse(value);
+  } catch (_) {
+    return BigInt.zero;
   }
 }
 

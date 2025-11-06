@@ -30,4 +30,8 @@ abstract class IndexerDatabaseAbstract {
   void clearAll();
 
   v2.AssetToken? findTokenByCid(String cid);
+
+  void deleteToken(String cid);
+
+  void deleteTokens(List<String> cids);
 }

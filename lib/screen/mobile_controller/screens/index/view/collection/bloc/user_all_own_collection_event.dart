@@ -2,8 +2,12 @@ part of 'user_all_own_collection_bloc.dart';
 
 abstract class UserAllOwnCollectionEvent {}
 
-class RefreshAssetTokens extends UserAllOwnCollectionEvent {
-  RefreshAssetTokens({this.shouldEmitLoading = true});
+class FetchTokensOfAddresses extends UserAllOwnCollectionEvent {
+  FetchTokensOfAddresses({
+    required this.addresses,
+    this.shouldEmitLoading = true,
+  });
+  final List<String> addresses;
   final bool shouldEmitLoading;
 }
 
@@ -32,4 +36,30 @@ class PollWorkflowStatus extends UserAllOwnCollectionEvent {
   final List<String> addresses;
   final String? workflowId;
   final String? runId;
+}
+
+class WorkflowStatusTick extends UserAllOwnCollectionEvent {
+  WorkflowStatusTick({
+    required this.operationKey,
+    required this.addresses,
+    required this.workflowId,
+    required this.runId,
+    required this.status,
+  });
+
+  final String operationKey;
+  final List<String> addresses;
+  final String workflowId;
+  final String runId;
+  final WorkflowExecutionStatus status;
+}
+
+class UpdateTokensOfAddresses extends UserAllOwnCollectionEvent {
+  UpdateTokensOfAddresses({
+    required this.addresses,
+    this.shouldEmitLoading = true,
+  });
+
+  final List<String> addresses;
+  final bool shouldEmitLoading;
 }

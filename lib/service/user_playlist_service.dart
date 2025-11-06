@@ -187,7 +187,7 @@ class UserDp1PlaylistService {
       return true;
     }
     final deleted = await Future.wait(allOwnedPlaylistIds.map(deletePlaylist));
-    injector<ConfigurationService>().setAddressLastRefreshedTime({});
+    await injector<ConfigurationService>().setAddressLastRefreshedTime({});
 
     if (deleted.any((e) => e == false)) {
       log.info('Failed to delete all owned playlists');
@@ -210,40 +210,31 @@ class UserDp1PlaylistService {
   }
 
   Future<void> updateAddressLastRefreshedTime({
-    required List<String> addresses,
-    DateTime? dateTime,
+    required Map<String, DateTime?> addresses,
   }) async {
     final addressLastRefreshedTime =
         injector<ConfigurationService>().getAddressLastRefreshedTime();
     // update the time for the addresses
-    final time = dateTime ?? DateTime.now();
-    for (var address in addresses) {
-      addressLastRefreshedTime[address] = time;
+    for (final entry in addresses.entries) {
+      if (entry.value == null) {
+        addressLastRefreshedTime.remove(entry.key);
+      } else {
+        addressLastRefreshedTime[entry.key] = entry.value!;
+      }
     }
     await injector<ConfigurationService>()
         .setAddressLastRefreshedTime(addressLastRefreshedTime);
   }
 
-  DateTime getAddressOldestLastRefreshedTime({
+  Map<String, DateTime?> getAddressOldestLastRefreshedTime({
     required List<String> addresses,
   }) {
-    final addressLastRefreshedTime =
-        injector<ConfigurationService>().getAddressLastRefreshedTime();
-    if (addresses.isEmpty) {
-      return DateTime(1970, 1, 1);
+    final map = injector<ConfigurationService>().getAddressLastRefreshedTime();
+    final result = <String, DateTime?>{};
+    for (final addr in addresses) {
+      result[addr] = map[addr];
     }
-    // find the oldest time, saved in addressLastRefreshedTime
-    // if any address in addresses is not in addressLastRefreshedTime, return 1970-01-01
-    for (var address in addresses) {
-      if (!addressLastRefreshedTime.containsKey(address)) {
-        return DateTime(1970, 1, 1);
-      }
-    }
-    return addressLastRefreshedTime.entries
-        .where((e) => addresses.contains(e.key))
-        .map((e) => e.value)
-        .toList()
-        .reduce((a, b) => a.isBefore(b) ? a : b);
+    return result;
   }
 
   Future<void> clearData() async {

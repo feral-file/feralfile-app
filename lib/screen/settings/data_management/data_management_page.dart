@@ -9,13 +9,13 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
-import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/settings/forget_exist/forget_exist_bloc.dart';
 import 'package:autonomy_flutter/screen/settings/forget_exist/forget_exist_view.dart';
+import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
@@ -144,12 +144,19 @@ class _DataManagementPageState extends State<DataManagementPage> {
           await DefaultCacheManager().emptyCache();
           injector<UserAllOwnCollectionBloc>().add(ClearDataEvent());
           injector<FeralFileFeedManager>().clearAllCache();
+          // clear token cache
+          injector<IndexerDatabaseAbstract>().clearAll();
+
+          final res = injector<IndexerDatabaseAbstract>()
+              .getGroupAssetTokensByOwnersGroupByAddress(
+                  owners: ['0x99fc8AD516FBCC9bA3123D56e63A35d05AA9EFB8']);
 
           //redownload data
           await injector<UserDp1PlaylistService>()
               .createAllOwnedPlaylistIfNotExists();
-          injector<UserAllOwnCollectionBloc>()
-              .add(RefreshAssetTokens(shouldEmitLoading: true));
+          final addresses = injector<AddressService>().getAllAddresses();
+          injector<UserAllOwnCollectionBloc>().add(FetchTokensOfAddresses(
+              addresses: addresses, shouldEmitLoading: true));
 
           unawaited(
               injector<FeralFileFeedManager>().reloadAllCache(force: true));

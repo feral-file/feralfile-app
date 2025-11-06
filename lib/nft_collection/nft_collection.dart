@@ -21,7 +21,6 @@ class NftCollection {
 
   static Future<void> initNftCollection({
     required String indexerUrl,
-    String databaseFileName = 'nft_collection_v2.db',
     Logger? logger,
     Logger? apiLogger,
   }) async {

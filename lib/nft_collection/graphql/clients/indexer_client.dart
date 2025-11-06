@@ -38,8 +38,6 @@ class IndexerClient {
     bool withToken = false,
     String? subKey,
   }) async {
-    // return Map<String, dynamic>.from(
-    //     mockdata); // Temporary mock data to avoid indexer issues
     try {
       final options = QueryOptions(
         document: gql(doc),
@@ -50,6 +48,8 @@ class IndexerClient {
 
       final result = await client.query(options);
       if (result.hasException) {
+        NftCollection.logger
+            .info('Error when querying: $doc with params: $vars');
         NftCollection.logger.warning(
           'GraphQL query exception: link: ${result.exception?.linkException}; graphql: ${result.exception?.graphqlErrors.map((e) => e.message).join(', ')}',
         );

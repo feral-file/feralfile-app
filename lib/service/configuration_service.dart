@@ -267,7 +267,7 @@ class ConfigurationServiceImpl implements ConfigurationService {
   static const String KEY_SELECTED_DEVICE_ID = 'selected_device_id';
 
   static const String KEY_ADDRESS_LAST_REFRESHED_TIME =
-      'address_last_refreshed_time';
+      'address_last_refreshed_time_v2';
 
   static const String KEY_LAST_TIME_REFRESH_FEEDS = 'last_time_refresh_feeds';
 

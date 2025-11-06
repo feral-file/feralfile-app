@@ -142,7 +142,7 @@ class NavigationService {
       final settings = OpenSettingsPlus.shared! as OpenSettingsPlusAndroid;
       // can not go to bluetooth settings, so we go to application settings
       // from here, user can go to bluetooth settings
-      await settings.applicationDetails();
+      await settings.bluetooth();
     } else {
       final settings = OpenSettingsPlus.shared! as OpenSettingsPlusIOS;
       await settings.appSettings();

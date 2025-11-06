@@ -23,7 +23,8 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
   final Box<TokenObject> tokenBox;
 
   QueryProperty<TokenObject, dynamic> convertSortByToQueryProperty(
-      IndexerDatabaseSortBy sortBy) {
+    IndexerDatabaseSortBy sortBy,
+  ) {
     switch (sortBy) {
       case IndexerDatabaseSortBy.updatedAt:
         return TokenObject_.updatedAt;
@@ -66,9 +67,11 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
   }) {
     final sortByProperty = convertSortByToQueryProperty(sortBy);
     final query = tokenBox
-        .query(TokenObject_.currentOwner
-            .equals(ownerAddress)
-            .or(TokenObject_.ownersJson.contains(ownerAddress)))
+        .query(
+          TokenObject_.currentOwner
+              .equals(ownerAddress)
+              .or(TokenObject_.ownersJson.contains(ownerAddress)),
+        )
         .order(sortByProperty, flags: Order.descending)
         .build();
     try {
@@ -83,24 +86,26 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
   }
 
   @override
-  List<AddressAssetTokens> getGroupAssetTokensByOwnersGroupByAddress(
-      {required List<String> owners,
-      IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt}) {
+  List<AddressAssetTokens> getGroupAssetTokensByOwnersGroupByAddress({
+    required List<String> owners,
+    IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt,
+  }) {
     final groupByAddress = <AddressAssetTokens>[];
     log.info('[getGroupAssetTokensByOwnersGroupByAddress] Owners: $owners');
     for (final owner in owners) {
       final assetTokens = getTokensByOwner(ownerAddress: owner, sortBy: sortBy);
       if (assetTokens.isEmpty) {
         log.info(
-            '[getGroupAssetTokensByOwnersGroupByAddress] No asset tokens for owner: $owner');
-        continue;
+          '[getGroupAssetTokensByOwnersGroupByAddress] No asset tokens for owner: $owner',
+        );
       }
       final address = owner;
       final walletAddress =
           injector<AddressService>().getWalletAddress(address);
       if (walletAddress == null) {
         log.info(
-            '[getGroupAssetTokensByOwnersGroupByAddress] Wallet address not found: $address');
+          '[getGroupAssetTokensByOwnersGroupByAddress] Wallet address not found: $address',
+        );
         continue;
       }
 
@@ -174,5 +179,31 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
     } finally {
       query.close();
     }
+  }
+
+  @override
+  void deleteToken(String cid) {
+    final query = tokenBox.query(TokenObject_.cid.equals(cid)).build();
+    try {
+      final results = query.find();
+      if (results.isNotEmpty) {
+        tokenBox.remove(results.first.id);
+      }
+    } catch (e) {
+      log.info('Error deleting token: $e');
+    } finally {}
+  }
+
+  @override
+  void deleteTokens(List<String> cids) {
+    final query = tokenBox.query(TokenObject_.cid.oneOf(cids)).build();
+    try {
+      final results = query.find();
+      if (results.isNotEmpty) {
+        tokenBox.removeMany(results.map((e) => e.id).toList());
+      }
+    } catch (e) {
+      log.info('Error deleting tokens: $e');
+    } finally {}
   }
 }

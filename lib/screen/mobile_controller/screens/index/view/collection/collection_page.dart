@@ -23,6 +23,7 @@ import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:autonomy_flutter/widgets/notice-banner/notice_banner.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -180,6 +181,10 @@ Type or paste an address into the command bar to load''',
                                     (addressAssetToken) {
                                       final address =
                                           addressAssetToken.address.address;
+                                      final isAddressIndexing = collectionState
+                                          .indexingOperations
+                                          .any((e) =>
+                                              e.addresses.contains(address));
                                       final dp1NowDisplayingItems =
                                           addressAssetToken.assetTokens
                                               .map((e) => DP1NowDisplayingItem(
@@ -195,7 +200,17 @@ Type or paste an address into the command bar to load''',
                                               nowDisplayingItems:
                                                   dp1NowDisplayingItems,
                                               title: addressAssetToken
-                                                  .address.name,
+                                                      .address.name +
+                                                  (kDebugMode
+                                                      ? "   " +
+                                                          (addressAssetToken
+                                                              .assetTokens
+                                                              .length
+                                                              .toString())
+                                                      : "") +
+                                                  (isAddressIndexing
+                                                      ? " (indexing)"
+                                                      : ""),
                                               isExpanded: _expandedAddressesMap[
                                                       address] ??
                                                   false,

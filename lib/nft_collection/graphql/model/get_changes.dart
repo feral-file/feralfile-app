@@ -178,6 +178,18 @@ class ProvenanceChangeMeta implements ChangeMeta {
         if (to != null) 'to': to,
         if (quantity != null) 'quantity': quantity,
       };
+
+  bool isMint() {
+    return from == null && to != null;
+  }
+
+  bool isBurn() {
+    return from != null && to == null;
+  }
+
+  bool isTransfer() {
+    return from != null && to != null;
+  }
 }
 
 /// MetadataChangeMeta represents the metadata for metadata update changes

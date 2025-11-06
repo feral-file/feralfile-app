@@ -141,6 +141,7 @@ class NftIndexerService implements NftIndexerServiceBase {
 
   @override
   Future<Identity> getIdentity(QueryIdentityRequest request) async {
+    return Identity('', '', '');
     final vars = request.toJson();
     final result = await _client.query(
       doc: identity,

@@ -217,14 +217,42 @@ enum DP1ProvenanceStandard {
 }
 
 extension DP1ContractExt on DP1Contract {
-  String get cid {
-    final prefix = chain.prefix;
+  String? get cid {
+    final prefix = switch (chain) {
+      DP1ProvenanceChain.evm => 'eip155:1',
+      DP1ProvenanceChain.tezos => 'tezos:mainnet',
+      DP1ProvenanceChain.other => '',
+      _ => '',
+    };
+
+    if (prefix.isEmpty) {
+      return null;
+    }
+
     final standard = this.standard?.value;
+
+    if (standard == null ||
+        standard.isEmpty ||
+        this.standard == DP1ProvenanceStandard.other) {
+      return null;
+    }
+
     final contractAddress = this.address;
-    return "prefix:$standard:$contractAddress:$tokenId";
+
+    if (contractAddress == null || contractAddress.isEmpty) {
+      return null;
+    }
+
+    final tokenId = this.tokenId;
+
+    if (tokenId == null || tokenId.isEmpty) {
+      return null;
+    }
+
+    return "$prefix:$standard:$contractAddress:$tokenId";
   }
 }
 
 extension DP1ProvenanceExt on DP1Provenance {
-  String get cid => contract.cid;
+  String? get cid => contract.cid;
 }
