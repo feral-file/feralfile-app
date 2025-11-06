@@ -18,12 +18,6 @@ abstract class NftIndexerServiceBase {
 
   Future<List<AssetToken>> getAssetTokens(List<DP1Item> items);
 
-  Stream<List<AssetToken>> getAssetTokensStream(
-    List<String> addresses, {
-    int pageSize = 50,
-    DateTime? lastUpdatedAt,
-  });
-
   /// Trigger indexing for a list of addresses
   /// Returns the workflow_id and run_id from the indexing operation
   Future<TriggerIndexingResult> indexAddresses(List<String> addresses);
@@ -158,54 +152,11 @@ class NftIndexerService implements NftIndexerServiceBase {
 
   @override
   Future<List<AssetToken>> getAssetTokens(List<DP1Item> items) async {
-    final indexIds = items.map((item) => item.cid).whereType<String>().toList();
+    final cids = items.map((item) => item.cid).whereType<String>().toList();
     final assetTokens = await getNftTokens(
-      QueryListTokensRequest(tokenIds: indexIds),
+      QueryListTokensRequest(tokenCids: cids),
     );
     return List<AssetToken>.from(assetTokens).toList();
-  }
-
-  /// Get AssetTokens with pagination and return as Stream
-  /// This method fetches tokens in batches to avoid loading all at once
-  ///
-  /// [addresses] - List of owner addresses to fetch tokens for
-  /// [pageSize] - Number of tokens to fetch per page (default: 50)
-  /// [lastUpdatedAt] - Optional timestamp to filter tokens updated after this time
-  ///
-  /// Returns a Stream of List<AssetToken> where each emission contains a batch of tokens
-  @override
-  Stream<List<AssetToken>> getAssetTokensStream(
-    List<String> addresses, {
-    int pageSize = 50,
-    DateTime? lastUpdatedAt,
-  }) async* {
-    if (addresses.isEmpty) return;
-
-    var offset = 0;
-    var hasMoreData = true;
-
-    while (hasMoreData) {
-      final request = QueryListTokensRequest(
-        owners: addresses,
-        offset: offset,
-        limit: pageSize,
-        // lastUpdatedAt: lastUpdatedAt,
-      );
-
-      final tokens = await getNftTokens(request);
-
-      if (tokens.isEmpty) {
-        hasMoreData = false;
-      } else {
-        yield tokens;
-        offset += tokens.length;
-
-        // If we got fewer tokens than requested, we've reached the end
-        if (tokens.length < pageSize) {
-          hasMoreData = false;
-        }
-      }
-    }
   }
 
   /// Trigger indexing for a list of addresses

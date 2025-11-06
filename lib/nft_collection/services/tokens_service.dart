@@ -14,11 +14,11 @@ import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/clients/indexer_client.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/model/get_changes.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
-import 'package:autonomy_flutter/nft_collection/graphql/queries/queries.dart';
 import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/nft_collection/services/configuration_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
+import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/list_extension.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -141,6 +141,7 @@ class NftTokensServiceImpl extends NftTokensService {
     disposeIsolate();
     await _configurationService.setDidSyncAddress(false);
     _database.clearAll();
+    injector<ConfigurationService>().clearAddressLastRefreshedTime();
   }
 
   @override
@@ -225,17 +226,17 @@ class NftTokensServiceImpl extends NftTokensService {
   }
 
   @override
-  Future<List<AssetToken>> fetchManualTokens(List<String> indexerIds) async {
+  Future<List<AssetToken>> fetchManualTokens(List<String> cids) async {
     final request = QueryListTokensRequest(
-      tokenIds: indexerIds,
-      limit: indexerIds.length,
+      tokenCids: cids,
+      limit: cids.length,
     );
 
     final manuallyAssets = await _indexerService.getNftTokens(request);
 
     NftCollection.logger.info('[TokensService] '
         'fetched ${manuallyAssets.length} manual tokens. '
-        'IDs: $indexerIds');
+        'IDs: $cids');
     if (manuallyAssets.isNotEmpty) {
       await insertAssetsWithProvenance(manuallyAssets);
     }
@@ -408,9 +409,11 @@ class NftTokensServiceImpl extends NftTokensService {
         for (final tokenCid in groupedChanges.keys) {
           final changes = groupedChanges[tokenCid]!;
 
-          // Find current token in database
-          var currentToken =
+          final originalToken =
               tokens.firstWhereOrNull((token) => token.cid == tokenCid);
+
+          // Find current token in database
+          var currentToken = originalToken?.copyWith();
 
           // Sort changes by changedAt to apply in chronological order
           final sortedChanges = changes.toList()
@@ -442,14 +445,15 @@ class NftTokensServiceImpl extends NftTokensService {
                     currentToken.applyChangeMeta(meta, change.changedAt);
               } else {
                 NftCollection.logger.info(
-                    "[UpdateTokensSuccess] token not found in database: $tokenCid, change: $change");
+                    "[UpdateTokensSuccess] token not found in database: $tokenCid, change: ${change.toJson()}");
               }
             } else {
               log.info("[UpdateTokensSuccess] meta is null");
             }
           }
 
-          if (currentToken != null) {
+          if (currentToken != null &&
+              currentToken.updatedAt != originalToken?.updatedAt) {
             updatedTokens.add(currentToken);
           }
         }
@@ -460,9 +464,7 @@ class NftTokensServiceImpl extends NftTokensService {
         }
 
         // Emit updated tokens to stream
-        for (final token in updatedTokens) {
-          controller.add([token]);
-        }
+        controller.add(updatedTokens);
 
         await controller.close();
         _streamControllers.remove(result.uuid);

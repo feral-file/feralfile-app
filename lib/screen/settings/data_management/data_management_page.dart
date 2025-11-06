@@ -144,8 +144,6 @@ class _DataManagementPageState extends State<DataManagementPage> {
           await DefaultCacheManager().emptyCache();
           injector<UserAllOwnCollectionBloc>().add(ClearDataEvent());
           injector<FeralFileFeedManager>().clearAllCache();
-          // clear token cache
-          injector<IndexerDatabaseAbstract>().clearAll();
 
           final res = injector<IndexerDatabaseAbstract>()
               .getGroupAssetTokensByOwnersGroupByAddress(

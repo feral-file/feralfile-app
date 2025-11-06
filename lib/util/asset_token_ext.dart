@@ -4,6 +4,7 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/blockchain.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/model/get_changes.dart';
+import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/nft_rendering/nft_rendering_widget.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
@@ -249,6 +250,11 @@ extension AssetTokenExtension on AssetToken {
 
   /// Apply ChangeMeta to this token and return updated token
   AssetToken applyChangeMeta(ChangeMeta changeMeta, DateTime? changedAt) {
+    if (this.updatedAt != null && this.updatedAt!.isAfter(changedAt!)) {
+      NftCollection.logger.info(
+          "[ApplyChangeMeta] token already updated: $cid, changedAt: $changedAt, updatedAt: $updatedAt");
+      return this;
+    }
     if (changeMeta is ProvenanceChangeMeta) {
       return _applyProvenanceChangeMeta(changeMeta, changedAt);
     } else if (changeMeta is MetadataChangeMeta) {

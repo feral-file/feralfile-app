@@ -51,9 +51,13 @@ class QueryListTokensRequest {
   QueryListTokensRequest({
     this.owners = const [], // backward-compat; maps to `owner`
     this.offset = 0,
-    this.chains = const [],
+    this.chains = const [
+      'eip155:1',
+      'tezos:mainnet',
+    ],
     this.contractAddresses = const [],
     this.tokenIds = const [],
+    this.tokenCids = const [],
     this.limit = indexerTokensPageSize,
     this.expand = const [
       ExpandField.provenanceEvents,
@@ -75,6 +79,7 @@ class QueryListTokensRequest {
   final List<String> chains;
   final List<String> contractAddresses;
   final List<String> tokenIds;
+  final List<String> tokenCids;
   final int? limit;
   final List<ExpandField> expand;
   final int ownersLimit;
@@ -85,14 +90,14 @@ class QueryListTokensRequest {
 
   Map<String, dynamic> toJson() {
     // Provide both new and legacy keys to maintain compatibility with current queries
-    final tokenIdValue = tokenIds;
     final limitValue = limit;
     return <String, dynamic>{
       // New API keys
       'owner': owners,
       'chain': chains,
       'contract_address': contractAddresses,
-      'token_id': tokenIdValue,
+      'token_id': tokenIds,
+      'token_cid': tokenCids,
       'limit': limitValue,
       'offset': offset,
       'expand': expand.map((e) => e.toJson()).toList(),

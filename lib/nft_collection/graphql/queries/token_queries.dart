@@ -92,6 +92,7 @@ const String getTokens = r'''
     $chain: [String!]
     $contract_address: [String!]
     $token_id: [String!]
+    $token_cid: [String!]
     $limit: Uint8 = 20
     $offset: Uint64 = 0
     $expand: [String!]
@@ -106,6 +107,7 @@ const String getTokens = r'''
       chain: $chain
       contract_address: $contract_address
       token_id: $token_id
+      token_cid: $token_cid
       limit: $limit
       offset: $offset
       expand: $expand

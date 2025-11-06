@@ -12,6 +12,7 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/gateway/iap_api.dart';
 import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
+import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
@@ -54,18 +55,23 @@ class ForgetExistBloc extends AuBloc<ForgetExistEvent, ForgetExistState> {
         log.info('Error when delete all profiles: $e');
       }
 
+      // remove all local cache
       _indexerDatabase.clearAll();
       await _configurationService.removeAll();
       await injector<CacheManager>().emptyCache();
       await DefaultCacheManager().emptyCache();
+      await injector<NftTokensService>().purgeCachedGallery();
+
       // delete dp1 data: playlists, channels;
       await injector<UserDp1PlaylistService>().deleteAllPlaylists();
-      injector<UserAllOwnCollectionBloc>().add(ClearDataEvent());
+      // remove all cloud data
       unawaited(injector<CloudManager>().deleteAll());
       injector<CloudManager>().clearCache();
+
       await injector<CustomerSupportService>().clear();
       await injector<IdentityBloc>().clear();
       await injector<AnnouncementStore>().clear();
+      injector<UserAllOwnCollectionBloc>().add(ClearDataEvent());
       injector<CanvasDeviceBloc>().clear();
       await BluetoothDeviceManager().resetDevice();
       await CanvasNotificationManager().disconnectAll();
