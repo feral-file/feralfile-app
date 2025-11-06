@@ -1,5 +1,6 @@
 import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
 import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
+import 'package:autonomy_flutter/util/eth_utils.dart';
 import 'package:sentry/sentry.dart';
 
 /// Subject type for change journal entries
@@ -180,15 +181,19 @@ class ProvenanceChangeMeta implements ChangeMeta {
       };
 
   bool isMint() {
-    return from == null && to != null;
+    // mint is a transfer from null (or empty or null address) to a non-null address
+    return (from == null || from!.isEmpty || from!.isNullAddress) &&
+        (to != null && to!.isNotEmpty && !to!.isNullAddress);
   }
 
   bool isBurn() {
-    return from != null && to == null;
+    return (to == null || to!.isEmpty || to!.isNullAddress) &&
+        (from != null && from!.isNotEmpty && !from!.isNullAddress);
   }
 
   bool isTransfer() {
-    return from != null && to != null;
+    return (from != null && from!.isNotEmpty && !from!.isNullAddress) &&
+        (to != null && to!.isNotEmpty && !to!.isNullAddress);
   }
 }
 
@@ -291,6 +296,25 @@ class Change {
         'created_at': createdAt.toIso8601String(),
         'updated_at': updatedAt.toIso8601String(),
       };
+
+  bool isMint() {
+    return metaParsed is ProvenanceChangeMeta &&
+        (metaParsed as ProvenanceChangeMeta).isMint();
+  }
+
+  bool isBurn() {
+    return metaParsed is ProvenanceChangeMeta &&
+        (metaParsed as ProvenanceChangeMeta).isBurn();
+  }
+
+  bool isTransfer() {
+    return metaParsed is ProvenanceChangeMeta &&
+        (metaParsed as ProvenanceChangeMeta).isTransfer();
+  }
+
+  bool isMetadataUpdate() {
+    return metaParsed is MetadataChangeMeta;
+  }
 }
 
 /// Paginated changes list

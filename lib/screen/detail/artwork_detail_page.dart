@@ -13,8 +13,6 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/model/play_list_model.dart';
 import 'package:autonomy_flutter/model/token.dart';
-import 'package:autonomy_flutter/nft_collection/models/provenance.dart';
-import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_bloc.dart';
@@ -30,10 +28,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ex
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_intent.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/collection_page.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
-import 'package:autonomy_flutter/service/metric_client_service.dart';
-import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/settings_data_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
@@ -42,7 +37,6 @@ import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/custom_route_observer.dart';
 import 'package:autonomy_flutter/util/feral_file_custom_tab.dart';
-import 'package:autonomy_flutter/util/metric_helper.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
@@ -61,7 +55,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
-import 'package:json_annotation/json_annotation.dart';
 import 'package:shake/shake.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -727,7 +720,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
               ),
               onTap: () async {
                 await injector<NftTokensService>()
-                    .fetchManualTokens([asset.cid]);
+                    .getManualTokens(cids: [asset.cid]);
                 if (!context.mounted) {
                   return;
                 }

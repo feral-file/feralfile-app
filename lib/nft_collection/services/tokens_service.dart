@@ -25,6 +25,7 @@ import 'package:autonomy_flutter/util/log.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
+import 'package:sentry/sentry.dart';
 import 'package:uuid/uuid.dart';
 
 // Auth bridge op-codes between isolates (top-level so both main and worker use them)
@@ -33,8 +34,6 @@ const String AUTH_GET_TOKEN = 'AUTH_GET_TOKEN';
 const String AUTH_REFRESH = 'AUTH_REFRESH';
 
 abstract class NftTokensService {
-  Future<List<AssetToken>> fetchManualTokens(List<String> cids);
-
   Future<List<AssetToken>> getManualTokens({
     required List<String> cids,
     bool shouldCallIndexer = true,
@@ -45,6 +44,8 @@ abstract class NftTokensService {
   );
 
   Future<TriggerIndexingResult> reindexAddresses(List<String> addresses);
+
+  Future<TriggerIndexingResult> reindexTokensByCids(List<String> tokenCids);
 
   Future<Stream<List<AssetToken>>> updateTokensInIsolate(
     Map<String, DateTime?> addressToSince,
@@ -77,6 +78,7 @@ class NftTokensServiceImpl extends NftTokensService {
 
   static const FETCH_ALL_TOKENS = 'FETCH_ALL_TOKENS';
   static const REINDEX_ADDRESSES = 'REINDEX_ADDRESSES';
+  static const REINDEX_TOKENS = 'REINDEX_TOKENS';
   static const UPDATE_TOKENS_IN_ISOLATE = 'UPDATE_TOKENS_IN_ISOLATE';
 
   SendPort? _sendPort;
@@ -91,6 +93,8 @@ class NftTokensServiceImpl extends NftTokensService {
       _refreshAllTokensWorker?.hasListener ?? false;
   final Map<String, Completer<TriggerIndexingResult>>
       _reindexAddressesCompleters = {};
+  final Map<String, Completer<TriggerIndexingResult>> _indexTokensCompleters =
+      {};
   final Map<String, StreamController<List<AssetToken>>> _streamControllers = {};
 
   Future<void> get isolateReady => _isolateReady.future;
@@ -192,6 +196,21 @@ class NftTokensServiceImpl extends NftTokensService {
   }
 
   @override
+  Future<TriggerIndexingResult> reindexTokensByCids(
+      List<String> tokenCids) async {
+    await startIsolateOrWait();
+
+    final uuid = const Uuid().v4();
+    final completer = Completer<TriggerIndexingResult>();
+    _indexTokensCompleters[uuid] = completer;
+
+    _sendPort?.send([REINDEX_TOKENS, uuid, tokenCids]);
+
+    NftCollection.logger.fine('[reindexTokensByCids][start] $tokenCids');
+    return completer.future;
+  }
+
+  @override
   Future<Stream<List<AssetToken>>> updateTokensInIsolate(
     Map<String, DateTime?> addressToSince,
   ) async {
@@ -225,14 +244,33 @@ class NftTokensServiceImpl extends NftTokensService {
         .info('[insertAssetsWithProvenance][tokens] $tokensLog');
   }
 
-  @override
-  Future<List<AssetToken>> fetchManualTokens(List<String> cids) async {
+  Future<List<AssetToken>> _fetchManualTokens(List<String> cids) async {
     final request = QueryListTokensRequest(
       tokenCids: cids,
       limit: cids.length,
     );
 
     final manuallyAssets = await _indexerService.getNftTokens(request);
+
+    final missingCids =
+        cids.where((cid) => !manuallyAssets.any((e) => e.cid == cid)).toList();
+
+    if (missingCids.isNotEmpty) {
+      // reindex the missing cids
+      final res = await reindexTokensByCids(missingCids);
+
+      // pull the status
+      while (true) {
+        final status =
+            await _indexerService.getWorkflowStatus(res.workflowId, res.runId);
+        if (status.status.isDone) {
+          break;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+      }
+      final assetTokenFromIndexer = await _fetchManualTokens(missingCids);
+      manuallyAssets.addAll(assetTokenFromIndexer);
+    }
 
     NftCollection.logger.info('[TokensService] '
         'fetched ${manuallyAssets.length} manual tokens. '
@@ -256,7 +294,7 @@ class NftTokensServiceImpl extends NftTokensService {
         .toList();
     if (missingIds.isNotEmpty) {
       if (shouldCallIndexer) {
-        final assetTokenFromIndexer = await fetchManualTokens(missingIds);
+        final assetTokenFromIndexer = await _fetchManualTokens(missingIds);
         res.addAll(assetTokenFromIndexer);
       }
     }
@@ -393,6 +431,22 @@ class NftTokensServiceImpl extends NftTokensService {
       );
     }
 
+    if (result is ReindexTokensDone) {
+      _indexTokensCompleters[result.uuid]?.complete(result.result);
+      _indexTokensCompleters.remove(result.uuid);
+      NftCollection.logger.info(
+        '[reindexTokensByCids][end] workflowId: ${result.result.workflowId}, runId: ${result.result.runId}',
+      );
+    }
+
+    if (result is ReindexTokensFailure) {
+      _indexTokensCompleters[result.uuid]?.completeError(result.exception);
+      _indexTokensCompleters.remove(result.uuid);
+      NftCollection.logger.info(
+        '[reindexTokensByCids][error] ${result.uuid}: ${result.exception}',
+      );
+    }
+
     if (result is UpdateTokensSuccess) {
       final controller = _streamControllers[result.uuid];
       if (controller != null && !controller.isClosed) {
@@ -421,34 +475,30 @@ class NftTokensServiceImpl extends NftTokensService {
 
           // Apply each change to the token
           for (final change in sortedChanges) {
-            final meta = change.metaParsed;
-            if (meta != null) {
-              if (meta is ProvenanceChangeMeta) {
-                if (meta.isMint()) {
-                  // if the change is a mint, we need to fetch token from indexer, then insert into database
-                  final cid = change.tokenCid;
-                  final token = await _indexerService
-                      .getTokenByCid(QueryGetTokenByCidRequest(cid: cid));
-                  if (token != null) {
-                    await insertAssetsWithProvenance([token]);
-                    currentToken = token;
-                  }
-                } else if (meta.isBurn()) {
-                  // if the change is a burn, we need to remove the token from database
-                  final cid = change.tokenCid;
-                  _database.deleteToken(cid);
-                  currentToken = null;
+            try {
+              if (change.isMint()) {
+                // if the change is a mint, we need to fetch token from indexer, then insert into database
+                final cid = change.tokenCid;
+                final tokens = await getManualTokens(cids: [cid]);
+                final token = tokens.firstWhereOrNull((e) => e.cid == cid);
+                if (token != null) {
+                  currentToken = token;
                 }
               }
               if (currentToken != null) {
-                currentToken =
-                    currentToken.applyChangeMeta(meta, change.changedAt);
+                currentToken = currentToken.applyChange(change);
               } else {
                 NftCollection.logger.info(
                     "[UpdateTokensSuccess] token not found in database: $tokenCid, change: ${change.toJson()}");
               }
-            } else {
-              log.info("[UpdateTokensSuccess] meta is null");
+            } catch (e) {
+              NftCollection.logger.info("[UpdateTokensSuccess] error: $e");
+              unawaited(Sentry.captureEvent(SentryEvent(
+                message: SentryMessage("Failed to update token: $e " +
+                    "change: ${change.toJson()}"),
+                level: SentryLevel.error,
+                throwable: e,
+              )));
             }
           }
 
@@ -509,6 +559,14 @@ class NftTokensServiceImpl extends NftTokensService {
             message[1] as String,
             List<String>.from(message[2] as List),
           );
+          break;
+
+        case REINDEX_TOKENS:
+          _reindexTokensInIndexer(
+            message[1] as String,
+            List<String>.from(message[2] as List),
+          );
+          break;
 
         case UPDATE_TOKENS_IN_ISOLATE:
           _updateTokensInIsolate(
@@ -580,6 +638,19 @@ class NftTokensServiceImpl extends NftTokensService {
       _isolateSendPort?.send(ReindexAddressesDone(uuid, lastResult));
     } catch (e) {
       _isolateSendPort?.send(ReindexAddressesFailure(uuid, e));
+    }
+  }
+
+  static Future<void> _reindexTokensInIndexer(
+      String uuid, List<String> tokenCids) async {
+    try {
+      final indexerService = _isolateScopeInjector<NftIndexerService>();
+      final result = await indexerService.indexTokens(tokenCids);
+
+      // Send the result (indexTokens always returns a result for non-empty tokenCids)
+      _isolateSendPort?.send(ReindexTokensDone(uuid, result));
+    } catch (e) {
+      _isolateSendPort?.send(ReindexTokensFailure(uuid, e));
     }
   }
 
@@ -723,6 +794,20 @@ class ReindexAddressesDone extends TokensServiceResult {
 
 class ReindexAddressesFailure extends TokensServiceResult {
   ReindexAddressesFailure(this.uuid, this.exception);
+
+  final String uuid;
+  final Object exception;
+}
+
+class ReindexTokensDone extends TokensServiceResult {
+  ReindexTokensDone(this.uuid, this.result);
+
+  final String uuid;
+  final TriggerIndexingResult result;
+}
+
+class ReindexTokensFailure extends TokensServiceResult {
+  ReindexTokensFailure(this.uuid, this.exception);
 
   final String uuid;
   final Object exception;

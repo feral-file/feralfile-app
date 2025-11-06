@@ -248,19 +248,33 @@ extension AssetTokenExtension on AssetToken {
     return provenanceEvents?.items ?? [];
   }
 
-  /// Apply ChangeMeta to this token and return updated token
-  AssetToken applyChangeMeta(ChangeMeta changeMeta, DateTime? changedAt) {
-    if (this.updatedAt != null && this.updatedAt!.isAfter(changedAt!)) {
+  /// Apply a Change (parsing its meta based on subjectType) and return updated token
+  AssetToken applyChange(Change change) {
+    final meta = change.metaParsed;
+    final changedAt = change.changedAt;
+    final lastUpdated = updatedAt;
+    if (lastUpdated != null && lastUpdated.isAfter(changedAt)) {
       NftCollection.logger.info(
-          "[ApplyChangeMeta] token already updated: $cid, changedAt: $changedAt, updatedAt: $updatedAt");
+          "[ApplyChange] token already updated: $cid, changedAt: $changedAt, updatedAt: $updatedAt");
       return this;
     }
-    if (changeMeta is ProvenanceChangeMeta) {
-      return _applyProvenanceChangeMeta(changeMeta, changedAt);
-    } else if (changeMeta is MetadataChangeMeta) {
-      return _applyMetadataChangeMeta(changeMeta, changedAt);
+    if (change.isMint()) {
+      // if the change is a mint, no need to apply any change
+      return this;
     }
-    return this;
+    if (meta is ProvenanceChangeMeta) {
+      return _applyProvenanceChangeMeta(meta, changedAt);
+    } else if (meta is MetadataChangeMeta) {
+      return _applyMetadataChangeMeta(meta, changedAt);
+    } else {
+      NftCollection.logger.info(
+          "[ApplyChange] unknown change type: ${change.subjectType}, change: ${change.toJson()}");
+      unawaited(Sentry.captureEvent(SentryEvent(
+        message: SentryMessage("Unknown change type: ${change.subjectType}"),
+        level: SentryLevel.info,
+      )));
+      return this;
+    }
   }
 
   AssetToken _applyProvenanceChangeMeta(
@@ -325,7 +339,6 @@ extension AssetTokenExtension on AssetToken {
   ) {
     // Merge metadata fields: use new values, fallback to old if new is null
     final newMetadataFields = meta.new_;
-    final oldMetadataFields = meta.old;
 
     // Convert ChangeArtist to Artist
     List<Artist>? convertArtists(List<ChangeArtist>? changeArtists) {
@@ -350,33 +363,23 @@ extension AssetTokenExtension on AssetToken {
     final existingMetadata = metadata;
     final mergedMetadata = existingMetadata != null
         ? existingMetadata.copyWith(
-            imageUrl: newMetadataFields.imageUrl ??
-                oldMetadataFields.imageUrl ??
-                existingMetadata.imageUrl,
-            animationUrl: newMetadataFields.animationUrl ??
-                oldMetadataFields.animationUrl ??
-                existingMetadata.animationUrl,
-            mimeType: newMetadataFields.mimeType ??
-                oldMetadataFields.mimeType ??
-                existingMetadata.mimeType,
+            imageUrl: newMetadataFields.imageUrl ?? existingMetadata.imageUrl,
+            animationUrl:
+                newMetadataFields.animationUrl ?? existingMetadata.animationUrl,
+            mimeType: newMetadataFields.mimeType ?? existingMetadata.mimeType,
             artists: convertArtists(newMetadataFields.artists) ??
-                convertArtists(oldMetadataFields.artists) ??
                 existingMetadata.artists,
             publisher: convertPublisher(newMetadataFields.publisher) ??
-                convertPublisher(oldMetadataFields.publisher) ??
                 existingMetadata.publisher,
           )
         : TokenMetadata(
             name: null,
             description: null,
-            imageUrl: newMetadataFields.imageUrl ?? oldMetadataFields.imageUrl,
-            animationUrl: newMetadataFields.animationUrl ??
-                oldMetadataFields.animationUrl,
-            mimeType: newMetadataFields.mimeType ?? oldMetadataFields.mimeType,
-            artists: convertArtists(newMetadataFields.artists) ??
-                convertArtists(oldMetadataFields.artists),
-            publisher: convertPublisher(newMetadataFields.publisher) ??
-                convertPublisher(oldMetadataFields.publisher),
+            imageUrl: newMetadataFields.imageUrl,
+            animationUrl: newMetadataFields.animationUrl,
+            mimeType: newMetadataFields.mimeType,
+            artists: convertArtists(newMetadataFields.artists),
+            publisher: convertPublisher(newMetadataFields.publisher),
           );
 
     return copyWith(

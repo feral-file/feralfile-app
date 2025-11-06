@@ -70,69 +70,6 @@ class NftIndexerService implements NftIndexerServiceBase {
     return assetTokens;
   }
 
-  // /*
-  // getNftCompactedTokens
-  // params: QueryListTokensRequest
-  // return: List<CompactedAssetToken>
-  // description: Get the list of asset tokens from the indexer
-  // */
-  // @override
-  // Future<List<CompactedAssetToken>> getNftCompactedTokens(
-  //     QueryListTokensRequest request,
-  //     {bool usingArtBlock = false}) async {
-  //   final vars = request.toJson();
-  //   final result = await _client.query(
-  //     doc: getCompactedTokens,
-  //     vars: vars,
-  //   );
-  //   if (result == null) {
-  //     return [];
-  //   }
-  //   final data = QueryListTokensResponse.fromJson(
-  //     Map<String, dynamic>.from(result as Map),
-  //     CompactedAssetToken.fromJsonGraphQl,
-  //   );
-  //   final compactedAssetTokens = data.tokens;
-  //
-  //   if (!usingArtBlock) {
-  //     return compactedAssetTokens;
-  //   } else {
-  //     // missing artist compactedAssetToken
-  //     final missingArtistAssetTokens = compactedAssetTokens.where((token) {
-  //       final artistAddress = token.asset?.artistID;
-  //       return artistAddress == '0x0000000000000000000000000000000000000000';
-  //     }).toList();
-  //     if (missingArtistAssetTokens.isEmpty) {
-  //       return compactedAssetTokens;
-  //     }
-  //     // Build a replacement map for tokens that need artist enrichment
-  //     final Map<String, CompactedAssetToken> replacementById = {};
-  //     for (final compactedAssetToken in missingArtistAssetTokens) {
-  //       final asset = compactedAssetToken.asset;
-  //       if (asset == null) {
-  //         replacementById[compactedAssetToken.id] = compactedAssetToken;
-  //         continue;
-  //       }
-  //       final artblockArtist = await _artBlockService.getArtistByToken(
-  //           contractAddress: compactedAssetToken.contractAddress!.toLowerCase(),
-  //           tokenId: compactedAssetToken.tokenId!);
-  //       if (artblockArtist == null) {
-  //         replacementById[compactedAssetToken.id] = compactedAssetToken;
-  //         continue;
-  //       }
-  //       final newCompactedAsset = asset.copyWith(
-  //           artistID: artblockArtist.address, artistName: artblockArtist.name);
-  //       replacementById[compactedAssetToken.id] =
-  //           compactedAssetToken.copyWith(asset: newCompactedAsset);
-  //     }
-  //     // Rebuild the list preserving original order, replacing where applicable
-  //     final List<CompactedAssetToken> finalList = compactedAssetTokens
-  //         .map((t) => replacementById[t.id] ?? t)
-  //         .toList(growable: false);
-  //     return finalList;
-  //   }
-  // }
-
   @override
   Future<Identity> getIdentity(QueryIdentityRequest request) async {
     return Identity('', '', '');
