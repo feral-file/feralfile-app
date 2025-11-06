@@ -488,8 +488,8 @@ class NftTokensServiceImpl extends NftTokensService {
               if (currentToken != null) {
                 currentToken = currentToken.applyChange(change);
               } else {
-                NftCollection.logger.info(
-                    "[UpdateTokensSuccess] token not found in database: $tokenCid, change: ${change.toJson()}");
+                // NftCollection.logger.info(
+                //     "[UpdateTokensSuccess] token not found in database: $tokenCid, change: ${change.toJson()}");
               }
             } catch (e) {
               NftCollection.logger.info("[UpdateTokensSuccess] error: $e");
@@ -544,6 +544,9 @@ class NftTokensServiceImpl extends NftTokensService {
               } else {
                 completer.complete(data);
               }
+            } else {
+              NftCollection.logger
+                  .info('[_handleMessageInIsolate] [AUTH_OP] complete is null');
             }
           }
           return;

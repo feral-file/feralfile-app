@@ -29,7 +29,7 @@ class UserAllOwnCollectionBloc
     on<ReloadAssetTokensFromIndexerDatabase>(
         _onReloadAssetTokensFromIndexerDatabase);
     on<ClearDataEvent>(_onClearData);
-    on<PollWorkflowStatus>(_onPollWorkflowStatus);
+    on<ReindexAddresses>(_onReindexAddresses);
     on<WorkflowStatusTick>(_onWorkflowStatusTick);
     on<UpdateTokensOfAddresses>(_onUpdateTokensOfAddresses);
   }
@@ -62,6 +62,85 @@ class UserAllOwnCollectionBloc
       add(ReloadAssetTokensFromIndexerDatabase());
     } else {
       add(ReloadAssetTokensFromIndexerDatabase());
+    }
+  }
+
+  Future<void> _onReindexAddresses(
+    ReindexAddresses event,
+    Emitter<UserAllOwnCollectionState> emit,
+  ) async {
+    final addresses = event.addresses;
+    if (addresses.isEmpty) return;
+
+    try {
+      log.info('[UserAllOwnCollectionBloc] Reindex addresses: $addresses');
+      // Emit operation BEFORE calling reindex
+      final opId = addresses.join(',');
+      final operations = List<IndexingOperation>.from(state.indexingOperations);
+
+      // if the operation already exists, return;
+      if (operations.any((op) => op.id == opId)) {
+        log.info(
+            '[UserAllOwnCollectionBloc] Addresses $addresses already being reindexed: $opId');
+        return;
+      }
+      operations.add(IndexingOperation(id: opId, addresses: addresses));
+      emit(state.copyWith(indexingOperations: operations));
+      try {
+        final result = await _tokensService.reindexAddresses(addresses);
+
+        final workflowId = result.workflowId;
+        final runId = result.runId;
+
+        final opKey = '${workflowId}_$runId';
+        // Cancel previous timer for this op if any
+        _workflowStatusTimers[opKey]?.cancel();
+
+        final startedAt = DateTime.now();
+        _workflowStatusTimers[opKey] = Timer.periodic(
+          const Duration(seconds: 5),
+          (timer) async {
+            try {
+              // Stop after 10 minutes silently
+              if (DateTime.now().difference(startedAt) >
+                  const Duration(minutes: 10)) {
+                timer.cancel();
+                _workflowStatusTimers.remove(opKey);
+                return;
+              }
+
+              final status = await injector<NftIndexerService>()
+                  .getWorkflowStatus(workflowId, runId);
+              log.info(
+                  '[ReindexAddresses][$opKey] status: ${status.status.toJson()}');
+              add(WorkflowStatusTick(
+                operationKey: opKey,
+                addresses: addresses,
+                workflowId: workflowId,
+                runId: runId,
+                status: status.status,
+              ));
+            } catch (e, st) {
+              // Keep polling despite transient errors
+              log.info('[ReindexAddresses][$opKey] poll error: $e');
+              Sentry.captureException(e, stackTrace: st);
+            }
+          },
+        );
+      } catch (e, st) {
+        log.info('[UserAllOwnCollectionBloc] Reindex error: $e');
+        Sentry.captureException(e, stackTrace: st);
+        operations.removeWhere((op) => op.id == opId);
+        emit(state.copyWith(indexingOperations: operations));
+        rethrow;
+      }
+    } catch (e, st) {
+      log.info('[UserAllOwnCollectionBloc] Reindex error: $e');
+      Sentry.captureException(e, stackTrace: st);
+      emit(state.copyWith(
+        status: UserAllOwnCollectionStatus.error,
+        error: e.toString(),
+      ));
     }
   }
 
@@ -192,135 +271,33 @@ class UserAllOwnCollectionBloc
       _tokensStreamSubs[FetchTokensOfAddresses] != null ||
       _activeCompleters[FetchTokensOfAddresses]?.isCompleted == false;
 
-  Future<void> _onPollWorkflowStatus(
-    PollWorkflowStatus event,
-    Emitter<UserAllOwnCollectionState> emit,
-  ) async {
-    final operationKey = event.addresses.join(',');
-
-    // Cancel existing timer for these addresses if any
-    _workflowStatusTimers[operationKey]?.cancel();
-    _workflowStatusTimers.remove(operationKey);
-
-    // Create indexing operation with workflowId and runId if provided
-    final operation = IndexingOperation(
-      addresses: event.addresses,
-      workflowId: event.workflowId,
-      runId: event.runId,
-    );
-
-    final currentOperations =
-        List<IndexingOperation>.from(state.indexingOperations);
-
-    // Remove existing operation with same addresses if any
-    currentOperations.removeWhere((op) => op.key == operationKey);
-
-    // Add new operation
-    currentOperations.add(operation);
-
-    // Emit state with operation (workflowId/runId may be null if not provided yet)
-    emit(state.copyWith(
-      indexingOperations: currentOperations,
-    ));
-
-    // If workflowId and runId are not provided, just emit state and return
-    // (caller should call again with workflowId/runId after getting them)
-    if (event.workflowId == null || event.runId == null) {
-      log.info(
-        '[PollWorkflowStatus] Waiting for workflowId and runId for addresses: ${event.addresses}',
-      );
-      return;
-    }
-
-    // Start polling workflow status
-    final indexerService = injector<NftIndexerService>();
-    final startTime = DateTime.now();
-    const timeoutDuration = Duration(minutes: 10);
-    const pollInterval = Duration(seconds: 5);
-
-    log.info(
-      '[PollWorkflowStatus] Starting poll for workflowId: ${event.workflowId}, runId: ${event.runId}',
-    );
-
-    // Poll workflow status every 5 seconds (dispatch tick events instead of emitting here)
-    final timer = Timer.periodic(pollInterval, (timer) async {
-      try {
-        // Check timeout
-        if (DateTime.now().difference(startTime) >= timeoutDuration) {
-          timer.cancel();
-          _workflowStatusTimers.remove(operationKey);
-          log.info(
-            '[PollWorkflowStatus] Timeout after 10 minutes, stopping poll for workflowId: ${event.workflowId}, runId: ${event.runId}',
-          );
-          add(WorkflowStatusTick(
-            operationKey: operationKey,
-            addresses: event.addresses,
-            workflowId: event.workflowId!,
-            runId: event.runId!,
-            status: WorkflowExecutionStatus.timedOut,
-          ));
-          return;
-        }
-
-        // Get workflow status
-        final workflowStatus = await indexerService.getWorkflowStatus(
-          event.workflowId!,
-          event.runId!,
-        );
-
-        log.info(
-          '[PollWorkflowStatus] Status: ${workflowStatus.status.toJson()} for workflowId: ${event.workflowId}, runId: ${event.runId}',
-        );
-
-        add(WorkflowStatusTick(
-          operationKey: operationKey,
-          addresses: event.addresses,
-          workflowId: event.workflowId!,
-          runId: event.runId!,
-          status: workflowStatus.status,
-        ));
-      } catch (e, stackTrace) {
-        log.info('[PollWorkflowStatus] Error: $e');
-        Sentry.captureException(
-          'Failed to poll workflow status: $e',
-          stackTrace: stackTrace,
-        );
-        // Don't cancel timer on error, continue polling
-      }
-    });
-
-    _workflowStatusTimers[operationKey] = timer;
-  }
+  // Removed deprecated _onPollWorkflowStatus
 
   Future<void> _onWorkflowStatusTick(
     WorkflowStatusTick event,
     Emitter<UserAllOwnCollectionState> emit,
   ) async {
-    // Timeout: stop polling and remove operation
-    if (event.status == WorkflowExecutionStatus.timedOut) {
-      final finalOperations =
-          List<IndexingOperation>.from(state.indexingOperations);
-      finalOperations.removeWhere((op) => op.key == event.operationKey);
-      emit(state.copyWith(indexingOperations: finalOperations));
-      return;
-    }
-
+    final opKey = event.operationKey;
     if (event.status.isDone) {
-      _workflowStatusTimers[event.operationKey]?.cancel();
-      _workflowStatusTimers.remove(event.operationKey);
+      _workflowStatusTimers[opKey]?.cancel();
+      _workflowStatusTimers.remove(opKey);
 
-      final finalOperations =
-          List<IndexingOperation>.from(state.indexingOperations);
-      finalOperations.removeWhere((op) => op.key == event.operationKey);
+      // Remove operation for these addresses from state
+      final operations = List<IndexingOperation>.from(state.indexingOperations);
+      operations.removeWhere((op) => op.id == event.addresses.join(','));
 
       if (event.status.isSuccess) {
-        emit(state.copyWith(indexingOperations: finalOperations));
+        emit(state.copyWith(indexingOperations: operations));
         add(FetchTokensOfAddresses(addresses: event.addresses));
+      } else if (event.status == WorkflowExecutionStatus.timedOut) {
+        // silently stop
+        emit(state.copyWith(indexingOperations: operations));
+        return;
       } else {
         emit(state.copyWith(
           status: UserAllOwnCollectionStatus.error,
-          error: 'Workflow ${event.status.toJson().toLowerCase()}',
-          indexingOperations: finalOperations,
+          error: 'Indexing failed or canceled: ${event.status.toJson()}',
+          indexingOperations: operations,
         ));
       }
     }

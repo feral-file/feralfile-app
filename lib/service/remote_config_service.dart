@@ -162,7 +162,7 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
     },
     // Token metadata rebuild policy
     'token_metadata_rebuild': {
-      'cache_valid_duration': '86400', // seconds (1 day)
+      'cache_valid_duration': null, // may be missing or null
       'last_force_update_time': '2025-01-01T00:00:00Z',
     },
   };

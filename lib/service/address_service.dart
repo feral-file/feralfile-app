@@ -86,10 +86,9 @@ class AddressService {
     await _cloudObject.addressObject.insertAddresses([newAddress]);
     final result = await injector<NftTokensService>()
         .reindexAddresses([newAddress.address]);
-    injector<UserAllOwnCollectionBloc>().add(PollWorkflowStatus(
-        addresses: [newAddress.address],
-        workflowId: result.workflowId,
-        runId: result.runId));
+    injector<UserAllOwnCollectionBloc>().add(ReindexAddresses(
+      addresses: [newAddress.address],
+    ));
 
     await injector<UserDp1PlaylistService>()
         .insertAddressesToPlaylist([newAddress.address]);

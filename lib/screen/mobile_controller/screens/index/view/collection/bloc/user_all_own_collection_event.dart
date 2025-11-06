@@ -24,16 +24,12 @@ class ReloadAssetTokensFromIndexerDatabase extends UserAllOwnCollectionEvent {
 
 class ClearDataEvent extends UserAllOwnCollectionEvent {}
 
-class PollWorkflowStatus extends UserAllOwnCollectionEvent {
-  PollWorkflowStatus({
+class ReindexAddresses extends UserAllOwnCollectionEvent {
+  ReindexAddresses({
     required this.addresses,
-    this.workflowId,
-    this.runId,
   });
 
   final List<String> addresses;
-  final String? workflowId;
-  final String? runId;
 }
 
 class WorkflowStatusTick extends UserAllOwnCollectionEvent {

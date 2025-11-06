@@ -167,15 +167,14 @@ class HomePageHelper {
         await rc.loadConfigs();
       }
 
-      // Read cache policy
-      final cacheValidSeconds = int.tryParse(
-            rc.getConfig<String>(
-              ConfigGroup.tokenMetadataRebuild,
-              ConfigKey.cacheValidDuration,
-              '86400',
-            ),
-          ) ??
-          86400;
+      // Read cache policy (cache_valid_duration can be null/missing)
+      final cacheValidStr = rc.getConfig<String?>(
+        ConfigGroup.tokenMetadataRebuild,
+        ConfigKey.cacheValidDuration,
+        null,
+      );
+      final int? cacheValidSeconds =
+          cacheValidStr != null ? int.tryParse(cacheValidStr) : null;
       final lastForceUpdateIso = rc.getConfig<String>(
         ConfigGroup.tokenMetadataRebuild,
         ConfigKey.lastForceUpdateTime,
@@ -186,23 +185,38 @@ class HomePageHelper {
 
       // Compute candidates
       final now = DateTime.now().toUtc();
-      final threshold = Duration(seconds: cacheValidSeconds);
+      final Duration? threshold = cacheValidSeconds != null
+          ? Duration(seconds: cacheValidSeconds)
+          : null;
       final addresses = injector<AddressService>().getAllAddresses();
       final refreshedMap = injector<UserDp1PlaylistService>()
           .getAddressOldestLastRefreshedTime(addresses: addresses);
 
-      final toRefresh = <String>{};
+      final addressesWithoutRefreshTime = <String>[];
+      final addressesInvalidOrBeforeForce = <String>[];
       for (final addr in addresses) {
         final last = refreshedMap[addr]?.toUtc();
         final isMissing = last == null;
-        final isExpired = last != null && now.difference(last) > threshold;
+        final isExpired = threshold != null &&
+            last != null &&
+            now.difference(last) > threshold;
         final isBeforeForced = lastForceUpdateTime != null &&
             (last == null || last.isBefore(lastForceUpdateTime));
-        if (isMissing || isExpired || isBeforeForced) {
-          toRefresh.add(addr);
+        if (isMissing) {
+          addressesWithoutRefreshTime.add(addr);
+        } else if (isExpired || isBeforeForced) {
+          addressesInvalidOrBeforeForce.add(addr);
         }
       }
 
+      final toRefresh = {
+        ...addressesWithoutRefreshTime,
+        ...addressesInvalidOrBeforeForce,
+      };
+
+      log.info('Addresses without refresh time: $addressesWithoutRefreshTime');
+      log.info(
+          'Addresses invalid cache or before force: $addressesInvalidOrBeforeForce');
       log.info('Addresses to refresh: ${toRefresh.toList()}');
 
       if (toRefresh.isNotEmpty) {

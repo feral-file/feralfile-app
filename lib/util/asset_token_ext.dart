@@ -254,8 +254,8 @@ extension AssetTokenExtension on AssetToken {
     final changedAt = change.changedAt;
     final lastUpdated = updatedAt;
     if (lastUpdated != null && lastUpdated.isAfter(changedAt)) {
-      NftCollection.logger.info(
-          "[ApplyChange] token already updated: $cid, changedAt: $changedAt, updatedAt: $updatedAt");
+      // NftCollection.logger.info(
+      //     "[ApplyChange] token already updated: $cid, changedAt: $changedAt, updatedAt: $updatedAt");
       return this;
     }
     if (change.isMint()) {

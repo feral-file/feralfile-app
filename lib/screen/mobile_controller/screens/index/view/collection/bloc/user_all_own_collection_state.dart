@@ -14,11 +14,13 @@ class AddressAssetTokens {
 
 class IndexingOperation {
   const IndexingOperation({
+    required this.id,
     required this.addresses,
     this.workflowId,
     this.runId,
   });
 
+  final String id; // key of operation
   final List<String> addresses;
   final String? workflowId;
   final String? runId;
@@ -30,23 +32,24 @@ class IndexingOperation {
     bool clearWorkflowIds = false,
   }) {
     return IndexingOperation(
+      id: id,
       addresses: addresses ?? this.addresses,
       workflowId: clearWorkflowIds ? null : (workflowId ?? this.workflowId),
       runId: clearWorkflowIds ? null : (runId ?? this.runId),
     );
   }
 
-  String get key => addresses.join(',');
+  String get key => id;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is IndexingOperation &&
           runtimeType == other.runtimeType &&
-          key == other.key;
+          id == other.id;
 
   @override
-  int get hashCode => key.hashCode;
+  int get hashCode => id.hashCode;
 }
 
 class UserAllOwnCollectionState {

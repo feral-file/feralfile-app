@@ -1,6 +1,8 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
+import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/dp1_manifest_helper.dart';
 import 'package:flutter/foundation.dart';
@@ -94,7 +96,9 @@ class WorksBloc extends Bloc<WorksEvent, WorksState> {
       );
 
       final items = worksResponse.items;
-      final assetTokens = await _indexerService.getAssetTokens(items);
+      final cids = items.map((e) => e.cid).whereType<String>().toList();
+      final assetTokens =
+          await injector<NftTokensService>().getManualTokens(cids: cids);
 
       // Fetch DP1 manifests for page items
       final refs = items.map((e) => e.ref).whereType<String>().toList();
