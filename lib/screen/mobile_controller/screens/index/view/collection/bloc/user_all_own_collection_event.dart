@@ -5,10 +5,8 @@ abstract class UserAllOwnCollectionEvent {}
 class FetchTokensOfAddresses extends UserAllOwnCollectionEvent {
   FetchTokensOfAddresses({
     required this.addresses,
-    this.shouldEmitLoading = true,
   });
   final List<String> addresses;
-  final bool shouldEmitLoading;
 }
 
 class UpdateDynamicQueryEvent extends UserAllOwnCollectionEvent {
@@ -57,9 +55,7 @@ class WorkflowStatusTick extends UserAllOwnCollectionEvent {
 class UpdateTokensOfAddresses extends UserAllOwnCollectionEvent {
   UpdateTokensOfAddresses({
     required this.addresses,
-    this.shouldEmitLoading = true,
   });
 
   final List<String> addresses;
-  final bool shouldEmitLoading;
 }

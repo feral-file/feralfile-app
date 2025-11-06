@@ -81,11 +81,6 @@ class UserAllOwnCollectionBloc
         log.info(
             '[UserAllOwnCollectionBloc][_onFetchTokensOfAddresses] not fetching, start fetching');
       }
-      if (event.shouldEmitLoading) {
-        log.info(
-            '[UserAllOwnCollectionBloc][_onFetchTokensOfAddresses] emit loading state');
-        emit(state.copyWith(status: UserAllOwnCollectionStatus.loading));
-      }
       // cancel the previous stream
       await _tokensStreamSubs[subType]?.cancel();
       _tokensStreamSubs[subType] = null;
@@ -146,12 +141,6 @@ class UserAllOwnCollectionBloc
     } catch (e) {
       log.info('[${event.runtimeType}] error $e');
       Sentry.captureException('Failed to refresh asset tokens: $e');
-      if (event.shouldEmitLoading) {
-        emit(state.copyWith(
-          status: UserAllOwnCollectionStatus.error,
-          error: e.toString(),
-        ));
-      }
     }
     log.info('[${event.runtimeType}] completed');
   }
@@ -326,8 +315,7 @@ class UserAllOwnCollectionBloc
 
       if (event.status.isSuccess) {
         emit(state.copyWith(indexingOperations: finalOperations));
-        add(FetchTokensOfAddresses(
-            addresses: event.addresses, shouldEmitLoading: true));
+        add(FetchTokensOfAddresses(addresses: event.addresses));
       } else {
         emit(state.copyWith(
           status: UserAllOwnCollectionStatus.error,
@@ -346,10 +334,6 @@ class UserAllOwnCollectionBloc
       log.info(
           '[UserAllOwnCollectionBloc][_onUpdateTokensOfAddresses] started');
       final subType = event.runtimeType;
-
-      if (event.shouldEmitLoading) {
-        emit(state.copyWith(status: UserAllOwnCollectionStatus.loading));
-      }
 
       // cancel previous stream for this subtype
       await _tokensStreamSubs[subType]?.cancel();
@@ -403,12 +387,6 @@ class UserAllOwnCollectionBloc
       log.info('[${event.runtimeType}] error $e');
       Sentry.captureException('Failed to update asset tokens: $e',
           stackTrace: stackTrace);
-      if (event.shouldEmitLoading) {
-        emit(state.copyWith(
-          status: UserAllOwnCollectionStatus.error,
-          error: e.toString(),
-        ));
-      }
     }
   }
 

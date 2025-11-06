@@ -153,8 +153,8 @@ class _DataManagementPageState extends State<DataManagementPage> {
           await injector<UserDp1PlaylistService>()
               .createAllOwnedPlaylistIfNotExists();
           final addresses = injector<AddressService>().getAllAddresses();
-          injector<UserAllOwnCollectionBloc>().add(FetchTokensOfAddresses(
-              addresses: addresses, shouldEmitLoading: true));
+          injector<UserAllOwnCollectionBloc>()
+              .add(FetchTokensOfAddresses(addresses: addresses));
 
           unawaited(
               injector<FeralFileFeedManager>().reloadAllCache(force: true));
