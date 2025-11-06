@@ -304,26 +304,37 @@ class Owner {
 }
 
 class PaginatedOwners {
-  PaginatedOwners({required this.items});
+  PaginatedOwners(
+      {required this.items, required this.total, required this.offset});
 
   final List<Owner> items;
+  final int total;
+  final int? offset;
 
   factory PaginatedOwners.fromJson(Map<String, dynamic> json) =>
       PaginatedOwners(
         items: (json['items'] as List)
             .map((e) => Owner.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList(),
+        total: int.tryParse(json['total'].toString()) ?? 0,
+        offset: int.tryParse(json['offset'].toString()),
       );
 
   Map<String, dynamic> toJson() => {
         'items': items.map((e) => e.toJson()).toList(),
+        'total': total,
+        'offset': offset,
       };
 
   PaginatedOwners copyWith({
     List<Owner>? items,
+    int? total,
+    int? offset,
   }) {
     return PaginatedOwners(
       items: items ?? this.items,
+      total: total ?? this.total,
+      offset: offset ?? this.offset,
     );
   }
 }

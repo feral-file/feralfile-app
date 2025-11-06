@@ -136,7 +136,7 @@ extension AssetTokenExtension on AssetToken {
 
     thumbnailUrl = enrichmentSource?.imageUrl ?? metadata?.imageUrl;
 
-    thumbnailUrl = enrichmentSourceMediaAssets
+    final mediaThumbnailUrl = enrichmentSourceMediaAssets
             ?.firstWhereOrNull(
                 (mediaAsset) => mediaAsset.sourceUrl == thumbnailUrl)
             ?.variantUrls
@@ -148,6 +148,11 @@ extension AssetTokenExtension on AssetToken {
             ?.variantUrls
             .values
             .firstOrNull as String?;
+
+    if (mediaThumbnailUrl != null && mediaThumbnailUrl.isNotEmpty) {
+      return mediaThumbnailUrl;
+    }
+
     if (thumbnailUrl?.isNotEmpty ?? false) {
       return thumbnailUrl;
     }
@@ -322,8 +327,8 @@ extension AssetTokenExtension on AssetToken {
         updated.add(Owner(ownerAddress: meta.to!, quantity: delta.toString()));
       }
 
-      newOwners =
-          (owners?.copyWith(items: updated)) ?? PaginatedOwners(items: updated);
+      newOwners = (owners?.copyWith(items: updated)) ??
+          PaginatedOwners(items: updated, offset: 0, total: updated.length);
     }
 
     return copyWith(

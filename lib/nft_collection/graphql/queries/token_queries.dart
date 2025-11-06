@@ -146,6 +146,8 @@ const String getTokens = r'''
             quantity
             owner_address
           }
+          total
+          offset
         }
         provenance_events {
           items {
@@ -156,6 +158,8 @@ const String getTokens = r'''
             timestamp
             chain
           }
+          total
+          offset
         }
         enrichment_source {
           name

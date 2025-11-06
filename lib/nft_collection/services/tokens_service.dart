@@ -598,14 +598,10 @@ class NftTokensServiceImpl extends NftTokensService {
       var offset = 0;
 
       do {
-        final request = QueryListTokensRequest(
-          owners: addresses,
-          offset: offset,
-        );
+        final tokens = await _getTokensPageWithAllOwners(
+            isolateIndexerService, addresses, offset);
 
-        final assets = await isolateIndexerService.getNftTokens(request);
-
-        if (assets.isEmpty) {
+        if (tokens.isEmpty) {
           break;
         } else {
           _isolateSendPort?.send(
@@ -613,12 +609,12 @@ class NftTokensServiceImpl extends NftTokensService {
               key,
               uuid,
               addresses,
-              assets,
+              tokens,
               false,
             ),
           );
 
-          offset += assets.length;
+          offset += tokens.length;
         }
       } while (true);
 
@@ -627,6 +623,54 @@ class NftTokensServiceImpl extends NftTokensService {
     } catch (exception) {
       _isolateSendPort?.send(FetchTokenFailure(key, uuid, exception));
     }
+  }
+
+  // Fetch a single tokens page (by offset) and progressively increase ownersLimit
+  // until owners lists are fully retrieved (heuristic) or a safety cap is reached.
+  static Future<List<AssetToken>> _getTokensPageWithAllOwners(
+    NftIndexerService indexerService,
+    List<String> addresses,
+    int offset,
+  ) async {
+    var ownersOffset = 0;
+    final request = QueryListTokensRequest(
+      owners: addresses,
+      offset: offset,
+      ownersOffset: ownersOffset,
+    );
+    final tokens = await indexerService.getNftTokens(request);
+    Map<String, AssetToken> tokenMap =
+        Map.fromEntries(tokens.map((token) => MapEntry(token.cid, token)));
+    ownersOffset = request.ownersLimit;
+
+    List<AssetToken> lastTokens = tokens.toList();
+
+    // looop to fetch more owners
+    while (true) {
+      // list token with owners limit not reached
+      final tokensToFetch = lastTokens
+          .where((token) => (token.owners?.total ?? 0) > ownersOffset)
+          .toList();
+      if (tokensToFetch.isEmpty) break;
+      final request = QueryListTokensRequest(
+        offset: 0,
+        ownersOffset: ownersOffset,
+        tokenCids: tokensToFetch.map((token) => token.cid).toList(),
+      );
+      final tokens = await indexerService.getNftTokens(request);
+      tokens.forEach((token) {
+        // insert new owners into token map
+        final oldToken = tokenMap[token.cid];
+        final oldOwners = oldToken?.owners;
+        final newOwners = oldOwners?.copyWith(
+          items: [...oldOwners?.items ?? [], ...token.owners?.items ?? []],
+        );
+        tokenMap[token.cid] = oldToken?.copyWith(owners: newOwners) ?? token;
+      });
+      lastTokens = tokens;
+      ownersOffset = ownersOffset + request.ownersLimit;
+    }
+    return tokenMap.values.toList();
   }
 
   static Future<void> _reindexAddressesInIndexer(
