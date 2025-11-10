@@ -98,6 +98,8 @@ class AccountSettingsClient {
 
   Future<String> _getToken() async {
     final jwt = await injector<AuthService>().getAuthToken();
+    log.info(
+        'AccountSettingsClient: getToken ${jwt?.jwtToken.substring(0, 10)}');
     return 'Bearer ${jwt ?? ''}';
   }
 

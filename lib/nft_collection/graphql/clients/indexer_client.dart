@@ -109,10 +109,14 @@ class IndexerClient {
     try {
       if (_getTokenOverride != null) {
         final authToken = await _getTokenOverride();
+        NftCollection.logger
+            .info('IndexerClient: getToken ${authToken.substring(0, 10)}');
         return authToken;
       }
       if (_authService == null) return '';
       final jwt = await _authService.getAuthToken();
+      NftCollection.logger
+          .info('IndexerClient: getToken ${jwt?.jwtToken.substring(0, 10)}');
       return jwt != null ? 'Bearer ${jwt.jwtToken}' : '';
     } catch (e) {
       NftCollection.logger.warning('Failed to get auth token: $e');
