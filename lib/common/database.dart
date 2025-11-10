@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sentry/sentry.dart';
 
 const objectboxDBFile = 'com.bitmark.feralfile.db';
+const objectboxDBFileV2 = 'com.feralfile.v2.db';
 
 class ObjectBox {
   /// The Store of this app.
