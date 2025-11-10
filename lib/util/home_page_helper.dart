@@ -211,7 +211,9 @@ class HomePageHelper {
           addresses.where((addr) => refreshedMap[addr] != null).toList();
 
       NftCollection.logger.info('Already indexed addresses: $alreadyIndexed');
-      injector<NftTokensService>().reindexAddresses(alreadyIndexed);
+      if (alreadyIndexed.isNotEmpty) {
+        injector<NftTokensService>().reindexAddresses(alreadyIndexed);
+      }
 
       log.info('Addresses without refresh time: $addressesWithoutRefreshTime');
       log.info(
