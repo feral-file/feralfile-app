@@ -598,10 +598,12 @@ class NftTokensServiceImpl extends NftTokensService {
       final String op = message[1] as String;
       final String reqId = message[2] as String;
       try {
+        NftCollection.logger.info('Auth op: $op');
         switch (op) {
           case AUTH_GET_TOKEN:
             final jwt = await injector<AuthService>()
                 .getAuthToken(shouldRefresh: false);
+            NftCollection.logger.info('Auth get token: ${jwt?.jwtToken}');
             _sendPort?.send([AUTH_OP, reqId, null, jwt?.jwtToken]);
             break;
           case AUTH_REFRESH:
