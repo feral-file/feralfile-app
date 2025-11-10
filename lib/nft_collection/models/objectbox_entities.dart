@@ -20,7 +20,7 @@ abstract class ObjectboxEntity {
 }
 
 /// ObjectBox persistence model for Token (v2)
-@Entity()
+@Entity(uid: 8)
 class TokenObject extends ObjectboxEntity {
   int id;
 

@@ -20,93 +20,93 @@ export 'package:objectbox/objectbox.dart'; // so that callers only have to impor
 
 final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
-      id: const obx_int.IdUid(1, 8785770107812140676),
+      id: const obx_int.IdUid(2, 8),
       name: 'TokenObject',
-      lastPropertyId: const obx_int.IdUid(20, 948222223331467252),
+      lastPropertyId: const obx_int.IdUid(16, 7337749507464353901),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(1, 2152673203633054074),
+            id: const obx_int.IdUid(1, 2492912385049457612),
             name: 'id',
             type: 6,
             flags: 1),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(2, 4298635337776257820),
+            id: const obx_int.IdUid(2, 3836698557715220357),
             name: 'uniqueId',
             type: 9,
             flags: 2080,
-            indexId: const obx_int.IdUid(1, 1037869124098185174)),
+            indexId: const obx_int.IdUid(4, 6556623671139989371)),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(3, 8791417915566643013),
+            id: const obx_int.IdUid(3, 5431265855778849670),
+            name: 'tokenId',
+            type: 6,
+            flags: 8,
+            indexId: const obx_int.IdUid(5, 6357305804225662327)),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(4, 8845955432334505068),
             name: 'cid',
             type: 9,
             flags: 2048,
-            indexId: const obx_int.IdUid(2, 1458197781980648048)),
+            indexId: const obx_int.IdUid(6, 6360416618412085390)),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(4, 8702876953287691070),
+            id: const obx_int.IdUid(5, 3125778704452126605),
             name: 'chain',
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(5, 3207296672527401195),
+            id: const obx_int.IdUid(6, 5186756438691878316),
             name: 'standard',
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(6, 8615917607975718880),
+            id: const obx_int.IdUid(7, 5184276449274202841),
             name: 'contractAddress',
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(7, 2837370537871558437),
+            id: const obx_int.IdUid(8, 7576297660286522227),
             name: 'tokenNumber',
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(8, 4962567785251355659),
+            id: const obx_int.IdUid(9, 7406237124215292896),
             name: 'currentOwner',
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(12, 1841365891659981081),
+            id: const obx_int.IdUid(10, 4955538776728222056),
+            name: 'updatedAtMicroseconds',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(11, 5017173103952557424),
             name: 'metadataJson',
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(13, 7820093520451817506),
+            id: const obx_int.IdUid(12, 2770984137435841123),
             name: 'ownersJson',
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(14, 663540667962612769),
+            id: const obx_int.IdUid(13, 7716881877070356794),
             name: 'provenanceEventsJson',
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(15, 7040337735420530751),
+            id: const obx_int.IdUid(14, 4682576918663374672),
             name: 'enrichmentSourceJson',
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(16, 6195398151728164133),
+            id: const obx_int.IdUid(15, 4984417783431494339),
             name: 'metadataMediaAssetsJson',
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(17, 6507761636191984416),
+            id: const obx_int.IdUid(16, 7337749507464353901),
             name: 'enrichmentSourceMediaAssetsJson',
             type: 9,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(19, 1128917049750185872),
-            name: 'tokenId',
-            type: 6,
-            flags: 8,
-            indexId: const obx_int.IdUid(3, 6205828368658050765)),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(20, 948222223331467252),
-            name: 'updatedAtMicroseconds',
-            type: 6,
             flags: 0)
       ],
       relations: <obx_int.ModelRelation>[],
@@ -148,17 +148,33 @@ Future<obx.Store> openStore(
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
       entities: _entities,
-      lastEntityId: const obx_int.IdUid(1, 8785770107812140676),
-      lastIndexId: const obx_int.IdUid(3, 6205828368658050765),
+      lastEntityId: const obx_int.IdUid(2, 8),
+      lastIndexId: const obx_int.IdUid(6, 6360416618412085390),
       lastRelationId: const obx_int.IdUid(0, 0),
       lastSequenceId: const obx_int.IdUid(0, 0),
-      retiredEntityUids: const [],
+      retiredEntityUids: const [8785770107812140676],
       retiredIndexUids: const [],
       retiredPropertyUids: const [
         1585894623012193859,
         1043666627485565459,
         2653960096876875255,
-        3607900808077485092
+        3607900808077485092,
+        2152673203633054074,
+        4298635337776257820,
+        8791417915566643013,
+        8702876953287691070,
+        3207296672527401195,
+        8615917607975718880,
+        2837370537871558437,
+        4962567785251355659,
+        1841365891659981081,
+        7820093520451817506,
+        663540667962612769,
+        7040337735420530751,
+        6195398151728164133,
+        6507761636191984416,
+        1128917049750185872,
+        948222223331467252
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -204,23 +220,23 @@ obx_int.ModelDefinition getObjectBoxModel() {
               object.enrichmentSourceMediaAssetsJson == null
                   ? null
                   : fbb.writeString(object.enrichmentSourceMediaAssetsJson!);
-          fbb.startTable(21);
+          fbb.startTable(17);
           fbb.addInt64(0, object.id);
           fbb.addOffset(1, uniqueIdOffset);
-          fbb.addOffset(2, cidOffset);
-          fbb.addOffset(3, chainOffset);
-          fbb.addOffset(4, standardOffset);
-          fbb.addOffset(5, contractAddressOffset);
-          fbb.addOffset(6, tokenNumberOffset);
-          fbb.addOffset(7, currentOwnerOffset);
-          fbb.addOffset(11, metadataJsonOffset);
-          fbb.addOffset(12, ownersJsonOffset);
-          fbb.addOffset(13, provenanceEventsJsonOffset);
-          fbb.addOffset(14, enrichmentSourceJsonOffset);
-          fbb.addOffset(15, metadataMediaAssetsJsonOffset);
-          fbb.addOffset(16, enrichmentSourceMediaAssetsJsonOffset);
-          fbb.addInt64(18, object.tokenId);
-          fbb.addInt64(19, object.updatedAtMicroseconds);
+          fbb.addInt64(2, object.tokenId);
+          fbb.addOffset(3, cidOffset);
+          fbb.addOffset(4, chainOffset);
+          fbb.addOffset(5, standardOffset);
+          fbb.addOffset(6, contractAddressOffset);
+          fbb.addOffset(7, tokenNumberOffset);
+          fbb.addOffset(8, currentOwnerOffset);
+          fbb.addInt64(9, object.updatedAtMicroseconds);
+          fbb.addOffset(10, metadataJsonOffset);
+          fbb.addOffset(11, ownersJsonOffset);
+          fbb.addOffset(12, provenanceEventsJsonOffset);
+          fbb.addOffset(13, enrichmentSourceJsonOffset);
+          fbb.addOffset(14, metadataMediaAssetsJsonOffset);
+          fbb.addOffset(15, enrichmentSourceMediaAssetsJsonOffset);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -230,41 +246,41 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final idParam =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
           final tokenIdParam =
-              const fb.Int64Reader().vTableGet(buffer, rootOffset, 40, 0);
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 8, 0);
           final cidParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGet(buffer, rootOffset, 8, '');
-          final chainParam = const fb.StringReader(asciiOptimization: true)
               .vTableGet(buffer, rootOffset, 10, '');
-          final standardParam = const fb.StringReader(asciiOptimization: true)
+          final chainParam = const fb.StringReader(asciiOptimization: true)
               .vTableGet(buffer, rootOffset, 12, '');
+          final standardParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 14, '');
           final contractAddressParam =
               const fb.StringReader(asciiOptimization: true)
-                  .vTableGet(buffer, rootOffset, 14, '');
+                  .vTableGet(buffer, rootOffset, 16, '');
           final tokenNumberParam =
               const fb.StringReader(asciiOptimization: true)
-                  .vTableGet(buffer, rootOffset, 16, '');
+                  .vTableGet(buffer, rootOffset, 18, '');
           final currentOwnerParam =
               const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 18);
+                  .vTableGetNullable(buffer, rootOffset, 20);
           final updatedAtMicrosecondsParam =
-              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 42);
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 22);
           final metadataJsonParam =
               const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 26);
+                  .vTableGetNullable(buffer, rootOffset, 24);
           final ownersJsonParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGetNullable(buffer, rootOffset, 28);
+              .vTableGetNullable(buffer, rootOffset, 26);
           final provenanceEventsJsonParam =
               const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 30);
+                  .vTableGetNullable(buffer, rootOffset, 28);
           final enrichmentSourceJsonParam =
               const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 32);
+                  .vTableGetNullable(buffer, rootOffset, 30);
           final metadataMediaAssetsJsonParam =
               const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 34);
+                  .vTableGetNullable(buffer, rootOffset, 32);
           final enrichmentSourceMediaAssetsJsonParam =
               const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 36);
+                  .vTableGetNullable(buffer, rootOffset, 34);
           final object = TokenObject(
               id: idParam,
               tokenId: tokenIdParam,
@@ -302,59 +318,59 @@ class TokenObject_ {
   static final uniqueId =
       obx.QueryStringProperty<TokenObject>(_entities[0].properties[1]);
 
+  /// See [TokenObject.tokenId].
+  static final tokenId =
+      obx.QueryIntegerProperty<TokenObject>(_entities[0].properties[2]);
+
   /// See [TokenObject.cid].
   static final cid =
-      obx.QueryStringProperty<TokenObject>(_entities[0].properties[2]);
+      obx.QueryStringProperty<TokenObject>(_entities[0].properties[3]);
 
   /// See [TokenObject.chain].
   static final chain =
-      obx.QueryStringProperty<TokenObject>(_entities[0].properties[3]);
+      obx.QueryStringProperty<TokenObject>(_entities[0].properties[4]);
 
   /// See [TokenObject.standard].
   static final standard =
-      obx.QueryStringProperty<TokenObject>(_entities[0].properties[4]);
+      obx.QueryStringProperty<TokenObject>(_entities[0].properties[5]);
 
   /// See [TokenObject.contractAddress].
   static final contractAddress =
-      obx.QueryStringProperty<TokenObject>(_entities[0].properties[5]);
+      obx.QueryStringProperty<TokenObject>(_entities[0].properties[6]);
 
   /// See [TokenObject.tokenNumber].
   static final tokenNumber =
-      obx.QueryStringProperty<TokenObject>(_entities[0].properties[6]);
+      obx.QueryStringProperty<TokenObject>(_entities[0].properties[7]);
 
   /// See [TokenObject.currentOwner].
   static final currentOwner =
-      obx.QueryStringProperty<TokenObject>(_entities[0].properties[7]);
-
-  /// See [TokenObject.metadataJson].
-  static final metadataJson =
       obx.QueryStringProperty<TokenObject>(_entities[0].properties[8]);
-
-  /// See [TokenObject.ownersJson].
-  static final ownersJson =
-      obx.QueryStringProperty<TokenObject>(_entities[0].properties[9]);
-
-  /// See [TokenObject.provenanceEventsJson].
-  static final provenanceEventsJson =
-      obx.QueryStringProperty<TokenObject>(_entities[0].properties[10]);
-
-  /// See [TokenObject.enrichmentSourceJson].
-  static final enrichmentSourceJson =
-      obx.QueryStringProperty<TokenObject>(_entities[0].properties[11]);
-
-  /// See [TokenObject.metadataMediaAssetsJson].
-  static final metadataMediaAssetsJson =
-      obx.QueryStringProperty<TokenObject>(_entities[0].properties[12]);
-
-  /// See [TokenObject.enrichmentSourceMediaAssetsJson].
-  static final enrichmentSourceMediaAssetsJson =
-      obx.QueryStringProperty<TokenObject>(_entities[0].properties[13]);
-
-  /// See [TokenObject.tokenId].
-  static final tokenId =
-      obx.QueryIntegerProperty<TokenObject>(_entities[0].properties[14]);
 
   /// See [TokenObject.updatedAtMicroseconds].
   static final updatedAtMicroseconds =
-      obx.QueryIntegerProperty<TokenObject>(_entities[0].properties[15]);
+      obx.QueryIntegerProperty<TokenObject>(_entities[0].properties[9]);
+
+  /// See [TokenObject.metadataJson].
+  static final metadataJson =
+      obx.QueryStringProperty<TokenObject>(_entities[0].properties[10]);
+
+  /// See [TokenObject.ownersJson].
+  static final ownersJson =
+      obx.QueryStringProperty<TokenObject>(_entities[0].properties[11]);
+
+  /// See [TokenObject.provenanceEventsJson].
+  static final provenanceEventsJson =
+      obx.QueryStringProperty<TokenObject>(_entities[0].properties[12]);
+
+  /// See [TokenObject.enrichmentSourceJson].
+  static final enrichmentSourceJson =
+      obx.QueryStringProperty<TokenObject>(_entities[0].properties[13]);
+
+  /// See [TokenObject.metadataMediaAssetsJson].
+  static final metadataMediaAssetsJson =
+      obx.QueryStringProperty<TokenObject>(_entities[0].properties[14]);
+
+  /// See [TokenObject.enrichmentSourceMediaAssetsJson].
+  static final enrichmentSourceMediaAssetsJson =
+      obx.QueryStringProperty<TokenObject>(_entities[0].properties[15]);
 }
