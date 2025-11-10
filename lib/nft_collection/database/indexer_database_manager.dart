@@ -206,4 +206,26 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
       log.info('Error deleting tokens: $e');
     } finally {}
   }
+
+  @override
+  List<v2.AssetToken> getTokensByTokenIds({
+    required List<String> tokenIds,
+    IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt,
+  }) {
+    final sortByProperty = convertSortByToQueryProperty(sortBy);
+    final query = tokenBox
+        .query(
+            TokenObject_.id.oneOf(tokenIds.map((e) => int.parse(e)).toList()))
+        .order(sortByProperty, flags: Order.descending)
+        .build();
+    try {
+      final results = query.find();
+      return results.map((e) => e.toToken()).toList();
+    } catch (e) {
+      log.info('Error getting tokens by token ids: $e');
+      return [];
+    } finally {
+      query.close();
+    }
+  }
 }

@@ -324,6 +324,26 @@ enum WorkflowExecutionStatus {
   bool get isSuccess {
     return this == WorkflowExecutionStatus.completed;
   }
+
+  bool get isRunning {
+    return this == WorkflowExecutionStatus.running;
+  }
+
+  bool get isFailed {
+    return this == WorkflowExecutionStatus.failed;
+  }
+
+  bool get isCanceled {
+    return this == WorkflowExecutionStatus.canceled;
+  }
+
+  bool get isTerminated {
+    return this == WorkflowExecutionStatus.terminated;
+  }
+
+  bool get isTimedOut {
+    return this == WorkflowExecutionStatus.timedOut;
+  }
 }
 
 /// Workflow status information from Temporal workflow execution

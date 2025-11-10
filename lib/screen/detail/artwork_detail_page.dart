@@ -563,13 +563,12 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                                       ''] ??
                               '',
                         ),
-                      ] else ...[
-                        if (state.assetToken?.provenance.isNotEmpty ?? false)
-                          _provenanceView(
-                              context, state.assetToken?.provenance ?? [])
-                        else
-                          const SizedBox(),
                       ],
+                      if (state.assetToken?.provenance.isNotEmpty ?? false)
+                        _provenanceView(
+                            context, state.assetToken?.provenance ?? [])
+                      else
+                        const SizedBox(),
                       artworkDetailsRightSection(context, asset),
                       const SizedBox(height: 80),
                     ],

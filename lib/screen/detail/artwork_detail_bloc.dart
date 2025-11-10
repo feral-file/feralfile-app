@@ -21,13 +21,15 @@ class ArtworkDetailBloc extends AuBloc<ArtworkDetailEvent, ArtworkDetailState> {
   final nftTokensService = injector<NftTokensService>();
   final database = injector<IndexerDatabaseAbstract>();
   final indexerService = injector<NftIndexerService>();
+  final tokenService = injector<NftTokensService>();
 
   ArtworkDetailBloc() : super(ArtworkDetailState()) {
     on<ArtworkDetailGetInfoEvent>((event, emit) async {
       if (event.useIndexer) {
-        final token = await indexerService.getTokenByCid(
-          QueryGetTokenByCidRequest(cid: event.identity.cid),
+        final tokens = await tokenService.getManualTokens(
+          cids: [event.identity.cid],
         );
+        final token = tokens.firstOrNull;
 
         if (token != null) {
           emit(

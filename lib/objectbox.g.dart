@@ -22,7 +22,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(1, 8785770107812140676),
       name: 'TokenObject',
-      lastPropertyId: const obx_int.IdUid(18, 3607900808077485092),
+      lastPropertyId: const obx_int.IdUid(19, 1128917049750185872),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -101,7 +101,13 @@ final _entities = <obx_int.ModelEntity>[
             id: const obx_int.IdUid(18, 3607900808077485092),
             name: 'updatedAt',
             type: 10,
-            flags: 0)
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(19, 1128917049750185872),
+            name: 'tokenId',
+            type: 6,
+            flags: 8,
+            indexId: const obx_int.IdUid(3, 6205828368658050765))
       ],
       relations: <obx_int.ModelRelation>[],
       backlinks: <obx_int.ModelBacklink>[])
@@ -143,7 +149,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
       entities: _entities,
       lastEntityId: const obx_int.IdUid(1, 8785770107812140676),
-      lastIndexId: const obx_int.IdUid(2, 1458197781980648048),
+      lastIndexId: const obx_int.IdUid(3, 6205828368658050765),
       lastRelationId: const obx_int.IdUid(0, 0),
       lastSequenceId: const obx_int.IdUid(0, 0),
       retiredEntityUids: const [],
@@ -197,7 +203,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
               object.enrichmentSourceMediaAssetsJson == null
                   ? null
                   : fbb.writeString(object.enrichmentSourceMediaAssetsJson!);
-          fbb.startTable(19);
+          fbb.startTable(20);
           fbb.addInt64(0, object.id);
           fbb.addOffset(1, uniqueIdOffset);
           fbb.addOffset(2, cidOffset);
@@ -213,6 +219,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           fbb.addOffset(15, metadataMediaAssetsJsonOffset);
           fbb.addOffset(16, enrichmentSourceMediaAssetsJsonOffset);
           fbb.addInt64(17, object.updatedAt?.millisecondsSinceEpoch);
+          fbb.addInt64(18, object.tokenId);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -223,6 +230,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 38);
           final idParam =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
+          final tokenIdParam =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 40, 0);
           final cidParam = const fb.StringReader(asciiOptimization: true)
               .vTableGet(buffer, rootOffset, 8, '');
           final chainParam = const fb.StringReader(asciiOptimization: true)
@@ -260,6 +269,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
                   .vTableGetNullable(buffer, rootOffset, 36);
           final object = TokenObject(
               id: idParam,
+              tokenId: tokenIdParam,
               cid: cidParam,
               chain: chainParam,
               standard: standardParam,
@@ -345,4 +355,8 @@ class TokenObject_ {
   /// See [TokenObject.updatedAt].
   static final updatedAt =
       obx.QueryDateProperty<TokenObject>(_entities[0].properties[14]);
+
+  /// See [TokenObject.tokenId].
+  static final tokenId =
+      obx.QueryIntegerProperty<TokenObject>(_entities[0].properties[15]);
 }

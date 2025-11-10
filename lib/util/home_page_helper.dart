@@ -243,8 +243,9 @@ class HomePageHelper {
 
         log.info('Fetching tokens for ${toRefresh.toList()}');
 
-        injector<UserAllOwnCollectionBloc>()
-            .add(FetchTokensOfAddresses(addresses: toRefresh.toList()));
+        injector<UserAllOwnCollectionBloc>().add(FetchTokensOfAddresses(
+            addresses: toRefresh.toList(),
+            shouldUpdateLastRefreshedTime: true));
       }
     } catch (_) {
       // ignore errors in background refresh

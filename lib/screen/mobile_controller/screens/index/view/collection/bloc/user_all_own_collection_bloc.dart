@@ -55,7 +55,8 @@ class UserAllOwnCollectionBloc
     ].toSet().toList();
 
     if (missingAddresses.isNotEmpty) {
-      add(FetchTokensOfAddresses(addresses: owners));
+      add(FetchTokensOfAddresses(
+          addresses: owners, shouldUpdateLastRefreshedTime: true));
     }
 
     if (isSameQuery) {
@@ -86,60 +87,66 @@ class UserAllOwnCollectionBloc
       }
       operations.add(IndexingOperation(id: opId, addresses: addresses));
       emit(state.copyWith(indexingOperations: operations));
-      try {
-        final result = await _tokensService.reindexAddresses(addresses);
+      bool isFinished = false;
+      final maxAttempts = 10;
+      int attempts = 0;
+      while (!isFinished && attempts < maxAttempts) {
+        attempts++;
+        log.info(
+            '[UserAllOwnCollectionBloc] Reindex addresses: $addresses, attempt: $attempts');
 
-        final workflowId = result.workflowId;
-        final runId = result.runId;
-
-        final opKey = '${workflowId}_$runId';
-        // Cancel previous timer for this op if any
-        _workflowStatusTimers[opKey]?.cancel();
-
-        final startedAt = DateTime.now();
-        _workflowStatusTimers[opKey] = Timer.periodic(
-          const Duration(seconds: 5),
-          (timer) async {
-            try {
-              // Stop after 10 minutes silently
-              if (DateTime.now().difference(startedAt) >
-                  const Duration(minutes: 10)) {
-                timer.cancel();
-                _workflowStatusTimers.remove(opKey);
-                return;
-              }
-
-              final status = await injector<NftIndexerService>()
-                  .getWorkflowStatus(workflowId, runId);
+        await _tokensService.reindexAddressesAndPullStatus(
+          addresses: addresses,
+          timeout: const Duration(days: 1),
+          onStatus: (status, workflowId, runId) {
+            log.info('[ReindexAddresses][$opId] status: ${status.toJson()}');
+            if (status.isDone) {
               log.info(
-                  '[ReindexAddresses][$opKey] status: ${status.status.toJson()}');
-              add(WorkflowStatusTick(
-                operationKey: opKey,
+                  'Pull workflow status done with status: ${status.toJson()}, workflowId: $workflowId, runId: $runId');
+              if (status.isSuccess) {
+                isFinished = true;
+              } else {
+                isFinished = false;
+              }
+            }
+            add(
+              WorkflowStatusTick(
+                operationId: opId,
                 addresses: addresses,
                 workflowId: workflowId,
                 runId: runId,
-                status: status.status,
-              ));
-            } catch (e, st) {
-              // Keep polling despite transient errors
-              log.info('[ReindexAddresses][$opKey] poll error: $e');
-              Sentry.captureException(e, stackTrace: st);
-            }
+                status: status,
+              ),
+            );
+            // Return true to complete if status is done
+            return status.isDone;
+          },
+          onTimeout: () {},
+          onError: (error, stackTrace) {
+            // Keep polling despite transient errors
+            log.info('[ReindexAddresses][$opId] poll error: $error');
+            unawaited(Sentry.captureException(error, stackTrace: stackTrace));
           },
         );
-      } catch (e, st) {
-        log.info('[UserAllOwnCollectionBloc] Reindex error: $e');
-        Sentry.captureException(e, stackTrace: st);
-        operations.removeWhere((op) => op.id == opId);
-        emit(state.copyWith(indexingOperations: operations));
-        rethrow;
+
+        if (isFinished) {
+          break;
+        } else {
+          log.info(
+              '[UserAllOwnCollectionBloc] Reindex is not finished, waiting for 30 seconds');
+          await Future<void>.delayed(const Duration(seconds: 30));
+        }
       }
     } catch (e, st) {
       log.info('[UserAllOwnCollectionBloc] Reindex error: $e');
-      Sentry.captureException(e, stackTrace: st);
+      unawaited(Sentry.captureException(e, stackTrace: st));
+      final opId = addresses.join(',');
+      final operations = List<IndexingOperation>.from(state.indexingOperations);
+      operations.removeWhere((op) => op.id == opId);
       emit(state.copyWith(
         status: UserAllOwnCollectionStatus.error,
         error: e.toString(),
+        indexingOperations: operations,
       ));
     }
   }
@@ -164,7 +171,7 @@ class UserAllOwnCollectionBloc
       await _tokensStreamSubs[subType]?.cancel();
       _tokensStreamSubs[subType] = null;
 
-      final newLastUpdatedAt = DateTime.now();
+      DateTime? newLastUpdatedAt;
 
       final prevCompleter = _activeCompleters[subType];
       if (prevCompleter?.isCompleted == false) {
@@ -187,6 +194,13 @@ class UserAllOwnCollectionBloc
           ));
           if (tokens.isNotEmpty) {
             add(ReloadAssetTokensFromIndexerDatabase());
+          }
+          final updatedAts =
+              tokens.map((token) => token.updatedAt).nonNulls.toList();
+          if (updatedAts.isNotEmpty) {
+            final lastUpdated =
+                updatedAts.reduce((a, b) => a.isAfter(b) ? a : b);
+            newLastUpdatedAt = lastUpdated;
           }
         },
         onError: (Object error, StackTrace stackTrace) {
@@ -211,10 +225,12 @@ class UserAllOwnCollectionBloc
         for (final addr in event.addresses) addr: newLastUpdatedAt,
       };
 
-      // update the last updated at
-      await injector<UserDp1PlaylistService>().updateAddressLastRefreshedTime(
-        addresses: addressMap,
-      );
+      if (event.shouldUpdateLastRefreshedTime) {
+        // update the last updated at
+        await injector<UserDp1PlaylistService>().updateAddressLastRefreshedTime(
+          addresses: addressMap,
+        );
+      }
 
       add(ReloadAssetTokensFromIndexerDatabase());
     } catch (e) {
@@ -277,10 +293,10 @@ class UserAllOwnCollectionBloc
     WorkflowStatusTick event,
     Emitter<UserAllOwnCollectionState> emit,
   ) async {
-    final opKey = event.operationKey;
+    final opId = event.operationId;
     if (event.status.isDone) {
-      _workflowStatusTimers[opKey]?.cancel();
-      _workflowStatusTimers.remove(opKey);
+      _workflowStatusTimers[opId]?.cancel();
+      _workflowStatusTimers.remove(opId);
 
       // Remove operation for these addresses from state
       final operations = List<IndexingOperation>.from(state.indexingOperations);
@@ -288,7 +304,11 @@ class UserAllOwnCollectionBloc
 
       if (event.status.isSuccess) {
         emit(state.copyWith(indexingOperations: operations));
-        add(FetchTokensOfAddresses(addresses: event.addresses));
+        add(FetchTokensOfAddresses(
+            addresses: event.addresses, shouldUpdateLastRefreshedTime: true));
+      } else if (event.status.isRunning) {
+        add(FetchTokensOfAddresses(
+            addresses: event.addresses, shouldUpdateLastRefreshedTime: false));
       } else if (event.status == WorkflowExecutionStatus.timedOut) {
         // silently stop
         emit(state.copyWith(indexingOperations: operations));
@@ -333,7 +353,6 @@ class UserAllOwnCollectionBloc
       _tokensStreamSubs[subType] = stream.listen(
         (tokens) {
           log.info('[${event.runtimeType}] Received ${tokens.length} tokens');
-          emit(state.copyWith(status: UserAllOwnCollectionStatus.loaded));
           if (tokens.isNotEmpty) {
             add(ReloadAssetTokensFromIndexerDatabase());
           }
@@ -344,8 +363,6 @@ class UserAllOwnCollectionBloc
           _activeCompleters[subType]?.completeError(error);
         },
         onDone: () async {
-          emit(state.copyWith(status: UserAllOwnCollectionStatus.loaded));
-
           await injector<UserDp1PlaylistService>()
               .updateAddressLastRefreshedTime(
             addresses: {

@@ -12,8 +12,7 @@ import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
-import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
-import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
+import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/detail/preview_detail/preview_detail_state.dart';
 import 'package:autonomy_flutter/service/ethereum_service.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
@@ -25,16 +24,17 @@ class ArtworkPreviewDetailBloc
     extends AuBloc<ArtworkPreviewDetailEvent, ArtworkPreviewDetailState> {
   ArtworkPreviewDetailBloc(
     this._ethereumService,
-    this._indexerService,
+    this._tokenService,
     this._database,
   ) : super(ArtworkPreviewDetailLoadingState()) {
     on<ArtworkPreviewDetailGetAssetTokenEvent>((event, emit) async {
       AssetToken? assetToken;
 
       if (event.useIndexer) {
-        final token = await _indexerService.getTokenByCid(
-          QueryGetTokenByCidRequest(cid: event.identity.cid),
+        final tokens = await _tokenService.getManualTokens(
+          cids: [event.identity.cid],
         );
+        final token = tokens.firstOrNull;
         if (token != null) {
           assetToken = token;
         }
@@ -86,7 +86,7 @@ class ArtworkPreviewDetailBloc
   }
 
   final EthereumService _ethereumService;
-  final NftIndexerService _indexerService;
+  final NftTokensService _tokenService;
   final IndexerDatabaseAbstract _database;
 }
 

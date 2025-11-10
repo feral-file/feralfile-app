@@ -7,6 +7,7 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_rendering/nft_rendering_widget.dart';
 import 'package:autonomy_flutter/screen/detail/royalty/royalty_bloc.dart';
+import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/color_extension.dart';
@@ -579,6 +580,7 @@ Widget artworkDetailsMetadataSection(
   String? artistName,
 ) {
   const divider = artworkDataDivider;
+  final publisherName = assetToken.publisher?.name;
   return SectionExpandedWidget(
     header: 'metadata'.tr(),
     padding: const EdgeInsets.only(bottom: 23),
@@ -599,12 +601,14 @@ Widget artworkDetailsMetadataSection(
           ),
         ],
         divider,
-        MetaDataItem(
-          title: 'token'.tr(),
-          value: assetToken.publisher?.name ?? '',
-          tapLink: assetToken.publisher?.url,
-          forceSafariVC: true,
-        ),
+        if (publisherName != null) ...[
+          MetaDataItem(
+            title: 'token'.tr(),
+            value: publisherName,
+            tapLink: assetToken.publisher?.url,
+            forceSafariVC: true,
+          ),
+        ],
         divider,
         MetaDataItem(
           title: 'contract'.tr(),
@@ -630,10 +634,15 @@ Widget tokenOwnership(
   AssetToken assetToken,
   String alias,
 ) {
-  final ownerAddress = assetToken.currentOwner ?? '';
+  final allAddresses = injector<AddressService>().getAllAddresses();
   final ownedTokens = assetToken.owners?.items
-      .firstWhereOrNull((element) => element.ownerAddress == ownerAddress)
+      .firstWhereOrNull(
+          (element) => allAddresses.contains(element.ownerAddress))
       ?.quantity;
+  final ownerAddress = assetToken.owners?.items
+      .firstWhereOrNull(
+          (element) => allAddresses.contains(element.ownerAddress))
+      ?.ownerAddress;
   final tapLink = assetToken.secondaryMarketURL;
 
   const divider = artworkDataDivider;
@@ -647,7 +656,7 @@ Widget tokenOwnership(
         const SizedBox(height: 32),
         MetaDataItem(
           title: 'token_holder'.tr(),
-          value: alias.isNotEmpty ? alias : ownerAddress.maskOnly(5),
+          value: alias.isNotEmpty ? alias : ownerAddress?.maskOnly(5) ?? '',
           forceSafariVC: true,
         ),
         if (ownedTokens != null) ...[

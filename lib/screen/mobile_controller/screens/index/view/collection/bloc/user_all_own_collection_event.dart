@@ -5,8 +5,10 @@ abstract class UserAllOwnCollectionEvent {}
 class FetchTokensOfAddresses extends UserAllOwnCollectionEvent {
   FetchTokensOfAddresses({
     required this.addresses,
+    this.shouldUpdateLastRefreshedTime = false,
   });
   final List<String> addresses;
+  final bool shouldUpdateLastRefreshedTime;
 }
 
 class UpdateDynamicQueryEvent extends UserAllOwnCollectionEvent {
@@ -34,14 +36,14 @@ class ReindexAddresses extends UserAllOwnCollectionEvent {
 
 class WorkflowStatusTick extends UserAllOwnCollectionEvent {
   WorkflowStatusTick({
-    required this.operationKey,
+    required this.operationId,
     required this.addresses,
     required this.workflowId,
     required this.runId,
     required this.status,
   });
 
-  final String operationKey;
+  final String operationId;
   final List<String> addresses;
   final String workflowId;
   final String runId;

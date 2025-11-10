@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:8785770107812140676",
-      "lastPropertyId": "18:3607900808077485092",
+      "lastPropertyId": "19:1128917049750185872",
       "name": "TokenObject",
       "properties": [
         {
@@ -87,13 +87,20 @@
           "id": "18:3607900808077485092",
           "name": "updatedAt",
           "type": 10
+        },
+        {
+          "id": "19:1128917049750185872",
+          "name": "tokenId",
+          "type": 6,
+          "flags": 8,
+          "indexId": "3:6205828368658050765"
         }
       ],
       "relations": []
     }
   ],
   "lastEntityId": "1:8785770107812140676",
-  "lastIndexId": "2:1458197781980648048",
+  "lastIndexId": "3:6205828368658050765",
   "lastRelationId": "0:0",
   "lastSequenceId": "0:0",
   "modelVersion": 5,

@@ -74,6 +74,7 @@ class TokenMetadata {
 
 class AssetToken {
   AssetToken({
+    required this.id,
     required this.cid,
     required this.chain,
     required this.standard,
@@ -89,6 +90,7 @@ class AssetToken {
     this.enrichmentSourceMediaAssets,
   });
 
+  final int id;
   final String cid; // primary key in app
   final String chain;
   final String standard;
@@ -104,6 +106,7 @@ class AssetToken {
   final List<MediaAsset>? enrichmentSourceMediaAssets;
 
   factory AssetToken.fromGraphQL(Map<String, dynamic> json) => AssetToken(
+        id: int.parse(json['id'].toString()),
         cid: json['token_cid'] as String? ?? json['cid'] as String,
         chain: json['chain'] as String,
         standard: json['standard'] as String,
@@ -145,6 +148,7 @@ class AssetToken {
       );
 
   factory AssetToken.fromRest(Map<String, dynamic> json) => AssetToken(
+        id: int.parse(json['id'].toString()),
         cid: json['token_cid'] as String? ?? json['cid'] as String,
         chain: json['chain'] as String,
         standard: json['standard'] as String,
@@ -186,6 +190,7 @@ class AssetToken {
       );
 
   AssetToken copyWith({
+    int? id,
     String? cid,
     String? chain,
     String? standard,
@@ -201,6 +206,7 @@ class AssetToken {
     List<MediaAsset>? enrichmentSourceMediaAssets,
   }) {
     return AssetToken(
+      id: id ?? this.id,
       cid: cid ?? this.cid,
       chain: chain ?? this.chain,
       standard: standard ?? this.standard,
@@ -339,6 +345,41 @@ class PaginatedOwners {
   }
 }
 
+enum ProvenanceEventType {
+  mint,
+  transfer,
+  burn,
+  unknown,
+}
+
+extension ProvenanceEventTypeJson on ProvenanceEventType {
+  String toJson() {
+    switch (this) {
+      case ProvenanceEventType.mint:
+        return 'mint';
+      case ProvenanceEventType.transfer:
+        return 'transfer';
+      case ProvenanceEventType.burn:
+        return 'burn';
+      case ProvenanceEventType.unknown:
+        return 'unknown';
+    }
+  }
+
+  static ProvenanceEventType fromJson(String? value) {
+    switch ((value ?? '').toLowerCase()) {
+      case 'mint':
+        return ProvenanceEventType.mint;
+      case 'transfer':
+        return ProvenanceEventType.transfer;
+      case 'burn':
+        return ProvenanceEventType.burn;
+      default:
+        return ProvenanceEventType.unknown;
+    }
+  }
+}
+
 class ProvenanceEvent {
   ProvenanceEvent({
     required this.chain,
@@ -349,8 +390,9 @@ class ProvenanceEvent {
     required this.timestamp,
   });
 
+  // eip1155:1, tezos:mainnet, ...
   final String chain;
-  final String eventType;
+  final ProvenanceEventType eventType;
   final String? fromAddress;
   final String? toAddress;
   final String? txHash;
@@ -359,7 +401,8 @@ class ProvenanceEvent {
   factory ProvenanceEvent.fromJson(Map<String, dynamic> json) =>
       ProvenanceEvent(
         chain: json['chain'] as String,
-        eventType: json['event_type'] as String,
+        eventType:
+            ProvenanceEventTypeJson.fromJson(json['event_type'] as String?),
         fromAddress: json['from_address'] as String?,
         toAddress: json['to_address'] as String?,
         txHash: json['tx_hash'] as String?,
@@ -368,12 +411,17 @@ class ProvenanceEvent {
 
   Map<String, dynamic> toJson() => {
         'chain': chain,
-        'event_type': eventType,
+        'event_type': eventType.toJson(),
         if (fromAddress != null) 'from_address': fromAddress,
         if (toAddress != null) 'to_address': toAddress,
         if (txHash != null) 'tx_hash': txHash,
         'timestamp': timestamp.toIso8601String(),
       };
+
+  String? get txUrl {
+    if (txHash == null) return null;
+    return null;
+  }
 }
 
 class PaginatedProvenanceEvents {

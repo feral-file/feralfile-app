@@ -29,6 +29,8 @@ class TokenObject extends ObjectboxEntity {
   String uniqueId;
 
   @Index()
+  int tokenId;
+  @Index()
   String cid;
   String chain;
   String standard;
@@ -49,6 +51,7 @@ class TokenObject extends ObjectboxEntity {
 
   TokenObject({
     this.id = 0,
+    required this.tokenId,
     required this.cid,
     required this.chain,
     required this.standard,
@@ -65,6 +68,7 @@ class TokenObject extends ObjectboxEntity {
   }) : uniqueId = cid;
 
   factory TokenObject.fromToken(v2.AssetToken token) => TokenObject(
+        tokenId: token.id,
         cid: token.cid,
         chain: token.chain,
         standard: token.standard,
@@ -99,6 +103,7 @@ class TokenObject extends ObjectboxEntity {
       );
 
   v2.AssetToken toToken() => v2.AssetToken(
+        id: tokenId,
         cid: cid,
         chain: chain,
         standard: standard,

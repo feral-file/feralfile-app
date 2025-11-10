@@ -51,6 +51,28 @@ abstract class NftTokensService {
     Map<String, DateTime?> addressToSince,
   );
 
+  Future<void> reindexAddressesAndPullStatus({
+    required List<String> addresses,
+    required Duration timeout,
+    required FutureOr<bool> Function(
+            WorkflowExecutionStatus status, String workflowId, String runId)
+        onStatus,
+    required FutureOr<void> Function() onTimeout,
+    required FutureOr<void> Function(Object error, StackTrace stackTrace)
+        onError,
+  });
+
+  Future<void> reindexByCidsAndPullStatus({
+    required List<String> tokenCids,
+    required Duration timeout,
+    required FutureOr<bool> Function(
+            WorkflowExecutionStatus status, String workflowId, String runId)
+        onStatus,
+    required FutureOr<void> Function() onTimeout,
+    required FutureOr<void> Function(Object error, StackTrace stackTrace)
+        onError,
+  });
+
   bool get isRefreshAllTokensListen;
 
   Future<void> purgeCachedGallery();
@@ -96,6 +118,12 @@ class NftTokensServiceImpl extends NftTokensService {
   final Map<String, Completer<TriggerIndexingResult>> _indexTokensCompleters =
       {};
   final Map<String, StreamController<List<AssetToken>>> _streamControllers = {};
+  // Track running reindex operations by addresses key (deduplication)
+  final Map<String, Completer<void>> _reindexAndPullCompleters = {};
+  final Map<String, Timer> _reindexAndPullTimers = {};
+  // Track running reindex operations by token CIDs key (deduplication)
+  final Map<String, Completer<void>> _reindexCidsAndPullCompleters = {};
+  final Map<String, Timer> _reindexCidsAndPullTimers = {};
 
   Future<void> get isolateReady => _isolateReady.future;
 
@@ -130,6 +158,18 @@ class NftTokensServiceImpl extends NftTokensService {
       controller.close();
     }
     _streamControllers.clear();
+    // Cancel all reindex and pull timers
+    for (final timer in _reindexAndPullTimers.values) {
+      timer.cancel();
+    }
+    _reindexAndPullTimers.clear();
+    _reindexAndPullCompleters.clear();
+    // Cancel all reindex CIDs and pull timers
+    for (final timer in _reindexCidsAndPullTimers.values) {
+      timer.cancel();
+    }
+    _reindexCidsAndPullTimers.clear();
+    _reindexCidsAndPullCompleters.clear();
     _isolate?.kill();
     _isolateSendPort = null;
     _isolate = null;
@@ -207,6 +247,204 @@ class NftTokensServiceImpl extends NftTokensService {
     _sendPort?.send([REINDEX_TOKENS, uuid, tokenCids]);
 
     NftCollection.logger.fine('[reindexTokensByCids][start] $tokenCids');
+    return completer.future;
+  }
+
+  @override
+  Future<void> reindexAddressesAndPullStatus({
+    required List<String> addresses,
+    required Duration timeout,
+    required FutureOr<bool> Function(
+            WorkflowExecutionStatus status, String workflowId, String runId)
+        onStatus,
+    required FutureOr<void> Function() onTimeout,
+    required FutureOr<void> Function(Object error, StackTrace stackTrace)
+        onError,
+  }) async {
+    if (addresses.isEmpty) return;
+
+    // Create key from addresses for deduplication
+    final addressesKey = addresses.join(',');
+
+    // If same addresses are already running, return the same completer
+    final existingCompleter = _reindexAndPullCompleters[addressesKey];
+    if (existingCompleter != null && !existingCompleter.isCompleted) {
+      NftCollection.logger.info(
+          '[reindexAddressesAndPullStatus] Addresses $addresses already being processed, returning existing completer');
+      return existingCompleter.future;
+    }
+
+    // Create new completer for this operation
+    final completer = Completer<void>();
+    _reindexAndPullCompleters[addressesKey] = completer;
+
+    try {
+      NftCollection.logger.info(
+          '[reindexAddressesAndPullStatus] Start for addresses: $addresses');
+
+      // Call reindexAddresses
+      final result = await reindexAddresses(addresses);
+      final workflowId = result.workflowId;
+      final runId = result.runId;
+
+      // Cancel previous timer if any
+      _reindexAndPullTimers[addressesKey]?.cancel();
+
+      final startedAt = DateTime.now();
+      _reindexAndPullTimers[addressesKey] = Timer.periodic(
+        const Duration(seconds: 5),
+        (timer) async {
+          try {
+            // Check timeout
+            if (DateTime.now().difference(startedAt) > timeout) {
+              timer.cancel();
+              _reindexAndPullTimers.remove(addressesKey);
+              _reindexAndPullCompleters.remove(addressesKey);
+              await onTimeout();
+              if (!completer.isCompleted) {
+                completer.complete();
+              }
+              return;
+            }
+
+            // Get workflow status
+            final status =
+                await _indexerService.getWorkflowStatus(workflowId, runId);
+            NftCollection.logger.info(
+                '[reindexAddressesAndPullStatus][$addressesKey] status: ${status.status.toJson()}');
+
+            // Call onStatus callback - if returns true, complete and cleanup
+            final shouldComplete =
+                await onStatus(status.status, workflowId, runId);
+            if (shouldComplete) {
+              timer.cancel();
+              _reindexAndPullTimers.remove(addressesKey);
+              _reindexAndPullCompleters.remove(addressesKey);
+              if (!completer.isCompleted) {
+                completer.complete();
+              }
+            }
+          } catch (e, st) {
+            // Keep polling despite transient errors, but call onError
+            NftCollection.logger.warning(
+                '[reindexAddressesAndPullStatus][$addressesKey] poll error: $e');
+            unawaited(Sentry.captureException(e, stackTrace: st));
+            await onError(e, st);
+          }
+        },
+      );
+    } catch (e, st) {
+      NftCollection.logger.warning('[reindexAddressesAndPullStatus] Error: $e');
+      unawaited(Sentry.captureException(e, stackTrace: st));
+      _reindexAndPullCompleters.remove(addressesKey);
+      _reindexAndPullTimers[addressesKey]?.cancel();
+      _reindexAndPullTimers.remove(addressesKey);
+      await onError(e, st);
+      if (!completer.isCompleted) {
+        completer.completeError(e);
+      }
+      rethrow;
+    }
+
+    return completer.future;
+  }
+
+  @override
+  Future<void> reindexByCidsAndPullStatus({
+    required List<String> tokenCids,
+    required Duration timeout,
+    required FutureOr<bool> Function(
+            WorkflowExecutionStatus status, String workflowId, String runId)
+        onStatus,
+    required FutureOr<void> Function() onTimeout,
+    required FutureOr<void> Function(Object error, StackTrace stackTrace)
+        onError,
+  }) async {
+    if (tokenCids.isEmpty) return;
+
+    // Create key from tokenCids for deduplication
+    final cidsKey = tokenCids.join(',');
+
+    // If same tokenCids are already running, return the same completer
+    final existingCompleter = _reindexCidsAndPullCompleters[cidsKey];
+    if (existingCompleter != null && !existingCompleter.isCompleted) {
+      NftCollection.logger.info(
+          '[reindexByCidsAndPullStatus] Token CIDs $tokenCids already being processed, returning existing completer');
+      return existingCompleter.future;
+    }
+
+    // Create new completer for this operation
+    final completer = Completer<void>();
+    _reindexCidsAndPullCompleters[cidsKey] = completer;
+
+    try {
+      NftCollection.logger
+          .info('[reindexByCidsAndPullStatus] Start for tokenCids: $tokenCids');
+
+      // Call reindexTokensByCids
+      final result = await reindexTokensByCids(tokenCids);
+      final workflowId = result.workflowId;
+      final runId = result.runId;
+
+      // Cancel previous timer if any
+      _reindexCidsAndPullTimers[cidsKey]?.cancel();
+
+      final startedAt = DateTime.now();
+      _reindexCidsAndPullTimers[cidsKey] = Timer.periodic(
+        const Duration(seconds: 5),
+        (timer) async {
+          try {
+            // Check timeout
+            if (DateTime.now().difference(startedAt) > timeout) {
+              timer.cancel();
+              _reindexCidsAndPullTimers.remove(cidsKey);
+              _reindexCidsAndPullCompleters.remove(cidsKey);
+              await onTimeout();
+              if (!completer.isCompleted) {
+                completer.complete();
+              }
+              return;
+            }
+
+            // Get workflow status
+            final status =
+                await _indexerService.getWorkflowStatus(workflowId, runId);
+            NftCollection.logger.info(
+                '[reindexByCidsAndPullStatus][$cidsKey] status: ${status.status.toJson()}');
+
+            // Call onStatus callback - if returns true, complete and cleanup
+            final shouldComplete =
+                await onStatus(status.status, workflowId, runId);
+            if (shouldComplete) {
+              timer.cancel();
+              _reindexCidsAndPullTimers.remove(cidsKey);
+              _reindexCidsAndPullCompleters.remove(cidsKey);
+              if (!completer.isCompleted) {
+                completer.complete();
+              }
+            }
+          } catch (e, st) {
+            // Keep polling despite transient errors, but call onError
+            NftCollection.logger.warning(
+                '[reindexByCidsAndPullStatus][$cidsKey] poll error: $e');
+            unawaited(Sentry.captureException(e, stackTrace: st));
+            await onError(e, st);
+          }
+        },
+      );
+    } catch (e, st) {
+      NftCollection.logger.warning('[reindexByCidsAndPullStatus] Error: $e');
+      unawaited(Sentry.captureException(e, stackTrace: st));
+      _reindexCidsAndPullCompleters.remove(cidsKey);
+      _reindexCidsAndPullTimers[cidsKey]?.cancel();
+      _reindexCidsAndPullTimers.remove(cidsKey);
+      await onError(e, st);
+      if (!completer.isCompleted) {
+        completer.completeError(e);
+      }
+      rethrow;
+    }
+
     return completer.future;
   }
 
@@ -451,20 +689,20 @@ class NftTokensServiceImpl extends NftTokensService {
       final controller = _streamControllers[result.uuid];
       if (controller != null && !controller.isClosed) {
         // Group changes by tokenCid
-        final groupedChanges =
-            result.changes.groupBy((change) => change.tokenCid);
-        final cids = groupedChanges.keys.toList();
+        final groupedChanges = result.changes
+            .groupBy((change) => change.tokenId?.toString() ?? '');
+        final tokenIds = groupedChanges.keys.toList();
 
         // Get tokens from database
-        final tokens = _database.getTokensByCIDs(cids: cids);
+        final tokens = _database.getTokensByTokenIds(tokenIds: tokenIds);
         final updatedTokens = <AssetToken>[];
 
         // Apply all changes to each token
-        for (final tokenCid in groupedChanges.keys) {
-          final changes = groupedChanges[tokenCid]!;
+        for (final tokenId in tokenIds) {
+          final changes = groupedChanges[tokenId]!;
 
           final originalToken =
-              tokens.firstWhereOrNull((token) => token.cid == tokenCid);
+              tokens.firstWhereOrNull((token) => token.id == tokenId);
 
           // Find current token in database
           var currentToken = originalToken?.copyWith();
@@ -476,10 +714,10 @@ class NftTokensServiceImpl extends NftTokensService {
           // Apply each change to the token
           for (final change in sortedChanges) {
             try {
-              if (change.isMint()) {
+              if (change.isMint() && change.tokenCid != null) {
                 // if the change is a mint, we need to fetch token from indexer, then insert into database
                 final cid = change.tokenCid;
-                final tokens = await getManualTokens(cids: [cid]);
+                final tokens = await getManualTokens(cids: [cid!]);
                 final token = tokens.firstWhereOrNull((e) => e.cid == cid);
                 if (token != null) {
                   currentToken = token;

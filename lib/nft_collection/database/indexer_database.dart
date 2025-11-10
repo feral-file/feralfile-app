@@ -34,4 +34,9 @@ abstract class IndexerDatabaseAbstract {
   void deleteToken(String cid);
 
   void deleteTokens(List<String> cids);
+
+  List<v2.AssetToken> getTokensByTokenIds({
+    required List<String> tokenIds,
+    IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt,
+  });
 }

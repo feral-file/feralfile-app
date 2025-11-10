@@ -145,7 +145,8 @@ class ProvenanceChangeMeta implements ChangeMeta {
     required this.chain,
     required this.standard,
     required this.contract,
-    required this.token,
+    required this.tokenNumber,
+    required this.tokenId,
     this.from,
     this.to,
     this.quantity,
@@ -154,17 +155,19 @@ class ProvenanceChangeMeta implements ChangeMeta {
   final String chain; // e.g., "eip155:1", "tezos:mainnet"
   final String standard; // e.g., "erc721", "erc1155", "fa2"
   final String contract; // Contract address
-  final String token; // Token number
+  final String tokenNumber; // Token number
   final String? from; // Sender address (null for mints)
   final String? to; // Receiver address (null for burns)
   final String? quantity; // Quantity transferred/minted/burned
+  final int tokenId;
 
   factory ProvenanceChangeMeta.fromJson(Map<String, dynamic> json) =>
       ProvenanceChangeMeta(
         chain: json['chain'] as String,
         standard: json['standard'] as String,
         contract: json['contract'] as String,
-        token: json['token'] as String,
+        tokenNumber: json['token'] as String,
+        tokenId: int.parse(json['token_id'].toString()),
         from: json['from'] as String?,
         to: json['to'] as String?,
         quantity: json['quantity'] as String?,
@@ -174,7 +177,8 @@ class ProvenanceChangeMeta implements ChangeMeta {
         'chain': chain,
         'standard': standard,
         'contract': contract,
-        'token': token,
+        'token_number': tokenNumber,
+        'token_id': tokenId,
         if (from != null) 'from': from,
         if (to != null) 'to': to,
         if (quantity != null) 'quantity': quantity,
@@ -195,6 +199,10 @@ class ProvenanceChangeMeta implements ChangeMeta {
     return (from != null && from!.isNotEmpty && !from!.isNullAddress) &&
         (to != null && to!.isNotEmpty && !to!.isNullAddress);
   }
+
+  String? get tokenCid {
+    return "$chain:$standard:$contract:$tokenNumber";
+  }
 }
 
 /// MetadataChangeMeta represents the metadata for metadata update changes
@@ -203,27 +211,30 @@ class MetadataChangeMeta implements ChangeMeta {
   MetadataChangeMeta({
     required this.old,
     required this.new_,
+    required this.tokenId,
   });
 
   final MetadataFields old; // Previous metadata values
   final MetadataFields new_; // New metadata values
+  final int tokenId;
 
   factory MetadataChangeMeta.fromJson(Map<String, dynamic> json) =>
       MetadataChangeMeta(
         old: MetadataFields.fromJson(json['old'] as Map<String, dynamic>?),
         new_: MetadataFields.fromJson(json['new'] as Map<String, dynamic>?),
+        tokenId: int.parse(json['token_id'].toString()),
       );
 
   Map<String, dynamic> toJson() => {
         'old': old.toJson(),
         'new': new_.toJson(),
+        'token_id': tokenId,
       };
 }
 
 /// Change journal entry
 class Change {
   final int id;
-  final String tokenCid;
   final SubjectType subjectType;
   final String subjectId;
   final DateTime changedAt;
@@ -233,7 +244,6 @@ class Change {
 
   Change({
     required this.id,
-    required this.tokenCid,
     required this.subjectType,
     required this.subjectId,
     required this.changedAt,
@@ -270,7 +280,6 @@ class Change {
 
   factory Change.fromJson(Map<String, dynamic> json) => Change(
         id: int.tryParse(json['id'].toString()) ?? 0,
-        tokenCid: json['token_cid'] as String,
         subjectType:
             SubjectTypeJson.fromJson(json['subject_type'] as String?) ??
                 SubjectType.token,
@@ -286,9 +295,25 @@ class Change {
             DateTime.tryParse(json['updated_at'] as String) ?? DateTime.now(),
       );
 
+  int? get tokenId {
+    if (metaParsed is ProvenanceChangeMeta) {
+      return (metaParsed as ProvenanceChangeMeta).tokenId;
+    }
+    if (metaParsed is MetadataChangeMeta) {
+      return (metaParsed as MetadataChangeMeta).tokenId;
+    }
+    return null;
+  }
+
+  String? get tokenCid {
+    if (metaParsed is ProvenanceChangeMeta) {
+      return (metaParsed! as ProvenanceChangeMeta).tokenCid;
+    }
+    return null;
+  }
+
   Map<String, dynamic> toJson() => {
         'id': id,
-        'token_cid': tokenCid,
         'subject_type': subjectType.toJson(),
         'subject_id': subjectId,
         'changed_at': changedAt.toIso8601String(),
