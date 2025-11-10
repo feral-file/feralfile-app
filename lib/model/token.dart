@@ -5,6 +5,8 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/model/blockchain.dart';
+
 class TokenMetadata {
   TokenMetadata({
     this.name,
@@ -420,7 +422,17 @@ class ProvenanceEvent {
 
   String? get txUrl {
     if (txHash == null) return null;
-    return null;
+    try {
+      final blockchain = Blockchain.fromChain(chain);
+      switch (blockchain) {
+        case Blockchain.ETHEREUM:
+          return 'https://etherscan.io/tx/$txHash';
+        case Blockchain.TEZOS:
+          return 'https://tzkt.io/$txHash';
+      }
+    } catch (e) {
+      return null;
+    }
   }
 }
 

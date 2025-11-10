@@ -137,6 +137,12 @@ class ArtworkPreviewWidgetState extends State<ArtworkPreviewWidget>
                   builder: (context) {
                     final previewURL = assetToken.previewUrl ?? '';
 
+                    if (previewURL.isEmpty) {
+                      return NoPreviewWidget(
+                        assetToken: assetToken,
+                      );
+                    }
+
                     switch (assetToken.getMimeType) {
                       case RenderingType.image:
                         _currentRenderingWidget = ImageNFTRenderingWidget(

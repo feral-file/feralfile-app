@@ -250,6 +250,53 @@ class GalleryNoThumbnailWidget extends StatelessWidget {
   }
 }
 
+class NoPreviewWidget extends StatelessWidget {
+  const NoPreviewWidget({this.assetToken, super.key});
+
+  final AssetToken? assetToken;
+
+  String getAssetDefault() {
+    switch (assetToken?.getMimeType) {
+      case RenderingType.modelViewer:
+        return 'assets/images/icon_3d.svg';
+      case RenderingType.webview:
+        return 'assets/images/icon_software.svg';
+      case RenderingType.video:
+        return 'assets/images/icon_video.svg';
+      default:
+        return 'assets/images/no_thumbnail.svg';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final side = constraints.biggest.shortestSide;
+        final dynamicPadding = min(10.0, side * 0.03);
+        final iconSize = min(24.0, side * 0.3);
+
+        return AspectRatio(
+          aspectRatio: 1,
+          child: Container(
+            padding: EdgeInsets.all(dynamicPadding),
+            color: theme.auLightGrey,
+            child: iconSize > 0
+                ? Center(
+                    child: SvgPicture.asset(
+                      getAssetDefault(),
+                      width: iconSize,
+                    ),
+                  )
+                : null,
+          ),
+        );
+      },
+    );
+  }
+}
+
 class GalleryThumbnailPlaceholder extends StatelessWidget {
   const GalleryThumbnailPlaceholder({
     super.key,
@@ -608,12 +655,12 @@ Widget artworkDetailsMetadataSection(
             tapLink: assetToken.publisher?.url,
             forceSafariVC: true,
           ),
+          divider,
         ],
-        divider,
         MetaDataItem(
           title: 'contract'.tr(),
-          value: assetToken.contractAddress,
-          tapLink: null,
+          value: assetToken.blockchain.name,
+          tapLink: assetToken.getBlockchainUrl(),
           forceSafariVC: true,
         ),
         // divider,
@@ -653,7 +700,6 @@ Widget tokenOwnership(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 32),
         MetaDataItem(
           title: 'token_holder'.tr(),
           value: alias.isNotEmpty ? alias : ownerAddress?.maskOnly(5) ?? '',
@@ -883,13 +929,16 @@ Widget artworkDetailsProvenanceSectionNotEmpty(
                     el.toAddress?.toIdentityOrMask(identityMap) ?? '';
                 final youTitle =
                     youAddresses.contains(el.toAddress) ? '_you'.tr() : '';
+                if (el.toAddress == null) {
+                  return SizedBox();
+                }
                 return Column(
                   children: [
                     ProvenanceItem(
                       title: (identityTitle) + youTitle,
                       value: localTimeString(el.timestamp),
                       // subTitle: el.blockchain.toUpperCase(),
-                      tapLink: el.txHash,
+                      tapLink: el.txUrl,
                       onNameTap: () => identity != null
                           ? unawaited(
                               UIHelper.showIdentityDetailDialog(

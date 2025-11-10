@@ -166,7 +166,7 @@ class ProvenanceChangeMeta implements ChangeMeta {
         chain: json['chain'] as String,
         standard: json['standard'] as String,
         contract: json['contract'] as String,
-        tokenNumber: json['token'] as String,
+        tokenNumber: json['token_number'] as String,
         tokenId: int.parse(json['token_id'].toString()),
         from: json['from'] as String?,
         to: json['to'] as String?,
@@ -403,11 +403,11 @@ class QueryChangesRequest {
     };
 
     if (tokenCids.isNotEmpty) {
-      json['token_cid'] = tokenCids;
+      json['token_cids'] = tokenCids;
     }
 
     if (addresses.isNotEmpty) {
-      json['address'] = addresses;
+      json['addresses'] = addresses;
     }
 
     if (since != null && since!.isNotEmpty) {

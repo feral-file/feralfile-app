@@ -20,4 +20,13 @@ enum Blockchain {
         throw Exception('Invalid blockchain: $value');
     }
   }
+
+  String get name {
+    switch (this) {
+      case Blockchain.ETHEREUM:
+        return "Ethereum";
+      case Blockchain.TEZOS:
+        return "Tezos";
+    }
+  }
 }

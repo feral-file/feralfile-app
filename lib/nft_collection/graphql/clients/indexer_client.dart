@@ -84,7 +84,7 @@ class IndexerClient {
       return result.data;
     } catch (e) {
       NftCollection.logger.info('Error mutating: $e');
-      return null;
+      rethrow;
     }
   }
 

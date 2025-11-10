@@ -108,6 +108,8 @@ class UserAllOwnCollectionBloc
               } else {
                 isFinished = false;
               }
+            } else {
+              add(FetchTokensOfAddresses(addresses: addresses));
             }
             add(
               WorkflowStatusTick(
@@ -145,7 +147,7 @@ class UserAllOwnCollectionBloc
       operations.removeWhere((op) => op.id == opId);
       emit(state.copyWith(
         status: UserAllOwnCollectionStatus.error,
-        error: e.toString(),
+        error: 'Something went wrong while indexing addresses.',
         indexingOperations: operations,
       ));
     }

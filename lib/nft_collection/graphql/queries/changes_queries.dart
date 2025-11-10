@@ -1,7 +1,7 @@
 const String getChangesQuery = r'''
   query getChanges(
-    $token_cid: [String!]
-    $address: [String!]
+    $token_cids: [String!]
+    $addresses: [String!]
     $since: String
     $limit: Uint8
     $offset: Uint64
@@ -9,8 +9,8 @@ const String getChangesQuery = r'''
     $expand: [String!]
   ) {
     changes(
-      token_cid: $token_cid
-      address: $address
+      token_cids: $token_cids
+      addresses: $addresses
       since: $since
       limit: $limit
       offset: $offset
@@ -19,7 +19,6 @@ const String getChangesQuery = r'''
     ) {
       items {
         id
-        token_cid
         subject_type
         subject_id
         changed_at

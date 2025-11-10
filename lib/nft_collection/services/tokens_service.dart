@@ -525,7 +525,8 @@ class NftTokensServiceImpl extends NftTokensService {
     bool shouldCallIndexer = true,
   }) async {
     // get from database
-    final assetTokenFromDatabase = _database.getTokensByCIDs(cids: cids);
+    final assetTokenFromDatabase = <AssetToken>[];
+    // _database.getTokensByCIDs(cids: cids);
     final res = [...assetTokenFromDatabase];
     final missingIds = cids
         .where((cid) => !assetTokenFromDatabase.any((e) => e.cid == cid))
@@ -691,7 +692,8 @@ class NftTokensServiceImpl extends NftTokensService {
         // Group changes by tokenCid
         final groupedChanges = result.changes
             .groupBy((change) => change.tokenId?.toString() ?? '');
-        final tokenIds = groupedChanges.keys.toList();
+        final tokenIds =
+            groupedChanges.keys.toList().where((id) => id.isNotEmpty).toList();
 
         // Get tokens from database
         final tokens = _database.getTokensByTokenIds(tokenIds: tokenIds);
@@ -701,8 +703,8 @@ class NftTokensServiceImpl extends NftTokensService {
         for (final tokenId in tokenIds) {
           final changes = groupedChanges[tokenId]!;
 
-          final originalToken =
-              tokens.firstWhereOrNull((token) => token.id == tokenId);
+          final originalToken = tokens
+              .firstWhereOrNull((token) => token.id.toString() == tokenId);
 
           // Find current token in database
           var currentToken = originalToken?.copyWith();
@@ -741,7 +743,10 @@ class NftTokensServiceImpl extends NftTokensService {
           }
 
           if (currentToken != null &&
-              currentToken.updatedAt != originalToken?.updatedAt) {
+              (originalToken == null ||
+                  (currentToken.updatedAt?.isAfter(
+                          originalToken.updatedAt ?? DateTime(1971)) ??
+                      false))) {
             updatedTokens.add(currentToken);
           }
         }

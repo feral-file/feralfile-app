@@ -80,6 +80,7 @@ class _CollectionPageState extends State<CollectionPage>
       builder: (context) {
         return Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             BlocBuilder<UserAllOwnCollectionBloc, UserAllOwnCollectionState>(
               bloc: _collectionBloc,
@@ -145,10 +146,14 @@ Type or paste an address into the command bar to load''',
                 bloc: _collectionBloc,
                 builder: (context, collectionState) {
                   if (collectionState.isError) {
-                    return Center(
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Text(
                         'Error: ${collectionState.error}',
-                        style: const TextStyle(color: AppColor.white),
+                        style: Theme.of(context)
+                            .textTheme
+                            .small
+                            .copyWith(color: AppColor.red),
                       ),
                     );
                   } else if (collectionState.addressAssetTokens.isEmpty) {

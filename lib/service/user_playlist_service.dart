@@ -73,8 +73,8 @@ class UserDp1PlaylistService {
           await _dp1FeedService.getPlaylistById(playlistId, usingCache: false);
       if (playlist != null) {
         // migrate from old indexer to new indexer
-        final oldIndexerUrl = 'https://indexer.autonomy.io';
-        if (playlist.dynamicQueries.any((e) => e.endpoint == oldIndexerUrl)) {
+        if (playlist.dynamicQueries
+            .any((e) => e.endpoint != Environment.indexerURL)) {
           final newIndexerUrl = Environment.indexerURL;
           final newPlaylist = playlist.copyWith(
             dynamicQueries: playlist.dynamicQueries
@@ -108,7 +108,7 @@ class UserDp1PlaylistService {
       items: [],
       dynamicQueries: [
         DynamicQuery(
-          endpoint: '${Environment.indexerURL}/v2/graphql',
+          endpoint: '${Environment.indexerURL}/graphql',
           params: DynamicQueryParams(
               owners: allOwnedAddresses.map((e) => e.address).toList()),
         )

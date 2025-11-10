@@ -27,7 +27,7 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
   ) {
     switch (sortBy) {
       case IndexerDatabaseSortBy.updatedAt:
-        return TokenObject_.updatedAt;
+        return TokenObject_.updatedAtMicroseconds;
     }
   }
 
@@ -214,8 +214,8 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
   }) {
     final sortByProperty = convertSortByToQueryProperty(sortBy);
     final query = tokenBox
-        .query(
-            TokenObject_.id.oneOf(tokenIds.map((e) => int.parse(e)).toList()))
+        .query(TokenObject_.tokenId
+            .oneOf(tokenIds.map((e) => int.parse(e)).toList()))
         .order(sortByProperty, flags: Order.descending)
         .build();
     try {

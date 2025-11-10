@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
+import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_event.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/util/dp1_manifest_helper.dart';
+import 'package:autonomy_flutter/util/log.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sentry/sentry.dart';
@@ -49,44 +51,52 @@ class PlaylistDetailsBloc
     try {
       final items = _playlist.items;
       final pageItems = items.take(event.size).toList();
-      final cids =
-          pageItems.map((item) => item.cid).whereType<String>().toList();
+      final pageAssetTokens = <AssetToken>[];
 
-      final assetTokens =
-          await injector<NftTokensService>().getManualTokens(cids: cids);
-      if (assetTokens.length != pageItems.length) {
-        final missingTokens = pageItems
-            .where((item) => !assetTokens.any((t) => t.cid == item.cid))
+      try {
+        final cids =
+            pageItems.map((item) => item.cid).whereType<String>().toList();
+
+        final assetTokens =
+            await injector<NftTokensService>().getManualTokens(cids: cids);
+        if (assetTokens.length != pageItems.length) {
+          final missingTokens = pageItems
+              .where((item) => !assetTokens.any((t) => t.cid == item.cid))
+              .toList();
+          unawaited(
+            Sentry.captureException(
+              Exception(
+                'Can not get all tokens. Missing tokens:  ${missingTokens.join(', ')}',
+              ),
+            ),
+          );
+        }
+
+        final tokens = cids
+            .map(
+              (cid) => assetTokens.firstWhereOrNull(
+                (t) => t.cid == cid,
+              ),
+            )
+            .nonNulls
             .toList();
-        unawaited(
-          Sentry.captureException(
-            Exception(
-              'Can not get all tokens. Missing tokens:  ${missingTokens.join(', ')}',
-            ),
-          ),
-        );
-      }
+        pageAssetTokens.addAll(tokens);
 
-      final pageAssetTokens = cids
-          .map(
-            (cid) => assetTokens.firstWhereOrNull(
-              (t) => t.cid == cid,
+        if (assetTokens.length != pageItems.length) {
+          final missingTokens = pageItems
+              .where((item) => !assetTokens.any((t) => t.cid == item.cid))
+              .toList();
+          unawaited(
+            Sentry.captureException(
+              Exception(
+                'Can not get all tokens. Missing tokens:  ${missingTokens.join(', ')}',
+              ),
             ),
-          )
-          .nonNulls
-          .toList();
-
-      if (assetTokens.length != pageItems.length) {
-        final missingTokens = pageItems
-            .where((item) => !assetTokens.any((t) => t.cid == item.cid))
-            .toList();
-        unawaited(
-          Sentry.captureException(
-            Exception(
-              'Can not get all tokens. Missing tokens:  ${missingTokens.join(', ')}',
-            ),
-          ),
-        );
+          );
+        }
+      } catch (e) {
+        log.info('Error getting tokens: $e');
+        unawaited(Sentry.captureException(e));
       }
 
       // Fetch DP1 manifests

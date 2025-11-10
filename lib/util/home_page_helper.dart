@@ -5,6 +5,7 @@ import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/model/additional_data/additional_data.dart';
 import 'package:autonomy_flutter/model/token.dart' as v2;
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
+import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/home/home_bloc.dart';
@@ -84,8 +85,7 @@ class HomePageHelper {
       },
     );
 
-    _reindexAllAddresses();
-    _refreshAddressesNeedingFetch();
+    _refreshAddressesNeedingReindex();
 
     unawaited(NowDisplayingManager().updateDisplayingNow());
 
@@ -152,14 +152,7 @@ class HomePageHelper {
     );
   }
 
-  Future<void> _reindexAllAddresses() async {
-    final allAddresses = injector<AddressService>().getAllAddresses();
-    if (allAddresses.isNotEmpty) {
-      await injector<NftTokensService>().reindexAddresses(allAddresses);
-    }
-  }
-
-  Future<void> _refreshAddressesNeedingFetch() async {
+  Future<void> _refreshAddressesNeedingReindex() async {
     try {
       // Load remote config if needed
       final rc = injector<RemoteConfigService>();
@@ -209,43 +202,49 @@ class HomePageHelper {
         }
       }
 
-      final toRefresh = {
+      final toReindex = {
         ...addressesWithoutRefreshTime,
         ...addressesInvalidOrBeforeForce,
       };
 
+      final alreadyIndexed =
+          addresses.where((addr) => refreshedMap[addr] != null).toList();
+
+      NftCollection.logger.info('Already indexed addresses: $alreadyIndexed');
+      injector<NftTokensService>().reindexAddresses(alreadyIndexed);
+
       log.info('Addresses without refresh time: $addressesWithoutRefreshTime');
       log.info(
           'Addresses invalid cache or before force: $addressesInvalidOrBeforeForce');
-      log.info('Addresses to refresh: ${toRefresh.toList()}');
+      log.info('Addresses to refresh: ${toReindex.toList()}');
 
-      if (toRefresh.isNotEmpty) {
-        log.info('Clearing recent refreshed time for ${toRefresh.toList()}');
+      if (toReindex.isNotEmpty) {
+        log.info('Clearing recent refreshed time for ${toReindex.toList()}');
 
         // clear recent refreshed time for these addresses
         final refreshedMap = injector<UserDp1PlaylistService>()
-            .getAddressOldestLastRefreshedTime(addresses: toRefresh.toList());
+            .getAddressOldestLastRefreshedTime(addresses: toReindex.toList());
         for (final addr in refreshedMap.keys) {
           refreshedMap[addr] = null;
         }
         injector<UserDp1PlaylistService>()
             .updateAddressLastRefreshedTime(addresses: refreshedMap);
 
-        log.info('Clearing cached tokens for ${toRefresh.toList()}');
+        log.info('Clearing cached tokens for ${toReindex.toList()}');
 
         // Clear cached tokens for these addresses before fetching
         final db = injector<IndexerDatabaseAbstract>();
-        final tokens = db.getTokensByOwners(owners: toRefresh.toList());
+        final tokens = db.getTokensByOwners(owners: toReindex.toList());
         if (tokens.isNotEmpty) {
           final cids = tokens.map((v2.AssetToken t) => t.cid).toList();
           db.deleteTokens(cids);
         }
 
-        log.info('Fetching tokens for ${toRefresh.toList()}');
+        log.info(
+            '[_refreshAddressesNeedingReindex] Reindexing tokens for ${toReindex.toList()}');
 
-        injector<UserAllOwnCollectionBloc>().add(FetchTokensOfAddresses(
-            addresses: toRefresh.toList(),
-            shouldUpdateLastRefreshedTime: true));
+        injector<UserAllOwnCollectionBloc>()
+            .add(ReindexAddresses(addresses: toReindex.toList()));
       }
     } catch (_) {
       // ignore errors in background refresh
@@ -274,7 +273,7 @@ class HomePageHelper {
 
     _triggerShowAnnouncement();
     // refresh stale/missing addresses when app resume
-    unawaited(_refreshAddressesNeedingFetch());
+    unawaited(_refreshAddressesNeedingReindex());
   }
 
   void _handleBackground() {

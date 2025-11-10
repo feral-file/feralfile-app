@@ -253,6 +253,16 @@ extension AssetTokenExtension on AssetToken {
     return provenanceEvents?.items ?? [];
   }
 
+  String? getBlockchainUrl() {
+    switch (blockchain) {
+      case Blockchain.ETHEREUM:
+        return 'https://etherscan.io/address/$contractAddress';
+      case Blockchain.TEZOS:
+        return 'https://tzkt.io/$contractAddress';
+    }
+    return null;
+  }
+
   /// Apply a Change (parsing its meta based on subjectType) and return updated token
   AssetToken applyChange(Change change) {
     final meta = change.metaParsed;
