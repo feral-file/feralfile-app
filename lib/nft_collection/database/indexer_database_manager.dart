@@ -78,14 +78,38 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
       final results = query.find();
       final res = results.map((e) => e.toToken()).toList();
 
-      // sort by provenance events timestamp descending, if an item has no provenance events, it should be at the end,
-      res.sort((a, b) => (b.provenanceEvents?.items.isNotEmpty ?? false)
-          ? b.provenanceEvents!.items.first.timestamp
-              .compareTo(a.provenanceEvents!.items.first.timestamp)
-          : 1);
+      // Sort by latest provenance event timestamp (desc). Items without provenance go last.
+      try {
+        res.sort((a, b) {
+          final hasA = (a.provenanceEvents?.items.isNotEmpty ?? false);
+          final hasB = (b.provenanceEvents?.items.isNotEmpty ?? false);
+          if (!hasA && !hasB) return 0;
+          if (!hasB) return -1; // b has no events -> a before b
+          if (!hasA) return 1; // a has no events -> a after b
+          final tsA = a.provenanceEvents!.items.first.timestamp;
+          final tsB = b.provenanceEvents!.items.first.timestamp;
+          // Descending: newer first
+          return tsB.compareTo(tsA);
+        });
+      } catch (e) {
+        log.info('Error sorting tokens by owner: $e');
+        Sentry.captureEvent(SentryEvent(
+          message: SentryMessage('Error sorting tokens by owner: $e'),
+          level: SentryLevel.error,
+        ));
+      }
       return res;
     } catch (e) {
       log.info('Error getting tokens by owner: $e');
+      Sentry.captureEvent(SentryEvent(
+        message:
+            SentryMessage('Error getting tokens by owner $ownerAddress: $e'),
+        level: SentryLevel.error,
+        extra: {
+          'ownerAddress': ownerAddress,
+          'sortBy': sortBy.toString(),
+        },
+      ));
       return [];
     } finally {
       query.close();
@@ -168,6 +192,14 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
       return results.map((e) => e.toToken()).toList();
     } catch (e) {
       log.info('Error getting tokens by owners: $e');
+      Sentry.captureEvent(SentryEvent(
+        message: SentryMessage('Error getting tokens by owners: $e'),
+        level: SentryLevel.error,
+        extra: {
+          'owners': owners,
+          'sortBy': sortBy.toString(),
+        },
+      ));
       return [];
     } finally {
       query.close();
