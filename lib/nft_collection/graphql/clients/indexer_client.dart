@@ -72,6 +72,14 @@ class IndexerClient {
       return result.data;
     } catch (e) {
       NftCollection.logger.info('Error querying: $e');
+      Sentry.captureEvent(SentryEvent(
+        message: SentryMessage('Error querying: $e'),
+        level: SentryLevel.error,
+        extra: {
+          'doc': doc,
+          'vars': vars.toString(),
+        },
+      ));
       return null;
     }
   }
@@ -108,6 +116,14 @@ class IndexerClient {
       return result.data;
     } catch (e) {
       NftCollection.logger.info('Error mutating: $e');
+      Sentry.captureEvent(SentryEvent(
+        message: SentryMessage('Error mutating: $e'),
+        level: SentryLevel.error,
+        extra: {
+          'doc': doc,
+          'vars': vars.toString(),
+        },
+      ));
       rethrow;
     }
   }
