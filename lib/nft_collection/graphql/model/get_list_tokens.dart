@@ -58,8 +58,9 @@ class QueryListTokensRequest {
     this.contractAddresses = const [],
     this.tokenIds = const [],
     this.tokenCids = const [],
+    this.tokenNumbers = const [],
     this.limit = indexerTokensPageSize,
-    this.expand = const [
+    this.expands = const [
       ExpandField.provenanceEvents,
       ExpandField.owners,
       ExpandField.metadataMediaAsset,
@@ -78,10 +79,11 @@ class QueryListTokensRequest {
   // New API fields
   final List<String> chains;
   final List<String> contractAddresses;
-  final List<String> tokenIds;
+  final List<int> tokenIds;
   final List<String> tokenCids;
+  final List<String> tokenNumbers;
   final int? limit;
-  final List<ExpandField> expand;
+  final List<ExpandField> expands;
   final int ownersLimit;
   final int ownersOffset;
   final int provenanceEventsLimit;
@@ -93,14 +95,15 @@ class QueryListTokensRequest {
     final limitValue = limit;
     return <String, dynamic>{
       // New API keys
-      'owner': owners,
-      'chain': chains,
-      'contract_address': contractAddresses,
-      'token_id': tokenIds,
+      'owners': owners,
+      'chains': chains,
+      'contract_addresses': contractAddresses,
+      'token_ids': tokenIds,
       'token_cids': tokenCids,
+      'token_numbers': tokenNumbers,
       'limit': limitValue,
       'offset': offset,
-      'expand': expand.map((e) => e.toJson()).toList(),
+      'expands': expands.map((e) => e.toJson()).toList(),
       'owners_limit': ownersLimit,
       'owners_offset': ownersOffset,
       'provenance_events_limit': provenanceEventsLimit,
@@ -114,7 +117,7 @@ class QueryListTokensRequest {
 class QueryGetTokenByCidRequest {
   QueryGetTokenByCidRequest({
     required this.cid,
-    this.expand = const [
+    this.expands = const [
       ExpandField.provenanceEvents,
       ExpandField.owners,
       ExpandField.metadataMediaAsset,
@@ -129,7 +132,7 @@ class QueryGetTokenByCidRequest {
   });
 
   final String cid;
-  final List<ExpandField> expand;
+  final List<ExpandField> expands;
   final int ownersLimit;
   final int ownersOffset;
   final int provenanceEventsLimit;
@@ -138,7 +141,7 @@ class QueryGetTokenByCidRequest {
 
   Map<String, dynamic> toJson() => <String, dynamic>{
         'cid': cid,
-        'expand': expand.map((e) => e.toJson()).toList(),
+        'expands': expands.map((e) => e.toJson()).toList(),
         'owners_limit': ownersLimit,
         'owners_offset': ownersOffset,
         'provenance_events_limit': provenanceEventsLimit,

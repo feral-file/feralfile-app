@@ -89,13 +89,14 @@ type Query {
 const String getTokens = r'''
   query getTokens(
     $owners: [String!]
-    $chain: [String!]
-    $contract_address: [String!]
-    $token_ids: [String!]
+    $chains: [String!]
+    $contract_addresses: [String!]
+    $token_ids: [Uint64!]
     $token_cids: [String!]
+    $token_numbers: [String!]
     $limit: Uint8 = 20
     $offset: Uint64 = 0
-    $expand: [String!]
+    $expands: [String!]
     $owners_limit: Uint8 = 10
     $owners_offset: Uint64 = 0
     $provenance_events_limit: Uint8 = 10
@@ -104,13 +105,14 @@ const String getTokens = r'''
   ) {
     tokens(
       owners: $owners
-      chain: $chain
-      contract_address: $contract_address
+      chains: $chains
+      contract_addresses: $contract_addresses
       token_ids: $token_ids
       token_cids: $token_cids
+      token_numbers: $token_numbers
       limit: $limit
       offset: $offset
-      expand: $expand
+      expands: $expands
       owners_limit: $owners_limit
       owners_offset: $owners_offset
       provenance_events_limit: $provenance_events_limit
@@ -192,7 +194,7 @@ const String getTokens = r'''
 const String getTokenByCidQuery = r'''
   query getToken(
     $cid: String!
-    $expand: [String!]
+    $expands: [String!]
     $owners_limit: Uint8 = 10
     $owners_offset: Uint64 = 0
     $provenance_events_limit: Uint8 = 10
@@ -201,7 +203,7 @@ const String getTokenByCidQuery = r'''
   ) {
     token(
       cid: $cid
-      expand: $expand
+      expands: $expands
       owners_limit: $owners_limit
       owners_offset: $owners_offset
       provenance_events_limit: $provenance_events_limit
