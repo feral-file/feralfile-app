@@ -2,6 +2,7 @@ import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:sentry/sentry.dart';
 
 class IndexerClient {
   IndexerClient(
@@ -53,6 +54,17 @@ class IndexerClient {
         NftCollection.logger.warning(
           'GraphQL query exception: link: ${result.exception?.linkException}; graphql: ${result.exception?.graphqlErrors.map((e) => e.message).join(', ')}',
         );
+        Sentry.captureEvent(SentryEvent(
+          message: SentryMessage(
+            'GraphQL query exception: link: ${result.exception?.linkException}; graphql: ${result.exception?.graphqlErrors.map((e) => e.message).join(', ')}',
+          ),
+          level: SentryLevel.error,
+          tags: {
+            'doc': doc,
+            'vars': vars.toString(),
+          },
+          throwable: result.exception,
+        ));
       }
       if (subKey != null) {
         return result.data?[subKey];
@@ -79,6 +91,18 @@ class IndexerClient {
       );
       final result = await clientToUse.mutate(options);
       if (result.exception != null) {
+        NftCollection.logger.info('Error mutating: $doc with params: $vars');
+        Sentry.captureEvent(SentryEvent(
+          message: SentryMessage(
+            'GraphQL mutation exception: link: ${result.exception?.linkException}; graphql: ${result.exception?.graphqlErrors.map((e) => e.message).join(', ')}',
+          ),
+          level: SentryLevel.error,
+          tags: {
+            'doc': doc,
+            'vars': vars.toString(),
+          },
+          throwable: result.exception,
+        ));
         throw result.exception!;
       }
       return result.data;

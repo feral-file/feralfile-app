@@ -88,10 +88,10 @@ type Query {
 
 const String getTokens = r'''
   query getTokens(
-    $owner: [String!]
+    $owners: [String!]
     $chain: [String!]
     $contract_address: [String!]
-    $token_id: [String!]
+    $token_ids: [String!]
     $token_cids: [String!]
     $limit: Uint8 = 20
     $offset: Uint64 = 0
@@ -103,10 +103,10 @@ const String getTokens = r'''
     $provenance_events_order: Order = desc
   ) {
     tokens(
-      owner: $owner
+      owners: $owners
       chain: $chain
       contract_address: $contract_address
-      token_id: $token_id
+      token_ids: $token_ids
       token_cids: $token_cids
       limit: $limit
       offset: $offset

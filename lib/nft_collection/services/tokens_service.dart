@@ -17,6 +17,7 @@ import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.da
 import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/nft_collection/services/configuration_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
+import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
@@ -547,7 +548,20 @@ class NftTokensServiceImpl extends NftTokensService {
         .info('[insertAssetsWithProvenance][tokens] $tokensLog');
   }
 
-  Future<List<AssetToken>> _fetchManualTokens(List<String> cids) async {
+  // fetch manual tokens from indexer in batches of 20
+  Future<List<AssetToken>> _fetchManualTokensInBatches(
+      List<String> cids) async {
+    final batches = cids.batch(40);
+    final manuallyAssets = <AssetToken>[];
+    for (final batch in batches) {
+      final assetTokenFromIndexer = await _fetchManualTokens(batch);
+      manuallyAssets.addAll(assetTokenFromIndexer);
+    }
+    return manuallyAssets;
+  }
+
+  Future<List<AssetToken>> _fetchManualTokens(List<String> cids,
+      {bool shouldCallIndexer = true}) async {
     final request = QueryListTokensRequest(
       tokenCids: cids,
       limit: cids.length,
@@ -558,7 +572,7 @@ class NftTokensServiceImpl extends NftTokensService {
     final missingCids =
         cids.where((cid) => !manuallyAssets.any((e) => e.cid == cid)).toList();
 
-    if (missingCids.isNotEmpty) {
+    if (missingCids.isNotEmpty && shouldCallIndexer) {
       // reindex the missing cids
       final res = await reindexTokensByCids(missingCids);
 
@@ -571,7 +585,8 @@ class NftTokensServiceImpl extends NftTokensService {
         }
         await Future<void>.delayed(const Duration(milliseconds: 500));
       }
-      final assetTokenFromIndexer = await _fetchManualTokens(missingCids);
+      final assetTokenFromIndexer =
+          await _fetchManualTokens(missingCids, shouldCallIndexer: false);
       manuallyAssets.addAll(assetTokenFromIndexer);
     }
 
@@ -598,7 +613,8 @@ class NftTokensServiceImpl extends NftTokensService {
         .toList();
     if (missingIds.isNotEmpty) {
       if (shouldCallIndexer) {
-        final assetTokenFromIndexer = await _fetchManualTokens(missingIds);
+        final assetTokenFromIndexer =
+            await _fetchManualTokensInBatches(missingIds);
         res.addAll(assetTokenFromIndexer);
       }
     }

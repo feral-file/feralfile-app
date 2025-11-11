@@ -7,7 +7,6 @@ import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.da
 import 'package:autonomy_flutter/nft_collection/graphql/model/identity.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/queries/queries.dart';
 import 'package:autonomy_flutter/nft_collection/models/identity.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 
 abstract class NftIndexerServiceBase {
   Future<List<AssetToken>> getNftTokens(
@@ -15,8 +14,6 @@ abstract class NftIndexerServiceBase {
   );
 
   Future<Identity> getIdentity(QueryIdentityRequest request);
-
-  Future<List<AssetToken>> getAssetTokens(List<DP1Item> items);
 
   /// Trigger indexing for a list of addresses
   /// Returns the workflow_id and run_id from the indexing operation
@@ -85,15 +82,6 @@ class NftIndexerService implements NftIndexerServiceBase {
       Map<String, dynamic>.from(result as Map),
     );
     return data.identity;
-  }
-
-  @override
-  Future<List<AssetToken>> getAssetTokens(List<DP1Item> items) async {
-    final cids = items.map((item) => item.cid).whereType<String>().toList();
-    final assetTokens = await getNftTokens(
-      QueryListTokensRequest(tokenCids: cids),
-    );
-    return List<AssetToken>.from(assetTokens).toList();
   }
 
   /// Trigger indexing for a list of addresses

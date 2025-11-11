@@ -188,12 +188,12 @@ class DynamicQueryParams {
 
   Map<String, dynamic> toJson() {
     return {
-      'owner': owners.join(','),
+      'owners': owners.join(','),
     };
   }
 
   factory DynamicQueryParams.fromJson(Map<String, dynamic> json) {
-    final ownersData = json['owner'];
+    final ownersData = json['owners'];
     List<String> owners;
     if (ownersData is String) {
       owners = ownersData.split(',').where((s) => s.isNotEmpty).toList();

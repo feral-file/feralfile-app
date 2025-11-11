@@ -50,8 +50,6 @@ class _TwoStopDraggableSheetState extends State<TwoStopDraggableSheet> {
     } else {
       isNowDisplayingBarExpanded.value = false;
     }
-    log.info(
-        "Sheet size: ${_controller.size}, isNowDisplayingBarExpanded: ${isNowDisplayingBarExpanded.value}, minSize: ${widget.minSize}, maxSize: ${widget.maxSize}");
   }
 
   Future<void> collapseSheet(

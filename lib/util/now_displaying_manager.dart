@@ -123,9 +123,11 @@ class NowDisplayingManager {
     if (status.items?.isNotEmpty ?? false) {
       // DP1
       final index = status.index!;
-      final assetTokens = await _fetchAssetTokens(
-        status.items!.map((e) => e.cid).nonNulls.toList(),
-      );
+
+      final cid = status.items![index].cid;
+      final assetTokens = await _fetchAssetTokens([
+        ...(cid != null ? [cid] : []),
+      ]);
       final refs = status.items!.map((e) => e.ref).nonNulls.toSet().toList();
       final manifests =
           await DP1ManifestHelper.instance.fetchDP1Manifests(refs);
