@@ -109,18 +109,18 @@ class NftIndexerService implements NftIndexerServiceBase {
     }
 
     final result = await _client.mutate(
-      doc: triggerIndexing,
+      doc: triggerOwnerIndexing,
       vars: {
         'addresses': addresses,
       },
       withToken: true,
     );
 
-    if (result == null || result['triggerIndexing'] == null) {
+    if (result == null || result['triggerOwnerIndexing'] == null) {
       throw Exception('Failed to trigger indexing for addresses');
     }
 
-    final data = result['triggerIndexing'] as Map<String, dynamic>;
+    final data = result['triggerOwnerIndexing'] as Map<String, dynamic>;
     return TriggerIndexingResult.fromJson(data);
   }
 
@@ -137,18 +137,18 @@ class NftIndexerService implements NftIndexerServiceBase {
     }
 
     final result = await _client.mutate(
-      doc: triggerIndexing,
+      doc: triggerTokenIndexing,
       vars: {
         'token_cids': tokenCids,
       },
-      withToken: true,
+      withToken: false,
     );
 
-    if (result == null || result['triggerIndexing'] == null) {
+    if (result == null || result['triggerTokenIndexing'] == null) {
       throw Exception('Failed to trigger indexing for tokens');
     }
 
-    final data = result['triggerIndexing'] as Map<String, dynamic>;
+    final data = result['triggerTokenIndexing'] as Map<String, dynamic>;
     return TriggerIndexingResult.fromJson(data);
   }
 

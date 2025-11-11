@@ -32,6 +32,7 @@ class UserAllOwnCollectionBloc
     on<ReindexAddresses>(_onReindexAddresses);
     on<WorkflowStatusTick>(_onWorkflowStatusTick);
     on<UpdateTokensOfAddresses>(_onUpdateTokensOfAddresses);
+    on<RemoveIndexingOperation>(_onRemoveIndexingOperation);
   }
 
   final NftTokensService _tokensService;
@@ -75,46 +76,74 @@ class UserAllOwnCollectionBloc
 
     try {
       log.info('[UserAllOwnCollectionBloc] Reindex addresses: $addresses');
-      // Emit operation BEFORE calling reindex
-      final opId = addresses.join(',');
-      final operations = List<IndexingOperation>.from(state.indexingOperations);
+      // Check if any of the addresses are already being reindexed
+      final allIndexingAddresses =
+          state.indexingOperations.expand((op) => op.addresses).toSet();
+      final newAddresses = addresses
+          .where((addr) => !allIndexingAddresses.contains(addr))
+          .toList();
 
-      // if the operation already exists, return;
-      if (operations.any((op) => op.id == opId)) {
+      if (newAddresses.isEmpty) {
         log.info(
-            '[UserAllOwnCollectionBloc] Addresses $addresses already being reindexed: $opId');
+            '[UserAllOwnCollectionBloc] All addresses $addresses are already being reindexed');
         return;
       }
-      operations.add(IndexingOperation(id: opId, addresses: addresses));
-      emit(state.copyWith(indexingOperations: operations));
-      bool isFinished = false;
-      final maxAttempts = 10;
+
+      // Track completed addresses from this event only
+      final completedAddresses = <String>{};
+      final maxAttempts = 13;
       int attempts = 0;
-      while (!isFinished && attempts < maxAttempts) {
+
+      while (attempts < maxAttempts) {
         attempts++;
+        final addressesToReindex = addresses
+            .where((addr) => !completedAddresses.contains(addr))
+            .toList();
         log.info(
-            '[UserAllOwnCollectionBloc] Reindex addresses: $addresses, attempt: $attempts');
+            '[UserAllOwnCollectionBloc] Reindex addresses: $addressesToReindex, attempt: $attempts');
 
         await _tokensService.reindexAddressesAndPullStatus(
-          addresses: addresses,
+          addresses: addressesToReindex,
           timeout: const Duration(days: 1),
-          onStatus: (status, workflowId, runId) {
-            log.info('[ReindexAddresses][$opId] status: ${status.toJson()}');
+          onBatchStart: (batchAddresses) async {
+            // Add operation for this batch when it starts
+            final batchOpId = batchAddresses.join(',');
+            final operations =
+                List<IndexingOperation>.from(state.indexingOperations);
+
+            // Skip if this batch is already being processed
+            if (operations.any((op) => op.id == batchOpId)) {
+              log.info(
+                  '[UserAllOwnCollectionBloc] Batch $batchAddresses already being reindexed: $batchOpId');
+              return;
+            }
+
+            operations.add(
+                IndexingOperation(id: batchOpId, addresses: batchAddresses));
+            emit(state.copyWith(indexingOperations: operations));
+            log.info(
+                '[UserAllOwnCollectionBloc] Started indexing batch: $batchAddresses');
+          },
+          onStatus: (status, workflowId, runId, batchAddresses) {
+            final batchOpId = batchAddresses.join(',');
+            log.info(
+                '[ReindexAddresses][$batchOpId] status: ${status.toJson()}');
             if (status.isDone) {
               log.info(
                   'Pull workflow status done with status: ${status.toJson()}, workflowId: $workflowId, runId: $runId');
               if (status.isSuccess) {
-                isFinished = true;
-              } else {
-                isFinished = false;
+                // Mark addresses from this batch as completed
+                completedAddresses.addAll(batchAddresses);
+                log.info(
+                    '[UserAllOwnCollectionBloc] Batch $batchAddresses completed successfully. Completed addresses: ${completedAddresses.length}/${addresses.length}');
               }
             } else {
-              add(FetchTokensOfAddresses(addresses: addresses));
+              add(FetchTokensOfAddresses(addresses: batchAddresses));
             }
             add(
               WorkflowStatusTick(
-                operationId: opId,
-                addresses: addresses,
+                operationId: batchOpId,
+                addresses: batchAddresses,
                 workflowId: workflowId,
                 runId: runId,
                 status: status,
@@ -123,28 +152,47 @@ class UserAllOwnCollectionBloc
             // Return true to complete if status is done
             return status.isDone;
           },
-          onTimeout: () {},
-          onError: (error, stackTrace) {
+          onTimeout: (batchAddresses) {
+            log.info('[ReindexAddresses] Timeout for batch: $batchAddresses');
+            // Remove operation for this batch
+            final batchOpId = batchAddresses.join(',');
+            add(RemoveIndexingOperation(operationId: batchOpId));
+          },
+          onError: (error, stackTrace, batchAddresses) {
             // Keep polling despite transient errors
-            log.info('[ReindexAddresses][$opId] poll error: $error');
+            log.info(
+                '[ReindexAddresses] Error for batch $batchAddresses: $error');
             unawaited(Sentry.captureException(error, stackTrace: stackTrace));
+            // Optionally remove operation for this batch on error
+            // Uncomment if you want to remove the operation on error:
+            final batchOpId = batchAddresses.join(',');
+            add(RemoveIndexingOperation(operationId: batchOpId));
           },
         );
 
-        if (isFinished) {
+        // Wait a bit for events to be processed (WorkflowStatusTick events that remove operations)
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+
+        // Also check completed addresses to ensure we have all
+        final allCompleted = completedAddresses.length == addresses.length;
+
+        if (allCompleted) {
+          log.info(
+              '[UserAllOwnCollectionBloc] All addresses from this event have been indexed. Completed: ${completedAddresses.length}/${addresses.length}');
           break;
         } else {
           log.info(
-              '[UserAllOwnCollectionBloc] Reindex is not finished, waiting for 30 seconds');
-          await Future<void>.delayed(const Duration(seconds: 30));
+              '[UserAllOwnCollectionBloc] Completed addresses: ${completedAddresses.join(',')}. Waiting for 5 seconds');
+          await Future<void>.delayed(const Duration(seconds: 5));
         }
       }
     } catch (e, st) {
       log.info('[UserAllOwnCollectionBloc] Reindex error: $e');
       unawaited(Sentry.captureException(e, stackTrace: st));
-      final opId = addresses.join(',');
+      // Remove all operations related to these addresses
       final operations = List<IndexingOperation>.from(state.indexingOperations);
-      operations.removeWhere((op) => op.id == opId);
+      operations.removeWhere(
+          (op) => op.addresses.any((addr) => addresses.contains(addr)));
       emit(state.copyWith(
         status: UserAllOwnCollectionStatus.error,
         error: 'Something went wrong while indexing addresses.',
@@ -384,6 +432,17 @@ class UserAllOwnCollectionBloc
       Sentry.captureException('Failed to update asset tokens: $e',
           stackTrace: stackTrace);
     }
+  }
+
+  Future<void> _onRemoveIndexingOperation(
+    RemoveIndexingOperation event,
+    Emitter<UserAllOwnCollectionState> emit,
+  ) async {
+    final operations = List<IndexingOperation>.from(state.indexingOperations);
+    operations.removeWhere((op) => op.id == event.operationId);
+    emit(state.copyWith(indexingOperations: operations));
+    log.info(
+        '[UserAllOwnCollectionBloc] Removed indexing operation: ${event.operationId}');
   }
 
   @override

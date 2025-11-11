@@ -73,9 +73,8 @@ class UserDp1PlaylistService {
           await _dp1FeedService.getPlaylistById(playlistId, usingCache: false);
       if (playlist != null) {
         // migrate from old indexer to new indexer
-        if (playlist.dynamicQueries
-            .any((e) => e.endpoint != Environment.indexerURL)) {
-          final newIndexerUrl = Environment.indexerURL;
+        final newIndexerUrl = '${Environment.indexerURL}/graphql';
+        if (playlist.dynamicQueries.any((e) => e.endpoint != newIndexerUrl)) {
           final newPlaylist = playlist.copyWith(
             dynamicQueries: playlist.dynamicQueries
                 .map((e) => e.copyWith(endpoint: newIndexerUrl))

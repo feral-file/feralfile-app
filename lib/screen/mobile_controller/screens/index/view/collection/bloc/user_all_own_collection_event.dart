@@ -57,3 +57,11 @@ class UpdateTokensOfAddresses extends UserAllOwnCollectionEvent {
 
   final List<String> addresses;
 }
+
+class RemoveIndexingOperation extends UserAllOwnCollectionEvent {
+  RemoveIndexingOperation({
+    required this.operationId,
+  });
+
+  final String operationId;
+}
