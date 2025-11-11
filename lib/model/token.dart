@@ -454,6 +454,14 @@ class PaginatedProvenanceEvents {
   Map<String, dynamic> toJson() => {
         'items': items.map((e) => e.toJson()).toList(),
       };
+
+  PaginatedProvenanceEvents copyWith({
+    List<ProvenanceEvent>? items,
+  }) {
+    return PaginatedProvenanceEvents(
+      items: items ?? this.items,
+    );
+  }
 }
 
 class EnrichmentSource {

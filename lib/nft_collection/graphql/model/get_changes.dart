@@ -150,6 +150,7 @@ class ProvenanceChangeMeta implements ChangeMeta {
     this.from,
     this.to,
     this.quantity,
+    this.txHash,
   });
 
   final String chain; // e.g., "eip155:1", "tezos:mainnet"
@@ -160,6 +161,7 @@ class ProvenanceChangeMeta implements ChangeMeta {
   final String? to; // Receiver address (null for burns)
   final String? quantity; // Quantity transferred/minted/burned
   final int tokenId;
+  final String? txHash;
 
   factory ProvenanceChangeMeta.fromJson(Map<String, dynamic> json) =>
       ProvenanceChangeMeta(
@@ -171,6 +173,7 @@ class ProvenanceChangeMeta implements ChangeMeta {
         from: json['from'] as String?,
         to: json['to'] as String?,
         quantity: json['quantity'] as String?,
+        txHash: json['tx_hash'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -182,6 +185,7 @@ class ProvenanceChangeMeta implements ChangeMeta {
         if (from != null) 'from': from,
         if (to != null) 'to': to,
         if (quantity != null) 'quantity': quantity,
+        if (txHash != null) 'tx_hash': txHash,
       };
 
   bool isMint() {

@@ -76,7 +76,14 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
         .build();
     try {
       final results = query.find();
-      return results.map((e) => e.toToken()).toList();
+      final res = results.map((e) => e.toToken()).toList();
+
+      // sort by provenance events timestamp descending, if an item has no provenance events, it should be at the end,
+      res.sort((a, b) => (b.provenanceEvents?.items.isNotEmpty ?? false)
+          ? b.provenanceEvents!.items.first.timestamp
+              .compareTo(a.provenanceEvents!.items.first.timestamp)
+          : 1);
+      return res;
     } catch (e) {
       log.info('Error getting tokens by owner: $e');
       return [];

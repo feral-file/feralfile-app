@@ -301,10 +301,11 @@ extension AssetTokenExtension on AssetToken {
 
     // Update owners list if needed
     PaginatedOwners? newOwners = owners;
+    PaginatedProvenanceEvents? newProvenanceEvents = provenanceEvents;
     if (meta.quantity != null) {
       final delta = _safeParseBigInt(meta.quantity!);
       final existingOwners = List<Owner>.from(owners?.items ?? []);
-      final updated = <Owner>[];
+      final updatedOwners = <Owner>[];
 
       bool toUpdated = false;
 
@@ -314,7 +315,7 @@ extension AssetTokenExtension on AssetToken {
           final currentQty = _safeParseBigInt(owner.quantity);
           final next = currentQty - delta;
           if (next > BigInt.zero) {
-            updated.add(owner.copyWith(quantity: next.toString()));
+            updatedOwners.add(owner.copyWith(quantity: next.toString()));
           }
           continue;
         }
@@ -323,28 +324,49 @@ extension AssetTokenExtension on AssetToken {
         if (meta.to != null && owner.ownerAddress == meta.to) {
           final currentQty = _safeParseBigInt(owner.quantity);
           final next = currentQty + delta;
-          updated.add(owner.copyWith(quantity: next.toString()));
+          updatedOwners.add(owner.copyWith(quantity: next.toString()));
           toUpdated = true;
           continue;
         }
 
         // Keep unchanged owners
-        updated.add(owner);
+        updatedOwners.add(owner);
       }
 
       // If 'to' address not found, add it with delta
       if (meta.to != null && !toUpdated) {
-        updated.add(Owner(ownerAddress: meta.to!, quantity: delta.toString()));
+        updatedOwners
+            .add(Owner(ownerAddress: meta.to!, quantity: delta.toString()));
       }
 
-      newOwners = (owners?.copyWith(items: updated)) ??
-          PaginatedOwners(items: updated, offset: 0, total: updated.length);
+      newOwners = (owners?.copyWith(items: updatedOwners)) ??
+          PaginatedOwners(
+              items: updatedOwners, offset: 0, total: updatedOwners.length);
+
+      final provenanceEvent = ProvenanceEvent(
+        chain: chain,
+        eventType: ProvenanceEventType.transfer,
+        fromAddress: meta.from,
+        toAddress: meta.to,
+        txHash: meta.txHash,
+        timestamp: changedAt!,
+      );
+
+      final newProvenanceEventsItems = (provenanceEvents?.items ?? []).toList();
+      newProvenanceEventsItems.add(provenanceEvent);
+      // sort by timestamp descending
+      newProvenanceEventsItems
+          .sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      newProvenanceEvents =
+          (provenanceEvents?.copyWith(items: newProvenanceEventsItems)) ??
+              PaginatedProvenanceEvents(items: newProvenanceEventsItems);
     }
 
     return copyWith(
       currentOwner: newOwner,
       updatedAt: changedAt ?? updatedAt,
       owners: newOwners,
+      provenanceEvents: newProvenanceEvents,
     );
   }
 
