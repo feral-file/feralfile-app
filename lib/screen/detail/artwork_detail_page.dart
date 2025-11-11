@@ -55,6 +55,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:sentry/sentry.dart';
 import 'package:shake/shake.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -709,27 +710,75 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                 );
               },
             ),
-          if (!widget.payload.shouldUseLocalCache)
-            OptionItem(
-              title: 'refresh_metadata'.tr(),
-              icon: SvgPicture.asset(
-                'assets/images/refresh_metadata_white.svg',
-                width: 20,
-                height: 20,
-              ),
-              onTap: () async {
+          OptionItem(
+            title: 'rebuild_metadata'.tr(),
+            icon: SvgPicture.asset(
+              'assets/images/refresh_metadata_white.svg',
+              width: 20,
+              height: 20,
+            ),
+            onTap: () async {
+              try {
+                // Trigger reindex by CID and wait until the workflow is done
+                await injector<NftTokensService>().reindexByCidsAndPullStatus(
+                  tokenCids: [asset.cid],
+                  timeout: const Duration(minutes: 3),
+                  onStatus: (status, workflowId, runId) async {
+                    // complete when workflow finishes
+                    if (status.isDone && !status.isSuccess) {
+                      Sentry.captureEvent(SentryEvent(
+                        message: SentryMessage(
+                            'Rebuild metadata failed for cid: ${asset.cid}'),
+                        level: SentryLevel.error,
+                        extra: {
+                          'status': status.toString(),
+                          'workflowId': workflowId,
+                          'runId': runId,
+                        },
+                      ));
+                    }
+                    return status.isDone;
+                  },
+                  onTimeout: () async {
+                    Sentry.captureEvent(SentryEvent(
+                      message: SentryMessage(
+                          'Rebuild metadata timeout for cid: ${asset.cid}'),
+                      level: SentryLevel.error,
+                    ));
+                    // No-op; we still proceed to fetch what we can
+                  },
+                  onError: (error, stackTrace) async {
+                    // No-op; allow flow to continue to fetch and reload
+                    Sentry.captureEvent(SentryEvent(
+                      message: SentryMessage(
+                          'Rebuild metadata error for cid: ${asset.cid}'),
+                      level: SentryLevel.error,
+                      extra: {
+                        'error': error.toString(),
+                        'stackTrace': stackTrace.toString(),
+                      },
+                    ));
+                  },
+                );
+                // Fetch the latest token and persist to database
                 await injector<NftTokensService>()
                     .getManualTokens(cids: [asset.cid]);
-                if (!context.mounted) {
-                  return;
-                }
-                Navigator.of(context).pop();
-                await Navigator.of(context).pushReplacementNamed(
-                  AppRouter.artworkDetailsPage,
-                  arguments: widget.payload.copyWith(),
-                );
-              },
-            ),
+              } catch (_) {
+                // Ignore errors and continue to reload UI
+              }
+              if (!context.mounted) {
+                return;
+              }
+              Navigator.of(context).pop();
+              // Reload current artwork state without navigation
+              _bloc.add(
+                ArtworkDetailGetInfoEvent(
+                  widget.payload.identity,
+                  useIndexer: widget.payload.useIndexer,
+                ),
+              );
+            },
+          ),
           OptionItem.emptyOptionItem,
         ],
       ),
