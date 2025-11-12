@@ -93,7 +93,7 @@ class HomePageHelper {
 
     _collectionRefreshTimer?.cancel();
     _collectionRefreshTimer =
-        Timer.periodic(const Duration(seconds: 15), (_) async {
+        Timer.periodic(const Duration(seconds: 60), (_) async {
       try {
         final allOwnedPlaylist =
             injector<UserDp1PlaylistService>().cachedAllOwnedPlaylist;
