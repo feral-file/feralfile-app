@@ -20,7 +20,6 @@ import 'package:autonomy_flutter/gateway/tv_cast_api.dart';
 import 'package:autonomy_flutter/gateway/user_api.dart';
 import 'package:autonomy_flutter/graphql/account_settings/account_settings_client.dart';
 import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
-import 'package:autonomy_flutter/nft_collection/data/api/indexer_api.dart';
 import 'package:autonomy_flutter/nft_collection/data/api/tzkt_api.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/clients/indexer_client.dart';
@@ -271,9 +270,9 @@ Future<void> setupInjector() async {
       baseUrl: Environment.feralFileAPIURL,
     ),
   );
-  injector.registerLazySingleton<IndexerApi>(
-    () => IndexerApi(dio, baseUrl: Environment.indexerURL),
-  );
+  // injector.registerLazySingleton<IndexerApi>(
+  //   () => IndexerApi(dio, baseUrl: Environment.indexerURL),
+  // );
 
   final indexerClient = IndexerClient(
     Environment.indexerURL,

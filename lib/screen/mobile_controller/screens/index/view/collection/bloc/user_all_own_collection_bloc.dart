@@ -102,73 +102,93 @@ class UserAllOwnCollectionBloc
         log.info(
             '[UserAllOwnCollectionBloc] Reindex addresses: $addressesToReindex, attempt: $attempts');
 
-        await _tokensService.reindexAddressesAndPullStatus(
-          addresses: addressesToReindex,
-          timeout: const Duration(days: 1),
-          onBatchStart: (batchAddresses) async {
-            // Add operation for this batch when it starts
-            final batchOpId = batchAddresses.join(',');
-            final operations =
-                List<IndexingOperation>.from(state.indexingOperations);
+        try {
+          await _tokensService.reindexAddressesAndPullStatus(
+            addresses: addressesToReindex,
+            timeout: const Duration(days: 1),
+            onBatchStart: (batchAddresses) async {
+              // Add operation for this batch when it starts
+              final batchOpId = batchAddresses.join(',');
+              final operations =
+                  List<IndexingOperation>.from(state.indexingOperations);
 
-            // Skip if this batch is already being processed
-            if (operations.any((op) => op.id == batchOpId)) {
-              log.info(
-                  '[UserAllOwnCollectionBloc] Batch $batchAddresses already being reindexed: $batchOpId');
-              return;
-            }
-
-            operations.add(
-                IndexingOperation(id: batchOpId, addresses: batchAddresses));
-            emit(state.copyWith(indexingOperations: operations));
-            log.info(
-                '[UserAllOwnCollectionBloc] Started indexing batch: $batchAddresses');
-          },
-          onStatus: (status, workflowId, runId, batchAddresses) {
-            final batchOpId = batchAddresses.join(',');
-            log.info(
-                '[ReindexAddresses][$batchOpId] status: ${status.toJson()}');
-            if (status.isDone) {
-              log.info(
-                  'Pull workflow status done with status: ${status.toJson()}, workflowId: $workflowId, runId: $runId');
-              if (status.isSuccess) {
-                // Mark addresses from this batch as completed
-                completedAddresses.addAll(batchAddresses);
+              // Skip if this batch is already being processed
+              if (operations.any((op) => op.id == batchOpId)) {
                 log.info(
-                    '[UserAllOwnCollectionBloc] Batch $batchAddresses completed successfully. Completed addresses: ${completedAddresses.length}/${addresses.length}');
+                    '[UserAllOwnCollectionBloc] Batch $batchAddresses already being reindexed: $batchOpId');
+                return;
               }
-            } else {
-              add(FetchTokensOfAddresses(addresses: batchAddresses));
-            }
-            add(
-              WorkflowStatusTick(
-                operationId: batchOpId,
-                addresses: batchAddresses,
-                workflowId: workflowId,
-                runId: runId,
-                status: status,
-              ),
-            );
-            // Return true to complete if status is done
-            return status.isDone;
-          },
-          onTimeout: (batchAddresses) {
-            log.info('[ReindexAddresses] Timeout for batch: $batchAddresses');
-            // Remove operation for this batch
-            final batchOpId = batchAddresses.join(',');
-            add(RemoveIndexingOperation(operationId: batchOpId));
-          },
-          onError: (error, stackTrace, batchAddresses) {
-            // Keep polling despite transient errors
-            log.info(
-                '[ReindexAddresses] Error for batch $batchAddresses: $error');
-            unawaited(Sentry.captureException(error, stackTrace: stackTrace));
-            // Optionally remove operation for this batch on error
-            // Uncomment if you want to remove the operation on error:
-            final batchOpId = batchAddresses.join(',');
-            add(RemoveIndexingOperation(operationId: batchOpId));
-          },
-        );
+
+              operations.add(
+                  IndexingOperation(id: batchOpId, addresses: batchAddresses));
+              emit(state.copyWith(indexingOperations: operations));
+              log.info(
+                  '[UserAllOwnCollectionBloc] Started indexing batch: $batchAddresses');
+            },
+            onStatus: (status, workflowId, runId, batchAddresses) {
+              final batchOpId = batchAddresses.join(',');
+              log.info(
+                  '[ReindexAddresses][$batchOpId] status: ${status.toJson()}');
+              if (status.isDone) {
+                log.info(
+                    'Pull workflow status done with status: ${status.toJson()}, workflowId: $workflowId, runId: $runId');
+                if (status.isSuccess) {
+                  // Mark addresses from this batch as completed
+                  completedAddresses.addAll(batchAddresses);
+                  log.info(
+                      '[UserAllOwnCollectionBloc] Batch $batchAddresses completed successfully. Completed addresses: ${completedAddresses.length}/${addresses.length}');
+                }
+              } else {
+                add(FetchTokensOfAddresses(addresses: batchAddresses));
+              }
+              add(
+                WorkflowStatusTick(
+                  operationId: batchOpId,
+                  addresses: batchAddresses,
+                  workflowId: workflowId,
+                  runId: runId,
+                  status: status,
+                ),
+              );
+              // Return true to complete if status is done
+              return status.isDone;
+            },
+            onTimeout: (batchAddresses) {
+              log.info('[ReindexAddresses] Timeout for batch: $batchAddresses');
+              Sentry.captureEvent(SentryEvent(
+                message: SentryMessage('Timeout for batch: $batchAddresses'),
+                level: SentryLevel.error,
+                extra: {
+                  'stackTrace': StackTrace.current.toString(),
+                },
+                throwable: 'Timeout for batch: $batchAddresses',
+              ));
+              // Remove operation for this batch
+              // final batchOpId = batchAddresses.join(',');
+              // add(RemoveIndexingOperation(operationId: batchOpId));
+            },
+            onError: (error, stackTrace, batchAddresses) {
+              // Keep polling despite transient errors
+              log.info(
+                  '[ReindexAddresses] Error for batch $batchAddresses: $error');
+              unawaited(Sentry.captureEvent(SentryEvent(
+                message:
+                    SentryMessage('Error for batch $batchAddresses: $error'),
+                level: SentryLevel.error,
+                extra: {
+                  'stackTrace': stackTrace.toString(),
+                },
+                throwable: error,
+              )));
+              // Optionally remove operation for this batch on error
+              // Uncomment if you want to remove the operation on error:
+              // final batchOpId = batchAddresses.join(',');
+              // add(RemoveIndexingOperation(operationId: batchOpId));
+            },
+          );
+        } catch (e, st) {
+          Sentry.captureException(e, stackTrace: st);
+        }
 
         // Wait a bit for events to be processed (WorkflowStatusTick events that remove operations)
         await Future<void>.delayed(const Duration(milliseconds: 100));
@@ -183,7 +203,7 @@ class UserAllOwnCollectionBloc
         } else {
           log.info(
               '[UserAllOwnCollectionBloc] Completed addresses: ${completedAddresses.join(',')}. Waiting for 5 seconds');
-          await Future<void>.delayed(const Duration(seconds: 5));
+          await Future<void>.delayed(const Duration(seconds: 10));
         }
       }
     } catch (e, st) {

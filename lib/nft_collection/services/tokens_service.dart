@@ -134,12 +134,40 @@ class NftTokensServiceImpl extends NftTokensService {
     if (_sendPort != null) return;
 
     _receivePort = ReceivePort();
+    final errorPort = ReceivePort();
+    final exitPort = ReceivePort();
     _receivePort!.listen(_handleMessageInMain);
 
-    _isolate = await Isolate.spawn(_isolateEntry, [
-      _receivePort!.sendPort,
-      _indexerUrl,
-    ]);
+    _isolate = await Isolate.spawn(
+        _isolateEntry,
+        [
+          _receivePort!.sendPort,
+          _indexerUrl,
+        ],
+        onError: errorPort.sendPort,
+        onExit: exitPort.sendPort);
+
+    errorPort.listen((message) {
+      Sentry.captureEvent(SentryEvent(
+        message: SentryMessage('Error in isolate: $message'),
+        level: SentryLevel.error,
+        extra: {
+          'stackTrace': StackTrace.current.toString(),
+        },
+        throwable: message,
+      ));
+    });
+    exitPort.listen((message) {
+      NftCollection.logger.info('[TokensService][exit] $message');
+      Sentry.captureEvent(SentryEvent(
+        message: SentryMessage('Exit isolate: $message'),
+        level: SentryLevel.error,
+        extra: {
+          'stackTrace': StackTrace.current.toString(),
+        },
+        throwable: message,
+      ));
+    });
   }
 
   Future<void> startIsolateOrWait() async {
@@ -166,12 +194,24 @@ class NftTokensServiceImpl extends NftTokensService {
       timer.cancel();
     }
     _reindexAndPullTimers.clear();
+
+    for (final completer in _reindexAndPullCompleters.values) {
+      completer.completeError(Exception('Isolate disposed'));
+    }
     _reindexAndPullCompleters.clear();
+    for (final completer in _reindexCidsAndPullCompleters.values) {
+      completer.completeError(Exception('Isolate disposed'));
+    }
+    _reindexCidsAndPullCompleters.clear();
     // Cancel all reindex CIDs and pull timers
     for (final timer in _reindexCidsAndPullTimers.values) {
       timer.cancel();
     }
     _reindexCidsAndPullTimers.clear();
+
+    for (final completer in _reindexCidsAndPullCompleters.values) {
+      completer.completeError(Exception('Isolate disposed'));
+    }
     _reindexCidsAndPullCompleters.clear();
     _isolate?.kill();
     _isolateSendPort = null;
@@ -628,13 +668,37 @@ class NftTokensServiceImpl extends NftTokensService {
   }
 
   static void _isolateEntry(List<dynamic> arguments) {
-    final sendPort = arguments[0] as SendPort;
+    // Use runZonedGuarded to catch all unhandled exceptions in isolate
+    runZonedGuarded(() {
+      final sendPort = arguments[0] as SendPort;
 
-    final receivePort = ReceivePort()..listen(_handleMessageInIsolate);
-    _isolateSendPort = sendPort;
+      final receivePort = ReceivePort()..listen(_handleMessageInIsolate);
+      _isolateSendPort = sendPort;
 
-    _setupInjector(arguments[1] as String);
-    sendPort.send(receivePort.sendPort);
+      _setupInjector(arguments[1] as String);
+      sendPort.send(receivePort.sendPort);
+    }, (error, stackTrace) {
+      // Catch any unhandled exceptions to prevent isolate from crashing
+      NftCollection.logger.warning(
+        '[TokensService][Isolate][_isolateEntry] Unhandled exception: $error\nStackTrace: $stackTrace',
+      );
+      unawaited(Sentry.captureEvent(SentryEvent(
+        message: SentryMessage('Unhandled exception in isolate: $error'),
+        level: SentryLevel.error,
+        extra: {
+          'stackTrace': stackTrace.toString(),
+        },
+        throwable: error,
+      )));
+      // Try to send error to main isolate if possible
+      try {
+        _isolateSendPort?.send(
+          'UNHANDLED_ERROR: ${error.toString()}',
+        );
+      } catch (_) {
+        // If sending fails, isolate will exit and main isolate will receive exit message
+      }
+    });
   }
 
   static void _setupInjector(String indexerUrl) {
@@ -854,62 +918,78 @@ class NftTokensServiceImpl extends NftTokensService {
   static SendPort? _isolateSendPort;
 
   static void _handleMessageInIsolate(dynamic message) {
-    NftCollection.logger
-        .info('[TokensService][Isolate] received message: $message');
-    if (message is List<dynamic>) {
-      switch (message[0]) {
-        case AUTH_OP:
-          if (message.length >= 4) {
-            final String reqId = message[1] as String;
-            final String? error = message[2] as String?;
-            final dynamic data = message[3];
-            final completer = _authRequestCompleters.remove(reqId);
-            if (completer != null && !completer.isCompleted) {
-              if (error != null) {
-                completer.completeError(error);
+    try {
+      NftCollection.logger
+          .info('[TokensService][Isolate] received message: $message');
+      if (message is List<dynamic>) {
+        switch (message[0]) {
+          case AUTH_OP:
+            if (message.length >= 4) {
+              final String reqId = message[1] as String;
+              final String? error = message[2] as String?;
+              final dynamic data = message[3];
+              final completer = _authRequestCompleters.remove(reqId);
+              if (completer != null && !completer.isCompleted) {
+                if (error != null) {
+                  completer.completeError(error);
+                } else {
+                  completer.complete(data);
+                }
               } else {
-                completer.complete(data);
+                NftCollection.logger.info(
+                    '[_handleMessageInIsolate] [AUTH_OP] complete is null');
               }
-            } else {
-              NftCollection.logger
-                  .info('[_handleMessageInIsolate] [AUTH_OP] complete is null');
             }
-          }
-          return;
-        case FETCH_ALL_TOKENS:
-          _fetchAllTokens(
-            FETCH_ALL_TOKENS,
-            const Uuid().v4(),
-            List<String>.from(message[1] as List),
-          );
+            return;
+          case FETCH_ALL_TOKENS:
+            _fetchAllTokens(
+              FETCH_ALL_TOKENS,
+              const Uuid().v4(),
+              List<String>.from(message[1] as List),
+            );
+            break;
 
-        case REINDEX_ADDRESSES:
-          _reindexAddressesInIndexer(
-            message[1] as String,
-            List<String>.from(message[2] as List),
-          );
-          break;
+          case REINDEX_ADDRESSES:
+            _reindexAddressesInIndexer(
+              message[1] as String,
+              List<String>.from(message[2] as List),
+            );
+            break;
 
-        case REINDEX_TOKENS:
-          _reindexTokensInIndexer(
-            message[1] as String,
-            List<String>.from(message[2] as List),
-          );
-          break;
+          case REINDEX_TOKENS:
+            _reindexTokensInIndexer(
+              message[1] as String,
+              List<String>.from(message[2] as List),
+            );
+            break;
 
-        case UPDATE_TOKENS_IN_ISOLATE:
-          _updateTokensInIsolate(
-            message[1] as String,
-            Map<String, String?>.from(
-              (message[2] as Map).map(
-                (k, v) => MapEntry(k as String, v as String?),
+          case UPDATE_TOKENS_IN_ISOLATE:
+            _updateTokensInIsolate(
+              message[1] as String,
+              Map<String, String?>.from(
+                (message[2] as Map).map(
+                  (k, v) => MapEntry(k as String, v as String?),
+                ),
               ),
-            ),
-          );
-          break;
+            );
+            break;
 
-        default:
-          break;
+          default:
+            break;
+        }
+      }
+    } catch (e, stackTrace) {
+      // Catch any unhandled exceptions to prevent isolate from crashing
+      NftCollection.logger.warning(
+        '[TokensService][Isolate][_handleMessageInIsolate] Unhandled exception: $e\nStackTrace: $stackTrace',
+      );
+      // Try to send error to main isolate if possible
+      try {
+        _isolateSendPort?.send(
+          'UNHANDLED_ERROR: ${e.toString()}',
+        );
+      } catch (_) {
+        // If sending fails, isolate will exit and main isolate will receive exit message
       }
     }
   }
