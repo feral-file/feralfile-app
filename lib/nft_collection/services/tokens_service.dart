@@ -644,27 +644,41 @@ class NftTokensServiceImpl extends NftTokensService {
     required List<String> cids,
     bool shouldCallIndexer = true,
   }) async {
-    // get from database
-    final assetTokenFromDatabase = <AssetToken>[];
-    // _database.getTokensByCIDs(cids: cids);
-    final res = [...assetTokenFromDatabase];
-    final missingIds = cids
-        .where((cid) => !assetTokenFromDatabase.any((e) => e.cid == cid))
-        .toList();
-    if (missingIds.isNotEmpty) {
-      if (shouldCallIndexer) {
-        final assetTokenFromIndexer =
-            await _fetchManualTokensInBatches(missingIds);
-        res.addAll(assetTokenFromIndexer);
+    try {
+      // get from database
+      final assetTokenFromDatabase = <AssetToken>[];
+      // _database.getTokensByCIDs(cids: cids);
+      final res = [...assetTokenFromDatabase];
+      final missingIds = cids
+          .where((cid) => !assetTokenFromDatabase.any((e) => e.cid == cid))
+          .toList();
+      if (missingIds.isNotEmpty) {
+        if (shouldCallIndexer) {
+          final assetTokenFromIndexer =
+              await _fetchManualTokensInBatches(missingIds);
+          res.addAll(assetTokenFromIndexer);
+        }
       }
+      // reorder the res to match the indexerIds
+      res.sort(
+        (a, b) => cids.indexOf(a.cid).compareTo(
+              cids.indexOf(b.cid),
+            ),
+      );
+      return res;
+    } catch (e, st) {
+      NftCollection.logger.warning('[TokensService] getManualTokens error: $e');
+      unawaited(Sentry.captureEvent(SentryEvent(
+        message: SentryMessage('getManualTokens error: $e'),
+        level: SentryLevel.error,
+        extra: {
+          'stackTrace': st.toString(),
+        },
+        throwable: e,
+      )));
+
+      return [];
     }
-    // reorder the res to match the indexerIds
-    res.sort(
-      (a, b) => cids.indexOf(a.cid).compareTo(
-            cids.indexOf(b.cid),
-          ),
-    );
-    return res;
   }
 
   static void _isolateEntry(List<dynamic> arguments) {

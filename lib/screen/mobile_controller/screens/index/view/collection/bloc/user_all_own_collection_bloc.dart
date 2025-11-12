@@ -91,7 +91,7 @@ class UserAllOwnCollectionBloc
 
       // Track completed addresses from this event only
       final completedAddresses = <String>{};
-      final maxAttempts = 13;
+      final maxAttempts = 5;
       int attempts = 0;
 
       while (attempts < maxAttempts) {
@@ -205,6 +205,22 @@ class UserAllOwnCollectionBloc
               '[UserAllOwnCollectionBloc] Completed addresses: ${completedAddresses.join(',')}. Waiting for 5 seconds');
           await Future<void>.delayed(const Duration(seconds: 10));
         }
+      }
+
+      // after all attempts, if some addresses are not completed, mark them as failed
+      final failedAddresses = addresses
+          .where((addr) => !completedAddresses.contains(addr))
+          .toList();
+      if (failedAddresses.isNotEmpty) {
+        log.info(
+            '[UserAllOwnCollectionBloc] Failed addresses: ${failedAddresses.join(',')}. Marking as failed');
+        final newOperations =
+            List<IndexingOperation>.from(state.indexingOperations);
+        newOperations
+            .removeWhere((op) => failedAddresses.contains(op.addresses.first));
+        emit(state.copyWith(
+          indexingOperations: newOperations,
+        ));
       }
     } catch (e, st) {
       log.info('[UserAllOwnCollectionBloc] Reindex error: $e');

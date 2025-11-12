@@ -190,6 +190,9 @@ Type or paste an address into the command bar to load''',
                                           .indexingOperations
                                           .any((e) =>
                                               e.addresses.contains(address));
+                                      final isIndexed =
+                                          injector<UserDp1PlaylistService>()
+                                              .isAddressIndexed(address);
                                       final dp1NowDisplayingItems =
                                           addressAssetToken.assetTokens
                                               .map((e) => DP1NowDisplayingItem(
@@ -215,7 +218,9 @@ Type or paste an address into the command bar to load''',
                                                       : "") +
                                                   (isAddressIndexing
                                                       ? " (indexing)"
-                                                      : ""),
+                                                      : isIndexed
+                                                          ? ""
+                                                          : " (failed to index)"),
                                               isExpanded: _expandedAddressesMap[
                                                       address] ??
                                                   false,

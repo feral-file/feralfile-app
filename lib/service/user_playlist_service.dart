@@ -258,6 +258,11 @@ class UserDp1PlaylistService {
     return result;
   }
 
+  bool isAddressIndexed(String address) {
+    final map = injector<ConfigurationService>().getAddressLastRefreshedTime();
+    return map.containsKey(address);
+  }
+
   Future<void> clearData() async {
     await injector<ConfigurationService>().clearAddressLastRefreshedTime();
     cachedAllOwnedPlaylist = null;

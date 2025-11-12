@@ -105,7 +105,8 @@ class NftIndexerService implements NftIndexerServiceBase {
     );
 
     if (result == null || result['triggerOwnerIndexing'] == null) {
-      throw Exception('Failed to trigger indexing for addresses');
+      throw Exception(
+          'Failed to trigger indexing for addresses ${addresses.join(', ')}');
     }
 
     final data = result['triggerOwnerIndexing'] as Map<String, dynamic>;
