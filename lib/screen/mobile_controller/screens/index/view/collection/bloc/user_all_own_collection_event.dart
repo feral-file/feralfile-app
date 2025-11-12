@@ -6,9 +6,13 @@ class FetchTokensOfAddresses extends UserAllOwnCollectionEvent {
   FetchTokensOfAddresses({
     required this.addresses,
     this.shouldUpdateLastRefreshedTime = false,
+    this.onDone,
+    this.onError,
   });
   final List<String> addresses;
   final bool shouldUpdateLastRefreshedTime;
+  final void Function()? onDone;
+  final void Function(Object error, StackTrace stackTrace)? onError;
 }
 
 class UpdateDynamicQueryEvent extends UserAllOwnCollectionEvent {

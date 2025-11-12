@@ -281,6 +281,10 @@ class NftTokensServiceImpl extends NftTokensService {
       final completer = Completer<TriggerIndexingResult>();
       _reindexAddressesCompleters[uuid] = completer;
 
+      if (_sendPort == null) {
+        throw Exception('Isolate not started');
+      }
+
       _sendPort?.send([REINDEX_ADDRESSES, uuid, batch]);
 
       NftCollection.logger.fine(
@@ -747,7 +751,6 @@ class NftTokensServiceImpl extends NftTokensService {
     if (message is SendPort) {
       _sendPort = message;
       if (!_isolateReady.isCompleted) _isolateReady.complete();
-
       return;
     }
 

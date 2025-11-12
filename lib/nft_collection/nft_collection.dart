@@ -5,6 +5,7 @@ import 'package:autonomy_flutter/nft_collection/database/indexer_database_manage
 import 'package:autonomy_flutter/nft_collection/services/configuration_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
+import 'package:autonomy_flutter/util/log.dart';
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -13,8 +14,8 @@ export 'package:autonomy_flutter/nft_collection/widgets/nft_collection_bloc_even
 export 'package:autonomy_flutter/nft_collection/widgets/nft_collection_grid_widget.dart';
 
 class NftCollection {
-  static Logger logger = Logger('nft_collection');
-  static Logger apiLog = Logger('nft_collection_api_log');
+  static Logger logger = log;
+  static Logger apiLog = log;
   static late NftTokensServiceImpl tokenService;
   static late NftCollectionPrefs prefs;
   static late IndexerDatabaseAbstract database;

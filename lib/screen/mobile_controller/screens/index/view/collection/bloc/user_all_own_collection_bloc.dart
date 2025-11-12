@@ -273,7 +273,8 @@ class UserAllOwnCollectionBloc
 
       _tokensStreamSubs[subType] = stream.listen(
         (tokens) {
-          log.info('[${event.runtimeType}] Received ${tokens.length} tokens');
+          log.info(
+              '[${event.runtimeType}] Received ${tokens.length} tokens from stream for addresses: ${event.addresses.join(',')}');
           collected.addAll(tokens);
           emit(state.copyWith(
             status: UserAllOwnCollectionStatus.loaded,
@@ -287,6 +288,8 @@ class UserAllOwnCollectionBloc
             final lastUpdated =
                 updatedAts.reduce((a, b) => a.isAfter(b) ? a : b);
             newLastUpdatedAt = lastUpdated;
+          } else {
+            newLastUpdatedAt = DateTime.now();
           }
         },
         onError: (Object error, StackTrace stackTrace) {
@@ -319,9 +322,11 @@ class UserAllOwnCollectionBloc
       }
 
       add(ReloadAssetTokensFromIndexerDatabase());
+      event.onDone?.call();
     } catch (e) {
       log.info('[${event.runtimeType}] error $e');
       Sentry.captureException('Failed to refresh asset tokens: $e');
+      event.onError?.call(e, StackTrace.current);
     }
     log.info('[${event.runtimeType}] completed');
   }
@@ -388,23 +393,40 @@ class UserAllOwnCollectionBloc
       final operations = List<IndexingOperation>.from(state.indexingOperations);
       operations.removeWhere((op) => op.id == event.addresses.join(','));
 
-      if (event.status.isSuccess) {
+      try {
+        if (event.status.isSuccess) {
+          final completer = Completer<void>();
+          add(
+            FetchTokensOfAddresses(
+              addresses: event.addresses,
+              shouldUpdateLastRefreshedTime: true,
+              onDone: () {
+                completer.complete();
+              },
+              onError: (error, stackTrace) {
+                completer.completeError(error);
+              },
+            ),
+          );
+          await completer.future;
+        } else if (event.status.isRunning) {
+          add(FetchTokensOfAddresses(
+              addresses: event.addresses,
+              shouldUpdateLastRefreshedTime: false));
+        } else if (event.status == WorkflowExecutionStatus.timedOut) {
+          // silently stop
+        } else {
+          emit(state.copyWith(
+            status: UserAllOwnCollectionStatus.error,
+            error: 'Indexing failed or canceled: ${event.status.toJson()}',
+          ));
+        }
+      } catch (e, stackTrace) {
+        log.info('[UserAllOwnCollectionBloc][_onWorkflowStatusTick] error $e');
+        Sentry.captureException('Failed to fetch tokens of addresses: $e',
+            stackTrace: stackTrace);
+      } finally {
         emit(state.copyWith(indexingOperations: operations));
-        add(FetchTokensOfAddresses(
-            addresses: event.addresses, shouldUpdateLastRefreshedTime: true));
-      } else if (event.status.isRunning) {
-        add(FetchTokensOfAddresses(
-            addresses: event.addresses, shouldUpdateLastRefreshedTime: false));
-      } else if (event.status == WorkflowExecutionStatus.timedOut) {
-        // silently stop
-        emit(state.copyWith(indexingOperations: operations));
-        return;
-      } else {
-        emit(state.copyWith(
-          status: UserAllOwnCollectionStatus.error,
-          error: 'Indexing failed or canceled: ${event.status.toJson()}',
-          indexingOperations: operations,
-        ));
       }
     }
   }
@@ -438,7 +460,8 @@ class UserAllOwnCollectionBloc
 
       _tokensStreamSubs[subType] = stream.listen(
         (tokens) {
-          log.info('[${event.runtimeType}] Received ${tokens.length} tokens');
+          log.info(
+              '[${event.runtimeType}] Received ${tokens.length} tokens from stream for addresses: ${event.addresses.join(',')}');
           if (tokens.isNotEmpty) {
             add(ReloadAssetTokensFromIndexerDatabase());
           }
