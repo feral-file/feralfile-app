@@ -14,7 +14,6 @@ import 'package:autonomy_flutter/screen/bloc/accounts/accounts_state.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address.dart';
 import 'package:autonomy_flutter/screen/settings/connection/accounts_view.dart';
 import 'package:autonomy_flutter/service/channel_service.dart';
-import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
@@ -116,13 +115,10 @@ class _WalletPageState extends State<WalletPage>
           },
           icon: Semantics(
             label: 'address_menu',
-            child: SvgPicture.asset(
-              'assets/images/more_circle.svg',
-              width: 22,
-              colorFilter: const ColorFilter.mode(
-                AppColor.primaryBlack,
-                BlendMode.srcIn,
-              ),
+            child: Container(
+              color: Colors.transparent,
+              height: 10,
+              width: 10,
             ),
           ),
           action: _showAddWalletOption,
