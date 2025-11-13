@@ -43,7 +43,7 @@ abstract class NftTokensService {
     List<String> addresses,
   );
 
-  Future<TriggerIndexingResult> reindexAddresses(List<String> addresses);
+  Future<TriggerIndexingResult?> reindexAddresses(List<String> addresses);
 
   Future<TriggerIndexingResult> reindexTokensByCids(List<String> tokenCids);
 
@@ -264,7 +264,8 @@ class NftTokensServiceImpl extends NftTokensService {
   }
 
   @override
-  Future<TriggerIndexingResult> reindexAddresses(List<String> addresses) async {
+  Future<TriggerIndexingResult?> reindexAddresses(
+      List<String> addresses) async {
     if (addresses.isEmpty) {
       throw ArgumentError('Addresses list cannot be empty');
     }
@@ -276,20 +277,33 @@ class NftTokensServiceImpl extends NftTokensService {
     TriggerIndexingResult? lastResult;
 
     for (var i = 0; i < addresses.length; i += batchSize) {
-      final batch = addresses.skip(i).take(batchSize).toList();
-      final uuid = const Uuid().v4();
-      final completer = Completer<TriggerIndexingResult>();
-      _reindexAddressesCompleters[uuid] = completer;
+      try {
+        final batch = addresses.skip(i).take(batchSize).toList();
+        final uuid = const Uuid().v4();
+        final completer = Completer<TriggerIndexingResult>();
+        _reindexAddressesCompleters[uuid] = completer;
 
-      if (_sendPort == null) {
-        throw Exception('Isolate not started');
+        if (_sendPort == null) {
+          throw Exception('Isolate not started');
+        }
+
+        _sendPort?.send([REINDEX_ADDRESSES, uuid, batch]);
+
+        NftCollection.logger.fine(
+            '[reindexAddresses][batch ${i ~/ batchSize + 1}][start] $batch');
+        lastResult = await completer.future;
+      } catch (e, stackTrace) {
+        NftCollection.logger.warning('[reindexAddresses] Error: $e');
+        unawaited(Sentry.captureEvent(SentryEvent(
+          message: SentryMessage('Error reindexing addresses: $e'),
+          level: SentryLevel.error,
+          extra: {
+            'stackTrace': stackTrace.toString(),
+          },
+          throwable: e,
+        )));
+        ;
       }
-
-      _sendPort?.send([REINDEX_ADDRESSES, uuid, batch]);
-
-      NftCollection.logger.fine(
-          '[reindexAddresses][batch ${i ~/ batchSize + 1}][start] $batch');
-      lastResult = await completer.future;
     }
 
     NftCollection.logger.fine(
@@ -309,7 +323,7 @@ class NftTokensServiceImpl extends NftTokensService {
     _sendPort?.send([REINDEX_TOKENS, uuid, tokenCids]);
 
     NftCollection.logger.fine('[reindexTokensByCids][start] $tokenCids');
-    return completer.future;
+    return completer.future.timeout(const Duration(seconds: 30));
   }
 
   @override
@@ -371,6 +385,13 @@ class NftTokensServiceImpl extends NftTokensService {
 
         // Call reindexAddresses for this batch
         final result = await reindexAddresses(batch);
+        if (result == null) {
+          NftCollection.logger.warning(
+              '[reindexAddressesAndPullStatus][batch ${batchIndex + 1}][$batchKey] reindexAddresses failed');
+          await onError(
+              Exception('Reindex addresses failed'), StackTrace.current, batch);
+          continue;
+        }
         final workflowId = result.workflowId;
         final runId = result.runId;
 
@@ -380,7 +401,7 @@ class NftTokensServiceImpl extends NftTokensService {
         final startedAt = DateTime.now();
         final batchCompleter = Completer<void>();
         _reindexAndPullTimers[batchKey] = Timer.periodic(
-          const Duration(seconds: 5),
+          const Duration(seconds: 15),
           (timer) async {
             try {
               // Check timeout
@@ -500,7 +521,7 @@ class NftTokensServiceImpl extends NftTokensService {
 
       final startedAt = DateTime.now();
       _reindexCidsAndPullTimers[cidsKey] = Timer.periodic(
-        const Duration(seconds: 5),
+        const Duration(seconds: 15),
         (timer) async {
           try {
             // Check timeout
