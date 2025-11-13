@@ -214,9 +214,11 @@ class ArtworkPreviewWidgetState extends State<ArtworkPreviewWidget>
                           child: _currentRenderingWidget,
                         );
                       default:
+                        // WebView can load data URI directly, no need to decode
+                        final previewUri = Uri.parse(previewURL);
                         _currentRenderingWidget = WebviewNFTRenderingWidget(
                           key: _artworkKey,
-                          previewURL: previewURL,
+                          previewUri: previewUri,
                           isMute: widget.isMute,
                           overriddenHtml: state.overriddenHtml,
                         );

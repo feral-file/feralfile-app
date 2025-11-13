@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class WebviewNFTRenderingWidget extends NFTRenderingWidget {
-  final String previewURL;
+  final Uri previewUri;
   final String? overriddenHtml;
   final bool isMute;
   final Widget loadingWidget;
@@ -18,7 +18,7 @@ class WebviewNFTRenderingWidget extends NFTRenderingWidget {
   final Function(WebViewController)? onLoaded;
 
   const WebviewNFTRenderingWidget({
-    required this.previewURL,
+    required this.previewUri,
     this.loadingWidget = const LoadingWidget(),
     super.key,
     this.overriddenHtml,
@@ -54,7 +54,7 @@ class _WebviewNFTRenderingWidgetState
   @override
   void didUpdateWidget(WebviewNFTRenderingWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.previewURL != widget.previewURL) {
+    if (oldWidget.previewUri != widget.previewUri) {
       isPreviewLoaded = false;
     }
   }
@@ -128,9 +128,10 @@ class _WebviewNFTRenderingWidgetState
       );
 
   Widget _buildWebView() => FeralFileWebview(
-        key: Key('FeralFileWebview_${widget.previewURL}'),
-        uri: Uri.parse(
-            widget.overriddenHtml != null ? 'about:blank' : widget.previewURL),
+        key: Key('FeralFileWebview_${widget.previewUri.toString()}'),
+        uri: widget.overriddenHtml != null
+            ? Uri.parse('about:blank')
+            : widget.previewUri,
         overriddenHtml: widget.overriddenHtml,
         backgroundColor: backgroundColor,
         onStarted: (WebViewController controller) {

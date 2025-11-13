@@ -27,9 +27,8 @@ import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_intent.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
-import 'package:autonomy_flutter/service/settings_data_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
@@ -49,6 +48,7 @@ import 'package:autonomy_flutter/view/webview_controller_text_field.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:backdrop/backdrop.dart';
+import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -475,8 +475,12 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
     String? artistName,
   ) {
     final theme = Theme.of(context);
-    final asset = state.assetToken!;
-    // final editionSubTitle = getEditionSubTitle(asset);
+    final assetToken = state.assetToken!;
+    final allAddresses = injector<AddressService>().getAllAddresses();
+    final ownerItems = assetToken.owners?.items.where((element) =>
+        allAddresses.contains(element.ownerAddress) &&
+        (int.tryParse(element.quantity) ?? 0) > 0);
+    // final editionSubTitle = getEditionSubTitle(assetToken);
     final editionSubTitle = '';
     return Stack(
       children: [
@@ -486,7 +490,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
             webViewController: _webViewController,
             focusNode: _focusNode,
             textController: _textController,
-            disableKeys: asset.disableKeys,
+            disableKeys: assetToken.disableKeys,
           ),
         ),
         SingleChildScrollView(
@@ -497,8 +501,8 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
             child: Column(
               children: [
                 Visibility(
-                  visible:
-                      checkWeb3ContractAddress.contains(asset.contractAddress),
+                  visible: checkWeb3ContractAddress
+                      .contains(assetToken.contractAddress),
                   child: Padding(
                     padding:
                         const EdgeInsets.only(left: 16, right: 16, bottom: 20),
@@ -510,7 +514,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                           Navigator.pushNamed(
                             context,
                             AppRouter.previewPrimerPage,
-                            arguments: asset,
+                            arguments: assetToken,
                           ),
                         );
                       },
@@ -541,7 +545,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                           focusNode: _selectTextFocusNode,
                           child: HtmlWidget(
                             customStylesBuilder: auHtmlStyle,
-                            asset.displayDescription,
+                            assetToken.displayDescription,
                             textStyle: theme.textTheme.ppMori400White12,
                             onTapUrl: (url) async {
                               await launchUrl(
@@ -554,13 +558,14 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                         ),
                       ),
                       const SizedBox(height: 40),
-                      artworkDetailsMetadataSection(context, asset, artistName),
-                      if (asset.owners?.items.isNotEmpty ?? false) ...[
+                      artworkDetailsMetadataSection(
+                          context, assetToken, artistName),
+                      if (ownerItems?.isNotEmpty ?? false) ...[
                         tokenOwnership(
                           context,
-                          asset,
+                          assetToken,
                           identityState.identityMap[
-                                  asset.owners?.items.first.ownerAddress ??
+                                  assetToken.owners?.items.first.ownerAddress ??
                                       ''] ??
                               '',
                         ),
@@ -570,7 +575,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                             context, state.assetToken?.provenance ?? [])
                       else
                         const SizedBox(),
-                      artworkDetailsRightSection(context, asset),
+                      artworkDetailsRightSection(context, assetToken),
                       const SizedBox(height: 80),
                     ],
                   ),
@@ -677,37 +682,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
               onTap: () async {
                 final browser = FeralFileBrowser();
                 await browser.openUrl(asset.secondaryMarketURL);
-              },
-            ),
-          if (widget.payload.shouldUseLocalCache && hasLocalAddress)
-            OptionItem(
-              title: isHidden ? 'unhide_aw'.tr() : 'hide_aw'.tr(),
-              icon: SvgPicture.asset('assets/images/hide_artwork_white.svg'),
-              onTap: () async {
-                await injector<ConfigurationService>()
-                    .updateTempStorageHiddenTokenIDs([asset.cid], !isHidden);
-                unawaited(injector<SettingsDataService>().backupUserSettings());
-
-                if (!context.mounted) {
-                  return;
-                }
-
-                injector<UserAllOwnCollectionBloc>()
-                    .add(ReloadAssetTokensFromIndexerDatabase());
-                Navigator.of(context).pop();
-                unawaited(
-                  UIHelper.showHideArtworkResultDialog(
-                    context,
-                    !isHidden,
-                    onOK: () {
-                      Navigator.of(context).popUntil(
-                        (route) =>
-                            route.settings.name == AppRouter.homePage ||
-                            route.settings.name == AppRouter.homePage,
-                      );
-                    },
-                  ),
-                );
               },
             ),
           OptionItem(

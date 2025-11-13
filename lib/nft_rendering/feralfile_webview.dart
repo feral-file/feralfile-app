@@ -106,7 +106,7 @@ class FeralFileWebviewState extends State<FeralFileWebview> {
   void dispose() {
     super.dispose();
     // webViewController dispose itself
-    // _webViewController.dispose();
+    _webViewController.onDispose();
   }
 
   @override
@@ -184,6 +184,9 @@ class FeralFileWebviewState extends State<FeralFileWebview> {
           },
           onNavigationRequest: (request) async {
             log.info('Navigation request to: ${request.url}');
+
+            // we allow navigating in webview now
+            return NavigationDecision.navigate;
             // Check if the URL is external (different domain) or if it's a specific type of link
             final currentUrl = widget.uri.toString();
             final requestUrl = request.url;
