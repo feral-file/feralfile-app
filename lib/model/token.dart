@@ -466,7 +466,7 @@ class PaginatedProvenanceEvents {
 
 class EnrichmentSource {
   EnrichmentSource({
-    required this.name,
+    this.name,
     this.description,
     this.imageUrl,
     this.animationUrl,
@@ -474,7 +474,7 @@ class EnrichmentSource {
     this.artists,
   });
 
-  final String name;
+  final String? name;
   final String? description;
   final String? imageUrl;
   final String? animationUrl;
@@ -483,7 +483,7 @@ class EnrichmentSource {
 
   factory EnrichmentSource.fromJson(Map<String, dynamic> json) =>
       EnrichmentSource(
-        name: json['name'] as String,
+        name: json['name'] as String?,
         description: json['description'] as String?,
         imageUrl: json['image_url'] as String?,
         animationUrl: json['animation_url'] as String?,
@@ -494,7 +494,7 @@ class EnrichmentSource {
       );
 
   Map<String, dynamic> toJson() => {
-        'name': name,
+        if (name != null) 'name': name,
         if (description != null) 'description': description,
         if (imageUrl != null) 'image_url': imageUrl,
         if (animationUrl != null) 'animation_url': animationUrl,

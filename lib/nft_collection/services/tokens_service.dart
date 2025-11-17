@@ -19,7 +19,6 @@ import 'package:autonomy_flutter/nft_collection/services/configuration_service.d
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
-import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/list_extension.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -226,7 +225,7 @@ class NftTokensServiceImpl extends NftTokensService {
     disposeIsolate();
     await _configurationService.setDidSyncAddress(false);
     _database.clearAll();
-    injector<ConfigurationService>().clearAddressLastRefreshedTime();
+    // injector<ConfigurationService>().clearAddressLastRefreshedTime();
   }
 
   @override
@@ -308,7 +307,7 @@ class NftTokensServiceImpl extends NftTokensService {
 
     NftCollection.logger.fine(
         '[reindexAddresses][complete] processed ${addresses.length} addresses in ${(addresses.length / batchSize).ceil()} batches');
-    return lastResult!;
+    return lastResult;
   }
 
   @override
@@ -1283,7 +1282,7 @@ class FetchTokensSuccess extends TokensServiceResult {
 }
 
 class FetchTokenFailure extends TokensServiceResult {
-  FetchTokenFailure(this.uuid, this.key, this.addresses, this.exception);
+  FetchTokenFailure(this.key, this.uuid, this.addresses, this.exception);
 
   final String uuid;
   final String key;

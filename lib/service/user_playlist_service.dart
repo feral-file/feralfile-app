@@ -264,7 +264,7 @@ class UserDp1PlaylistService {
   }
 
   Future<void> clearData() async {
-    await injector<ConfigurationService>().clearAddressLastRefreshedTime();
+    // await injector<ConfigurationService>().clearAddressLastRefreshedTime();
     cachedAllOwnedPlaylist = null;
   }
 }

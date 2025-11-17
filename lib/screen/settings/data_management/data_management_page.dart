@@ -144,11 +144,6 @@ class _DataManagementPageState extends State<DataManagementPage> {
           await DefaultCacheManager().emptyCache();
           injector<UserAllOwnCollectionBloc>().add(ClearDataEvent());
           injector<FeralFileFeedManager>().clearAllCache();
-
-          final res = injector<IndexerDatabaseAbstract>()
-              .getGroupAssetTokensByOwnersGroupByAddress(
-                  owners: ['0x99fc8AD516FBCC9bA3123D56e63A35d05AA9EFB8']);
-
           //redownload data
           await injector<UserDp1PlaylistService>()
               .createAllOwnedPlaylistIfNotExists();

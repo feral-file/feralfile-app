@@ -156,7 +156,7 @@ Type or paste an address into the command bar to load''',
                             .copyWith(color: AppColor.red),
                       ),
                     );
-                  } else if (collectionState.addressAssetTokens.isEmpty) {
+                  } else if (collectionState.addressStates.isEmpty) {
                     return Column(
                       children: [
                         Expanded(
@@ -180,47 +180,54 @@ Type or paste an address into the command bar to load''',
                               controller: _scrollController,
                               physics: const ClampingScrollPhysics(),
                               slivers: [
-                                if (collectionState
-                                    .addressAssetTokens.isNotEmpty)
-                                  ...collectionState.addressAssetTokens.map(
-                                    (addressAssetToken) {
+                                if (collectionState.addressStates.isNotEmpty)
+                                  ...collectionState.addressStates.map(
+                                    (addressState) {
                                       final address =
-                                          addressAssetToken.address.address;
-                                      final isAddressIndexing = collectionState
-                                          .indexingOperations
-                                          .any((e) =>
-                                              e.addresses.contains(address));
-                                      final isIndexed =
-                                          injector<UserDp1PlaylistService>()
-                                              .isAddressIndexed(address);
-                                      final dp1NowDisplayingItems =
-                                          addressAssetToken.assetTokens
-                                              .map((e) => DP1NowDisplayingItem(
-                                                  dp1Item:
-                                                      DP1PlaylistItemExtension
-                                                          .fromAssetToken(
-                                                              token: e),
-                                                  assetToken: e))
-                                              .toList();
+                                          addressState.address.address;
+                                      final addressStateType =
+                                          addressState.state;
+                                      final dp1NowDisplayingItems = addressState
+                                          .assetTokens
+                                          .map((e) => DP1NowDisplayingItem(
+                                              dp1Item: DP1PlaylistItemExtension
+                                                  .fromAssetToken(token: e),
+                                              assetToken: e))
+                                          .toList();
+
+                                      String stateSuffix = '';
+                                      switch (addressStateType) {
+                                        case AddressStateType.indexing:
+                                          stateSuffix = " (indexing)";
+                                        case AddressStateType
+                                              .indexingIncomplete:
+                                          stateSuffix = " (failed to index)";
+                                        case AddressStateType.fetchingArtworks:
+                                          stateSuffix = " (getting artworks)";
+                                        case AddressStateType
+                                              .fetchingArtworksFailed:
+                                          stateSuffix =
+                                              " (getting artworks failed)";
+                                        case AddressStateType
+                                              .fetchingArtworksDone:
+                                        case AddressStateType.indexingDone:
+                                          stateSuffix = "";
+                                      }
+
                                       return UIHelper
                                           .assetTokenExpandableSliverStickyHeader(
                                               context,
                                               nowDisplayingItems:
                                                   dp1NowDisplayingItems,
-                                              title: addressAssetToken
-                                                      .address.name +
+                                              title: addressState.address.name +
                                                   (kDebugMode
                                                       ? "   " +
-                                                          (addressAssetToken
+                                                          (addressState
                                                               .assetTokens
                                                               .length
                                                               .toString())
                                                       : "") +
-                                                  (isAddressIndexing
-                                                      ? " (indexing)"
-                                                      : isIndexed
-                                                          ? ""
-                                                          : " (failed to index)"),
+                                                  stateSuffix,
                                               isExpanded: _expandedAddressesMap[
                                                       address] ??
                                                   false,
@@ -241,7 +248,7 @@ Type or paste an address into the command bar to load''',
                                               onPressed:
                                                   (BuildContext context) async {
                                                 final address =
-                                                    addressAssetToken.address;
+                                                    addressState.address;
                                                 UIHelper
                                                     .showDeleteAccountConfirmation(
                                                         address,
@@ -279,8 +286,7 @@ Type or paste an address into the command bar to load''',
                                     },
                                   ).toList(),
                                 if (collectionState.isLazyLoading &&
-                                    collectionState
-                                        .addressAssetTokens.isNotEmpty)
+                                    collectionState.addressStates.isNotEmpty)
                                   SliverToBoxAdapter(
                                     child: Padding(
                                       padding:
@@ -299,7 +305,7 @@ Type or paste an address into the command bar to load''',
                         ),
                         // Loading overlay when loading and no tokens yet
                         if (collectionState.isLazyLoading &&
-                            collectionState.addressAssetTokens.isEmpty)
+                            collectionState.addressStates.isEmpty)
                           Container(
                             color: Colors.black.withOpacity(0.3),
                             child: const Center(

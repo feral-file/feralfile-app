@@ -2,6 +2,15 @@ part of 'user_all_own_collection_bloc.dart';
 
 enum UserAllOwnCollectionStatus { initial, loading, loaded, error }
 
+enum AddressStateType {
+  indexing,
+  indexingDone,
+  indexingIncomplete,
+  fetchingArtworks,
+  fetchingArtworksFailed,
+  fetchingArtworksDone,
+}
+
 class AddressAssetTokens {
   final WalletAddress address;
   final List<AssetToken> assetTokens;
@@ -10,6 +19,30 @@ class AddressAssetTokens {
     required this.address,
     required this.assetTokens,
   });
+}
+
+class AddressState {
+  final WalletAddress address;
+  final List<AssetToken> assetTokens;
+  final AddressStateType state;
+
+  AddressState({
+    required this.address,
+    required this.assetTokens,
+    required this.state,
+  });
+
+  AddressState copyWith({
+    WalletAddress? address,
+    List<AssetToken>? assetTokens,
+    AddressStateType? state,
+  }) {
+    return AddressState(
+      address: address ?? this.address,
+      assetTokens: assetTokens ?? this.assetTokens,
+      state: state ?? this.state,
+    );
+  }
 }
 
 class IndexingOperation {
@@ -55,15 +88,13 @@ class IndexingOperation {
 class UserAllOwnCollectionState {
   const UserAllOwnCollectionState({
     this.status = UserAllOwnCollectionStatus.initial,
-    this.addressAssetTokens = const <AddressAssetTokens>[],
+    this.addressStates = const <AddressState>[],
     this.error = '',
-    this.indexingOperations = const <IndexingOperation>[],
   });
 
   final UserAllOwnCollectionStatus status;
-  final List<AddressAssetTokens> addressAssetTokens;
+  final List<AddressState> addressStates;
   final String error;
-  final List<IndexingOperation> indexingOperations;
 
   bool get isLazyLoading => status == UserAllOwnCollectionStatus.loading;
   bool get isLoaded => status == UserAllOwnCollectionStatus.loaded;
@@ -71,15 +102,47 @@ class UserAllOwnCollectionState {
 
   UserAllOwnCollectionState copyWith({
     UserAllOwnCollectionStatus? status,
-    List<AddressAssetTokens>? addressAssetTokens,
+    List<AddressState>? addressStates,
     String? error,
-    List<IndexingOperation>? indexingOperations,
   }) {
     return UserAllOwnCollectionState(
       status: status ?? this.status,
-      addressAssetTokens: addressAssetTokens ?? this.addressAssetTokens,
+      addressStates: addressStates ?? this.addressStates,
       error: error ?? this.error,
-      indexingOperations: indexingOperations ?? this.indexingOperations,
     );
+  }
+}
+
+extension AddressStateListExtension on List<AddressState> {
+  List<AddressState> updateStates(
+    List<String> addresses,
+    AddressStateType newState,
+  ) {
+    final updatedStates = map((addressState) {
+      if (addresses.contains(addressState.address.address)) {
+        return addressState.copyWith(state: newState);
+      }
+      return addressState;
+    }).toList();
+
+    // Add new addresses that don't exist in current states
+    final existingAddresses = map((state) => state.address.address).toSet();
+    for (final addressStr in addresses) {
+      if (!existingAddresses.contains(addressStr)) {
+        final walletAddress =
+            injector<AddressService>().getWalletAddress(addressStr);
+        if (walletAddress != null) {
+          updatedStates.add(
+            AddressState(
+              address: walletAddress,
+              assetTokens: [],
+              state: newState,
+            ),
+          );
+        }
+      }
+    }
+
+    return updatedStates;
   }
 }

@@ -32,7 +32,6 @@ class UserAllOwnCollectionBloc
     on<ReindexAddresses>(_onReindexAddresses);
     on<WorkflowStatusTick>(_onWorkflowStatusTick);
     on<UpdateTokensOfAddresses>(_onUpdateTokensOfAddresses);
-    on<RemoveIndexingOperation>(_onRemoveIndexingOperation);
   }
 
   final NftTokensService _tokensService;
@@ -77,8 +76,10 @@ class UserAllOwnCollectionBloc
     try {
       log.info('[UserAllOwnCollectionBloc] Reindex addresses: $addresses');
       // Check if any of the addresses are already being reindexed
-      final allIndexingAddresses =
-          state.indexingOperations.expand((op) => op.addresses).toSet();
+      final allIndexingAddresses = state.addressStates
+          .where((state) => state.state == AddressStateType.indexing)
+          .map((state) => state.address.address)
+          .toSet();
       final newAddresses = addresses
           .where((addr) => !allIndexingAddresses.contains(addr))
           .toList();
@@ -88,6 +89,13 @@ class UserAllOwnCollectionBloc
             '[UserAllOwnCollectionBloc] All addresses $addresses are already being reindexed');
         return;
       }
+
+      // Update state to indexing for new addresses
+      final updatedStates = state.addressStates.updateStates(
+        newAddresses,
+        AddressStateType.indexing,
+      );
+      emit(state.copyWith(addressStates: updatedStates));
 
       // Track completed addresses from this event only
       final completedAddresses = <String>{};
@@ -107,28 +115,18 @@ class UserAllOwnCollectionBloc
             addresses: addressesToReindex,
             timeout: const Duration(days: 1),
             onBatchStart: (batchAddresses) async {
-              // Add operation for this batch when it starts
-              final batchOpId = batchAddresses.join(',');
-              final operations =
-                  List<IndexingOperation>.from(state.indexingOperations);
-
-              // Skip if this batch is already being processed
-              if (operations.any((op) => op.id == batchOpId)) {
-                log.info(
-                    '[UserAllOwnCollectionBloc] Batch $batchAddresses already being reindexed: $batchOpId');
-                return;
-              }
-
-              operations.add(
-                  IndexingOperation(id: batchOpId, addresses: batchAddresses));
-              emit(state.copyWith(indexingOperations: operations));
+              // Update state to indexing when batch starts
+              final updatedStates = state.addressStates.updateStates(
+                batchAddresses,
+                AddressStateType.indexing,
+              );
+              emit(state.copyWith(addressStates: updatedStates));
               log.info(
                   '[UserAllOwnCollectionBloc] Started indexing batch: $batchAddresses');
             },
             onStatus: (status, workflowId, runId, batchAddresses) {
-              final batchOpId = batchAddresses.join(',');
               log.info(
-                  '[ReindexAddresses][$batchOpId] status: ${status.toJson()}');
+                  '[ReindexAddresses][${batchAddresses.join(',')}] status: ${status.toJson()}');
               if (status.isDone) {
                 log.info(
                     'Pull workflow status done with status: ${status.toJson()}, workflowId: $workflowId, runId: $runId');
@@ -137,13 +135,20 @@ class UserAllOwnCollectionBloc
                   completedAddresses.addAll(batchAddresses);
                   log.info(
                       '[UserAllOwnCollectionBloc] Batch $batchAddresses completed successfully. Completed addresses: ${completedAddresses.length}/${addresses.length}');
+                  // Update state to gettingArtworks
+                  final updatedStates = state.addressStates.updateStates(
+                    batchAddresses,
+                    AddressStateType.indexingDone,
+                  );
+                  emit(state.copyWith(addressStates: updatedStates));
                 }
               } else {
+                // Still indexing, fetch tokens
                 add(FetchTokensOfAddresses(addresses: batchAddresses));
               }
               add(
                 WorkflowStatusTick(
-                  operationId: batchOpId,
+                  operationId: batchAddresses.join(','),
                   addresses: batchAddresses,
                   workflowId: workflowId,
                   runId: runId,
@@ -163,9 +168,12 @@ class UserAllOwnCollectionBloc
                 },
                 throwable: 'Timeout for batch: $batchAddresses',
               ));
-              // Remove operation for this batch
-              // final batchOpId = batchAddresses.join(',');
-              // add(RemoveIndexingOperation(operationId: batchOpId));
+              // Update state to indexingIncomplete on timeout
+              // final updatedStates = state.addressStates.updateStates(
+              //   batchAddresses,
+              //   AddressStateType.indexingIncomplete,
+              // );
+              // emit(state.copyWith(addressStates: updatedStates));
             },
             onError: (error, stackTrace, batchAddresses) {
               // Keep polling despite transient errors
@@ -180,17 +188,13 @@ class UserAllOwnCollectionBloc
                 },
                 throwable: error,
               )));
-              // Optionally remove operation for this batch on error
-              // Uncomment if you want to remove the operation on error:
-              // final batchOpId = batchAddresses.join(',');
-              // add(RemoveIndexingOperation(operationId: batchOpId));
             },
           );
         } catch (e, st) {
           Sentry.captureException(e, stackTrace: st);
         }
 
-        // Wait a bit for events to be processed (WorkflowStatusTick events that remove operations)
+        // Wait a bit for events to be processed
         await Future<void>.delayed(const Duration(milliseconds: 100));
 
         // Also check completed addresses to ensure we have all
@@ -202,7 +206,7 @@ class UserAllOwnCollectionBloc
           break;
         } else {
           log.info(
-              '[UserAllOwnCollectionBloc] Completed addresses: ${completedAddresses.join(',')}. Waiting for 5 seconds');
+              '[UserAllOwnCollectionBloc] Completed addresses: ${completedAddresses.join(',')}. Waiting for 10 seconds');
           await Future<void>.delayed(const Duration(seconds: 10));
         }
       }
@@ -213,26 +217,25 @@ class UserAllOwnCollectionBloc
           .toList();
       if (failedAddresses.isNotEmpty) {
         log.info(
-            '[UserAllOwnCollectionBloc] Failed addresses: ${failedAddresses.join(',')}. Marking as failed');
-        final newOperations =
-            List<IndexingOperation>.from(state.indexingOperations);
-        newOperations
-            .removeWhere((op) => failedAddresses.contains(op.addresses.first));
-        emit(state.copyWith(
-          indexingOperations: newOperations,
-        ));
+            '[UserAllOwnCollectionBloc] Failed addresses: ${failedAddresses.join(',')}. Marking as incomplete');
+        final updatedStates = state.addressStates.updateStates(
+          failedAddresses,
+          AddressStateType.indexingIncomplete,
+        );
+        emit(state.copyWith(addressStates: updatedStates));
       }
     } catch (e, st) {
       log.info('[UserAllOwnCollectionBloc] Reindex error: $e');
       unawaited(Sentry.captureException(e, stackTrace: st));
-      // Remove all operations related to these addresses
-      final operations = List<IndexingOperation>.from(state.indexingOperations);
-      operations.removeWhere(
-          (op) => op.addresses.any((addr) => addresses.contains(addr)));
+      // Update state to indexingIncomplete on error
+      final updatedStates = state.addressStates.updateStates(
+        addresses,
+        AddressStateType.indexingIncomplete,
+      );
       emit(state.copyWith(
         status: UserAllOwnCollectionStatus.error,
         error: 'Something went wrong while indexing addresses.',
-        indexingOperations: operations,
+        addressStates: updatedStates,
       ));
     }
   }
@@ -257,7 +260,7 @@ class UserAllOwnCollectionBloc
       await _tokensStreamSubs[subType]?.cancel();
       _tokensStreamSubs[subType] = null;
 
-      DateTime? newLastUpdatedAt;
+      DateTime newLastUpdatedAt = DateTime.now();
 
       final prevCompleter = _activeCompleters[subType];
       if (prevCompleter?.isCompleted == false) {
@@ -265,6 +268,16 @@ class UserAllOwnCollectionBloc
       }
       final completer = Completer<void>();
       _activeCompleters[subType] = completer;
+
+      // Update state to fetchingArtworks when starting to fetch
+      final updatedStatesStart = state.addressStates.updateStates(
+        event.addresses,
+        AddressStateType.fetchingArtworks,
+      );
+      emit(state.copyWith(
+        addressStates: updatedStatesStart,
+        status: UserAllOwnCollectionStatus.loading,
+      ));
 
       // get the stream
       final stream = await _tokensService.fetchTokensInIsolate(event.addresses);
@@ -288,17 +301,27 @@ class UserAllOwnCollectionBloc
             final lastUpdated =
                 updatedAts.reduce((a, b) => a.isAfter(b) ? a : b);
             newLastUpdatedAt = lastUpdated;
-          } else {
-            newLastUpdatedAt = DateTime.now();
           }
         },
         onError: (Object error, StackTrace stackTrace) {
           log.info('[${event.runtimeType}] Stream error: $error');
           Sentry.captureException('Failed to refresh asset tokens: $error');
+          // Update state to gettingArtworksFailed on error
+          final updatedStates = state.addressStates.updateStates(
+            event.addresses,
+            AddressStateType.fetchingArtworksFailed,
+          );
+          emit(state.copyWith(addressStates: updatedStates));
           _activeCompleters[subType]?.completeError(error);
         },
         onDone: () {
+          // Update state to artworksReady when done
+          final updatedStates = state.addressStates.updateStates(
+            event.addresses,
+            AddressStateType.fetchingArtworksDone,
+          );
           emit(state.copyWith(
+            addressStates: updatedStates,
             status: UserAllOwnCollectionStatus.loaded,
           ));
           log.info(
@@ -337,20 +360,29 @@ class UserAllOwnCollectionBloc
   ) async {
     final owners = _dynamicQuery?.params.owners;
     if (owners == null) {
-      emit(state.copyWith(addressAssetTokens: []));
+      emit(state.copyWith(addressStates: []));
       return;
     }
     final assetTokenGroupByAddress = injector<IndexerDatabaseAbstract>()
         .getGroupAssetTokensByOwnersGroupByAddress(
       owners: _dynamicQuery!.params.owners,
     );
+
+    // Preserve existing states when reloading
+    final existingStatesMap = {
+      for (final addrState in state.addressStates)
+        addrState.address.address: addrState.state
+    };
+
     emit(
       state.copyWith(
-        addressAssetTokens: assetTokenGroupByAddress
+        addressStates: assetTokenGroupByAddress
             .map(
-              (e) => AddressAssetTokens(
+              (e) => AddressState(
                 address: e.address,
                 assetTokens: e.assetTokens,
+                state: existingStatesMap[e.address.address] ??
+                    AddressStateType.fetchingArtworksDone,
               ),
             )
             .toList(),
@@ -389,12 +421,15 @@ class UserAllOwnCollectionBloc
       _workflowStatusTimers[opId]?.cancel();
       _workflowStatusTimers.remove(opId);
 
-      // Remove operation for these addresses from state
-      final operations = List<IndexingOperation>.from(state.indexingOperations);
-      operations.removeWhere((op) => op.id == event.addresses.join(','));
-
       try {
         if (event.status.isSuccess) {
+          // Update state to gettingArtworks before fetching
+          final updatedStates = state.addressStates.updateStates(
+            event.addresses,
+            AddressStateType.fetchingArtworks,
+          );
+          emit(state.copyWith(addressStates: updatedStates));
+
           final completer = Completer<void>();
           add(
             FetchTokensOfAddresses(
@@ -410,23 +445,31 @@ class UserAllOwnCollectionBloc
           );
           await completer.future;
         } else if (event.status.isRunning) {
+          // Still running, keep indexing state
           add(FetchTokensOfAddresses(
               addresses: event.addresses,
               shouldUpdateLastRefreshedTime: false));
         } else if (event.status == WorkflowExecutionStatus.timedOut) {
-          // silently stop
+          // Update state to indexingIncomplete on timeout
+          final updatedStates = state.addressStates.updateStates(
+            event.addresses,
+            AddressStateType.indexingIncomplete,
+          );
+          emit(state.copyWith(addressStates: updatedStates));
         } else {
+          // Update state to indexingIncomplete on failure
+          final updatedStates = state.addressStates.updateStates(
+            event.addresses,
+            AddressStateType.indexingIncomplete,
+          );
           emit(state.copyWith(
-            status: UserAllOwnCollectionStatus.error,
-            error: 'Indexing failed or canceled: ${event.status.toJson()}',
+            addressStates: updatedStates,
           ));
         }
       } catch (e, stackTrace) {
         log.info('[UserAllOwnCollectionBloc][_onWorkflowStatusTick] error $e');
         Sentry.captureException('Failed to fetch tokens of addresses: $e',
             stackTrace: stackTrace);
-      } finally {
-        emit(state.copyWith(indexingOperations: operations));
       }
     }
   }
@@ -491,17 +534,6 @@ class UserAllOwnCollectionBloc
       Sentry.captureException('Failed to update asset tokens: $e',
           stackTrace: stackTrace);
     }
-  }
-
-  Future<void> _onRemoveIndexingOperation(
-    RemoveIndexingOperation event,
-    Emitter<UserAllOwnCollectionState> emit,
-  ) async {
-    final operations = List<IndexingOperation>.from(state.indexingOperations);
-    operations.removeWhere((op) => op.id == event.operationId);
-    emit(state.copyWith(indexingOperations: operations));
-    log.info(
-        '[UserAllOwnCollectionBloc] Removed indexing operation: ${event.operationId}');
   }
 
   @override
