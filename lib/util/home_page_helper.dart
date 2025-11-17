@@ -84,7 +84,7 @@ class HomePageHelper {
         }
       },
     );
-
+    unawaited(_forceFetchTokensOfAddresses());
     _refreshAddressesNeedingReindex();
 
     unawaited(NowDisplayingManager().updateDisplayingNow());
@@ -101,7 +101,7 @@ class HomePageHelper {
         if (dynamicQuery != null) {
           final owners = dynamicQuery.params.owners;
           final lastUpdatedTime = injector<UserDp1PlaylistService>()
-              .getAddressOldestLastRefreshedTime(addresses: owners);
+              .getAddressOldestLastIndexTime(addresses: owners);
           final addressesToRefresh =
               owners.where((e) => lastUpdatedTime[e] != null).toList();
           log.info('Refreshing tokens for ${addressesToRefresh}');
@@ -152,101 +152,102 @@ class HomePageHelper {
     );
   }
 
+  Future<void> _forceFetchTokensOfAddresses() async {
+    final addresses = injector<AddressService>().getAllAddresses();
+    final refreshedMap = injector<UserDp1PlaylistService>()
+        .getAddressOldestLastFetchTokenTime(addresses: addresses);
+
+    final rc = injector<RemoteConfigService>();
+    if (!rc.isLoaded) {
+      await rc.loadConfigs();
+    }
+
+    // Read cache policy (cache_valid_duration can be null/missing)
+    final cacheValidStr = rc.getConfig<String?>(
+      ConfigGroup.tokenMetadataRebuild,
+      ConfigKey.cacheValidDuration,
+      null,
+    );
+    final int? cacheValidSeconds =
+        cacheValidStr != null ? int.tryParse(cacheValidStr) : null;
+    final lastForceUpdateIso = rc.getConfig<String>(
+      ConfigGroup.tokenMetadataRebuild,
+      ConfigKey.lastForceUpdateTime,
+      '2025-01-01T00:00:00Z',
+    );
+
+    final now = DateTime.now().toUtc();
+    final Duration? threshold =
+        cacheValidSeconds != null ? Duration(seconds: cacheValidSeconds) : null;
+    final lastForceUpdateTime = DateTime.tryParse(lastForceUpdateIso)?.toUtc();
+
+    final addressesToRefresh = <String>[];
+    for (final addr in addresses) {
+      final isFetched =
+          injector<UserDp1PlaylistService>().isAddressFetched(addr);
+      final isIndexed =
+          injector<UserDp1PlaylistService>().isAddressIndexed(addr);
+      final last = refreshedMap[addr]?.toUtc();
+      final isExpired =
+          threshold != null && last != null && now.difference(last) > threshold;
+      final isBeforeForced = lastForceUpdateTime != null &&
+          (last == null || last.isBefore(lastForceUpdateTime));
+      if ((!isFetched && isIndexed) || isExpired || isBeforeForced) {
+        addressesToRefresh.add(addr);
+      }
+    }
+
+    if (addressesToRefresh.isNotEmpty) {
+      log.info('Force fetching tokens for ${addressesToRefresh.toList()}');
+      injector<UserAllOwnCollectionBloc>().add(FetchTokensOfAddresses(
+          addresses: addressesToRefresh, shouldUpdateLastRefreshedTime: true));
+    }
+  }
+
   Future<void> _refreshAddressesNeedingReindex() async {
     try {
-      // Load remote config if needed
-      final rc = injector<RemoteConfigService>();
-      if (!rc.isLoaded) {
-        await rc.loadConfigs();
-      }
-
-      // Read cache policy (cache_valid_duration can be null/missing)
-      final cacheValidStr = rc.getConfig<String?>(
-        ConfigGroup.tokenMetadataRebuild,
-        ConfigKey.cacheValidDuration,
-        null,
-      );
-      final int? cacheValidSeconds =
-          cacheValidStr != null ? int.tryParse(cacheValidStr) : null;
-      final lastForceUpdateIso = rc.getConfig<String>(
-        ConfigGroup.tokenMetadataRebuild,
-        ConfigKey.lastForceUpdateTime,
-        '2025-01-01T00:00:00Z',
-      );
-      final lastForceUpdateTime =
-          DateTime.tryParse(lastForceUpdateIso)?.toUtc();
-
-      // Compute candidates
-      final now = DateTime.now().toUtc();
-      final Duration? threshold = cacheValidSeconds != null
-          ? Duration(seconds: cacheValidSeconds)
-          : null;
       final addresses = injector<AddressService>().getAllAddresses();
-      final refreshedMap = injector<UserDp1PlaylistService>()
-          .getAddressOldestLastRefreshedTime(addresses: addresses);
 
-      final addressesWithoutRefreshTime = <String>[];
-      final addressesInvalidOrBeforeForce = <String>[];
+      final addressesToReindex = <String>[];
       for (final addr in addresses) {
-        final last = refreshedMap[addr]?.toUtc();
-        final isMissing = last == null;
-        final isExpired = threshold != null &&
-            last != null &&
-            now.difference(last) > threshold;
-        final isBeforeForced = lastForceUpdateTime != null &&
-            (last == null || last.isBefore(lastForceUpdateTime));
-        if (isMissing) {
-          addressesWithoutRefreshTime.add(addr);
-        } else if (isExpired || isBeforeForced) {
-          addressesInvalidOrBeforeForce.add(addr);
+        final isIndexed =
+            injector<UserDp1PlaylistService>().isAddressIndexed(addr);
+
+        if (!isIndexed) {
+          addressesToReindex.add(addr);
         }
       }
 
-      final toReindex = {
-        ...addressesWithoutRefreshTime,
-        ...addressesInvalidOrBeforeForce,
-      };
-
-      final alreadyIndexed =
-          addresses.where((addr) => refreshedMap[addr] != null).toList();
+      final alreadyIndexed = addresses
+          .where((addr) => !addressesToReindex.contains(addr))
+          .toList();
 
       NftCollection.logger.info('Already indexed addresses: $alreadyIndexed');
       if (alreadyIndexed.isNotEmpty) {
-        injector<NftTokensService>().reindexAddresses(alreadyIndexed);
+        unawaited(
+            injector<NftTokensService>().reindexAddresses(alreadyIndexed));
       }
 
-      log.info('Addresses without refresh time: $addressesWithoutRefreshTime');
-      log.info(
-          'Addresses invalid cache or before force: $addressesInvalidOrBeforeForce');
-      log.info('Addresses to refresh: ${toReindex.toList()}');
+      log.info('Addresses to reindex: $addressesToReindex');
+      log.info('Addresses to refresh: ${addressesToReindex.toList()}');
 
-      if (toReindex.isNotEmpty) {
-        log.info('Clearing recent refreshed time for ${toReindex.toList()}');
-
-        // clear recent refreshed time for these addresses
-        final refreshedMap = injector<UserDp1PlaylistService>()
-            .getAddressOldestLastRefreshedTime(addresses: toReindex.toList());
-        for (final addr in refreshedMap.keys) {
-          refreshedMap[addr] = null;
-        }
-        injector<UserDp1PlaylistService>()
-            .updateAddressLastRefreshedTime(addresses: refreshedMap);
-
-        log.info('Clearing cached tokens for ${toReindex.toList()}');
+      if (addressesToReindex.isNotEmpty) {
+        log.info('Clearing cached tokens for ${addressesToReindex.toList()}');
 
         // Clear cached tokens for these addresses before fetching
         final db = injector<IndexerDatabaseAbstract>();
-        final tokens = db.getTokensByOwners(owners: toReindex.toList());
+        final tokens =
+            db.getTokensByOwners(owners: addressesToReindex.toList());
         if (tokens.isNotEmpty) {
           final cids = tokens.map((v2.AssetToken t) => t.cid).toList();
           db.deleteTokens(cids);
         }
 
         log.info(
-            '[_refreshAddressesNeedingReindex] Reindexing tokens for ${toReindex.toList()}');
+            '[_refreshAddressesNeedingReindex] Reindexing tokens for ${addressesToReindex.toList()}');
 
         injector<UserAllOwnCollectionBloc>()
-            .add(ReindexAddresses(addresses: toReindex.toList()));
+            .add(ReindexAddresses(addresses: addressesToReindex.toList()));
       }
     } catch (_) {
       // ignore errors in background refresh

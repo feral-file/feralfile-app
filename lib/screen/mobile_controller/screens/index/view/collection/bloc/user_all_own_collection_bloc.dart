@@ -124,7 +124,7 @@ class UserAllOwnCollectionBloc
               log.info(
                   '[UserAllOwnCollectionBloc] Started indexing batch: $batchAddresses');
             },
-            onStatus: (status, workflowId, runId, batchAddresses) {
+            onStatus: (status, workflowId, runId, batchAddresses) async {
               log.info(
                   '[ReindexAddresses][${batchAddresses.join(',')}] status: ${status.toJson()}');
               if (status.isDone) {
@@ -139,6 +139,12 @@ class UserAllOwnCollectionBloc
                   final updatedStates = state.addressStates.updateStates(
                     batchAddresses,
                     AddressStateType.indexingDone,
+                  );
+                  await injector<UserDp1PlaylistService>()
+                      .updateAddressLastIndexTime(
+                    addresses: {
+                      for (final addr in batchAddresses) addr: DateTime.now(),
+                    },
                   );
                   emit(state.copyWith(addressStates: updatedStates));
                 }
@@ -339,7 +345,8 @@ class UserAllOwnCollectionBloc
 
       if (event.shouldUpdateLastRefreshedTime) {
         // update the last updated at
-        await injector<UserDp1PlaylistService>().updateAddressLastRefreshedTime(
+        await injector<UserDp1PlaylistService>()
+            .updateAddressLastFetchTokenTime(
           addresses: addressMap,
         );
       }
@@ -496,7 +503,7 @@ class UserAllOwnCollectionBloc
 
       final now = DateTime.now();
       final addressMap = injector<UserDp1PlaylistService>()
-          .getAddressOldestLastRefreshedTime(addresses: event.addresses);
+          .getAddressOldestLastIndexTime(addresses: event.addresses);
 
       // get stream from token service (updates from indexer changes)
       final stream = await _tokensService.updateTokensInIsolate(addressMap);
@@ -516,7 +523,7 @@ class UserAllOwnCollectionBloc
         },
         onDone: () async {
           await injector<UserDp1PlaylistService>()
-              .updateAddressLastRefreshedTime(
+              .updateAddressLastFetchTokenTime(
             addresses: {
               for (final addr in event.addresses) addr: now,
             },

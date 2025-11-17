@@ -190,6 +190,10 @@ class UserDp1PlaylistService {
     final playlist = await _dp1FeedService.updatePlaylist(
         playlistId: playlistId, request: request);
     cachedAllOwnedPlaylist = playlist;
+    final map = addresses.map((e) => MapEntry(e, null));
+    await updateAddressLastIndexTime(addresses: Map.fromEntries(map));
+    await updateAddressLastFetchTokenTime(addresses: Map.fromEntries(map));
+
     log.info('Removed addresses from playlist: $addresses');
     return playlist;
   }
@@ -202,7 +206,7 @@ class UserDp1PlaylistService {
       return true;
     }
     final deleted = await Future.wait(allOwnedPlaylistIds.map(deletePlaylist));
-    await injector<ConfigurationService>().setAddressLastRefreshedTime({});
+    await injector<ConfigurationService>().setAddressLastIndexTime({});
 
     if (deleted.any((e) => e == false)) {
       log.info('Failed to delete all owned playlists');
@@ -224,11 +228,11 @@ class UserDp1PlaylistService {
     }
   }
 
-  Future<void> updateAddressLastRefreshedTime({
+  Future<void> updateAddressLastIndexTime({
     required Map<String, DateTime?> addresses,
   }) async {
     final addressLastRefreshedTime =
-        injector<ConfigurationService>().getAddressLastRefreshedTime();
+        injector<ConfigurationService>().getAddressLastIndexTime();
     // update the time for the addresses
     for (final entry in addresses.entries) {
       if (entry.value == null) {
@@ -244,13 +248,13 @@ class UserDp1PlaylistService {
       }
     }
     await injector<ConfigurationService>()
-        .setAddressLastRefreshedTime(addressLastRefreshedTime);
+        .setAddressLastIndexTime(addressLastRefreshedTime);
   }
 
-  Map<String, DateTime?> getAddressOldestLastRefreshedTime({
+  Map<String, DateTime?> getAddressOldestLastIndexTime({
     required List<String> addresses,
   }) {
-    final map = injector<ConfigurationService>().getAddressLastRefreshedTime();
+    final map = injector<ConfigurationService>().getAddressLastIndexTime();
     final result = <String, DateTime?>{};
     for (final addr in addresses) {
       result[addr] = map[addr];
@@ -259,7 +263,46 @@ class UserDp1PlaylistService {
   }
 
   bool isAddressIndexed(String address) {
-    final map = injector<ConfigurationService>().getAddressLastRefreshedTime();
+    final map = injector<ConfigurationService>().getAddressLastIndexTime();
+    return map.containsKey(address);
+  }
+
+  Future<void> updateAddressLastFetchTokenTime({
+    required Map<String, DateTime?> addresses,
+  }) async {
+    final addressLastFetchTokenTime =
+        injector<ConfigurationService>().getAddressLastFetchTokenTime();
+    // update the time for the addresses
+    for (final entry in addresses.entries) {
+      if (entry.value == null) {
+        addressLastFetchTokenTime.remove(entry.key);
+      } else {
+        final candidate = entry.value!.toUtc();
+        final current = addressLastFetchTokenTime[entry.key];
+        if (current == null || candidate.isAfter(current)) {
+          addressLastFetchTokenTime[entry.key] = candidate;
+        } else {
+          addressLastFetchTokenTime[entry.key] = current;
+        }
+      }
+    }
+    await injector<ConfigurationService>()
+        .setAddressLastFetchTokenTime(addressLastFetchTokenTime);
+  }
+
+  Map<String, DateTime?> getAddressOldestLastFetchTokenTime({
+    required List<String> addresses,
+  }) {
+    final map = injector<ConfigurationService>().getAddressLastFetchTokenTime();
+    final result = <String, DateTime?>{};
+    for (final addr in addresses) {
+      result[addr] = map[addr];
+    }
+    return result;
+  }
+
+  bool isAddressFetched(String address) {
+    final map = injector<ConfigurationService>().getAddressLastFetchTokenTime();
     return map.containsKey(address);
   }
 

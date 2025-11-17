@@ -165,11 +165,17 @@ abstract class ConfigurationService {
 
   Future<void> setRecordedMessages(List<String> messages);
 
-  Future<void> setAddressLastRefreshedTime(Map<String, DateTime> time);
+  Future<void> setAddressLastIndexTime(Map<String, DateTime> time);
 
-  Map<String, DateTime> getAddressLastRefreshedTime();
+  Map<String, DateTime> getAddressLastIndexTime();
 
-  Future<void> clearAddressLastRefreshedTime();
+  Future<void> clearAddressLastIndexTime();
+
+  Future<void> setAddressLastFetchTokenTime(Map<String, DateTime> time);
+
+  Map<String, DateTime> getAddressLastFetchTokenTime();
+
+  Future<void> clearAddressLastFetchTokenTime();
 
   DateTime? getLastTimeRefreshFeeds();
 
@@ -268,6 +274,9 @@ class ConfigurationServiceImpl implements ConfigurationService {
 
   static const String KEY_ADDRESS_LAST_REFRESHED_TIME =
       'address_last_refreshed_time_v2';
+
+  static const String KEY_ADDRESS_LAST_FETCH_TOKEN_TIME =
+      'address_last_fetch_token_time';
 
   static const String KEY_LAST_TIME_REFRESH_FEEDS = 'last_time_refresh_feeds';
 
@@ -672,12 +681,12 @@ class ConfigurationServiceImpl implements ConfigurationService {
   }
 
   @override
-  Future<void> clearAddressLastRefreshedTime() {
+  Future<void> clearAddressLastIndexTime() {
     return _preferences.remove(KEY_ADDRESS_LAST_REFRESHED_TIME);
   }
 
   @override
-  Map<String, DateTime> getAddressLastRefreshedTime() {
+  Map<String, DateTime> getAddressLastIndexTime() {
     final time = _preferences.getString(KEY_ADDRESS_LAST_REFRESHED_TIME);
     if (time == null) {
       return {};
@@ -688,11 +697,37 @@ class ConfigurationServiceImpl implements ConfigurationService {
   }
 
   @override
-  Future<void> setAddressLastRefreshedTime(Map<String, DateTime> time) {
+  Future<void> setAddressLastIndexTime(Map<String, DateTime> time) {
     final timeJson =
         time.map((key, value) => MapEntry(key, value.toIso8601String()));
     return _preferences.setString(
       KEY_ADDRESS_LAST_REFRESHED_TIME,
+      jsonEncode(timeJson),
+    );
+  }
+
+  @override
+  Future<void> clearAddressLastFetchTokenTime() {
+    return _preferences.remove(KEY_ADDRESS_LAST_FETCH_TOKEN_TIME);
+  }
+
+  @override
+  Map<String, DateTime> getAddressLastFetchTokenTime() {
+    final time = _preferences.getString(KEY_ADDRESS_LAST_FETCH_TOKEN_TIME);
+    if (time == null) {
+      return {};
+    }
+    final timeJson = jsonDecode(time) as Map<String, dynamic>;
+    return timeJson
+        .map((key, value) => MapEntry(key, DateTime.parse(value as String)));
+  }
+
+  @override
+  Future<void> setAddressLastFetchTokenTime(Map<String, DateTime> time) {
+    final timeJson =
+        time.map((key, value) => MapEntry(key, value.toIso8601String()));
+    return _preferences.setString(
+      KEY_ADDRESS_LAST_FETCH_TOKEN_TIME,
       jsonEncode(timeJson),
     );
   }
