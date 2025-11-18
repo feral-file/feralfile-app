@@ -1,0 +1,284 @@
+---
+alwaysApply: true
+---
+
+# Cursor Rule: Flutter Code Best Practices
+
+## Purpose
+Ensure high-quality Flutter code that follows industry standards, maintains consistency, and passes all lint checks.
+
+## Code Quality & Linting
+
+### Always run flutter lint before committing
+- Execute `flutter analyze` to check for lint issues
+- Fix all lint violations before submitting code
+- Use `flutter format` to auto-format code
+
+### Lint Rules Compliance
+Follow the `very_good_analysis` ruleset (version 6.0.0) with these exceptions:
+- `public_member_api_docs: false` (API docs not required for private app)
+- `avoid_dynamic_calls: false` (allowed for flexibility with external APIs)
+
+### Common Lint Fixes
+- **prefer_const_constructors**: Always use `const` for compile-time constants
+- **prefer_final_fields**: Mark class fields `final` when not reassigned
+- **avoid_print**: Use proper logging instead of print statements
+- **prefer_single_quotes**: Use single quotes for strings
+- **sort_child_properties_last**: Put child widgets last in widget constructors
+
+## Architecture & Patterns
+
+### BLoC Pattern
+- Use BLoC for state management in complex screens
+- Separate business logic from UI in Bloc classes
+- Use `BlocBuilder`, `BlocListener`, and `BlocConsumer` appropriately
+- Keep Bloc classes in `lib/screen/*/bloc/` directories
+
+### Clean Architecture Layers
+```
+lib/
+├── gateway/     # API clients & external data sources
+├── service/     # Business logic & data processing
+├── model/       # Data models & entities
+├── screen/      # UI screens & routing
+├── view/        # Reusable UI components
+├── util/        # Utility functions & helpers
+├── theme/       # Styling & design tokens
+└── widgets/     # Custom widgets
+```
+
+### Dependency Injection
+- Use `get_it` for dependency injection
+- Register services in `lib/common/injector.dart`
+- Access services via `injector<T>()` calls
+
+## Widget Best Practices
+
+### Widget Structure
+- Prefer `StatelessWidget` when possible, use `StatefulWidget` only when necessary
+- Use meaningful widget names (e.g., `PlaylistCarouselView`, `ArtworkItemView`)
+- Keep widgets focused on single responsibilities
+- Break complex widgets into smaller, reusable components
+
+### Constructor Best Practices
+```dart
+class MyWidget extends StatelessWidget {
+  const MyWidget({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.onTap,
+  });
+
+  final String title;
+  final String? subtitle;
+  final VoidCallback? onTap;
+
+  // Good: const constructor with proper parameter naming
+}
+```
+
+### State Management
+- Use `ValueNotifier` for simple local state
+- Use BLoC for complex state that needs to persist or be shared
+- Avoid setState() for complex state management
+- Use keys for widgets that need to maintain state across rebuilds
+
+## Code Style & Conventions
+
+### Naming Conventions
+- **Classes**: PascalCase (e.g., `PlaylistService`, `ArtworkModel`)
+- **Methods/Functions**: camelCase (e.g., `fetchPlaylists()`, `formatDate()`)
+- **Variables**: camelCase (e.g., `playlistTitle`, `isLoading`)
+- **Constants**: UPPER_SNAKE_CASE (e.g., `MAX_RETRY_COUNT`)
+- **Private members**: Prefix with underscore (e.g., `_isLoading`)
+
+### File Organization
+- One class per file (except for closely related classes like models)
+- Group related functionality in feature directories
+- Use clear, descriptive file names
+- Keep files under 500 lines when possible
+
+### Imports
+```dart
+// Good: Group imports logically
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:autonomy_flutter/model/playlist.dart';
+import 'package:autonomy_flutter/service/playlist_service.dart';
+import 'package:autonomy_flutter/util/constants.dart';
+
+// Local imports
+import 'playlist_state.dart';
+import 'playlist_event.dart';
+```
+
+## Error Handling
+
+### Async Operations
+- Always handle errors in async functions
+- Use try-catch blocks for critical operations
+- Log errors appropriately using the logging system
+- Show user-friendly error messages
+
+```dart
+// Good: Proper error handling
+Future<void> loadData() async {
+  try {
+    final data = await apiService.fetchData();
+    emit(DataLoaded(data));
+  } catch (e) {
+    log.error('Failed to load data: $e');
+    emit(DataError('Unable to load data. Please try again.'));
+  }
+}
+```
+
+### Null Safety
+- Use null-safe operators (`?.`, `??`, `!`)
+- Prefer nullable types when data might be absent
+- Use `late` keyword only when initialization is guaranteed
+
+## Performance Optimization
+
+### Build Optimization
+- Avoid unnecessary rebuilds by using `const` constructors
+- Use `const` widgets in lists when possible
+- Implement `shouldRebuild` in custom widgets when needed
+- Use `ValueListenableBuilder` for reactive UI updates
+
+### Memory Management
+- Dispose controllers, streams, and listeners in `dispose()`
+- Cancel subscriptions and timers
+- Use weak references when appropriate
+- Avoid memory leaks from closures capturing large objects
+
+### Image Optimization
+- Use appropriate image formats (WebP preferred)
+- Implement proper caching with `cached_network_image`
+- Use `cacheWidth` and `cacheHeight` for image optimization
+- Lazy load images in lists
+
+### Rendering Performance
+- **Minimize saveLayer() calls**: Avoid `saveLayer()` when possible, use static shapes or refactor to avoid overlaps
+- **Use opacity wisely**: Prefer `AnimatedOpacity` or `FadeInImage` over `Opacity` widget, especially in animations
+- Apply opacity directly to images rather than wrapping in `Opacity` widget when possible
+- Draw shapes with semitransparent colors instead of `Opacity` widget when possible
+- **Use clipping carefully**: Clipping is expensive, use `borderRadius` instead of clipping for rounded rectangles
+- Avoid `Clip.antiAliasWithSaveLayer` unless necessary
+
+### Layout Optimization
+- **Avoid intrinsic operations**: Don't use widgets that trigger intrinsic layout passes (like `IntrinsicHeight`, `IntrinsicWidth`)
+- Set fixed sizes for grid/list cells when possible to avoid intrinsic calculations
+- Use custom `RenderObject` for complex sizing requirements instead of intrinsic operations
+- **Minimize layout passes**: Debug with DevTools "Track layouts" to identify excessive intrinsic passes
+
+### Animation Performance
+- Avoid `Opacity` widget in animations; use `AnimatedOpacity` instead
+- Don't put non-animated subtrees in `AnimatedBuilder.builder` function
+- Avoid clipping in animations; pre-clip images when possible
+- Use GPU fragment shaders for fading effects (`FadeInImage`)
+
+### Frame Rate Target
+- **Target 60fps**: Build and render frames in 16ms or less
+- Use DevTools Performance view to identify frames taking longer than 16ms
+- Enable "Show widget rebuild information" in IDE Flutter Performance window
+
+## Testing
+
+### Unit Tests
+- Write tests for business logic in services
+- Use `mocktail` for mocking dependencies
+- Place tests in `test/unit-tests/`
+- Follow existing test naming conventions
+
+### Widget Tests
+- Test complex widget behavior
+- Use `flutter_test` for widget testing
+- Mock external dependencies
+- Test both success and error states
+
+## Design System Integration
+
+### Design Tokens
+- Use design tokens from `/lib/design/build/` for consistent styling
+- Reference typography tokens for text styles
+- Use component tokens for consistent spacing and colors
+- Avoid hard-coded values when tokens are available
+
+### Responsive Design
+- Use `ResponsiveLayout` utilities for adaptive layouts
+- Test layouts on different screen sizes
+- Consider tablet layouts where appropriate
+- Use `MediaQuery` for responsive spacing
+
+## Code Commit Guidelines
+
+### Never Auto-Commit Code
+- **Do NOT automatically commit or stage code changes**
+- Always provide the user with a conventional commit message after making changes
+- Use the format: `type(scope): description`
+
+### Conventional Commit Format
+```
+type(scope): brief description
+
+[optional body explaining changes]
+
+[optional footer with breaking changes]
+```
+
+**Types:**
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting, etc.)
+- `refactor`: Code refactoring
+- `test`: Adding/modifying tests
+- `chore`: Maintenance tasks
+
+**Scopes (common for Flutter apps):**
+- `ui`, `widget`, `view`: UI components
+- `bloc`, `state`, `event`: State management
+- `api`, `service`, `gateway`: Data layer
+- `model`, `entity`: Data models
+- `util`, `helper`: Utility functions
+- `theme`, `style`: Styling/theming
+
+**Examples:**
+```
+feat(playlist): add carousel view for artwork display
+
+fix(auth): resolve login timeout issue
+
+refactor(playlist-service): extract common playlist operations
+
+style(artwork-widget): fix lint issues and formatting
+```
+
+## Best Practice Checklist
+
+### Code Review Checklist:
+- [ ] Follows BLoC pattern where appropriate
+- [ ] Proper error handling and logging
+- [ ] Uses design tokens consistently
+- [ ] No lint violations
+- [ ] Responsive design considerations
+- [ ] Memory leaks prevented
+- [ ] Proper state management
+- [ ] Clean, readable code structure
+
+### Performance Checklist:
+- [ ] No unnecessary rebuilds
+- [ ] Efficient list rendering (lazy builders, no intrinsic operations)
+- [ ] Proper image caching
+- [ ] Minimal bundle size impact
+- [ ] Smooth animations and transitions
+- [ ] Frames render in 16ms or less (60fps target)
+- [ ] No excessive saveLayer() calls
+- [ ] Opacity and clipping used efficiently
+- [ ] No intrinsic layout passes causing performance issues
