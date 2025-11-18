@@ -84,6 +84,12 @@ class MyWidget extends StatelessWidget {
 - Avoid setState() for complex state management
 - Use keys for widgets that need to maintain state across rebuilds
 
+### Touch Targets & Accessibility
+- **Minimum tappable area**: Ensure all interactive elements have at least 44x44 pixels
+- **If parent size is smaller**: Adjust padding/gaps to meet the 44x44 minimum requirement
+- **Accessibility compliance**: Follow WCAG guidelines for touch target sizes
+- **Consistent touch feedback**: Provide visual feedback for all interactive elements
+
 ## Code Style & Conventions
 
 ### Naming Conventions
@@ -175,7 +181,6 @@ Future<void> loadData() async {
 - **Avoid intrinsic operations**: Don't use widgets that trigger intrinsic layout passes (like `IntrinsicHeight`, `IntrinsicWidth`)
 - Set fixed sizes for grid/list cells when possible to avoid intrinsic calculations
 - Use custom `RenderObject` for complex sizing requirements instead of intrinsic operations
-- **Minimize layout passes**: Debug with DevTools "Track layouts" to identify excessive intrinsic passes
 
 ### Animation Performance
 - Avoid `Opacity` widget in animations; use `AnimatedOpacity` instead
@@ -185,7 +190,6 @@ Future<void> loadData() async {
 
 ### Frame Rate Target
 - **Target 60fps**: Build and render frames in 16ms or less
-- Use DevTools Performance view to identify frames taking longer than 16ms
 - Enable "Show widget rebuild information" in IDE Flutter Performance window
 
 ## Testing
@@ -271,6 +275,8 @@ style(artwork-widget): fix lint issues and formatting
 - [ ] Memory leaks prevented
 - [ ] Proper state management
 - [ ] Clean, readable code structure
+- [ ] Touch targets meet 44x44 minimum size requirement
+- [ ] Accessibility features work properly
 
 ### Performance Checklist:
 - [ ] No unnecessary rebuilds
