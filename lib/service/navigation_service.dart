@@ -769,7 +769,7 @@ class NavigationService {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Welcome back! It looks like you’re starting fresh. Would you like to contniue?',
+            'Welcome back! It looks like you’re starting fresh. Would you like to continue?',
             style: Theme.of(context).textTheme.ppMori400White14,
           ),
           const SizedBox(height: 36),
