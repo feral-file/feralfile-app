@@ -281,6 +281,8 @@ extension AssetTokenExtension on AssetToken {
       return _applyProvenanceChangeMeta(meta, changedAt);
     } else if (meta is MetadataChangeMeta) {
       return _applyMetadataChangeMeta(meta, changedAt);
+    } else if (meta is EnrichmentSourceChangeMeta) {
+      return _applyEnrichmentSourceChangeMeta(meta, changedAt);
     } else {
       NftCollection.logger.info(
           "[ApplyChange] unknown change type: ${change.subjectType}, change: ${change.toJson()}");
@@ -422,6 +424,66 @@ extension AssetTokenExtension on AssetToken {
     return copyWith(
       updatedAt: changedAt ?? updatedAt,
       metadata: mergedMetadata,
+    );
+  }
+
+  AssetToken _applyEnrichmentSourceChangeMeta(
+    EnrichmentSourceChangeMeta meta,
+    DateTime? changedAt,
+  ) {
+    // Merge enrichment source fields: use new values, fallback to old if new is null
+    final newEnrichmentSourceFields = meta.new_;
+    final oldEnrichmentSourceFields = meta.old;
+
+    // Convert ChangeArtist to Artist
+    List<Artist>? convertArtists(List<ChangeArtist>? changeArtists) {
+      if (changeArtists == null) return null;
+      return changeArtists
+          .map((a) => Artist(did: a.did, name: a.name))
+          .toList();
+    }
+
+    // Build new enrichment source by merging: new > old > existing
+    final existingEnrichmentSource = enrichmentSource;
+    final mergedEnrichmentSource = existingEnrichmentSource != null
+        ? existingEnrichmentSource.copyWith(
+            name: newEnrichmentSourceFields.name ??
+                oldEnrichmentSourceFields.name ??
+                existingEnrichmentSource.name,
+            description: newEnrichmentSourceFields.description ??
+                oldEnrichmentSourceFields.description ??
+                existingEnrichmentSource.description,
+            imageUrl: newEnrichmentSourceFields.imageUrl ??
+                oldEnrichmentSourceFields.imageUrl ??
+                existingEnrichmentSource.imageUrl,
+            animationUrl: newEnrichmentSourceFields.animationUrl ??
+                oldEnrichmentSourceFields.animationUrl ??
+                existingEnrichmentSource.animationUrl,
+            mimeType: newEnrichmentSourceFields.mimeType ??
+                oldEnrichmentSourceFields.mimeType ??
+                existingEnrichmentSource.mimeType,
+            artists: convertArtists(newEnrichmentSourceFields.artists) ??
+                convertArtists(oldEnrichmentSourceFields.artists) ??
+                existingEnrichmentSource.artists,
+          )
+        : EnrichmentSource(
+            name: newEnrichmentSourceFields.name ??
+                oldEnrichmentSourceFields.name,
+            description: newEnrichmentSourceFields.description ??
+                oldEnrichmentSourceFields.description,
+            imageUrl: newEnrichmentSourceFields.imageUrl ??
+                oldEnrichmentSourceFields.imageUrl,
+            animationUrl: newEnrichmentSourceFields.animationUrl ??
+                oldEnrichmentSourceFields.animationUrl,
+            mimeType: newEnrichmentSourceFields.mimeType ??
+                oldEnrichmentSourceFields.mimeType,
+            artists: convertArtists(newEnrichmentSourceFields.artists) ??
+                convertArtists(oldEnrichmentSourceFields.artists),
+          );
+
+    return copyWith(
+      updatedAt: changedAt ?? updatedAt,
+      enrichmentSource: mergedEnrichmentSource,
     );
   }
 }

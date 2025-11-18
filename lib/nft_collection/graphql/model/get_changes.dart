@@ -4,12 +4,13 @@ import 'package:autonomy_flutter/util/eth_utils.dart';
 import 'package:sentry/sentry.dart';
 
 /// Subject type for change journal entries
-/// Based on ff-indexer-v2: token, owner, balance, metadata
+/// Based on ff-indexer-v2: token, owner, balance, metadata, enrichment_source
 enum SubjectType {
   token,
   owner,
   balance,
   metadata,
+  enrichmentSource,
 }
 
 extension SubjectTypeJson on SubjectType {
@@ -23,6 +24,8 @@ extension SubjectTypeJson on SubjectType {
         return 'balance';
       case SubjectType.metadata:
         return 'metadata';
+      case SubjectType.enrichmentSource:
+        return 'enrich_source';
     }
   }
 
@@ -37,6 +40,8 @@ extension SubjectTypeJson on SubjectType {
         return SubjectType.balance;
       case 'metadata':
         return SubjectType.metadata;
+      case 'enrich_source':
+        return SubjectType.enrichmentSource;
       default:
         return null;
     }
@@ -236,6 +241,92 @@ class MetadataChangeMeta implements ChangeMeta {
       };
 }
 
+/// EnrichmentSourceFields represents the enrichment source fields we track for changes
+class EnrichmentSourceFields {
+  EnrichmentSourceFields({
+    this.vendor,
+    this.vendorHash,
+    this.name,
+    this.description,
+    this.animationUrl,
+    this.imageUrl,
+    this.artists,
+    this.mimeType,
+  });
+
+  final String? vendor; // Vendor type (artblocks, fxhash, etc.)
+  final String? vendorHash; // Hash of vendor JSON
+  final String? name;
+  final String? description;
+  final String? animationUrl;
+  final String? imageUrl;
+  final List<ChangeArtist>? artists;
+  final String? mimeType;
+
+  factory EnrichmentSourceFields.fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return EnrichmentSourceFields();
+    }
+    return EnrichmentSourceFields(
+      vendor: json['vendor'] as String?,
+      vendorHash: json['vendor_hash'] as String?,
+      name: json['name'] as String?,
+      description: json['description'] as String?,
+      animationUrl: json['animation_url'] as String?,
+      imageUrl: json['image_url'] as String?,
+      artists: json['artists'] != null
+          ? List<ChangeArtist>.from(
+              (json['artists'] as List<dynamic>).map(
+                (x) => ChangeArtist.fromJson(x as Map<String, dynamic>),
+              ),
+            )
+          : null,
+      mimeType: json['mime_type'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        if (vendor != null) 'vendor': vendor,
+        if (vendorHash != null) 'vendor_hash': vendorHash,
+        if (name != null) 'name': name,
+        if (description != null) 'description': description,
+        if (animationUrl != null) 'animation_url': animationUrl,
+        if (imageUrl != null) 'image_url': imageUrl,
+        if (artists != null)
+          'artists': artists!.map((x) => x.toJson()).toList(),
+        if (mimeType != null) 'mime_type': mimeType,
+      };
+}
+
+/// EnrichmentSourceChangeMeta represents the metadata for enrichment source update changes
+/// It stores the old and new values of enrichment source fields to track what changed
+class EnrichmentSourceChangeMeta implements ChangeMeta {
+  EnrichmentSourceChangeMeta({
+    required this.old,
+    required this.new_,
+    required this.tokenId,
+  });
+
+  final EnrichmentSourceFields old; // Previous enrichment source values
+  final EnrichmentSourceFields new_; // New enrichment source values
+  final int tokenId;
+
+  factory EnrichmentSourceChangeMeta.fromJson(Map<String, dynamic> json) =>
+      EnrichmentSourceChangeMeta(
+        old: EnrichmentSourceFields.fromJson(
+            json['old'] as Map<String, dynamic>?),
+        new_: EnrichmentSourceFields.fromJson(
+            json['new'] as Map<String, dynamic>?),
+        tokenId: int.parse(json['token_id'].toString()),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'old': old.toJson(),
+        'new': new_.toJson(),
+        'token_id': tokenId,
+      };
+}
+
 /// Change journal entry
 class Change {
   final int id;
@@ -267,6 +358,8 @@ class Change {
           return ProvenanceChangeMeta.fromJson(_metaRaw);
         case SubjectType.metadata:
           return MetadataChangeMeta.fromJson(_metaRaw);
+        case SubjectType.enrichmentSource:
+          return EnrichmentSourceChangeMeta.fromJson(_metaRaw);
       }
     } catch (e, _) {
       Sentry.captureEvent(SentryEvent(
@@ -306,6 +399,9 @@ class Change {
     if (metaParsed is MetadataChangeMeta) {
       return (metaParsed as MetadataChangeMeta).tokenId;
     }
+    if (metaParsed is EnrichmentSourceChangeMeta) {
+      return (metaParsed as EnrichmentSourceChangeMeta).tokenId;
+    }
     return null;
   }
 
@@ -343,6 +439,10 @@ class Change {
 
   bool isMetadataUpdate() {
     return metaParsed is MetadataChangeMeta;
+  }
+
+  bool isEnrichmentSourceUpdate() {
+    return metaParsed is EnrichmentSourceChangeMeta;
   }
 }
 
