@@ -1,16 +1,20 @@
 ---
 alwaysApply: false
 ---
+
 # Cursor Rule: Figma MCP → Flutter
 
 ## Purpose
+
 Generate Flutter widgets directly from Figma nodes with pixel-accurate layout and styling.
 
 ## Scope
+
 - Flutter mobile app only. Ignore web-specific stacks or utilities.
 - Input must include a Figma node URL.
 
 ## Generation Rules
+
 - Extract properties strictly from Figma. Do not infer or add unspecified styles.
 - Preserve exact dimensions/positions when provided by the design.
 - Avoid hardcoding width and height in general layouts; only apply fixed sizes to images, icons, and logos.
@@ -23,9 +27,11 @@ Generate Flutter widgets directly from Figma nodes with pixel-accurate layout an
 - Break complex views into small, reusable widgets with clear names. Keep code clean and modular; avoid unnecessary comments.
 
 ## Output
+
 - Dart widgets that match the Figma layout and style.
 - Token-first styling; fall back to explicit Figma values only when tokens are unavailable and the design specifies a value.
 - No extra behaviors or styles beyond the design.
 
 ## Stack
+
 - Flutter
