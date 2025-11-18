@@ -19,6 +19,7 @@ Generate Flutter widgets directly from Figma nodes with pixel-accurate layout an
 - Do not introduce responsive patterns beyond what the design specifies. Follow constraints and safe areas as appropriate for Flutter.
 - Export grouped images/vectors as single assets when intended.
 - Default font is PP Mori; set `fontFamily` only when different in the design.
+- Text styles: match the text style from existing source code if the design matches a pre-defined style. Available predefined styles include: design tokens (H1, H2, H3, Title, Body, Small, Mono) from `/lib/design/build/typography.dart`, custom extensions (ppMori{weight}{color}{size} patterns like ppMori700Black16, ppMori400White14) from `/lib/theme/extensions/theme_extension.dart`, or use FontWeightUtil.fromString() for weight conversion. If no exact match exists, create a new style following existing naming conventions and add it to the appropriate location.
 - Break complex views into small, reusable widgets with clear names. Keep code clean and modular; avoid unnecessary comments.
 
 ## Output
