@@ -11,19 +11,20 @@ import 'dart:io';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/gateway/feralfile_docs_api.dart';
 import 'package:autonomy_flutter/gateway/pubdoc_api.dart';
+import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/model/release_note.dart';
 import 'package:autonomy_flutter/model/version_info.dart';
-import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
-import 'package:autonomy_flutter/util/release_notes_parser.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/helpers.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:autonomy_flutter/util/release_notes_parser.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
+import 'package:autonomy_flutter/view/release_note_bottom_sheet.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -345,10 +346,24 @@ class VersionServiceImpl implements VersionService {
 
     UIHelper.currentDialogTitle = screenKey;
 
-    await _navigationService.navigateTo(
-      AppRouter.releaseNoteDetailPage,
-      arguments: releaseNote,
+    final context = _navigationService.navigatorKey.currentContext;
+    if (context == null) {
+      return;
+    }
+
+    shouldShowNowDisplaying.value = false;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      isScrollControlled: true,
+      builder: (context) => ReleaseNoteBottomSheet(
+        releaseNote: releaseNote,
+      ),
     );
+
+    shouldShowNowDisplaying.value = true;
+    UIHelper.currentDialogTitle = '';
   }
 
   @override
