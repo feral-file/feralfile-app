@@ -15,5 +15,5 @@ abstract class FeralFileDocsAPI {
   factory FeralFileDocsAPI(Dio dio, {String baseUrl}) = _FeralFileDocsAPI;
 
   @GET('/changelog.md')
-  Future<String> getChangeLog();
+  Future<String> getChangeLogs();
 }

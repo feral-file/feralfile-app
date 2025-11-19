@@ -22,7 +22,7 @@ class _FeralFileDocsAPI implements FeralFileDocsAPI {
   final ParseErrorLogger? errorLogger;
 
   @override
-  Future<String> getChangeLog() async {
+  Future<String> getChangeLogs() async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};

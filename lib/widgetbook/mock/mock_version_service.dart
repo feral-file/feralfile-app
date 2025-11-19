@@ -7,7 +7,7 @@ class MockVersionService implements VersionService {
   }
 
   @override
-  Future<String?> getReleaseNote(String? changeLog, String? date) {
+  Future<String?> getReleaseNote(String? changeLogs, String? date) {
     return Future.value();
   }
 
