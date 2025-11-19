@@ -152,6 +152,8 @@ class Environment {
 
   static String get pubdocURL => _readKey('AUTONOMY_PUBDOC_URL', '');
 
+  static String get feralfileDocsURL => _readKey('FERALFILE_DOCS_URL', '');
+
   static String get remoteConfigURL => _readKey('REMOTE_CONFIG_URL', '');
 
   static String get autonomyIpfsPrefix => _readKey('AUTONOMY_IPFS_PREFIX', '');
