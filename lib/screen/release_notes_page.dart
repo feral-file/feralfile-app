@@ -6,30 +6,50 @@
 //
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/service/deeplink_service.dart';
+import 'package:autonomy_flutter/gateway/feralfile_docs_api.dart';
+import 'package:autonomy_flutter/model/release_note.dart';
+import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
-import 'package:autonomy_flutter/util/constants.dart';
-import 'package:autonomy_flutter/util/style.dart';
+import 'package:autonomy_flutter/util/change_log.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
-import 'package:autonomy_flutter/view/tag_markdown.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:url_launcher/url_launcher_string.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class ReleaseNotesPage extends StatefulWidget {
-  final String releaseNotes;
-
-  const ReleaseNotesPage({required this.releaseNotes, super.key});
+  const ReleaseNotesPage({super.key});
 
   @override
   State<ReleaseNotesPage> createState() => _ReleaseNotesPageState();
 }
 
 class _ReleaseNotesPageState extends State<ReleaseNotesPage> {
+  List<ReleaseNote> _releaseNotes = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReleaseNotes();
+  }
+
+  Future<void> _loadReleaseNotes() async {
+    try {
+      final changeLogs = await injector<FeralFileDocsAPI>().getChangeLogs();
+      setState(() {
+        _releaseNotes = parseChangeLogs(changeLogs);
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   void dispose() {
     super.dispose();
@@ -46,77 +66,81 @@ class _ReleaseNotesPageState extends State<ReleaseNotesPage> {
         title: 'release_notes'.tr(),
         onBack: () => Navigator.of(context).pop(),
       ),
-      body: Container(
-        color: theme.colorScheme.background,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: theme.colorScheme.background,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView.builder(
+              itemCount: _releaseNotes.length,
+              itemBuilder: (context, index) {
+                final releaseNote = _releaseNotes[index];
+                return _ReleaseNoteItem(
+                  releaseNote: releaseNote,
+                  onTap: () {
+                    injector<NavigationService>().navigateTo(
+                      AppRouter.releaseNoteDetailPage,
+                      arguments: releaseNote,
+                    );
+                  },
+                );
+              },
+            ),
+    );
+  }
+}
+
+class _ReleaseNoteItem extends StatelessWidget {
+  const _ReleaseNoteItem({
+    required this.releaseNote,
+    required this.onTap,
+  });
+
+  final ReleaseNote releaseNote;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: const BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: AppColor.auLightGrey,
+              width: 1,
+            ),
+          ),
+        ),
+        child: Row(
           children: [
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 60),
-                    Text(
-                      'believe_transparency'.tr(),
-                      style: theme.textTheme.ppMori700Black16,
-                    ),
-                    Row(
-                      children: [
-                        Text(
-                          '${'autonomy_is_'.tr()} ',
-                          style: theme.textTheme.ppMori400Black16,
-                        ),
-                        GestureDetector(
-                          child: Text(
-                            'open_source'.tr(),
-                            style: theme.textTheme.ppMori400Black16.copyWith(
-                              decoration: TextDecoration.underline,
-                              decorationColor: AppColor.primaryBlack,
-                            ),
-                          ),
-                          onTap: () async => launchUrl(
-                              Uri.parse(AUTONOMY_CLIENT_GITHUB_LINK),
-                              mode: LaunchMode.externalApplication),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 30),
-                    const Divider(
-                      color: AppColor.feralFileHighlight,
-                      thickness: 1,
-                    ),
-                    Markdown(
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      data: widget.releaseNotes,
-                      softLineBreak: true,
-                      selectable: true,
-                      padding: const EdgeInsets.only(bottom: 32, top: 32),
-                      styleSheet: markDownChangeLogStyle(context),
-                      builders: <String, MarkdownElementBuilder>{
-                        '#': TagBuilder(),
-                      },
-                      blockSyntaxes: [
-                        TagBlockSyntax(),
-                      ],
-                      onTapLink: (text, href, title) async {
-                        if (href == null) {
-                          return;
-                        }
-                        if (DEEP_LINKS
-                            .any((prefix) => href.startsWith(prefix))) {
-                          injector<DeeplinkService>().handleDeeplink(href);
-                        } else if (await canLaunchUrlString(href)) {
-                          await launchUrlString(href,
-                              mode: LaunchMode.externalApplication);
-                        }
-                      },
-                    ),
-                  ],
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    releaseNote.date,
+                    style: theme.textTheme.ppMori400Black12,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    releaseNote.title,
+                    style: theme.textTheme.ppMori400Black14,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            SvgPicture.asset(
+              'assets/images/iconForward.svg',
+              width: 9,
+              height: 18,
+              colorFilter: const ColorFilter.mode(
+                AppColor.auGrey,
+                BlendMode.srcIn,
               ),
             ),
           ],

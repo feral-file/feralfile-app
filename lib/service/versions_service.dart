@@ -17,6 +17,7 @@ import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
+import 'package:autonomy_flutter/util/change_log.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/helpers.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -43,7 +44,7 @@ enum VersionCompatibilityResult {
 abstract class VersionService {
   Future<void> checkForUpdate();
 
-  Future<String?> getReleaseNote(String? changeLog, String? date);
+  Future<String?> getReleaseNote(String? changeLogs, String? date);
 
   Future<void> openLatestVersion();
 
@@ -233,8 +234,8 @@ class VersionServiceImpl implements VersionService {
 
   Future<void> showLatestReleaseNote() async {
     try {
-      final changeLog = await _feralfileDocAPI.getChangeLog();
-      final latestDate = _getLatestVersionDate(changeLog);
+      final changeLogs = await _feralfileDocAPI.getChangeLogs();
+      final latestDate = getLatestChangeLogDate(changeLogs);
       if (latestDate == null) {
         return;
       }
@@ -261,7 +262,7 @@ class VersionServiceImpl implements VersionService {
       if (readDate != null) {
         // Check if user has already read this date or a newer date
         final hasReadNewerDate =
-            compareReleaseNoteDates(changeLog, readDate, latestDate) >= 0;
+            compareReleaseNoteDates(changeLogs, readDate, latestDate) >= 0;
         if (hasReadNewerDate) {
           // Already read this date or newer, mark latest date as read
           unawaited(
@@ -273,7 +274,7 @@ class VersionServiceImpl implements VersionService {
 
       // User has read release notes before but not this latest date
       // Show the latest release notes
-      final releaseNote = _getReleaseNoteByDate(changeLog, latestDate);
+      final releaseNote = getReleaseNoteByDate(changeLogs, latestDate);
       if (releaseNote == null) {
         return;
       }
@@ -301,72 +302,20 @@ class VersionServiceImpl implements VersionService {
   }
 
   @override
-  Future<String?> getReleaseNote(String? changeLog, String? date) async {
+  Future<String?> getReleaseNote(String? changeLogs, String? date) async {
     try {
-      var releaseNotes = changeLog;
-      releaseNotes ??= await _feralfileDocAPI.getChangeLog();
+      var releaseNotes = changeLogs;
+      releaseNotes ??= await _feralfileDocAPI.getChangeLogs();
 
       String? releaseNote;
       if (date != null) {
-        releaseNote = _getReleaseNoteByDate(releaseNotes, date);
+        releaseNote = getReleaseNoteByDate(releaseNotes, date);
       }
 
       return releaseNote;
     } catch (_) {
       return null;
     }
-  }
-
-  String? _getLatestVersionDate(String changeLog) {
-    final lines = changeLog.split('\n');
-
-    // Find the first version date header (##)
-    // Changelog is ordered newest to oldest
-    for (final line in lines) {
-      if (isReleaseNoteDateHeader(line)) {
-        return line.replaceFirst(RegExp(r'^##\s*'), '').trim();
-      }
-    }
-
-    return null;
-  }
-
-  /// Gets release note for a specific date from changelog
-  /// Returns null if date not found
-  String? _getReleaseNoteByDate(String changeLog, String date) {
-    final lines = changeLog.split('\n');
-    int? dateHeaderIndex;
-
-    // Find the date header
-    for (var i = 0; i < lines.length; i++) {
-      final line = lines[i];
-      if (isReleaseNoteDateHeader(line)) {
-        final dateStr = line.replaceFirst(RegExp(r'^##\s*'), '').trim();
-        if (dateStr == date) {
-          dateHeaderIndex = i;
-          break;
-        }
-      }
-    }
-
-    if (dateHeaderIndex == null) {
-      return null;
-    }
-
-    // Find where this date section ends (next date header ## or end of file)
-    var dateSectionEnd = lines.length;
-    for (var i = dateHeaderIndex + 1; i < lines.length; i++) {
-      final line = lines[i];
-      if (isReleaseNoteDateHeader(line)) {
-        dateSectionEnd = i;
-        break;
-      }
-    }
-
-    // Extract the entire date section (including FF OS and Mobile App)
-    final sectionLines = lines.sublist(dateHeaderIndex, dateSectionEnd);
-
-    return sectionLines.join('\n').trim();
   }
 
   Future<void> showForceUpdateDialog(String link) async {
@@ -417,7 +366,6 @@ class VersionServiceImpl implements VersionService {
 
     await _navigationService.navigateTo(
       AppRouter.releaseNotesPage,
-      arguments: releaseNote,
     );
   }
 
