@@ -117,14 +117,20 @@ class _CombinedHeaderDelegate extends SliverPersistentHeaderDelegate {
     // As we scroll, HomeIndexHeader moves up
     final headerOffset = shrinkOffset.clamp(0.0, _hamburgerHeight);
 
+    // Calculate available height for hamburger button
+    // Shrinks proportionally as header collapses
+    final availableHeight = maxExtent - shrinkOffset;
+    final hamburgerHeight =
+        (availableHeight - _headerHeight).clamp(44.0, 106.0);
+
     return Container(
       color: AppColor.red,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Hamburger button - stays at top
+          // Hamburger button - responsive height as header collapses
           SizedBox(
-            height: 106,
+            height: hamburgerHeight,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               crossAxisAlignment: CrossAxisAlignment.center,
