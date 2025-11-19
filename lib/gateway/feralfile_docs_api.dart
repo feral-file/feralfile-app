@@ -12,7 +12,7 @@ part 'feralfile_docs_api.g.dart';
 
 @RestApi(baseUrl: '')
 abstract class FeralFileDocsAPI {
-  factory FeralFileDocsAPI(Dio dio, {String baseUrl}) = _FeralFileDocAPI;
+  factory FeralFileDocsAPI(Dio dio, {String baseUrl}) = _FeralFileDocsAPI;
 
   @GET('/changelog.md')
   Future<String> getChangeLog();
