@@ -1,8 +1,8 @@
 import 'package:autonomy_flutter/design/build/components/ArtworkItem.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/util/dp1_now_displaying_item_ext.dart';
-import 'package:autonomy_flutter/view/ff_artwork_thumbnail_view.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
+import 'package:autonomy_flutter/view/ff_artwork_thumbnail_view.dart';
 import 'package:flutter/material.dart';
 
 class DP1ItemThumbnail extends StatelessWidget {
@@ -22,20 +22,15 @@ class DP1ItemThumbnail extends StatelessWidget {
       child: Container(
         width: ArtworkItemTokens.containerWidth,
         height: ArtworkItemTokens.containerHeight,
-        padding: EdgeInsets.all(ArtworkItemTokens.containerPadding),
+        padding: const EdgeInsets.all(ArtworkItemTokens.containerPadding),
         decoration: const BoxDecoration(
           color: Colors.transparent,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: ArtworkItemTokens.imageWidth,
-              height: ArtworkItemTokens.imageHeight,
-              child: _buildThumbnail(context),
-            ),
-          ],
+        alignment: Alignment.center,
+        child: SizedBox(
+          width: ArtworkItemTokens.imageWidth,
+          height: ArtworkItemTokens.imageHeight,
+          child: _buildThumbnail(context),
         ),
       ),
     );

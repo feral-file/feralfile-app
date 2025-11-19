@@ -1,8 +1,9 @@
 import 'package:autonomy_flutter/main.dart';
+import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_list_view.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_section.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -94,15 +95,46 @@ class _PlaylistsPageState extends State<PlaylistsPage>
 
   Widget _buildPlaylists(PlaylistsState state) {
     final playlists = state.playlists;
-    final hasMore = state.hasMore;
-    final isLoadingMore = state.isLoadingMore;
 
-    return PlaylistListView(
-      playlists: playlists,
-      hasMore: hasMore,
-      isLoadingMore: isLoadingMore,
-      scrollController: _scrollController,
-      isFromPlaylistsPage: true,
+    // Group playlists by owner for sections
+    final playlistDataList = playlists.map((playlistRef) {
+      final playlist = playlistRef.playlist;
+      final items = playlist.items.map((item) {
+        return DP1NowDisplayingItem(
+          dp1Item: item,
+          assetToken: null,
+          dp1Manifest: null,
+        );
+      }).toList();
+      return PlaylistData(
+        title: playlist.title,
+        creator: "Me",
+        items: items,
+        onListItemTap: () {
+          // Handle playlist tap
+        },
+      );
+    }).toList();
+
+    if (playlistDataList.isEmpty) {
+      return const Center(
+        child: Text('No playlists found'),
+      );
+    }
+
+    return SingleChildScrollView(
+      controller: _scrollController,
+      child: Column(
+        children: [
+          PlaylistSection(
+            sectionName: 'Me',
+            playlists: playlistDataList,
+            onViewAllTap: () {
+              // Handle view all tap
+            },
+          ),
+        ],
+      ),
     );
   }
 

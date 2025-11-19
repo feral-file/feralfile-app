@@ -29,6 +29,7 @@ class DP1Carousel extends StatelessWidget {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: List.generate(
             items.length,
             (index) => DP1ItemThumbnail(

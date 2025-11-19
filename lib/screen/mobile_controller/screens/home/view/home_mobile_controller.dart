@@ -1,5 +1,6 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/home.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/index.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
@@ -69,7 +70,7 @@ class _MobileControllerHomePageState
         BlocProvider.value(value: _channelsBloc),
         BlocProvider.value(value: _playlistsBloc),
       ],
-      child: ListDirectoryPage(
+      child: HomeIndexPage(
         key: directoryPageGlobalKey,
       ),
     );
