@@ -8,12 +8,13 @@
 class ReleaseNote {
   const ReleaseNote({
     required this.date,
-    required this.title,
     required this.content,
+    this.ffOSTitle,
+    this.mobileAppTitle,
   });
 
   final String date;
-  final String title;
+  final String? ffOSTitle;
+  final String? mobileAppTitle;
   final String content;
 }
-

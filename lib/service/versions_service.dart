@@ -11,6 +11,7 @@ import 'dart:io';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/gateway/feralfile_docs_api.dart';
 import 'package:autonomy_flutter/gateway/pubdoc_api.dart';
+import 'package:autonomy_flutter/model/release_note.dart';
 import 'package:autonomy_flutter/model/version_info.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
@@ -44,7 +45,7 @@ enum VersionCompatibilityResult {
 abstract class VersionService {
   Future<void> checkForUpdate();
 
-  Future<String?> getReleaseNote(String? changeLogs, String? date);
+  Future<List<ReleaseNote>> getReleaseNotes();
 
   Future<void> openLatestVersion();
 
@@ -234,18 +235,19 @@ class VersionServiceImpl implements VersionService {
 
   Future<void> showLatestReleaseNote() async {
     try {
-      final changeLogs = await _feralfileDocAPI.getChangeLogs();
-      final latestDate = getLatestChangeLogDate(changeLogs);
-      if (latestDate == null) {
+      final releaseNotes = await getReleaseNotes();
+      if (releaseNotes.isEmpty) {
         return;
       }
 
+      final latestReleaseNote = releaseNotes.first;
       var readDate = _configurationService.getReadReleaseNotesVersion();
 
       // Don't show release notes for new users
       if (readDate == null) {
         unawaited(
-          _configurationService.setReadReleaseNotesInVersion(latestDate),
+          _configurationService
+              .setReadReleaseNotesInVersion(latestReleaseNote.date),
         );
         return;
       }
@@ -255,31 +257,17 @@ class VersionServiceImpl implements VersionService {
         // Old version format, treat as not read
         readDate = null;
         unawaited(
-          _configurationService.setReadReleaseNotesInVersion(latestDate),
+          _configurationService
+              .setReadReleaseNotesInVersion(latestReleaseNote.date),
         );
       }
 
-      if (readDate != null) {
-        // Check if user has already read this date or a newer date
-        final hasReadNewerDate =
-            compareReleaseNoteDates(changeLogs, readDate, latestDate) >= 0;
-        if (hasReadNewerDate) {
-          // Already read this date or newer, mark latest date as read
-          unawaited(
-            _configurationService.setReadReleaseNotesInVersion(latestDate),
-          );
-          return;
-        }
-      }
-
-      // User has read release notes before but not this latest date
-      // Show the latest release notes
-      final releaseNote = getReleaseNoteByDate(changeLogs, latestDate);
-      if (releaseNote == null) {
+      // Check if user has already read the latest release note
+      if (readDate != null && readDate == latestReleaseNote.date) {
         return;
       }
 
-      await showReleaseNodeDialog(releaseNote);
+      await showReleaseNodeDialog(latestReleaseNote);
     } catch (_) {
       // On error, silently return
     }
@@ -302,19 +290,12 @@ class VersionServiceImpl implements VersionService {
   }
 
   @override
-  Future<String?> getReleaseNote(String? changeLogs, String? date) async {
+  Future<List<ReleaseNote>> getReleaseNotes() async {
     try {
-      var releaseNotes = changeLogs;
-      releaseNotes ??= await _feralfileDocAPI.getChangeLogs();
-
-      String? releaseNote;
-      if (date != null) {
-        releaseNote = getReleaseNoteByDate(releaseNotes, date);
-      }
-
-      return releaseNote;
+      final changeLogs = await _feralfileDocAPI.getChangeLogs();
+      return parseChangeLogs(changeLogs);
     } catch (_) {
-      return null;
+      return [];
     }
   }
 
@@ -355,7 +336,7 @@ class VersionServiceImpl implements VersionService {
     );
   }
 
-  Future<void> showReleaseNodeDialog(String releaseNote) async {
+  Future<void> showReleaseNodeDialog(ReleaseNote releaseNote) async {
     final screenKey =
         'what_new'.tr(); // avoid showing multiple what's new screens
     if (UIHelper.currentDialogTitle == screenKey) {
@@ -365,7 +346,8 @@ class VersionServiceImpl implements VersionService {
     UIHelper.currentDialogTitle = screenKey;
 
     await _navigationService.navigateTo(
-      AppRouter.releaseNotesPage,
+      AppRouter.releaseNoteDetailPage,
+      arguments: releaseNote,
     );
   }
 

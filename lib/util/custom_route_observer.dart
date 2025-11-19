@@ -28,6 +28,8 @@ final listRouteShouldNotShowNowDisplaying = [
   AppRouter.nameLinkedAccountPage,
   UIHelper.artistArtworkDisplaySettingModal,
   AppRouter.voiceCommandPage,
+  AppRouter.releaseNotesPage,
+  AppRouter.releaseNoteDetailPage,
 ];
 
 class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {

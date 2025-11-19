@@ -44,7 +44,7 @@ class _ReleaseNoteDetailPageState extends State<ReleaseNoteDetailPage> {
     return Scaffold(
       appBar: getBackAppBar(
         context,
-        title: widget.releaseNote.title,
+        title: widget.releaseNote.date,
         onBack: () => Navigator.of(context).pop(),
       ),
       body: Container(

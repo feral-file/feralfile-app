@@ -6,15 +6,14 @@
 //
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/gateway/feralfile_docs_api.dart';
+import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/model/release_note.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
-import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
-import 'package:autonomy_flutter/util/change_log.dart';
-import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
+import 'package:autonomy_flutter/view/loading.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -38,9 +37,9 @@ class _ReleaseNotesPageState extends State<ReleaseNotesPage> {
 
   Future<void> _loadReleaseNotes() async {
     try {
-      final changeLogs = await injector<FeralFileDocsAPI>().getChangeLogs();
+      final releaseNotes = await injector<VersionService>().getReleaseNotes();
       setState(() {
-        _releaseNotes = parseChangeLogs(changeLogs);
+        _releaseNotes = releaseNotes;
         _isLoading = false;
       });
     } catch (e) {
@@ -53,36 +52,39 @@ class _ReleaseNotesPageState extends State<ReleaseNotesPage> {
   @override
   void dispose() {
     super.dispose();
-    UIHelper.currentDialogTitle = '';
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: getBackAppBar(
         context,
         title: 'release_notes'.tr(),
         onBack: () => Navigator.of(context).pop(),
       ),
-      backgroundColor: theme.colorScheme.background,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: _releaseNotes.length,
-              itemBuilder: (context, index) {
-                final releaseNote = _releaseNotes[index];
-                return _ReleaseNoteItem(
-                  releaseNote: releaseNote,
-                  onTap: () {
-                    injector<NavigationService>().navigateTo(
-                      AppRouter.releaseNoteDetailPage,
-                      arguments: releaseNote,
-                    );
-                  },
-                );
-              },
+          ? const Center(
+              child: LoadingWidget(
+                backgroundColor: PrimitivesTokens.colorsWhite,
+              ),
+            )
+          : Padding(
+              padding: const EdgeInsets.symmetric(vertical: 60),
+              child: ListView.builder(
+                itemCount: _releaseNotes.length,
+                itemBuilder: (context, index) {
+                  final releaseNote = _releaseNotes[index];
+                  return _ReleaseNoteItem(
+                    releaseNote: releaseNote,
+                    onTap: () {
+                      injector<NavigationService>().navigateTo(
+                        AppRouter.releaseNoteDetailPage,
+                        arguments: releaseNote,
+                      );
+                    },
+                  );
+                },
+              ),
             ),
     );
   }
@@ -108,8 +110,7 @@ class _ReleaseNoteItem extends StatelessWidget {
         decoration: const BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: AppColor.auLightGrey,
-              width: 1,
+              color: PrimitivesTokens.colorsLightGrey,
             ),
           ),
         ),
@@ -121,25 +122,39 @@ class _ReleaseNoteItem extends StatelessWidget {
                 children: [
                   Text(
                     releaseNote.date,
-                    style: theme.textTheme.ppMori400Black12,
+                    style: theme.textTheme.small.copyWith(
+                      color: PrimitivesTokens.colorsBlack,
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  Text(
-                    releaseNote.title,
-                    style: theme.textTheme.ppMori400Black14,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  if (releaseNote.ffOSTitle != null)
+                    Text(
+                      releaseNote.ffOSTitle!,
+                      style: theme.textTheme.body.copyWith(
+                        color: PrimitivesTokens.colorsBlack,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  if (releaseNote.mobileAppTitle != null)
+                    Text(
+                      releaseNote.mobileAppTitle!,
+                      style: theme.textTheme.body.copyWith(
+                        color: PrimitivesTokens.colorsBlack,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 40),
             SvgPicture.asset(
-              'assets/images/iconForward.svg',
+              'assets/images/chevron_right_icon.svg',
               width: 9,
               height: 18,
               colorFilter: const ColorFilter.mode(
-                AppColor.auGrey,
+                PrimitivesTokens.colorsGrey,
                 BlendMode.srcIn,
               ),
             ),
