@@ -9,6 +9,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/gateway/feralfile_docs_api.dart';
 import 'package:autonomy_flutter/gateway/pubdoc_api.dart';
 import 'package:autonomy_flutter/model/version_info.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
@@ -28,11 +29,11 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 enum VersionCompatibilityResult {
-  compatible, // 0: Thiết bị tương thích
-  needUpdateApp, // 1: Cần update app
-  needUpdateDevice, // 2: Cần update device
-  unknown, // 3: Không xác định được
-  deviceNotFound; // 4: Không có thiết bị
+  compatible,
+  needUpdateApp,
+  needUpdateDevice,
+  unknown,
+  deviceNotFound;
 
   bool get isValid =>
       this != VersionCompatibilityResult.needUpdateApp &&
@@ -42,7 +43,7 @@ enum VersionCompatibilityResult {
 abstract class VersionService {
   Future<void> checkForUpdate();
 
-  Future<void> showReleaseNotes({String? currentVersion});
+  Future<String?> getReleaseNote(String? changeLog, String? date);
 
   Future<void> openLatestVersion();
 
@@ -60,11 +61,13 @@ abstract class VersionService {
 class VersionServiceImpl implements VersionService {
   VersionServiceImpl(
     this._pubdocAPI,
+    this._feralfileDocAPI,
     this._configurationService,
     this._navigationService,
   );
 
   final PubdocAPI _pubdocAPI;
+  final FeralFileDocsAPI _feralfileDocAPI;
   final ConfigurationService _configurationService;
   final NavigationService _navigationService;
 
@@ -208,7 +211,7 @@ class VersionServiceImpl implements VersionService {
   }
 
   @override
-  Future checkForUpdate() async {
+  Future<void> checkForUpdate() async {
     if (kDebugMode) {
       return;
     }
@@ -217,39 +220,68 @@ class VersionServiceImpl implements VersionService {
     }
 
     final versionInfo = await getVersionInfo();
-    PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    String currentVersion = packageInfo.version;
+    final packageInfo = await PackageInfo.fromPlatform();
+    final currentVersion = packageInfo.version;
 
     if (compareVersion(versionInfo.requiredVersion, currentVersion) > 0) {
       await showForceUpdateDialog(versionInfo.link);
     } else {
-      // check to show Release Notes
-      await showReleaseNotes(currentVersion: currentVersion);
+      // check to show the latest release notes
+      await showLatestReleaseNote();
     }
   }
 
-  @override
-  Future showReleaseNotes({String? currentVersion}) async {
-    if (currentVersion != null) {
-      final readVersion = _configurationService.getReadReleaseNotesVersion();
-      if (readVersion == null ||
-          compareVersion(readVersion, currentVersion) >= 0) {
+  Future<void> showLatestReleaseNote() async {
+    try {
+      final changeLog = await _feralfileDocAPI.getChangeLog();
+      final latestDate = _getLatestVersionDate(changeLog);
+      if (latestDate == null) {
+        return;
+      }
+
+      var readDate = _configurationService.getReadReleaseNotesVersion();
+
+      // Don't show release notes for new users
+      if (readDate == null) {
         unawaited(
-          _configurationService.setReadReleaseNotesInVersion(currentVersion),
+          _configurationService.setReadReleaseNotesInVersion(latestDate),
         );
         return;
       }
-    }
 
-    final releaseNotes = await getReleaseNotes(currentVersion);
-    if (releaseNotes == 'TBD') {
-      return;
-    }
+      // Handle backward compatibility: if stored value is a version, ignore it
+      if (RegExp(r'^\d+\.\d+\.\d+').hasMatch(readDate)) {
+        // Old version format, treat as not read
+        readDate = null;
+        unawaited(
+          _configurationService.setReadReleaseNotesInVersion(latestDate),
+        );
+      }
 
-    if (currentVersion != null) {
-      await _configurationService.setReadReleaseNotesInVersion(currentVersion);
+      if (readDate != null) {
+        // Check if user has already read this date or a newer date
+        final hasReadNewerDate =
+            compareReleaseNoteDates(changeLog, readDate, latestDate) >= 0;
+        if (hasReadNewerDate) {
+          // Already read this date or newer, mark latest date as read
+          unawaited(
+            _configurationService.setReadReleaseNotesInVersion(latestDate),
+          );
+          return;
+        }
+      }
+
+      // User has read release notes before but not this latest date
+      // Show the latest release notes
+      final releaseNote = _getReleaseNoteByDate(changeLog, latestDate);
+      if (releaseNote == null) {
+        return;
+      }
+
+      await showReleaseNodeDialog(releaseNote);
+    } catch (_) {
+      // On error, silently return
     }
-    await showReleaseNodeDialog(releaseNotes);
   }
 
   Future<VersionInfo> getVersionInfo() async {
@@ -268,33 +300,83 @@ class VersionServiceImpl implements VersionService {
     }
   }
 
-  Future<String> getReleaseNotes(String? currentVersion) async {
-    var releaseNotes = '';
+  @override
+  Future<String?> getReleaseNote(String? changeLog, String? date) async {
     try {
-      final app = (await isAppCenterBuild()) ? 'dev' : 'production';
-      releaseNotes = await _pubdocAPI.getReleaseNotesContent(app);
+      var releaseNotes = changeLog;
+      releaseNotes ??= await _feralfileDocAPI.getChangeLog();
 
-      if (currentVersion != null) {
-        final textBegin = '[#] $currentVersion';
-        if (!releaseNotes.startsWith(textBegin)) {
-          releaseNotes = 'TBD';
-        }
+      String? releaseNote;
+      if (date != null) {
+        releaseNote = _getReleaseNoteByDate(releaseNotes, date);
       }
-    } catch (_) {
-      releaseNotes = 'TBD';
-    }
 
-    return releaseNotes;
+      return releaseNote;
+    } catch (_) {
+      return null;
+    }
   }
 
-  Future showForceUpdateDialog(String link) async {
+  String? _getLatestVersionDate(String changeLog) {
+    final lines = changeLog.split('\n');
+
+    // Find the first version date header (##)
+    // Changelog is ordered newest to oldest
+    for (final line in lines) {
+      if (isReleaseNoteDateHeader(line)) {
+        return line.replaceFirst(RegExp(r'^##\s*'), '').trim();
+      }
+    }
+
+    return null;
+  }
+
+  /// Gets release note for a specific date from changelog
+  /// Returns null if date not found
+  String? _getReleaseNoteByDate(String changeLog, String date) {
+    final lines = changeLog.split('\n');
+    int? dateHeaderIndex;
+
+    // Find the date header
+    for (var i = 0; i < lines.length; i++) {
+      final line = lines[i];
+      if (isReleaseNoteDateHeader(line)) {
+        final dateStr = line.replaceFirst(RegExp(r'^##\s*'), '').trim();
+        if (dateStr == date) {
+          dateHeaderIndex = i;
+          break;
+        }
+      }
+    }
+
+    if (dateHeaderIndex == null) {
+      return null;
+    }
+
+    // Find where this date section ends (next date header ## or end of file)
+    var dateSectionEnd = lines.length;
+    for (var i = dateHeaderIndex + 1; i < lines.length; i++) {
+      final line = lines[i];
+      if (isReleaseNoteDateHeader(line)) {
+        dateSectionEnd = i;
+        break;
+      }
+    }
+
+    // Extract the entire date section (including FF OS and Mobile App)
+    final sectionLines = lines.sublist(dateHeaderIndex, dateSectionEnd);
+
+    return sectionLines.join('\n').trim();
+  }
+
+  Future<void> showForceUpdateDialog(String link) async {
     final context = _navigationService.navigatorKey.currentContext;
     if (context == null) {
       return;
     }
 
     final theme = Theme.of(context);
-    await UIHelper.showDialog(
+    await UIHelper.showDialog<void>(
       context,
       'update_required'.tr(),
       PopScope(
@@ -324,8 +406,8 @@ class VersionServiceImpl implements VersionService {
     );
   }
 
-  Future showReleaseNodeDialog(String releaseNotes) async {
-    var screenKey =
+  Future<void> showReleaseNodeDialog(String releaseNote) async {
+    final screenKey =
         'what_new'.tr(); // avoid showing multiple what's new screens
     if (UIHelper.currentDialogTitle == screenKey) {
       return;
@@ -335,12 +417,12 @@ class VersionServiceImpl implements VersionService {
 
     await _navigationService.navigateTo(
       AppRouter.releaseNotesPage,
-      arguments: releaseNotes,
+      arguments: releaseNote,
     );
   }
 
   @override
-  Future openLatestVersion() async {
+  Future<void> openLatestVersion() async {
     final appStoreUrl =
         Platform.isIOS ? Constants.appStoreUrl : Constants.playStoreUrl;
     final uri = Uri.tryParse(appStoreUrl);

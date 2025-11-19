@@ -14,7 +14,6 @@ import 'package:autonomy_flutter/screen/github_doc.dart';
 import 'package:autonomy_flutter/service/channel_service.dart';
 import 'package:autonomy_flutter/service/local_auth_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
-import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/secure_screen_channel.dart';
@@ -205,17 +204,6 @@ class _RecoveryPhrasePageState extends State<RecoveryPhrasePage> {
                 children: [
                   TextSpan(
                     text: '${'get_recovery_phrase_desc'.tr()} ',
-                  ),
-                  TextSpan(
-                    text: 'read_more'.tr(),
-                    recognizer: TapGestureRecognizer()
-                      ..onTap = () {
-                        injector<VersionService>().showReleaseNotes();
-                      },
-                    style: const TextStyle(
-                      color: AppColor.primaryBlack,
-                      decoration: TextDecoration.underline,
-                    ),
                   ),
                 ],
               ),

@@ -1,12 +1,9 @@
-import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/channel_service.dart';
-import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 class RecoveryPhraseWarning extends StatelessWidget {
@@ -57,17 +54,6 @@ class RecoveryPhraseWarning extends StatelessWidget {
                         children: [
                           TextSpan(
                             text: '${'get_recovery_phrase_desc'.tr()} ',
-                          ),
-                          TextSpan(
-                            text: 'read_more'.tr(),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () {
-                                injector<VersionService>().showReleaseNotes();
-                              },
-                            style: const TextStyle(
-                              color: AppColor.primaryBlack,
-                              decoration: TextDecoration.underline,
-                            ),
                           ),
                         ],
                       ),
