@@ -20,11 +20,11 @@
         },
         "paddingRight": {
           "$type": "dimension",
-          "$value": "10px"
+          "$value": "2px"
         },
         "paddingVertical": {
           "$type": "dimension",
-          "$value": "8px"
+          "$value": "2px"
         },
         "active": {
           "cornerRadius": {
@@ -43,7 +43,7 @@
       },
       "padding": {
         "$type": "dimension",
-        "$value": "10px"
+        "$value": "12px"
       }
     }
   }
