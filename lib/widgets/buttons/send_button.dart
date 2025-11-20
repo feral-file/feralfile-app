@@ -14,9 +14,10 @@ class SendButton extends StatelessWidget {
       child: Container(
         width: SendButtonTokens.width.toDouble(),
         height: SendButtonTokens.height.toDouble(),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: SendButtonTokens.bgColor,
-          shape: BoxShape.circle,
+          borderRadius:
+              BorderRadius.circular(SendButtonTokens.cornerRadius.toDouble()),
         ),
         child: Center(
           child: SvgPicture.asset(
