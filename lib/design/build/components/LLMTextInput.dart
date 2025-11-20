@@ -18,8 +18,8 @@ class LLMTextInputTokens {
     static const llmBgColor = Color(0xFF000000);
     static const llmCornerRadius = 50;
     static const llmPaddingLeft = 14;
-    static const llmPaddingRight = 10;
-    static const llmPaddingVertical = 8;
+    static const llmPaddingRight = 2;
+    static const llmPaddingVertical = 2;
     static const llmTextColor = Color(0xFFFFFFFF);
-    static const padding = 10;
+    static const padding = 12;
 }
