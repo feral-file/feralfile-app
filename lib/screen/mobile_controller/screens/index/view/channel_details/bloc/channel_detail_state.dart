@@ -13,6 +13,7 @@ class ChannelDetailState {
   const ChannelDetailState({
     this.status = ChannelDetailStateStatus.initial,
     this.playlists = const [],
+    this.playlistData = const [],
     this.hasMore = true,
     this.cursor,
     this.error,
@@ -20,6 +21,7 @@ class ChannelDetailState {
 
   final ChannelDetailStateStatus status;
   final List<DP1Call> playlists;
+  final List<PlaylistData> playlistData;
   final bool hasMore;
   final String? cursor;
   final String? error;
@@ -27,6 +29,7 @@ class ChannelDetailState {
   ChannelDetailState copyWith({
     ChannelDetailStateStatus? status,
     List<DP1Call>? playlists,
+    List<PlaylistData>? playlistData,
     bool? hasMore,
     String? cursor,
     String? error,
@@ -34,6 +37,7 @@ class ChannelDetailState {
     return ChannelDetailState(
       status: status ?? this.status,
       playlists: playlists ?? this.playlists,
+      playlistData: playlistData ?? this.playlistData,
       hasMore: hasMore ?? this.hasMore,
       cursor: cursor ?? this.cursor,
       error: error ?? this.error,
@@ -46,6 +50,7 @@ class ChannelDetailState {
     return other is ChannelDetailState &&
         other.status == status &&
         other.playlists == playlists &&
+        other.playlistData == playlistData &&
         other.hasMore == hasMore &&
         other.cursor == cursor &&
         other.error == error;
@@ -55,6 +60,7 @@ class ChannelDetailState {
   int get hashCode {
     return status.hashCode ^
         playlists.hashCode ^
+        playlistData.hashCode ^
         hasMore.hashCode ^
         cursor.hashCode ^
         error.hashCode;

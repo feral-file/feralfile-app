@@ -1,7 +1,9 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/bluetooth_connected_device_config.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/channels_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/playlists_page.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/works/works_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/home_index_header.dart';
 import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
@@ -30,17 +32,29 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
   late HomeIndexTab _selectedTab;
   final TransformationController _transformationController =
       TransformationController();
+  late ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
     _selectedTab = HomeIndexTab.playlists;
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScrollChange);
   }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScrollChange);
+    _scrollController.dispose();
     _transformationController.dispose();
     super.dispose();
+  }
+
+  void _onScrollChange() {
+    // Delegate scroll events to current page's load more logic
+    if (_selectedTab == HomeIndexTab.works) {
+      // WorksPage will handle load more through scroll position
+    }
   }
 
   @override
@@ -50,10 +64,11 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
       body: InteractiveViewer(
         transformationController: _transformationController,
         minScale: 1.0,
-        maxScale: 16.0,
+        maxScale: shouldShowOverlay ? 16.0 : 1.0,
         child: Stack(
           children: [
             NestedScrollView(
+              controller: _scrollController,
               floatHeaderSlivers: true,
               headerSliverBuilder: (context, innerBoxIsScrolled) {
                 return [
@@ -87,17 +102,21 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
               ),
             ),
             // Figma design overlay for comparison - zooms with content
-            // Opacity(
-            //   opacity: 0.3,
-            //   child: Container(
-            //     width: double.infinity,
-            //     height: double.infinity,
-            //     child: Image.asset(
-            //       'assets/images/No Scroll.png',
-            //       fit: BoxFit.fitWidth,
-            //     ),
-            //   ),
-            // ),
+            if (shouldShowOverlay)
+              IgnorePointer(
+                ignoring: true,
+                child: Opacity(
+                  opacity: 0.3,
+                  child: Container(
+                    width: double.infinity,
+                    height: double.infinity,
+                    child: Image.asset(
+                      'assets/images/Channels.png',
+                      fit: BoxFit.fitWidth,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -109,25 +128,9 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
       case HomeIndexTab.playlists:
         return Container(child: const PlaylistsPage());
       case HomeIndexTab.channels:
-        return Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Channels',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ),
-        );
+        return const ChannelsPage();
       case HomeIndexTab.works:
-        return Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Works',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ),
-        );
+        return const WorksPage();
     }
   }
 }

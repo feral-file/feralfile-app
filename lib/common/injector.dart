@@ -34,6 +34,7 @@ import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/meili_search/meili_search_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/bloc/record_controller_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
@@ -403,8 +404,31 @@ Future<void> setupInjector() async {
     () => UserAllOwnCollectionBloc(injector()),
   );
 
+  // Curated channels (top 5)
   injector.registerLazySingleton<ChannelsBloc>(
-    ChannelsBloc.new,
+    () => ChannelsBloc(
+      channelType: ChannelType.curated,
+      total: null,
+    ),
+    instanceName: ChannelsBlocInstance.curated.instanceName,
+  );
+
+  // User's channels (all)
+  injector.registerLazySingleton<ChannelsBloc>(
+    () => ChannelsBloc(
+      channelType: ChannelType.me,
+      total: null,
+    ),
+    instanceName: ChannelsBlocInstance.me.instanceName,
+  );
+
+  // Global channels (all)
+  injector.registerLazySingleton<ChannelsBloc>(
+    () => ChannelsBloc(
+      channelType: ChannelType.global,
+      total: null,
+    ),
+    instanceName: ChannelsBlocInstance.global.instanceName,
   );
 
   injector.registerLazySingleton<DP1FeedApi>(

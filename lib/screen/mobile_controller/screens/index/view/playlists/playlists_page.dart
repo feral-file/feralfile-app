@@ -8,7 +8,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/pla
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_section.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:flutter/material.dart';
@@ -155,14 +155,7 @@ class _PlaylistsPageState extends State<PlaylistsPage>
 
   Widget _buildPlaylists(PlaylistsState state, PlaylistType playlistType) {
     // Group playlists by owner for sections
-    final onListItemTap = (PlaylistReference playlist) {
-      Navigator.of(context).pushNamed(AppRouter.dp1PlaylistDetailsPage,
-          arguments: DP1PlaylistDetailsScreenPayload(playlist: playlist));
-    };
-    final playlistDataList = state.playlistData
-        .map((playlist) => playlist.copyWith(
-            onListItemTap: () => onListItemTap(playlist.playlistReference)))
-        .toList();
+    final playlistDataList = state.playlistData;
 
     return SliverList.builder(
       itemCount: 1,

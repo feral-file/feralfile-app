@@ -5,6 +5,7 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/service/dp1_store.dart';
@@ -290,7 +291,14 @@ class FeedCacheImpl extends BaseFeedCache {
   }
 
   void _onCacheUpdated() {
-    injector<ChannelsBloc>().add(const LoadChannelsEvent());
+    injector<ChannelsBloc>(
+            instanceName: ChannelsBlocInstance.curated.instanceName)
+        .add(const LoadChannelsEvent());
+    injector<ChannelsBloc>(instanceName: ChannelsBlocInstance.me.instanceName)
+        .add(const LoadChannelsEvent());
+    injector<ChannelsBloc>(
+            instanceName: ChannelsBlocInstance.global.instanceName)
+        .add(const LoadChannelsEvent());
     injector<PlaylistsBloc>(
             instanceName: PlaylistsBlocInstance.curated.instanceName)
         .add(const LoadPlaylistsEvent());

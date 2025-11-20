@@ -1,12 +1,16 @@
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channel_details/bloc/channel_detail_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_item.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_list_row.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
+import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
@@ -129,17 +133,12 @@ class _ChannelDetailPageState extends State<ChannelDetailPage>
   }
 
   SliverList _buildPlaylists(ChannelDetailState state) {
-    final playlists = state.playlists;
+    final playlistDataList = state.playlistData;
     final hasMore = state.hasMore;
     final isLoadingMore = state.isLoadingMore;
-    final channelReference = widget.payload.channelReference;
-    final url = channelReference.url;
-    final playlistReferences = playlists
-        .map((playlist) => PlaylistReference(playlist: playlist, url: url))
-        .toList();
 
     return playlistSliverListView(
-      playlists: playlistReferences,
+      playlistData: playlistDataList,
       hasMore: hasMore,
       isLoadingMore: isLoadingMore,
       scrollController: _scrollController,
@@ -152,7 +151,7 @@ class _ChannelDetailPageState extends State<ChannelDetailPage>
 }
 
 SliverList playlistSliverListView({
-  required List<PlaylistReference> playlists,
+  required List<PlaylistData> playlistData,
   bool hasMore = false,
   bool isLoadingMore = false,
   ScrollController? scrollController,
@@ -161,7 +160,7 @@ SliverList playlistSliverListView({
 }) {
   return SliverList.builder(
     itemBuilder: (context, index) {
-      if (index == playlists.length) {
+      if (index == playlistData.length) {
         return Column(
           children: [
             LoadMoreIndicator(isLoadingMore: isLoadingMore),
@@ -170,30 +169,30 @@ SliverList playlistSliverListView({
         );
       }
 
-      final playlist = playlists[index];
-      final service =
-          injector<FeralFileFeedManager>().getFeedServiceByUrl(playlist.url);
-      ChannelReference? channelReference;
-      if (service is FeralFileDP1FeedService) {
-        final channel = service.getChannelByPlaylistId(playlist.playlist.id);
-        if (channel != null) {
-          channelReference =
-              ChannelReference(channel: channel, url: playlist.url);
-        }
-      }
+      final data = playlistData[index];
 
       return Column(
         children: [
-          PlaylistItem(
-            playlistReference: playlist,
-            channelReference: channelReference,
-            isFromPlaylistsPage: isFromPlaylistsPage,
-            channelVisible: channelVisible,
+          PlaylistListRow(
+            playlistReference: data.playlistReference,
+            carouselItems: data.items,
+            playlistCreator: data.creator,
+            onItemTap: (item) {
+              final assetToken = item.assetToken;
+              if (assetToken != null) {
+                injector<NavigationService>().navigateTo(
+                  AppRouter.artworkDetailsPage,
+                  arguments:
+                      ArtworkDetailPayload(ArtworkIdentity(assetToken.cid)),
+                );
+              }
+            },
           ),
-          if (index == playlists.length - 1 && !hasMore) const BottomSpacing(),
+          if (index == playlistData.length - 1 && !hasMore)
+            const BottomSpacing(),
         ],
       );
     },
-    itemCount: playlists.length + (hasMore ? 1 : 0),
+    itemCount: playlistData.length + (hasMore ? 1 : 0),
   );
 }

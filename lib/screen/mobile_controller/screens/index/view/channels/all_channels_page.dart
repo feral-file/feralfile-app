@@ -2,54 +2,55 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channel_details/channel_detail.page.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel/channel_list_row.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_details_header.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_list_row.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/svg.dart';
 
-/// All Playlists Page - Displays list of all playlists with curated badges and descriptions
+/// All Channels Page - Displays list of all channels with descriptions
 ///
-/// [playlistType] - The type of playlists to display
-///   - [PlaylistType.curated] - Displays all curated playlists
-///   - [PlaylistType.me] - Displays all playlists created by the user
-///   - [PlaylistType.global] - Displays all global playlists
+/// [channelType] - The type of channels to display
+///   - [ChannelType.curated] - Displays all curated channels
+///   - [ChannelType.me] - Displays all channels created by the user
+///   - [ChannelType.global] - Displays all global channels
 ///
 
-class AllPlaylistsPagePayload {
-  const AllPlaylistsPagePayload({required this.playlistType});
+class AllChannelsPagePayload {
+  const AllChannelsPagePayload({
+    required this.channelType,
+  });
 
-  final PlaylistType playlistType;
+  final ChannelType channelType;
 }
 
-class AllPlaylistsPage extends StatefulWidget {
-  const AllPlaylistsPage({super.key, required this.payload});
+class AllChannelsPage extends StatefulWidget {
+  const AllChannelsPage({super.key, required this.payload});
 
-  final AllPlaylistsPagePayload payload;
+  final AllChannelsPagePayload payload;
 
   @override
-  State<AllPlaylistsPage> createState() => _AllPlaylistsPageState();
+  State<AllChannelsPage> createState() => _AllChannelsPageState();
 }
 
-class _AllPlaylistsPageState extends State<AllPlaylistsPage>
+class _AllChannelsPageState extends State<AllChannelsPage>
     with AutomaticKeepAliveClientMixin, RouteAware {
   final ScrollController _scrollController = ScrollController();
-  late final PlaylistsBloc _playlistsBloc;
+  late final ChannelsBloc _channelsBloc;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    _playlistsBloc = context.read<PlaylistsBloc>();
-    _playlistsBloc.add(const LoadPlaylistsEvent());
+    _channelsBloc = context.read<ChannelsBloc>();
+    _channelsBloc.add(const LoadChannelsEvent());
   }
 
   @override
@@ -69,13 +70,13 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
   @override
   void didPopNext() {
     super.didPopNext();
-    _playlistsBloc.add(const RefreshPlaylistsEvent());
+    _channelsBloc.add(const RefreshChannelsEvent());
   }
 
   void _onScroll() {
     if (_scrollController.position.pixels + 100 >=
         _scrollController.position.maxScrollExtent) {
-      _playlistsBloc.add(const LoadMorePlaylistsEvent());
+      _channelsBloc.add(const LoadMoreChannelsEvent());
     }
   }
 
@@ -89,14 +90,14 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
         backTitle: 'Index',
       ),
       body: SafeArea(
-        child: BlocBuilder<PlaylistsBloc, PlaylistsState>(
-          bloc: _playlistsBloc,
+        child: BlocBuilder<ChannelsBloc, ChannelsState>(
+          bloc: _channelsBloc,
           builder: (context, state) {
             return RefreshIndicator(
               onRefresh: () async {
-                _playlistsBloc.add(const RefreshPlaylistsEvent());
+                _channelsBloc.add(const RefreshChannelsEvent());
                 // Wait for the refresh to complete
-                await _playlistsBloc.stream.firstWhere(
+                await _channelsBloc.stream.firstWhere(
                   (state) => state.isLoaded || state.isError,
                 );
               },
@@ -110,29 +111,29 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
     );
   }
 
-  Widget _buildContent(BuildContext context, PlaylistsState state) {
-    if (state.isLoading && state.playlistData.isEmpty) {
+  Widget _buildContent(BuildContext context, ChannelsState state) {
+    if (state.isLoading && state.channelData.isEmpty) {
       return const LoadingView();
     }
 
-    if (state.isError && state.playlistData.isEmpty) {
+    if (state.isError && state.channelData.isEmpty) {
       return ErrorView(
-        error: 'Error loading playlists: ${state.error}',
-        onRetry: () => _playlistsBloc.add(const LoadPlaylistsEvent()),
+        error: 'Error loading channels: ${state.error}',
+        onRetry: () => _channelsBloc.add(const LoadChannelsEvent()),
       );
     }
 
-    return _buildPlaylistsList(context, state);
+    return _buildChannelsList(context, state);
   }
 
-  Widget _buildPlaylistsList(BuildContext context, PlaylistsState state) {
+  Widget _buildChannelsList(BuildContext context, ChannelsState state) {
     final theme = Theme.of(context);
-    final playlistDataList = state.playlistData;
+    final channelDataList = state.channelData;
 
-    if (playlistDataList.isEmpty) {
+    if (channelDataList.isEmpty) {
       return Center(
         child: Text(
-          'No playlists found',
+          'No channels found',
           style: theme.textTheme.bodyMedium,
         ),
       );
@@ -141,36 +142,17 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
     return CustomScrollView(
       controller: _scrollController,
       slivers: [
-        SliverToBoxAdapter(
-          child: const SizedBox(height: 21),
-        ),
-        // PlaylistDetailsHeader
-        SliverToBoxAdapter(
-          child: PlaylistDetailsHeader(
-            icon: SvgPicture.asset(
-              widget.payload.playlistType.icon,
-              width: 12,
-              height: 12,
-              colorFilter: const ColorFilter.mode(
-                Color(0xFFFFFFFF),
-                BlendMode.srcIn,
-              ),
-            ),
-            title: widget.payload.playlistType.name,
-            description: widget.payload.playlistType.description,
-          ),
-        ),
         const SliverToBoxAdapter(
-          child: SizedBox(height: 50),
+          child: SizedBox(height: 21),
         ),
-        // PlaylistList
+        // ChannelList
         SliverList.builder(
           itemBuilder: (context, index) {
-            final playlistData = playlistDataList[index];
-            return PlaylistListRow(
-              playlistReference: playlistData.playlistReference,
-              playlistCreator: playlistData.creator,
-              carouselItems: playlistData.items,
+            final channelData = channelDataList[index];
+            return ChannelListRow(
+              channelReference: channelData.channelReference,
+              channelCreator: channelData.creator,
+              carouselItems: channelData.items,
               onItemTap: (item) {
                 final assetToken = item.assetToken;
                 if (assetToken != null) {
@@ -183,10 +165,10 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
               },
             );
           },
-          itemCount: playlistDataList.length,
+          itemCount: channelDataList.length,
         ),
         if (state.isLoadingMore)
-          SliverToBoxAdapter(
+          const SliverToBoxAdapter(
             child: LoadMoreIndicator(
               isLoadingMore: true,
             ),

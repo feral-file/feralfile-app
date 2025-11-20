@@ -1,9 +1,7 @@
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channel_details/channel_detail.page.dart';
-import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
-import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:flutter/material.dart';
 
 class ChannelItem extends StatelessWidget {
@@ -37,7 +35,7 @@ class ChannelItem extends StatelessWidget {
           children: [
             Container(
               padding: EdgeInsets.symmetric(
-                horizontal: ResponsiveLayout.paddingHorizontal,
+                horizontal: 12,
                 vertical: 16,
               ),
               child: Column(
@@ -60,10 +58,6 @@ class ChannelItem extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-            const Divider(
-              height: 1,
-              color: AppColor.primaryBlack,
             ),
           ],
         ),

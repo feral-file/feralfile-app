@@ -5,6 +5,8 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'dart:io';
+
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
@@ -37,6 +39,9 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/bloc/r
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/view/record_controller.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/home/view/home_mobile_controller.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channel_details/channel_detail.page.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/all_channels_page.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/dp1_playlist_details.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
@@ -59,10 +64,11 @@ import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/view/transparent_router.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:page_transition/page_transition.dart';
 
-const bool shouldShowOverlay = false;
+bool shouldShowOverlay = kDebugMode && Platform.isIOS;
 
 class AppRouter {
   static const previewPrimerPage = 'preview_primer_page';
@@ -103,6 +109,7 @@ class AppRouter {
   static const addLocalFeedServerPage = 'add_local_feed_server_page';
   static const customFeedServersPage = 'custom_feed_servers_page';
   static const allPlaylistsPage = 'all_playlists_page';
+  static const allChannelsPage = 'all_channels_page';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     log.info('[onGenerateRoute] Route: ${settings.name}');
@@ -492,6 +499,18 @@ class AppRouter {
                   ),
                 )
             ],
+          ),
+        );
+
+      case allChannelsPage:
+        final payload = settings.arguments! as AllChannelsPagePayload;
+        return CupertinoPageRoute(
+          settings: settings,
+          builder: (context) => BlocProvider<ChannelsBloc>.value(
+            value: injector<ChannelsBloc>(
+              instanceName: ChannelsBlocInstance.curated.instanceName,
+            ),
+            child: AllChannelsPage(payload: payload),
           ),
         );
 

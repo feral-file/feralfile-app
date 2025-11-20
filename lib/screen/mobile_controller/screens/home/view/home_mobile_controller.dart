@@ -1,5 +1,6 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/home.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/index.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
@@ -26,7 +27,12 @@ class _MobileControllerHomePageState
   late int _currentPageIndex;
   late PageController _pageController;
 
-  final _channelsBloc = injector<ChannelsBloc>();
+  final _curatedChannelsBloc = injector<ChannelsBloc>(
+      instanceName: ChannelsBlocInstance.curated.instanceName);
+  final _myChannelsBloc = injector<ChannelsBloc>(
+      instanceName: ChannelsBlocInstance.me.instanceName);
+  final _globalChannelsBloc = injector<ChannelsBloc>(
+      instanceName: ChannelsBlocInstance.global.instanceName);
   final _curatedPlaylistsBloc = injector<PlaylistsBloc>(
       instanceName: PlaylistsBlocInstance.curated.instanceName);
   final _myPlaylistsBloc = injector<PlaylistsBloc>(
@@ -41,7 +47,9 @@ class _MobileControllerHomePageState
     _pageController = PageController(initialPage: _currentPageIndex);
 
     // load channel and playlist
-    _channelsBloc.add(const LoadChannelsEvent());
+    _curatedChannelsBloc.add(const LoadChannelsEvent());
+    _myChannelsBloc.add(const LoadChannelsEvent());
+    _globalChannelsBloc.add(const LoadChannelsEvent());
     _curatedPlaylistsBloc.add(const LoadPlaylistsEvent());
     _myPlaylistsBloc.add(const LoadPlaylistsEvent());
     _globalPlaylistsBloc.add(const LoadPlaylistsEvent());

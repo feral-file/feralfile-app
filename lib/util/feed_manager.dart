@@ -7,6 +7,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_respons
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/service/base_dp1_feed_service_impl.dart';
@@ -105,7 +106,14 @@ class FeedManager {
       log.info(
           'Skip reload all cache, last time refresh feeds: $lastTimeRefreshFeeds, duration: $updateFeedDuration, force: $force');
     }
-    injector<ChannelsBloc>().add(const RefreshChannelsEvent());
+    injector<ChannelsBloc>(
+            instanceName: ChannelsBlocInstance.curated.instanceName)
+        .add(const RefreshChannelsEvent());
+    injector<ChannelsBloc>(instanceName: ChannelsBlocInstance.me.instanceName)
+        .add(const RefreshChannelsEvent());
+    injector<ChannelsBloc>(
+            instanceName: ChannelsBlocInstance.global.instanceName)
+        .add(const RefreshChannelsEvent());
     injector<PlaylistsBloc>(
             instanceName: PlaylistsBlocInstance.curated.instanceName)
         .add(const RefreshPlaylistsEvent());
@@ -253,6 +261,22 @@ class FeralFileFeedManager extends FeedManager {
       }
     }
     return allChannelReferences;
+  }
+
+  // get all cache playlists of channels
+  List<PlaylistReference> getAllCachedPlaylistsOfChannels(
+      List<ChannelReference> channels) {
+    List<PlaylistReference> allPlaylistReferences = [];
+    for (final channel in channels) {
+      final service = getFeedServiceByUrl(channel.url);
+      if (service is FeralFileDP1FeedService) {
+        final playlists =
+            service.getCachedPlaylistsByChannelId(channel.channel.id);
+        allPlaylistReferences.addAll(playlists.map(
+            (item) => PlaylistReference(playlist: item, url: channel.url)));
+      }
+    }
+    return allPlaylistReferences;
   }
 
   Future<ChannelReference?> getChannelReferenceByChannelId(

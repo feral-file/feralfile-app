@@ -1,6 +1,14 @@
+import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/model/now_displaying_object.dart';
+import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
+import 'package:autonomy_flutter/util/dp1_manifest_helper.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -84,17 +92,77 @@ class ChannelDetailBloc extends Bloc<ChannelDetailEvent, ChannelDetailState> {
         null,
       );
 
+      // Collect all unique CIDs from playlists
+      final cids = <String>[];
+      for (final playlist in playlistsResponse.items) {
+        for (final item in playlist.items) {
+          if (item.cid != null) {
+            cids.add(item.cid!);
+          }
+        }
+      }
+
+      // Load asset tokens for all items
+      final assetTokens =
+          await injector<NftTokensService>().getManualTokens(cids: cids);
+
+      // Fetch DP1 manifests for all items
+      final refs = <String>[];
+      for (final playlist in playlistsResponse.items) {
+        for (final item in playlist.items) {
+          if (item.ref != null) {
+            refs.add(item.ref!);
+          }
+        }
+      }
+      final manifests =
+          await DP1ManifestHelper.instance.fetchDP1Manifests(refs);
+
+      // Create PlaylistData list
+      final playlistDataList = <PlaylistData>[];
+      for (final playlist in playlistsResponse.items) {
+        final items = <DP1NowDisplayingItem>[];
+        for (final dp1Item in playlist.items) {
+          final assetToken =
+              assetTokens.firstWhereOrNull((t) => t.cid == dp1Item.cid);
+          final dp1Manifest =
+              dp1Item.ref != null ? manifests[dp1Item.ref] : null;
+
+          items.add(
+            DP1NowDisplayingItem(
+              dp1Item: dp1Item,
+              assetToken: assetToken,
+              dp1Manifest: dp1Manifest,
+            ),
+          );
+        }
+        playlistDataList.add(
+          PlaylistData(
+            playlistReference: PlaylistReference(
+              playlist: playlist,
+              url: '',
+            ),
+            creator: 'Channel',
+            items: items,
+          ),
+        );
+      }
+
       final List<DP1Call> newPlaylists;
+      final List<PlaylistData> newPlaylistDataList;
       if (isLoadMore) {
         newPlaylists = [...state.playlists, ...playlistsResponse.items];
+        newPlaylistDataList = [...state.playlistData, ...playlistDataList];
       } else {
         newPlaylists = playlistsResponse.items;
+        newPlaylistDataList = playlistDataList;
       }
 
       emit(
         state.copyWith(
           status: ChannelDetailStateStatus.loaded,
           playlists: newPlaylists,
+          playlistData: newPlaylistDataList,
           hasMore: playlistsResponse.hasMore,
           cursor: playlistsResponse.cursor,
           error: '',

@@ -4,7 +4,7 @@ import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_section.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
 import 'package:autonomy_flutter/util/dp1_manifest_helper.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:collection/collection.dart';
@@ -179,7 +179,7 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
       // Collect all unique CIDs from top 5 playlists
       final cids = <String>[];
       for (final playlistRef in playlists) {
-        for (final item in playlistRef.playlist.items) {
+        for (final item in playlistRef.playlist.items.safeSublist(0, 10)) {
           if (item.cid != null) {
             cids.add(item.cid!);
           }
