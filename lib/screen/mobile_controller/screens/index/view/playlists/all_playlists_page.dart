@@ -1,9 +1,15 @@
+import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
+import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/dp1_playlist_details.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_details_header.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_list_row.dart';
+import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
@@ -12,8 +18,23 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 
 /// All Playlists Page - Displays list of all playlists with curated badges and descriptions
+///
+/// [playlistType] - The type of playlists to display
+///   - [PlaylistType.curated] - Displays all curated playlists
+///   - [PlaylistType.me] - Displays all playlists created by the user
+///   - [PlaylistType.global] - Displays all global playlists
+///
+
+class AllPlaylistsPagePayload {
+  const AllPlaylistsPagePayload({required this.playlistType});
+
+  final PlaylistType playlistType;
+}
+
 class AllPlaylistsPage extends StatefulWidget {
-  const AllPlaylistsPage({super.key});
+  const AllPlaylistsPage({super.key, required this.payload});
+
+  final AllPlaylistsPagePayload payload;
 
   @override
   State<AllPlaylistsPage> createState() => _AllPlaylistsPageState();
@@ -128,7 +149,7 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
         SliverToBoxAdapter(
           child: PlaylistDetailsHeader(
             icon: SvgPicture.asset(
-              'assets/images/D.svg',
+              widget.payload.playlistType.icon,
               width: 12,
               height: 12,
               colorFilter: const ColorFilter.mode(
@@ -136,9 +157,8 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
                 BlendMode.srcIn,
               ),
             ),
-            title: 'Curated',
-            description:
-                'Curated playlists are curated by the team\n to help you discover new music.\n\nView all curated playlists\nby clicking the button below.',
+            title: widget.payload.playlistType.name,
+            description: widget.payload.playlistType.description,
           ),
         ),
         const SliverToBoxAdapter(
@@ -153,12 +173,31 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
               playlistCreator: playlistData.creator,
               carouselItems: playlistData.items,
               onListItemTap: () {
-                // Handle playlist tap
+                Navigator.of(context).pushNamed(
+                    AppRouter.dp1PlaylistDetailsPage,
+                    arguments: DP1PlaylistDetailsScreenPayload(
+                        playlist: playlistData.playlistReference));
+              },
+              onItemTap: (item) {
+                final assetToken = item.assetToken;
+                if (assetToken != null) {
+                  injector<NavigationService>().navigateTo(
+                    AppRouter.artworkDetailsPage,
+                    arguments:
+                        ArtworkDetailPayload(ArtworkIdentity(assetToken.cid)),
+                  );
+                }
               },
             );
           },
           itemCount: playlistDataList.length,
         ),
+        if (state.isLoadingMore)
+          SliverToBoxAdapter(
+            child: LoadMoreIndicator(
+              isLoadingMore: true,
+            ),
+          ),
         const SliverToBoxAdapter(
           child: BottomSpacing(),
         ),

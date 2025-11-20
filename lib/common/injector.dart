@@ -376,7 +376,7 @@ Future<void> setupInjector() async {
   injector.registerLazySingleton<PlaylistsBloc>(
     () => PlaylistsBloc(
       playlistType: PlaylistType.curated,
-      total: 5,
+      total: null,
     ),
     instanceName: PlaylistsBlocInstance.curated.instanceName,
   );
@@ -385,7 +385,7 @@ Future<void> setupInjector() async {
   injector.registerLazySingleton<PlaylistsBloc>(
     () => PlaylistsBloc(
       playlistType: PlaylistType.me,
-      total: 5,
+      total: null,
     ),
     instanceName: PlaylistsBlocInstance.my.instanceName,
   );
@@ -394,7 +394,7 @@ Future<void> setupInjector() async {
   injector.registerLazySingleton<PlaylistsBloc>(
     () => PlaylistsBloc(
       playlistType: PlaylistType.global,
-      total: 5,
+      total: null,
     ),
     instanceName: PlaylistsBlocInstance.global.instanceName,
   );

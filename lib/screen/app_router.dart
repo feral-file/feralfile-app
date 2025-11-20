@@ -62,6 +62,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:page_transition/page_transition.dart';
 
+const bool shouldShowOverlay = false;
+
 class AppRouter {
   static const previewPrimerPage = 'preview_primer_page';
   static const onboardingPage = 'onboarding_page';
@@ -465,6 +467,7 @@ class AppRouter {
         );
 
       case allPlaylistsPage:
+        final payload = settings.arguments! as AllPlaylistsPagePayload;
         return CupertinoPageRoute(
           settings: settings,
           builder: (context) => Stack(
@@ -473,20 +476,21 @@ class AppRouter {
                 value: injector<PlaylistsBloc>(
                   instanceName: PlaylistsBlocInstance.curated.instanceName,
                 ),
-                child: const AllPlaylistsPage(),
+                child: AllPlaylistsPage(payload: payload),
               ),
-              IgnorePointer(
-                ignoring: true,
-                child: Opacity(
-                  opacity: 0.3,
-                  child: Image.asset(
-                    "assets/images/Curated Playlist.png",
-                    width: double.infinity,
-                    height: double.infinity,
-                    fit: BoxFit.cover,
+              if (shouldShowOverlay)
+                IgnorePointer(
+                  ignoring: true,
+                  child: Opacity(
+                    opacity: 0.3,
+                    child: Image.asset(
+                      "assets/images/Curated Playlist.png",
+                      width: double.infinity,
+                      height: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                ),
-              )
+                )
             ],
           ),
         );

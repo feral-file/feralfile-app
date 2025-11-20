@@ -3,6 +3,7 @@ import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/dp1_playlist_details.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
@@ -140,51 +141,6 @@ class _PlaylistsPageState extends State<PlaylistsPage>
         child: LoadingView(),
       );
     }
-
-    String sectionName = '';
-    Widget? sectionIcon;
-    switch (playlistsBloc.playlistType) {
-      case PlaylistType.curated:
-        sectionName = 'Curated';
-        sectionIcon = SvgPicture.asset(
-          'assets/images/D.svg',
-          width: 12,
-          height: 12,
-          colorFilter: const ColorFilter.mode(
-            Color(0xFFFFFFFF),
-            BlendMode.srcIn,
-          ),
-        );
-        break;
-      case PlaylistType.me:
-        sectionName = 'Me';
-        sectionIcon = SvgPicture.asset(
-          'assets/images/D.svg',
-          width: 12,
-          height: 12,
-          colorFilter: const ColorFilter.mode(
-            Color(0xFFFFFFFF),
-            BlendMode.srcIn,
-          ),
-        );
-        break;
-      case PlaylistType.global:
-        sectionName = 'Global';
-        sectionIcon = SvgPicture.asset(
-          'assets/images/D.svg',
-          width: 12,
-          height: 12,
-          colorFilter: const ColorFilter.mode(
-            Color(0xFFFFFFFF),
-            BlendMode.srcIn,
-          ),
-        );
-        break;
-      default:
-        sectionName = 'Unknown';
-        sectionIcon = null;
-        break;
-    }
     if (state.isError && state.playlists.isEmpty) {
       return SliverToBoxAdapter(
         child: ErrorView(
@@ -194,11 +150,10 @@ class _PlaylistsPageState extends State<PlaylistsPage>
       );
     }
 
-    return _buildPlaylists(state, sectionName, sectionIcon);
+    return _buildPlaylists(state, playlistsBloc.playlistType);
   }
 
-  Widget _buildPlaylists(
-      PlaylistsState state, String sectionName, Widget? sectionIcon) {
+  Widget _buildPlaylists(PlaylistsState state, PlaylistType playlistType) {
     // Group playlists by owner for sections
     final onListItemTap = (PlaylistReference playlist) {
       Navigator.of(context).pushNamed(AppRouter.dp1PlaylistDetailsPage,
@@ -214,11 +169,22 @@ class _PlaylistsPageState extends State<PlaylistsPage>
       itemBuilder: (context, index) => Column(
         children: [
           PlaylistSection(
-            sectionName: sectionName,
-            sectionIcon: sectionIcon,
+            sectionName: playlistType.name,
+            sectionIcon: SvgPicture.asset(
+              playlistType.icon,
+              width: 12,
+              height: 12,
+              colorFilter: const ColorFilter.mode(
+                Color(0xFFFFFFFF),
+                BlendMode.srcIn,
+              ),
+            ),
             playlists: playlistDataList,
             onViewAllTap: () {
-              Navigator.of(context).pushNamed(AppRouter.allPlaylistsPage);
+              Navigator.of(context).pushNamed(
+                AppRouter.allPlaylistsPage,
+                arguments: AllPlaylistsPagePayload(playlistType: playlistType),
+              );
             },
             onPlaylistItemTap: (item) {
               final assetToken = item.assetToken;

@@ -2,6 +2,7 @@ import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
+import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_section.dart';
 import 'package:autonomy_flutter/util/dp1_manifest_helper.dart';
@@ -17,6 +18,7 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
   PlaylistsBloc({
     required this.playlistType,
     this.total,
+    this.pageSize = 5,
   }) : super(const PlaylistsState()) {
     on<LoadPlaylistsEvent>(_onLoadPlaylists);
     on<LoadMorePlaylistsEvent>(_onLoadMorePlaylists);
@@ -25,6 +27,7 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
 
   final PlaylistType playlistType;
   final int? total;
+  final int pageSize;
 
   Future<void> _onLoadPlaylists(
     LoadPlaylistsEvent event,
@@ -63,6 +66,87 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     );
   }
 
+  Future<LoadPlaylistPaginationResponse> _loadCuratedPlaylists({
+    required Emitter<PlaylistsState> emit,
+    required String? cursor,
+  }) async {
+    // Get all cached playlists
+    final allPlaylists =
+        await injector<FeralFileFeedManager>().getAllCachedPlaylists();
+
+    final start = int.tryParse(cursor ?? '0') ?? 0;
+    final end = start + pageSize;
+
+    // Get playlists based on total
+    // If total is null, get all playlists
+    final topPlaylists = total != null
+        ? allPlaylists.take(total!).toList()
+        : allPlaylists.safeSublist(start, end).toList();
+
+    final nextCursor = end < allPlaylists.length ? end.toString() : null;
+    final hasMore = nextCursor != null;
+
+    return LoadPlaylistPaginationResponse(
+      playlists: topPlaylists,
+      hasMore: hasMore,
+      cursor: nextCursor,
+    );
+  }
+
+  Future<LoadPlaylistPaginationResponse> _loadMyPlaylists({
+    required Emitter<PlaylistsState> emit,
+    required String? cursor,
+  }) async {
+    // Get all cached playlists
+    final allPlaylists =
+        await injector<FeralFileFeedManager>().getAllCachedPlaylists();
+
+    final start = int.tryParse(cursor ?? '0') ?? 0;
+    final end = start + pageSize;
+
+    // Get playlists based on total
+    // If total is null, get all playlists
+    final topPlaylists = total != null
+        ? allPlaylists.take(total!).toList()
+        : allPlaylists.safeSublist(start, end).toList();
+
+    final nextCursor = end < allPlaylists.length ? end.toString() : null;
+    final hasMore = nextCursor != null;
+
+    return LoadPlaylistPaginationResponse(
+      playlists: topPlaylists,
+      hasMore: hasMore,
+      cursor: nextCursor,
+    );
+  }
+
+  Future<LoadPlaylistPaginationResponse> _loadGlobalPlaylists({
+    required Emitter<PlaylistsState> emit,
+    required String? cursor,
+  }) async {
+    // Get all cached playlists
+    final allPlaylists =
+        await injector<FeralFileFeedManager>().getAllCachedPlaylists();
+
+    final start = int.tryParse(cursor ?? '0') ?? 0;
+    final end = start + pageSize;
+
+    // Get playlists based on total
+    // If total is null, get all playlists
+    final topPlaylists = total != null
+        ? allPlaylists.take(total!).toList()
+        : allPlaylists.safeSublist(start, end).toList();
+
+    final nextCursor = end < allPlaylists.length ? end.toString() : null;
+    final hasMore = nextCursor != null;
+
+    return LoadPlaylistPaginationResponse(
+      playlists: topPlaylists,
+      hasMore: hasMore,
+      cursor: nextCursor,
+    );
+  }
+
   Future<void> _loadPlaylists({
     required Emitter<PlaylistsState> emit,
     required String? cursor,
@@ -77,18 +161,24 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
         emit(state.copyWith(status: PlaylistsStateStatus.loading));
       }
 
-      // Get all cached playlists
-      final allPlaylists =
-          await injector<FeralFileFeedManager>().getAllCachedPlaylists();
+      LoadPlaylistPaginationResponse paginationResponse;
+      switch (playlistType) {
+        case PlaylistType.curated:
+          paginationResponse =
+              await _loadCuratedPlaylists(emit: emit, cursor: cursor);
+        case PlaylistType.me:
+          paginationResponse =
+              await _loadMyPlaylists(emit: emit, cursor: cursor);
+        case PlaylistType.global:
+          paginationResponse =
+              await _loadGlobalPlaylists(emit: emit, cursor: cursor);
+      }
 
-      // Get playlists based on total
-      // If total is null, get all playlists
-      final topPlaylists =
-          total != null ? allPlaylists.take(total!).toList() : allPlaylists;
+      final playlists = paginationResponse.playlists;
 
       // Collect all unique CIDs from top 5 playlists
       final cids = <String>[];
-      for (final playlistRef in topPlaylists) {
+      for (final playlistRef in playlists) {
         for (final item in playlistRef.playlist.items) {
           if (item.cid != null) {
             cids.add(item.cid!);
@@ -102,7 +192,7 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
 
       // Fetch DP1 manifests for all items
       final refs = <String>[];
-      for (final playlistRef in topPlaylists) {
+      for (final playlistRef in playlists) {
         for (final item in playlistRef.playlist.items) {
           if (item.ref != null) {
             refs.add(item.ref!);
@@ -114,7 +204,7 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
 
       // Create PlaylistData list for top 5 playlists
       final playlistDataList = <PlaylistData>[];
-      for (final playlistRef in topPlaylists) {
+      for (final playlistRef in playlists) {
         final playlist = playlistRef.playlist;
         final items = <DP1NowDisplayingItem>[];
 
@@ -142,12 +232,18 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
         );
       }
 
+      final newPlaylists =
+          isLoadMore ? [...state.playlists, ...playlists] : playlists;
+      final newPlaylistDataList = isLoadMore
+          ? [...state.playlistData, ...playlistDataList]
+          : playlistDataList;
+
       emit(state.copyWith(
         status: PlaylistsStateStatus.loaded,
-        playlists: topPlaylists,
-        playlistData: playlistDataList,
-        hasMore: false,
-        cursor: null,
+        playlists: newPlaylists,
+        playlistData: newPlaylistDataList,
+        hasMore: paginationResponse.hasMore,
+        cursor: paginationResponse.cursor,
         error: '',
       ));
     } catch (e) {
@@ -159,4 +255,16 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
       );
     }
   }
+}
+
+class LoadPlaylistPaginationResponse {
+  final List<PlaylistReference> playlists;
+  final bool hasMore;
+  final String? cursor;
+
+  LoadPlaylistPaginationResponse({
+    required this.playlists,
+    required this.hasMore,
+    required this.cursor,
+  });
 }

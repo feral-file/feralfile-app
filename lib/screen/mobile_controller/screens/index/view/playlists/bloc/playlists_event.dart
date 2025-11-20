@@ -4,7 +4,28 @@ part of 'playlists_bloc.dart';
 enum PlaylistType {
   curated,
   me,
-  global,
+  global;
+
+  String get name => switch (this) {
+        PlaylistType.curated => 'Curated',
+        PlaylistType.me => 'Me',
+        PlaylistType.global => 'Global',
+      };
+
+  String get icon => switch (this) {
+        PlaylistType.curated => 'assets/images/D.svg',
+        PlaylistType.me => 'assets/images/icon_account.svg',
+        PlaylistType.global => 'assets/images/icon_global.svg',
+      };
+
+  String get description => switch (this) {
+        PlaylistType.curated =>
+          'Curated playlists are curated by the team\n to help you discover new music.\nView all curated playlists\nby clicking the button below.',
+        PlaylistType.me =>
+          'Me playlists are playlists created by the user\n to help you discover new music.\nView all me playlists\nby clicking the button below.',
+        PlaylistType.global =>
+          'Global playlists are playlists created by the team\n to help you discover new music.\nView all global playlists\nby clicking the button below.',
+      };
 }
 
 abstract class PlaylistsEvent {

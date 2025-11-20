@@ -30,4 +30,15 @@ extension ListExtensions<T> on List<T> {
     }
     return result;
   }
+
+  /// Safely get a sublist between [start] and [end] without throwing RangeError
+  /// Returns empty list if indices are invalid
+  List<T> safeSublist(int start, int end) {
+    final clampedStart = start.clamp(0, length);
+    final clampedEnd = end.clamp(0, length);
+    if (clampedStart >= clampedEnd) {
+      return [];
+    }
+    return sublist(clampedStart, clampedEnd);
+  }
 }

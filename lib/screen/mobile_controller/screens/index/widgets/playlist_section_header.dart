@@ -60,6 +60,7 @@ class PlaylistSectionHeader extends StatelessWidget {
                 minWidth: 9.78,
                 minHeight: 8,
               ),
+              color: Colors.transparent,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
