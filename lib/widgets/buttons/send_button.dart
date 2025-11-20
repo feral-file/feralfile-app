@@ -12,8 +12,8 @@ class SendButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: SendButtonTokens.size.toDouble(),
-        height: SendButtonTokens.size.toDouble(),
+        width: SendButtonTokens.width.toDouble(),
+        height: SendButtonTokens.height.toDouble(),
         decoration: const BoxDecoration(
           color: SendButtonTokens.bgColor,
           shape: BoxShape.circle,
@@ -21,6 +21,8 @@ class SendButton extends StatelessWidget {
         child: Center(
           child: SvgPicture.asset(
             'assets/images/send_icon.svg',
+            width: SendButtonTokens.iconWidth,
+            height: SendButtonTokens.iconHeight,
             colorFilter: const ColorFilter.mode(
               SendButtonTokens.iconColor,
               BlendMode.srcIn,

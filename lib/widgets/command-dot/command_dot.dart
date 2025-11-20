@@ -11,8 +11,8 @@ class CommandDot extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: CommandDotTokens.size.toDouble(),
-        height: CommandDotTokens.size.toDouble(),
+        width: CommandDotTokens.width.toDouble(),
+        height: CommandDotTokens.height.toDouble(),
         decoration: BoxDecoration(
           color: CommandDotTokens.bgColor,
           borderRadius:
@@ -22,7 +22,7 @@ class CommandDot extends StatelessWidget {
           child: SvgPicture.asset(
             'assets/images/talk_icon.svg',
             width: CommandDotTokens.iconWidth,
-            height: CommandDotTokens.iconHeight.toDouble(),
+            height: CommandDotTokens.iconHeight,
             colorFilter: const ColorFilter.mode(
               CommandDotTokens.iconColor,
               BlendMode.srcIn,

@@ -13,7 +13,7 @@ class BottomSpacing extends StatelessWidget {
     final paddingBottom = MediaQuery.of(context).padding.bottom;
     const llmInputHeight = LLMTextInputTokens.padding * 2 +
         LLMTextInputTokens.llmPaddingVertical * 2 +
-        CommandDotTokens.size;
+        CommandDotTokens.height;
 
     return ValueListenableBuilder(
       valueListenable: nowDisplayingShowing,
