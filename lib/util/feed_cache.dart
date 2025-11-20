@@ -6,6 +6,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/service/dp1_store.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
@@ -290,6 +291,13 @@ class FeedCacheImpl extends BaseFeedCache {
 
   void _onCacheUpdated() {
     injector<ChannelsBloc>().add(const LoadChannelsEvent());
-    injector<PlaylistsBloc>().add(const LoadPlaylistsEvent());
+    injector<PlaylistsBloc>(
+            instanceName: PlaylistsBlocInstance.curated.instanceName)
+        .add(const LoadPlaylistsEvent());
+    injector<PlaylistsBloc>(instanceName: PlaylistsBlocInstance.my.instanceName)
+        .add(const LoadPlaylistsEvent());
+    injector<PlaylistsBloc>(
+            instanceName: PlaylistsBlocInstance.global.instanceName)
+        .add(const LoadPlaylistsEvent());
   }
 }

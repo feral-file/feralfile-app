@@ -38,6 +38,9 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/view/r
 import 'package:autonomy_flutter/screen/mobile_controller/screens/home/view/home_mobile_controller.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channel_details/channel_detail.page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/dp1_playlist_details.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/name_view_only_page.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address_bloc.dart';
@@ -56,7 +59,6 @@ import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/view/transparent_router.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:page_transition/page_transition.dart';
 
@@ -98,6 +100,7 @@ class AppRouter {
   static const voiceCommandPage = 'voice_command_page';
   static const addLocalFeedServerPage = 'add_local_feed_server_page';
   static const customFeedServersPage = 'custom_feed_servers_page';
+  static const allPlaylistsPage = 'all_playlists_page';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     log.info('[onGenerateRoute] Route: ${settings.name}');
@@ -459,6 +462,33 @@ class AppRouter {
         return CupertinoPageRoute(
           settings: settings,
           builder: (context) => const CustomFeedServersPage(),
+        );
+
+      case allPlaylistsPage:
+        return CupertinoPageRoute(
+          settings: settings,
+          builder: (context) => Stack(
+            children: [
+              BlocProvider<PlaylistsBloc>.value(
+                value: injector<PlaylistsBloc>(
+                  instanceName: PlaylistsBlocInstance.curated.instanceName,
+                ),
+                child: const AllPlaylistsPage(),
+              ),
+              IgnorePointer(
+                ignoring: true,
+                child: Opacity(
+                  opacity: 0.3,
+                  child: Image.asset(
+                    "assets/images/Curated Playlist.png",
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              )
+            ],
+          ),
         );
 
       default:

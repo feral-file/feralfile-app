@@ -1,5 +1,12 @@
 part of 'playlists_bloc.dart';
 
+/// Enum for playlist types
+enum PlaylistType {
+  curated,
+  me,
+  global,
+}
+
 abstract class PlaylistsEvent {
   const PlaylistsEvent();
 }

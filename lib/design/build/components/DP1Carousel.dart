@@ -8,7 +8,7 @@ class DP1CarouselTokens {
   DP1CarouselTokens._();
 
   // Content wrapper layout
-  static const contentPaddingHorizontal = 13.0;
+  static const contentPaddingHorizontal = 12.0;
   static const contentPaddingVertical = 0.0;
 
   // Item layout

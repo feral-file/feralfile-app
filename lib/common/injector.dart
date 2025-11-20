@@ -36,6 +36,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/bloc/r
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/works/bloc/works_bloc.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/announcement/announcement_service.dart';
@@ -371,8 +372,31 @@ Future<void> setupInjector() async {
     AudioService.new,
   );
 
+  // Curated playlists (top 5)
   injector.registerLazySingleton<PlaylistsBloc>(
-    PlaylistsBloc.new,
+    () => PlaylistsBloc(
+      playlistType: PlaylistType.curated,
+      total: 5,
+    ),
+    instanceName: PlaylistsBlocInstance.curated.instanceName,
+  );
+
+  // User's playlists (all)
+  injector.registerLazySingleton<PlaylistsBloc>(
+    () => PlaylistsBloc(
+      playlistType: PlaylistType.me,
+      total: 5,
+    ),
+    instanceName: PlaylistsBlocInstance.my.instanceName,
+  );
+
+  // Global playlists (all)
+  injector.registerLazySingleton<PlaylistsBloc>(
+    () => PlaylistsBloc(
+      playlistType: PlaylistType.global,
+      total: 5,
+    ),
+    instanceName: PlaylistsBlocInstance.global.instanceName,
   );
 
   injector.registerLazySingleton<UserAllOwnCollectionBloc>(

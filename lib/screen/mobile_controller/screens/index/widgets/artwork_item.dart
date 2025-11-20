@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:autonomy_flutter/design/build/components/ArtworkItem.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/util/dp1_now_displaying_item_ext.dart';
@@ -23,7 +25,7 @@ class DP1ItemThumbnail extends StatelessWidget {
         width: ArtworkItemTokens.containerWidth,
         height: ArtworkItemTokens.containerHeight,
         padding: const EdgeInsets.all(ArtworkItemTokens.containerPadding),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Colors.transparent,
         ),
         alignment: Alignment.center,
@@ -48,6 +50,7 @@ class DP1ItemThumbnail extends StatelessWidget {
       fit: BoxFit.contain,
       cacheWidth: ArtworkItemTokens.imageWidth.toInt(),
       cacheHeight: ArtworkItemTokens.imageHeight.toInt(),
+      onTap: onTap,
     );
   }
 }

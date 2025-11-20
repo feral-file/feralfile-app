@@ -1,12 +1,18 @@
+import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
-import 'package:autonomy_flutter/model/now_displaying_object.dart';
+import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/dp1_playlist_details.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_section.dart';
-import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/service/navigation_service.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
 
 class PlaylistsPage extends StatefulWidget {
   const PlaylistsPage({super.key});
@@ -18,14 +24,23 @@ class PlaylistsPage extends StatefulWidget {
 class _PlaylistsPageState extends State<PlaylistsPage>
     with AutomaticKeepAliveClientMixin, RouteAware {
   final ScrollController _scrollController = ScrollController();
-  late final PlaylistsBloc _playlistsBloc;
+  late final PlaylistsBloc _curatedPlaylistsBloc;
+  late final PlaylistsBloc _myPlaylistsBloc;
+  late final PlaylistsBloc _globalPlaylistsBloc;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    _playlistsBloc = context.read<PlaylistsBloc>();
-    _playlistsBloc.add(const LoadPlaylistsEvent());
+    _curatedPlaylistsBloc = injector<PlaylistsBloc>(
+      instanceName: PlaylistsBlocInstance.curated.instanceName,
+    );
+    _myPlaylistsBloc = injector<PlaylistsBloc>(
+      instanceName: PlaylistsBlocInstance.my.instanceName,
+    );
+    _globalPlaylistsBloc = injector<PlaylistsBloc>(
+      instanceName: PlaylistsBlocInstance.global.instanceName,
+    );
   }
 
   @override
@@ -45,92 +60,175 @@ class _PlaylistsPageState extends State<PlaylistsPage>
   @override
   void didPopNext() {
     super.didPopNext();
-    _playlistsBloc.add(const RefreshPlaylistsEvent());
+    _curatedPlaylistsBloc.add(const RefreshPlaylistsEvent());
+    _myPlaylistsBloc.add(const RefreshPlaylistsEvent());
+    _globalPlaylistsBloc.add(const RefreshPlaylistsEvent());
   }
 
   void _onScroll() {
     if (_scrollController.position.pixels + 100 >=
         _scrollController.position.maxScrollExtent) {
-      _playlistsBloc.add(const LoadMorePlaylistsEvent());
+      _curatedPlaylistsBloc.add(const LoadMorePlaylistsEvent());
+      _myPlaylistsBloc.add(const LoadMorePlaylistsEvent());
+      _globalPlaylistsBloc.add(const LoadMorePlaylistsEvent());
     }
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-
-    return BlocBuilder<PlaylistsBloc, PlaylistsState>(
-      bloc: _playlistsBloc,
-      builder: (context, state) {
-        return RefreshIndicator(
-          onRefresh: () async {
-            _playlistsBloc.add(const RefreshPlaylistsEvent());
-            // Wait for the refresh to complete
-            await _playlistsBloc.stream.firstWhere(
-              (state) => state.isLoaded || state.isError,
-            );
-          },
-          backgroundColor: AppColor.primaryBlack,
-          color: AppColor.white,
-          child: _buildContent(state),
-        );
-      },
+    return CustomScrollView(
+      shrinkWrap: true,
+      controller: _scrollController,
+      physics: const NeverScrollableScrollPhysics(),
+      slivers: [
+        _buildMyPlaylists(),
+        SliverToBoxAdapter(
+          child: SizedBox(height: 50),
+        ),
+        _buildCuratedPlaylists(),
+        SliverToBoxAdapter(
+          child: SizedBox(height: 50),
+        ),
+        _buildGlobalPlaylists(),
+      ],
     );
   }
 
-  Widget _buildContent(PlaylistsState state) {
-    if (state.isLoading && state.playlists.isEmpty) {
-      return const LoadingView();
-    }
-
-    if (state.isError && state.playlists.isEmpty) {
-      return ErrorView(
-        error: 'Error loading playlists: ${state.error}',
-        onRetry: () => _playlistsBloc.add(const LoadPlaylistsEvent()),
-      );
-    }
-
-    return _buildPlaylists(state);
+  Widget _buildCuratedPlaylists() {
+    return BlocBuilder<PlaylistsBloc, PlaylistsState>(
+      bloc: _curatedPlaylistsBloc,
+      builder: (context, state) => _buildContent(state, _curatedPlaylistsBloc),
+    );
   }
 
-  Widget _buildPlaylists(PlaylistsState state) {
-    final playlists = state.playlists;
+  Widget _buildMyPlaylists() {
+    return BlocBuilder<PlaylistsBloc, PlaylistsState>(
+      bloc: _myPlaylistsBloc,
+      builder: (context, state) => _buildContent(state, _myPlaylistsBloc),
+    );
+  }
 
-    // Group playlists by owner for sections
-    final playlistDataList = playlists.map((playlistRef) {
-      final playlist = playlistRef.playlist;
-      final items = playlist.items.map((item) {
-        return DP1NowDisplayingItem(
-          dp1Item: item,
-          assetToken: null,
-          dp1Manifest: null,
-        );
-      }).toList();
-      return PlaylistData(
-        title: playlist.title,
-        creator: "Me",
-        items: items,
-        onListItemTap: () {
-          // Handle playlist tap
-        },
-      );
-    }).toList();
+  Widget _buildGlobalPlaylists() {
+    return BlocBuilder<PlaylistsBloc, PlaylistsState>(
+      bloc: _globalPlaylistsBloc,
+      builder: (context, state) => _buildContent(state, _globalPlaylistsBloc),
+    );
+  }
 
-    if (playlistDataList.isEmpty) {
-      return const Center(
-        child: Text('No playlists found'),
+  // return BlocBuilder<PlaylistsBloc, PlaylistsState>(
+  //   bloc: _playlistsBloc,
+  //   builder: (context, state) {
+  //     return RefreshIndicator(
+  //       onRefresh: () async {
+  //         _playlistsBloc.add(const RefreshPlaylistsEvent());
+  //         // Wait for the refresh to complete
+  //         await _playlistsBloc.stream.firstWhere(
+  //           (state) => state.isLoaded || state.isError,
+  //         );
+  //       },
+  //       backgroundColor: AppColor.primaryBlack,
+  //       color: AppColor.white,
+  //       child: _buildContent(state),
+  //     );
+  //   },
+  // );
+
+  Widget _buildContent(PlaylistsState state, PlaylistsBloc playlistsBloc) {
+    if (state.isLoading && state.playlists.isEmpty) {
+      return const SliverToBoxAdapter(
+        child: LoadingView(),
       );
     }
 
-    return SingleChildScrollView(
-      controller: _scrollController,
-      child: Column(
+    String sectionName = '';
+    Widget? sectionIcon;
+    switch (playlistsBloc.playlistType) {
+      case PlaylistType.curated:
+        sectionName = 'Curated';
+        sectionIcon = SvgPicture.asset(
+          'assets/images/D.svg',
+          width: 12,
+          height: 12,
+          colorFilter: const ColorFilter.mode(
+            Color(0xFFFFFFFF),
+            BlendMode.srcIn,
+          ),
+        );
+        break;
+      case PlaylistType.me:
+        sectionName = 'Me';
+        sectionIcon = SvgPicture.asset(
+          'assets/images/D.svg',
+          width: 12,
+          height: 12,
+          colorFilter: const ColorFilter.mode(
+            Color(0xFFFFFFFF),
+            BlendMode.srcIn,
+          ),
+        );
+        break;
+      case PlaylistType.global:
+        sectionName = 'Global';
+        sectionIcon = SvgPicture.asset(
+          'assets/images/D.svg',
+          width: 12,
+          height: 12,
+          colorFilter: const ColorFilter.mode(
+            Color(0xFFFFFFFF),
+            BlendMode.srcIn,
+          ),
+        );
+        break;
+      default:
+        sectionName = 'Unknown';
+        sectionIcon = null;
+        break;
+    }
+    if (state.isError && state.playlists.isEmpty) {
+      return SliverToBoxAdapter(
+        child: ErrorView(
+          error: 'Error loading playlists: ${state.error}',
+          onRetry: () => playlistsBloc.add(const LoadPlaylistsEvent()),
+        ),
+      );
+    }
+
+    return _buildPlaylists(state, sectionName, sectionIcon);
+  }
+
+  Widget _buildPlaylists(
+      PlaylistsState state, String sectionName, Widget? sectionIcon) {
+    // Group playlists by owner for sections
+    final onListItemTap = (PlaylistReference playlist) {
+      Navigator.of(context).pushNamed(AppRouter.dp1PlaylistDetailsPage,
+          arguments: DP1PlaylistDetailsScreenPayload(playlist: playlist));
+    };
+    final playlistDataList = state.playlistData
+        .map((playlist) => playlist.copyWith(
+            onListItemTap: () => onListItemTap(playlist.playlistReference)))
+        .toList();
+
+    return SliverList.builder(
+      itemCount: 1,
+      itemBuilder: (context, index) => Column(
         children: [
           PlaylistSection(
-            sectionName: 'Me',
+            sectionName: sectionName,
+            sectionIcon: sectionIcon,
             playlists: playlistDataList,
             onViewAllTap: () {
-              // Handle view all tap
+              Navigator.of(context).pushNamed(AppRouter.allPlaylistsPage);
+            },
+            onPlaylistItemTap: (item) {
+              final assetToken = item.assetToken;
+              if (assetToken != null) {
+                injector<NavigationService>().navigateTo(
+                  AppRouter.artworkDetailsPage,
+                  arguments:
+                      ArtworkDetailPayload(ArtworkIdentity(assetToken.cid)),
+                );
+              }
             },
           ),
         ],

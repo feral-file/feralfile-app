@@ -57,8 +57,8 @@ class PlaylistSectionHeader extends StatelessWidget {
             onTap: onViewAllTap,
             child: Container(
               constraints: const BoxConstraints(
-                minWidth: 44,
-                minHeight: 44,
+                minWidth: 9.78,
+                minHeight: 8,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -76,9 +76,12 @@ class PlaylistSectionHeader extends StatelessWidget {
                   SizedBox(
                     width: PlaylistSectionHeaderTokens.buttonGap,
                   ),
-                  Text(
-                    'All',
-                    style: theme.textTheme.ppMori400Grey12,
+                  Padding(
+                    padding: const EdgeInsets.only(right: 1),
+                    child: Text(
+                      'All',
+                      style: theme.textTheme.ppMori400Grey12,
+                    ),
                   ),
                 ],
               ),

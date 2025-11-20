@@ -1,6 +1,7 @@
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/home_index_header.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -14,6 +15,8 @@ class HomeIndexPage extends StatefulWidget {
 
 class _HomeIndexPageState extends State<HomeIndexPage> {
   late HomeIndexTab _selectedTab;
+  final TransformationController _transformationController =
+      TransformationController();
 
   @override
   void initState() {
@@ -22,33 +25,67 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
   }
 
   @override
+  void dispose() {
+    _transformationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColor.auGreyBackground,
-      body: NestedScrollView(
-        floatHeaderSlivers: true,
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            // Combined header: hamburgerButton + HomeIndexHeader
-            // Full state: hamburgerButton (top-right) + HomeIndexHeader (bottom-left)
-            // Collapse state: both on same row
-            SliverPersistentHeader(
-              pinned: false,
-              floating: false,
-              delegate: _CombinedHeaderDelegate(
-                selectedTab: _selectedTab,
-                onTabChanged: (tab) {
-                  setState(() {
-                    _selectedTab = tab;
-                  });
-                },
-                isBodyScrolling: innerBoxIsScrolled,
+      body: InteractiveViewer(
+        transformationController: _transformationController,
+        minScale: 1.0,
+        maxScale: 16.0,
+        child: Stack(
+          children: [
+            NestedScrollView(
+              floatHeaderSlivers: true,
+              headerSliverBuilder: (context, innerBoxIsScrolled) {
+                return [
+                  // Add padding before header
+                  SliverPadding(
+                    padding: const EdgeInsets.only(top: 48),
+                    sliver: SliverPersistentHeader(
+                      pinned: false,
+                      floating: false,
+                      delegate: _CombinedHeaderDelegate(
+                        selectedTab: _selectedTab,
+                        onTabChanged: (tab) {
+                          setState(() {
+                            _selectedTab = tab;
+                          });
+                        },
+                        isBodyScrolling: innerBoxIsScrolled,
+                      ),
+                    ),
+                  ),
+                ];
+              },
+              body: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 50),
+                    _buildContent(),
+                    const BottomSpacing()
+                  ],
+                ),
               ),
             ),
-          ];
-        },
-        body: SingleChildScrollView(
-          child: _buildContent(),
+            // Figma design overlay for comparison - zooms with content
+            // Opacity(
+            //   opacity: 0.3,
+            //   child: Container(
+            //     width: double.infinity,
+            //     height: double.infinity,
+            //     child: Image.asset(
+            //       'assets/images/No Scroll.png',
+            //       fit: BoxFit.fitWidth,
+            //     ),
+            //   ),
+            // ),
+          ],
         ),
       ),
     );
@@ -57,7 +94,7 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
   Widget _buildContent() {
     switch (_selectedTab) {
       case HomeIndexTab.playlists:
-        return const PlaylistsPage();
+        return Container(child: const PlaylistsPage());
       case HomeIndexTab.channels:
         return Center(
           child: Padding(
@@ -124,7 +161,6 @@ class _CombinedHeaderDelegate extends SliverPersistentHeaderDelegate {
         (availableHeight - _headerHeight).clamp(44.0, 106.0);
 
     return Container(
-      color: AppColor.red,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -133,14 +169,14 @@ class _CombinedHeaderDelegate extends SliverPersistentHeaderDelegate {
             height: hamburgerHeight,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                GestureDetector(
-                  onTap: () {
-                    // Handle hamburger menu tap
-                  },
-                  child: Container(
-                    color: Colors.amber,
+                Padding(
+                  padding: const EdgeInsets.only(top: 15.5),
+                  child: GestureDetector(
+                    onTap: () {
+                      // Handle hamburger menu tap
+                    },
                     child: Padding(
                       padding: const EdgeInsets.only(
                         right: 15,
@@ -149,9 +185,9 @@ class _CombinedHeaderDelegate extends SliverPersistentHeaderDelegate {
                         bottom: 12,
                       ),
                       child: SvgPicture.asset(
-                        'assets/images/icon_drawer.svg',
+                        'assets/images/Drawer.svg',
                         width: 22,
-                        height: 22,
+                        height: 14,
                         colorFilter: const ColorFilter.mode(
                           AppColor.white,
                           BlendMode.srcIn,

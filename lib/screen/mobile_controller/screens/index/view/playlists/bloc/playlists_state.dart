@@ -13,6 +13,7 @@ class PlaylistsState {
   const PlaylistsState({
     this.status = PlaylistsStateStatus.initial,
     this.playlists = const [],
+    this.playlistData = const [],
     this.hasMore = true,
     this.cursor,
     this.error,
@@ -20,6 +21,7 @@ class PlaylistsState {
 
   final PlaylistsStateStatus status;
   final List<PlaylistReference> playlists;
+  final List<PlaylistData> playlistData;
   final bool hasMore;
   final String? cursor;
   final String? error;
@@ -27,6 +29,7 @@ class PlaylistsState {
   PlaylistsState copyWith({
     PlaylistsStateStatus? status,
     List<PlaylistReference>? playlists,
+    List<PlaylistData>? playlistData,
     bool? hasMore,
     String? cursor,
     String? error,
@@ -34,6 +37,7 @@ class PlaylistsState {
     return PlaylistsState(
       status: status ?? this.status,
       playlists: playlists ?? this.playlists,
+      playlistData: playlistData ?? this.playlistData,
       hasMore: hasMore ?? this.hasMore,
       cursor: cursor ?? this.cursor,
       error: error ?? this.error,
@@ -46,6 +50,7 @@ class PlaylistsState {
     return other is PlaylistsState &&
         other.status == status &&
         other.playlists == playlists &&
+        other.playlistData == playlistData &&
         other.hasMore == hasMore &&
         other.cursor == cursor &&
         other.error == error;
@@ -55,6 +60,7 @@ class PlaylistsState {
   int get hashCode {
     return status.hashCode ^
         playlists.hashCode ^
+        playlistData.hashCode ^
         hasMore.hashCode ^
         cursor.hashCode ^
         error.hashCode;

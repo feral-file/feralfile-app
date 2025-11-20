@@ -58,4 +58,6 @@ app.*.map.json
 .env.production
 .env.secret
 
+/test/coverage
+
 lib/encrypt_env/secrets.g.dart

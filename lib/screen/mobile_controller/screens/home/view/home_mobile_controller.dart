@@ -3,8 +3,10 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/cha
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/home.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/index.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/home_page_helper.dart';
+import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -25,7 +27,12 @@ class _MobileControllerHomePageState
   late PageController _pageController;
 
   final _channelsBloc = injector<ChannelsBloc>();
-  final _playlistsBloc = injector<PlaylistsBloc>();
+  final _curatedPlaylistsBloc = injector<PlaylistsBloc>(
+      instanceName: PlaylistsBlocInstance.curated.instanceName);
+  final _myPlaylistsBloc = injector<PlaylistsBloc>(
+      instanceName: PlaylistsBlocInstance.my.instanceName);
+  final _globalPlaylistsBloc = injector<PlaylistsBloc>(
+      instanceName: PlaylistsBlocInstance.global.instanceName);
 
   @override
   void initState() {
@@ -35,7 +42,9 @@ class _MobileControllerHomePageState
 
     // load channel and playlist
     _channelsBloc.add(const LoadChannelsEvent());
-    _playlistsBloc.add(const LoadPlaylistsEvent());
+    _curatedPlaylistsBloc.add(const LoadPlaylistsEvent());
+    _myPlaylistsBloc.add(const LoadPlaylistsEvent());
+    _globalPlaylistsBloc.add(const LoadPlaylistsEvent());
 
     HomePageHelper.instance.onHomePageInit(context, this);
   }
@@ -65,14 +74,8 @@ class _MobileControllerHomePageState
   }
 
   Widget _body(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider.value(value: _channelsBloc),
-        BlocProvider.value(value: _playlistsBloc),
-      ],
-      child: HomeIndexPage(
-        key: directoryPageGlobalKey,
-      ),
+    return HomeIndexPage(
+      key: directoryPageGlobalKey,
     );
   }
 }

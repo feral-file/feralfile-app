@@ -1,7 +1,9 @@
 import 'package:autonomy_flutter/design/build/components/PlaylistSection.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_section_header.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist_list_row.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:flutter/material.dart';
 
 /// Playlist Section - Combines header with list of playlist rows
@@ -27,6 +29,7 @@ class PlaylistSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.builder(
       shrinkWrap: true,
+      padding: EdgeInsets.zero,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: playlists.length + 2,
       itemBuilder: (context, index) {
@@ -50,7 +53,7 @@ class PlaylistSection extends StatelessWidget {
         final playlistIndex = index - 2;
         final playlist = playlists[playlistIndex];
         return PlaylistListRow(
-          playlistTitle: playlist.title,
+          playlistTitle: playlist.playlistReference.playlist.title,
           playlistCreator: playlist.creator,
           carouselItems: playlist.items,
           onListItemTap: playlist.onListItemTap,
@@ -65,14 +68,28 @@ class PlaylistSection extends StatelessWidget {
 /// Data model for playlist information
 class PlaylistData {
   PlaylistData({
-    required this.title,
+    required this.playlistReference,
     required this.creator,
     required this.items,
     this.onListItemTap,
   });
 
-  final String title;
+  final PlaylistReference playlistReference;
   final String creator;
   final List<DP1NowDisplayingItem> items;
   final VoidCallback? onListItemTap;
+
+  PlaylistData copyWith({
+    PlaylistReference? playlistReference,
+    String? creator,
+    List<DP1NowDisplayingItem>? items,
+    VoidCallback? onListItemTap,
+  }) {
+    return PlaylistData(
+      playlistReference: playlistReference ?? this.playlistReference,
+      creator: creator ?? this.creator,
+      items: items ?? this.items,
+      onListItemTap: onListItemTap ?? this.onListItemTap,
+    );
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:autonomy_flutter/design/build/components/PlaylistListItem.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/util/log.dart';
 import 'package:flutter/material.dart';
 
 /// Playlist List Item - Displays playlist info with primary and secondary text
@@ -17,6 +18,8 @@ class PlaylistListItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    log.info('devicePixelRatio: ${MediaQuery.of(context).devicePixelRatio}');
+
     final theme = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
@@ -37,7 +40,7 @@ class PlaylistListItemWidget extends StatelessWidget {
                 children: [
                   Text(
                     primaryText,
-                    style: theme.textTheme.ppMori400White12,
+                    style: theme.textTheme.small,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

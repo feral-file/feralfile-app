@@ -265,6 +265,7 @@ extension TextThemeExtension on TextTheme {
       fontWeight: FontWeight.w400,
       fontFamily: AppTheme.ppMori,
       height: 1.4,
+      letterSpacing: 0.04,
     );
   }
 
@@ -408,6 +409,7 @@ extension TextThemeExtension on TextTheme {
       fontWeight: FontWeight.w400,
       fontFamily: AppTheme.ppMori,
       height: 1.4,
+      letterSpacing: 0.04,
     );
   }
 

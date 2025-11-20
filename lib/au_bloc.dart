@@ -14,6 +14,11 @@ abstract class AuBloc<Event, State> extends Bloc<Event, State> {
     if (isClosed) return;
     super.add(event);
   }
+
+  @override
+  Future<void> close() {
+    return super.close();
+  }
 }
 
 class EventWithResult {

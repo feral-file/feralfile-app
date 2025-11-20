@@ -8,6 +8,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/service/base_dp1_feed_service_impl.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
@@ -104,8 +105,15 @@ class FeedManager {
       log.info(
           'Skip reload all cache, last time refresh feeds: $lastTimeRefreshFeeds, duration: $updateFeedDuration, force: $force');
     }
-    injector<PlaylistsBloc>().add(const RefreshPlaylistsEvent());
     injector<ChannelsBloc>().add(const RefreshChannelsEvent());
+    injector<PlaylistsBloc>(
+            instanceName: PlaylistsBlocInstance.curated.instanceName)
+        .add(const RefreshPlaylistsEvent());
+    injector<PlaylistsBloc>(instanceName: PlaylistsBlocInstance.my.instanceName)
+        .add(const RefreshPlaylistsEvent());
+    injector<PlaylistsBloc>(
+            instanceName: PlaylistsBlocInstance.global.instanceName)
+        .add(const RefreshPlaylistsEvent());
   }
 
   Future<List<PlaylistReference>> getAllCachedPlaylists() async {

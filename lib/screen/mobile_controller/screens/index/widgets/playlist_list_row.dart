@@ -33,7 +33,7 @@ class PlaylistListRow extends StatelessWidget {
           ),
         ),
       ),
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 11),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

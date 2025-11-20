@@ -34,7 +34,7 @@ class HomeIndexHeader extends StatelessWidget {
               return GestureDetector(
                 onTap: () => onTabChanged(tab),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 5.5),
+                  padding: const EdgeInsets.only(right: 11),
                   child: Text(
                     tab.label,
                     style: isSelected
