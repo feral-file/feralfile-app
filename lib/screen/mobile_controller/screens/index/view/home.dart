@@ -1,7 +1,20 @@
+import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/screen/device_setting/bluetooth_connected_device_config.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/home_index_header.dart';
+import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
+import 'package:autonomy_flutter/service/auth_service.dart';
+import 'package:autonomy_flutter/service/customer_support_service.dart';
+import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/util/au_icons.dart';
+import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
+import 'package:autonomy_flutter/util/style.dart';
+import 'package:autonomy_flutter/util/ui_helper.dart';
+import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -144,6 +157,99 @@ class _CombinedHeaderDelegate extends SliverPersistentHeaderDelegate {
   @override
   double get maxExtent => _maxExtent;
 
+  List<OptionItem> get _defaultOptions {
+    return [
+      // scan
+      OptionItem(
+        title: 'scan'.tr(),
+        icon: const Icon(
+          AuIcon.scan,
+        ),
+        onTap: () {
+          injector<NavigationService>().navigateTo(
+            AppRouter.scanQRPage,
+            arguments: const ScanQRPagePayload(scannerItem: ScannerItem.GLOBAL),
+          );
+          isNowDisplayingBarExpanded.value = false;
+        },
+      ),
+      if (injector<AuthService>().isBetaTester() &&
+          BluetoothDeviceManager().castingBluetoothDevice != null)
+        // FF-X1 Setting
+        OptionItem(
+          title: 'FF1 Settings',
+          icon: SvgPicture.asset(
+            'assets/images/portal_setting.svg',
+            colorFilter:
+                const ColorFilter.mode(AppColor.white, BlendMode.srcIn),
+          ),
+          onTap: () {
+            injector<NavigationService>().navigateTo(
+              AppRouter.bluetoothConnectedDeviceConfig,
+              arguments: BluetoothConnectedDeviceConfigPayload(),
+            );
+            isNowDisplayingBarExpanded.value = false;
+          },
+        ),
+      // OptionItem(
+      //   title: 'Custom Feed Server',
+      //   icon: const Icon(
+      //     AuIcon.settings,
+      //   ),
+      //   onTap: () {
+      //     injector<NavigationService>()
+      //         .navigateTo(AppRouter.customFeedServersPage);
+      //     isNowDisplayingBarExpanded.value = false;
+      //   },
+      // ),
+      OptionItem(
+        title: 'App Settings',
+        icon: const Icon(
+          AuIcon.settings,
+        ),
+        onTap: () {
+          injector<NavigationService>().navigateTo(AppRouter.settingsPage);
+          isNowDisplayingBarExpanded.value = false;
+        },
+      ),
+      OptionItem(
+        title: 'wallet'.tr(),
+        icon: const Icon(
+          AuIcon.wallet,
+        ),
+        onTap: () {
+          injector<NavigationService>().navigateTo(AppRouter.walletPage);
+        },
+      ),
+
+      // help
+      OptionItem(
+        title: 'help'.tr(),
+        icon: ValueListenableBuilder<List<int>?>(
+          valueListenable:
+              injector<CustomerSupportService>().numberOfIssuesInfo,
+          builder: (
+            BuildContext context,
+            List<int>? numberOfIssuesInfo,
+            Widget? child,
+          ) =>
+              iconWithRedDot(
+            icon: const Icon(
+              AuIcon.help,
+            ),
+            padding: const EdgeInsets.only(right: 2, top: 2),
+            withReddot: numberOfIssuesInfo != null && numberOfIssuesInfo[1] > 0,
+          ),
+        ),
+        onTap: () {
+          injector<NavigationService>()
+              .navigateTo(AppRouter.supportCustomerPage);
+          isNowDisplayingBarExpanded.value = false;
+        },
+      ),
+    ];
+  }
+
   @override
   Widget build(
     BuildContext context,
@@ -176,6 +282,9 @@ class _CombinedHeaderDelegate extends SliverPersistentHeaderDelegate {
                   child: GestureDetector(
                     onTap: () {
                       // Handle hamburger menu tap
+
+                      UIHelper.showCenterMenu(context,
+                          options: _defaultOptions);
                     },
                     child: Padding(
                       padding: const EdgeInsets.only(
