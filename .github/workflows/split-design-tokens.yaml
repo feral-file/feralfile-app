@@ -2,6 +2,11 @@ name: Split Design Tokens
 
 on:
   workflow_call:
+    inputs:
+      base-branch:
+        description: 'Base branch to rebase on'
+        required: true
+        type: string
 
 jobs:
   split-tokens:
@@ -30,10 +35,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Rebase on latest feat/build-components
+      - name: Rebase on latest base branch
+        env:
+          BASE_BRANCH: ${{ inputs.base-branch }}
         run: |
-          git fetch origin feat/build-components
-          if ! git rebase origin/feat/build-components; then
+          echo "Rebasing on branch: $BASE_BRANCH"
+          git fetch origin $BASE_BRANCH
+          if ! git rebase origin/$BASE_BRANCH; then
             echo "❌ Rebase failed, aborting"
             git rebase --abort
             exit 1
