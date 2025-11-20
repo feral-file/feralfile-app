@@ -521,10 +521,6 @@
         "$type": "color",
         "$value": "{primitives.colors.black}"
       },
-      "size": {
-        "$type": "dimension",
-        "$value": "22px"
-      },
       "cornerRadius": {
         "$type": "dimension",
         "$value": "40px"
@@ -568,11 +564,11 @@
         },
         "paddingRight": {
           "$type": "dimension",
-          "$value": "10px"
+          "$value": "2px"
         },
         "paddingVertical": {
           "$type": "dimension",
-          "$value": "8px"
+          "$value": "2px"
         },
         "active": {
           "cornerRadius": {
@@ -591,7 +587,7 @@
       },
       "padding": {
         "$type": "dimension",
-        "$value": "10px"
+        "$value": "12px"
       }
     }
   },
@@ -605,9 +601,21 @@
         "$type": "color",
         "$value": "{primitives.colors.black}"
       },
-      "size": {
+      "width": {
         "$type": "dimension",
-        "$value": "22px"
+        "$value": "50px"
+      },
+      "height": {
+        "$type": "dimension",
+        "$value": "34px"
+      },
+      "iconWidth": {
+        "$type": "dimension",
+        "$value": "23.5px"
+      },
+      "iconHeight": {
+        "$type": "dimension",
+        "$value": "23.5px"
       }
     }
   },
