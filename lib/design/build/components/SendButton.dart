@@ -13,6 +13,7 @@ class SendButtonTokens {
     SendButtonTokens._();
 
     static const bgColor = Color(0xFFFFFFFF);
+    static const cornerRadius = 40;
     static const height = 34;
     static const iconColor = Color(0xFF000000);
     static const iconHeight = 23.5;
