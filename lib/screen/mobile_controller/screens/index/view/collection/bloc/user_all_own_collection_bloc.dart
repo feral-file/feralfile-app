@@ -514,8 +514,10 @@ class UserAllOwnCollectionBloc
               oldestLastFetchTokenTime ??
               DateTime(1970);
 
+      final hardCodeDateTime = DateTime.parse('2025-11-21T00:29:11Z');
+
       final addressMap = {
-        for (final addr in event.addresses) addr: lastUpdateChangeAt,
+        for (final addr in event.addresses) addr: hardCodeDateTime,
       };
 
       // get stream from token service (updates from indexer changes)
