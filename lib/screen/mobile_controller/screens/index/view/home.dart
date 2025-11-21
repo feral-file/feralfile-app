@@ -57,6 +57,113 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
     }
   }
 
+  List<OptionItem> get _defaultOptions {
+    return [
+      // scan
+      OptionItem(
+        title: 'scan'.tr(),
+        icon: const Icon(
+          AuIcon.scan,
+        ),
+        onTap: () {
+          injector<NavigationService>().navigateTo(
+            AppRouter.scanQRPage,
+            arguments: const ScanQRPagePayload(scannerItem: ScannerItem.GLOBAL),
+          );
+          isNowDisplayingBarExpanded.value = false;
+        },
+      ),
+      if (injector<AuthService>().isBetaTester() &&
+          BluetoothDeviceManager().castingBluetoothDevice != null)
+        // FF-X1 Setting
+        OptionItem(
+          title: 'FF1 Settings',
+          icon: SvgPicture.asset(
+            'assets/images/portal_setting.svg',
+            colorFilter:
+                const ColorFilter.mode(AppColor.white, BlendMode.srcIn),
+          ),
+          onTap: () {
+            injector<NavigationService>().navigateTo(
+              AppRouter.bluetoothConnectedDeviceConfig,
+              arguments: BluetoothConnectedDeviceConfigPayload(),
+            );
+            isNowDisplayingBarExpanded.value = false;
+          },
+        ),
+      // OptionItem(
+      //   title: 'Custom Feed Server',
+      //   icon: const Icon(
+      //     AuIcon.settings,
+      //   ),
+      //   onTap: () {
+      //     injector<NavigationService>()
+      //         .navigateTo(AppRouter.customFeedServersPage);
+      //     isNowDisplayingBarExpanded.value = false;
+      //   },
+      // ),
+      OptionItem(
+        title: 'App Settings',
+        icon: const Icon(
+          AuIcon.settings,
+        ),
+        onTap: () {
+          injector<NavigationService>().navigateTo(AppRouter.settingsPage);
+          isNowDisplayingBarExpanded.value = false;
+        },
+      ),
+      OptionItem(
+        title: 'wallet'.tr(),
+        icon: const Icon(
+          AuIcon.wallet,
+        ),
+        onTap: () {
+          injector<NavigationService>().navigateTo(AppRouter.walletPage);
+        },
+      ),
+
+      // help
+      OptionItem(
+        title: 'help'.tr(),
+        icon: ValueListenableBuilder<List<int>?>(
+          valueListenable:
+              injector<CustomerSupportService>().numberOfIssuesInfo,
+          builder: (
+            BuildContext context,
+            List<int>? numberOfIssuesInfo,
+            Widget? child,
+          ) =>
+              iconWithRedDot(
+            icon: const Icon(
+              AuIcon.help,
+            ),
+            padding: const EdgeInsets.only(right: 2, top: 2),
+            withReddot: numberOfIssuesInfo != null && numberOfIssuesInfo[1] > 0,
+          ),
+        ),
+        onTap: () {
+          injector<NavigationService>()
+              .navigateTo(AppRouter.supportCustomerPage);
+          isNowDisplayingBarExpanded.value = false;
+        },
+      ),
+
+      OptionItem(
+        title: 'release_notes'.tr(),
+        icon: SvgPicture.asset(
+          'assets/images/release_notes.svg',
+          width: 22,
+          height: 22,
+          colorFilter: const ColorFilter.mode(AppColor.white, BlendMode.srcIn),
+        ),
+        onTap: () {
+          injector<NavigationService>().navigateTo(AppRouter.releaseNotesPage);
+          isNowDisplayingBarExpanded.value = false;
+        },
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,8 +182,8 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
                 final hamburgerButton = GestureDetector(
                   onTap: () {
                     // Handle back button tap
-                    // UIHelper.showCenterMenu(context,
-                    //     options: _defaultOptions);
+                    UIHelper.showCenterMenu(context,
+                        options: _defaultOptions);
                   },
                   child: Container(
                     color: Colors.transparent,
