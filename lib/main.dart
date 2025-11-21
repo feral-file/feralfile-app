@@ -330,11 +330,13 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
         !shouldHideDisplayingBar.value;
     nowDisplayingShowing.value = shouldShow;
     if (nowDisplayingShowing.value) {
-      _animationController.forward();
       setState(() => _isVisible = true);
+      _animationController.forward();
     } else {
-      _animationController.reverse();
-      setState(() => _isVisible = false);
+      _animationController.reverse().then((_) {
+        // Only set _isVisible to false after animation completes
+        setState(() => _isVisible = false);
+      });
     }
   }
 
@@ -453,8 +455,8 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                       : const SizedBox();
                 },
               ),
-              Visibility(
-                visible: _isVisible,
+              Offstage(
+                offstage: !_isVisible,
                 child: Stack(
                   children: [
                     // gradient
@@ -519,7 +521,7 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                         final paddingBottom =
                             MediaQuery.of(context).padding.bottom;
                         return AnimatedPositioned(
-                          duration: const Duration(milliseconds: 150),
+                          duration: const Duration(milliseconds: 300),
                           bottom: bottomSheetHeight > 0
                               ? bottomSheetHeight +
                                   UIConstants.nowDisplayingBarBottomPadding
@@ -548,10 +550,6 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                                     color: Colors.transparent,
                                     child: LLMTextInput(),
                                   ),
-                                  // SizedBox(
-                                  //   height: UIConstants
-                                  //       .nowDisplayingBarBottomPadding,
-                                  // ),
                                   Row(
                                     children: [
                                       Expanded(child: const NowDisplayingBar()),
