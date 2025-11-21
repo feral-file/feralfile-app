@@ -2,7 +2,6 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channel_details/channel_detail.page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/all_channels_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc_constants.dart';
@@ -10,7 +9,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
-import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -83,10 +81,10 @@ class _ChannelsPageState extends State<ChannelsPage>
       controller: _scrollController,
       physics: const NeverScrollableScrollPhysics(),
       slivers: [
-        _buildMyChannels(),
-        const SliverToBoxAdapter(
-          child: SizedBox(height: 50),
-        ),
+        // _buildMyChannels(),
+        // const SliverToBoxAdapter(
+        //   child: SizedBox(height: 50),
+        // ),
         _buildCuratedChannels(),
         const SliverToBoxAdapter(
           child: SizedBox(height: 50),
@@ -136,14 +134,8 @@ class _ChannelsPageState extends State<ChannelsPage>
   }
 
   Widget _buildChannels(ChannelsState state, ChannelType channelType) {
-    void onListItemTap(ChannelReference channel) {
-      Navigator.of(context).pushNamed(
-        AppRouter.channelDetailPage,
-        arguments: ChannelDetailPagePayload(channelReference: channel),
-      );
-    }
-
     final channelDataList = state.channelData;
+    final hasMore = state.hasMore;
 
     return SliverList.builder(
       itemCount: 1,
@@ -161,6 +153,7 @@ class _ChannelsPageState extends State<ChannelsPage>
               ),
             ),
             channels: channelDataList,
+            hasMore: hasMore,
             onViewAllTap: () {
               Navigator.of(context).pushNamed(
                 AppRouter.allChannelsPage,

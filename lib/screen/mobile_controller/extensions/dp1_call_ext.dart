@@ -29,13 +29,15 @@ extension DP1CallExtension on DP1Call {
   static DP1Call fromItems({
     required List<DP1Item> items,
     String? playlistId,
+    String? title,
+    DateTime? created,
   }) {
     return DP1Call(
         dpVersion: DP_VERSION,
         id: playlistId ?? Uuid().v1(),
         slug: '',
-        title: 'Playlist',
-        created: DateTime.now(),
+        title: title ?? 'Playlist',
+        created: created ?? DateTime.now(),
         items: items,
         defaults: {},
         signature: '0x17794533e25b08');

@@ -186,7 +186,7 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
           .getAllCachedPlaylistsOfChannels(channels);
       final playlistItems = <DP1Item>[];
       for (final playlist in playlists) {
-        playlistItems.addAll(playlist.playlist.items.safeSublist(0, 10));
+        playlistItems.addAll(playlist.playlist.items.safeSublist(0, 50));
       }
 
       final cids = playlistItems.map((item) => item.cid).nonNulls.toList();
@@ -203,7 +203,7 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
         // Collect items from all playlists in this channel
         final channelItems = <DP1NowDisplayingItem>[];
         for (final playlist in channelPlaylists) {
-          final items = playlist.playlist.items.safeSublist(0, 10);
+          final items = playlist.playlist.items.safeSublist(0, 50);
           for (final item in items) {
             final assetToken =
                 assetTokens.firstWhereOrNull((token) => token.cid == item.cid);

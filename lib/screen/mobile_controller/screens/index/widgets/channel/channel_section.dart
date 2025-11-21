@@ -13,6 +13,7 @@ class ChannelSection extends StatelessWidget {
     this.onViewAllTap,
     this.onChannelItemTap,
     this.scrollController,
+    this.hasMore = true,
     super.key,
   });
 
@@ -22,6 +23,7 @@ class ChannelSection extends StatelessWidget {
   final VoidCallback? onViewAllTap;
   final void Function(DP1NowDisplayingItem)? onChannelItemTap;
   final ScrollController? scrollController;
+  final bool hasMore;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +38,8 @@ class ChannelSection extends StatelessWidget {
           return ChannelSectionHeader(
             sectionName: sectionName,
             sectionIcon: sectionIcon,
-            onViewAllTap: onViewAllTap,
+            onViewAllTap: hasMore ? onViewAllTap : null,
+            hasMore: hasMore,
           );
         }
 

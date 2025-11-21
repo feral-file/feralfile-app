@@ -1,10 +1,14 @@
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
+import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
+import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/util/dp1_manifest_helper.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:collection/collection.dart';
@@ -97,27 +101,49 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     required Emitter<PlaylistsState> emit,
     required String? cursor,
   }) async {
-    // Get all cached playlists
-    final allPlaylists =
-        await injector<FeralFileFeedManager>().getAllCachedPlaylists();
+    final dynamicQuery = injector<UserDp1PlaylistService>()
+        .cachedAllOwnedPlaylist
+        .firstDynamicQuery;
+    if (dynamicQuery == null) {
+      return LoadPlaylistPaginationResponse(
+        playlists: [],
+        hasMore: false,
+        cursor: null,
+      );
+    }
+    final assetTokenGroupByAddress = injector<IndexerDatabaseAbstract>()
+        .getGroupAssetTokensByOwnersGroupByAddress(
+      owners: dynamicQuery.params.owners,
+    );
+    if (assetTokenGroupByAddress.isEmpty) {
+      return LoadPlaylistPaginationResponse(
+        playlists: [],
+        hasMore: false,
+        cursor: null,
+      );
+    }
+    final playlists = <PlaylistReference>[];
+    for (final addressAssetTokens in assetTokenGroupByAddress) {
+      final assetTokens = addressAssetTokens.assetTokens;
+      final items = <DP1Item>[];
+      for (final assetToken in assetTokens) {
+        final item = DP1PlaylistItemExtension.fromAssetToken(token: assetToken);
+        items.add(item);
+      }
+      final title = '${addressAssetTokens.address.name}';
+      final playlist = DP1CallExtension.fromItems(items: items, title: title);
+      playlists.add(PlaylistReference.fromFeralFileDP1Call(playlist));
+    }
 
-    final start = int.tryParse(cursor ?? '0') ?? 0;
-    final end = start + pageSize;
+    final topPlaylists = playlists.safeSublist(0, pageSize).toList();
+    final nextCursor = topPlaylists.length < playlists.length
+        ? topPlaylists.length.toString()
+        : null;
 
-    // Get playlists based on total
-    // If total is null, get all playlists
-    final topPlaylists = total != null
-        ? allPlaylists.take(total!).toList()
-        : allPlaylists.safeSublist(start, end).toList();
-
-    final nextCursor = end < allPlaylists.length ? end.toString() : null;
     final hasMore = nextCursor != null;
 
     return LoadPlaylistPaginationResponse(
-      playlists: topPlaylists,
-      hasMore: hasMore,
-      cursor: nextCursor,
-    );
+        playlists: topPlaylists, hasMore: hasMore, cursor: nextCursor);
   }
 
   Future<LoadPlaylistPaginationResponse> _loadGlobalPlaylists({
@@ -179,7 +205,7 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
       // Collect all unique CIDs from top 5 playlists
       final cids = <String>[];
       for (final playlistRef in playlists) {
-        for (final item in playlistRef.playlist.items.safeSublist(0, 10)) {
+        for (final item in playlistRef.playlist.items.safeSublist(0, 50)) {
           if (item.cid != null) {
             cids.add(item.cid!);
           }

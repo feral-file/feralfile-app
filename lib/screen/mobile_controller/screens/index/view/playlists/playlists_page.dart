@@ -2,7 +2,6 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/dp1_playlist_details.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
@@ -10,7 +9,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
-import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -157,6 +155,8 @@ class _PlaylistsPageState extends State<PlaylistsPage>
     // Group playlists by owner for sections
     final playlistDataList = state.playlistData;
 
+    final hasMore = state.hasMore;
+
     return SliverList.builder(
       itemCount: 1,
       itemBuilder: (context, index) => Column(
@@ -173,6 +173,7 @@ class _PlaylistsPageState extends State<PlaylistsPage>
               ),
             ),
             playlists: playlistDataList,
+            hasMore: hasMore,
             onViewAllTap: () {
               Navigator.of(context).pushNamed(
                 AppRouter.allPlaylistsPage,

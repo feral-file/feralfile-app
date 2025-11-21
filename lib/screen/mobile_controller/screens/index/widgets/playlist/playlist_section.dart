@@ -14,6 +14,7 @@ class PlaylistSection extends StatelessWidget {
     this.onViewAllTap,
     this.onPlaylistItemTap,
     this.scrollController,
+    this.hasMore = true,
     super.key,
   });
 
@@ -23,6 +24,7 @@ class PlaylistSection extends StatelessWidget {
   final VoidCallback? onViewAllTap;
   final void Function(DP1NowDisplayingItem)? onPlaylistItemTap;
   final ScrollController? scrollController;
+  final bool hasMore;
 
   @override
   Widget build(BuildContext context) {
@@ -37,13 +39,14 @@ class PlaylistSection extends StatelessWidget {
           return PlaylistSectionHeader(
             sectionName: sectionName,
             sectionIcon: sectionIcon,
-            onViewAllTap: onViewAllTap,
+            onViewAllTap: hasMore ? onViewAllTap : null,
+            hasMore: hasMore,
           );
         }
 
         // Gap
         if (index == 1) {
-          return SizedBox(
+          return const SizedBox(
             height: PlaylistSectionTokens.gap,
           );
         }

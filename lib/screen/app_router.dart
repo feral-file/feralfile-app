@@ -246,11 +246,9 @@ class AppRouter {
         );
 
       case releaseNotesPage:
-        return PageTransition(
+        return CupertinoPageRoute(
           settings: settings,
-          type: PageTransitionType.bottomToTop,
-          curve: Curves.easeIn,
-          child: const ReleaseNotesPage(),
+          builder: (context) => const ReleaseNotesPage(),
         );
 
       case releaseNoteDetailPage:

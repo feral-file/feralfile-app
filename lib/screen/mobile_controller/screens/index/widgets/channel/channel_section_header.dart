@@ -8,12 +8,14 @@ class ChannelSectionHeader extends StatelessWidget {
     required this.sectionName,
     this.sectionIcon,
     this.onViewAllTap,
+    this.hasMore = true,
     super.key,
   });
 
   final String sectionName;
   final Widget? sectionIcon;
   final VoidCallback? onViewAllTap;
+  final bool hasMore;
 
   @override
   Widget build(BuildContext context) {
@@ -52,45 +54,44 @@ class ChannelSectionHeader extends StatelessWidget {
             ],
           ),
           // Right: View all button
-          GestureDetector(
-            onTap: onViewAllTap,
-            child: Container(
-              constraints: const BoxConstraints(
-                minWidth: 9.78,
-                minHeight: 8,
-              ),
-              color: Colors.transparent,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SvgPicture.asset(
-                    'assets/images/icon_arrow_left.svg',
-                    width: 9.78,
-                    height: 8,
-                    colorFilter: const ColorFilter.mode(
-                      Color(0xFFA0A0A0),
-                      BlendMode.srcIn,
+          if (hasMore)
+            GestureDetector(
+              onTap: onViewAllTap,
+              child: Container(
+                constraints: const BoxConstraints(
+                  minWidth: 9.78,
+                  minHeight: 8,
+                ),
+                color: Colors.transparent,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SvgPicture.asset(
+                      'assets/images/icon_arrow_left.svg',
+                      width: 9.78,
+                      height: 8,
+                      colorFilter: const ColorFilter.mode(
+                        Color(0xFFA0A0A0),
+                        BlendMode.srcIn,
+                      ),
                     ),
-                  ),
-                  const SizedBox(
-                    width: 8,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 1),
-                    child: Text(
-                      'All',
-                      style: theme.textTheme.ppMori400Grey12,
+                    const SizedBox(
+                      width: 8,
                     ),
-                  ),
-                ],
+                    Padding(
+                      padding: const EdgeInsets.only(right: 1),
+                      child: Text(
+                        'All',
+                        style: theme.textTheme.ppMori400Grey12,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
   }
 }
-
-
