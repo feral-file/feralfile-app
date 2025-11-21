@@ -9,9 +9,11 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/gateway/feralfile_docs_api.dart';
 import 'package:autonomy_flutter/gateway/pubdoc_api.dart';
+import 'package:autonomy_flutter/main.dart';
+import 'package:autonomy_flutter/model/release_note.dart';
 import 'package:autonomy_flutter/model/version_info.dart';
-import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
@@ -19,8 +21,10 @@ import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/helpers.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:autonomy_flutter/util/release_notes_parser.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
+import 'package:autonomy_flutter/view/release_note_bottom_sheet.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -28,11 +32,11 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 enum VersionCompatibilityResult {
-  compatible, // 0: Thiết bị tương thích
-  needUpdateApp, // 1: Cần update app
-  needUpdateDevice, // 2: Cần update device
-  unknown, // 3: Không xác định được
-  deviceNotFound; // 4: Không có thiết bị
+  compatible,
+  needUpdateApp,
+  needUpdateDevice,
+  unknown,
+  deviceNotFound;
 
   bool get isValid =>
       this != VersionCompatibilityResult.needUpdateApp &&
@@ -42,7 +46,7 @@ enum VersionCompatibilityResult {
 abstract class VersionService {
   Future<void> checkForUpdate();
 
-  Future<void> showReleaseNotes({String? currentVersion});
+  Future<List<ReleaseNote>> getReleaseNotes();
 
   Future<void> openLatestVersion();
 
@@ -60,11 +64,13 @@ abstract class VersionService {
 class VersionServiceImpl implements VersionService {
   VersionServiceImpl(
     this._pubdocAPI,
+    this._feralfileDocAPI,
     this._configurationService,
     this._navigationService,
   );
 
   final PubdocAPI _pubdocAPI;
+  final FeralFileDocsAPI _feralfileDocAPI;
   final ConfigurationService _configurationService;
   final NavigationService _navigationService;
 
@@ -208,7 +214,7 @@ class VersionServiceImpl implements VersionService {
   }
 
   @override
-  Future checkForUpdate() async {
+  Future<void> checkForUpdate() async {
     if (kDebugMode) {
       return;
     }
@@ -217,39 +223,55 @@ class VersionServiceImpl implements VersionService {
     }
 
     final versionInfo = await getVersionInfo();
-    PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    String currentVersion = packageInfo.version;
+    final packageInfo = await PackageInfo.fromPlatform();
+    final currentVersion = packageInfo.version;
 
     if (compareVersion(versionInfo.requiredVersion, currentVersion) > 0) {
       await showForceUpdateDialog(versionInfo.link);
     } else {
-      // check to show Release Notes
-      await showReleaseNotes(currentVersion: currentVersion);
+      // check to show the latest release notes
+      await showLatestReleaseNote();
     }
   }
 
-  @override
-  Future showReleaseNotes({String? currentVersion}) async {
-    if (currentVersion != null) {
-      final readVersion = _configurationService.getReadReleaseNotesVersion();
-      if (readVersion == null ||
-          compareVersion(readVersion, currentVersion) >= 0) {
+  Future<void> showLatestReleaseNote() async {
+    try {
+      final releaseNotes = await getReleaseNotes();
+      if (releaseNotes.isEmpty) {
+        return;
+      }
+
+      final latestReleaseNote = releaseNotes.first;
+      var readDate = _configurationService.getReadReleaseNotesVersion();
+
+      // Don't show release notes for new users
+      if (readDate == null) {
         unawaited(
-          _configurationService.setReadReleaseNotesInVersion(currentVersion),
+          _configurationService
+              .setReadReleaseNotesInVersion(latestReleaseNote.date),
         );
         return;
       }
-    }
 
-    final releaseNotes = await getReleaseNotes(currentVersion);
-    if (releaseNotes == 'TBD') {
-      return;
-    }
+      // Handle backward compatibility: if stored value is a version, ignore it
+      if (RegExp(r'^\d+\.\d+\.\d+').hasMatch(readDate)) {
+        // Old version format, treat as not read
+        readDate = null;
+      }
 
-    if (currentVersion != null) {
-      await _configurationService.setReadReleaseNotesInVersion(currentVersion);
+      // Check if user has already read the latest release note
+      if (readDate != null && readDate == latestReleaseNote.date) {
+        return;
+      }
+
+      unawaited(
+        _configurationService
+            .setReadReleaseNotesInVersion(latestReleaseNote.date),
+      );
+      await showReleaseNodeDialog(latestReleaseNote);
+    } catch (_) {
+      // On error, silently return
     }
-    await showReleaseNodeDialog(releaseNotes);
   }
 
   Future<VersionInfo> getVersionInfo() async {
@@ -268,33 +290,24 @@ class VersionServiceImpl implements VersionService {
     }
   }
 
-  Future<String> getReleaseNotes(String? currentVersion) async {
-    var releaseNotes = '';
+  @override
+  Future<List<ReleaseNote>> getReleaseNotes() async {
     try {
-      final app = (await isAppCenterBuild()) ? 'dev' : 'production';
-      releaseNotes = await _pubdocAPI.getReleaseNotesContent(app);
-
-      if (currentVersion != null) {
-        final textBegin = '[#] $currentVersion';
-        if (!releaseNotes.startsWith(textBegin)) {
-          releaseNotes = 'TBD';
-        }
-      }
+      final changeLogs = await _feralfileDocAPI.getChangeLogs();
+      return parseChangeLogs(changeLogs);
     } catch (_) {
-      releaseNotes = 'TBD';
+      return [];
     }
-
-    return releaseNotes;
   }
 
-  Future showForceUpdateDialog(String link) async {
+  Future<void> showForceUpdateDialog(String link) async {
     final context = _navigationService.navigatorKey.currentContext;
     if (context == null) {
       return;
     }
 
     final theme = Theme.of(context);
-    await UIHelper.showDialog(
+    await UIHelper.showDialog<void>(
       context,
       'update_required'.tr(),
       PopScope(
@@ -324,8 +337,8 @@ class VersionServiceImpl implements VersionService {
     );
   }
 
-  Future showReleaseNodeDialog(String releaseNotes) async {
-    var screenKey =
+  Future<void> showReleaseNodeDialog(ReleaseNote releaseNote) async {
+    final screenKey =
         'what_new'.tr(); // avoid showing multiple what's new screens
     if (UIHelper.currentDialogTitle == screenKey) {
       return;
@@ -333,14 +346,28 @@ class VersionServiceImpl implements VersionService {
 
     UIHelper.currentDialogTitle = screenKey;
 
-    await _navigationService.navigateTo(
-      AppRouter.releaseNotesPage,
-      arguments: releaseNotes,
+    final context = _navigationService.navigatorKey.currentContext;
+    if (context == null) {
+      return;
+    }
+
+    shouldShowNowDisplaying.value = false;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      isScrollControlled: true,
+      builder: (context) => ReleaseNoteBottomSheet(
+        releaseNote: releaseNote,
+      ),
     );
+
+    shouldShowNowDisplaying.value = true;
+    UIHelper.currentDialogTitle = '';
   }
 
   @override
-  Future openLatestVersion() async {
+  Future<void> openLatestVersion() async {
     final appStoreUrl =
         Platform.isIOS ? Constants.appStoreUrl : Constants.playStoreUrl;
     final uri = Uri.tryParse(appStoreUrl);

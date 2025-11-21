@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/model/release_note.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
 
 class MockVersionService implements VersionService {
@@ -7,12 +8,12 @@ class MockVersionService implements VersionService {
   }
 
   @override
-  Future<void> openLatestVersion() {
-    return Future.value();
+  Future<List<ReleaseNote>> getReleaseNotes() {
+    return Future.value([]);
   }
 
   @override
-  Future<void> showReleaseNotes({String? currentVersion}) {
+  Future<void> openLatestVersion() {
     return Future.value();
   }
 

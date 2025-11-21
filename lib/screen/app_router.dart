@@ -8,6 +8,7 @@
 import 'dart:io';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/model/release_note.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/autonomy_security_page.dart';
@@ -50,6 +51,7 @@ import 'package:autonomy_flutter/screen/onboarding/view_address/name_view_only_p
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address_bloc.dart';
 import 'package:autonomy_flutter/screen/onboarding_page.dart';
+import 'package:autonomy_flutter/screen/release_note_detail_page.dart';
 import 'package:autonomy_flutter/screen/release_notes_page.dart';
 import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
 import 'package:autonomy_flutter/screen/settings/data_management/data_management_page.dart';
@@ -82,6 +84,7 @@ class AppRouter {
   static const recoveryPhrasePage = 'recovery_phrase_page';
   static const autonomySecurityPage = 'security_page';
   static const releaseNotesPage = 'release_notes_page';
+  static const releaseNoteDetailPage = 'release_note_detail_page';
   static const hiddenArtworksPage = 'hidden_artworks_page';
   static const supportCustomerPage = 'support_customer_page';
   static const supportListPage = 'support_list_page';
@@ -247,8 +250,14 @@ class AppRouter {
           settings: settings,
           type: PageTransitionType.bottomToTop,
           curve: Curves.easeIn,
-          child: ReleaseNotesPage(
-            releaseNotes: settings.arguments! as String,
+          child: const ReleaseNotesPage(),
+        );
+
+      case releaseNoteDetailPage:
+        return CupertinoPageRoute(
+          settings: settings,
+          builder: (context) => ReleaseNoteDetailPage(
+            releaseNote: settings.arguments! as ReleaseNote,
           ),
         );
 

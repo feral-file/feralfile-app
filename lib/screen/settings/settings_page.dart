@@ -255,9 +255,6 @@ class _SettingsPageState extends State<SettingsPage>
                 style: theme.textTheme.ppMori400Grey14,
               ),
             ),
-            onTap: () async {
-              await injector<VersionService>().showReleaseNotes();
-            },
           ),
         const SizedBox(height: 10),
         StatefulBuilder(

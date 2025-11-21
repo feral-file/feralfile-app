@@ -12,6 +12,7 @@ import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/gateway/customer_support_api.dart';
 import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
 import 'package:autonomy_flutter/gateway/feralfile_api.dart';
+import 'package:autonomy_flutter/gateway/feralfile_docs_api.dart';
 import 'package:autonomy_flutter/gateway/iap_api.dart';
 import 'package:autonomy_flutter/gateway/mobile_controller_api.dart';
 import 'package:autonomy_flutter/gateway/pubdoc_api.dart';
@@ -182,6 +183,9 @@ Future<void> setupInjector() async {
   injector.registerLazySingleton(
     () => PubdocAPI(dio, baseUrl: Environment.pubdocURL),
   );
+  injector.registerLazySingleton(
+    () => FeralFileDocsAPI(dio, baseUrl: Environment.feralfileDocsURL),
+  );
 
   injector.registerLazySingleton<RemoteConfigService>(
     () => RemoteConfigServiceImpl(
@@ -237,7 +241,7 @@ Future<void> setupInjector() async {
     ),
   );
   injector.registerLazySingleton<VersionService>(
-    () => VersionServiceImpl(injector(), injector(), injector()),
+    () => VersionServiceImpl(injector(), injector(), injector(), injector()),
   );
   injector.registerLazySingleton<CustomerSupportService>(
     () => CustomerSupportServiceImpl(

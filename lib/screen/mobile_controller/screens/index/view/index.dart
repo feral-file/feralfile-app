@@ -1,6 +1,5 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
-import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/bluetooth_connected_device_config.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
@@ -10,7 +9,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/pla
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/works/works_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/header.dart';
 import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
-import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
@@ -227,6 +225,19 @@ class ListDirectoryPageState extends State<ListDirectoryPage>
         onTap: () {
           injector<NavigationService>()
               .navigateTo(AppRouter.supportCustomerPage);
+          isNowDisplayingBarExpanded.value = false;
+        },
+      ),
+      OptionItem(
+        title: 'release_notes'.tr(),
+        icon: SvgPicture.asset(
+          'assets/images/release_notes.svg',
+          width: 22,
+          height: 22,
+          colorFilter: const ColorFilter.mode(AppColor.white, BlendMode.srcIn),
+        ),
+        onTap: () {
+          injector<NavigationService>().navigateTo(AppRouter.releaseNotesPage);
           isNowDisplayingBarExpanded.value = false;
         },
       ),
