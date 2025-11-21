@@ -14,7 +14,6 @@ import 'dart:ui';
 import 'package:autonomy_flutter/common/database.dart';
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/design/build/components/NowPlayingBar.dart';
 import 'package:autonomy_flutter/model/announcement/announcement_adapter.dart';
 import 'package:autonomy_flutter/model/draft_customer_support.dart';
 import 'package:autonomy_flutter/model/identity.dart';
@@ -38,6 +37,7 @@ import 'package:autonomy_flutter/widgets/now_playing_bar/collapsed_now_playing_b
 import 'package:easy_localization/easy_localization.dart';
 import 'package:floor/floor.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
@@ -283,6 +283,7 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
   late AnimationController _animationController;
   bool _isVisible = false;
   late final ValueNotifier<bool> _shouldShowOverlay;
+  double _lastScrollPosition = 0;
 
   StreamSubscription<bool>? _keyboardVisibilitySubscription;
   StreamSubscription<NowDisplayingStatus?>? _nowDisplayingStreamSubscription;
@@ -343,6 +344,33 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
         nowDisplayingShowing.value;
   }
 
+  void _handleScrollUpdate(UserScrollNotification notification) {
+    if (notification.metrics.axis != Axis.vertical) {
+      return;
+    }
+
+    // Detect scroll direction using ScrollDirection
+    // ScrollDirection.reverse = scrolling DOWN (content moves up)
+    // ScrollDirection.forward = scrolling UP (content moves down)
+    // ScrollDirection.idle = not scrolling
+    switch (notification.direction) {
+      case ScrollDirection.reverse:
+        nowDisplayingVisibility.value = false;
+      case ScrollDirection.forward:
+        nowDisplayingVisibility.value = true;
+      case ScrollDirection.idle:
+        // No action needed for idle state
+        break;
+    }
+
+    // Track position để detect khi scroll to top
+    final currentScroll = notification.metrics.pixels;
+    _lastScrollPosition = currentScroll;
+    if (_lastScrollPosition == 0) {
+      log.info('Scroll to top');
+    }
+  }
+
   @override
   void dispose() {
     shouldShowNowDisplaying.removeListener(_updateAnimationBasedOnDisplayState);
@@ -365,9 +393,9 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
   @override
   Widget build(BuildContext context) {
     return Material(
-      child: NotificationListener<ScrollNotification>(
+      child: NotificationListener<UserScrollNotification>(
         onNotification: (notification) {
-          // _handleScrollUpdate(notification);
+          _handleScrollUpdate(notification);
           return false; // Allow the notification to continue to be dispatched
         },
         child: GestureDetector(
@@ -461,30 +489,30 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                       },
                     ),
 
-                    if (_isVisible)
-                      ValueListenableBuilder(
-                        valueListenable: isNowDisplayingBarExpanded,
-                        builder: (context, value, child) {
-                          if (value) {
-                            return const Positioned.fill(
-                                child: SizedBox.shrink());
-                          }
-
-                          final paddingBottom =
-                              MediaQuery.of(context).padding.bottom;
-                          return Positioned(
-                            bottom: paddingBottom +
-                                UIConstants.nowDisplayingBarBottomPadding +
-                                NowPlayingBarTokens.collapseHeight,
-                            left: 0,
-                            right: 0,
-                            child: const Material(
-                              color: Colors.transparent,
-                              child: LLMTextInput(),
-                            ),
-                          );
-                        },
-                      ),
+                    // if (_isVisible)
+                    //   ValueListenableBuilder(
+                    //     valueListenable: isNowDisplayingBarExpanded,
+                    //     builder: (context, value, child) {
+                    //       if (value) {
+                    //         return const Positioned.fill(
+                    //             child: SizedBox.shrink());
+                    //       }
+                    //
+                    //       final paddingBottom =
+                    //           MediaQuery.of(context).padding.bottom;
+                    //       return Positioned(
+                    //         bottom: paddingBottom +
+                    //             UIConstants.nowDisplayingBarBottomPadding +
+                    //             NowPlayingBarTokens.collapseHeight,
+                    //         left: 0,
+                    //         right: 0,
+                    //         child: const Material(
+                    //           color: Colors.transparent,
+                    //           child: LLMTextInput(),
+                    //         ),
+                    //       );
+                    //     },
+                    //   ),
                     ValueListenableBuilder(
                       valueListenable: CustomRouteObserver.bottomSheetHeight,
                       builder: (context, bottomSheetHeight, child) {
@@ -514,7 +542,19 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                                   curve: Curves.easeOut,
                                 ),
                               ),
-                              child: const NowDisplayingBar(),
+                              child: Column(
+                                children: [
+                                  const Material(
+                                    color: Colors.transparent,
+                                    child: LLMTextInput(),
+                                  ),
+                                  // SizedBox(
+                                  //   height: UIConstants
+                                  //       .nowDisplayingBarBottomPadding,
+                                  // ),
+                                  const NowDisplayingBar(),
+                                ],
+                              ),
                             ),
                           ),
                         );

@@ -58,7 +58,8 @@ class _LLMTextInputState extends State<LLMTextInput> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(LLMTextInputTokens.padding.toDouble()),
+      padding:
+          EdgeInsets.symmetric(vertical: LLMTextInputTokens.padding.toDouble()),
       child: Container(
         decoration: BoxDecoration(
           color: LLMTextInputTokens.llmBgColor,

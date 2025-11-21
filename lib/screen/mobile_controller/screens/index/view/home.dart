@@ -71,24 +71,97 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
               controller: _scrollController,
               floatHeaderSlivers: true,
               headerSliverBuilder: (context, innerBoxIsScrolled) {
-                return [
-                  // Add padding before header
-                  SliverPadding(
-                    padding: const EdgeInsets.only(top: 48),
-                    sliver: SliverPersistentHeader(
-                      pinned: false,
-                      floating: false,
-                      delegate: _CombinedHeaderDelegate(
-                        selectedTab: _selectedTab,
-                        onTabChanged: (tab) {
-                          setState(() {
-                            _selectedTab = tab;
-                          });
-                        },
-                        isBodyScrolling: innerBoxIsScrolled,
+                final height = innerBoxIsScrolled ? 75.0 : 123.0;
+                final hamburgerButton = GestureDetector(
+                  onTap: () {
+                    // Handle back button tap
+                    // UIHelper.showCenterMenu(context,
+                    //     options: _defaultOptions);
+                  },
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        right: 15,
+                        top: 16,
+                        left: 15,
+                        bottom: 16,
+                      ),
+                      child: SvgPicture.asset(
+                        'assets/images/Drawer.svg',
+                        width: 22,
+                        height: 14,
+                        colorFilter: const ColorFilter.mode(
+                          AppColor.white,
+                          BlendMode.srcIn,
+                        ),
                       ),
                     ),
                   ),
+                );
+                return [
+                  SliverAppBar(
+                    pinned: false,
+                    floating: true,
+                    snap: true,
+                    elevation: 0,
+                    toolbarHeight: height,
+                    expandedHeight: height,
+                    flexibleSpace: FlexibleSpaceBar(
+                      background: Container(
+                        color: AppColor.auGreyBackground,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (!innerBoxIsScrolled)
+                              SizedBox(
+                                height: 106,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    hamburgerButton,
+                                  ],
+                                ),
+                              ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: HomeIndexHeader(
+                                    selectedTab: _selectedTab,
+                                    onTabChanged: (tab) {
+                                      setState(() {
+                                        _selectedTab = tab;
+                                      });
+                                    },
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 16,
+                                ),
+                                if (innerBoxIsScrolled) hamburgerButton,
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // SliverPadding(
+                  //   padding: const EdgeInsets.only(top: 48),
+                  //   sliver: SliverPersistentHeader(
+                  //     pinned: false,
+                  //     floating: false,
+                  //     delegate: _CombinedHeaderDelegate(
+                  //       selectedTab: _selectedTab,
+                  //       onTabChanged: (tab) {
+                  //         setState(() {
+                  //           _selectedTab = tab;
+                  //         });
+                  //       },
+                  //       isBodyScrolling: innerBoxIsScrolled,
+                  //     ),
+                  //   ),
+                  // ),
                 ];
               },
               body: SingleChildScrollView(
