@@ -552,7 +552,11 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                                   //   height: UIConstants
                                   //       .nowDisplayingBarBottomPadding,
                                   // ),
-                                  const NowDisplayingBar(),
+                                  Row(
+                                    children: [
+                                      Expanded(child: const NowDisplayingBar()),
+                                    ],
+                                  ),
                                 ],
                               ),
                             ),
