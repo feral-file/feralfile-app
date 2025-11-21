@@ -886,7 +886,7 @@ class NftTokensServiceImpl extends NftTokensService {
       );
     }
 
-    if (result is UpdateTokensSuccess) {
+    if (result is UpdateTokensData) {
       final controller = _streamControllers[result.uuid];
       if (controller != null && !controller.isClosed) {
         bool hasError = false;
@@ -964,8 +964,6 @@ class NftTokensServiceImpl extends NftTokensService {
         // Emit updated tokens to stream
         controller.add(updatedTokens);
 
-        await controller.close();
-        _streamControllers.remove(result.uuid);
         NftCollection.logger.info(
           '[UPDATE_TOKENS_IN_ISOLATE][end] ${result.uuid} - Updated ${updatedTokens.length} tokens',
         );
@@ -976,6 +974,31 @@ class NftTokensServiceImpl extends NftTokensService {
               .updateLastUpdateChangeAt(latestChangeAt);
         }
       }
+    }
+
+    if (result is UpdateTokensSuccess) {
+      final controller = _streamControllers[result.uuid];
+      if (controller != null && !controller.isClosed) {
+        controller.add([]);
+        await controller.close();
+        _streamControllers.remove(result.uuid);
+      }
+      NftCollection.logger.info(
+        '[UPDATE_TOKENS_IN_ISOLATE][end] ${result.uuid} - Stream closed',
+      );
+    }
+
+    if (result is UpdateTokensFailure) {
+      final controller = _streamControllers[result.uuid];
+      if (controller != null && !controller.isClosed) {
+        controller.addError(result.exception);
+        await controller.close();
+        _streamControllers.remove(result.uuid);
+      }
+      Sentry.captureException(result.exception);
+      NftCollection.logger.info(
+        '[UPDATE_TOKENS_IN_ISOLATE][error] ${result.uuid} - ${result.exception}',
+      );
     }
   }
 
@@ -1180,7 +1203,6 @@ class NftTokensServiceImpl extends NftTokensService {
   ) async {
     try {
       final isolateIndexerService = _isolateScopeInjector<NftIndexerService>();
-      final List<Change> allChanges = [];
 
       // Fetch changes per address with its own since filter
       for (final entry in addressToSinceIso.entries) {
@@ -1191,12 +1213,12 @@ class NftTokensServiceImpl extends NftTokensService {
           addr,
           sinceIso,
         );
-        allChanges.addAll(changes);
+        _isolateSendPort?.send(UpdateTokensData(uuid, changes));
       }
 
       // Send all changes to main isolate to fetch tokens from database
       _isolateSendPort?.send(
-        UpdateTokensSuccess(uuid, allChanges),
+        UpdateTokensSuccess(uuid),
       );
     } catch (exception) {
       _isolateSendPort?.send(UpdateTokensFailure(uuid, exception));
@@ -1335,7 +1357,13 @@ class ReindexTokensFailure extends TokensServiceResult {
 }
 
 class UpdateTokensSuccess extends TokensServiceResult {
-  UpdateTokensSuccess(this.uuid, this.changes);
+  UpdateTokensSuccess(this.uuid);
+
+  final String uuid;
+}
+
+class UpdateTokensData extends TokensServiceResult {
+  UpdateTokensData(this.uuid, this.changes);
 
   final String uuid;
   final List<Change> changes;
