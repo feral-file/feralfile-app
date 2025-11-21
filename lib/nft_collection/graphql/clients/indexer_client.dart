@@ -90,6 +90,8 @@ class IndexerClient {
           },
           throwable: result.exception,
         ));
+        throw Exception(
+            'Error querying: ${result.exception?.graphqlErrors.map((e) => e.message).join(', ')}');
       }
       if (subKey != null) {
         return result.data?[subKey];
@@ -105,7 +107,7 @@ class IndexerClient {
           'vars': vars.toString(),
         },
       ));
-      return null;
+      throw Exception('Error querying: $e');
     }
   }
 
@@ -137,6 +139,7 @@ class IndexerClient {
             },
             level: SentryLevel.error,
           ));
+          throw Exception('Error mutating: $e');
         },
       );
 
@@ -168,6 +171,7 @@ class IndexerClient {
           'vars': vars.toString(),
         },
       ));
+      throw Exception('Error mutating: $e');
     }
   }
 

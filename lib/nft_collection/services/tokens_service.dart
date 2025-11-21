@@ -919,7 +919,8 @@ class NftTokensServiceImpl extends NftTokensService {
           // Apply each change to the token
           for (final change in sortedChanges) {
             try {
-              if (change.isMint() && change.tokenCid != null) {
+              if ((change.isMint() || change.isTransfer()) &&
+                  change.tokenCid != null) {
                 // if the change is a mint, we need to fetch token from indexer, then insert into database
                 final cid = change.tokenCid;
                 final tokens = await getManualTokens(cids: [cid!]);

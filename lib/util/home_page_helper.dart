@@ -111,7 +111,8 @@ class HomePageHelper {
         } else {
           log.info('No dynamic query found');
         }
-      } catch (_) {
+      } catch (e) {
+        log.info('Error in refresh tokens : $e');
         // Silently ignore refresh errors
       }
     });
