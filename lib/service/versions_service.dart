@@ -257,10 +257,6 @@ class VersionServiceImpl implements VersionService {
       if (RegExp(r'^\d+\.\d+\.\d+').hasMatch(readDate)) {
         // Old version format, treat as not read
         readDate = null;
-        unawaited(
-          _configurationService
-              .setReadReleaseNotesInVersion(latestReleaseNote.date),
-        );
       }
 
       // Check if user has already read the latest release note
@@ -268,6 +264,10 @@ class VersionServiceImpl implements VersionService {
         return;
       }
 
+      unawaited(
+        _configurationService
+            .setReadReleaseNotesInVersion(latestReleaseNote.date),
+      );
       await showReleaseNodeDialog(latestReleaseNote);
     } catch (_) {
       // On error, silently return
