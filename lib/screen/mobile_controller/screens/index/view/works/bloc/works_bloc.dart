@@ -5,6 +5,7 @@ import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/dp1_manifest_helper.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -109,8 +110,9 @@ class WorksBloc extends Bloc<WorksEvent, WorksState> {
       final pageNowDisplayingItems = <DP1NowDisplayingItem>[];
       for (int i = 0; i < items.length; i++) {
         final dp1Item = items[i];
-        final assetToken = i < assetTokens.length ? assetTokens[i] : null;
-        final dp1Manifest = dp1Item.ref != null ? manifests[dp1Item.ref] : null;
+        final assetToken =
+            assetTokens.firstWhereOrNull((e) => e.cid == dp1Item.cid);
+        final dp1Manifest = manifests[dp1Item.ref];
         pageNowDisplayingItems.add(
           DP1NowDisplayingItem(
             dp1Item: dp1Item,
