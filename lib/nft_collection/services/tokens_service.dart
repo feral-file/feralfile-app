@@ -20,6 +20,7 @@ import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
+import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/list_extension.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -582,6 +583,9 @@ class NftTokensServiceImpl extends NftTokensService {
   Future<Stream<List<AssetToken>>> updateTokensInIsolate(
     Map<String, DateTime?> addressToSince,
   ) async {
+    NftCollection.logger
+        .info('[updateTokensInIsolate][start] ${addressToSince.toString()}');
+
     await startIsolateOrWait();
 
     final uuid = const Uuid().v4();
@@ -885,7 +889,10 @@ class NftTokensServiceImpl extends NftTokensService {
     if (result is UpdateTokensSuccess) {
       final controller = _streamControllers[result.uuid];
       if (controller != null && !controller.isClosed) {
+        bool hasError = false;
         // Group changes by tokenCid
+
+        final latestChangeAt = result.changes.lastOrNull?.changedAt;
         final groupedChanges = result.changes
             .groupBy((change) => change.tokenId?.toString() ?? '');
         final tokenIds =
@@ -935,6 +942,7 @@ class NftTokensServiceImpl extends NftTokensService {
                 level: SentryLevel.error,
                 throwable: e,
               )));
+              hasError = true;
             }
           }
 
@@ -960,6 +968,12 @@ class NftTokensServiceImpl extends NftTokensService {
         NftCollection.logger.info(
           '[UPDATE_TOKENS_IN_ISOLATE][end] ${result.uuid} - Updated ${updatedTokens.length} tokens',
         );
+        if (!hasError && latestChangeAt != null) {
+          NftCollection.logger.info(
+              '[UPDATE_TOKENS_IN_ISOLATE][update last update change at] $latestChangeAt');
+          injector<UserDp1PlaylistService>()
+              .updateLastUpdateChangeAt(latestChangeAt);
+        }
       }
     }
   }

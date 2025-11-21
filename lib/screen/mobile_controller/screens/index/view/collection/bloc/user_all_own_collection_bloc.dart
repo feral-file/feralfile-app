@@ -501,9 +501,13 @@ class UserAllOwnCollectionBloc
       }
       _activeCompleters[subType] = completer;
 
-      final now = DateTime.now();
-      final addressMap = injector<UserDp1PlaylistService>()
-          .getAddressOldestLastIndexTime(addresses: event.addresses);
+      final lastUpdateChangeAt =
+          injector<UserDp1PlaylistService>().getLastUpdateChangeAt() ??
+              DateTime(1970);
+
+      final addressMap = {
+        for (final addr in event.addresses) addr: lastUpdateChangeAt,
+      };
 
       // get stream from token service (updates from indexer changes)
       final stream = await _tokensService.updateTokensInIsolate(addressMap);
@@ -522,12 +526,6 @@ class UserAllOwnCollectionBloc
           _activeCompleters[subType]?.completeError(error);
         },
         onDone: () async {
-          await injector<UserDp1PlaylistService>()
-              .updateAddressLastFetchTokenTime(
-            addresses: {
-              for (final addr in event.addresses) addr: now,
-            },
-          );
           _activeCompleters[subType]?.complete();
         },
         cancelOnError: true,
