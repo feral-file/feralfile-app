@@ -962,7 +962,9 @@ class NftTokensServiceImpl extends NftTokensService {
         }
 
         // Emit updated tokens to stream
-        controller.add(updatedTokens);
+        if (!controller.isClosed && !controller.isPaused) {
+          controller.add(updatedTokens);
+        }
 
         NftCollection.logger.info(
           '[UPDATE_TOKENS_IN_ISOLATE][end] ${result.uuid} - Updated ${updatedTokens.length} tokens',
