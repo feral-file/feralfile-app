@@ -1204,17 +1204,24 @@ class NftTokensServiceImpl extends NftTokensService {
     try {
       final isolateIndexerService = _isolateScopeInjector<NftIndexerService>();
 
-      // Fetch changes per address with its own since filter
-      for (final entry in addressToSinceIso.entries) {
-        final addr = entry.key;
-        final sinceIso = entry.value;
-        final changes = await _getChangesForAddress(
-          isolateIndexerService,
-          addr,
-          sinceIso,
-        );
+      // Get all addresses and find the oldest sinceIso time
+      final addresses = addressToSinceIso.keys.toList();
+      final sinceIsoValues = addressToSinceIso.values.whereType<String>();
+      final oldestSinceIso = sinceIsoValues.isEmpty
+          ? null
+          : sinceIsoValues.reduce((a, b) => a.compareTo(b) < 0 ? a : b);
+
+      // Fetch changes for all addresses at once
+      final changesStream = _getChangesForAddress(
+        isolateIndexerService,
+        addresses,
+        oldestSinceIso,
+      );
+
+      // Listen to the changes stream and send UpdateTokensData for each batch
+      await changesStream.forEach((changes) {
         _isolateSendPort?.send(UpdateTokensData(uuid, changes));
-      }
+      });
 
       // Send all changes to main isolate to fetch tokens from database
       _isolateSendPort?.send(
@@ -1225,30 +1232,30 @@ class NftTokensServiceImpl extends NftTokensService {
     }
   }
 
-  static Future<List<Change>> _getChangesForAddress(
+  static Stream<List<Change>> _getChangesForAddress(
     NftIndexerService service,
-    String address,
+    List<String> addresses,
     String? sinceIso,
-  ) async {
+  ) async* {
     var offset = 0;
     const pageSize = 50;
-    final List<Change> acc = [];
 
     while (true) {
       final req = QueryChangesRequest(
-        addresses: [address],
+        addresses: addresses,
         since: sinceIso,
         limit: pageSize,
         offset: offset,
       );
       final page = await service.getChanges(req);
       if (page.items.isEmpty) break;
-      acc.addAll(page.items);
+
+      // Yield each page of changes to the stream
+      yield page.items;
+
       offset += page.items.length;
       if (page.items.length < pageSize) break;
     }
-
-    return acc;
   }
 }
 
