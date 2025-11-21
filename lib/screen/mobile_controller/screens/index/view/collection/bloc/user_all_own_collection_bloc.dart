@@ -501,8 +501,17 @@ class UserAllOwnCollectionBloc
       }
       _activeCompleters[subType] = completer;
 
+      final lastFetchTokenTimeMap = injector<UserDp1PlaylistService>()
+          .getAddressOldestLastFetchTokenTime(addresses: event.addresses);
+
+      final sinceIsoValues = lastFetchTokenTimeMap.values.nonNulls.toList();
+      final oldestLastFetchTokenTime = sinceIsoValues.isEmpty
+          ? null
+          : sinceIsoValues.reduce((a, b) => a.compareTo(b) < 0 ? a : b);
+
       final lastUpdateChangeAt =
           injector<UserDp1PlaylistService>().getLastUpdateChangeAt() ??
+              oldestLastFetchTokenTime ??
               DateTime(1970);
 
       final addressMap = {
