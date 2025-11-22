@@ -100,17 +100,19 @@ class HomePageHelper {
         final dynamicQuery = allOwnedPlaylist.firstDynamicQuery;
         if (dynamicQuery != null) {
           final owners = dynamicQuery.params.owners;
-          final lastUpdatedTime = injector<UserDp1PlaylistService>()
+          // filter out addresses that have not been indexed
+          final lastIndexedTime = injector<UserDp1PlaylistService>()
               .getAddressOldestLastIndexTime(addresses: owners);
           final addressesToRefresh =
-              owners.where((e) => lastUpdatedTime[e] != null).toList();
+              owners.where((e) => lastIndexedTime[e] != null).toList();
           log.info('Refreshing tokens for ${addressesToRefresh}');
           injector<UserAllOwnCollectionBloc>()
               .add(UpdateTokensOfAddresses(addresses: addressesToRefresh));
         } else {
           log.info('No dynamic query found');
         }
-      } catch (_) {
+      } catch (e) {
+        log.info('Error in refresh tokens : $e');
         // Silently ignore refresh errors
       }
     });

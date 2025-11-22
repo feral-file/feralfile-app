@@ -110,8 +110,8 @@ class PlaylistDetailsBloc
       for (int i = 0; i < pageItems.length; i++) {
         final dp1Item = pageItems[i];
         final assetToken =
-            i < pageAssetTokens.length ? pageAssetTokens[i] : null;
-        final dp1Manifest = dp1Item.ref != null ? manifests[dp1Item.ref] : null;
+            pageAssetTokens.firstWhereOrNull((e) => e.cid == dp1Item.cid);
+        final dp1Manifest = manifests[dp1Item.ref];
 
         nowDisplayingItems.add(
           DP1NowDisplayingItem(
@@ -192,8 +192,8 @@ class PlaylistDetailsBloc
       for (int i = 0; i < pageItems.length; i++) {
         final dp1Item = pageItems[i];
         final assetToken =
-            i < pageAssetTokens.length ? pageAssetTokens[i] : null;
-        final dp1Manifest = dp1Item.ref != null ? manifests[dp1Item.ref] : null;
+            pageAssetTokens.firstWhereOrNull((e) => e.cid == dp1Item.cid);
+        final dp1Manifest = manifests[dp1Item.ref];
 
         newNowDisplayingItems.add(
           DP1NowDisplayingItem(

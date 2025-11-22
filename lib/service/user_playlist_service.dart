@@ -310,4 +310,13 @@ class UserDp1PlaylistService {
     // await injector<ConfigurationService>().clearAddressLastRefreshedTime();
     cachedAllOwnedPlaylist = null;
   }
+
+  Future<void> updateLastUpdateChangeAt(DateTime latestChangeAt) async {
+    await injector<ConfigurationService>()
+        .setLastUpdateChangeAt(latestChangeAt.toUtc());
+  }
+
+  DateTime? getLastUpdateChangeAt() {
+    return injector<ConfigurationService>().getLastUpdateChangeAt();
+  }
 }
