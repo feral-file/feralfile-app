@@ -1,5 +1,6 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
+import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/all_channels_page.dart';
@@ -89,7 +90,7 @@ class _ChannelsPageState extends State<ChannelsPage>
         const SliverToBoxAdapter(
           child: SizedBox(height: 50),
         ),
-        _buildGlobalChannels(),
+        // _buildGlobalChannels(),
       ],
     );
   }
@@ -134,7 +135,7 @@ class _ChannelsPageState extends State<ChannelsPage>
   }
 
   Widget _buildChannels(ChannelsState state, ChannelType channelType) {
-    final channelDataList = state.channelData;
+    final channelDataList = state.channelData.safeSublist(0, 5);
     final hasMore = state.hasMore;
 
     return SliverList.builder(

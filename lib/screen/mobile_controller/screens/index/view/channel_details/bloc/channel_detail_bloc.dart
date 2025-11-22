@@ -140,9 +140,9 @@ class ChannelDetailBloc extends Bloc<ChannelDetailEvent, ChannelDetailState> {
           PlaylistData(
             playlistReference: PlaylistReference(
               playlist: playlist,
-              url: '',
+              url: _dp1playlistService.baseUrl,
             ),
-            creator: 'Channel',
+            creator: '',
             items: items,
           ),
         );

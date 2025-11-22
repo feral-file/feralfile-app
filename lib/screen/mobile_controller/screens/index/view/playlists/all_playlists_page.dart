@@ -3,6 +3,7 @@ import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
@@ -48,8 +49,22 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    _playlistsBloc = context.read<PlaylistsBloc>();
+    _playlistsBloc = _getPlaylistsBloc();
     _playlistsBloc.add(const LoadPlaylistsEvent());
+  }
+
+  PlaylistsBloc _getPlaylistsBloc() {
+    switch (widget.payload.playlistType) {
+      case PlaylistType.curated:
+        return injector<PlaylistsBloc>(
+            instanceName: PlaylistsBlocInstance.curated.instanceName);
+      case PlaylistType.me:
+        return injector<PlaylistsBloc>(
+            instanceName: PlaylistsBlocInstance.my.instanceName);
+      case PlaylistType.global:
+        return injector<PlaylistsBloc>(
+            instanceName: PlaylistsBlocInstance.global.instanceName);
+    }
   }
 
   @override

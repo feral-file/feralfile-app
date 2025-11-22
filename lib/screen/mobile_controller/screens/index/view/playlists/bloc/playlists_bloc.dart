@@ -135,10 +135,12 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
       playlists.add(PlaylistReference.fromFeralFileDP1Call(playlist));
     }
 
-    final topPlaylists = playlists.safeSublist(0, pageSize).toList();
-    final nextCursor = topPlaylists.length < playlists.length
-        ? topPlaylists.length.toString()
-        : null;
+    final start = int.tryParse(cursor ?? '0') ?? 0;
+    final end = start + pageSize;
+
+    final topPlaylists = playlists.safeSublist(start, end).toList();
+    final nextCursor =
+        end < playlists.length ? topPlaylists.length.toString() : null;
 
     final hasMore = nextCursor != null;
 
@@ -205,7 +207,7 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
       // Collect all unique CIDs from top 5 playlists
       final cids = <String>[];
       for (final playlistRef in playlists) {
-        for (final item in playlistRef.playlist.items.safeSublist(0, 50)) {
+        for (final item in playlistRef.playlist.items) {
           if (item.cid != null) {
             cids.add(item.cid!);
           }
@@ -249,10 +251,15 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
           );
         }
 
+        final channelReference = injector<FeralFileFeedManager>()
+            .getCachedChannelReferenceByPlaylist(playlist);
+        final creator =
+            channelReference != null ? channelReference.channel.title : '';
+
         playlistDataList.add(
           PlaylistData(
             playlistReference: playlistRef,
-            creator: 'Me',
+            creator: creator,
             items: items,
           ),
         );

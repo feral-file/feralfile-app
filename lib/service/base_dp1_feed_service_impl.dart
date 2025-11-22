@@ -7,6 +7,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_respons
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_create_playlist_request.dart';
 import 'package:autonomy_flutter/service/base_dp1_feed_service.dart';
+import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/util/feed_cache.dart';
 import 'package:autonomy_flutter/util/log.dart';
 
@@ -180,5 +181,28 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
 
   void clearCache() {
     cache.clearAll();
+  }
+
+  /*
+  =======================================================================
+
+  SERVICE CONFIGURATION
+
+  =======================================================================
+   */
+
+  /// Get the feed service name mapping from remote config
+  /// Returns a map of {url: name}
+  Map<String, String> getServiceUrlToNameMap() {
+    return injector<RemoteConfigService>().getConfig(
+      ConfigGroup.dp1Playlist,
+      ConfigKey.dp1FeedServerUrlToName,
+      {},
+    );
+  }
+
+  /// Get the service name for this feed service
+  String? get name {
+    return getServiceUrlToNameMap()[baseUrl];
   }
 }

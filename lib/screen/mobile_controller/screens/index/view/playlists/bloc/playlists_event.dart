@@ -20,11 +20,11 @@ enum PlaylistType {
 
   String get description => switch (this) {
         PlaylistType.curated =>
-          'Curated playlists are curated by the team\n to help you discover new music.\nView all curated playlists\nby clicking the button below.',
+          'Playlists assembled by Feral File and a small group of invited artists and curators. These are early recommendations to help you explore digital art as we build toward deeper, global curation.',
         PlaylistType.me =>
-          'Me playlists are playlists created by the user\n to help you discover new music.\nView all me playlists\nby clicking the button below.',
+          'Playlists built from the wallet addresses you add. Use it to browse the works you own or to explore any address you’re curious about.',
         PlaylistType.global =>
-          'Global playlists are playlists created by the team\n to help you discover new music.\nView all global playlists\nby clicking the button below.',
+          'A rotating selection of public playlists and on-chain collections gathered from across the ecosystem. It’s a broad starting point for discovery, not a ranking or popularity list.',
       };
 }
 

@@ -397,6 +397,18 @@ class FeralFileFeedManager extends FeedManager {
       nextCursor,
     );
   }
+
+  ChannelReference? getCachedChannelReferenceByPlaylist(DP1Call playlist) {
+    for (final feedService in feedServices) {
+      if (feedService is FeralFileDP1FeedService) {
+        final channel = feedService.getChannelByPlaylistId(playlist.id);
+        if (channel != null) {
+          return ChannelReference(channel: channel, url: feedService.baseUrl);
+        }
+      }
+    }
+    return null;
+  }
 }
 
 class PlaylistReference {

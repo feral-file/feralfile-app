@@ -46,7 +46,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/cha
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/dp1_playlist_details.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/name_view_only_page.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address_bloc.dart';
@@ -486,12 +485,7 @@ class AppRouter {
           settings: settings,
           builder: (context) => Stack(
             children: [
-              BlocProvider<PlaylistsBloc>.value(
-                value: injector<PlaylistsBloc>(
-                  instanceName: PlaylistsBlocInstance.curated.instanceName,
-                ),
-                child: AllPlaylistsPage(payload: payload),
-              ),
+              AllPlaylistsPage(payload: payload),
               if (shouldShowOverlay)
                 IgnorePointer(
                   ignoring: true,

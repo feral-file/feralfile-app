@@ -1,5 +1,6 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
+import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
@@ -89,7 +90,7 @@ class _PlaylistsPageState extends State<PlaylistsPage>
         SliverToBoxAdapter(
           child: SizedBox(height: 50),
         ),
-        _buildGlobalPlaylists(),
+        // _buildGlobalPlaylists(),
       ],
     );
   }
@@ -153,7 +154,7 @@ class _PlaylistsPageState extends State<PlaylistsPage>
 
   Widget _buildPlaylists(PlaylistsState state, PlaylistType playlistType) {
     // Group playlists by owner for sections
-    final playlistDataList = state.playlistData;
+    final playlistDataList = state.playlistData.safeSublist(0, 5);
 
     final hasMore = state.hasMore;
 

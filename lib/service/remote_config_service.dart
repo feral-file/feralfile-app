@@ -156,6 +156,10 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
       ],
       ConfigKey.dp1FeedCacheDuration.getString: '86400',
       ConfigKey.dp1FeedLastUpdated.getString: '2025-01-01T00:00:00Z',
+      ConfigKey.dp1FeedServerUrlToName.getString: {
+        'https://dp1-feed-operator-api-prod.autonomy-system.workers.dev':
+            'Feral File',
+      },
     },
     ConfigGroup.documentation.getString: {
       ConfigKey.docsUrl.getString: 'https://docs.feralfile.com/ff1?from=app',
@@ -339,6 +343,7 @@ enum ConfigKey {
   dp1PlaylistChannelUrls,
   dp1FeedCacheDuration,
   dp1FeedLastUpdated,
+  dp1FeedServerUrlToName,
   docsUrl,
   cacheValidDuration,
   lastForceUpdateTime,
@@ -432,6 +437,8 @@ extension ConfigKeyExtension on ConfigKey {
         return 'feed_cache_duration';
       case ConfigKey.dp1FeedLastUpdated:
         return 'feed_last_updated';
+      case ConfigKey.dp1FeedServerUrlToName:
+        return 'feed_server_url_to_name';
       case ConfigKey.docsUrl:
         return 'docs_url';
       case ConfigKey.cacheValidDuration:

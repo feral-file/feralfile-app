@@ -186,7 +186,7 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
           .getAllCachedPlaylistsOfChannels(channels);
       final playlistItems = <DP1Item>[];
       for (final playlist in playlists) {
-        playlistItems.addAll(playlist.playlist.items.safeSublist(0, 50));
+        playlistItems.addAll(playlist.playlist.items);
       }
 
       final cids = playlistItems.map((item) => item.cid).nonNulls.toList();
@@ -203,7 +203,7 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
         // Collect items from all playlists in this channel
         final channelItems = <DP1NowDisplayingItem>[];
         for (final playlist in channelPlaylists) {
-          final items = playlist.playlist.items.safeSublist(0, 50);
+          final items = playlist.playlist.items;
           for (final item in items) {
             final assetToken =
                 assetTokens.firstWhereOrNull((token) => token.cid == item.cid);
@@ -214,10 +214,14 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
           }
         }
 
+        final service = injector<FeralFileFeedManager>()
+            .getFeedServiceByUrl(channelRef.url);
+        final creator = service?.name ?? '';
+
         channelDataList.add(
           ChannelData(
             channelReference: channelRef,
-            creator: 'Channel',
+            creator: creator,
             items: channelItems,
           ),
         );

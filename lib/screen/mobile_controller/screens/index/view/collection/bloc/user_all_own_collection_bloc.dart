@@ -7,6 +7,8 @@ import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -395,6 +397,8 @@ class UserAllOwnCollectionBloc
             .toList(),
       ),
     );
+    injector<PlaylistsBloc>(instanceName: PlaylistsBlocInstance.my.instanceName)
+        .add(LoadPlaylistsEvent());
   }
 
   Future<void> _onClearData(

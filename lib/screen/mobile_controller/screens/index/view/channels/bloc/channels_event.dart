@@ -20,14 +20,13 @@ enum ChannelType {
 
   String get description => switch (this) {
         ChannelType.curated =>
-          'Curated channels are curated by the team to help you discover new content. '
-          'View all curated channels by clicking the button below.',
-        ChannelType.me =>
-          'Me channels are channels created by the user to help you discover new content. '
-          'View all me channels by clicking the button below.',
+          'A small set of Channels selected by Feral File and invited collaborators. '
+              'These are early recommendations designed to give you strong entry points into digital art.',
+        ChannelType.me => 'Public Channels gathered from across the ecosystem. '
+            'They’re not ranked or popularity-based—they simply give you a wide view of what’s out there, organized by source.',
         ChannelType.global =>
-          'Global channels are channels created by the team to help you discover new content. '
-          'View all global channels by clicking the button below.',
+          'Public Channels gathered from across the ecosystem. '
+              'They’re not ranked or popularity-based—they simply give you a wide view of what’s out there, organized by source.',
       };
 }
 
