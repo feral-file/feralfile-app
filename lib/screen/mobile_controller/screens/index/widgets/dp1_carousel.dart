@@ -18,28 +18,29 @@ class DP1Carousel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      controller: scrollController,
-      scrollDirection: Axis.horizontal,
-      physics: const PageScrollPhysics(),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: DP1CarouselTokens.contentPaddingHorizontal,
-          vertical: DP1CarouselTokens.contentPaddingVertical,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: List.generate(
-            items.length,
-            (index) => DP1ItemThumbnail(
-              item: items[index],
-              onTap: () {
-                onItemTap?.call(items[index]);
-              },
+    return SizedBox(
+      height: DP1CarouselTokens.itemHeight,
+      child: CustomScrollView(
+        controller: scrollController,
+        scrollDirection: Axis.horizontal,
+        shrinkWrap: true,
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: DP1CarouselTokens.contentPaddingHorizontal,
+              vertical: DP1CarouselTokens.contentPaddingVertical,
+            ),
+            sliver: SliverList.builder(
+              itemCount: items.length,
+              itemBuilder: (context, index) => DP1ItemThumbnail(
+                item: items[index],
+                onTap: () {
+                  onItemTap?.call(items[index]);
+                },
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
