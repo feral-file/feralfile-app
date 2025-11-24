@@ -37,7 +37,6 @@ class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {
       ValueNotifier<Route<dynamic>?>(null);
 
   static final bottomSheetVisibility = ValueNotifier<bool>(false);
-  static final bottomSheetHeight = ValueNotifier<double>(0);
 
   // Stack to track all screens
   static final List<Route<dynamic>> _screenStack = [];
@@ -48,8 +47,6 @@ class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {
 
   // Getter to get the current screen count
   static int get screenCount => _screenStack.length;
-
-  static bool get onIgnoreBackLayerPopUp => bottomSheetVisibility.value;
 
   Timer? _timer;
 
@@ -81,16 +78,6 @@ class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
     if (route is ModalBottomSheetRoute) {
-      final key = (route.settings.arguments as Map<String, dynamic>?)?['key']
-          as GlobalKey?;
-      if (key != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          final box = key.currentContext?.findRenderObject() as RenderBox?;
-          if (box != null) {
-            bottomSheetHeight.value = box.size.height;
-          }
-        });
-      }
       bottomSheetVisibility.value = true;
     }
     super.didPush(route, previousRoute);
@@ -123,7 +110,6 @@ class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {
     /// this must be put after super.didPop
     if (currentRoute.value is! ModalBottomSheetRoute) {
       bottomSheetVisibility.value = false;
-      bottomSheetHeight.value = 0;
     }
   }
 
@@ -142,7 +128,6 @@ class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {
 
     if (currentRoute.value is! ModalBottomSheetRoute) {
       bottomSheetVisibility.value = false;
-      bottomSheetHeight.value = 0;
     }
   }
 
@@ -166,7 +151,6 @@ class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {
 
     if (currentRoute.value is! ModalBottomSheetRoute) {
       bottomSheetVisibility.value = false;
-      bottomSheetHeight.value = 0;
     }
   }
 

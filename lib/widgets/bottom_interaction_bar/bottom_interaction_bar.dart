@@ -8,15 +8,12 @@
 import 'package:autonomy_flutter/design/build/components/NowPlayingBar.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
-import 'package:autonomy_flutter/util/custom_route_observer.dart';
 import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
 import 'package:autonomy_flutter/view/now_displaying/now_displaying_bar.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/llm_text_input/llm_text_input.dart';
 import 'package:flutter/material.dart';
-import 'package:multi_value_listenable_builder/multi_value_listenable_builder.dart';
 
-/// Widget that wraps LLMTextInput and NowDisplayingBar with shared scroll-based visibility
 class BottomInteractionBar extends StatefulWidget {
   const BottomInteractionBar({super.key});
 
@@ -27,9 +24,9 @@ class BottomInteractionBar extends StatefulWidget {
 class _BottomInteractionBarState extends State<BottomInteractionBar>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  double _scrollOffset = 0.0; // Negative value means scrolled up (hidden)
-  double _previousScrollPosition = 0.0;
-  static const double _maxScrollOffset = 200.0; // Max pixels to scroll up
+  double _scrollOffset = 0; // Negative value means scrolled up (hidden)
+  double _previousScrollPosition = 0;
+  static const double _maxScrollOffset = 200; // Max pixels to scroll up
 
   bool get _shouldShow => _isShowing && _scrollOffset == 0.0;
   bool _isShowing = false;
@@ -82,16 +79,10 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
       return const SizedBox.shrink();
     }
 
-    return MultiValueListenableBuilder(
-      valueListenables: [
-        isNowDisplayingBarExpanded,
-        CustomRouteObserver.bottomSheetHeight,
-      ],
-      builder: (context, values, child) {
-        final isExpanded = values[0] as bool;
-        final bottomSheetHeight = values[1] as double;
+    return ValueListenableBuilder(
+      valueListenable: isNowDisplayingBarExpanded,
+      builder: (context, isExpanded, child) {
         final paddingBottom = MediaQuery.of(context).padding.bottom;
-
         return NotificationListener<ScrollNotification>(
           onNotification: _handleScrollUpdate,
           child: Transform.translate(
@@ -115,13 +106,9 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
                   ),
 
                 // NowDisplayingBar
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 150),
-                  bottom: bottomSheetHeight > 0
-                      ? bottomSheetHeight +
-                          UIConstants.nowDisplayingBarBottomPadding
-                      : paddingBottom +
-                          UIConstants.nowDisplayingBarBottomPadding,
+                Positioned(
+                  bottom:
+                      paddingBottom + UIConstants.nowDisplayingBarBottomPadding,
                   left: ResponsiveLayout.paddingHorizontal,
                   right: ResponsiveLayout.paddingHorizontal,
                   child: _buildAnimatedWrapper(
