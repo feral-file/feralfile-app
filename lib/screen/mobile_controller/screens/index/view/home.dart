@@ -182,8 +182,10 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
                 final hamburgerButton = GestureDetector(
                   onTap: () {
                     // Handle back button tap
-                    UIHelper.showCenterMenu(context,
-                        options: _defaultOptions);
+                    UIHelper.showCenterMenu(
+                      context,
+                      options: _defaultOptions,
+                    );
                   },
                   child: Container(
                     color: Colors.transparent,
@@ -449,64 +451,61 @@ class _CombinedHeaderDelegate extends SliverPersistentHeaderDelegate {
     final hamburgerHeight =
         (availableHeight - _headerHeight).clamp(44.0, 106.0);
 
-    return Container(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Hamburger button - responsive height as header collapses
-          SizedBox(
-            height: hamburgerHeight,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 15.5),
-                  child: GestureDetector(
-                    onTap: () {
-                      // Handle hamburger menu tap
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Hamburger button - responsive height as header collapses
+        SizedBox(
+          height: hamburgerHeight,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 15.5),
+                child: GestureDetector(
+                  onTap: () {
+                    // Handle hamburger menu tap
 
-                      UIHelper.showCenterMenu(context,
-                          options: _defaultOptions);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                        right: 15,
-                        top: 12,
-                        left: 15,
-                        bottom: 12,
-                      ),
-                      child: SvgPicture.asset(
-                        'assets/images/Drawer.svg',
-                        width: 22,
-                        height: 14,
-                        colorFilter: const ColorFilter.mode(
-                          AppColor.white,
-                          BlendMode.srcIn,
-                        ),
+                    UIHelper.showCenterMenu(context, options: _defaultOptions);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      right: 15,
+                      top: 12,
+                      left: 15,
+                      bottom: 12,
+                    ),
+                    child: SvgPicture.asset(
+                      'assets/images/Drawer.svg',
+                      width: 22,
+                      height: 14,
+                      colorFilter: const ColorFilter.mode(
+                        AppColor.white,
+                        BlendMode.srcIn,
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          // HomeIndexHeader - scrolls up
-          Transform.translate(
-            offset: Offset(0, -headerOffset),
-            child: Container(
-              height: _headerHeight,
-              child: Align(
-                alignment: Alignment.bottomLeft,
-                child: HomeIndexHeader(
-                  selectedTab: selectedTab,
-                  onTabChanged: onTabChanged,
-                ),
+        ),
+        // HomeIndexHeader - scrolls up
+        Transform.translate(
+          offset: Offset(0, -headerOffset),
+          child: SizedBox(
+            height: _headerHeight,
+            child: Align(
+              alignment: Alignment.bottomLeft,
+              child: HomeIndexHeader(
+                selectedTab: selectedTab,
+                onTabChanged: onTabChanged,
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

@@ -11,6 +11,7 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/model/ff_account.dart';
 import 'package:autonomy_flutter/model/jwt.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
@@ -1083,60 +1084,63 @@ class UIHelper {
     RouteSettings? routeSettings,
   }) async {
     final theme = Theme.of(context);
-    await showCupertinoModalPopup(
+    await showCupertinoModalPopup<void>(
       routeSettings: routeSettings,
       context: context,
-      builder: (context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: AppColor.auGreyBackground,
+      builder: (context) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        return Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: screenWidth * 0.62,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(5),
+                color: PrimitivesTokens.colorsDarkGrey,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
                 ListView.separated(
                   shrinkWrap: true,
-                  padding: const EdgeInsets.all(0),
+                  padding: EdgeInsets.zero,
                   physics: const NeverScrollableScrollPhysics(),
+                  itemCount: options.length,
                   itemBuilder: (BuildContext context, int index) {
                     final option = options[index];
-                    final child = Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 16,
-                        horizontal: 13,
-                      ),
-                      child: Row(
-                        children: [
-                          if (option.icon != null)
-                            SizedBox(
-                              width: 30,
-                              child: IconTheme(
-                                data: const IconThemeData(
-                                  color: AppColor.white,
-                                ),
-                                child: option.icon!,
+                    final child = Row(
+                      children: [
+                        if (option.icon != null)
+                          SizedBox(
+                            width: 22,
+                            child: IconTheme(
+                              data: const IconThemeData(
+                                color: AppColor.white,
                               ),
+                              child: option.icon!,
                             ),
-                          if (option.icon != null)
-                            const SizedBox(
-                              width: 39,
-                            ),
-                          Text(
-                            option.title ?? '',
-                            style: option.titleStyle ??
-                                theme.textTheme.ppMori400White14
-                                    .copyWith(decoration: TextDecoration.none),
                           ),
-                        ],
-                      ),
+                        if (option.icon != null)
+                          const SizedBox(
+                            width: 15,
+                          ),
+                        Text(
+                          option.title ?? '',
+                          style: option.titleStyle ??
+                              theme.textTheme.ppMori400White14
+                                  .copyWith(decoration: TextDecoration.none),
+                        ),
+                      ],
                     );
+
                     if (option.builder != null) {
                       return option.builder!.call(context, option);
                     }
+
                     return GestureDetector(
                       onTap: () {
                         option.onTap?.call();
@@ -1153,21 +1157,17 @@ class UIHelper {
                       ),
                     );
                   },
-                  itemCount: options.length,
-                  separatorBuilder: (context, index) => const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 13),
-                    child: Divider(
-                      height: 1,
-                      color: AppColor.primaryBlack,
-                      thickness: 1,
-                    ),
+                  separatorBuilder: (context, index) => const SizedBox(
+                    height: 24,
                   ),
                 ),
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
