@@ -14,6 +14,7 @@ import 'dart:ui';
 import 'package:autonomy_flutter/common/database.dart';
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/model/announcement/announcement_adapter.dart';
 import 'package:autonomy_flutter/model/draft_customer_support.dart';
 import 'package:autonomy_flutter/model/identity.dart';
@@ -428,11 +429,12 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold> {
                                   decoration: const BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: [
-                                        AppColor.auGreyBackground,
                                         Colors.transparent,
+                                        PrimitivesTokens.colorsDarkGrey,
                                       ],
-                                      begin: Alignment.bottomCenter,
-                                      end: Alignment.topCenter,
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      stops: [0.0, 0.37],
                                     ),
                                   ),
                                 ),
