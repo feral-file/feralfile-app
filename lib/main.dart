@@ -14,7 +14,6 @@ import 'dart:ui';
 import 'package:autonomy_flutter/common/database.dart';
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/model/announcement/announcement_adapter.dart';
 import 'package:autonomy_flutter/model/draft_customer_support.dart';
 import 'package:autonomy_flutter/model/identity.dart';
@@ -404,53 +403,7 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold> {
                       : const SizedBox();
                 },
               ),
-              Stack(
-                children: [
-                  // gradient
-                  ValueListenableBuilder(
-                    valueListenable: CustomRouteObserver.currentRoute,
-                    builder: (context, value, child) {
-                      if (value?.settings.name == AppRouter.homePage) {
-                        return ValueListenableBuilder(
-                          valueListenable: nowDisplayingShowing,
-                          builder: (context, isShowing, child) {
-                            if (!isShowing) {
-                              return const SizedBox.shrink();
-                            }
-                            return Positioned(
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              child: IgnorePointer(
-                                child: Container(
-                                  height: 195 +
-                                      MediaQuery.of(context).padding.bottom,
-                                  // gradient
-                                  decoration: const BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.transparent,
-                                        PrimitivesTokens.colorsDarkGrey,
-                                      ],
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      stops: [0.0, 0.37],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      }
-                      return const Positioned.fill(
-                        child: SizedBox.shrink(),
-                      );
-                    },
-                  ),
-                  const BottomInteractionBar(),
-                ],
-              ),
+              const BottomInteractionBar(),
             ],
           ),
         ),

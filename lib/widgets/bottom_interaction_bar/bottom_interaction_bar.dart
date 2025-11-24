@@ -5,9 +5,14 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/design/build/components/CommandDot.dart';
+import 'package:autonomy_flutter/design/build/components/LLMTextInput.dart';
 import 'package:autonomy_flutter/design/build/components/NowPlayingBar.dart';
+import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/main.dart';
+import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
+import 'package:autonomy_flutter/util/custom_route_observer.dart';
 import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
 import 'package:autonomy_flutter/view/now_displaying/now_displaying_bar.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
@@ -28,7 +33,13 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
   double _previousScrollPosition = 0;
   static const double _maxScrollOffset = 200; // Max pixels to scroll up
 
-  bool get _shouldShow => _isShowing && _scrollOffset == 0.0;
+  // Widget heights
+  static final double _llmInputHeight = LLMTextInputTokens.padding * 2 +
+      LLMTextInputTokens.llmPaddingVertical * 2 +
+      CommandDotTokens.height.toDouble();
+  static final double _nowDisplayingBarHeight =
+      NowPlayingBarTokens.collapseHeight.toDouble();
+
   bool _isShowing = false;
 
   @override
@@ -89,19 +100,54 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
             offset: Offset(0, _scrollOffset),
             child: Stack(
               children: [
+                // Gradient (only on home page)
+                ValueListenableBuilder(
+                  valueListenable: CustomRouteObserver.currentRoute,
+                  builder: (context, route, child) {
+                    if (route?.settings.name == AppRouter.homePage) {
+                      return Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: IgnorePointer(
+                          child: FadeTransition(
+                            opacity: _animationController,
+                            child: Container(
+                              height: 195 + paddingBottom,
+                              decoration: const BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.transparent,
+                                    PrimitivesTokens.colorsDarkGrey,
+                                  ],
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  stops: [0.0, 0.37],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+
                 // LLMTextInput
                 if (!isExpanded)
                   Positioned(
                     bottom: paddingBottom +
                         UIConstants.nowDisplayingBarBottomPadding +
-                        NowPlayingBarTokens.collapseHeight,
+                        _nowDisplayingBarHeight,
                     left: 0,
                     right: 0,
-                    child: _buildAnimatedWrapper(
+                    child: _animateVisibility(
                       child: const Material(
                         color: Colors.transparent,
                         child: LLMTextInput(),
                       ),
+                      slideBegin: _calculateSlideBegin(_llmInputHeight),
                     ),
                   ),
 
@@ -111,25 +157,9 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
                       paddingBottom + UIConstants.nowDisplayingBarBottomPadding,
                   left: ResponsiveLayout.paddingHorizontal,
                   right: ResponsiveLayout.paddingHorizontal,
-                  child: _buildAnimatedWrapper(
-                    child: FadeTransition(
-                      opacity: _animationController,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: Offset(
-                            0,
-                            paddingBottom / kNowDisplayingHeight,
-                          ),
-                          end: Offset.zero,
-                        ).animate(
-                          CurvedAnimation(
-                            parent: _animationController,
-                            curve: Curves.easeOut,
-                          ),
-                        ),
-                        child: const NowDisplayingBar(),
-                      ),
-                    ),
+                  child: _animateVisibility(
+                    child: const NowDisplayingBar(),
+                    slideBegin: _calculateSlideBegin(_nowDisplayingBarHeight),
                   ),
                 ),
               ],
@@ -140,15 +170,31 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
     );
   }
 
-  Widget _buildAnimatedWrapper({required Widget child}) {
-    return AnimatedSlide(
-      duration: const Duration(milliseconds: 200),
-      offset: _shouldShow ? Offset.zero : const Offset(0, 1),
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 150),
-        opacity: _shouldShow ? 1 : 0,
-        child: child,
+  /// Calculate slide begin offset to achieve the same pixel distance for all widgets
+  /// Offset is a fraction of widget height, so we calculate: pixelDistance / widgetHeight
+  static Offset _calculateSlideBegin(double widgetHeight) {
+    final slideDistance = UIConstants.nowDisplayingBarBottomPadding +
+        _nowDisplayingBarHeight +
+        _llmInputHeight;
+    final offsetY = slideDistance / widgetHeight;
+    return Offset(0, offsetY);
+  }
+
+  SlideTransition _animateVisibility({
+    required Widget child,
+    required Offset slideBegin,
+  }) {
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: slideBegin,
+        end: Offset.zero,
+      ).animate(
+        CurvedAnimation(
+          parent: _animationController,
+          curve: Curves.easeOut,
+        ),
       ),
+      child: child,
     );
   }
 
