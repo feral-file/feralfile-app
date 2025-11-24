@@ -1,4 +1,5 @@
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
@@ -149,7 +150,7 @@ class _ChannelsPageState extends State<ChannelsPage>
               width: 12,
               height: 12,
               colorFilter: const ColorFilter.mode(
-                Color(0xFFFFFFFF),
+                PrimitivesTokens.colorsGrey,
                 BlendMode.srcIn,
               ),
             ),
