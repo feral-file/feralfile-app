@@ -48,6 +48,7 @@ class _DisplayItemListState extends State<DisplayItemList>
   }
 
   void _scrollToSelectedIndex() {
+    return;
     if (widget.selectedIndex == null) return;
 
     final scrollPosition = calculateScrollPosition(widget.selectedIndex!);

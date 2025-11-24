@@ -5,6 +5,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/view/record_controller.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/buttons/send_button.dart';
 import 'package:autonomy_flutter/widgets/command-dot/command_dot.dart';
 import 'package:flutter/material.dart';
@@ -58,6 +59,8 @@ class _LLMTextInputState extends State<LLMTextInput> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      margin:
+          EdgeInsets.symmetric(horizontal: ResponsiveLayout.paddingHorizontal),
       padding:
           EdgeInsets.symmetric(vertical: LLMTextInputTokens.padding.toDouble()),
       child: Container(

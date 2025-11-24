@@ -18,7 +18,6 @@ import 'package:autonomy_flutter/model/announcement/announcement_adapter.dart';
 import 'package:autonomy_flutter/model/draft_customer_support.dart';
 import 'package:autonomy_flutter/model/identity.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
 import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
@@ -28,11 +27,9 @@ import 'package:autonomy_flutter/util/custom_route_observer.dart';
 import 'package:autonomy_flutter/util/device.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/util/now_displaying_manager.dart';
 import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
-import 'package:autonomy_flutter/view/now_displaying/now_displaying_bar.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
-import 'package:autonomy_flutter/widgets/llm_text_input/llm_text_input.dart';
+import 'package:autonomy_flutter/widgets/bottom_interaction_bar/bottom_interaction_bar.dart';
 import 'package:autonomy_flutter/widgets/now_playing_bar/collapsed_now_playing_bar.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:floor/floor.dart';
@@ -51,10 +48,6 @@ import 'package:system_date_time_format/system_date_time_format.dart';
 // This value notifies which screen should be shown
 ValueNotifier<bool> shouldShowNowDisplaying = ValueNotifier<bool>(false);
 
-// This value notifies if user did tap on close icon to hide now displaying
-ValueNotifier<bool> shouldShowNowDisplayingOnDisconnect =
-    ValueNotifier<bool>(true);
-
 // This value notifies if now displaying is visible on scroll
 ValueNotifier<bool> nowDisplayingVisibility = ValueNotifier<bool>(true);
 
@@ -65,9 +58,6 @@ final keyboardVisibilityController = KeyboardVisibilityController();
 final ValueNotifier<bool> shouldHideKeyboardOnTap = ValueNotifier<bool>(
   true,
 ); // This value notifies if keyboard should be hidden on tap
-
-// this value is used for specific case in a screen with pageview and scrollview
-final ValueNotifier<bool> shouldHideDisplayingBar = ValueNotifier<bool>(false);
 
 void main() async {
   unawaited(
@@ -278,36 +268,18 @@ class AutonomyAppScaffold extends StatefulWidget {
   State<AutonomyAppScaffold> createState() => _AutonomyAppScaffoldState();
 }
 
-class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  bool _isVisible = false;
+class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold> {
   late final ValueNotifier<bool> _shouldShowOverlay;
-  double _lastScrollPosition = 0;
-
   StreamSubscription<bool>? _keyboardVisibilitySubscription;
-  StreamSubscription<NowDisplayingStatus?>? _nowDisplayingStreamSubscription;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-      value: 0,
-    );
 
     shouldShowNowDisplaying.addListener(_updateAnimationBasedOnDisplayState);
-    shouldShowNowDisplayingOnDisconnect
-        .addListener(_updateAnimationBasedOnDisplayState);
     nowDisplayingVisibility.addListener(_updateAnimationBasedOnDisplayState);
-    shouldHideDisplayingBar.addListener(_updateAnimationBasedOnDisplayState);
     CustomRouteObserver.bottomSheetHeight
         .addListener(_updateAnimationBasedOnDisplayState);
-    _nowDisplayingStreamSubscription =
-        NowDisplayingManager().nowDisplayingStream.listen((_) {
-      _updateAnimationBasedOnDisplayState();
-    });
 
     _keyboardVisibilitySubscription =
         keyboardVisibilityController.onChange.listen((_) {
@@ -323,21 +295,10 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
 
   void _updateAnimationBasedOnDisplayState() {
     final shouldShow = shouldShowNowDisplaying.value &&
-        shouldShowNowDisplayingOnDisconnect.value &&
         nowDisplayingVisibility.value &&
         CustomRouteObserver.bottomSheetHeight.value == 0 &&
-        !keyboardVisibilityController.isVisible &&
-        !shouldHideDisplayingBar.value;
+        !keyboardVisibilityController.isVisible;
     nowDisplayingShowing.value = shouldShow;
-    if (nowDisplayingShowing.value) {
-      setState(() => _isVisible = true);
-      _animationController.forward();
-    } else {
-      _animationController.reverse().then((_) {
-        // Only set _isVisible to false after animation completes
-        setState(() => _isVisible = false);
-      });
-    }
   }
 
   void _updateOverlayVisibility() {
@@ -347,7 +308,8 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
   }
 
   void _handleScrollUpdate(UserScrollNotification notification) {
-    if (notification.metrics.axis != Axis.vertical) {
+    if (notification.metrics.axis != Axis.vertical ||
+        notification.metrics.maxScrollExtent < 10) {
       return;
     }
 
@@ -364,20 +326,11 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
         // No action needed for idle state
         break;
     }
-
-    // Track position để detect khi scroll to top
-    final currentScroll = notification.metrics.pixels;
-    _lastScrollPosition = currentScroll;
-    if (_lastScrollPosition == 0) {
-      log.info('Scroll to top');
-    }
   }
 
   @override
   void dispose() {
     shouldShowNowDisplaying.removeListener(_updateAnimationBasedOnDisplayState);
-    shouldShowNowDisplayingOnDisconnect
-        .removeListener(_updateAnimationBasedOnDisplayState);
     nowDisplayingVisibility.removeListener(_updateAnimationBasedOnDisplayState);
     CustomRouteObserver.bottomSheetHeight
         .removeListener(_updateAnimationBasedOnDisplayState);
@@ -386,8 +339,6 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
     isNowDisplayingBarShowingQuickSetting
         .removeListener(_updateOverlayVisibility);
     _shouldShowOverlay.dispose();
-    _nowDisplayingStreamSubscription?.cancel();
-    _animationController.dispose();
     _keyboardVisibilitySubscription?.cancel();
     super.dispose();
   }
@@ -417,7 +368,6 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                 });
               }
             }
-            ;
           },
           child: Stack(
             children: [
@@ -440,11 +390,9 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                           child: GestureDetector(
                             behavior: HitTestBehavior.translucent,
                             onTap: () {
-                              if (_isVisible) {
-                                DraggableSheetController.collapseSheet();
-                                isNowDisplayingBarShowingQuickSetting.value =
-                                    false;
-                              }
+                              DraggableSheetController.collapseSheet();
+                              isNowDisplayingBarShowingQuickSetting.value =
+                                  false;
                             },
                             child: AnimatedContainer(
                               color: Colors.transparent,
@@ -455,115 +403,51 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
                       : const SizedBox();
                 },
               ),
-              Offstage(
-                offstage: !_isVisible,
-                child: Stack(
-                  children: [
-                    // gradient
-                    ValueListenableBuilder(
-                      valueListenable: CustomRouteObserver.currentRoute,
-                      builder: (context, value, child) {
-                        if (value?.settings.name == AppRouter.homePage) {
-                          return Positioned(
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            child: IgnorePointer(
-                              child: Container(
-                                height:
-                                    195 + MediaQuery.of(context).padding.bottom,
-                                // gradient
-                                decoration: const BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      AppColor.auGreyBackground,
-                                      Colors.transparent,
-                                    ],
-                                    begin: Alignment.bottomCenter,
-                                    end: Alignment.topCenter,
+              Stack(
+                children: [
+                  // gradient
+                  ValueListenableBuilder(
+                    valueListenable: CustomRouteObserver.currentRoute,
+                    builder: (context, value, child) {
+                      if (value?.settings.name == AppRouter.homePage) {
+                        return ValueListenableBuilder(
+                          valueListenable: nowDisplayingShowing,
+                          builder: (context, isShowing, child) {
+                            if (!isShowing) {
+                              return const SizedBox.shrink();
+                            }
+                            return Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              child: IgnorePointer(
+                                child: Container(
+                                  height: 195 +
+                                      MediaQuery.of(context).padding.bottom,
+                                  // gradient
+                                  decoration: const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        AppColor.auGreyBackground,
+                                        Colors.transparent,
+                                      ],
+                                      begin: Alignment.bottomCenter,
+                                      end: Alignment.topCenter,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          );
-                        }
-                        return const Positioned.fill(child: SizedBox.shrink());
-                      },
-                    ),
-
-                    // if (_isVisible)
-                    //   ValueListenableBuilder(
-                    //     valueListenable: isNowDisplayingBarExpanded,
-                    //     builder: (context, value, child) {
-                    //       if (value) {
-                    //         return const Positioned.fill(
-                    //             child: SizedBox.shrink());
-                    //       }
-                    //
-                    //       final paddingBottom =
-                    //           MediaQuery.of(context).padding.bottom;
-                    //       return Positioned(
-                    //         bottom: paddingBottom +
-                    //             UIConstants.nowDisplayingBarBottomPadding +
-                    //             NowPlayingBarTokens.collapseHeight,
-                    //         left: 0,
-                    //         right: 0,
-                    //         child: const Material(
-                    //           color: Colors.transparent,
-                    //           child: LLMTextInput(),
-                    //         ),
-                    //       );
-                    //     },
-                    //   ),
-                    ValueListenableBuilder(
-                      valueListenable: CustomRouteObserver.bottomSheetHeight,
-                      builder: (context, bottomSheetHeight, child) {
-                        final paddingBottom =
-                            MediaQuery.of(context).padding.bottom;
-                        return AnimatedPositioned(
-                          duration: const Duration(milliseconds: 300),
-                          bottom: bottomSheetHeight > 0
-                              ? bottomSheetHeight +
-                                  UIConstants.nowDisplayingBarBottomPadding
-                              : paddingBottom +
-                                  UIConstants.nowDisplayingBarBottomPadding,
-                          left: ResponsiveLayout.paddingHorizontal,
-                          right: ResponsiveLayout.paddingHorizontal,
-                          child: FadeTransition(
-                            opacity: _animationController,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: Offset(
-                                  0,
-                                  paddingBottom / kNowDisplayingHeight,
-                                ),
-                                end: Offset.zero,
-                              ).animate(
-                                CurvedAnimation(
-                                  parent: _animationController,
-                                  curve: Curves.easeOut,
-                                ),
-                              ),
-                              child: Column(
-                                children: [
-                                  const Material(
-                                    color: Colors.transparent,
-                                    child: LLMTextInput(),
-                                  ),
-                                  Row(
-                                    children: [
-                                      Expanded(child: const NowDisplayingBar()),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                            );
+                          },
                         );
-                      },
-                    ),
-                  ],
-                ),
+                      }
+                      return const Positioned.fill(
+                        child: SizedBox.shrink(),
+                      );
+                    },
+                  ),
+                  const BottomInteractionBar(),
+                ],
               ),
             ],
           ),
