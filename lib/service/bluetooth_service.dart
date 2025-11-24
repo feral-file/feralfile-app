@@ -600,24 +600,24 @@ class FFBluetoothService {
       await _connect(
         device,
         shouldShowError: (e) {
-          if (isDisconnectedWithSuccess(e)) {
-            return false;
-          }
+          // if (isDisconnectedWithSuccess(e)) {
+          //   return false;
+          // }
           return shouldShowError;
         },
         timeout: timeout,
       );
     } catch (e) {
-      if (isDisconnectedWithSuccess(e)) {
-        log.info("Connection is not stable, retrying...");
-        await _connect(
-          device,
-          shouldShowError: (_) => shouldShowError,
-          timeout: timeout,
-        );
-      } else {
-        throw e;
-      }
+      // if (isDisconnectedWithSuccess(e)) {
+      //   log.info("Connection is not stable, retrying...");
+      //   await _connect(
+      //     device,
+      //     shouldShowError: (_) => shouldShowError,
+      //     timeout: timeout,
+      //   );
+      // } else {
+      //   throw e;
+      // }
     }
   }
 
@@ -674,7 +674,7 @@ class FFBluetoothService {
         final now = DateTime.now();
 
         final timer = Timer.periodic(
-          const Duration(seconds: 1),
+          const Duration(seconds: 3),
           (Timer timer) {
             if (_connectCompleter?.isCompleted == true) {
               timer.cancel();
@@ -686,22 +686,7 @@ class FFBluetoothService {
           },
         );
 
-        await _connectCompleter?.future.timeout(
-          const Duration(seconds: 30),
-          onTimeout: () {
-            log.warning('Timeout waiting for connection to complete');
-            if (shouldShowError?.call(e) ?? true) {
-              unawaited(
-                injector<NavigationService>()
-                    .showCannotConnectToBluetoothDevice(
-                  device,
-                  TimeoutException('Taking too long to connect to device'),
-                ),
-              );
-            }
-            throw TimeoutException('Taking too long to connect to device');
-          },
-        ).catchError((Object e) {
+        await _connectCompleter?.future.catchError((Object e) {
           log.warning('Error waiting for connection to complete: $e');
           timer.cancel();
           unawaited(
@@ -720,6 +705,7 @@ class FFBluetoothService {
               ),
             );
           }
+          timer.cancel();
           throw e;
         });
         log.info('Connected to device: ${device.remoteId.str}');
