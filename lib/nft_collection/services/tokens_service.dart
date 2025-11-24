@@ -227,7 +227,7 @@ class NftTokensServiceImpl extends NftTokensService {
     disposeIsolate();
     await _configurationService.setDidSyncAddress(false);
     _database.clearAll();
-    injector<ConfigurationService>().clearAddressLastFetchTokenTime();
+    await injector<ConfigurationService>().clearAddressLastFetchTokenTime();
   }
 
   @override

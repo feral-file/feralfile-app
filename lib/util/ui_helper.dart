@@ -17,10 +17,12 @@ import 'package:autonomy_flutter/model/jwt.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_item_card.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_list_row.dart';
 import 'package:autonomy_flutter/service/base_dp1_feed_service_impl.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
@@ -1493,11 +1495,19 @@ class UIHelper {
 
         return Column(
           children: [
-            PlaylistItem(
+            PlaylistListRow(
               playlistReference: playlist,
-              channelReference: channelReference,
-              isFromPlaylistsPage: isFromPlaylistsPage,
-              channelVisible: channelVisible,
+              carouselItems: [],
+              onItemTap: (item) {
+                final assetToken = item.assetToken;
+                if (assetToken != null) {
+                  injector<NavigationService>().navigateTo(
+                    AppRouter.artworkDetailsPage,
+                    arguments:
+                        ArtworkDetailPayload(ArtworkIdentity(assetToken.cid)),
+                  );
+                }
+              },
             ),
             if (index == playlists.length - 1 && !hasMore)
               const BottomSpacing(),

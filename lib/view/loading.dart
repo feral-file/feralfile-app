@@ -8,10 +8,21 @@ import 'package:gif_view/gif_view.dart';
 class LoadingWidget extends StatelessWidget {
   final bool invertColors;
   final Color? backgroundColor;
+  final int? width;
+  final int? height;
+  final int? frameRate;
   final String? text;
+  final bool showText;
 
   const LoadingWidget(
-      {super.key, this.invertColors = false, this.backgroundColor, this.text});
+      {super.key,
+      this.invertColors = false,
+      this.backgroundColor,
+      this.text,
+      this.showText = true,
+      this.width,
+      this.height,
+      this.frameRate});
 
   @override
   Widget build(BuildContext context) {
@@ -26,17 +37,20 @@ class LoadingWidget extends StatelessWidget {
           children: [
             GifView.asset(
               'assets/images/loading_white.gif',
-              height: 52,
-              frameRate: 12,
+              width: width?.toDouble() ?? 52.0,
+              height: height?.toDouble(),
+              frameRate: frameRate ?? 12,
               invertColors: invertColors,
             ),
-            const SizedBox(height: 12),
-            Text(
-              text ?? 'loading'.tr(),
-              style: ResponsiveLayout.isMobile
-                  ? theme.textTheme.ppMori400White12
-                  : theme.textTheme.ppMori400White14,
-            )
+            if (showText) ...[
+              const SizedBox(height: 12),
+              Text(
+                text ?? 'loading'.tr(),
+                style: ResponsiveLayout.isMobile
+                    ? theme.textTheme.ppMori400White12
+                    : theme.textTheme.ppMori400White14,
+              )
+            ]
           ],
         ),
       ),

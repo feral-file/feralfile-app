@@ -5,6 +5,7 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
+import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_event.dart';
@@ -162,9 +163,9 @@ class PlaylistDetailsBloc
         emit(state.copyWith(hasMore: false));
         return;
       }
-      final pageItems = items.sublist(
+      final pageItems = items.safeSublist(
         start,
-        end > items.length ? items.length : end,
+        end,
       );
       final pageCids =
           pageItems.map((item) => item.cid).whereType<String>().toList();

@@ -136,18 +136,18 @@ extension AssetTokenExtension on AssetToken {
 
     thumbnailUrl = enrichmentSource?.imageUrl ?? metadata?.imageUrl;
 
-    final mediaThumbnailUrl = enrichmentSourceMediaAssets
-            ?.firstWhereOrNull(
-                (mediaAsset) => mediaAsset.sourceUrl == thumbnailUrl)
-            ?.variantUrls
-            .values
-            .firstOrNull as String? ??
-        metadataMediaAssets
-            ?.firstWhereOrNull(
-                (mediaAsset) => mediaAsset.sourceUrl == thumbnailUrl)
-            ?.variantUrls
-            .values
-            .firstOrNull as String?;
+    final metadataVariantUrls = metadataMediaAssets
+        ?.firstWhereOrNull((mediaAsset) => mediaAsset.sourceUrl == thumbnailUrl)
+        ?.variantUrls;
+
+    final enrichmentSourceVariantUrls = enrichmentSourceMediaAssets
+        ?.firstWhereOrNull((mediaAsset) => mediaAsset.sourceUrl == thumbnailUrl)
+        ?.variantUrls;
+
+    final mediaThumbnailUrl = (enrichmentSourceVariantUrls?['xs'] ??
+            enrichmentSourceVariantUrls?.values.firstOrNull) as String? ??
+        (metadataVariantUrls?['xs'] ?? metadataVariantUrls?.values.firstOrNull)
+            as String?;
 
     if (mediaThumbnailUrl != null && mediaThumbnailUrl.isNotEmpty) {
       return mediaThumbnailUrl;

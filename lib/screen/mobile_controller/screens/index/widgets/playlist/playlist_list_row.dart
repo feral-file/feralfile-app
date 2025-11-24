@@ -1,13 +1,17 @@
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_event.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/dp1_playlist_details.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/dp1_carousel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_list_item_widget.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Playlist List Row - Combines list item info with carousel content
-class PlaylistListRow extends StatelessWidget {
+class PlaylistListRow extends StatefulWidget {
   const PlaylistListRow({
     required this.playlistReference,
     required this.carouselItems,
@@ -24,17 +28,55 @@ class PlaylistListRow extends StatelessWidget {
   final ScrollController? scrollController;
 
   @override
+  State<PlaylistListRow> createState() => _PlaylistListRowState();
+}
+
+class _PlaylistListRowState extends State<PlaylistListRow> {
+  late PlaylistDetailsBloc _playlistDetailsBloc;
+  late ScrollController _carouselScrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _playlistDetailsBloc = PlaylistDetailsBloc(
+      playlist: widget.playlistReference.playlist,
+    );
+    _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
+
+    _carouselScrollController = widget.scrollController ?? ScrollController();
+    _carouselScrollController.addListener(_onScrollListener);
+  }
+
+  @override
+  void dispose() {
+    _carouselScrollController.removeListener(_onScrollListener);
+    if (widget.scrollController == null) {
+      _carouselScrollController.dispose();
+    }
+    _playlistDetailsBloc.close();
+    super.dispose();
+  }
+
+  void _onScrollListener() {
+    final scrollController = _carouselScrollController;
+    if (scrollController.position.pixels >=
+        scrollController.position.maxScrollExtent * 0.8) {
+      _playlistDetailsBloc.add(LoadMorePlaylistDetailsEvent());
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final playlist = playlistReference.playlist;
+    final playlist = widget.playlistReference.playlist;
     final playlistTitle = playlist.title;
-    final creator = playlistCreator ?? 'Playlist Creator';
+    final creator = widget.playlistCreator ?? 'Playlist Creator';
 
     return GestureDetector(
       onTap: () {
         Navigator.of(context).pushNamed(
           AppRouter.dp1PlaylistDetailsPage,
           arguments: DP1PlaylistDetailsScreenPayload(
-            playlist: playlistReference,
+            playlist: widget.playlistReference,
           ),
         );
       },
@@ -56,10 +98,16 @@ class PlaylistListRow extends StatelessWidget {
               primaryText: playlistTitle,
               secondaryText: creator,
             ),
-            DP1Carousel(
-              items: carouselItems,
-              onItemTap: onItemTap,
-              scrollController: scrollController,
+            BlocBuilder<PlaylistDetailsBloc, PlaylistDetailsState>(
+              bloc: _playlistDetailsBloc,
+              builder: (context, state) {
+                return DP1Carousel(
+                  items: state.nowDisplayingItems,
+                  onItemTap: widget.onItemTap,
+                  scrollController: _carouselScrollController,
+                  isLoadingMore: state is PlaylistDetailsLoadingMoreState,
+                );
+              },
             ),
           ],
         ),
