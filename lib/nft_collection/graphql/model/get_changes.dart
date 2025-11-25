@@ -452,11 +452,13 @@ class ChangeList {
     required this.items,
     this.offset,
     required this.total,
+    this.nextAnchor,
   });
 
   final List<Change> items;
   final int? offset;
   final int total;
+  final int? nextAnchor;
 
   factory ChangeList.fromJson(Map<String, dynamic> json) => ChangeList(
         items: json['items'] != null
@@ -470,12 +472,14 @@ class ChangeList {
             ? int.tryParse(json['offset'].toString())
             : null,
         total: int.tryParse(json['total'].toString()) ?? 0,
+        nextAnchor: int.tryParse(json['next_anchor'] as String? ?? ''),
       );
 
   Map<String, dynamic> toJson() => {
         'items': items.map((x) => x.toJson()).toList(),
         'offset': offset,
         'total': total,
+        if (nextAnchor != null) 'next_anchor': nextAnchor,
       };
 }
 
@@ -489,11 +493,13 @@ class QueryChangesRequest {
     this.offset = 0,
     this.order = Order.asc,
     this.expand = const [],
+    this.anchor,
   });
 
   final List<String> tokenCids;
   final List<String> addresses;
   final String? since;
+  final int? anchor;
   final int limit;
   final int offset;
   final Order order;
@@ -517,7 +523,9 @@ class QueryChangesRequest {
     if (since != null && since!.isNotEmpty) {
       json['since'] = since;
     }
-
+    if (anchor != null) {
+      json['anchor'] = anchor;
+    }
     if (expand.isNotEmpty) {
       json['expand'] = expand;
     }

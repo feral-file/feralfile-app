@@ -4,6 +4,7 @@ import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/model/error/dp1_error.dart';
+import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_create_playlist_request.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
@@ -190,9 +191,9 @@ class UserDp1PlaylistService {
     final playlist = await _dp1FeedService.updatePlaylist(
         playlistId: playlistId, request: request);
     cachedAllOwnedPlaylist = playlist;
-    final map = addresses.map((e) => MapEntry(e, null));
-    await updateAddressLastIndexTime(addresses: Map.fromEntries(map));
-    await updateAddressLastFetchTokenTime(addresses: Map.fromEntries(map));
+    await clearAddressLastIndexTime(addresses: addresses);
+    await clearAddressLastFetchTokenTime(addresses: addresses);
+    await removeLastUpdateChangeAnchor(addresses: addresses);
 
     log.info('Removed addresses from playlist: $addresses');
     return playlist;
@@ -206,7 +207,9 @@ class UserDp1PlaylistService {
       return true;
     }
     final deleted = await Future.wait(allOwnedPlaylistIds.map(deletePlaylist));
-    await injector<ConfigurationService>().setAddressLastIndexTime({});
+    await setAddressLastFetchTokenTime(addresses: {});
+    await setAddressLastIndexTime(addresses: {});
+    await setLastUpdateChangeAnchor(addressAnchors: []);
 
     if (deleted.any((e) => e == false)) {
       log.info('Failed to delete all owned playlists');
@@ -228,6 +231,19 @@ class UserDp1PlaylistService {
     }
   }
 
+  /*
+  ------------------------------------------------------------
+  ADDRESS LAST INDEX TIME
+  ------------------------------------------------------------
+  This is used to track the last index time for each address.
+  */
+
+  Future<void> setAddressLastIndexTime({
+    required Map<String, DateTime> addresses,
+  }) async {
+    await injector<ConfigurationService>().setAddressLastIndexTime(addresses);
+  }
+
   Future<void> updateAddressLastIndexTime({
     required Map<String, DateTime?> addresses,
   }) async {
@@ -247,8 +263,7 @@ class UserDp1PlaylistService {
         }
       }
     }
-    await injector<ConfigurationService>()
-        .setAddressLastIndexTime(addressLastRefreshedTime);
+    await setAddressLastIndexTime(addresses: addressLastRefreshedTime);
   }
 
   Map<String, DateTime?> getAddressOldestLastIndexTime({
@@ -262,9 +277,32 @@ class UserDp1PlaylistService {
     return result;
   }
 
+  Future<void> clearAddressLastIndexTime({
+    required List<String> addresses,
+  }) async {
+    final map = injector<ConfigurationService>().getAddressLastIndexTime();
+    for (final addr in addresses) {
+      map.remove(addr);
+    }
+    await setAddressLastIndexTime(addresses: map);
+  }
+
   bool isAddressIndexed(String address) {
     final map = injector<ConfigurationService>().getAddressLastIndexTime();
     return map.containsKey(address);
+  }
+
+  /*
+  ------------------------------------------------------------
+  ADDRESS LAST FETCH TOKEN TIME
+  ------------------------------------------------------------
+  This is used to track the last fetch token time for each address.
+  */
+  Future<void> setAddressLastFetchTokenTime({
+    required Map<String, DateTime> addresses,
+  }) async {
+    await injector<ConfigurationService>()
+        .setAddressLastFetchTokenTime(addresses);
   }
 
   Future<void> updateAddressLastFetchTokenTime({
@@ -286,8 +324,7 @@ class UserDp1PlaylistService {
         }
       }
     }
-    await injector<ConfigurationService>()
-        .setAddressLastFetchTokenTime(addressLastFetchTokenTime);
+    await setAddressLastFetchTokenTime(addresses: addressLastFetchTokenTime);
   }
 
   Map<String, DateTime?> getAddressOldestLastFetchTokenTime({
@@ -301,22 +338,71 @@ class UserDp1PlaylistService {
     return result;
   }
 
+  Future<void> clearAddressLastFetchTokenTime({
+    required List<String> addresses,
+  }) async {
+    final map = injector<ConfigurationService>().getAddressLastFetchTokenTime();
+    for (final addr in addresses) {
+      map.remove(addr);
+    }
+    await setAddressLastFetchTokenTime(addresses: map);
+  }
+
   bool isAddressFetched(String address) {
     final map = injector<ConfigurationService>().getAddressLastFetchTokenTime();
     return map.containsKey(address);
   }
 
+  /*
+  ------------------------------------------------------------
+  ADDRESS ANCHOR
+  ------------------------------------------------------------
+  This is used to track the last update change anchor for each address.
+   */
+
+  List<AddressAnchor> getLastUpdateChangeAnchor(
+      {required List<String> addresses,
+      AddressAnchor Function(String address)? defaultAnchorBuilder}) {
+    return injector<ConfigurationService>().getLastUpdateChangeAnchor(
+        addresses: addresses, defaultAnchorBuilder: defaultAnchorBuilder);
+  }
+
+  Future<void> setLastUpdateChangeAnchor(
+      {required List<AddressAnchor> addressAnchors}) async {
+    await injector<ConfigurationService>()
+        .setLastUpdateChangeAnchor(addressAnchors: addressAnchors);
+  }
+
+  Future<void> updateLastUpdateChangeAnchor(
+      {required List<AddressAnchor> addressAnchors}) async {
+    final currentAnchor = getLastUpdateChangeAnchor(
+        addresses: addressAnchors.map((e) => e.address).toList());
+    for (final anchor in addressAnchors) {
+      if (currentAnchor.any((e) => e.address == anchor.address)) {
+        currentAnchor.removeWhere((e) => e.address == anchor.address);
+      }
+    }
+    currentAnchor.addAll(addressAnchors);
+    await injector<ConfigurationService>()
+        .setLastUpdateChangeAnchor(addressAnchors: currentAnchor);
+  }
+
+  Future<void> removeLastUpdateChangeAnchor(
+      {required List<String> addresses}) async {
+    final currentAnchor = getLastUpdateChangeAnchor(addresses: addresses);
+    for (final anchor in currentAnchor) {
+      if (addresses.contains(anchor.address)) {
+        currentAnchor.removeWhere((e) => e.address == anchor.address);
+      }
+    }
+    await setLastUpdateChangeAnchor(addressAnchors: currentAnchor);
+  }
+
   Future<void> clearData() async {
     // await injector<ConfigurationService>().clearAddressLastRefreshedTime();
     cachedAllOwnedPlaylist = null;
-  }
-
-  Future<void> updateLastUpdateChangeAt(DateTime latestChangeAt) async {
-    await injector<ConfigurationService>()
-        .setLastUpdateChangeAt(latestChangeAt.toUtc());
-  }
-
-  DateTime? getLastUpdateChangeAt() {
-    return injector<ConfigurationService>().getLastUpdateChangeAt();
+    await setAddressLastIndexTime(addresses: {});
+    await setAddressLastFetchTokenTime(addresses: {});
+    await setLastUpdateChangeAnchor(addressAnchors: []);
   }
 }

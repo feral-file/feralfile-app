@@ -9,6 +9,7 @@ import 'dart:convert';
 
 import 'package:autonomy_flutter/model/jwt.dart';
 import 'package:autonomy_flutter/model/network.dart';
+import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/util/list_extension.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:collection/collection.dart';
@@ -184,6 +185,13 @@ abstract class ConfigurationService {
   DateTime? getLastUpdateChangeAt();
 
   Future<void> setLastUpdateChangeAt(DateTime time);
+
+  List<AddressAnchor> getLastUpdateChangeAnchor(
+      {required List<String> addresses,
+      AddressAnchor Function(String address)? defaultAnchorBuilder});
+
+  Future<void> setLastUpdateChangeAnchor(
+      {required List<AddressAnchor> addressAnchors});
 }
 
 class ConfigurationServiceImpl implements ConfigurationService {
@@ -281,6 +289,9 @@ class ConfigurationServiceImpl implements ConfigurationService {
 
   static const String KEY_ADDRESS_LAST_FETCH_TOKEN_TIME =
       'address_last_fetch_token_time';
+
+  static const String KEY_LAST_UPDATE_CHANGE_ANCHOR =
+      'last_update_change_anchor';
 
   static const String KEY_LAST_TIME_REFRESH_FEEDS = 'last_time_refresh_feeds';
 
@@ -763,6 +774,29 @@ class ConfigurationServiceImpl implements ConfigurationService {
   @override
   Future<void> setLastUpdateChangeAt(DateTime time) =>
       _preferences.setString(KEY_LAST_UPDATE_CHANGE_AT, time.toIso8601String());
+
+  @override
+  List<AddressAnchor> getLastUpdateChangeAnchor(
+      {required List<String> addresses,
+      AddressAnchor Function(String address)? defaultAnchorBuilder}) {
+    final anchorRaw = _preferences.getStringList(KEY_LAST_UPDATE_CHANGE_ANCHOR);
+    final anchors = anchorRaw
+        ?.map((e) =>
+            AddressAnchor.fromJson(jsonDecode(e) as Map<String, dynamic>))
+        .toList();
+    return addresses
+        .map((address) =>
+            anchors?.firstWhereOrNull((e) => e.address == address) ??
+            defaultAnchorBuilder?.call(address))
+        .nonNulls
+        .toList();
+  }
+
+  @override
+  Future<void> setLastUpdateChangeAnchor(
+          {required List<AddressAnchor> addressAnchors}) =>
+      _preferences.setStringList(KEY_LAST_UPDATE_CHANGE_ANCHOR,
+          addressAnchors.map((e) => jsonEncode(e.toJson())).toList());
 }
 
 enum ConflictAction {

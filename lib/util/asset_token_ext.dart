@@ -266,7 +266,7 @@ extension AssetTokenExtension on AssetToken {
   /// Apply a Change (parsing its meta based on subjectType) and return updated token
   AssetToken applyChange(Change change) {
     final meta = change.metaParsed;
-    final changedAt = change.changedAt;
+    final changedAt = change.createdAt;
     final lastUpdated = updatedAt;
     if (lastUpdated != null && lastUpdated.isAfter(changedAt)) {
       // NftCollection.logger.info(
@@ -366,7 +366,7 @@ extension AssetTokenExtension on AssetToken {
 
     return copyWith(
       currentOwner: newOwner,
-      updatedAt: changedAt ?? updatedAt,
+      updatedAt: changedAt ?? changedAt,
       owners: newOwners,
       provenanceEvents: newProvenanceEvents,
     );

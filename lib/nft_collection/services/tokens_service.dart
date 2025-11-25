@@ -6,6 +6,7 @@
 //
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:autonomy_flutter/common/injector.dart';
@@ -46,10 +47,12 @@ abstract class NftTokensService {
 
   Future<TriggerIndexingResult?> reindexAddresses(List<String> addresses);
 
-  Future<TriggerIndexingResult> reindexTokensByCids(List<String> tokenCids);
+  Future<TriggerIndexingResult> reindexTokensByCids(
+    List<String> tokenCids,
+  );
 
   Future<Stream<List<AssetToken>>> updateTokensInIsolate(
-    Map<String, DateTime?> addressToSince,
+    List<AddressAnchor> addressAnchors,
   );
 
   Future<void> reindexAddressesAndPullStatus({
@@ -581,10 +584,10 @@ class NftTokensServiceImpl extends NftTokensService {
 
   @override
   Future<Stream<List<AssetToken>>> updateTokensInIsolate(
-    Map<String, DateTime?> addressToSince,
+    List<AddressAnchor> addressAnchors,
   ) async {
-    NftCollection.logger
-        .info('[updateTokensInIsolate][start] ${addressToSince.toString()}');
+    NftCollection.logger.info(
+        '[updateTokensInIsolate][start] ${addressAnchors.map((e) => e.toJson().toString()).join(',')}');
 
     await startIsolateOrWait();
 
@@ -592,9 +595,10 @@ class NftTokensServiceImpl extends NftTokensService {
     final controller = StreamController<List<AssetToken>>();
     _streamControllers[uuid] = controller;
 
-    final Map<String, String?> payload = addressToSince.map(
-      (addr, dt) => MapEntry(addr, dt?.toUtc().toIso8601String()),
-    );
+    final Map<String, String?> payload = {};
+    for (final addressAnchor in addressAnchors) {
+      payload[addressAnchor.address] = jsonEncode(addressAnchor.toJson());
+    }
 
     _sendPort?.send([
       UPDATE_TOKENS_IN_ISOLATE,
@@ -886,13 +890,15 @@ class NftTokensServiceImpl extends NftTokensService {
     }
 
     if (result is UpdateTokensData) {
+      log.info(
+        '[UpdateTokensData] ${result.uuid} - ${result.changesList.items.length} changes, next anchor: ${result.changesList.nextAnchor}',
+      );
       final controller = _streamControllers[result.uuid];
       if (controller != null && !controller.isClosed) {
         bool hasError = false;
         // Group changes by tokenCid
 
-        final latestChangeAt = result.changes.lastOrNull?.changedAt;
-        final groupedChanges = result.changes
+        final groupedChanges = result.changesList.items
             .groupBy((change) => change.tokenId?.toString() ?? '');
         final tokenIds =
             groupedChanges.keys.toList().where((id) => id.isNotEmpty).toList();
@@ -968,11 +974,16 @@ class NftTokensServiceImpl extends NftTokensService {
         NftCollection.logger.info(
           '[UPDATE_TOKENS_IN_ISOLATE][end] ${result.uuid} - Updated ${updatedTokens.length} tokens',
         );
-        if (!hasError && latestChangeAt != null) {
+        if (!hasError && result.changesList.nextAnchor != null) {
           NftCollection.logger.info(
-              '[UPDATE_TOKENS_IN_ISOLATE][update last update change at] $latestChangeAt');
+              '[UPDATE_TOKENS_IN_ISOLATE][update ] ${result.changesList.nextAnchor}');
+          final addresses = result.addresses;
+          final addressAnchors = addresses
+              .map((address) => AddressAnchor(
+                  address: address, anchor: result.changesList.nextAnchor!))
+              .toList();
           injector<UserDp1PlaylistService>()
-              .updateLastUpdateChangeAt(latestChangeAt);
+              .updateLastUpdateChangeAnchor(addressAnchors: addressAnchors);
         }
       }
     }
@@ -1052,13 +1063,19 @@ class NftTokensServiceImpl extends NftTokensService {
             break;
 
           case UPDATE_TOKENS_IN_ISOLATE:
+            final addressAnchorsMessage = Map<String, String>.from(
+              (message[2] as Map).map(
+                (k, v) => MapEntry(k as String, v as String?),
+              ),
+            );
+            final List<AddressAnchor> addressAnchors = [];
+            for (final address in addressAnchorsMessage.values) {
+              addressAnchors.add(AddressAnchor.fromJson(
+                  Map<String, dynamic>.from(jsonDecode(address) as Map)));
+            }
             _updateTokensInIsolate(
               message[1] as String,
-              Map<String, String?>.from(
-                (message[2] as Map).map(
-                  (k, v) => MapEntry(k as String, v as String?),
-                ),
-              ),
+              addressAnchors,
             );
             break;
 
@@ -1200,28 +1217,29 @@ class NftTokensServiceImpl extends NftTokensService {
 
   static Future<void> _updateTokensInIsolate(
     String uuid,
-    Map<String, String?> addressToSinceIso,
+    List<AddressAnchor> addressAnchors,
   ) async {
+    final addresses = addressAnchors.map((e) => e.address).toList();
+    final anchors = addressAnchors.map((e) => e.anchor).toList();
     try {
       final isolateIndexerService = _isolateScopeInjector<NftIndexerService>();
 
       // Get all addresses and find the oldest sinceIso time
-      final addresses = addressToSinceIso.keys.toList();
-      final sinceIsoValues = addressToSinceIso.values.whereType<String>();
-      final oldestSinceIso = sinceIsoValues.isEmpty
+
+      final anchor = anchors.isEmpty
           ? null
-          : sinceIsoValues.reduce((a, b) => a.compareTo(b) < 0 ? a : b);
+          : anchors.reduce((a, b) => a.compareTo(b) < 0 ? a : b);
 
       // Fetch changes for all addresses at once
       final changesStream = _getChangesForAddress(
         isolateIndexerService,
         addresses,
-        oldestSinceIso,
+        anchor,
       );
 
       // Listen to the changes stream and send UpdateTokensData for each batch
-      await changesStream.forEach((changes) {
-        _isolateSendPort?.send(UpdateTokensData(uuid, changes));
+      await changesStream.forEach((changesList) {
+        _isolateSendPort?.send(UpdateTokensData(uuid, changesList, addresses));
       });
 
       // Send all changes to main isolate to fetch tokens from database
@@ -1229,53 +1247,54 @@ class NftTokensServiceImpl extends NftTokensService {
         UpdateTokensSuccess(uuid),
       );
     } catch (exception) {
-      _isolateSendPort?.send(UpdateTokensFailure(uuid, exception));
+      _isolateSendPort?.send(UpdateTokensFailure(
+        uuid,
+        exception,
+        addresses,
+      ));
     }
   }
 
-  static Stream<List<Change>> _getChangesForAddress(
+  static Stream<ChangeList> _getChangesForAddress(
     NftIndexerService service,
     List<String> addresses,
-    String? sinceIso,
+    int? anchor,
   ) async* {
-    var offset = 0;
     const pageSize = 50;
+    int? nextAnchor = anchor;
 
     while (true) {
       final req = QueryChangesRequest(
         addresses: addresses,
-        since: sinceIso,
         limit: pageSize,
-        offset: offset,
+        anchor: nextAnchor,
       );
       final page = await service.getChanges(req);
       if (page.items.isEmpty) break;
 
       // Yield each page of changes to the stream
-      yield page.items;
+      yield page;
 
-      offset += page.items.length;
-      if (page.items.length < pageSize) break;
+      nextAnchor = page.nextAnchor;
+      if (nextAnchor == null) break;
     }
   }
 }
 
-class AddressSince {
-  AddressSince({required this.address, required this.lastUpdatedAt});
+class AddressAnchor {
+  AddressAnchor({required this.address, required this.anchor});
 
   final String address;
-  final DateTime? lastUpdatedAt;
+  final int anchor;
 
   Map<String, dynamic> toJson() => {
         'address': address,
-        'since_iso': lastUpdatedAt?.toUtc().toIso8601String(),
+        'anchor': anchor,
       };
 
-  static AddressSince fromJson(Map<String, dynamic> json) => AddressSince(
+  static AddressAnchor fromJson(Map<String, dynamic> json) => AddressAnchor(
         address: json['address'] as String,
-        lastUpdatedAt: (json['since_iso'] as String?) != null
-            ? DateTime.tryParse(json['since_iso'] as String)
-            : null,
+        anchor: json['anchor'] as int,
       );
 }
 
@@ -1371,15 +1390,17 @@ class UpdateTokensSuccess extends TokensServiceResult {
 }
 
 class UpdateTokensData extends TokensServiceResult {
-  UpdateTokensData(this.uuid, this.changes);
+  UpdateTokensData(this.uuid, this.changesList, this.addresses);
 
   final String uuid;
-  final List<Change> changes;
+  final ChangeList changesList;
+  final List<String> addresses;
 }
 
 class UpdateTokensFailure extends TokensServiceResult {
-  UpdateTokensFailure(this.uuid, this.exception);
+  UpdateTokensFailure(this.uuid, this.exception, this.addresses);
 
   final String uuid;
   final Object exception;
+  final List<String> addresses;
 }

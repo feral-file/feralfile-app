@@ -491,7 +491,7 @@ class UserAllOwnCollectionBloc
   ) async {
     try {
       log.info(
-          '[UserAllOwnCollectionBloc][_onUpdateTokensOfAddresses] started');
+          '[UserAllOwnCollectionBloc][_onUpdateTokensOfAddresses] started with addresses: ${event.addresses.join(',')}');
       final subType = event.runtimeType;
 
       // cancel previous stream for this subtype
@@ -513,17 +513,14 @@ class UserAllOwnCollectionBloc
           ? null
           : sinceIsoValues.reduce((a, b) => a.compareTo(b) < 0 ? a : b);
 
-      final lastUpdateChangeAt =
-          injector<UserDp1PlaylistService>().getLastUpdateChangeAt() ??
-              oldestLastFetchTokenTime ??
-              DateTime(1970);
-
-      final addressMap = {
-        for (final addr in event.addresses) addr: lastUpdateChangeAt,
-      };
+      final addressAnchors = injector<UserDp1PlaylistService>()
+          .getLastUpdateChangeAnchor(
+              addresses: event.addresses,
+              defaultAnchorBuilder: (address) =>
+                  AddressAnchor(address: address, anchor: 0));
 
       // get stream from token service (updates from indexer changes)
-      final stream = await _tokensService.updateTokensInIsolate(addressMap);
+      final stream = await _tokensService.updateTokensInIsolate(addressAnchors);
 
       _tokensStreamSubs[subType] = stream.listen(
         (tokens) {

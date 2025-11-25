@@ -30,6 +30,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'package:sentry/sentry.dart';
 
 class ObservingState<T extends StatefulWidget> extends State<T>
     with WidgetsBindingObserver {
@@ -113,6 +114,11 @@ class HomePageHelper {
         }
       } catch (e) {
         log.info('Error in refresh tokens : $e');
+        unawaited(Sentry.captureEvent(SentryEvent(
+          message: SentryMessage('Error in refresh tokens: $e'),
+          level: SentryLevel.error,
+          throwable: e,
+        )));
         // Silently ignore refresh errors
       }
     });

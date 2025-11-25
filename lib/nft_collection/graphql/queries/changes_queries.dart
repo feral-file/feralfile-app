@@ -4,6 +4,7 @@ const String getChangesQuery = r'''
     $addresses: [String!]
     $since: String
     $limit: Uint8
+    $anchor: Uint64
     $offset: Uint64
     $order: Order
     $expand: [String!]
@@ -13,6 +14,7 @@ const String getChangesQuery = r'''
       addresses: $addresses
       since: $since
       limit: $limit
+      anchor: $anchor
       offset: $offset
       order: $order
       expand: $expand
@@ -29,6 +31,7 @@ const String getChangesQuery = r'''
       }
       offset
       total
+      next_anchor
     }
   }
 ''';
