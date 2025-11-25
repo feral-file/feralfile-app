@@ -98,6 +98,23 @@ Future<void> setupLogger() async {
   });
 }
 
+void setupInjectorForSunsetPage() {
+  if (injector.isRegistered<RemoteConfigService>()) {
+    return;
+  }
+  final dioOptions = BaseOptions(
+    followRedirects: true,
+    connectTimeout: const Duration(seconds: 10),
+    receiveTimeout: const Duration(seconds: 10),
+  );
+  final dio = baseDio(dioOptions);
+  injector.registerLazySingleton<RemoteConfigService>(
+    () => RemoteConfigServiceImpl(
+      RemoteConfigApi(dio, baseUrl: Environment.remoteConfigURL),
+    ),
+  );
+}
+
 Future<void> setupHomeWidgetInjector() async {
   final dioOptions = BaseOptions(
     followRedirects: true,

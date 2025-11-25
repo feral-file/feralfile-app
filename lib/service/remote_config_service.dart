@@ -147,6 +147,14 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
     },
     'tester': {
       'beta_tester': <String>[],
+    },
+    'sunset': {
+      'title': 'This version of the Feral File app is now sunset.',
+      'description': 'A new Feral File app is available with improved features and support. Please download the new app to continue.',
+      'download_button_text': 'Download the New Feral File App',
+      'support_email': 'support@feralfile.com',
+      'ios_app_download_url': 'https://apps.apple.com/us/app/feral-file/id1544022728',
+      'android_app_download_url': 'https://play.google.com/store/apps/details?id=com.bitmark.autonomy_client&pli=',
     }
   };
 
@@ -227,6 +235,7 @@ enum ConfigGroup {
   videoSettings,
   localCacheConfig,
   tester,
+  sunset,
 }
 
 // ConfigGroup getString extension
@@ -263,6 +272,8 @@ extension ConfigGroupExtension on ConfigGroup {
         return 'local_cache_config';
       case ConfigGroup.tester:
         return 'tester';
+      case ConfigGroup.sunset:
+        return 'sunset';
     }
   }
 }
@@ -307,6 +318,12 @@ enum ConfigKey {
   featuredWorksLastUpdated,
   foreWord,
   betaTester,
+  title,
+  description,
+  downloadButtonText,
+  supportEmail,
+  iosAppStoreUrl,
+  androidAppStoreUrl,
 }
 
 // ConfigKey getString extension
@@ -391,6 +408,18 @@ extension ConfigKeyExtension on ConfigKey {
         return 'foreword';
       case ConfigKey.betaTester:
         return 'beta_tester';
+      case ConfigKey.title:
+        return 'title';
+      case ConfigKey.description:
+        return 'description';
+      case ConfigKey.downloadButtonText:
+        return 'download_button_text';
+      case ConfigKey.supportEmail:
+        return 'support_email';
+      case ConfigKey.iosAppStoreUrl:
+        return 'ios_app_download_url';
+      case ConfigKey.androidAppStoreUrl:
+        return 'android_app_download_url';
     }
   }
 }

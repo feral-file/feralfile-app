@@ -78,6 +78,7 @@ import 'package:autonomy_flutter/screen/settings/hidden_artworks/hidden_artworks
 import 'package:autonomy_flutter/screen/settings/preferences/preferences_bloc.dart';
 import 'package:autonomy_flutter/screen/settings/preferences/preferences_page.dart';
 import 'package:autonomy_flutter/screen/settings/settings_page.dart';
+import 'package:autonomy_flutter/screen/sunset_page.dart';
 import 'package:autonomy_flutter/screen/wallet/wallet_page.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -100,6 +101,7 @@ class AppRouter {
   static const previewPrimerPage = 'preview_primer_page';
   static const onboardingPage = 'onboarding_page';
   static const newOnboardingPage = 'new_onboarding_page';
+  static const sunsetPage = 'sunset_page';
   static const nameLinkedAccountPage = 'name_linked_account_page';
   static const homePage = 'home_page';
   static const homePageNoTransition = 'home_page_no_transition';
@@ -217,6 +219,12 @@ class AppRouter {
         return CupertinoPageRoute(
           settings: settings,
           builder: (context) => const OnboardingPage(),
+        );
+
+      case sunsetPage:
+        return CupertinoPageRoute(
+          settings: settings,
+          builder: (context) => const SunsetPage(),
         );
 
       case previewPrimerPage:
