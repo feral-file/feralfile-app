@@ -365,31 +365,34 @@ AppBar getCustomBackAppBar(
   BuildContext context, {
   required Widget title,
   required List<Widget> actions,
+  bool canGoBack = true,
   double adjustLeftTitleWith = 0.0,
 }) =>
     AppBar(
       systemOverlayStyle: systemUiOverlayDarkStyle,
       elevation: 0,
       shadowColor: Colors.transparent,
-      leading: Semantics(
-          label: 'BACK',
-          child: Padding(
-            padding: EdgeInsets.only(right: adjustLeftTitleWith),
-            child: IconButton(
-              constraints: const BoxConstraints(
-                maxWidth: 44,
-                maxHeight: 44,
-                minWidth: 44,
-                minHeight: 44,
-              ),
-              onPressed: () => Navigator.pop(context),
-              icon: SvgPicture.asset(
-                'assets/images/ff_back_dark.svg',
-                width: 28,
-                height: 28,
-              ),
-            ),
-          )),
+      leading: canGoBack
+          ? Semantics(
+              label: 'BACK',
+              child: Padding(
+                padding: EdgeInsets.only(right: adjustLeftTitleWith),
+                child: IconButton(
+                  constraints: const BoxConstraints(
+                    maxWidth: 44,
+                    maxHeight: 44,
+                    minWidth: 44,
+                    minHeight: 44,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  icon: SvgPicture.asset(
+                    'assets/images/ff_back_dark.svg',
+                    width: 28,
+                    height: 28,
+                  ),
+                ),
+              ))
+          : const SizedBox(width: 44),
       leadingWidth: 70 + adjustLeftTitleWith,
       titleSpacing: 0,
       toolbarHeight: 66,

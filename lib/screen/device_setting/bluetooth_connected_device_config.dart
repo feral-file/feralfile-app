@@ -223,6 +223,7 @@ class BluetoothConnectedDeviceConfigState
     return Scaffold(
       appBar: getCustomBackAppBar(
         context,
+        canGoBack: !widget.payload.isFromOnboarding,
         title: name == null
             ? Text('configure_device'.tr())
             : FFTextName(
