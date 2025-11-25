@@ -608,6 +608,8 @@ class FFBluetoothService {
         timeout: timeout,
       );
     } catch (e) {
+      log.info('[_connectDevice] Error while connecting error $e');
+      rethrow;
       // if (isDisconnectedWithSuccess(e)) {
       //   log.info("Connection is not stable, retrying...");
       //   await _connect(
