@@ -65,7 +65,6 @@ import 'package:autonomy_flutter/service/pending_token_service.dart';
 import 'package:autonomy_flutter/service/playlist_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/settings_data_service.dart';
-import 'package:autonomy_flutter/service/tezos_service.dart';
 import 'package:autonomy_flutter/service/user_interactivity_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/util/au_file_service.dart';
@@ -345,9 +344,6 @@ Future<void> setupInjector() async {
   injector.registerLazySingleton<IndexerService>(
     () => IndexerService(indexerClient, injector()),
   );
-
-  injector
-      .registerLazySingleton<TezosService>(() => TezosServiceImpl(injector()));
 
   injector.registerLazySingleton<EthereumService>(
     () => EthereumServiceImpl(

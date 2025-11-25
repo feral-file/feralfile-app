@@ -93,9 +93,6 @@ android {
         targetSdkVersion 35
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
-
-        manifestPlaceholders = [
-        ]
     }
 
     buildFeatures {

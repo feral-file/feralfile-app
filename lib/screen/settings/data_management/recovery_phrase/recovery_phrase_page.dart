@@ -400,8 +400,7 @@ class _RecoveryPhrasePageState extends State<RecoveryPhrasePage> {
           child: Platform.isAndroid
               ? OutlineButton(
                   text: 'open_device_setting'.tr(),
-                  onTap: () => unawaited(
-                      injector<NavigationService>().openAccountSettings()),
+                  onTap: () => (),
                   color: AppColor.white,
                   borderColor: AppColor.primaryBlack,
                   textColor: AppColor.primaryBlack,

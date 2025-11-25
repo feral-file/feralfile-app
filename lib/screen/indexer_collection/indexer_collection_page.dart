@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/ff_alumni.dart';
+import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
+import 'package:autonomy_flutter/nft_collection/models/user_collection.dart';
+import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/indexer_collection/indexer_collection_bloc.dart';
@@ -15,9 +18,6 @@ import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
-import 'package:autonomy_flutter/nft_collection/models/user_collection.dart';
-import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:sentry/sentry.dart';
 
 class IndexerCollectionPage extends StatefulWidget {
@@ -63,7 +63,7 @@ class _IndexerCollectionPageState extends State<IndexerCollectionPage> {
 
     try {
       final newKey = (_pageState.keys?.last ?? 0) + 1;
-      final newItems = await injector<NftIndexerService>()
+      final newItems = await injector<IndexerService>()
           .getCollectionListToken(widget.payload.collection.id);
       final isLastPage = true;
 
