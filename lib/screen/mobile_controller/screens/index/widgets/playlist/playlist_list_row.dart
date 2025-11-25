@@ -14,7 +14,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class PlaylistListRow extends StatefulWidget {
   const PlaylistListRow({
     required this.playlistReference,
-    required this.carouselItems,
     this.playlistCreator,
     this.onItemTap,
     this.scrollController,
@@ -22,7 +21,6 @@ class PlaylistListRow extends StatefulWidget {
   });
 
   final PlaylistReference playlistReference;
-  final List<DP1NowDisplayingItem> carouselItems;
   final String? playlistCreator;
   final void Function(DP1NowDisplayingItem)? onItemTap;
   final ScrollController? scrollController;
@@ -55,6 +53,24 @@ class _PlaylistListRowState extends State<PlaylistListRow> {
     }
     _playlistDetailsBloc.close();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(PlaylistListRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.playlistReference.playlist.id !=
+        widget.playlistReference.playlist.id) {
+      _playlistDetailsBloc = PlaylistDetailsBloc(
+        playlist: widget.playlistReference.playlist,
+      );
+      _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
+    } else {
+      final currentItems = oldWidget.playlistReference.playlist.items;
+      final newItems = widget.playlistReference.playlist.items;
+      if (currentItems.length != newItems.length) {
+        _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
+      }
+    }
   }
 
   void _onScrollListener() {

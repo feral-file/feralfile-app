@@ -494,6 +494,12 @@ class UserAllOwnCollectionBloc
           '[UserAllOwnCollectionBloc][_onUpdateTokensOfAddresses] started with addresses: ${event.addresses.join(',')}');
       final subType = event.runtimeType;
 
+      if (event.addresses.isEmpty) {
+        log.info(
+            '[UserAllOwnCollectionBloc][_onUpdateTokensOfAddresses] addresses list cannot be empty');
+        return;
+      }
+
       // cancel previous stream for this subtype
       await _tokensStreamSubs[subType]?.cancel();
       _tokensStreamSubs[subType] = null;

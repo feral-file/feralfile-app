@@ -13,7 +13,9 @@ class ChannelListRow extends StatelessWidget {
     required this.carouselItems,
     this.channelCreator,
     this.onItemTap,
+    this.isLoadingMore = false,
     this.scrollController,
+    this.onLoadMore,
     super.key,
   });
 
@@ -21,12 +23,12 @@ class ChannelListRow extends StatelessWidget {
   final List<DP1NowDisplayingItem> carouselItems;
   final String? channelCreator;
   final void Function(DP1NowDisplayingItem)? onItemTap;
+  final bool isLoadingMore;
   final ScrollController? scrollController;
+  final VoidCallback? onLoadMore;
 
   @override
   Widget build(BuildContext context) {
-    final creator = channelCreator ?? 'Channel Creator';
-
     return GestureDetector(
       onTap: () {
         Navigator.of(context).pushNamed(
@@ -58,6 +60,8 @@ class ChannelListRow extends StatelessWidget {
               items: carouselItems,
               onItemTap: onItemTap,
               scrollController: scrollController,
+              isLoadingMore: isLoadingMore,
+              onLoadMore: onLoadMore,
             ),
           ],
         ),

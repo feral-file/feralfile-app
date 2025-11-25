@@ -1222,6 +1222,10 @@ class NftTokensServiceImpl extends NftTokensService {
     final addresses = addressAnchors.map((e) => e.address).toList();
     final anchors = addressAnchors.map((e) => e.anchor).toList();
     try {
+      if (addresses.isEmpty) {
+        throw Exception('Addresses list cannot be empty');
+      }
+
       final isolateIndexerService = _isolateScopeInjector<NftIndexerService>();
 
       // Get all addresses and find the oldest sinceIso time

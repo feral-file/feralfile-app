@@ -14,6 +14,7 @@ class ChannelSection extends StatelessWidget {
     this.onChannelItemTap,
     this.scrollController,
     this.hasMore = true,
+    this.onLoadMore,
     super.key,
   });
 
@@ -24,6 +25,7 @@ class ChannelSection extends StatelessWidget {
   final void Function(DP1NowDisplayingItem)? onChannelItemTap;
   final ScrollController? scrollController;
   final bool hasMore;
+  final void Function(ChannelData)? onLoadMore;
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +61,10 @@ class ChannelSection extends StatelessWidget {
           carouselItems: channel.items,
           onItemTap: onChannelItemTap,
           scrollController: scrollController,
+          isLoadingMore: channel.isLoadingMore,
+          onLoadMore: () {
+            onLoadMore?.call(channel);
+          },
         );
       },
     );
@@ -71,21 +77,32 @@ class ChannelData {
     required this.channelReference,
     required this.creator,
     required this.items,
+    this.currentItemsPage = 0,
+    this.hasMoreItems = false,
+    this.isLoadingMore = false,
   });
 
   final ChannelReference channelReference;
   final String creator;
   final List<DP1NowDisplayingItem> items;
-
+  final int currentItemsPage;
+  final bool hasMoreItems;
+  final bool isLoadingMore;
   ChannelData copyWith({
     ChannelReference? channelReference,
     String? creator,
     List<DP1NowDisplayingItem>? items,
+    int? currentItemsPage,
+    bool? hasMoreItems,
+    bool? isLoadingMore,
   }) {
     return ChannelData(
       channelReference: channelReference ?? this.channelReference,
       creator: creator ?? this.creator,
       items: items ?? this.items,
+      currentItemsPage: currentItemsPage ?? this.currentItemsPage,
+      hasMoreItems: hasMoreItems ?? this.hasMoreItems,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
     );
   }
 }

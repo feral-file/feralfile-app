@@ -175,7 +175,6 @@ SliverList playlistSliverListView({
         children: [
           PlaylistListRow(
             playlistReference: data.playlistReference,
-            carouselItems: data.items,
             playlistCreator: data.creator,
             onItemTap: (item) {
               final assetToken = item.assetToken;

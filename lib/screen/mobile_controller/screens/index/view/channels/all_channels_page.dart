@@ -163,6 +163,11 @@ class _AllChannelsPageState extends State<AllChannelsPage>
                   );
                 }
               },
+              onLoadMore: () {
+                _channelsBloc.add(LoadMoreChannelItemsEvent(
+                  channelId: channelData.channelReference.channel.id,
+                ));
+              },
             );
           },
           itemCount: channelDataList.length,

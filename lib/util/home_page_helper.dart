@@ -106,7 +106,11 @@ class HomePageHelper {
               .getAddressOldestLastIndexTime(addresses: owners);
           final addressesToRefresh =
               owners.where((e) => lastIndexedTime[e] != null).toList();
-          log.info('Refreshing tokens for ${addressesToRefresh}');
+          log.info('Refreshing tokens for: ${addressesToRefresh}');
+          if (addressesToRefresh.isEmpty) {
+            log.info('No addresses to refresh');
+            return;
+          }
           injector<UserAllOwnCollectionBloc>()
               .add(UpdateTokensOfAddresses(addresses: addressesToRefresh));
         } else {

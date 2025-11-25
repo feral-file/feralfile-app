@@ -19,16 +19,18 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
     required this.channelType,
     this.total,
     this.pageSize = 5,
+    this.channelItemsPageSize = 10,
   }) : super(const ChannelsState()) {
     on<LoadChannelsEvent>(_onLoadChannels);
     on<LoadMoreChannelsEvent>(_onLoadMoreChannels);
     on<RefreshChannelsEvent>(_onRefreshChannels);
+    on<LoadMoreChannelItemsEvent>(_onLoadMoreChannelItems);
   }
 
   final ChannelType channelType;
   final int? total;
   final int pageSize;
-
+  final int channelItemsPageSize;
   Future<void> _onLoadChannels(
     LoadChannelsEvent event,
     Emitter<ChannelsState> emit,
@@ -182,47 +184,47 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
 
       final channels = paginationResponse.channels;
 
-      final playlists = injector<FeralFileFeedManager>()
-          .getAllCachedPlaylistsOfChannels(channels);
-      final playlistItems = <DP1Item>[];
-      for (final playlist in playlists) {
-        playlistItems.addAll(playlist.playlist.items);
-      }
-
-      final cids = playlistItems.map((item) => item.cid).nonNulls.toList();
-      final assetTokens =
-          await injector<NftTokensService>().getManualTokens(cids: cids);
-
       // Create ChannelData list for channels with their items
       final channelDataList = <ChannelData>[];
       for (final channelRef in channels) {
-        // Get playlists for this specific channel
-        final channelPlaylists = injector<FeralFileFeedManager>()
+        final playlists = injector<FeralFileFeedManager>()
             .getAllCachedPlaylistsOfChannels([channelRef]);
+        final playlistItems = <DP1Item>[];
+        for (final playlist in playlists) {
+          playlistItems.addAll(playlist.playlist.items);
+        }
+
+        final pageItems = playlistItems.safeSublist(0, channelItemsPageSize);
+
+        final cids = pageItems.map((item) => item.cid).nonNulls.toList();
+        final assetTokens =
+            await injector<NftTokensService>().getManualTokens(cids: cids);
 
         // Collect items from all playlists in this channel
         final channelItems = <DP1NowDisplayingItem>[];
-        for (final playlist in channelPlaylists) {
-          final items = playlist.playlist.items;
-          for (final item in items) {
-            final assetToken =
-                assetTokens.firstWhereOrNull((token) => token.cid == item.cid);
-            channelItems.add(DP1NowDisplayingItem(
-              dp1Item: item,
-              assetToken: assetToken,
-            ));
-          }
+        for (final item in pageItems) {
+          final assetToken =
+              assetTokens.firstWhereOrNull((token) => token.cid == item.cid);
+          channelItems.add(DP1NowDisplayingItem(
+            dp1Item: item,
+            assetToken: assetToken,
+          ));
         }
 
         final service = injector<FeralFileFeedManager>()
             .getFeedServiceByUrl(channelRef.url);
         final creator = service?.name ?? '';
 
+        final currentItemsPage = 0;
+        final hasMore = playlistItems.length >= channelItemsPageSize;
+
         channelDataList.add(
           ChannelData(
             channelReference: channelRef,
             creator: creator,
             items: channelItems,
+            currentItemsPage: 0,
+            hasMoreItems: hasMore,
           ),
         );
       }
@@ -243,6 +245,121 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
       ));
     } catch (e) {
       log.info('Error loading channels: $e');
+      emit(
+        state.copyWith(
+          status: ChannelsStateStatus.error,
+          error: e.toString(),
+        ),
+      );
+    }
+  }
+
+  Future<void> _onLoadMoreChannelItems(
+    LoadMoreChannelItemsEvent event,
+    Emitter<ChannelsState> emit,
+  ) async {
+    // Find the channel data to update
+    final channelDataIndex = state.channelData.indexWhere(
+      (data) => data.channelReference.channel.id == event.channelId,
+    );
+
+    if (channelDataIndex == -1) {
+      log.info('Channel not found: ${event.channelId}');
+      return;
+    }
+
+    final channelData = state.channelData[channelDataIndex];
+
+    // Check if there are more items to load
+    if (!channelData.hasMoreItems) {
+      return;
+    }
+
+    try {
+      final loadingMoreChannelData = channelData.copyWith(
+        isLoadingMore: true,
+      );
+
+      final loadingMoreChannelDataList = [...state.channelData];
+      loadingMoreChannelDataList[channelDataIndex] = loadingMoreChannelData;
+
+      emit(state.copyWith(
+        channelData: loadingMoreChannelDataList,
+        status: ChannelsStateStatus.loaded,
+      ));
+      // Get playlists for this channel
+      final channelPlaylists = injector<FeralFileFeedManager>()
+          .getAllCachedPlaylistsOfChannels([channelData.channelReference]);
+
+      // Collect all items from playlists
+      final allChannelItems = <DP1Item>[];
+      for (final playlist in channelPlaylists) {
+        allChannelItems.addAll(playlist.playlist.items);
+      }
+
+      // Calculate pagination
+      final nextPage = channelData.currentItemsPage + 1;
+      final start = nextPage * channelItemsPageSize;
+      final end = start + channelItemsPageSize;
+
+      if (start >= allChannelItems.length) {
+        // No more items to load
+        return;
+      }
+
+      // Get the page items
+      final pageItems = allChannelItems.safeSublist(start, end);
+      final pageCids =
+          pageItems.map((item) => item.cid).whereType<String>().toList();
+
+      // Get asset tokens for the page items
+      final assetTokens =
+          await injector<NftTokensService>().getManualTokens(cids: pageCids);
+
+      // Create DP1NowDisplayingItem list
+      final newDisplayingItems = <DP1NowDisplayingItem>[];
+      for (int i = 0; i < pageItems.length; i++) {
+        final dp1Item = pageItems[i];
+        final assetToken =
+            assetTokens.firstWhereOrNull((t) => t.cid == dp1Item.cid);
+        newDisplayingItems.add(
+          DP1NowDisplayingItem(
+            dp1Item: dp1Item,
+            assetToken: assetToken,
+          ),
+        );
+      }
+
+      // Determine if there are more items to load
+      final hasMore = end < allChannelItems.length;
+
+      // Update the channel data with new items and pagination info
+      final updatedChannelData = channelData.copyWith(
+        items: [...channelData.items, ...newDisplayingItems],
+        currentItemsPage: nextPage,
+        hasMoreItems: hasMore,
+        isLoadingMore: false,
+      );
+
+      // get the index
+      final updatedChannelDataIndex = state.channelData.indexWhere(
+          (data) => data.channelReference.channel.id == event.channelId);
+
+      if (updatedChannelDataIndex == -1) {
+        log.info('Channel not found: ${event.channelId}');
+        return;
+      }
+
+      // Update the state
+      final updatedChannelDataList = [...state.channelData];
+      updatedChannelDataList[updatedChannelDataIndex] = updatedChannelData;
+
+      emit(state.copyWith(
+        channelData: updatedChannelDataList,
+        status: ChannelsStateStatus.loaded,
+      ));
+    } catch (e) {
+      log.info('Error loading more channel items for ${event.channelId}: $e');
       emit(
         state.copyWith(
           status: ChannelsStateStatus.error,

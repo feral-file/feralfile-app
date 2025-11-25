@@ -1107,62 +1107,62 @@ class UIHelper {
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                ListView.separated(
-                  shrinkWrap: true,
-                  padding: EdgeInsets.zero,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: options.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    final option = options[index];
-                    final child = Row(
-                      children: [
-                        if (option.icon != null)
-                          SizedBox(
-                            width: 22,
-                            child: IconTheme(
-                              data: const IconThemeData(
-                                color: AppColor.white,
+                    ListView.separated(
+                      shrinkWrap: true,
+                      padding: EdgeInsets.zero,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: options.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final option = options[index];
+                        final child = Row(
+                          children: [
+                            if (option.icon != null)
+                              SizedBox(
+                                width: 22,
+                                child: IconTheme(
+                                  data: const IconThemeData(
+                                    color: AppColor.white,
+                                  ),
+                                  child: option.icon!,
+                                ),
                               ),
-                              child: option.icon!,
+                            if (option.icon != null)
+                              const SizedBox(
+                                width: 15,
+                              ),
+                            Text(
+                              option.title ?? '',
+                              style: option.titleStyle ??
+                                  theme.textTheme.ppMori400White14.copyWith(
+                                      decoration: TextDecoration.none),
                             ),
-                          ),
-                        if (option.icon != null)
-                          const SizedBox(
-                            width: 15,
-                          ),
-                        Text(
-                          option.title ?? '',
-                          style: option.titleStyle ??
-                              theme.textTheme.ppMori400White14
-                                  .copyWith(decoration: TextDecoration.none),
-                        ),
-                      ],
-                    );
+                          ],
+                        );
 
-                    if (option.builder != null) {
-                      return option.builder!.call(context, option);
-                    }
+                        if (option.builder != null) {
+                          return option.builder!.call(context, option);
+                        }
 
-                    return GestureDetector(
-                      onTap: () {
-                        option.onTap?.call();
+                        return GestureDetector(
+                          onTap: () {
+                            option.onTap?.call();
+                          },
+                          child: Stack(
+                            children: [
+                              child,
+                              Positioned.fill(
+                                child: Container(
+                                  color: Colors.transparent,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
                       },
-                      child: Stack(
-                        children: [
-                          child,
-                          Positioned.fill(
-                            child: Container(
-                              color: Colors.transparent,
-                            ),
-                          ),
-                        ],
+                      separatorBuilder: (context, index) => const SizedBox(
+                        height: 24,
                       ),
-                    );
-                  },
-                  separatorBuilder: (context, index) => const SizedBox(
-                    height: 24,
-                  ),
-                ),
+                    ),
                   ],
                 ),
               ),
@@ -1497,7 +1497,6 @@ class UIHelper {
           children: [
             PlaylistListRow(
               playlistReference: playlist,
-              carouselItems: [],
               onItemTap: (item) {
                 final assetToken = item.assetToken;
                 if (assetToken != null) {

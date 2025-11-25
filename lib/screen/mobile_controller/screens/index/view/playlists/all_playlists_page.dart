@@ -185,7 +185,6 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
             return PlaylistListRow(
               playlistReference: playlistData.playlistReference,
               playlistCreator: playlistData.creator,
-              carouselItems: playlistData.items,
               onItemTap: (item) {
                 final assetToken = item.assetToken;
                 if (assetToken != null) {

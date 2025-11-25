@@ -600,6 +600,7 @@ class FFBluetoothService {
       await _connect(
         device,
         shouldShowError: (e) {
+          return false;
           if (isDisconnectedWithSuccess(e)) {
             return false;
           }
@@ -608,16 +609,21 @@ class FFBluetoothService {
         timeout: timeout,
       );
     } catch (e) {
-      if (isDisconnectedWithSuccess(e)) {
-        log.info("Connection is not stable, retrying...");
-        await _connect(
-          device,
-          shouldShowError: (_) => shouldShowError,
-          timeout: timeout,
-        );
-      } else {
-        throw e;
-      }
+      log.info("Connection is not stable, retrying...");
+      unawaited(Sentry.captureEvent(SentryEvent(
+        message: SentryMessage(
+            'Connection is not stable, retrying... ${device.remoteId.str} ${e.toString()}'),
+        level: SentryLevel.warning,
+        extra: {
+          'device': device.remoteId.str,
+          'timeout': timeout.inSeconds,
+        },
+      )));
+      await _connect(
+        device,
+        shouldShowError: (_) => shouldShowError,
+        timeout: timeout,
+      );
     }
   }
 

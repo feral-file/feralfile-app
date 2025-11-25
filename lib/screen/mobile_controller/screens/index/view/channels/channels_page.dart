@@ -132,10 +132,12 @@ class _ChannelsPageState extends State<ChannelsPage>
       );
     }
 
-    return _buildChannels(state, channelsBloc.channelType);
+    return _buildChannels(state, channelsBloc);
   }
 
-  Widget _buildChannels(ChannelsState state, ChannelType channelType) {
+  Widget _buildChannels(ChannelsState state, ChannelsBloc channelsBloc) {
+    final channelType = channelsBloc.channelType;
+    // only get the first 5 channels for section
     final channelDataList = state.channelData.safeSublist(0, 5);
     final hasMore = state.hasMore;
 
@@ -171,6 +173,11 @@ class _ChannelsPageState extends State<ChannelsPage>
                       ArtworkDetailPayload(ArtworkIdentity(assetToken.cid)),
                 );
               }
+            },
+            onLoadMore: (channel) {
+              channelsBloc.add(LoadMoreChannelItemsEvent(
+                channelId: channel.channelReference.channel.id,
+              ));
             },
           ),
         ],

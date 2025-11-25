@@ -57,7 +57,6 @@ class PlaylistSection extends StatelessWidget {
         return PlaylistListRow(
           playlistReference: playlist.playlistReference,
           playlistCreator: playlist.creator,
-          carouselItems: playlist.items,
           onItemTap: onPlaylistItemTap,
           scrollController: scrollController,
         );
@@ -71,22 +70,18 @@ class PlaylistData {
   PlaylistData({
     required this.playlistReference,
     required this.creator,
-    required this.items,
   });
 
   final PlaylistReference playlistReference;
   final String creator;
-  final List<DP1NowDisplayingItem> items;
 
   PlaylistData copyWith({
     PlaylistReference? playlistReference,
     String? creator,
-    List<DP1NowDisplayingItem>? items,
   }) {
     return PlaylistData(
       playlistReference: playlistReference ?? this.playlistReference,
       creator: creator ?? this.creator,
-      items: items ?? this.items,
     );
   }
 }
