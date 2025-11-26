@@ -278,7 +278,7 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold> {
 
     shouldShowNowDisplaying.addListener(_updateAnimationBasedOnDisplayState);
     nowDisplayingVisibility.addListener(_updateAnimationBasedOnDisplayState);
-    CustomRouteObserver.bottomSheetVisibility
+    CustomRouteObserver.bottomSheetHeight
         .addListener(_updateAnimationBasedOnDisplayState);
 
     _keyboardVisibilitySubscription =
@@ -296,7 +296,7 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold> {
   void _updateAnimationBasedOnDisplayState() {
     final shouldShow = shouldShowNowDisplaying.value &&
         nowDisplayingVisibility.value &&
-        !CustomRouteObserver.bottomSheetVisibility.value &&
+        CustomRouteObserver.bottomSheetHeight.value == 0 &&
         !keyboardVisibilityController.isVisible;
     nowDisplayingShowing.value = shouldShow;
   }
@@ -309,7 +309,7 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold> {
 
   void _handleScrollUpdate(UserScrollNotification notification) {
     if (notification.metrics.axis != Axis.vertical ||
-        notification.metrics.maxScrollExtent < 10) {
+        notification.metrics.maxScrollExtent < 100) {
       return;
     }
 
@@ -332,7 +332,7 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold> {
   void dispose() {
     shouldShowNowDisplaying.removeListener(_updateAnimationBasedOnDisplayState);
     nowDisplayingVisibility.removeListener(_updateAnimationBasedOnDisplayState);
-    CustomRouteObserver.bottomSheetVisibility
+    CustomRouteObserver.bottomSheetHeight
         .removeListener(_updateAnimationBasedOnDisplayState);
     isNowDisplayingBarExpanded.removeListener(_updateOverlayVisibility);
     nowDisplayingShowing.removeListener(_updateOverlayVisibility);

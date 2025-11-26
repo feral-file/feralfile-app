@@ -160,20 +160,20 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
 
   @override
   void didPop() {
-    CustomRouteObserver.bottomSheetVisibility.value = false;
+    CustomRouteObserver.bottomSheetHeight.value = 0;
     super.didPop();
   }
 
   @override
   void didPopNext() {
-    CustomRouteObserver.bottomSheetVisibility.value = false;
+    CustomRouteObserver.bottomSheetHeight.value = 0;
     super.didPopNext();
   }
 
   void _infoShrink() {
     setState(() {
       _isInfoExpand = false;
-      CustomRouteObserver.bottomSheetVisibility.value = false;
+      CustomRouteObserver.bottomSheetHeight.value = 0;
     });
     _selectTextFocusNode.unfocus();
     _animationController.animateTo(_infoShrinkPosition);
@@ -186,7 +186,12 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
     }
     setState(() {
       _isInfoExpand = true;
-      CustomRouteObserver.bottomSheetVisibility.value = true;
+      CustomRouteObserver.bottomSheetHeight.value =
+          (MediaQuery.of(context).size.height -
+                      (_appBarBottomDy ?? 80) -
+                      _infoHeaderHeight) *
+                  0.5 +
+              _infoHeaderHeight;
     });
     _animationController.animateTo(_infoExpandPosition);
   }
