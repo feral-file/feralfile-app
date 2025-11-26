@@ -390,11 +390,7 @@ class UserDp1PlaylistService {
   Future<void> removeLastUpdateChangeAnchor(
       {required List<String> addresses}) async {
     final currentAnchor = getLastUpdateChangeAnchor(addresses: addresses);
-    for (final anchor in currentAnchor) {
-      if (addresses.contains(anchor.address)) {
-        currentAnchor.removeWhere((e) => e.address == anchor.address);
-      }
-    }
+    currentAnchor.removeWhere((anchor) => addresses.contains(anchor.address));
     await setLastUpdateChangeAnchor(addressAnchors: currentAnchor);
   }
 

@@ -61,9 +61,6 @@ class _ChannelsPageState extends State<ChannelsPage>
   @override
   void didPopNext() {
     super.didPopNext();
-    _curatedChannelsBloc.add(const RefreshChannelsEvent());
-    _myChannelsBloc.add(const RefreshChannelsEvent());
-    _globalChannelsBloc.add(const RefreshChannelsEvent());
   }
 
   void _onScroll() {

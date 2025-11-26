@@ -91,7 +91,6 @@ Widget tokenGalleryThumbnailWidget(
   final isJohnGerrard = token.isJohnGerrardArtwork;
   final thumbnailUrl = token.getGalleryThumbnailUrl(
     usingThumbnailID: usingThumbnailID && !isJohnGerrard,
-    variant: variant,
   );
 
   if (thumbnailUrl == null || thumbnailUrl.isEmpty) {

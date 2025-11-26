@@ -61,9 +61,6 @@ class _PlaylistsPageState extends State<PlaylistsPage>
   @override
   void didPopNext() {
     super.didPopNext();
-    _curatedPlaylistsBloc.add(const RefreshPlaylistsEvent());
-    _myPlaylistsBloc.add(const RefreshPlaylistsEvent());
-    _globalPlaylistsBloc.add(const RefreshPlaylistsEvent());
   }
 
   void _onScroll() {
@@ -145,7 +142,7 @@ class _PlaylistsPageState extends State<PlaylistsPage>
       return SliverToBoxAdapter(
         child: ErrorView(
           error: 'Error loading playlists: ${state.error}',
-          onRetry: () => playlistsBloc.add(const LoadPlaylistsEvent()),
+          onRetry: () => playlistsBloc.add(LoadPlaylistsEvent()),
         ),
       );
     }

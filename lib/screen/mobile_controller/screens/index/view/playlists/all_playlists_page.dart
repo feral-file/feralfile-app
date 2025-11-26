@@ -50,7 +50,7 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
     super.initState();
     _scrollController.addListener(_onScroll);
     _playlistsBloc = _getPlaylistsBloc();
-    _playlistsBloc.add(const LoadPlaylistsEvent());
+    _playlistsBloc.add(LoadPlaylistsEvent());
   }
 
   PlaylistsBloc _getPlaylistsBloc() {
@@ -84,7 +84,6 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
   @override
   void didPopNext() {
     super.didPopNext();
-    _playlistsBloc.add(const RefreshPlaylistsEvent());
   }
 
   void _onScroll() {
@@ -92,6 +91,11 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
         _scrollController.position.maxScrollExtent) {
       _playlistsBloc.add(const LoadMorePlaylistsEvent());
     }
+  }
+
+  @override
+  void didUpdateWidget(AllPlaylistsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
   }
 
   @override
@@ -133,7 +137,7 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
     if (state.isError && state.playlistData.isEmpty) {
       return ErrorView(
         error: 'Error loading playlists: ${state.error}',
-        onRetry: () => _playlistsBloc.add(const LoadPlaylistsEvent()),
+        onRetry: () => _playlistsBloc.add(LoadPlaylistsEvent()),
       );
     }
 

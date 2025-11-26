@@ -301,11 +301,11 @@ class FeedCacheImpl extends BaseFeedCache {
         .add(const LoadChannelsEvent());
     injector<PlaylistsBloc>(
             instanceName: PlaylistsBlocInstance.curated.instanceName)
-        .add(const LoadPlaylistsEvent());
-    injector<PlaylistsBloc>(instanceName: PlaylistsBlocInstance.my.instanceName)
-        .add(const LoadPlaylistsEvent());
-    injector<PlaylistsBloc>(
-            instanceName: PlaylistsBlocInstance.global.instanceName)
-        .add(const LoadPlaylistsEvent());
+        .add(LoadPlaylistsEvent());
+    // injector<PlaylistsBloc>(instanceName: PlaylistsBlocInstance.my.instanceName)
+    //     .add(LoadPlaylistsEvent());
+    // injector<PlaylistsBloc>(
+    //         instanceName: PlaylistsBlocInstance.global.instanceName)
+    //     .add(LoadPlaylistsEvent());
   }
 }

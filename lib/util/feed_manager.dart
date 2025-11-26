@@ -109,18 +109,10 @@ class FeedManager {
     injector<ChannelsBloc>(
             instanceName: ChannelsBlocInstance.curated.instanceName)
         .add(const RefreshChannelsEvent());
-    injector<ChannelsBloc>(instanceName: ChannelsBlocInstance.me.instanceName)
-        .add(const RefreshChannelsEvent());
-    injector<ChannelsBloc>(
-            instanceName: ChannelsBlocInstance.global.instanceName)
-        .add(const RefreshChannelsEvent());
     injector<PlaylistsBloc>(
             instanceName: PlaylistsBlocInstance.curated.instanceName)
         .add(const RefreshPlaylistsEvent());
     injector<PlaylistsBloc>(instanceName: PlaylistsBlocInstance.my.instanceName)
-        .add(const RefreshPlaylistsEvent());
-    injector<PlaylistsBloc>(
-            instanceName: PlaylistsBlocInstance.global.instanceName)
         .add(const RefreshPlaylistsEvent());
   }
 

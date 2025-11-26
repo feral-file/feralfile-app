@@ -2,7 +2,6 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channel_details/channel_detail.page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel/channel_list_row.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
@@ -40,8 +39,7 @@ class AllChannelsPage extends StatefulWidget {
   State<AllChannelsPage> createState() => _AllChannelsPageState();
 }
 
-class _AllChannelsPageState extends State<AllChannelsPage>
-    with AutomaticKeepAliveClientMixin, RouteAware {
+class _AllChannelsPageState extends State<AllChannelsPage> with RouteAware {
   final ScrollController _scrollController = ScrollController();
   late final ChannelsBloc _channelsBloc;
 
@@ -70,7 +68,6 @@ class _AllChannelsPageState extends State<AllChannelsPage>
   @override
   void didPopNext() {
     super.didPopNext();
-    _channelsBloc.add(const RefreshChannelsEvent());
   }
 
   void _onScroll() {
@@ -81,9 +78,15 @@ class _AllChannelsPageState extends State<AllChannelsPage>
   }
 
   @override
-  Widget build(BuildContext context) {
-    super.build(context);
+  void didUpdateWidget(AllChannelsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.payload.channelType != widget.payload.channelType) {
+      _channelsBloc.add(const LoadChannelsEvent());
+    }
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColor.auGreyBackground,
       appBar: const CustomAppBar(
@@ -184,7 +187,4 @@ class _AllChannelsPageState extends State<AllChannelsPage>
       ],
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

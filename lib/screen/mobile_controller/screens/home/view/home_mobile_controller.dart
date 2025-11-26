@@ -7,10 +7,8 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/pla
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/home_page_helper.dart';
-import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MobileControllerHomePage extends StatefulWidget {
   const MobileControllerHomePage({super.key, this.initialPageIndex = 0});
@@ -50,9 +48,9 @@ class _MobileControllerHomePageState
     _curatedChannelsBloc.add(const LoadChannelsEvent());
     _myChannelsBloc.add(const LoadChannelsEvent());
     _globalChannelsBloc.add(const LoadChannelsEvent());
-    _curatedPlaylistsBloc.add(const LoadPlaylistsEvent());
-    _myPlaylistsBloc.add(const LoadPlaylistsEvent());
-    _globalPlaylistsBloc.add(const LoadPlaylistsEvent());
+    _curatedPlaylistsBloc.add(LoadPlaylistsEvent());
+    _myPlaylistsBloc.add(LoadPlaylistsEvent());
+    // _globalPlaylistsBloc.add(LoadPlaylistsEvent());
 
     HomePageHelper.instance.onHomePageInit(context, this);
   }

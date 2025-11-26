@@ -130,7 +130,7 @@ extension AssetTokenExtension on AssetToken {
 
   String? getGalleryThumbnailUrl({
     bool usingThumbnailID = true,
-    String variant = 'thumbnail',
+    String size = 'xs',
   }) {
     String? thumbnailUrl;
 
@@ -258,7 +258,7 @@ extension AssetTokenExtension on AssetToken {
       return animationUrl;
     }
 
-    return getGalleryThumbnailUrl();
+    return getGalleryThumbnailUrl(size: 'xl');
   }
 
   List<ProvenanceEvent> get provenance {
@@ -290,7 +290,7 @@ extension AssetTokenExtension on AssetToken {
       return this;
     }
     if (meta is ProvenanceChangeMeta) {
-      return _applyProvenanceChangeMeta(meta, changedAt);
+      return _applyProvenanceChangeMeta(meta, change.changedAt);
     } else if (meta is MetadataChangeMeta) {
       return _applyMetadataChangeMeta(meta, changedAt);
     } else if (meta is EnrichmentSourceChangeMeta) {
@@ -308,7 +308,7 @@ extension AssetTokenExtension on AssetToken {
 
   AssetToken _applyProvenanceChangeMeta(
     ProvenanceChangeMeta meta,
-    DateTime? changedAt,
+    DateTime changedAt,
   ) {
     // Update currentOwner if 'to' address is provided
     String? newOwner = (currentOwner == meta.from) ? meta.to : currentOwner;
@@ -363,7 +363,7 @@ extension AssetTokenExtension on AssetToken {
         fromAddress: meta.from,
         toAddress: meta.to,
         txHash: meta.txHash,
-        timestamp: changedAt!,
+        timestamp: changedAt,
       );
 
       final newProvenanceEventsItems = (provenanceEvents?.items ?? []).toList();

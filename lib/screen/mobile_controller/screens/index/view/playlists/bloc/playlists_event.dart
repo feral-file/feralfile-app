@@ -33,7 +33,9 @@ abstract class PlaylistsEvent {
 }
 
 class LoadPlaylistsEvent extends PlaylistsEvent {
-  const LoadPlaylistsEvent();
+  LoadPlaylistsEvent() {
+    log.info("Create LoadPlaylistsEvent");
+  }
 }
 
 class LoadMorePlaylistsEvent extends PlaylistsEvent {
