@@ -177,16 +177,6 @@ platform :ios do
 
 		install_provisioning_profile(path: "fastlane/provisioning_profiles/Autonomy_Inhouse_Adhoc.mobileprovision")
 		install_provisioning_profile(path: "fastlane/provisioning_profiles/Autonomy_Inhouse_Adhoc_Notification.mobileprovision")
-
-        update_info_plist(
-            xcodeproj: "Runner.xcodeproj",
-            plist_path: "Runner/Info.plist",
-            block: proc do |plist|
-                urlScheme = plist["branch_key"]
-                urlScheme["live"] = ENV["BRANCH_KEY"]
-            end
-        )
-
         if env == 'test'
 		    build_appcenter_test
         else
@@ -318,15 +308,6 @@ platform :ios do
 		install_provisioning_profile(path: "fastlane/provisioning_profiles/Autonomy_Wallet_Appstore.mobileprovision")
 		install_provisioning_profile(path: "fastlane/provisioning_profiles/Autonomy_Wallet_Push_Notification_Appstore.mobileprovision")
 		install_provisioning_profile(path: "fastlane/provisioning_profiles/Feral_File_app_widget.mobileprovision")
-
-		update_info_plist(
-          xcodeproj: "Runner.xcodeproj",
-          plist_path: "Runner/Info.plist",
-          block: proc do |plist|
-            urlScheme = plist["branch_key"]
-            urlScheme["live"] = ENV["BRANCH_KEY"]
-          end
-        )
 
 		build_testflight
 
