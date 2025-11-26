@@ -13,7 +13,6 @@ import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_state.dart';
 import 'package:autonomy_flutter/service/ethereum_service.dart';
-import 'package:autonomy_flutter/service/tezos_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/int_ext.dart';
 import 'package:autonomy_flutter/view/crypto_view.dart';
@@ -125,8 +124,6 @@ Future<Pair<BigInt?, String>> getAddressBalance(
             await injector<EthereumService>().getBalance(address);
         cryptoBalance = etherAmount.getInWei;
       case CryptoType.XTZ:
-        final tezosAmount = await injector<TezosService>().getBalance(address);
-        cryptoBalance = BigInt.from(tezosAmount);
       case CryptoType.USDC:
       case CryptoType.UNKNOWN:
         cryptoBalance = null;

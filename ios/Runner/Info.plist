@@ -102,26 +102,6 @@
 	<string>Light</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>branch_key</key>
-	<dict>
-		<key>live</key>
-		<string></string>
-		<key>test</key>
-		<string></string>
-	</dict>
-	<key>branch_universal_link_domains</key>
-	<array>
-		<string>link.autonomy.io</string>
-		<string>autonomy-app.app.link</string>
-		<string>autonomy-app-alternate.app.link</string>
-		<string>autonomy-app.test.app.link</string>
-		<string>autonomy-app-alternate.test.app.link</string>
-		<string>app.feralfile.com</string>
-		<string>feralfile-app.app.link</string>
-		<string>feralfile-app-alternate.app.link</string>
-		<string>feralfile-app.test-app.link</string>
-		<string>feralfile-app-alternate.test-app.link</string>
-	</array>
 	<key>io.flutter.embedded_views_preview</key>
 	<true/>
 </dict>

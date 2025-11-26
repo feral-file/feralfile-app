@@ -47,7 +47,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:flutter_vibrate/flutter_vibrate.dart';
+// import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:open_settings_plus/open_settings_plus.dart';
 import 'package:sentry/sentry.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -299,78 +299,6 @@ class NavigationService {
     }
   }
 
-  Future<void> showCannotResolveBranchLink() async {
-    if (navigatorKey.currentContext != null &&
-        navigatorKey.currentState?.mounted == true) {
-      await UIHelper.showInfoDialog(
-        context,
-        'can_not_resolve_branch_link'.tr(),
-        'can_not_resolve_branch_link_desc'.tr(),
-        onClose: () => UIHelper.hideInfoDialog(context),
-      );
-    }
-  }
-
-  Future<void> showMembershipGiftCodeEmpty() async {
-    if (navigatorKey.currentContext != null &&
-        navigatorKey.currentState?.mounted == true) {
-      await UIHelper.showInfoDialog(
-        context,
-        'can_not_get_gift_code'.tr(),
-        'can_not_get_gift_code_desc'.tr(),
-        onClose: () => UIHelper.hideInfoDialog(context),
-      );
-    }
-  }
-
-  Future<void> showFailToRedeemMembership() async {
-    if (navigatorKey.currentContext != null &&
-        navigatorKey.currentState?.mounted == true) {
-      await UIHelper.showInfoDialog(
-        context,
-        'fail_to_redeem_membership'.tr(),
-        'fail_to_redeem_membership_desc'.tr(),
-        onClose: () => UIHelper.hideInfoDialog(context),
-      );
-    }
-  }
-
-  Future<void> showRedeemMembershipCodeUsed() async {
-    if (navigatorKey.currentContext != null &&
-        navigatorKey.currentState?.mounted == true) {
-      await UIHelper.showInfoDialog(
-        context,
-        'fail_to_redeem_membership'.tr(),
-        'redeem_code_used_desc'.tr(),
-        onClose: () => UIHelper.hideInfoDialog(context),
-      );
-    }
-  }
-
-  Future<void> showPremiumUserCanNotClaim() async {
-    if (navigatorKey.currentContext != null &&
-        navigatorKey.currentState?.mounted == true) {
-      await UIHelper.showInfoDialog(
-        context,
-        'fail_to_redeem_membership'.tr(),
-        'premium_user_can_not_claim'.tr(),
-        onClose: () => UIHelper.hideInfoDialog(context),
-      );
-    }
-  }
-
-  Future<void> showRedeemMembershipSuccess() async {
-    if (navigatorKey.currentContext != null &&
-        navigatorKey.currentState?.mounted == true) {
-      await UIHelper.showInfoDialog(
-        context,
-        'redeem_membership_success'.tr(),
-        'redeem_membership_success_desc'.tr(),
-        onClose: () => UIHelper.hideInfoDialog(context),
-      );
-    }
-  }
-
   Future<void> gotoExhibitionDetailsPage(String exhibitionID) async {
     popUntilHome();
     await Future.delayed(const Duration(seconds: 1), () async {
@@ -606,7 +534,7 @@ class NavigationService {
     bool isRoundCorner = true,
     Color? backgroundColor,
     int autoDismissAfter = 0,
-    FeedbackType? feedback = FeedbackType.selection,
+    // FeedbackType? feedback = FeedbackType.selection,
   }) async {
     await UIHelper.showFlexibleDialog(
       context,
@@ -615,7 +543,7 @@ class NavigationService {
       isRoundCorner: isRoundCorner,
       backgroundColor: backgroundColor,
       autoDismissAfter: autoDismissAfter,
-      feedback: feedback,
+      // feedback: feedback,
     );
   }
 

@@ -25,10 +25,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_vibrate/flutter_vibrate.dart';
+// import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
-import 'package:tezart/tezart.dart';
+// import 'package:tezart/tezart.dart';
 
 enum ErrorItemState {
   getReport,
@@ -170,7 +170,7 @@ Future showErrorDialog(BuildContext context, String title, String description,
   isShowErrorDialogWorking = DateTime.now();
   final theme = Theme.of(context);
 
-  Vibrate.feedback(FeedbackType.warning);
+  // Vibrate.feedback(FeedbackType.warning);
   await showModalBottomSheet(
       context: context,
       enableDrag: false,
@@ -357,32 +357,6 @@ bool _isErrorIgnored(ErrorEvent event) {
 
 void hideInfoDialog(BuildContext context) {
   Navigator.of(context).pop();
-}
-
-String getTezosErrorMessage(TezartNodeError err) {
-  String message = '';
-  final tezosError = getTezosError(err);
-  if (tezosError == TezosError.notEnoughMoney) {
-    message = 'not_enough_tz'.tr();
-  } else if (tezosError == TezosError.contractMalformed) {
-    message = 'contract_malformed'
-        .tr(); // "The operation failed. Contract malformed or deprecated.";
-  } else {
-    message = 'operation_failed_with'.tr(args: [err.message]);
-  }
-
-  return message;
-}
-
-TezosError getTezosError(TezartNodeError err) {
-  if (err.message.contains('empty_implicit_contract') ||
-      err.message.contains('balance_too_low')) {
-    return TezosError.notEnoughMoney;
-  } else if (err.message.contains('script_rejected')) {
-    return TezosError.contractMalformed;
-  } else {
-    return TezosError.other;
-  }
 }
 
 enum TezosError {

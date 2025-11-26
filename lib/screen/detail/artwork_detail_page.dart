@@ -124,7 +124,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
     WidgetsBinding.instance.addObserver(this);
     _appBarBottomDy ??= MediaQuery.of(context).padding.top + kToolbarHeight;
     _detector = ShakeDetector.autoStart(
-      onPhoneShake: () async {
+      onPhoneShake: (event) async {
         await _exitFullScreen();
       },
     );

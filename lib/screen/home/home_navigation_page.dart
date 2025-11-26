@@ -31,7 +31,6 @@ import 'package:autonomy_flutter/service/client_token_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/deeplink_service.dart';
-import 'package:autonomy_flutter/service/home_widget_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
@@ -147,23 +146,11 @@ class HomeNavigationPageState extends State<HomeNavigationPage>
       setState(() {
         _selectedIndex = index;
       });
-      final isWidgetAdded = await injector<HomeWidgetService>()
-          .isWidgetAdded()
-          .timeout(const Duration(seconds: 10), onTimeout: () => false);
+
       await UIHelper.showCenterMenu(
         context,
         routeSettings: const RouteSettings(name: UIHelper.homeMenu),
         options: [
-          if (!isWidgetAdded)
-            OptionItem(
-              title: 'Install Feral File Widget',
-              icon: const Icon(
-                AuIcon.add,
-              ),
-              onTap: () {
-                injector<NavigationService>().showHowToInstallDailyWidget();
-              },
-            ),
           OptionItem(
             title: 'scan'.tr(),
             icon: const Icon(
@@ -563,7 +550,6 @@ class HomeNavigationPageState extends State<HomeNavigationPage>
     await _remoteConfig.loadConfigs(forceRefresh: true);
     unawaited(NowDisplayingManager().updateDisplayingNow());
 
-    unawaited(injector<HomeWidgetService>().updateDailyTokensToHomeWidget());
     _triggerShowAnnouncement();
   }
 

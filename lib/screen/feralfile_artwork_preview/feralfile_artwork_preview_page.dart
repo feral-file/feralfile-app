@@ -112,7 +112,7 @@ class _FeralFileArtworkPreviewPageState
   void afterFirstLayout(BuildContext context) {
     _appBarBottomDy ??= MediaQuery.of(context).padding.top + kToolbarHeight;
     _detector = ShakeDetector.autoStart(
-      onPhoneShake: () async {
+      onPhoneShake: (event) async {
         await _exitFullScreen();
       },
     );

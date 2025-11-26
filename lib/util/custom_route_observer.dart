@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 final listRouteShouldNotShowNowDisplaying = [
   AppRouter.scanQRPage,
   AppRouter.settingsPage,
-  AppRouter.subscriptionPage,
   AppRouter.supportCustomerPage,
   AppRouter.supportListPage,
   AppRouter.supportThreadPage,

@@ -9,6 +9,7 @@ package com.bitmark.autonomywallet
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import androidx.activity.enableEdgeToEdge
 import com.bitmark.autonomy_flutter.FileLogger
 import com.bitmark.autonomy_flutter.jsonKT
 import com.google.android.gms.auth.blockstore.Blockstore
@@ -69,6 +70,7 @@ class MainActivity : FlutterFragmentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         client = Blockstore.getClient(this)
     }

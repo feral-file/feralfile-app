@@ -7,7 +7,6 @@ import 'package:autonomy_flutter/model/device/base_device.dart';
 import 'package:autonomy_flutter/model/ff_account.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
-import 'package:autonomy_flutter/util/dio_exception_ext.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:dio/dio.dart';
@@ -359,9 +358,6 @@ class TvCastServiceImpl extends BaseTvCastService {
             error.error! as FeralfileError,
           ),
         );
-      } else if (error.isBranchError) {
-        final feralfileError = error.branchError;
-        unawaited(UIHelper.showTVConnectError(context, feralfileError));
       }
     } else {
       unawaited(

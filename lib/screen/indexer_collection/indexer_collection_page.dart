@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/ff_alumni.dart';
+import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
+import 'package:autonomy_flutter/nft_collection/models/user_collection.dart';
+import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/indexer_collection/indexer_collection_bloc.dart';
@@ -15,9 +18,6 @@ import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
-import 'package:autonomy_flutter/nft_collection/models/user_collection.dart';
-import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:sentry/sentry.dart';
 
 class IndexerCollectionPage extends StatefulWidget {
@@ -33,8 +33,7 @@ class _IndexerCollectionPageState extends State<IndexerCollectionPage> {
   late final IndexerCollectionBloc _indexerCollectionBloc;
   static const _padding = 14.0;
   static const _axisSpacing = 5.0;
-  final PagingController<int, AssetToken> _pagingController =
-      PagingController(firstPageKey: 0);
+  PagingState<int, AssetToken> _pageState = PagingState<int, AssetToken>();
 
   @override
   void initState() {
@@ -42,9 +41,6 @@ class _IndexerCollectionPageState extends State<IndexerCollectionPage> {
     _indexerCollectionBloc = context.read<IndexerCollectionBloc>();
     _indexerCollectionBloc
         .add(IndexerCollectionGetCollectionEvent(widget.payload.collection.id));
-    _pagingController.addPageRequestListener((pageKey) async {
-      await _fetchPage(context, pageKey);
-    });
   }
 
   Future<void> _fetchPage(BuildContext context, int pageKey) async {
@@ -52,16 +48,47 @@ class _IndexerCollectionPageState extends State<IndexerCollectionPage> {
       final newItems = await injector<IndexerService>().getCollectionListToken(
         widget.payload.collection.id,
       );
-      _pagingController.appendLastPage(newItems);
     } catch (error) {
       log.info('Error fetching series page: $error');
       unawaited(Sentry.captureException(error));
     }
   }
 
+  Future<void> _fetchNextPage() async {
+    if (_pageState.isLoading) return;
+
+    setState(() {
+      _pageState = _pageState.copyWith(isLoading: true, error: null);
+    });
+
+    try {
+      final newKey = (_pageState.keys?.last ?? 0) + 1;
+      final newItems = await injector<IndexerService>()
+          .getCollectionListToken(widget.payload.collection.id);
+      final isLastPage = true;
+
+      setState(() {
+        _pageState = _pageState.copyWith(
+          pages: [...?_pageState.pages, newItems],
+          keys: [...?_pageState.keys, newKey],
+          hasNextPage: !isLastPage,
+          isLoading: false,
+        );
+      });
+    } catch (error) {
+      log.info('Error fetching collection page: $error');
+      unawaited(Sentry.captureException(error));
+      setState(() {
+        _pageState = _pageState.copyWith(
+          error: error,
+          isLoading: false,
+        );
+      });
+    }
+  }
+
   @override
   void dispose() {
-    _pagingController.dispose();
     super.dispose();
   }
 
@@ -114,7 +141,8 @@ class _IndexerCollectionPageState extends State<IndexerCollectionPage> {
       child: CustomScrollView(
         slivers: [
           PagedSliverGrid<int, AssetToken>(
-            pagingController: _pagingController,
+            state: _pageState,
+            fetchNextPage: _fetchNextPage,
             showNewPageErrorIndicatorAsGridChild: false,
             showNewPageProgressIndicatorAsGridChild: false,
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

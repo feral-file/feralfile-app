@@ -22,8 +22,6 @@ jobs:
         run: |
           echo "FLUTTER_VERSION_NAME=0.100.0" >> $GITHUB_ENV
           echo "FLUTTER_VERSION_CODE=10" >> $GITHUB_ENV
-          echo "BRANCH_KEY=${{ secrets.BRANCH_KEY }}" >> $GITHUB_ENV
-          echo "BRANCH_KEY_TEST=${{ secrets.BRANCH_KEY_TEST }}" >> $GITHUB_ENV
       - name: Create env file
         run: |
           touch .env
@@ -61,7 +59,6 @@ jobs:
           # echo AUTONOMY_SHARD_SERVICE=${{ secrets.AUTONOMY_SHARD_SERVICE }} >> .env
           # echo METRIC_ENDPOINT=${{ secrets.METRIC_ENDPOINT }} >> .env
           # echo METRIC_SECRET_KEY=${{ secrets.METRIC_SECRET_KEY }} >> .env
-          # echo BRANCH_KEY=${{ secrets.BRANCH_KEY }} >> .env
           # echo MIXPANEL_KEY=${{ secrets.MIXPANEL_KEY }} >> .env
           # echo CLOUD_FLARE_IMAGE_URL_PREFIX=${{ secrets.CLOUD_FLARE_IMAGE_URL_PREFIX }} >> .env
 

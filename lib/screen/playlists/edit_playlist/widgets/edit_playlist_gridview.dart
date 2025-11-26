@@ -1,10 +1,10 @@
+// import 'package:flutter_vibrate/flutter_vibrate.dart';
+import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:autonomy_flutter/screen/playlists/add_new_playlist/add_new_playlist.dart';
 import 'package:autonomy_flutter/view/au_button_clipper.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:flutter_vibrate/flutter_vibrate.dart';
-import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 class EditPlaylistGridView extends StatefulWidget {
@@ -49,7 +49,7 @@ class _EditPlaylistGridViewState extends State<EditPlaylistGridView> {
     return ReorderableGridView.count(
       controller: widget.controller,
       onDragStart: (dragIndex) {
-        Vibrate.feedback(FeedbackType.light);
+        // Vibrate.feedback(FeedbackType.light);
       },
       onReorder: (oldIndex, newIndex) {
         setState(() {

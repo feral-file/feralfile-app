@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:autonomy_flutter/nft_rendering/feralfile_webview.dart';
 import 'package:autonomy_flutter/nft_rendering/webview_controller_ext.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
@@ -19,7 +20,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:shake/shake.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -65,7 +65,7 @@ class _PreviewPrimerPageState extends State<PreviewPrimerPage>
   @override
   void afterFirstLayout(BuildContext context) {
     _detector = ShakeDetector.autoStart(
-      onPhoneShake: () {
+      onPhoneShake: (event) {
         setState(() {
           isFullScreen = false;
         });

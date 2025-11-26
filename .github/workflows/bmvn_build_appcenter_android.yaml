@@ -63,8 +63,6 @@ jobs:
         run: |
           echo "FLUTTER_VERSION_NAME=${{ inputs.version }}" >> $GITHUB_ENV
           # echo "FLUTTER_VERSION_CODE=${{ inputs.build-number }}" >> $GITHUB_ENV
-          echo "BRANCH_KEY=${{ secrets.BRANCH_KEY }}" >> $GITHUB_ENV
-          echo "BRANCH_KEY_TEST=${{ secrets.BRANCH_KEY_TEST }}" >> $GITHUB_ENV
           echo "SIGNATURE_HASH=${{ secrets.SIGNATURE_HASH }}" >> $GITHUB_ENV
           echo "SIGNATURE_HASH_INHOUSE=${{ secrets.SIGNATURE_HASH_INHOUSE }}" >> $GITHUB_ENV
           ${{ inputs.testnet == true }} && echo APPCENTER_APP_ID=support-zzd0-28/Autonomy-Android-Test >> $GITHUB_ENV || echo APPCENTER_APP_ID=support-zzd0-28/Autonomy-Android-1 >> $GITHUB_ENV

@@ -54,31 +54,16 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
-def branchKey = localProperties["branch.key"] ?: environment["BRANCH_KEY"]
-if (branchKey == null) {
-    throw new GradleException("Branch key not found.")
-}
-
-def branchKeyTest = localProperties["branch.keyTest"] ?: environment["BRANCH_KEY_TEST"]
-if (branchKeyTest == null) {
-    throw new GradleException("Branch test key not found.")
-}
-
-def branchTestMode = localProperties["branch.testMode"] ?: environment["BRANCH_IS_TEST"] ?: false
-
 def signature_hash = localProperties["signature.hash"] ?: environment["SIGNATURE_HASH"]
 
 def signature_hash_inhouse = localProperties["signature.hashInhouse"] ?: environment["SIGNATURE_HASH_INHOUSE"]
 
 android {
-    compileSdkVersion 34
+    compileSdkVersion 35
     flavorDimensions 'env'
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
-    }
-    defaultConfig {
-        resConfigs 'en', 'US'
     }
 
     signingConfigs {
@@ -100,18 +85,14 @@ android {
     }
 
     defaultConfig {
+        resourceConfigurations += ['en', 'US']
+
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "com.bitmark.autonomy_client"
         minSdkVersion 29
-        targetSdkVersion 34
+        targetSdkVersion 35
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
-
-        manifestPlaceholders = [
-                branchKey     : branchKey,
-                branchKeyTest : branchKeyTest,
-                branchTestMode: branchTestMode
-        ]
     }
 
     buildFeatures {
@@ -235,7 +216,7 @@ dependencies {
 
     implementation 'com.github.bumptech.glide:glide:4.12.0'
 //    kapt 'com.github.bumptech.glide:compiler:4.12.0'
-    implementation 'androidx.glance:glance-appwidget:LATEST-VERSION'
+    implementation 'androidx.glance:glance-appwidget:1.1.0'
 }
 
 configurations.all {
