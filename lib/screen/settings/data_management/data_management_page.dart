@@ -143,6 +143,8 @@ class _DataManagementPageState extends State<DataManagementPage> {
           await injector<CacheManager>().emptyCache();
           await DefaultCacheManager().emptyCache();
           injector<UserAllOwnCollectionBloc>().add(ClearDataEvent());
+          injector<UserAllOwnCollectionBloc>()
+              .add(ReloadAssetTokensFromIndexerDatabase());
           injector<FeralFileFeedManager>().clearAllCache();
           //redownload data
           await injector<UserDp1PlaylistService>()

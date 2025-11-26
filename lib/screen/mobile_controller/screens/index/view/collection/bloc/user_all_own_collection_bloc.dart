@@ -353,7 +353,7 @@ class UserAllOwnCollectionBloc
         );
       }
 
-      add(ReloadAssetTokensFromIndexerDatabase());
+      // add(ReloadAssetTokensFromIndexerDatabase());
       event.onDone?.call();
     } catch (e) {
       log.info('[${event.runtimeType}] error $e');
@@ -397,8 +397,11 @@ class UserAllOwnCollectionBloc
             .toList(),
       ),
     );
+    log.info(
+        '[UserAllOwnCollectionBloc] Reloaded asset tokens from indexer database. Update my playlist');
+
     injector<PlaylistsBloc>(instanceName: PlaylistsBlocInstance.my.instanceName)
-        .add(LoadPlaylistsEvent());
+        .add(RefreshPlaylistsEvent());
   }
 
   Future<void> _onClearData(
@@ -549,7 +552,7 @@ class UserAllOwnCollectionBloc
 
       await completer.future;
       _tokensStreamSubs[subType] = null;
-      add(ReloadAssetTokensFromIndexerDatabase());
+      // add(ReloadAssetTokensFromIndexerDatabase());
     } catch (e, stackTrace) {
       log.info('[${event.runtimeType}] error $e');
       Sentry.captureException('Failed to update asset tokens: $e',

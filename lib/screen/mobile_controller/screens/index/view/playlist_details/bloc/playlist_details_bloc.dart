@@ -42,6 +42,7 @@ class PlaylistDetailsBloc
     GetPlaylistDetailsEvent event,
     Emitter<PlaylistDetailsState> emit,
   ) async {
+    log.info('GetPlaylistDetailsEvent');
     emit(
       PlaylistDetailsLoadingState(
         nowDisplayingItems: state.nowDisplayingItems,
@@ -122,6 +123,9 @@ class PlaylistDetailsBloc
           ),
         );
       }
+
+      log.info(
+          'PlaylistDetailsLoadedState loaded ${this._playlist.id} with ${nowDisplayingItems.length} items');
 
       emit(
         PlaylistDetailsLoadedState(

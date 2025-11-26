@@ -259,7 +259,7 @@ class BluetoothConnectedDeviceConfigState
                         },
                         child: SvgPicture.asset(
                           'assets/images/more_circle.svg',
-                          width: 22,
+                          width: 34,
                           colorFilter: const ColorFilter.mode(
                             AppColor.white,
                             BlendMode.srcIn,
