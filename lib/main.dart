@@ -19,7 +19,6 @@ import 'package:autonomy_flutter/util/device.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -76,9 +75,6 @@ Future<void> runFeralFileApp() async {
     'Initial Route: ${WidgetsBinding.instance.platformDispatcher.defaultRouteName}',
   );
 
-  // feature/text_localization
-  await EasyLocalization.ensureInitialized();
-
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -117,15 +113,9 @@ Future<void> _setupApp() async {
   }
 
   runApp(
-    SDTFScope(
-      child: EasyLocalization(
-        supportedLocales: const [Locale('en', 'US'), Locale('ja')],
-        path: 'assets/translations',
-        fallbackLocale: const Locale('en', 'US'),
-        useFallbackTranslations: true,
-        child: const OverlaySupport.global(
-          child: AutonomyApp(),
-        ),
+    const SDTFScope(
+      child: OverlaySupport.global(
+        child: AutonomyApp(),
       ),
     ),
   );
@@ -151,9 +141,6 @@ class AutonomyApp extends StatelessWidget {
                 ? AppTheme.lightTheme()
                 : AppTheme.tabletLightTheme(),
             darkTheme: AppTheme.lightTheme(),
-            localizationsDelegates: context.localizationDelegates,
-            supportedLocales: context.supportedLocales,
-            locale: context.locale,
             debugShowCheckedModeBanner: false,
             home: const SunsetPage(),
           );
