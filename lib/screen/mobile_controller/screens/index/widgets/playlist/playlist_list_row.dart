@@ -58,18 +58,15 @@ class _PlaylistListRowState extends State<PlaylistListRow> {
   @override
   void didUpdateWidget(PlaylistListRow oldWidget) {
     super.didUpdateWidget(oldWidget);
+    final currentItems = oldWidget.playlistReference.playlist.items;
+    final newItems = widget.playlistReference.playlist.items;
     if (oldWidget.playlistReference.playlist.id !=
-        widget.playlistReference.playlist.id) {
+            widget.playlistReference.playlist.id ||
+        currentItems.length != newItems.length) {
       _playlistDetailsBloc = PlaylistDetailsBloc(
         playlist: widget.playlistReference.playlist,
       );
       _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
-    } else {
-      final currentItems = oldWidget.playlistReference.playlist.items;
-      final newItems = widget.playlistReference.playlist.items;
-      if (currentItems.length != newItems.length) {
-        _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
-      }
     }
   }
 
