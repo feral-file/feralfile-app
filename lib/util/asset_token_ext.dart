@@ -144,9 +144,9 @@ extension AssetTokenExtension on AssetToken {
         ?.firstWhereOrNull((mediaAsset) => mediaAsset.sourceUrl == thumbnailUrl)
         ?.variantUrls;
 
-    final mediaThumbnailUrl = (enrichmentSourceVariantUrls?['xs'] ??
+    final mediaThumbnailUrl = (enrichmentSourceVariantUrls?[size] ??
             enrichmentSourceVariantUrls?.values.firstOrNull) as String? ??
-        (metadataVariantUrls?['xs'] ?? metadataVariantUrls?.values.firstOrNull)
+        (metadataVariantUrls?[size] ?? metadataVariantUrls?.values.firstOrNull)
             as String?;
 
     if (mediaThumbnailUrl != null && mediaThumbnailUrl.isNotEmpty) {
