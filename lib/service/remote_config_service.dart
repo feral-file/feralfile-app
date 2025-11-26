@@ -149,8 +149,8 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
       'beta_tester': <String>[],
     },
     'sunset': {
-      'title': 'This version of the Feral File app is now sunset.',
-      'description': 'A new Feral File app is available with improved features and support. Please download the new app to continue.',
+      'title': 'Feral File Legacy App: End of Support',
+      'description': 'This version of the Feral File app is being retired in December 2025.\n\nWe\'ve rebuilt the app under our new company to focus on FF1 and daily digital art, so some settings (like saved addresses) need to be set up again. Your artworks and NFTs remain in your own wallets.\n\nTo use Feral File with FF1 and future exhibitions, please install our new app, Feral File, from this app store (subtitle: "Digital art & FF1 controller"). After you sign in there, you can re-add any wallet or account addresses you\'d like us to index.\n\nIf you need help, email support@feralfile.com.',
       'download_button_text': 'Download the New Feral File App',
       'support_email': 'support@feralfile.com',
       'ios_app_download_url': 'https://apps.apple.com/us/app/feral-file/id1544022728',
