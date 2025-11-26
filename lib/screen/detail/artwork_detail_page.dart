@@ -100,6 +100,8 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
   @override
   void initState() {
     super.initState();
+    // Reset bottomSheetHeight to ensure BottomInteractionBar can be shown
+    CustomRouteObserver.bottomSheetHeight.value = 0;
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -135,6 +137,10 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
   @override
   void didChangeDependencies() {
     routeObserver.subscribe(this, ModalRoute.of(context)!);
+    // Ensure bottomSheetHeight is reset when page is shown to allow BottomInteractionBar to be visible
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      CustomRouteObserver.bottomSheetHeight.value = 0;
+    });
     super.didChangeDependencies();
   }
 

@@ -87,12 +87,16 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
 
   @override
   Widget build(BuildContext context) {
-    // Keep widget visible during animation even if shouldShow is false
-    if (!_isShowing && _animationController.value == 0.0) {
-      return const SizedBox.shrink();
-    }
+    // Use AnimatedBuilder to automatically rebuild when animation value changes
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        // Keep widget visible during animation even if shouldShow is false
+        if (!_isShowing && _animationController.value == 0.0) {
+          return const SizedBox.shrink();
+        }
 
-    return MultiValueListenableBuilder(
+        return MultiValueListenableBuilder(
       valueListenables: [
         isNowDisplayingBarExpanded,
         CustomRouteObserver.bottomSheetHeight,
@@ -108,6 +112,13 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
             offset: Offset(0, _scrollOffset),
             child: Stack(
               children: [
+                IgnorePointer(
+                  child: Container(
+                    color: Colors.transparent,
+                    height: MediaQuery.of(context).size.height,
+                    width: MediaQuery.of(context).size.width,
+                  ),
+                ),
                 // Gradient (only on home page)
                 ValueListenableBuilder(
                   valueListenable: CustomRouteObserver.currentRoute,
@@ -181,6 +192,8 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
               ],
             ),
           ),
+        );
+      },
         );
       },
     );
