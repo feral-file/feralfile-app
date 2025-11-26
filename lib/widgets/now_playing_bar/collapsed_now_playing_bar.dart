@@ -3,8 +3,6 @@ import 'package:autonomy_flutter/design/build/components/NowPlayingBar.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
-import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/view/header_with_animated_below.dart';
 import 'package:autonomy_flutter/view/now_displaying/now_display_setting.dart';
 import 'package:autonomy_flutter/widgets/now_playing_bar/display_item.dart';
@@ -16,13 +14,9 @@ final ValueNotifier<bool> isNowDisplayingBarShowingQuickSetting =
 
 class CollapsedNowPlayingBar extends StatefulWidget {
   const CollapsedNowPlayingBar(
-      {required this.playingObject,
-      this.onToggle,
-      this.isShowingQuickSetting,
-      super.key});
+      {required this.playingObject, this.onToggle, super.key});
   final DP1NowDisplayingObject playingObject;
   final void Function()? onToggle;
-  final ValueNotifier<bool>? isShowingQuickSetting;
 
   @override
   State<StatefulWidget> createState() => _CollapsedNowPlayingBarState();
@@ -30,13 +24,9 @@ class CollapsedNowPlayingBar extends StatefulWidget {
 
 class _CollapsedNowPlayingBarState extends State<CollapsedNowPlayingBar>
     with SingleTickerProviderStateMixin {
-  late ValueNotifier<bool> isShowingQuickSetting;
-
   @override
   void initState() {
     super.initState();
-    isShowingQuickSetting =
-        widget.isShowingQuickSetting ?? ValueNotifier(false);
   }
 
   @override
@@ -86,23 +76,12 @@ class _CollapsedNowPlayingBarState extends State<CollapsedNowPlayingBar>
                     },
                   ),
                 ),
-                const SizedBox(width: 10),
-                GestureDetector(
-                  child: Icon(
-                    isShowingQuickSetting.value ? AuIcon.close : AuIcon.drawer,
-                    size: 24,
-                    color: AppColor.white,
-                  ),
-                  onTap: () {
-                    widget.onToggle?.call();
-                  },
-                )
               ],
             ),
           ],
         ),
+        isExpandedListenable: ValueNotifier(false),
         child: const NowDisplayingQuickSettingView(),
-        isExpandedListenable: isShowingQuickSetting,
       ),
     );
   }

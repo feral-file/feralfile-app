@@ -70,37 +70,29 @@ class _NowDisplayingBarState extends State<NowDisplayingBar>
           return const SizedBox();
         }
 
+        const minSize = NowPlayingBarTokens.collapseHeight /
+            NowPlayingBarTokens.expandedHeight;
+        log.info(
+          'NowDisplayingBar - minSize: $minSize',
+        );
+
         return Container(
           constraints: BoxConstraints(
             maxHeight: NowPlayingBarTokens.expandedHeight.toDouble(),
           ),
-          child: ExpandableWithOption(
-            isExpandedNotifier: isNowDisplayingBarShowingQuickSetting,
-            header: (context, onUpdate, notifier) {
-              final isExpanded = notifier.value;
-              final minSize = (NowPlayingBarTokens.collapseHeight +
-                      (isExpanded ? 56 * 3 : 0)) /
-                  NowPlayingBarTokens.expandedHeight;
-              return TwoStopDraggableSheet(
-                key: draggableSheetKey,
-                minSize: minSize,
-                maxSize: 1,
-                collapsedBuilder: (context, scrollController) {
-                  log.info(
-                    'NowDisplayingBar - minSize: $minSize, isExpanded: $isExpanded',
-                  );
-                  return CollapsedNowPlayingBar(
-                    playingObject: nowPlayingObject,
-                    onToggle: onUpdate,
-                    isShowingQuickSetting: notifier,
-                  );
-                },
-                expandedBuilder:
-                    (BuildContext context, ScrollController scrollController) {
-                  return ExpandedNowPlayingBar(
-                    playingObject: nowPlayingObject,
-                  );
-                },
+          child: TwoStopDraggableSheet(
+            key: draggableSheetKey,
+            minSize: minSize,
+            maxSize: 1,
+            collapsedBuilder: (context, scrollController) {
+              return CollapsedNowPlayingBar(
+                playingObject: nowPlayingObject,
+              );
+            },
+            expandedBuilder:
+                (BuildContext context, ScrollController scrollController) {
+              return ExpandedNowPlayingBar(
+                playingObject: nowPlayingObject,
               );
             },
           ),
