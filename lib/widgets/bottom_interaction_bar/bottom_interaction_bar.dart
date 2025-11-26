@@ -147,7 +147,8 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
                         color: Colors.transparent,
                         child: LLMTextInput(),
                       ),
-                      slideBegin: _calculateSlideBegin(_llmInputHeight),
+                      slideBegin:
+                          _calculateSlideBegin(paddingBottom, _llmInputHeight),
                     ),
                   ),
 
@@ -159,7 +160,10 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
                   right: ResponsiveLayout.paddingHorizontal,
                   child: _animateVisibility(
                     child: const NowDisplayingBar(),
-                    slideBegin: _calculateSlideBegin(_nowDisplayingBarHeight),
+                    slideBegin: _calculateSlideBegin(
+                      paddingBottom,
+                      _nowDisplayingBarHeight,
+                    ),
                   ),
                 ),
               ],
@@ -172,8 +176,12 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
 
   /// Calculate slide begin offset to achieve the same pixel distance for all widgets
   /// Offset is a fraction of widget height, so we calculate: pixelDistance / widgetHeight
-  static Offset _calculateSlideBegin(double widgetHeight) {
-    final slideDistance = UIConstants.nowDisplayingBarBottomPadding +
+  static Offset _calculateSlideBegin(
+    double paddingBottom,
+    double widgetHeight,
+  ) {
+    final slideDistance = paddingBottom +
+        UIConstants.nowDisplayingBarBottomPadding +
         _nowDisplayingBarHeight +
         _llmInputHeight;
     final offsetY = slideDistance / widgetHeight;
