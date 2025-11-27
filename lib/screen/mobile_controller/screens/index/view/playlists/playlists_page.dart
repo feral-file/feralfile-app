@@ -90,16 +90,12 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
 
   Widget _buildContent(PlaylistsState state, PlaylistsBloc playlistsBloc) {
     if (state.isLoading && state.playlists.isEmpty) {
-      return const SliverToBoxAdapter(
-        child: LoadingView(),
-      );
+      return const LoadingView();
     }
     if (state.isError && state.playlists.isEmpty) {
-      return SliverToBoxAdapter(
-        child: ErrorView(
-          error: 'Error loading playlists: ${state.error}',
-          onRetry: () => playlistsBloc.add(LoadPlaylistsEvent()),
-        ),
+      return ErrorView(
+        error: 'Error loading playlists: ${state.error}',
+        onRetry: () => playlistsBloc.add(LoadPlaylistsEvent()),
       );
     }
 
@@ -140,44 +136,6 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
           );
         }
       },
-    );
-
-    return SliverList.builder(
-      itemCount: 1,
-      itemBuilder: (context, index) => Column(
-        children: [
-          PlaylistSection(
-            sectionName: playlistType.name,
-            sectionIcon: SvgPicture.asset(
-              playlistType.icon,
-              width: 12,
-              height: 12,
-              colorFilter: const ColorFilter.mode(
-                PrimitivesTokens.colorsGrey,
-                BlendMode.srcIn,
-              ),
-            ),
-            playlists: playlistDataList,
-            hasMore: hasMore,
-            onViewAllTap: () {
-              Navigator.of(context).pushNamed(
-                AppRouter.allPlaylistsPage,
-                arguments: AllPlaylistsPagePayload(playlistType: playlistType),
-              );
-            },
-            onPlaylistItemTap: (item) {
-              final assetToken = item.assetToken;
-              if (assetToken != null) {
-                injector<NavigationService>().navigateTo(
-                  AppRouter.artworkDetailsPage,
-                  arguments:
-                      ArtworkDetailPayload(ArtworkIdentity(assetToken.cid)),
-                );
-              }
-            },
-          ),
-        ],
-      ),
     );
   }
 }
