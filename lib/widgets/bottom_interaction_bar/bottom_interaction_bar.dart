@@ -18,7 +18,6 @@ import 'package:autonomy_flutter/view/now_displaying/now_displaying_bar.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/llm_text_input/llm_text_input.dart';
 import 'package:flutter/material.dart';
-import 'package:multi_value_listenable_builder/multi_value_listenable_builder.dart';
 
 /// Widget that wraps LLMTextInput and NowDisplayingBar with shared scroll-based visibility
 class BottomInteractionBar extends StatefulWidget {
@@ -72,7 +71,11 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
         if (_isShowing) {
           _animationController.forward();
         } else {
-          _animationController.reverse();
+          if (CustomRouteObserver.bottomSheetVisibility.value) {
+            _animationController.value = 0.0;
+          } else {
+            _animationController.reverse();
+          }
         }
       });
     }
@@ -96,104 +99,96 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
           return const SizedBox.shrink();
         }
 
-        return MultiValueListenableBuilder(
-      valueListenables: [
-        isNowDisplayingBarExpanded,
-        CustomRouteObserver.bottomSheetHeight,
-      ],
-      builder: (context, values, child) {
-        final isExpanded = values[0] as bool;
-        final bottomSheetHeight = values[1] as double;
-        final paddingBottom = MediaQuery.of(context).padding.bottom;
+        return ValueListenableBuilder(
+          valueListenable: isNowDisplayingBarExpanded,
+          builder: (context, isExpanded, child) {
+            final paddingBottom = MediaQuery.of(context).padding.bottom;
 
-        return NotificationListener<ScrollNotification>(
-          onNotification: _handleScrollUpdate,
-          child: Transform.translate(
-            offset: Offset(0, _scrollOffset),
-            child: Stack(
-              children: [
-                IgnorePointer(
-                  child: Container(
-                    color: Colors.transparent,
-                    height: MediaQuery.of(context).size.height,
-                    width: MediaQuery.of(context).size.width,
-                  ),
-                ),
-                // Gradient (only on home page)
-                ValueListenableBuilder(
-                  valueListenable: CustomRouteObserver.currentRoute,
-                  builder: (context, route, child) {
-                    if (route?.settings.name == AppRouter.homePage) {
-                      return Positioned(
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        child: IgnorePointer(
-                          child: FadeTransition(
-                            opacity: _animationController,
-                            child: Container(
-                              height: 195 + paddingBottom,
-                              decoration: const BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.transparent,
-                                    PrimitivesTokens.colorsDarkGrey,
-                                  ],
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  stops: [0.0, 0.37],
+            return NotificationListener<ScrollNotification>(
+              onNotification: _handleScrollUpdate,
+              child: Transform.translate(
+                offset: Offset(0, _scrollOffset),
+                child: Stack(
+                  children: [
+                    IgnorePointer(
+                      child: Container(
+                        color: Colors.transparent,
+                        height: MediaQuery.of(context).size.height,
+                        width: MediaQuery.of(context).size.width,
+                      ),
+                    ),
+                    // Gradient (only on home page)
+                    ValueListenableBuilder(
+                      valueListenable: CustomRouteObserver.currentRoute,
+                      builder: (context, route, child) {
+                        if (route?.settings.name == AppRouter.homePage) {
+                          return Positioned(
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            child: IgnorePointer(
+                              child: FadeTransition(
+                                opacity: _animationController,
+                                child: Container(
+                                  height: 195 + paddingBottom,
+                                  decoration: const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Colors.transparent,
+                                        PrimitivesTokens.colorsDarkGrey,
+                                      ],
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      stops: [0.0, 0.37],
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+
+                    // LLMTextInput
+                    if (!isExpanded)
+                      Positioned(
+                        bottom: paddingBottom +
+                            UIConstants.nowDisplayingBarBottomPadding +
+                            _nowDisplayingBarHeight,
+                        left: 0,
+                        right: 0,
+                        child: _animateVisibility(
+                          child: const Material(
+                            color: Colors.transparent,
+                            child: LLMTextInput(),
                           ),
+                          slideBegin: _calculateSlideBegin(
+                              paddingBottom, _llmInputHeight),
                         ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-
-                // LLMTextInput
-                if (!isExpanded)
-                  Positioned(
-                    bottom: paddingBottom +
-                        UIConstants.nowDisplayingBarBottomPadding +
-                        _nowDisplayingBarHeight,
-                    left: 0,
-                    right: 0,
-                    child: _animateVisibility(
-                      child: const Material(
-                        color: Colors.transparent,
-                        child: LLMTextInput(),
                       ),
-                      slideBegin:
-                          _calculateSlideBegin(paddingBottom, _llmInputHeight),
-                    ),
-                  ),
 
-                // NowDisplayingBar
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 150),
-                  bottom: bottomSheetHeight > 0
-                      ? bottomSheetHeight +
-                          UIConstants.nowDisplayingBarBottomPadding
-                      : paddingBottom +
+                    // NowDisplayingBar
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 200),
+                      bottom: paddingBottom +
                           UIConstants.nowDisplayingBarBottomPadding,
-                  left: ResponsiveLayout.paddingHorizontal,
-                  right: ResponsiveLayout.paddingHorizontal,
-                  child: _animateVisibility(
-                    child: const NowDisplayingBar(),
-                    slideBegin: _calculateSlideBegin(
-                      paddingBottom,
-                      _nowDisplayingBarHeight,
+                      left: ResponsiveLayout.paddingHorizontal,
+                      right: ResponsiveLayout.paddingHorizontal,
+                      child: _animateVisibility(
+                        child: const NowDisplayingBar(),
+                        slideBegin: _calculateSlideBegin(
+                          paddingBottom,
+                          _nowDisplayingBarHeight,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-        );
-      },
+              ),
+            );
+          },
         );
       },
     );
