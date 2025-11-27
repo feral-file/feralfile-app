@@ -43,6 +43,11 @@ class PlaylistDetailsBloc
     Emitter<PlaylistDetailsState> emit,
   ) async {
     log.info('GetPlaylistDetailsEvent');
+    if (state is PlaylistDetailsLoadingState) {
+      log.info(
+          '[PlaylistDetailsBloc] GetPlaylistDetailsEvent: already loading');
+      return;
+    }
     emit(
       PlaylistDetailsLoadingState(
         nowDisplayingItems: state.nowDisplayingItems,
@@ -150,6 +155,12 @@ class PlaylistDetailsBloc
     LoadMorePlaylistDetailsEvent event,
     Emitter<PlaylistDetailsState> emit,
   ) async {
+    log.info('[PlaylistDetailsBloc] LoadMorePlaylistDetailsEvent');
+    if (state is PlaylistDetailsLoadingMoreState) {
+      log.info(
+          '[PlaylistDetailsBloc] LoadMorePlaylistDetailsEvent: already loading');
+      return;
+    }
     if (!state.hasMore) return;
     emit(
       PlaylistDetailsLoadingMoreState(

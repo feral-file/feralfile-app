@@ -2,7 +2,6 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/home.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/index.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
@@ -35,8 +34,6 @@ class _MobileControllerHomePageState
       instanceName: PlaylistsBlocInstance.curated.instanceName);
   final _myPlaylistsBloc = injector<PlaylistsBloc>(
       instanceName: PlaylistsBlocInstance.my.instanceName);
-  final _globalPlaylistsBloc = injector<PlaylistsBloc>(
-      instanceName: PlaylistsBlocInstance.global.instanceName);
 
   @override
   void initState() {
@@ -80,8 +77,6 @@ class _MobileControllerHomePageState
   }
 
   Widget _body(BuildContext context) {
-    return HomeIndexPage(
-      key: directoryPageGlobalKey,
-    );
+    return HomeIndexPage();
   }
 }

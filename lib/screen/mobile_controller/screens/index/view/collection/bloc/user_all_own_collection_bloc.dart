@@ -113,6 +113,7 @@ class UserAllOwnCollectionBloc
             '[UserAllOwnCollectionBloc] Reindex addresses: $addressesToReindex, attempt: $attempts');
 
         try {
+          add(FetchTokensOfAddresses(addresses: addressesToReindex));
           await _tokensService.reindexAddressesAndPullStatus(
             addresses: addressesToReindex,
             timeout: const Duration(days: 1),

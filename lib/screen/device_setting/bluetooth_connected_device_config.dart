@@ -252,14 +252,14 @@ class BluetoothConnectedDeviceConfigState
                   // },
                   builder: (context, state) {
                     return Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(8).copyWith(left: 14),
                       child: GestureDetector(
                         onTap: () {
                           _showOption(context, state);
                         },
                         child: SvgPicture.asset(
                           'assets/images/more_circle.svg',
-                          width: 34,
+                          width: 22,
                           colorFilter: const ColorFilter.mode(
                             AppColor.white,
                             BlendMode.srcIn,

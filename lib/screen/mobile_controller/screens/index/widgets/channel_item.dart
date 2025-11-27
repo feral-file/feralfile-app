@@ -4,8 +4,8 @@ import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:flutter/material.dart';
 
-class ChannelItem extends StatelessWidget {
-  const ChannelItem({
+class ChannelHeader extends StatelessWidget {
+  const ChannelHeader({
     required this.channelReference,
     this.clickable = true,
     this.maxLines,

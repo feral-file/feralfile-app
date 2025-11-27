@@ -3,8 +3,8 @@ import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:flutter/material.dart';
 
 /// Playlist List Item - Displays playlist info with primary and secondary text
-class PlaylistListItemWidget extends StatelessWidget {
-  const PlaylistListItemWidget({
+class PlaylistTitle extends StatelessWidget {
+  const PlaylistTitle({
     required this.primaryText,
     required this.secondaryText,
     this.onTap,

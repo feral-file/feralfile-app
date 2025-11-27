@@ -1,6 +1,5 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
-import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
@@ -22,12 +21,10 @@ class PlaylistsPage extends StatefulWidget {
   State<PlaylistsPage> createState() => _PlaylistsPageState();
 }
 
-class _PlaylistsPageState extends State<PlaylistsPage>
-    with AutomaticKeepAliveClientMixin, RouteAware {
+class _PlaylistsPageState extends State<PlaylistsPage> {
   final ScrollController _scrollController = ScrollController();
   late final PlaylistsBloc _curatedPlaylistsBloc;
   late final PlaylistsBloc _myPlaylistsBloc;
-  late final PlaylistsBloc _globalPlaylistsBloc;
 
   @override
   void initState() {
@@ -39,9 +36,6 @@ class _PlaylistsPageState extends State<PlaylistsPage>
     _myPlaylistsBloc = injector<PlaylistsBloc>(
       instanceName: PlaylistsBlocInstance.my.instanceName,
     );
-    _globalPlaylistsBloc = injector<PlaylistsBloc>(
-      instanceName: PlaylistsBlocInstance.global.instanceName,
-    );
   }
 
   @override
@@ -52,40 +46,27 @@ class _PlaylistsPageState extends State<PlaylistsPage>
     super.dispose();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    routeObserver.subscribe(this, ModalRoute.of(context)!);
-  }
-
-  @override
-  void didPopNext() {
-    super.didPopNext();
-  }
-
   void _onScroll() {
     if (_scrollController.position.pixels + 100 >=
         _scrollController.position.maxScrollExtent) {
       _curatedPlaylistsBloc.add(const LoadMorePlaylistsEvent());
       _myPlaylistsBloc.add(const LoadMorePlaylistsEvent());
-      _globalPlaylistsBloc.add(const LoadMorePlaylistsEvent());
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     return CustomScrollView(
       shrinkWrap: true,
       controller: _scrollController,
       physics: const NeverScrollableScrollPhysics(),
       slivers: [
-        _buildMyPlaylists(),
-        SliverToBoxAdapter(
+        SliverToBoxAdapter(child: _buildMyPlaylists()),
+        const SliverToBoxAdapter(
           child: SizedBox(height: 50),
         ),
-        _buildCuratedPlaylists(),
-        SliverToBoxAdapter(
+        SliverToBoxAdapter(child: _buildCuratedPlaylists()),
+        const SliverToBoxAdapter(
           child: SizedBox(height: 50),
         ),
         // _buildGlobalPlaylists(),
@@ -106,31 +87,6 @@ class _PlaylistsPageState extends State<PlaylistsPage>
       builder: (context, state) => _buildContent(state, _myPlaylistsBloc),
     );
   }
-
-  Widget _buildGlobalPlaylists() {
-    return BlocBuilder<PlaylistsBloc, PlaylistsState>(
-      bloc: _globalPlaylistsBloc,
-      builder: (context, state) => _buildContent(state, _globalPlaylistsBloc),
-    );
-  }
-
-  // return BlocBuilder<PlaylistsBloc, PlaylistsState>(
-  //   bloc: _playlistsBloc,
-  //   builder: (context, state) {
-  //     return RefreshIndicator(
-  //       onRefresh: () async {
-  //         _playlistsBloc.add(const RefreshPlaylistsEvent());
-  //         // Wait for the refresh to complete
-  //         await _playlistsBloc.stream.firstWhere(
-  //           (state) => state.isLoaded || state.isError,
-  //         );
-  //       },
-  //       backgroundColor: AppColor.primaryBlack,
-  //       color: AppColor.white,
-  //       child: _buildContent(state),
-  //     );
-  //   },
-  // );
 
   Widget _buildContent(PlaylistsState state, PlaylistsBloc playlistsBloc) {
     if (state.isLoading && state.playlists.isEmpty) {
@@ -155,6 +111,36 @@ class _PlaylistsPageState extends State<PlaylistsPage>
     final playlistDataList = state.playlistData.safeSublist(0, 5);
 
     final hasMore = state.hasMore;
+
+    return PlaylistSection(
+      sectionName: playlistType.name,
+      sectionIcon: SvgPicture.asset(
+        playlistType.icon,
+        width: 12,
+        height: 12,
+        colorFilter: const ColorFilter.mode(
+          PrimitivesTokens.colorsGrey,
+          BlendMode.srcIn,
+        ),
+      ),
+      playlists: playlistDataList,
+      hasMore: hasMore,
+      onViewAllTap: () {
+        Navigator.of(context).pushNamed(
+          AppRouter.allPlaylistsPage,
+          arguments: AllPlaylistsPagePayload(playlistType: playlistType),
+        );
+      },
+      onPlaylistItemTap: (item) {
+        final assetToken = item.assetToken;
+        if (assetToken != null) {
+          injector<NavigationService>().navigateTo(
+            AppRouter.artworkDetailsPage,
+            arguments: ArtworkDetailPayload(ArtworkIdentity(assetToken.cid)),
+          );
+        }
+      },
+    );
 
     return SliverList.builder(
       itemCount: 1,
@@ -194,7 +180,4 @@ class _PlaylistsPageState extends State<PlaylistsPage>
       ),
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

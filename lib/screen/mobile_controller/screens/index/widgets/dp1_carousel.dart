@@ -2,6 +2,7 @@ import 'package:autonomy_flutter/design/build/components/DP1Carousel.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/artwork_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
+import 'package:autonomy_flutter/util/debouce_util.dart';
 import 'package:flutter/material.dart';
 
 /// DP1 Carousel - Horizontal scrollable carousel for displaying DP1 items
@@ -50,7 +51,15 @@ class _DP1CarouselState extends State<DP1Carousel> {
 
     // Trigger onLoadMore when scrolled to 80% of the carousel
     if (currentScroll >= maxScroll * 0.8 && !widget.isLoadingMore) {
-      widget.onLoadMore?.call();
+      try {
+        withDebounce(
+          () => widget.onLoadMore?.call(),
+          key: 'carousel_load_more_${hashCode}',
+          debounceTime: 300,
+        );
+      } catch (e) {
+        // Debounce blocked - do nothing, already loading
+      }
     }
   }
 

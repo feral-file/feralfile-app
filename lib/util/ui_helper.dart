@@ -20,7 +20,6 @@ import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_item_card.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_list_row.dart';
 import 'package:autonomy_flutter/service/base_dp1_feed_service_impl.dart';
@@ -1495,7 +1494,7 @@ class UIHelper {
 
         return Column(
           children: [
-            PlaylistListRow(
+            PlaylistRowItem(
               playlistReference: playlist,
               onItemTap: (item) {
                 final assetToken = item.assetToken;
@@ -1571,7 +1570,7 @@ class UIHelper {
           final channel = channelReferences[index];
           return ColoredBox(
             color: Colors.transparent,
-            child: ChannelItem(
+            child: ChannelHeader(
               channelReference: channel,
               maxLines: 3,
             ),

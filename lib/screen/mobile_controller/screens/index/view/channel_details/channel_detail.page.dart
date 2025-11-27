@@ -98,7 +98,7 @@ class _ChannelDetailPageState extends State<ChannelDetailPage>
               const SliverToBoxAdapter(
                   child: SizedBox(height: UIConstants.detailPageHeaderPadding)),
               SliverToBoxAdapter(
-                  child: ChannelItem(
+                  child: ChannelHeader(
                 channelReference: widget.payload.channelReference,
                 clickable: false,
               )),
@@ -173,7 +173,7 @@ SliverList playlistSliverListView({
 
       return Column(
         children: [
-          PlaylistListRow(
+          PlaylistRowItem(
             playlistReference: data.playlistReference,
             playlistCreator: data.creator,
             onItemTap: (item) {

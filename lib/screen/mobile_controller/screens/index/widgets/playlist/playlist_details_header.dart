@@ -1,69 +1,94 @@
+import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channel_details/channel_detail.page.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/dp1_playlist_details.dart';
+import 'package:autonomy_flutter/service/navigation_service.dart';
+import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
+import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:flutter/material.dart';
 
-/// Playlist Details Header - Displays playlist info with icon, title badge, and description
 class PlaylistDetailsHeader extends StatelessWidget {
   const PlaylistDetailsHeader({
-    required this.icon,
-    required this.title,
-    required this.description,
-    this.onTap,
+    required this.playlistReference,
+    this.channelReference,
+    this.dividerColor = AppColor.primaryBlack,
+    this.channelVisible = true,
+    this.isFromPlaylistsPage = false,
+    this.clickable = true,
     super.key,
   });
 
-  final Widget icon;
-  final String title;
-  final String description;
-  final VoidCallback? onTap;
+  final PlaylistReference playlistReference;
+  final ChannelReference? channelReference;
+  final Color dividerColor;
+  final bool channelVisible;
+  final bool isFromPlaylistsPage;
+  final bool clickable;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
+    final playlist = playlistReference.playlist;
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        if (!clickable) return;
+        injector<NavigationService>().navigateTo(
+          AppRouter.dp1PlaylistDetailsPage,
+          arguments: DP1PlaylistDetailsScreenPayload(
+            playlist: playlistReference,
+            backTitle: isFromPlaylistsPage
+                ? 'Playlists'
+                : channelReference?.channel.title,
+            isFromFeedServer: true,
+          ),
+        );
+      },
       child: Container(
         color: Colors.transparent,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 16,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
+        child: Column(
           children: [
-            // Left section: icon, curated badge, and description
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: ResponsiveLayout.paddingHorizontal,
+                vertical: 16,
+              ),
+              child: Row(
                 children: [
-                  // Icon and title badge
-                  if (title.isNotEmpty)
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 12,
-                          height: 12,
-                          child: icon,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          title,
-                          style: theme.textTheme.ppMori400White12,
-                        ),
-                      ],
+                  // Playlist info
+                  Expanded(
+                    child: Text(
+                      playlist.title,
+                      style: theme.textTheme.ppMori400White12,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  if (title.isNotEmpty) const SizedBox(height: 20),
-                  // Description text
-                  Text(
-                    description,
-                    maxLines: 4,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.ppMori400Grey12,
                   ),
+                  if (channelReference != null && channelVisible)
+                    GestureDetector(
+                      onTap: () {
+                        injector<NavigationService>().navigateTo(
+                          AppRouter.channelDetailPage,
+                          arguments: ChannelDetailPagePayload(
+                            channelReference: channelReference!,
+                            backTitle: isFromPlaylistsPage
+                                ? 'Playlists'
+                                : playlist.title,
+                          ),
+                        );
+                      },
+                      child: Text(
+                        channelReference!.channel.title,
+                        style: theme.textTheme.ppMori400Grey12,
+                      ),
+                    ),
                 ],
               ),
+            ),
+            Divider(
+              height: 1,
+              color: dividerColor,
             ),
           ],
         ),

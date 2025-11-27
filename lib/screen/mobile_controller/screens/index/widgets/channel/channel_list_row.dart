@@ -52,7 +52,7 @@ class ChannelListRow extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ChannelItem(
+            ChannelHeader(
               channelReference: channelReference,
               maxLines: 4,
             ),

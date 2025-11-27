@@ -258,6 +258,8 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
     LoadMoreChannelItemsEvent event,
     Emitter<ChannelsState> emit,
   ) async {
+    log.info('[ChannelsBloc] LoadMoreChannelItemsEvent: ${event.channelId}');
+
     // Find the channel data to update
     final channelDataIndex = state.channelData.indexWhere(
       (data) => data.channelReference.channel.id == event.channelId,
@@ -269,6 +271,15 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
     }
 
     final channelData = state.channelData[channelDataIndex];
+
+    if (channelData.isLoadingMore) {
+      log.info(
+          '[ChannelsBloc] LoadMoreChannelItemsEvent: ${event.channelId} already loading');
+      return;
+    }
+
+    log.info(
+        '[ChannelsBloc] LoadMoreChannelItemsEvent: ${event.channelId} loading more');
 
     // Check if there are more items to load
     if (!channelData.hasMoreItems) {

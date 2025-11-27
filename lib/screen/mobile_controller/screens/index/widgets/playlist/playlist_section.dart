@@ -54,7 +54,7 @@ class PlaylistSection extends StatelessWidget {
         // List items
         final playlistIndex = index - 2;
         final playlist = playlists[playlistIndex];
-        return PlaylistListRow(
+        return PlaylistRowItem(
           playlistReference: playlist.playlistReference,
           playlistCreator: playlist.creator,
           onItemTap: onPlaylistItemTap,

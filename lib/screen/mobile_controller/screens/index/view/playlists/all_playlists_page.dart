@@ -7,8 +7,8 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/pla
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_details_header.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_list_row.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/section_details_header.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
@@ -165,7 +165,7 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
         ),
         // PlaylistDetailsHeader
         SliverToBoxAdapter(
-          child: PlaylistDetailsHeader(
+          child: SectionDetailsHeader(
             icon: SvgPicture.asset(
               widget.payload.playlistType.icon,
               width: 12,
@@ -186,7 +186,7 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
         SliverList.builder(
           itemBuilder: (context, index) {
             final playlistData = playlistDataList[index];
-            return PlaylistListRow(
+            return PlaylistRowItem(
               playlistReference: playlistData.playlistReference,
               playlistCreator: playlistData.creator,
               onItemTap: (item) {

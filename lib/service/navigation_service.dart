@@ -14,7 +14,8 @@ import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/customer_support/support_thread_page.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/index.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
@@ -742,7 +743,7 @@ class NavigationService {
       unawaited(
         UIHelper.showRawDialog(
           navigatorKey.currentContext!,
-          NowDisplayingQuickSettingView(),
+          const NowDisplayingQuickSettingView(),
           title: 'FF1 Settings',
           name: UIHelper.artDisplaySettingModal,
           isRoundCorner: false,
@@ -851,21 +852,21 @@ class NavigationService {
                 text: TextSpan(
                   style: Theme.of(context).textTheme.ppMori400White14,
                   children: [
-                    TextSpan(
+                    const TextSpan(
                       text: 'App Version',
                     ),
                     TextSpan(
                       text: ' $version ($buildNumber)',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextSpan(
+                    const TextSpan(
                       text: ' is not compatible with your ',
                     ),
                     TextSpan(
                       text: deviceName,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextSpan(
+                    const TextSpan(
                       text:
                           '. Please update the app to continue using your device.',
                     ),
@@ -904,31 +905,23 @@ class NavigationService {
                 text: TextSpan(
                   style: Theme.of(context).textTheme.ppMori400White14,
                   children: [
-                    TextSpan(
+                    const TextSpan(
                       text: 'Your ',
                     ),
                     TextSpan(
                       text: deviceName,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextSpan(
+                    const TextSpan(
                       text: ' is running an older software version.',
                     ),
-                    TextSpan(
+                    const TextSpan(
                       text:
                           'Please update your FF1 to ensure full functionality.',
                     ),
                   ],
                 ),
               ),
-              // const SizedBox(height: 16),
-              // PrimaryButton(
-              //   text: 'Update Device',
-              //   onTap: () {
-              //     // Add your update logic here
-              //     injector<NavigationService>().goBack();
-              //   },
-              // ),
             ],
           ),
         ),
@@ -938,6 +931,8 @@ class NavigationService {
 
   void openMyCollection() {
     popUntilHome();
-    directoryPageGlobalKey.currentState?.openMyCollection();
+    navigateTo(AppRouter.allPlaylistsPage,
+        arguments:
+            const AllPlaylistsPagePayload(playlistType: PlaylistType.me));
   }
 }
