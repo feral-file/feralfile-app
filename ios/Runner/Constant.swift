@@ -19,19 +19,12 @@ struct Constant {
     static let deviceIDKey: String = "device_id_key"
 
     static let secureMainBundleIdentifiers: Set<String> = [
-        "com.bitmark.autonomywallet",
-        "com.bitmark.autonomy-wallet.inhouse",
+        "com.feralfile.app",
+        "com.feralfile.app.inhouse",
     ]
 
     static func isInhouse() -> Bool {
         let bundleIdentifier = Bundle.main.bundleIdentifier ?? "Unknown"
         return bundleIdentifier.contains("inhouse")
-    }
-    
-
-    struct KeychainKey {
-        static func personaPrefix(at uuid: UUID) -> String {
-            "persona.\(uuid.uuidString)"
-        }
     }
 }
