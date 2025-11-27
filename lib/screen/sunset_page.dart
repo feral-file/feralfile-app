@@ -250,7 +250,7 @@ class _SunsetPageState extends State<SunsetPage> {
                     )
                   : Padding(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
+                        horizontal: 30,
                         vertical: 40,
                       ),
                       child: Column(
