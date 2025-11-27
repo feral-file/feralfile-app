@@ -1,4 +1,4 @@
-package com.bitmark.autonomy_flutter
+package com.feralfile.app
 
 import android.content.Context
 import timber.log.Timber

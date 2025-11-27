@@ -4,13 +4,13 @@
  * that can be found in the LICENSE file.
  */
 
-package com.bitmark.autonomywallet
+package com.feralfile.app
 
 import android.os.Build
 import android.os.Bundle
 import android.content.Intent
 import androidx.activity.enableEdgeToEdge
-import com.bitmark.autonomy_flutter.FileLogger
+import com.feralfile.app.FileLogger
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
