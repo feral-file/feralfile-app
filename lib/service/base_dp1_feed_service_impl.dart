@@ -39,7 +39,7 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
 
   PLAYLIST
   Base implementation for playlist methods
-  
+
   =======================================================================
   */
 
@@ -49,17 +49,18 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
     required DP1CreatePlaylistRequest request,
     bool isSyncToCloud = true,
   }) async {
-    final created = await api.createPlaylist(request.toJson());
     try {
+      final created = await api.createPlaylist(request.toJson());
       if (isSyncToCloud) {
         final cloud = injector<CloudManager>().dp1FeedCloudObject;
         await cloud.insertPlaylists([created]);
       }
+      return created;
     } catch (e) {
       // Keep API success even if cloud sync fails
       log.info('Failed to cache created DP1 playlist to cloud: $e');
+      rethrow;
     }
-    return created;
   }
 
   // update playlist
