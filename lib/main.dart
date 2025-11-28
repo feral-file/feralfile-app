@@ -346,66 +346,65 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      child: NotificationListener<UserScrollNotification>(
-        onNotification: (notification) {
-          _handleScrollUpdate(notification);
-          return false; // Allow the notification to continue to be dispatched
-        },
-        child: GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onTap: () {
-            if (keyboardVisibilityController.isVisible &&
-                shouldHideKeyboardOnTap.value) {
-              final currentFocus = FocusScope.of(context);
-              if (!currentFocus.hasPrimaryFocus &&
-                  currentFocus.focusedChild != null) {
-                // Hide keyboard when tapping outside while keyboard is visible
-                Timer(const Duration(milliseconds: 100), () {
-                  log.info('Hiding keyboard');
-                  SystemChannels.textInput.invokeMethod('TextInput.hide');
-                  FocusScope.of(context).unfocus();
-                  log.info('Keyboard hidden');
-                });
-              }
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () {
+          if (keyboardVisibilityController.isVisible &&
+              shouldHideKeyboardOnTap.value) {
+            final currentFocus = FocusScope.of(context);
+            if (!currentFocus.hasPrimaryFocus &&
+                currentFocus.focusedChild != null) {
+              // Hide keyboard when tapping outside while keyboard is visible
+              Timer(const Duration(milliseconds: 100), () {
+                log.info('Hiding keyboard');
+                SystemChannels.textInput.invokeMethod('TextInput.hide');
+                FocusScope.of(context).unfocus();
+                log.info('Keyboard hidden');
+              });
             }
-          },
-          child: Stack(
-            children: [
-              Overlay(
-                initialEntries: [
-                  OverlayEntry(
-                    builder: (context) => Stack(
+          }
+        },
+        child: Stack(
+          children: [
+            Overlay(
+              initialEntries: [
+                OverlayEntry(
+                  builder: (context) => NotificationListener<UserScrollNotification>(
+                    onNotification: (notification) {
+                      _handleScrollUpdate(notification);
+                      return false; // Allow the notification to continue to be dispatched
+                    },
+                    child: Stack(
                       children: [
                         widget.child,
                       ],
                     ),
                   ),
-                ],
-              ),
-              ValueListenableBuilder<bool>(
-                valueListenable: _shouldShowOverlay,
-                builder: (context, shouldShowOverlay, child) {
-                  return shouldShowOverlay
-                      ? Positioned.fill(
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.translucent,
-                            onTap: () {
-                              DraggableSheetController.collapseSheet();
-                              isNowDisplayingBarShowingQuickSetting.value =
-                                  false;
-                            },
-                            child: AnimatedContainer(
-                              color: Colors.transparent,
-                              duration: const Duration(milliseconds: 150),
-                            ), // Transparent area
-                          ),
-                        )
-                      : const SizedBox();
-                },
-              ),
-              const BottomInteractionBar(),
-            ],
-          ),
+                ),
+              ],
+            ),
+            ValueListenableBuilder<bool>(
+              valueListenable: _shouldShowOverlay,
+              builder: (context, shouldShowOverlay, child) {
+                return shouldShowOverlay
+                    ? Positioned.fill(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.translucent,
+                          onTap: () {
+                            DraggableSheetController.collapseSheet();
+                            isNowDisplayingBarShowingQuickSetting.value = false;
+                          },
+                          child: AnimatedContainer(
+                            color: Colors.transparent,
+                            duration: const Duration(milliseconds: 150),
+                          ), // Transparent area
+                        ),
+                      )
+                    : const SizedBox();
+              },
+            ),
+            const BottomInteractionBar(),
+          ],
         ),
       ),
     );
