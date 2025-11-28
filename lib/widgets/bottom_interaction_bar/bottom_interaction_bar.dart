@@ -31,14 +31,41 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
 
-  // Widget heights
+  // Widget heights (constants)
   static final double _llmInputHeight = LLMTextInputTokens.padding * 2 +
       LLMTextInputTokens.llmPaddingVertical * 2 +
       CommandDotTokens.height.toDouble();
   static final double _nowDisplayingBarHeight =
       NowPlayingBarTokens.collapseHeight.toDouble();
 
+  // Keys to measure actual widget heights
+  final GlobalKey _nowDisplayingBarKey = GlobalKey();
+  double _actualNowDisplayingBarHeight = _nowDisplayingBarHeight;
+
   bool _isShowing = false;
+
+  void _updateHeights() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      double? newBarHeight;
+
+      final barContext = _nowDisplayingBarKey.currentContext;
+      if (barContext != null) {
+        final renderBox = barContext.findRenderObject() as RenderBox?;
+        if (renderBox != null && renderBox.hasSize) {
+          newBarHeight = renderBox.size.height;
+        }
+      }
+      newBarHeight ??= _nowDisplayingBarHeight;
+
+      if (newBarHeight != _actualNowDisplayingBarHeight) {
+        setState(() {
+          _actualNowDisplayingBarHeight = newBarHeight!;
+        });
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -46,7 +73,7 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
     _isShowing = nowDisplayingShowing.value;
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 200),
       value: _isShowing ? 1.0 : 0.0,
     );
     // Update animation when shouldShow changes
@@ -100,6 +127,7 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
           valueListenable: isNowDisplayingBarExpanded,
           builder: (context, isExpanded, child) {
             final paddingBottom = MediaQuery.of(context).padding.bottom;
+            _updateHeights();
 
             return Stack(
               children: [
@@ -158,22 +186,27 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
                         child: LLMTextInput(),
                       ),
                       slideBegin: _calculateSlideBegin(
-                          paddingBottom, _llmInputHeight),
+                        paddingBottom,
+                        _llmInputHeight,
+                      ),
                     ),
                   ),
 
                 // NowDisplayingBar
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 200),
-                  bottom: paddingBottom +
-                      UIConstants.nowDisplayingBarBottomPadding,
+                  bottom:
+                      paddingBottom + UIConstants.nowDisplayingBarBottomPadding,
                   left: ResponsiveLayout.paddingHorizontal,
                   right: ResponsiveLayout.paddingHorizontal,
                   child: _animateVisibility(
-                    child: const NowDisplayingBar(),
+                    child: Container(
+                      key: _nowDisplayingBarKey,
+                      child: const NowDisplayingBar(),
+                    ),
                     slideBegin: _calculateSlideBegin(
                       paddingBottom,
-                      _nowDisplayingBarHeight,
+                      _actualNowDisplayingBarHeight,
                     ),
                   ),
                 ),
