@@ -43,6 +43,8 @@ abstract class NftTokensService {
 
   Future<Stream<List<AssetToken>>> fetchTokensInIsolate(
     List<String> addresses,
+    int? offset,
+    int? total,
   );
 
   Future<TriggerIndexingResult?> reindexAddresses(List<String> addresses);
@@ -236,6 +238,8 @@ class NftTokensServiceImpl extends NftTokensService {
   @override
   Future<Stream<List<AssetToken>>> fetchTokensInIsolate(
     List<String> addresses,
+    int? offset,
+    int? total,
   ) async {
     // Create key from addresses for deduplication
     final addressesKey = addresses.join(',');
@@ -259,10 +263,12 @@ class NftTokensServiceImpl extends NftTokensService {
     _sendPort?.send([
       FETCH_ALL_TOKENS,
       addresses,
+      offset,
+      total,
     ]);
 
-    NftCollection.logger
-        .info('[FETCH_ALL_TOKENS][start] addresses: $addresses');
+    NftCollection.logger.info(
+        '[FETCH_ALL_TOKENS][start] addresses: $addresses, offset: $offset, total: $total');
 
     return worker.stream;
   }
@@ -678,7 +684,8 @@ class NftTokensServiceImpl extends NftTokensService {
   }) async {
     try {
       // get from database
-      final assetTokenFromDatabase = _database.getTokensByCIDs(cids: cids);
+      final assetTokenFromDatabase = <AssetToken>[];
+      //_database.getTokensByCIDs(cids: cids);
       final res = [...assetTokenFromDatabase];
       final missingIds = cids
           .where((cid) => !assetTokenFromDatabase.any((e) => e.cid == cid))
@@ -1041,10 +1048,15 @@ class NftTokensServiceImpl extends NftTokensService {
             }
             return;
           case FETCH_ALL_TOKENS:
+            final addresses = List<String>.from(message[1] as List);
+            final offset = message[2] as int;
+            final size = message[3] as int;
             _fetchAllTokens(
               FETCH_ALL_TOKENS,
               const Uuid().v4(),
-              List<String>.from(message[1] as List),
+              addresses,
+              offset,
+              size,
             );
             break;
 
@@ -1103,31 +1115,38 @@ class NftTokensServiceImpl extends NftTokensService {
     String key,
     String uuid,
     List<String> addresses,
+    int? offset,
+    int? total,
   ) async {
     try {
       final isolateIndexerService = _isolateScopeInjector<NftIndexerService>();
-      var offset = 0;
+      var numberOfToken = 0;
+      var currentOffset = offset ?? 0;
 
-      do {
-        final tokens = await _getTokensPageWithAllOwners(
-            isolateIndexerService, addresses, offset);
+      while (total == null || numberOfToken < total!) {
+        final tokens = await getTokensPageWithAllOwners(
+            isolateIndexerService, addresses, currentOffset);
 
         if (tokens.isEmpty) {
           break;
-        } else {
-          _isolateSendPort?.send(
-            FetchTokensSuccess(
-              key,
-              uuid,
-              addresses,
-              tokens,
-              false,
-            ),
-          );
-
-          offset += tokens.length;
         }
-      } while (true);
+        final sentTokens = total == null
+            ? tokens
+            : tokens.safeSublist(
+                0, (total - numberOfToken).clamp(0, tokens.length));
+        _isolateSendPort?.send(
+          FetchTokensSuccess(
+            key,
+            uuid,
+            addresses,
+            sentTokens,
+            false,
+          ),
+        );
+
+        currentOffset += sentTokens.length;
+        numberOfToken += sentTokens.length;
+      }
 
       _isolateSendPort
           ?.send(FetchTokensSuccess(key, uuid, addresses, [], true));
@@ -1139,7 +1158,7 @@ class NftTokensServiceImpl extends NftTokensService {
 
   // Fetch a single tokens page (by offset) and progressively increase ownersLimit
   // until owners lists are fully retrieved (heuristic) or a safety cap is reached.
-  static Future<List<AssetToken>> _getTokensPageWithAllOwners(
+  static Future<List<AssetToken>> getTokensPageWithAllOwners(
     NftIndexerService indexerService,
     List<String> addresses,
     int offset,

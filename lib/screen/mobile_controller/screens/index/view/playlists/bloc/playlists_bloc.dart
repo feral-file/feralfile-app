@@ -1,11 +1,10 @@
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
+import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -108,30 +107,16 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
         cursor: null,
       );
     }
-    final assetTokenGroupByAddress = injector<IndexerDatabaseAbstract>()
-        .getGroupAssetTokensByOwnersGroupByAddress(
-      owners: dynamicQuery.params.owners,
-    );
-    if (assetTokenGroupByAddress.isEmpty) {
-      return LoadPlaylistPaginationResponse(
-        playlists: [],
-        hasMore: false,
-        cursor: null,
-      );
-    }
+    final owners = dynamicQuery.params.owners;
+    final allAddresses =
+        await injector<AddressService>().getAllWalletAddresses();
+    final addresses =
+        allAddresses.where((e) => owners.contains(e.address)).toList();
+
     final playlists = <PlaylistReference>[];
-    for (final addressAssetTokens in assetTokenGroupByAddress) {
-      final assetTokens = addressAssetTokens.assetTokens;
-      final items = <DP1Item>[];
-      for (final assetToken in assetTokens) {
-        final item = DP1PlaylistItemExtension.fromAssetToken(token: assetToken);
-        items.add(item);
-      }
-      final title = '${addressAssetTokens.address.name}';
-      final playlist = DP1CallExtension.fromItems(
-          items: items,
-          title: title,
-          playlistId: addressAssetTokens.address.address);
+    for (final address in addresses) {
+      final playlist = DP1CallExtension.fromOwner(
+          owners: [address.address], title: '${address.name}');
       playlists.add(PlaylistReference.fromFeralFileDP1Call(playlist));
     }
 
@@ -152,26 +137,10 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     required Emitter<PlaylistsState> emit,
     required String? cursor,
   }) async {
-    // Get all cached playlists
-    final allPlaylists =
-        await injector<FeralFileFeedManager>().getAllCachedPlaylists();
-
-    final start = int.tryParse(cursor ?? '0') ?? 0;
-    final end = start + pageSize;
-
-    // Get playlists based on total
-    // If total is null, get all playlists
-    final topPlaylists = total != null
-        ? allPlaylists.take(total!).toList()
-        : allPlaylists.safeSublist(start, end).toList();
-
-    final nextCursor = end < allPlaylists.length ? end.toString() : null;
-    final hasMore = nextCursor != null;
-
     return LoadPlaylistPaginationResponse(
-      playlists: topPlaylists,
-      hasMore: hasMore,
-      cursor: nextCursor,
+      playlists: [],
+      hasMore: false,
+      cursor: null,
     );
   }
 

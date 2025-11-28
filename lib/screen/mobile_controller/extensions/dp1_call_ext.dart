@@ -43,6 +43,28 @@ extension DP1CallExtension on DP1Call {
         signature: '0x17794533e25b08');
   }
 
+  static DP1Call fromOwner({
+    required List<String> owners,
+    String? playlistId,
+    String? title,
+    DateTime? created,
+  }) {
+    return DP1Call(
+        dpVersion: DP_VERSION,
+        id: playlistId ?? Uuid().v1(),
+        slug: '',
+        title: title ?? 'Playlist',
+        created: created ?? DateTime.now(),
+        items: [],
+        defaults: {},
+        dynamicQueries: [
+          DynamicQuery(
+              endpoint: '${Environment.indexerURL}/graphql',
+              params: DynamicQueryParams(owners: owners))
+        ],
+        signature: '0x17794533e25b08');
+  }
+
   String get channelName => 'Feral File';
 
   String get url => '${Environment.dp1FeedUrl}/api/v1/playlists/$id';

@@ -30,7 +30,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
-import 'package:sentry/sentry.dart';
 
 class ObservingState<T extends StatefulWidget> extends State<T>
     with WidgetsBindingObserver {
@@ -85,47 +84,47 @@ class HomePageHelper {
         }
       },
     );
-    unawaited(_forceFetchTokensOfAddresses());
+    // unawaited(_forceFetchTokensOfAddresses());
     _refreshAddressesNeedingReindex();
 
     unawaited(NowDisplayingManager().updateDisplayingNow());
 
     context.read<HomeBloc>().add(CheckReviewAppEvent());
 
-    _collectionRefreshTimer?.cancel();
-    _collectionRefreshTimer =
-        Timer.periodic(const Duration(seconds: 60), (_) async {
-      try {
-        final allOwnedPlaylist =
-            injector<UserDp1PlaylistService>().cachedAllOwnedPlaylist;
-        final dynamicQuery = allOwnedPlaylist.firstDynamicQuery;
-        if (dynamicQuery != null) {
-          final owners = dynamicQuery.params.owners;
-          // filter out addresses that have not been indexed
-          final lastIndexedTime = injector<UserDp1PlaylistService>()
-              .getAddressOldestLastIndexTime(addresses: owners);
-          final addressesToRefresh =
-              owners.where((e) => lastIndexedTime[e] != null).toList();
-          log.info('Refreshing tokens for: ${addressesToRefresh}');
-          if (addressesToRefresh.isEmpty) {
-            log.info('No addresses to refresh');
-            return;
-          }
-          injector<UserAllOwnCollectionBloc>()
-              .add(UpdateTokensOfAddresses(addresses: addressesToRefresh));
-        } else {
-          log.info('No dynamic query found');
-        }
-      } catch (e) {
-        log.info('Error in refresh tokens : $e');
-        unawaited(Sentry.captureEvent(SentryEvent(
-          message: SentryMessage('Error in refresh tokens: $e'),
-          level: SentryLevel.error,
-          throwable: e,
-        )));
-        // Silently ignore refresh errors
-      }
-    });
+    // _collectionRefreshTimer?.cancel();
+    // _collectionRefreshTimer =
+    //     Timer.periodic(const Duration(seconds: 60), (_) async {
+    //   try {
+    //     final allOwnedPlaylist =
+    //         injector<UserDp1PlaylistService>().cachedAllOwnedPlaylist;
+    //     final dynamicQuery = allOwnedPlaylist.firstDynamicQuery;
+    //     if (dynamicQuery != null) {
+    //       final owners = dynamicQuery.params.owners;
+    //       // filter out addresses that have not been indexed
+    //       final lastIndexedTime = injector<UserDp1PlaylistService>()
+    //           .getAddressOldestLastIndexTime(addresses: owners);
+    //       final addressesToRefresh =
+    //           owners.where((e) => lastIndexedTime[e] != null).toList();
+    //       log.info('Refreshing tokens for: ${addressesToRefresh}');
+    //       if (addressesToRefresh.isEmpty) {
+    //         log.info('No addresses to refresh');
+    //         return;
+    //       }
+    //       injector<UserAllOwnCollectionBloc>()
+    //           .add(UpdateTokensOfAddresses(addresses: addressesToRefresh));
+    //     } else {
+    //       log.info('No dynamic query found');
+    //     }
+    //   } catch (e) {
+    //     log.info('Error in refresh tokens : $e');
+    //     unawaited(Sentry.captureEvent(SentryEvent(
+    //       message: SentryMessage('Error in refresh tokens: $e'),
+    //       level: SentryLevel.error,
+    //       throwable: e,
+    //     )));
+    //     // Silently ignore refresh errors
+    //   }
+    // });
 
     _triggerShowAnnouncement();
 

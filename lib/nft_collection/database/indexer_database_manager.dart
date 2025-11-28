@@ -65,6 +65,7 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
     required String ownerAddress,
     IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt,
   }) {
+    return [];
     final sortByProperty = convertSortByToQueryProperty(sortBy);
     final query = tokenBox
         .query(
@@ -121,6 +122,7 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
     required List<String> owners,
     IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt,
   }) {
+    return [];
     final groupByAddress = <AddressAssetTokens>[];
     log.info('[getGroupAssetTokensByOwnersGroupByAddress] Owners: $owners');
     for (final owner in owners) {
@@ -156,6 +158,7 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
     required List<String> cids,
     IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt,
   }) {
+    return [];
     final sortByProperty = convertSortByToQueryProperty(sortBy);
     final query = tokenBox
         .query(TokenObject_.cid.oneOf(cids))
@@ -182,6 +185,7 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
     required List<String> owners,
     IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt,
   }) {
+    return [];
     final sortByProperty = convertSortByToQueryProperty(sortBy);
     final query = tokenBox
         .query(TokenObject_.currentOwner.oneOf(owners))
@@ -208,6 +212,7 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
 
   @override
   v2.AssetToken? findTokenByCid(String cid) {
+    return null;
     final query = tokenBox.query(TokenObject_.cid.equals(cid)).build();
     try {
       final results = query.find();
@@ -251,6 +256,7 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
     required List<String> tokenIds,
     IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt,
   }) {
+    return [];
     final sortByProperty = convertSortByToQueryProperty(sortBy);
     final query = tokenBox
         .query(TokenObject_.tokenId

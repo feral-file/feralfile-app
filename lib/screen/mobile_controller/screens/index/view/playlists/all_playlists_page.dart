@@ -50,7 +50,7 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
     super.initState();
     _scrollController.addListener(_onScroll);
     _playlistsBloc = _getPlaylistsBloc();
-    _playlistsBloc.add(LoadPlaylistsEvent());
+    _playlistsBloc.add(LoadMorePlaylistsEvent());
   }
 
   PlaylistsBloc _getPlaylistsBloc() {

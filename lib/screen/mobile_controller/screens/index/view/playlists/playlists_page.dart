@@ -132,7 +132,8 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
         if (assetToken != null) {
           injector<NavigationService>().navigateTo(
             AppRouter.artworkDetailsPage,
-            arguments: ArtworkDetailPayload(ArtworkIdentity(assetToken.cid)),
+            arguments: ArtworkDetailPayload(ArtworkIdentity(assetToken.cid),
+                useIndexer: true),
           );
         }
       },

@@ -789,7 +789,7 @@ class ArtworkDetailPayload {
   ArtworkDetailPayload(
     this.identity, {
     this.playlist,
-    this.useIndexer = false,
+    this.useIndexer = true,
     this.shouldUseLocalCache = true,
     this.key,
     this.backTitle,
