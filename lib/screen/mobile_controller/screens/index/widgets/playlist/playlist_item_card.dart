@@ -1,10 +1,10 @@
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
-import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/dp1_now_displaying_item_ext.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
@@ -74,11 +74,9 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Expanded(
-                child: Center(
+                child: SizedBox.expand(
                   child: Builder(
-                    builder: (context) {
-                      return _thumbnail(context);
-                    },
+                    builder: (context) => _thumbnail(context),
                   ),
                 ),
               ),
@@ -130,7 +128,9 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
     }
     return FFArtworkThumbnailView(
       url: url,
-      fit: BoxFit.fitWidth,
+      // Use BoxFit.contain so the artwork scales up as much as possible
+      // within the available box (full width or full height) without cropping.
+      fit: BoxFit.contain,
     );
   }
 }
