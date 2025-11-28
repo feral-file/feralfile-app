@@ -229,13 +229,13 @@ class FFBluetoothService {
           log.info(
             '[onConnectionStateChanged] Disconnecting from device: ${device.remoteId.str} due to error $e',
           );
-          await device.disconnect();
           if (hash == _connectCompleter?.hashCode) {
             if (_connectCompleter?.isCompleted == false) {
               _connectCompleter?.completeError(e);
             }
             _connectCompleter = null;
           }
+          await device.disconnect();
         }
       } else if (state == BluetoothConnectionState.disconnected) {
         log.warning('Device disconnected reason: ${device.disconnectReason}');
@@ -550,7 +550,8 @@ class FFBluetoothService {
   Future<void> connectToDevice(
     BluetoothDevice device, {
     bool shouldShowError = true,
-    Duration timeout = const Duration(seconds: 30),
+    Duration timeout = const Duration(seconds: 10),
+    int maxRetries = 3,
   }) async {
     if (_multiConnectCompleter?.isCompleted == false) {
       log.info(
@@ -562,8 +563,12 @@ class FFBluetoothService {
 
     _multiConnectCompleter = Completer<void>();
 
-    _connectDevice(device, shouldShowError: shouldShowError, timeout: timeout)
-        .then((_) {
+    _connectDevice(
+      device,
+      shouldShowError: shouldShowError,
+      timeout: timeout,
+      maxRetries: maxRetries,
+    ).then((_) {
       log.info('Connected to device: ${device.remoteId.str}');
 
       _multiConnectCompleter?.complete();
@@ -588,42 +593,79 @@ class FFBluetoothService {
     BluetoothDevice device, {
     bool shouldShowError = true,
     Duration timeout = const Duration(seconds: 30),
+    int maxRetries = 1,
   }) async {
-    log.info('_connectDevice');
-    final isDisconnectedWithSuccess = (Object e) {
-      if (e is FFBluetoothDisconnectedError && e.disconnectReason?.code == 0) {
-        return true;
+    log.info(
+      '_connectDevice: maxRetries=$maxRetries, timeout=${timeout.inSeconds}s',
+    );
+
+    var attempt = 0;
+
+    while (true) {
+      try {
+        final isLastAttempt = attempt >= maxRetries;
+
+        await _connect(
+          device,
+          // Only show error on the last attempt
+          shouldShowError: (_) => isLastAttempt ? shouldShowError : false,
+          timeout: timeout,
+        );
+        // Connected successfully, exit
+        log.info(
+            '[connectDevice] Connected to device after $attempt attempts: ${device.remoteId.str}');
+        return;
+      } catch (e) {
+        await device.disconnect();
+        log.info(
+            '[connectDevice] Disconnected from device and retrying... attempt $attempt/$maxRetries');
+        if (attempt >= maxRetries) {
+          // Exhausted all retries, log and rethrow
+          log.info(
+            '[connectDevice] Failed after ${attempt + 1} attempts, giving up. Error: $e',
+          );
+          unawaited(
+            Sentry.captureEvent(
+              SentryEvent(
+                message: SentryMessage(
+                  'Bluetooth connection failed after ${attempt + 1} attempts for ${device.remoteId.str}: ${e.toString()}',
+                ),
+                level: SentryLevel.warning,
+                extra: {
+                  'device': device.remoteId.str,
+                  'timeout': timeout.inSeconds,
+                  'attempts': attempt + 1,
+                },
+              ),
+            ),
+          );
+          throw e;
+        }
+
+        final nextAttempt = attempt + 1;
+        log.info(
+          '[connectDevice] Connection is not stable, retrying... attempt $nextAttempt/$maxRetries',
+        );
+
+        unawaited(
+          Sentry.captureEvent(
+            SentryEvent(
+              message: SentryMessage(
+                'Connection is not stable, retrying... ${device.remoteId.str} attempt $nextAttempt/$maxRetries ${e.toString()}',
+              ),
+              level: SentryLevel.warning,
+              extra: {
+                'device': device.remoteId.str,
+                'timeout': timeout.inSeconds,
+                'attempt': nextAttempt,
+                'maxRetries': maxRetries,
+              },
+            ),
+          ),
+        );
+
+        attempt = nextAttempt;
       }
-      return false;
-    };
-    try {
-      await _connect(
-        device,
-        shouldShowError: (e) {
-          return false;
-          if (isDisconnectedWithSuccess(e)) {
-            return false;
-          }
-          return shouldShowError;
-        },
-        timeout: timeout,
-      );
-    } catch (e) {
-      log.info("Connection is not stable, retrying...");
-      unawaited(Sentry.captureEvent(SentryEvent(
-        message: SentryMessage(
-            'Connection is not stable, retrying... ${device.remoteId.str} ${e.toString()}'),
-        level: SentryLevel.warning,
-        extra: {
-          'device': device.remoteId.str,
-          'timeout': timeout.inSeconds,
-        },
-      )));
-      await _connect(
-        device,
-        shouldShowError: (_) => shouldShowError,
-        timeout: timeout,
-      );
     }
   }
 
@@ -693,7 +735,7 @@ class FFBluetoothService {
         );
 
         await _connectCompleter?.future.timeout(
-          const Duration(seconds: 30),
+          timeout,
           onTimeout: () {
             log.warning('Timeout waiting for connection to complete');
             if (shouldShowError?.call(e) ?? true) {

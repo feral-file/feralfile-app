@@ -40,8 +40,6 @@ extension BluetoothDeviceExtension on BluetoothDevice {
   Future<void> discoverCharacteristics() async {
     const timeouts = [
       Duration(seconds: 5),
-      Duration(seconds: 10),
-      Duration(seconds: 15)
     ];
 
     for (int i = 0; i < timeouts.length; i++) {
