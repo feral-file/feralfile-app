@@ -10,7 +10,5 @@
 		<string>webcredentials:accounts.dev.bitmark.com</string>
 		<string>applinks:link.feralfile.com</string>
 	</array>
-	<key>com.apple.developer.networking.wifi-info</key>
-	<true/>
 </dict>
 </plist>

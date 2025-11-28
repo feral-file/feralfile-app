@@ -241,15 +241,13 @@ platform :ios do
 		)
 
 		import_certificate(
-			certificate_path: "mobile-signing-key-vault/ios/autonomy-wallet/appstore/Certificates.p12",
+			certificate_path: "mobile-signing-key-vault/ios/autonomy-wallet/appstore/Certificates_FF_Production.p12",
 			certificate_password: ENV["APPSTORE_CERTIFICATE_PASSWORD"],
 			keychain_name: keychainName,
 			keychain_password: keychainPassword
 		)
 
-		install_provisioning_profile(path: "fastlane/provisioning_profiles/Autonomy_Wallet_Appstore.mobileprovision")
-		install_provisioning_profile(path: "fastlane/provisioning_profiles/Autonomy_Wallet_Push_Notification_Appstore.mobileprovision")
-		install_provisioning_profile(path: "fastlane/provisioning_profiles/Feral_File_app_widget.mobileprovision")
+		install_provisioning_profile(path: "fastlane/provisioning_profiles/Feral_File_app__Production.mobileprovision")
 
 		build_testflight
 
