@@ -1,4 +1,4 @@
-package com.bitmark.autonomy_flutter.util
+package com.feralfile.app.util
 
 import com.google.gson.Gson
 import kotlinx.serialization.json.*

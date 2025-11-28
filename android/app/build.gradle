@@ -18,7 +18,6 @@ plugins {
     id "com.android.application"
     id "kotlin-android"
     id "kotlinx-serialization"
-    id "com.google.gms.google-services"
     id "dev.flutter.flutter-gradle-plugin"
     id 'kotlin-kapt'
     id 'kotlin-parcelize'
@@ -88,7 +87,7 @@ android {
         resourceConfigurations += ['en', 'US']
 
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId "com.bitmark.autonomy_client"
+        applicationId "com.feralfile.app"
         minSdkVersion 29
         targetSdkVersion 35
         versionCode flutterVersionCode.toInteger()
@@ -163,7 +162,7 @@ android {
         }
     }
 
-    namespace 'com.bitmark.autonomy_flutter'
+    namespace 'com.feralfile.app'
     lint {
         checkReleaseBuilds false
     }
@@ -177,19 +176,16 @@ flutter {
 }
 
 dependencies {
-    implementation 'com.google.firebase:protolite-well-known-types:18.0.0'
     def lifecycle_version = "2.6.0-alpha03"
     def beacon_version = "c2434dcc73"
 
+    implementation "com.squareup.okhttp3:okhttp:4.12.0"
+    implementation "com.jakewharton.timber:timber:5.0.1"
+
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
-    implementation 'com.google.android.gms:play-services-auth-blockstore:16.2.0'
     implementation 'io.reactivex.rxjava2:rxjava:2.2.10'
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
-    implementation('com.github.bitmark-inc:libauk-kotlin:ad2d4519bd') {
-        exclude group: 'com.google.protobuf'
-        exclude module: 'jetified-protobuf-java'
-    }
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'com.google.android.material:material:1.6.1'
@@ -200,19 +196,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.9.1")
     implementation("com.android.installreferrer:installreferrer:2.2")
     implementation("com.google.android.gms:play-services-ads-identifier:18.0.1")
-    implementation(platform("com.walletconnect:android-bom:1.12.0"))
-    implementation("com.walletconnect:android-core:1.17.0")
-    implementation("com.walletconnect:sign:2.15.0")
     implementation("com.scottyab:rootbeer-lib:0.1.0")
-
-    implementation("com.github.autonomy-system:beacon-android-sdk:$beacon_version") {
-        exclude group: 'com.goterl'
-        exclude module: 'lazysodium-android'
-        exclude group: 'net.java.dev.jna'
-        exclude module: 'jna'
-        exclude group: 'com.google.protobuf'
-        exclude module: 'jetified-protobuf-java'
-    }
 
     implementation 'com.github.bumptech.glide:glide:4.12.0'
 //    kapt 'com.github.bumptech.glide:compiler:4.12.0'

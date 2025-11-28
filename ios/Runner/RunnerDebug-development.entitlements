@@ -12,14 +12,5 @@
 	</array>
 	<key>com.apple.developer.networking.wifi-info</key>
 	<true/>
-	<key>com.apple.security.application-groups</key>
-	<array>
-		<string>group.com.bitmark.autonomywallet.storage</string>
-	</array>
-	<key>keychain-access-groups</key>
-	<array>
-		<string>$(AppIdentifierPrefix)com.bitmark.autonomy-wallet.inhouse.keychain</string>
-		<string>$(AppIdentifierPrefix)com.bitmark.autonomywallet.keychain</string>
-	</array>
 </dict>
 </plist>

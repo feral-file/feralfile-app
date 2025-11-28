@@ -24,6 +24,7 @@ import 'package:autonomy_flutter/view/loading.dart';
 import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -306,38 +307,21 @@ class GalleryThumbnailPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    // return const SizedBox();
+
     return Semantics(
       label: loading ? 'loading' : '',
       child: AspectRatio(
         aspectRatio: 1,
-        child: Container(
-          padding: const EdgeInsets.all(10),
-          color: theme.auLightGrey,
-          child: Stack(
-            children: [
-              Visibility(
-                visible: loading,
-                child: Center(
-                  child: loadingIndicator(
-                    size: 22,
-                    strokeWidth: 1.5,
-                    valueColor: theme.colorScheme.primary,
-                    backgroundColor: theme.colorScheme.primary.withOpacity(0.5),
-                  ),
-                ),
-              ),
-              Visibility(
-                visible: loading,
-                child: Align(
-                  alignment: AlignmentDirectional.bottomStart,
-                  child: Text(
-                    'loading'.tr(),
-                    style: theme.textTheme.ppMori700QuickSilver8,
-                  ),
-                ),
-              ),
-            ],
+        child: Shimmer.fromColors(
+          baseColor: Colors.transparent,
+          highlightColor: Colors.white.withAlpha(10),
+          period: const Duration(milliseconds: 1000),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.amber,
+              borderRadius: BorderRadius.circular(0),
+            ),
           ),
         ),
       ),

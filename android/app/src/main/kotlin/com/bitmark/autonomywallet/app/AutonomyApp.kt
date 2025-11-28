@@ -1,11 +1,11 @@
-package com.bitmark.autonomy_flutter.app
+package com.feralfile.app.app
 
 import android.app.Application
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
-import com.bitmark.autonomy_flutter.BuildConfig
+import com.feralfile.app.BuildConfig
 import timber.log.Timber
 
 class AutonomyApp : Application(), LifecycleEventObserver {
