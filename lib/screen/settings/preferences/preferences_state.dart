@@ -21,6 +21,8 @@ class PreferenceState {
   final bool isAnalyticEnabled;
   final String authMethodName;
   final bool hasHiddenArtworks;
+  bool isBetaFeaturesEnabled;
+  bool isExploreBarEnabled;
 
   PreferenceState(
     this.isDevicePasscodeEnabled,
@@ -28,6 +30,8 @@ class PreferenceState {
     this.isAnalyticEnabled,
     this.authMethodName,
     this.hasHiddenArtworks,
+    this.isBetaFeaturesEnabled,
+    this.isExploreBarEnabled,
   );
 
   PreferenceState copyWith({
@@ -36,6 +40,8 @@ class PreferenceState {
     bool? isAnalyticEnabled,
     String? authMethodName,
     bool? hasHiddenArtworks,
+    bool? isBetaFeaturesEnabled,
+    bool? isExploreBarEnabled,
   }) =>
       PreferenceState(
         isDevicePasscodeEnabled ?? this.isDevicePasscodeEnabled,
@@ -43,5 +49,7 @@ class PreferenceState {
         isAnalyticEnabled ?? this.isAnalyticEnabled,
         authMethodName ?? this.authMethodName,
         hasHiddenArtworks ?? this.hasHiddenArtworks,
+        isBetaFeaturesEnabled ?? this.isBetaFeaturesEnabled,
+        isExploreBarEnabled ?? this.isExploreBarEnabled,
       );
 }
