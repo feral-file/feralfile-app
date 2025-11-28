@@ -30,9 +30,6 @@ class BottomInteractionBar extends StatefulWidget {
 class _BottomInteractionBarState extends State<BottomInteractionBar>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  double _scrollOffset = 0.0; // Negative value means scrolled up (hidden)
-  double _previousScrollPosition = 0.0;
-  static const double _maxScrollOffset = 200.0; // Max pixels to scroll up
 
   // Widget heights
   static final double _llmInputHeight = LLMTextInputTokens.padding * 2 +
@@ -49,7 +46,7 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
     _isShowing = nowDisplayingShowing.value;
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 2000),
       value: _isShowing ? 1.0 : 0.0,
     );
     // Update animation when shouldShow changes
@@ -104,89 +101,83 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
           builder: (context, isExpanded, child) {
             final paddingBottom = MediaQuery.of(context).padding.bottom;
 
-            return NotificationListener<ScrollNotification>(
-              onNotification: _handleScrollUpdate,
-              child: Transform.translate(
-                offset: Offset(0, _scrollOffset),
-                child: Stack(
-                  children: [
-                    IgnorePointer(
-                      child: Container(
-                        color: Colors.transparent,
-                        height: MediaQuery.of(context).size.height,
-                        width: MediaQuery.of(context).size.width,
-                      ),
-                    ),
-                    // Gradient (only on home page)
-                    ValueListenableBuilder(
-                      valueListenable: CustomRouteObserver.currentRoute,
-                      builder: (context, route, child) {
-                        if (route?.settings.name == AppRouter.homePage) {
-                          return Positioned(
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            child: IgnorePointer(
-                              child: FadeTransition(
-                                opacity: _animationController,
-                                child: Container(
-                                  height: 195 + paddingBottom,
-                                  decoration: const BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.transparent,
-                                        PrimitivesTokens.colorsDarkGrey,
-                                      ],
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      stops: [0.0, 0.37],
-                                    ),
-                                  ),
+            return Stack(
+              children: [
+                IgnorePointer(
+                  child: Container(
+                    color: Colors.transparent,
+                    height: MediaQuery.of(context).size.height,
+                    width: MediaQuery.of(context).size.width,
+                  ),
+                ),
+                // Gradient (only on home page)
+                ValueListenableBuilder(
+                  valueListenable: CustomRouteObserver.currentRoute,
+                  builder: (context, route, child) {
+                    if (route?.settings.name == AppRouter.homePage) {
+                      return Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: IgnorePointer(
+                          child: FadeTransition(
+                            opacity: _animationController,
+                            child: Container(
+                              height: 195 + paddingBottom,
+                              decoration: const BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.transparent,
+                                    PrimitivesTokens.colorsDarkGrey,
+                                  ],
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  stops: [0.0, 0.37],
                                 ),
                               ),
                             ),
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      },
-                    ),
-
-                    // LLMTextInput
-                    if (!isExpanded)
-                      Positioned(
-                        bottom: paddingBottom +
-                            UIConstants.nowDisplayingBarBottomPadding +
-                            _nowDisplayingBarHeight,
-                        left: 0,
-                        right: 0,
-                        child: _animateVisibility(
-                          child: const Material(
-                            color: Colors.transparent,
-                            child: LLMTextInput(),
                           ),
-                          slideBegin: _calculateSlideBegin(
-                              paddingBottom, _llmInputHeight),
                         ),
-                      ),
-
-                    // NowDisplayingBar
-                    AnimatedPositioned(
-                      duration: const Duration(milliseconds: 200),
-                      bottom: paddingBottom +
-                          UIConstants.nowDisplayingBarBottomPadding,
-                      left: ResponsiveLayout.paddingHorizontal,
-                      right: ResponsiveLayout.paddingHorizontal,
-                      child: _animateVisibility(
-                        child: const NowDisplayingBar(),
-                        slideBegin: _calculateSlideBegin(
-                          paddingBottom,
-                          _nowDisplayingBarHeight,
-                        ),
-                      ),
-                    ),
-                  ],
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
                 ),
-              ),
+
+                // LLMTextInput
+                if (!isExpanded)
+                  Positioned(
+                    bottom: paddingBottom +
+                        UIConstants.nowDisplayingBarBottomPadding +
+                        _nowDisplayingBarHeight,
+                    left: 0,
+                    right: 0,
+                    child: _animateVisibility(
+                      child: const Material(
+                        color: Colors.transparent,
+                        child: LLMTextInput(),
+                      ),
+                      slideBegin: _calculateSlideBegin(
+                          paddingBottom, _llmInputHeight),
+                    ),
+                  ),
+
+                // NowDisplayingBar
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 200),
+                  bottom: paddingBottom +
+                      UIConstants.nowDisplayingBarBottomPadding,
+                  left: ResponsiveLayout.paddingHorizontal,
+                  right: ResponsiveLayout.paddingHorizontal,
+                  child: _animateVisibility(
+                    child: const NowDisplayingBar(),
+                    slideBegin: _calculateSlideBegin(
+                      paddingBottom,
+                      _nowDisplayingBarHeight,
+                    ),
+                  ),
+                ),
+              ],
             );
           },
         );
@@ -224,48 +215,5 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
       ),
       child: child,
     );
-  }
-
-  bool _handleScrollUpdate(ScrollNotification notification) {
-    if (notification.metrics.axis != Axis.vertical) {
-      return false;
-    }
-
-    final currentPosition = notification.metrics.pixels;
-    final scrollDelta = currentPosition - _previousScrollPosition;
-
-    // Always reset to visible when at top of scroll
-    if (currentPosition <= 0) {
-      if (_scrollOffset != 0.0 && mounted) {
-        setState(() {
-          _scrollOffset = 0.0;
-          _previousScrollPosition = currentPosition;
-        });
-      } else {
-        _previousScrollPosition = currentPosition;
-      }
-      return false;
-    }
-
-    // Update scroll offset based on scroll direction
-    if (scrollDelta.abs() > 2) {
-      if (mounted) {
-        setState(() {
-          // Scrolling down (positive delta) -> move up (negative offset)
-          if (scrollDelta > 0) {
-            _scrollOffset = (_scrollOffset - scrollDelta * 0.8)
-                .clamp(-_maxScrollOffset, 0.0);
-          }
-          // Scrolling up (negative delta) -> move down (positive offset)
-          else {
-            _scrollOffset = (_scrollOffset - scrollDelta * 0.8)
-                .clamp(-_maxScrollOffset, 0.0);
-          }
-          _previousScrollPosition = currentPosition;
-        });
-      }
-    }
-
-    return false;
   }
 }
