@@ -12,34 +12,9 @@ import 'package:flutter/material.dart';
 final ValueNotifier<bool> isNowDisplayingBarShowingQuickSetting =
     ValueNotifier(false);
 
-class CollapsedNowPlayingBar extends StatefulWidget {
-  const CollapsedNowPlayingBar(
-      {required this.playingObject, this.onToggle, super.key});
+class CollapsedNowPlayingBar extends StatelessWidget {
+  const CollapsedNowPlayingBar({required this.playingObject, super.key});
   final DP1NowDisplayingObject playingObject;
-  final void Function()? onToggle;
-
-  @override
-  State<StatefulWidget> createState() => _CollapsedNowPlayingBarState();
-}
-
-class _CollapsedNowPlayingBarState extends State<CollapsedNowPlayingBar>
-    with SingleTickerProviderStateMixin {
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  void didUpdateWidget(CollapsedNowPlayingBar oldWidget) {
-    super.didUpdateWidget(oldWidget);
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  DP1NowDisplayingObject get playingObject => widget.playingObject;
 
   @override
   Widget build(BuildContext context) {
@@ -63,20 +38,14 @@ class _CollapsedNowPlayingBarState extends State<CollapsedNowPlayingBar>
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             const TopLine(),
-            Row(
-              children: [
-                Expanded(
-                  child: DisplayItem(
-                    nowDisplayingItem: playingObject.currentItem,
-                    deviceName: playingObject.connectedDevice.name,
-                    onTap: () {
-                      injector<NavigationService>().navigateTo(
-                        AppRouter.nowDisplayingPage,
-                      );
-                    },
-                  ),
-                ),
-              ],
+            DisplayItem(
+              nowDisplayingItem: playingObject.currentItem,
+              deviceName: playingObject.connectedDevice.name,
+              onTap: () {
+                injector<NavigationService>().navigateTo(
+                  AppRouter.nowDisplayingPage,
+                );
+              },
             ),
           ],
         ),
