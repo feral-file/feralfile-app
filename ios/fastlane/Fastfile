@@ -210,7 +210,7 @@ platform :ios do
 			export_options: {
 				method: "app-store",
 				provisioningProfiles: {
-					"com.feralfile.app": "Autonomy_Wallet_Appstore",
+					"com.feralfile.app": "Feral File app - Production",
 				},
 				iCloudContainerEnvironment: 'Production'
 			},
