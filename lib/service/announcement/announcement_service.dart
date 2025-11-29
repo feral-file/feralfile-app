@@ -53,39 +53,7 @@ class AnnouncementServiceImpl implements AnnouncementService {
 
   @override
   Future<List<Announcement>> fetchAnnouncements() async {
-    final lastPullTime = _configurationService.getLastPullAnnouncementTime();
-    final request = AnnouncementRequest(
-      lastPullTime: lastPullTime,
-      size: _fetchSize,
-    );
-    log.info('Fetching announcements with request: ${request.toJson()}');
-    late List<Announcement> announcements;
-    try {
-      announcements = await _iapApi.getAnnouncements(request);
-      final localAnnouncement = _announcementStore.getAll();
-      announcements.removeWhere((element) => localAnnouncement.any((local) =>
-          local.announcementContentId == element.announcementContentId));
-      for (final announcement in announcements) {
-        final localAnnouncement =
-            AnnouncementLocal.fromAnnouncement(announcement);
-        await _saveAnnouncement(localAnnouncement);
-
-        if (_queue.isNotEmpty &&
-            !_queue.any((element) =>
-                element.announcementContentId ==
-                localAnnouncement.announcementContentId)) {
-          _queue.add(localAnnouncement);
-        }
-      }
-      await _configurationService.setLastPullAnnouncementTime(
-          DateTime.now().millisecondsSinceEpoch ~/ 1000);
-    } catch (e) {
-      log.info('Error fetching announcements: $e');
-      return [];
-    }
-    log.info('Fetched announcements: ${announcements.length}');
-    _updateBadger(_queue.length);
-    return announcements;
+    return [];
   }
 
   @override

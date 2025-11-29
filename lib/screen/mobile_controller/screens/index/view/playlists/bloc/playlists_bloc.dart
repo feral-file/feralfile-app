@@ -33,10 +33,12 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     LoadPlaylistsEvent event,
     Emitter<PlaylistsState> emit,
   ) async {
+    log.info("LoadPlaylistsEvent for ${playlistType.name}");
     await _loadPlaylists(
       emit: emit,
       cursor: null,
     );
+    log.info("LoadPlaylistsEvent for ${playlistType.name} done");
   }
 
   Future<void> _onLoadMorePlaylists(
@@ -214,6 +216,8 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
         cursor: paginationResponse.cursor,
         error: '',
       ));
+      log.info(
+          "LoadPlaylistsEvent for ${playlistType.name}: ${newPlaylists.length}");
     } catch (e) {
       emit(
         state.copyWith(

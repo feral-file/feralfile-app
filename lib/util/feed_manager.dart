@@ -102,18 +102,16 @@ class FeedManager {
       log.info(
           'Reload all cache, last time refresh feeds: $lastTimeRefreshFeeds, duration: $updateFeedDuration, force: $force');
       await Future.delayed(const Duration(milliseconds: 500));
+      injector<ChannelsBloc>(
+              instanceName: ChannelsBlocInstance.curated.instanceName)
+          .add(const RefreshChannelsEvent());
+      injector<PlaylistsBloc>(
+              instanceName: PlaylistsBlocInstance.curated.instanceName)
+          .add(RefreshPlaylistsEvent());
     } else {
       log.info(
           'Skip reload all cache, last time refresh feeds: $lastTimeRefreshFeeds, duration: $updateFeedDuration, force: $force');
     }
-    injector<ChannelsBloc>(
-            instanceName: ChannelsBlocInstance.curated.instanceName)
-        .add(const RefreshChannelsEvent());
-    injector<PlaylistsBloc>(
-            instanceName: PlaylistsBlocInstance.curated.instanceName)
-        .add(const RefreshPlaylistsEvent());
-    injector<PlaylistsBloc>(instanceName: PlaylistsBlocInstance.my.instanceName)
-        .add(const RefreshPlaylistsEvent());
   }
 
   Future<List<PlaylistReference>> getAllCachedPlaylists() async {

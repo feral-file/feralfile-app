@@ -45,6 +45,7 @@ class MetricClientService {
     Map<MetricParameter, dynamic> data = const {},
     Map<String, dynamic> hashedData = const {},
   }) async {
+    return;
     log.info('[MetricClientService] addEvent: ${event.name}');
     final configurationService = injector.get<ConfigurationService>();
 
@@ -72,15 +73,15 @@ class MetricClientService {
       ]
     };
     try {
-      await injector<IAPApi>().sendEvent(
-        metrics,
-        _identifier,
-        // TODO: add device info
-        // injector<DeviceInfoService>().deviceName,
-        // injector<DeviceInfoService>().deviceVendor,
-        // injector<DeviceInfoService>().deviceModel,
-        // injector<DeviceInfoService>().deviceOSName,
-      );
+      // await injector<IAPApi>().sendEvent(
+      //   metrics,
+      //   _identifier,
+      //   // TODO: add device info
+      //   // injector<DeviceInfoService>().deviceName,
+      //   // injector<DeviceInfoService>().deviceVendor,
+      //   // injector<DeviceInfoService>().deviceModel,
+      //   // injector<DeviceInfoService>().deviceOSName,
+      // );
       log.info('Metric add event success: ${event.name}');
     } catch (e) {
       log.info('Metric add event error: $e');
@@ -94,7 +95,7 @@ class MetricClientService {
 
   Future<void> mergeUser(String oldUserId) async {
     // new userId will include in jwt token
-    await injector<IAPApi>().updateMetrics(oldUserId);
+    // await injector<IAPApi>().updateMetrics(oldUserId);
   }
 
   void setLabel(String prop, dynamic value) {
@@ -107,6 +108,7 @@ class MetricClientService {
 
   Future<void> reset() async {
     try {
+      return;
       final deviceId = _defaultIdentifier();
       await injector<IAPApi>().deleteMetrics(deviceId);
     } catch (e) {

@@ -256,8 +256,9 @@ class NftTokensServiceImpl extends NftTokensService {
         .info('[fetchTokensInIsolate] start for addresses: $addresses');
     await startIsolateOrWait();
 
-    // Create new stream controller for this addresses list
-    final worker = StreamController<List<AssetToken>>();
+    // Create new broadcast stream controller for this addresses list
+    // Use broadcast stream to allow multiple listeners (multiple bloc instances)
+    final worker = StreamController<List<AssetToken>>.broadcast();
     _fetchTokensWorkers[addressesKey] = worker;
 
     _sendPort?.send([
@@ -850,17 +851,24 @@ class NftTokensServiceImpl extends NftTokensService {
     if (result is FetchTokenFailure) {
       NftCollection.logger.info(
           '[FETCH_ALL_TOKENS] end in error ${result.exception} for addresses: ${result.addresses}');
+      unawaited(Sentry.captureEvent(SentryEvent(
+        message: SentryMessage('FetchTokenFailure: ${result.exception}'),
+        level: SentryLevel.error,
+        extra: {
+          'addresses': result.addresses,
+        },
+      )));
 
-      if (result.key == FETCH_ALL_TOKENS) {
-        // Create key from addresses to find the correct stream controller (sort to handle same addresses in different order)
-        final addressesKey = result.addresses.join(',');
-        final worker = _fetchTokensWorkers[addressesKey];
+      // Create key from addresses to find the correct stream controller (sort to handle same addresses in different order)
+      final addressesKey = result.addresses.join(',');
+      final worker = _fetchTokensWorkers[addressesKey];
 
-        if (worker != null && !worker.isClosed) {
-          await worker.close();
-          _fetchTokensWorkers.remove(addressesKey);
-        }
+      if (worker != null && !worker.isClosed) {
+        await worker.close();
+        _fetchTokensWorkers.remove(addressesKey);
       }
+      _reindexAddressesCompleters[result.uuid]?.completeError(result.exception);
+      _reindexAddressesCompleters.remove(result.uuid);
       return;
     }
 

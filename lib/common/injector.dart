@@ -447,7 +447,7 @@ Future<void> setupInjector() async {
     ),
   );
 
-  injector.registerFactory<WorksBloc>(
+  injector.registerLazySingleton<WorksBloc>(
     () => WorksBloc(
       indexerService: injector(),
     ),

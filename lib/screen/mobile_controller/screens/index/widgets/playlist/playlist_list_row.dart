@@ -8,6 +8,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_title.dart';
 import 'package:autonomy_flutter/util/debouce_util.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
+import 'package:autonomy_flutter/util/log.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -40,7 +41,10 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
     _playlistDetailsBloc = PlaylistDetailsBloc(
       playlist: widget.playlistReference.playlist,
     );
-    _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
+    // Ensure BlocBuilder is mounted before dispatching event
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _playlistDetailsBloc.add(LoadMorePlaylistDetailsEvent());
+    });
 
     _carouselScrollController = widget.scrollController ?? ScrollController();
     _carouselScrollController.addListener(_onScrollListener);
@@ -67,7 +71,10 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
       _playlistDetailsBloc = PlaylistDetailsBloc(
         playlist: widget.playlistReference.playlist,
       );
-      _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
+      // Ensure BlocBuilder is mounted before dispatching event
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _playlistDetailsBloc.add(LoadMorePlaylistDetailsEvent());
+      });
     }
   }
 

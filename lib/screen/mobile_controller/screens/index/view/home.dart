@@ -21,6 +21,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
 /// Home Index Page - Main navigation with playlist sections
+///
+
+final GlobalKey<PlaylistsPageState> _playlistsPageKey =
+    GlobalKey<PlaylistsPageState>();
+final GlobalKey<ChannelsPageState> _channelsPageKey =
+    GlobalKey<ChannelsPageState>();
+final GlobalKey<WorksPageState> _worksPageKey = GlobalKey<WorksPageState>();
+
 class HomeIndexPage extends StatefulWidget {
   const HomeIndexPage({super.key});
 
@@ -306,14 +314,14 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
   }
 
   Widget _buildContent() {
-    switch (_selectedTab) {
-      case HomeIndexTab.playlists:
-        return Container(child: const PlaylistsPage());
-      case HomeIndexTab.channels:
-        return const ChannelsPage();
-      case HomeIndexTab.works:
-        return const WorksPage();
-    }
+    return IndexedStack(
+      index: _selectedTab.index,
+      children: [
+        PlaylistsPage(key: _playlistsPageKey),
+        ChannelsPage(key: _channelsPageKey),
+        WorksPage(key: _worksPageKey),
+      ],
+    );
   }
 }
 

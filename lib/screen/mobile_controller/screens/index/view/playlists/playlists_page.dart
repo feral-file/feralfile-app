@@ -18,13 +18,17 @@ class PlaylistsPage extends StatefulWidget {
   const PlaylistsPage({super.key});
 
   @override
-  State<PlaylistsPage> createState() => _PlaylistsPageState();
+  State<PlaylistsPage> createState() => PlaylistsPageState();
 }
 
-class _PlaylistsPageState extends State<PlaylistsPage> {
+class PlaylistsPageState extends State<PlaylistsPage>
+    with AutomaticKeepAliveClientMixin {
   final ScrollController _scrollController = ScrollController();
   late final PlaylistsBloc _curatedPlaylistsBloc;
   late final PlaylistsBloc _myPlaylistsBloc;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -49,13 +53,14 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
   void _onScroll() {
     if (_scrollController.position.pixels + 100 >=
         _scrollController.position.maxScrollExtent) {
-      _curatedPlaylistsBloc.add(const LoadMorePlaylistsEvent());
-      _myPlaylistsBloc.add(const LoadMorePlaylistsEvent());
+      _curatedPlaylistsBloc.add(LoadMorePlaylistsEvent());
+      _myPlaylistsBloc.add(LoadMorePlaylistsEvent());
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return CustomScrollView(
       shrinkWrap: true,
       controller: _scrollController,

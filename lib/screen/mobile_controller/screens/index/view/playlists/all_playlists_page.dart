@@ -89,7 +89,7 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
   void _onScroll() {
     if (_scrollController.position.pixels + 100 >=
         _scrollController.position.maxScrollExtent) {
-      _playlistsBloc.add(const LoadMorePlaylistsEvent());
+      _playlistsBloc.add(LoadMorePlaylistsEvent());
     }
   }
 
@@ -113,7 +113,7 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
           builder: (context, state) {
             return RefreshIndicator(
               onRefresh: () async {
-                _playlistsBloc.add(const RefreshPlaylistsEvent());
+                _playlistsBloc.add(RefreshPlaylistsEvent());
                 // Wait for the refresh to complete
                 await _playlistsBloc.stream.firstWhere(
                   (state) => state.isLoaded || state.isError,

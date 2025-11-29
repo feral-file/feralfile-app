@@ -8,6 +8,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/cha
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/works/bloc/works_bloc.dart';
 import 'package:autonomy_flutter/service/dp1_store.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
@@ -142,6 +143,7 @@ class FeedCacheImpl extends BaseFeedCache {
       playlistError ??= e;
       channelError ??= e;
     } finally {
+      _onCacheUpdated();
       if (playlistError != null) {
         log.info('Failed to load playlist from Hive: $playlistError');
         onPlaylistError?.call(playlistError);
@@ -294,18 +296,9 @@ class FeedCacheImpl extends BaseFeedCache {
     injector<ChannelsBloc>(
             instanceName: ChannelsBlocInstance.curated.instanceName)
         .add(const LoadChannelsEvent());
-    injector<ChannelsBloc>(instanceName: ChannelsBlocInstance.me.instanceName)
-        .add(const LoadChannelsEvent());
-    injector<ChannelsBloc>(
-            instanceName: ChannelsBlocInstance.global.instanceName)
-        .add(const LoadChannelsEvent());
     injector<PlaylistsBloc>(
             instanceName: PlaylistsBlocInstance.curated.instanceName)
         .add(LoadPlaylistsEvent());
-    // injector<PlaylistsBloc>(instanceName: PlaylistsBlocInstance.my.instanceName)
-    //     .add(LoadPlaylistsEvent());
-    // injector<PlaylistsBloc>(
-    //         instanceName: PlaylistsBlocInstance.global.instanceName)
-    //     .add(LoadPlaylistsEvent());
+    injector<WorksBloc>().add(LoadWorksEvent());
   }
 }

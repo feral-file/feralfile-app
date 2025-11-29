@@ -104,6 +104,9 @@ class PlaylistDetailsBloc
       return <DP1NowDisplayingItem>[];
     }
 
+    log.info(
+        '[PlaylistDetailsBloc][_buildNowDisplayingItemsFromDynamicQuery] Fetching tokens for playlist ${_playlist.id} with owners: $owners, offset: $offset, size: $size');
+
     // Fetch tokens from indexer via isolate for given owners
     final tokensStream = await injector<NftTokensService>()
         .fetchTokensInIsolate(owners, offset, size);
@@ -142,6 +145,9 @@ class PlaylistDetailsBloc
         ),
       );
     }
+
+    log.info(
+        '[PlaylistDetailsBloc][_buildNowDisplayingItemsFromDynamicQuery] Returning ${nowDisplayingItems.length} items for playlist ${_playlist.id}');
 
     return nowDisplayingItems;
   }

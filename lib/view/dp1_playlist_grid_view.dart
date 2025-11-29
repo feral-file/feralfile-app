@@ -44,7 +44,7 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
   void initState() {
     super.initState();
     _playlistDetailsBloc = PlaylistDetailsBloc(playlist: widget.playlist);
-    _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
+    _playlistDetailsBloc.add(LoadMorePlaylistDetailsEvent());
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
   }
@@ -104,7 +104,8 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
               ),
             ],
             if (state is PlaylistDetailsInitialState ||
-                (state is PlaylistDetailsLoadingState &&
+                ((state is PlaylistDetailsLoadingState ||
+                        state is PlaylistDetailsLoadingMoreState) &&
                     widget.showLoadingOnUpdating))
               SliverToBoxAdapter(
                 child: _loadingView(context),

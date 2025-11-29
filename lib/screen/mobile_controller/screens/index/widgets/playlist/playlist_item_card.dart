@@ -71,13 +71,22 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
         child: IgnorePointer(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: MainAxisSize.max,
             children: [
-              Expanded(
-                child: SizedBox.expand(
-                  child: Builder(
-                    builder: (context) => _thumbnail(context),
-                  ),
+              Flexible(
+                fit: FlexFit.tight,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return ClipRect(
+                      child: SizedBox(
+                        width: constraints.maxWidth,
+                        height: constraints.maxHeight,
+                        child: Center(
+                          child: _thumbnail(context),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 10),
@@ -94,6 +103,7 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
                         : 'Unknown Artist';
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           displayArtist,
