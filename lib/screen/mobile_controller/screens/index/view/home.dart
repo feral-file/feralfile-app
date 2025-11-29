@@ -314,12 +314,25 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
   }
 
   Widget _buildContent() {
-    return IndexedStack(
-      index: _selectedTab.index,
+    // Use Stack with Offstage instead of IndexedStack
+    // Offstage keeps widgets alive (not disposed) while hiding them
+    // This allows each page to have independent constraints
+    // Combined with AutomaticKeepAliveClientMixin in each page, state is preserved
+    // Each page can determine its own height (limited or unlimited) independently
+    return Stack(
       children: [
-        PlaylistsPage(key: _playlistsPageKey),
-        ChannelsPage(key: _channelsPageKey),
-        WorksPage(key: _worksPageKey),
+        Offstage(
+          offstage: _selectedTab != HomeIndexTab.playlists,
+          child: PlaylistsPage(key: _playlistsPageKey),
+        ),
+        Offstage(
+          offstage: _selectedTab != HomeIndexTab.channels,
+          child: ChannelsPage(key: _channelsPageKey),
+        ),
+        Offstage(
+          offstage: _selectedTab != HomeIndexTab.works,
+          child: WorksPage(key: _worksPageKey),
+        ),
       ],
     );
   }

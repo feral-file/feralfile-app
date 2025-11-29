@@ -57,12 +57,7 @@ class PlaylistSection extends StatelessWidget {
         }
 
         if (playlists.isEmpty) {
-          return emptyView ??
-              Center(
-                  child: Text(
-                'No playlists',
-                style: theme.textTheme.small,
-              ));
+          return emptyView ?? SizedBox.shrink();
         }
 
         // List items
