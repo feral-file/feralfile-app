@@ -5,8 +5,6 @@
 //  that can be found in the LICENSE file.
 //
 
-import 'package:autonomy_flutter/common/environment.dart';
-import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/build/components/CommandDot.dart';
 import 'package:autonomy_flutter/design/build/components/LLMTextInput.dart';
 import 'package:autonomy_flutter/design/build/components/NowPlayingBar.dart';
@@ -14,7 +12,6 @@ import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
-import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/util/custom_route_observer.dart';
 import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
 import 'package:autonomy_flutter/view/now_displaying/now_displaying_bar.dart';
@@ -46,20 +43,6 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
   double _actualNowDisplayingBarHeight = _nowDisplayingBarHeight;
 
   bool _isShowing = false;
-
-  /// Check if explore bar should be shown
-  /// Returns true if:
-  /// - Dev override is enabled (ENABLE_EXPLORE_DEV env var or kDebugMode), OR
-  /// - Beta features are enabled AND explore bar is enabled
-  bool _shouldShowExploreBar() {
-    if (Environment.enableExploreDev) {
-      return true;
-    }
-
-    final configService = injector<ConfigurationService>();
-    return configService.isBetaFeaturesEnabled() &&
-        configService.isExploreBarEnabled();
-  }
 
   void _updateHeights() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -131,10 +114,6 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
 
   @override
   Widget build(BuildContext context) {
-    if (!_shouldShowExploreBar()) {
-      return const SizedBox.shrink();
-    }
-
     // Use AnimatedBuilder to automatically rebuild when animation value changes
     return AnimatedBuilder(
       animation: _animationController,

@@ -1,0 +1,69 @@
+{
+  "project_info": {
+    "project_number": "1049339402213",
+    "firebase_url": "https://bitmark-autonomy.firebaseio.com",
+    "project_id": "bitmark-autonomy",
+    "storage_bucket": "bitmark-autonomy.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1049339402213:android:7265dc65bcc4e82715c10c",
+        "android_client_info": {
+          "package_name": "com.bitmark.autonomy_client"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1049339402213-4p8ded0ahoujss4hq73mlk46d4kmg3vo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9pZXBE637fqM-Qz8mxhqMGpaWyENrm2w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1049339402213-4p8ded0ahoujss4hq73mlk46d4kmg3vo.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1049339402213:android:ac2e79b3a7b8853215c10c",
+        "android_client_info": {
+          "package_name": "com.bitmark.autonomy_client.inhouse"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1049339402213-4p8ded0ahoujss4hq73mlk46d4kmg3vo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9pZXBE637fqM-Qz8mxhqMGpaWyENrm2w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1049339402213-4p8ded0ahoujss4hq73mlk46d4kmg3vo.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

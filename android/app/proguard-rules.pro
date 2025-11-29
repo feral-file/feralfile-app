@@ -1,4 +1,4 @@
--keep class com.feralfile.app.** { *; }
+-keep class com.bitmark.autonomy_flutter.** { *; }
 -keep class it.airgap.beaconsdk.** { *; }
 
 # Keep `Companion` object fields of serializable classes.
@@ -32,7 +32,7 @@
 # If you have any, uncomment and replace classes with those containing named companion objects.
 -keepattributes InnerClasses # Needed for `getDeclaredClasses`.
 -if @kotlinx.serialization.Serializable class
-com.feralfile.app.**
+com.bitmark.autonomy_flutter.**
 {
     static **$* *;
 }

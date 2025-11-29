@@ -76,14 +76,6 @@ abstract class ConfigurationService {
 
   bool isAnalyticsEnabled();
 
-  Future<void> setBetaFeaturesEnabled(bool value);
-
-  bool isBetaFeaturesEnabled();
-
-  Future<void> setExploreBarEnabled(bool value);
-
-  bool isExploreBarEnabled();
-
   Future<void> setDoneOnboarding(bool value);
 
   bool isDoneOnboarding();
@@ -224,8 +216,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
   static const String KEY_DEVICE_PASSCODE = 'device_passcode';
   static const String KEY_NOTIFICATION = 'notifications';
   static const String KEY_ANALYTICS = 'analytics';
-  static const String KEY_BETA_FEATURES = 'beta_features';
-  static const String KEY_SHOW_EXPLORE_BAR = 'show_explore_bar';
   static const String KEY_DONE_ONBOARING = 'done_onboarding';
   static const String KEY_LAST_TIME_ASK_SUBSCRIPTION =
       'last_time_ask_subscription';
@@ -373,29 +363,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
   Future<void> setAnalyticEnabled(bool value) async {
     log.info('setAnalyticEnabled: $value');
     await _preferences.setBool(KEY_ANALYTICS, value);
-  }
-
-  @override
-  bool isBetaFeaturesEnabled() =>
-      _preferences.getBool(KEY_BETA_FEATURES) ?? false;
-
-  @override
-  Future<void> setBetaFeaturesEnabled(bool value) async {
-    log.info('setBetaFeaturesEnabled: $value');
-    await _preferences.setBool(KEY_BETA_FEATURES, value);
-    // If beta features are disabled, also disable explore bar
-    if (!value) {
-      await setExploreBarEnabled(false);
-    }
-  }
-
-  @override
-  bool isExploreBarEnabled() => _preferences.getBool(KEY_SHOW_EXPLORE_BAR) ?? false;
-
-  @override
-  Future<void> setExploreBarEnabled(bool value) async {
-    log.info('setExploreBarEnabled: $value');
-    await _preferences.setBool(KEY_SHOW_EXPLORE_BAR, value);
   }
 
   @override

@@ -39,14 +39,10 @@ class SettingsDataServiceImpl implements SettingsDataService {
   static const _keyIsAnalyticsEnabled = 'isAnalyticsEnabled';
   static const _keyDevicePasscodeEnabled = 'devicePasscodeEnabled';
   static const _keyNotificationEnabled = 'notificationEnabled';
-  static const _keyBetaFeaturesEnabled = 'betaFeaturesEnabled';
-  static const _keyExploreBarEnabled = 'exploreBarEnabled';
   static const _deviceSettingsKeys = [
     _keyIsAnalyticsEnabled,
     _keyDevicePasscodeEnabled,
     _keyNotificationEnabled,
-    _keyBetaFeaturesEnabled,
-    _keyExploreBarEnabled,
     _keyPlaylists,
   ];
 
@@ -97,12 +93,6 @@ class SettingsDataServiceImpl implements SettingsDataService {
 
     await _configurationService.setNotificationEnabled(
         data[_keyNotificationEnabled] as bool? ?? false);
-
-    await _configurationService.setBetaFeaturesEnabled(
-        data[_keyBetaFeaturesEnabled] as bool? ?? false);
-
-    await _configurationService.setExploreBarEnabled(
-        data[_keyExploreBarEnabled] as bool? ?? false);
 
     await _configurationService.updateTempStorageHiddenTokenIDs(
       (data[_keyHiddenMainnetTokenIDs] as List<dynamic>?)
@@ -157,24 +147,6 @@ class SettingsDataServiceImpl implements SettingsDataService {
       newSettings.add({
         'key': _keyNotificationEnabled,
         'value': notificationEnabled,
-      });
-    }
-
-    final betaFeaturesEnabled =
-        jsonEncode(_configurationService.isBetaFeaturesEnabled());
-    if (currentSettings[_keyBetaFeaturesEnabled] != betaFeaturesEnabled) {
-      newSettings.add({
-        'key': _keyBetaFeaturesEnabled,
-        'value': betaFeaturesEnabled,
-      });
-    }
-
-    final exploreBarEnabled =
-        jsonEncode(_configurationService.isExploreBarEnabled());
-    if (currentSettings[_keyExploreBarEnabled] != exploreBarEnabled) {
-      newSettings.add({
-        'key': _keyExploreBarEnabled,
-        'value': exploreBarEnabled,
       });
     }
 

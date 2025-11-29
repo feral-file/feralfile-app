@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.feralfile.app">
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.HIDE_OVERLAY_WINDOWS" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -36,8 +35,14 @@
         android:roundIcon="${appIconRound}"
         tools:replace="android:label,allowBackup">
 
+        <meta-data
+            android:name="com.onesignal.NotificationServiceExtension"
+            android:value="com.bitmark.autonomy_flutter.service.NotificationServiceExtension" /> <!--
+        Branch init -->
+
+
         <activity
-            android:name=".MainActivity"
+            android:name="com.bitmark.autonomywallet.MainActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:exported="true"
             android:hardwareAccelerated="true"
@@ -76,6 +81,37 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="au.bitmark.com"
+                    android:pathPrefix="/apps"
+                    android:scheme="https" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="autonomy.io"
+                    android:pathPrefix="/apps"
+                    android:scheme="https" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="autonomy" />
+            </intent-filter>
+
             <!-- Disable Flutter's automatic deep link handling -->
             <meta-data
                 android:name="flutter_deeplinking_enabled"
@@ -107,7 +143,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.feralfile.app.EmergencyLog"
+            android:name=".EmergencyLog"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

@@ -30,7 +30,7 @@ class PreferencesBloc extends AuBloc<PreferenceEvent, PreferenceState> {
   static bool get isOnChanging => _isOnChanging;
 
   PreferencesBloc(this._configurationService)
-      : super(PreferenceState(false, false, false, '', false, false, false)) {
+      : super(PreferenceState(false, false, false, '', false)) {
     on<PreferenceInfoEvent>((event, emit) async {
       _availableBiometrics = await _localAuth.getAvailableBiometrics();
       final canCheckBiometrics = await authenticateIsAvailable();
@@ -38,8 +38,6 @@ class PreferencesBloc extends AuBloc<PreferenceEvent, PreferenceState> {
       final passcodeEnabled = _configurationService.isDevicePasscodeEnabled();
       final notificationEnabled = _configurationService.isNotificationEnabled();
       final analyticsEnabled = _configurationService.isAnalyticsEnabled();
-      final betaFeaturesEnabled = _configurationService.isBetaFeaturesEnabled();
-      final exploreBarEnabled = _configurationService.isExploreBarEnabled();
 
       final hasHiddenArtwork =
           _configurationService.getTempStorageHiddenTokenIDs().isNotEmpty;
@@ -49,9 +47,7 @@ class PreferencesBloc extends AuBloc<PreferenceEvent, PreferenceState> {
           notificationEnabled,
           analyticsEnabled,
           _authMethodTitle(),
-          hasHiddenArtwork,
-          betaFeaturesEnabled,
-          exploreBarEnabled));
+          hasHiddenArtwork));
     });
 
     on<PreferenceUpdateEvent>((event, emit) async {
@@ -101,29 +97,9 @@ class PreferencesBloc extends AuBloc<PreferenceEvent, PreferenceState> {
             .setAnalyticEnabled(event.newState.isAnalyticEnabled);
       }
 
-      if (event.newState.isBetaFeaturesEnabled != state.isBetaFeaturesEnabled) {
-        await _configurationService
-            .setBetaFeaturesEnabled(event.newState.isBetaFeaturesEnabled);
-        // If beta features are disabled, also disable explore bar
-        if (!event.newState.isBetaFeaturesEnabled) {
-          event.newState.isExploreBarEnabled = false;
-        }
-      }
-
-      if (event.newState.isExploreBarEnabled != state.isExploreBarEnabled) {
-        // Only allow enabling explore bar if beta features are enabled
-        if (event.newState.isExploreBarEnabled &&
-            !event.newState.isBetaFeaturesEnabled) {
-          event.newState.isExploreBarEnabled = false;
-        } else {
-          await _configurationService
-              .setExploreBarEnabled(event.newState.isExploreBarEnabled);
-        }
-      }
-
       unawaited(injector<SettingsDataService>()
           .backupDeviceSettings()
-          .then((value) => _isOnChanging = false, onError: (Object error) {
+          .then((value) => _isOnChanging = false, onError: (error) {
         log.warning('Error when backup device settings: $error');
         _isOnChanging = false;
       }));

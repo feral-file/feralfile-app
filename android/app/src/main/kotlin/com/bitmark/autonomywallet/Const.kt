@@ -4,7 +4,7 @@
  * that can be found in the LICENSE file.
  */
 
-package com.feralfile.app
+package com.bitmark.autonomy_flutter
 
 import kotlinx.serialization.json.Json
 

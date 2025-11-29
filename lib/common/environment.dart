@@ -9,7 +9,6 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:sentry/sentry.dart';
 
@@ -252,9 +251,4 @@ class Environment {
   // MeiliSearch configuration
   static String get meiliSearchUrl => _readKey('MEILISEARCH_URL', '');
   static String get meiliSearchKey => _readKey('MEILISEARCH_KEY', '');
-
-  // Dev/Internal testing flags
-  static bool get enableExploreDev =>
-      _readKey('ENABLE_EXPLORE_DEV', '').toUpperCase() == 'TRUE' ||
-      kDebugMode;
 }
