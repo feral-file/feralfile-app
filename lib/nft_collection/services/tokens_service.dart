@@ -113,7 +113,7 @@ class NftTokensServiceImpl extends NftTokensService {
   ReceivePort? _receivePort;
   Isolate? _isolate;
   var _isolateReady = Completer<void>();
-  // Map of addresses key to stream controller for deduplication
+  // Map of UUID to stream controller for deduplication
   final Map<String, StreamController<List<AssetToken>>> _fetchTokensWorkers =
       {};
 
@@ -241,35 +241,38 @@ class NftTokensServiceImpl extends NftTokensService {
     int? offset,
     int? total,
   ) async {
-    // Create key from addresses for deduplication
-    final addressesKey = addresses.join(',');
+    // Generate unique UUID for this request
+    final uuid = const Uuid().v4();
+    NftCollection.logger.info(
+        '[fetchTokensInIsolate] Creating new request with UUID: $uuid for addresses: $addresses');
 
-    // If same addresses are already being fetched, return the same stream
-    final existingWorker = _fetchTokensWorkers[addressesKey];
-    if (existingWorker != null && !existingWorker.isClosed) {
-      NftCollection.logger.info(
-          '[fetchTokensInIsolate] Addresses $addresses already being fetched, returning existing stream');
-      return existingWorker.stream;
-    }
-
-    NftCollection.logger
-        .info('[fetchTokensInIsolate] start for addresses: $addresses');
     await startIsolateOrWait();
 
-    // Create new broadcast stream controller for this addresses list
+    // Create new broadcast stream controller for this request
     // Use broadcast stream to allow multiple listeners (multiple bloc instances)
     final worker = StreamController<List<AssetToken>>.broadcast();
-    _fetchTokensWorkers[addressesKey] = worker;
+    _fetchTokensWorkers[uuid] = worker;
 
     _sendPort?.send([
       FETCH_ALL_TOKENS,
+      uuid,
       addresses,
       offset,
       total,
     ]);
 
     NftCollection.logger.info(
-        '[FETCH_ALL_TOKENS][start] addresses: $addresses, offset: $offset, total: $total');
+        '[FETCH_ALL_TOKENS][start] UUID: $uuid, addresses: $addresses, offset: $offset, total: $total');
+    worker.stream.listen((tokens) {
+      NftCollection.logger.info(
+          '[fetchTokensInIsolate] Received ${tokens.length} tokens from stream for UUID: $uuid addresses: ${addresses.join(',')}');
+    }, onError: (Object error, StackTrace stackTrace) {
+      NftCollection.logger.warning(
+          '[fetchTokensInIsolate] Error for addresses: ${addresses.join(',')} UUID $uuid: $error');
+    }, onDone: () {
+      NftCollection.logger.info(
+          '[fetchTokensInIsolate] Stream done for addresses: ${addresses.join(',')} UUID: $uuid');
+    });
 
     return worker.stream;
   }
@@ -825,23 +828,38 @@ class NftTokensServiceImpl extends NftTokensService {
           .info('[${result.key}] receive ${result.assets.length} tokens');
 
       if (result.key == FETCH_ALL_TOKENS) {
-        // Create key from addresses to find the correct stream controller
-        final addressesKey = result.addresses.join(',');
-        final worker = _fetchTokensWorkers[addressesKey];
+        // Use UUID to find the correct stream controller
+        final uuid = result.uuid;
+        final worker = _fetchTokensWorkers[uuid];
 
         if (worker != null && !worker.isClosed) {
+          // Send data to stream
           worker.sink.add(result.assets);
-        }
-
-        if (result.done) {
-          await worker?.close();
-          _fetchTokensWorkers.remove(addressesKey);
-          NftCollection.logger.fine(
-            '[FETCH_ALL_TOKENS]'
-            ' ${result.addresses.join(',')} at ${DateTime.now()}',
+          NftCollection.logger.info(
+            '[FETCH_ALL_TOKENS] Sent ${result.assets.length} tokens to stream for UUID: $uuid, done: ${result.done}',
           );
-          NftCollection.logger
-              .info('[FETCH_ALL_TOKENS][end] addresses: $addressesKey');
+
+          // Close stream after sending data when done
+          if (result.done) {
+            await worker.close();
+            _fetchTokensWorkers.remove(uuid);
+            NftCollection.logger.fine(
+              '[FETCH_ALL_TOKENS]'
+              ' ${result.addresses.join(',')} at ${DateTime.now()}',
+            );
+            NftCollection.logger.info(
+                '[FETCH_ALL_TOKENS][end] Stream closed for UUID: $uuid, addresses: ${result.addresses.join(',')}');
+          }
+        } else if (worker != null && worker.isClosed) {
+          // Stream was already closed, remove from map
+          _fetchTokensWorkers.remove(uuid);
+          NftCollection.logger.warning(
+            '[FETCH_ALL_TOKENS] Stream was already closed for UUID: $uuid, cannot send ${result.assets.length} tokens',
+          );
+        } else if (worker == null) {
+          NftCollection.logger.warning(
+            '[FETCH_ALL_TOKENS] No worker found for UUID: $uuid, cannot send ${result.assets.length} tokens',
+          );
         }
       }
 
@@ -859,13 +877,13 @@ class NftTokensServiceImpl extends NftTokensService {
         },
       )));
 
-      // Create key from addresses to find the correct stream controller (sort to handle same addresses in different order)
-      final addressesKey = result.addresses.join(',');
-      final worker = _fetchTokensWorkers[addressesKey];
+      // Use UUID to find the correct stream controller
+      final uuid = result.uuid;
+      final worker = _fetchTokensWorkers[uuid];
 
       if (worker != null && !worker.isClosed) {
         await worker.close();
-        _fetchTokensWorkers.remove(addressesKey);
+        _fetchTokensWorkers.remove(uuid);
       }
       _reindexAddressesCompleters[result.uuid]?.completeError(result.exception);
       _reindexAddressesCompleters.remove(result.uuid);
@@ -1056,12 +1074,13 @@ class NftTokensServiceImpl extends NftTokensService {
             }
             return;
           case FETCH_ALL_TOKENS:
-            final addresses = List<String>.from(message[1] as List);
-            final offset = message[2] as int;
-            final size = message[3] as int;
+            final uuid = message[1] as String;
+            final addresses = List<String>.from(message[2] as List);
+            final offset = message[3] as int;
+            final size = message[4] as int;
             _fetchAllTokens(
               FETCH_ALL_TOKENS,
-              const Uuid().v4(),
+              uuid,
               addresses,
               offset,
               size,

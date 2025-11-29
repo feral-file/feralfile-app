@@ -236,15 +236,18 @@ class PlaylistDetailsBloc
       final isStatic = _playlist.items.isNotEmpty;
       final start = state.offset;
 
-      final newNowDisplayingItems = isStatic
-          ? await _buildNowDisplayingItemsFromStaticItems(
-              offset: start,
-              size: _pageSize,
-            )
-          : await _buildNowDisplayingItemsFromDynamicQuery(
-              offset: start,
-              size: _pageSize,
-            );
+      final newNowDisplayingItems = await (isStatic
+              ? _buildNowDisplayingItemsFromStaticItems(
+                  offset: start,
+                  size: _pageSize,
+                )
+              : _buildNowDisplayingItemsFromDynamicQuery(
+                  offset: start,
+                  size: _pageSize,
+                ))
+          .timeout(const Duration(seconds: 30), onTimeout: () {
+        throw Exception('Timeout loading more playlist details');
+      });
 
       if (newNowDisplayingItems.isEmpty) {
         emit(state.copyWith(hasMore: false));

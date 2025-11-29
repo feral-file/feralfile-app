@@ -32,12 +32,15 @@ class NoticeBanner extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
-              child: Text(
-                message,
-                style: Theme.of(context).textTheme.small,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  message,
+                  style: Theme.of(context).textTheme.small,
+                ),
               ),
             ),
-            _CloseButton(onPressed: onClose),
+            if (onClose != null) _CloseButton(onPressed: onClose),
           ],
         ),
       ),

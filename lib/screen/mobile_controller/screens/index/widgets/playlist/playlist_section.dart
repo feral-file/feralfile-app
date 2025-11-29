@@ -2,6 +2,7 @@ import 'package:autonomy_flutter/design/build/components/PlaylistSection.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_list_row.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section_header.dart';
+import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:flutter/material.dart';
 
@@ -15,6 +16,7 @@ class PlaylistSection extends StatelessWidget {
     this.onPlaylistItemTap,
     this.scrollController,
     this.hasMore = true,
+    this.emptyView,
     super.key,
   });
 
@@ -24,15 +26,18 @@ class PlaylistSection extends StatelessWidget {
   final VoidCallback? onViewAllTap;
   final void Function(DP1NowDisplayingItem)? onPlaylistItemTap;
   final ScrollController? scrollController;
+  final Widget? emptyView;
   final bool hasMore;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return ListView.builder(
       shrinkWrap: true,
       padding: EdgeInsets.zero,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: playlists.length + 2,
+      itemCount: 2 + (playlists.isNotEmpty ? playlists.length : 1),
       itemBuilder: (context, index) {
         // Header
         if (index == 0) {
@@ -49,6 +54,15 @@ class PlaylistSection extends StatelessWidget {
           return const SizedBox(
             height: PlaylistSectionTokens.gap,
           );
+        }
+
+        if (playlists.isEmpty) {
+          return emptyView ??
+              Center(
+                  child: Text(
+                'No playlists',
+                style: theme.textTheme.small,
+              ));
         }
 
         // List items

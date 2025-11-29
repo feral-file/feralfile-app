@@ -3,6 +3,7 @@ import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/view/record_controller.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
@@ -10,6 +11,8 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
+import 'package:autonomy_flutter/view/responsive.dart';
+import 'package:autonomy_flutter/widgets/notice-banner/notice_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -113,6 +116,30 @@ class PlaylistsPageState extends State<PlaylistsPage>
 
     final hasMore = state.hasMore;
 
+    Widget? emptyView;
+    if (playlistType == PlaylistType.me) {
+      emptyView = Column(
+        children: [
+          SizedBox(height: 12),
+          Padding(
+            padding: ResponsiveLayout.pageHorizontalEdgeInsets,
+            child: NoticeBanner(
+              message: '''
+      Type or paste an address into the command bar to load''',
+              onTap: () {
+                injector<NavigationService>().popToRouteOrPush(
+                  AppRouter.voiceCommandPage,
+                  arguments: RecordControllerScreenPayload(
+                    isListening: false,
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      );
+    }
+
     return PlaylistSection(
       sectionName: playlistType.name,
       sectionIcon: SvgPicture.asset(
@@ -124,6 +151,7 @@ class PlaylistsPageState extends State<PlaylistsPage>
           BlendMode.srcIn,
         ),
       ),
+      emptyView: emptyView,
       playlists: playlistDataList,
       hasMore: hasMore,
       onViewAllTap: () {

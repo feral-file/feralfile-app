@@ -104,13 +104,13 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
               ),
             ],
             if (state is PlaylistDetailsInitialState ||
-                ((state is PlaylistDetailsLoadingState ||
-                        state is PlaylistDetailsLoadingMoreState) &&
+                (state is PlaylistDetailsLoadingState &&
                     widget.showLoadingOnUpdating))
               SliverToBoxAdapter(
                 child: _loadingView(context),
               )
-            else if (state.nowDisplayingItems.isEmpty)
+            else if (state.nowDisplayingItems.isEmpty &&
+                state is! PlaylistDetailsLoadingMoreState)
               SliverToBoxAdapter(
                 child: _emptyView(context),
               )
