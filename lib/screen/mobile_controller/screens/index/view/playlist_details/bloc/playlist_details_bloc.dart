@@ -4,6 +4,7 @@ import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/model/token.dart';
+import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
@@ -108,13 +109,18 @@ class PlaylistDetailsBloc
         '[PlaylistDetailsBloc][_buildNowDisplayingItemsFromDynamicQuery] Fetching tokens for playlist ${_playlist.id} with owners: $owners, offset: $offset, size: $size');
 
     // Fetch tokens from indexer via isolate for given owners
-    final tokensStream = await injector<NftTokensService>()
-        .fetchTokensInIsolate(owners, offset, size);
-    final allTokens = <AssetToken>[];
+    // final tokensStream = await injector<NftTokensService>()
+    //     .fetchTokensInIsolate(owners, offset, size);
+    // final allTokens = <AssetToken>[];
 
-    await for (final batch in tokensStream) {
-      allTokens.addAll(batch);
-    }
+    // await for (final batch in tokensStream) {
+    //   allTokens.addAll(batch);
+    // }
+
+    final allTokensOwners = await injector<IndexerDatabaseAbstract>()
+        .getTokensByOwners(owners: owners);
+
+    final allTokens = allTokensOwners.safeSublist(offset, offset + size);
 
     if (allTokens.isEmpty) {
       log.info(

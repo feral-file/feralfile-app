@@ -48,18 +48,18 @@ class UserAllOwnCollectionBloc
     final isSameQuery = _dynamicQuery == event.dynamicQuery;
     _dynamicQuery = event.dynamicQuery;
     // Get addresses for the query
-    // final dynamicQueryOwners = event.dynamicQuery.params.owners;
-    // final allAddresses = injector<AddressService>().getAllAddresses();
-    // final missingAddresses =
-    //     dynamicQueryOwners.where((e) => !allAddresses.contains(e)).toList();
-    // final owners = [
-    //   ...missingAddresses,
-    // ].toSet().toList();
-    //
-    // if (missingAddresses.isNotEmpty) {
-    //   add(FetchTokensOfAddresses(
-    //       addresses: owners, shouldUpdateLastRefreshedTime: true));
-    // }
+    final dynamicQueryOwners = event.dynamicQuery.params.owners;
+    final allAddresses = injector<AddressService>().getAllAddresses();
+    final missingAddresses =
+        dynamicQueryOwners.where((e) => !allAddresses.contains(e)).toList();
+    final owners = [
+      ...missingAddresses,
+    ].toSet().toList();
+
+    if (missingAddresses.isNotEmpty) {
+      add(FetchTokensOfAddresses(
+          addresses: owners, shouldUpdateLastRefreshedTime: true));
+    }
 
     if (isSameQuery) {
       add(ReloadAssetTokensFromIndexerDatabase());
@@ -253,8 +253,6 @@ class UserAllOwnCollectionBloc
     FetchTokensOfAddresses event,
     Emitter<UserAllOwnCollectionState> emit,
   ) async {
-    add(ReloadAssetTokensFromIndexerDatabase());
-    return;
     try {
       log.info('[UserAllOwnCollectionBloc][_onFetchTokensOfAddresses] started');
       // If the same type is already being processed, ignore this event
@@ -496,7 +494,6 @@ class UserAllOwnCollectionBloc
     UpdateTokensOfAddresses event,
     Emitter<UserAllOwnCollectionState> emit,
   ) async {
-    return;
     try {
       log.info(
           '[UserAllOwnCollectionBloc][_onUpdateTokensOfAddresses] started with addresses: ${event.addresses.join(',')}');
