@@ -139,7 +139,10 @@ class _DataManagementPageState extends State<DataManagementPage> {
         () async {
           // remove all cached data
           await injector<NftTokensService>().purgeCachedGallery();
-          await injector<UserDp1PlaylistService>().clearData();
+          await injector<UserDp1PlaylistService>()
+              .setLastUpdateChangeAnchor(addressAnchors: []);
+          await injector<UserDp1PlaylistService>()
+              .setLastUpdateChangeAnchor(addressAnchors: []);
           await injector<CacheManager>().emptyCache();
           await DefaultCacheManager().emptyCache();
           injector<UserAllOwnCollectionBloc>().add(ClearDataEvent());
