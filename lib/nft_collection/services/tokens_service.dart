@@ -625,9 +625,10 @@ class NftTokensServiceImpl extends NftTokensService {
     for (final assetToken in assetTokens) {
       _database.insertToken(assetToken);
     }
+
     final tokensLog = assetTokens.map((e) => 'cid: ${e.cid}').toList();
-    NftCollection.logger
-        .info('[insertAssetsWithProvenance][tokens] $tokensLog');
+    NftCollection.logger.info(
+        '[insertAssetsWithProvenance][tokens] ${assetTokens.length} $tokensLog');
   }
 
   // fetch manual tokens from indexer in batches of 20
@@ -688,8 +689,7 @@ class NftTokensServiceImpl extends NftTokensService {
   }) async {
     try {
       // get from database
-      final assetTokenFromDatabase = <AssetToken>[];
-      //_database.getTokensByCIDs(cids: cids);
+      final assetTokenFromDatabase = _database.getTokensByCIDs(cids: cids);
       final res = [...assetTokenFromDatabase];
       final missingIds = cids
           .where((cid) => !assetTokenFromDatabase.any((e) => e.cid == cid))
@@ -1019,6 +1019,7 @@ class NftTokensServiceImpl extends NftTokensService {
               .updateLastUpdateChangeAnchor(addressAnchors: addressAnchors);
         }
       }
+      return;
     }
 
     if (result is UpdateTokensSuccess) {
@@ -1031,6 +1032,7 @@ class NftTokensServiceImpl extends NftTokensService {
       NftCollection.logger.info(
         '[UPDATE_TOKENS_IN_ISOLATE][end] ${result.uuid} - Stream closed',
       );
+      return;
     }
 
     if (result is UpdateTokensFailure) {
@@ -1044,7 +1046,16 @@ class NftTokensServiceImpl extends NftTokensService {
       NftCollection.logger.info(
         '[UPDATE_TOKENS_IN_ISOLATE][error] ${result.uuid} - ${result.exception}',
       );
+      return;
     }
+
+    NftCollection.logger
+        .info('[TokensService][_handleMessageInMain] Unknown message: $result');
+    unawaited(Sentry.captureEvent(SentryEvent(
+      message: SentryMessage('Unknown message: $result'),
+      level: SentryLevel.error,
+    )));
+    return;
   }
 
   static SendPort? _isolateSendPort;
@@ -1076,8 +1087,8 @@ class NftTokensServiceImpl extends NftTokensService {
           case FETCH_ALL_TOKENS:
             final uuid = message[1] as String;
             final addresses = List<String>.from(message[2] as List);
-            final offset = message[3] as int;
-            final size = message[4] as int;
+            final offset = message[3] as int?;
+            final size = message[4] as int?;
             _fetchAllTokens(
               FETCH_ALL_TOKENS,
               uuid,

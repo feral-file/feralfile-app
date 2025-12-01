@@ -227,6 +227,7 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
         Sentry.captureEvent(SentryEvent(
           message: SentryMessage('Error sorting tokens by owner: $e'),
           level: SentryLevel.error,
+          throwable: e,
         ));
       }
       return res;

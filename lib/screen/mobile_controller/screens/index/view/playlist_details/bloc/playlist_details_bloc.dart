@@ -118,13 +118,13 @@ class PlaylistDetailsBloc
     // }
 
     final allTokensOwners = await injector<IndexerDatabaseAbstract>()
-        .getTokensByOwners(owners: owners);
+        .getTokensByOwner(ownerAddress: owners.first);
 
     final allTokens = allTokensOwners.safeSublist(offset, offset + size);
 
     if (allTokens.isEmpty) {
       log.info(
-          '[PlaylistDetailsBloc][_buildNowDisplayingItemsFromDynamicQuery] No tokens found for owners from isolate: $owners');
+          '[PlaylistDetailsBloc][_buildNowDisplayingItemsFromDynamicQuery] No tokens found for owners: $owners');
       return <DP1NowDisplayingItem>[];
     }
 

@@ -90,8 +90,7 @@ class IndexerClient {
           },
           throwable: result.exception,
         ));
-        throw Exception(
-            'Error querying: ${result.exception?.graphqlErrors.map((e) => e.message).join(', ')}');
+        throw Exception('Error querying: ${result.exception?.raw}');
       }
       if (subKey != null) {
         return result.data?[subKey];
@@ -159,6 +158,7 @@ class IndexerClient {
           },
           throwable: result.exception,
         ));
+        throw Exception('Error mutating: ${result.exception?.raw}');
       }
       return result.data;
     } catch (e) {
