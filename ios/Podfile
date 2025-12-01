@@ -50,6 +50,11 @@ post_install do |installer|
           'PERMISSION_CAMERA=1',
           'PERMISSION_LOCATION=1'
         ]
+
+        if target.name == 'mobile_scanner'
+          # Allow arm64 simulator builds for mobile_scanner on Apple Silicon
+          config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'i386 armv7'
+        end
       end
   end
 end
