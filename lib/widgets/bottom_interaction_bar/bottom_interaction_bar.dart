@@ -131,10 +131,6 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
 
   @override
   Widget build(BuildContext context) {
-    if (!_shouldShowExploreBar()) {
-      return const SizedBox.shrink();
-    }
-
     // Use AnimatedBuilder to automatically rebuild when animation value changes
     return AnimatedBuilder(
       animation: _animationController,
@@ -194,7 +190,7 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
                 ),
 
                 // LLMTextInput
-                if (!isExpanded)
+                if (_shouldShowExploreBar() && !isExpanded)
                   Positioned(
                     bottom: paddingBottom +
                         UIConstants.nowDisplayingBarBottomPadding +
