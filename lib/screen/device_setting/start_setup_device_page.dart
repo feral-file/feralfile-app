@@ -10,6 +10,7 @@ import 'package:autonomy_flutter/screen/device_setting/bluetooth_connected_devic
 import 'package:autonomy_flutter/screen/device_setting/enter_wifi_password.dart';
 import 'package:autonomy_flutter/screen/device_setting/scan_wifi_network_page.dart';
 import 'package:autonomy_flutter/service/bluetooth_service.dart';
+import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
@@ -234,9 +235,11 @@ class BluetoothDevicePortalPageState extends State<BluetoothDevicePortalPage>
             branchName: branchName,
           );
           await BluetoothDeviceManager().addDevice(ffDevice);
+          await injector<CanvasClientServiceV2>()
+              .showPairingQRCode(ffDevice, false);
+
           injector<NavigationService>()
               .popUntil(AppRouter.bluetoothDevicePortalPage);
-
           unawaited(injector<NavigationService>().popAndPushNamed(
             AppRouter.bluetoothConnectedDeviceConfig,
             arguments: BluetoothConnectedDeviceConfigPayload(
