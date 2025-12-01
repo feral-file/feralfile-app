@@ -5,17 +5,14 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/cha
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/works/works_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/home_index_header.dart';
-import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
-import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -66,50 +63,25 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
 
   List<OptionItem> get _defaultOptions {
     return [
-      // scan
+      // FF1 Setting
       OptionItem(
-        title: 'scan'.tr(),
-        icon: const Icon(
-          AuIcon.scan,
+        title: 'FF1',
+        icon: SvgPicture.asset(
+          'assets/images/portal_setting.svg',
+          colorFilter: const ColorFilter.mode(AppColor.white, BlendMode.srcIn),
         ),
         onTap: () {
           injector<NavigationService>().navigateTo(
-            AppRouter.scanQRPage,
-            arguments: const ScanQRPagePayload(scannerItem: ScannerItem.GLOBAL),
+            AppRouter.bluetoothConnectedDeviceConfig,
+            arguments: BluetoothConnectedDeviceConfigPayload(),
           );
           isNowDisplayingBarExpanded.value = false;
         },
       ),
-      if (BluetoothDeviceManager().castingBluetoothDevice != null)
-        // FF-X1 Setting
-        OptionItem(
-          title: 'FF1 Settings',
-          icon: SvgPicture.asset(
-            'assets/images/portal_setting.svg',
-            colorFilter:
-                const ColorFilter.mode(AppColor.white, BlendMode.srcIn),
-          ),
-          onTap: () {
-            injector<NavigationService>().navigateTo(
-              AppRouter.bluetoothConnectedDeviceConfig,
-              arguments: BluetoothConnectedDeviceConfigPayload(),
-            );
-            isNowDisplayingBarExpanded.value = false;
-          },
-        ),
-      // OptionItem(
-      //   title: 'Custom Feed Server',
-      //   icon: const Icon(
-      //     AuIcon.settings,
-      //   ),
-      //   onTap: () {
-      //     injector<NavigationService>()
-      //         .navigateTo(AppRouter.customFeedServersPage);
-      //     isNowDisplayingBarExpanded.value = false;
-      //   },
-      // ),
+
+      // Personal Preferences & Data, Security Management
       OptionItem(
-        title: 'App Settings',
+        title: 'Account',
         icon: const Icon(
           AuIcon.settings,
         ),
@@ -118,19 +90,10 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
           isNowDisplayingBarExpanded.value = false;
         },
       ),
-      OptionItem(
-        title: 'wallet'.tr(),
-        icon: const Icon(
-          AuIcon.wallet,
-        ),
-        onTap: () {
-          injector<NavigationService>().navigateTo(AppRouter.walletPage);
-        },
-      ),
 
-      // help
+      // Support & Feedback
       OptionItem(
-        title: 'help'.tr(),
+        title: 'Support & Feedback',
         icon: ValueListenableBuilder<List<int>?>(
           valueListenable:
               injector<CustomerSupportService>().numberOfIssuesInfo,
@@ -154,8 +117,9 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
         },
       ),
 
+      // Release Notes
       OptionItem(
-        title: 'release_notes'.tr(),
+        title: 'Release Notes',
         icon: SvgPicture.asset(
           'assets/images/release_notes.svg',
           width: 22,
@@ -326,50 +290,25 @@ class _CombinedHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   List<OptionItem> get _defaultOptions {
     return [
-      // scan
+      // FF1 Setting
       OptionItem(
-        title: 'scan'.tr(),
-        icon: const Icon(
-          AuIcon.scan,
+        title: 'FF1',
+        icon: SvgPicture.asset(
+          'assets/images/portal_setting.svg',
+          colorFilter: const ColorFilter.mode(AppColor.white, BlendMode.srcIn),
         ),
         onTap: () {
           injector<NavigationService>().navigateTo(
-            AppRouter.scanQRPage,
-            arguments: const ScanQRPagePayload(scannerItem: ScannerItem.GLOBAL),
+            AppRouter.bluetoothConnectedDeviceConfig,
+            arguments: BluetoothConnectedDeviceConfigPayload(),
           );
           isNowDisplayingBarExpanded.value = false;
         },
       ),
-      if (BluetoothDeviceManager().castingBluetoothDevice != null)
-        // FF-X1 Setting
-        OptionItem(
-          title: 'FF1 Settings',
-          icon: SvgPicture.asset(
-            'assets/images/portal_setting.svg',
-            colorFilter:
-                const ColorFilter.mode(AppColor.white, BlendMode.srcIn),
-          ),
-          onTap: () {
-            injector<NavigationService>().navigateTo(
-              AppRouter.bluetoothConnectedDeviceConfig,
-              arguments: BluetoothConnectedDeviceConfigPayload(),
-            );
-            isNowDisplayingBarExpanded.value = false;
-          },
-        ),
-      // OptionItem(
-      //   title: 'Custom Feed Server',
-      //   icon: const Icon(
-      //     AuIcon.settings,
-      //   ),
-      //   onTap: () {
-      //     injector<NavigationService>()
-      //         .navigateTo(AppRouter.customFeedServersPage);
-      //     isNowDisplayingBarExpanded.value = false;
-      //   },
-      // ),
+
+      // Personal Preferences & Data, Security Management
       OptionItem(
-        title: 'App Settings',
+        title: 'Account',
         icon: const Icon(
           AuIcon.settings,
         ),
@@ -378,19 +317,10 @@ class _CombinedHeaderDelegate extends SliverPersistentHeaderDelegate {
           isNowDisplayingBarExpanded.value = false;
         },
       ),
-      OptionItem(
-        title: 'wallet'.tr(),
-        icon: const Icon(
-          AuIcon.wallet,
-        ),
-        onTap: () {
-          injector<NavigationService>().navigateTo(AppRouter.walletPage);
-        },
-      ),
 
-      // help
+      // Support & Feedback
       OptionItem(
-        title: 'help'.tr(),
+        title: 'Support & Feedback',
         icon: ValueListenableBuilder<List<int>?>(
           valueListenable:
               injector<CustomerSupportService>().numberOfIssuesInfo,
@@ -410,6 +340,21 @@ class _CombinedHeaderDelegate extends SliverPersistentHeaderDelegate {
         onTap: () {
           injector<NavigationService>()
               .navigateTo(AppRouter.supportCustomerPage);
+          isNowDisplayingBarExpanded.value = false;
+        },
+      ),
+
+      // Release Notes
+      OptionItem(
+        title: 'Release Notes',
+        icon: SvgPicture.asset(
+          'assets/images/release_notes.svg',
+          width: 22,
+          height: 22,
+          colorFilter: const ColorFilter.mode(AppColor.white, BlendMode.srcIn),
+        ),
+        onTap: () {
+          injector<NavigationService>().navigateTo(AppRouter.releaseNotesPage);
           isNowDisplayingBarExpanded.value = false;
         },
       ),
