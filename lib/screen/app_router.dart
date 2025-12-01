@@ -27,6 +27,7 @@ import 'package:autonomy_flutter/screen/detail/preview_primer.dart';
 import 'package:autonomy_flutter/screen/detail/royalty/royalty_bloc.dart';
 import 'package:autonomy_flutter/screen/device_setting/bluetooth_connected_device_config.dart';
 import 'package:autonomy_flutter/screen/device_setting/check_bluetooth_state.dart';
+import 'package:autonomy_flutter/screen/device_setting/connect_ff1_page.dart';
 import 'package:autonomy_flutter/screen/device_setting/enter_wifi_password.dart';
 import 'package:autonomy_flutter/screen/device_setting/now_displaying_page.dart';
 import 'package:autonomy_flutter/screen/device_setting/scan_wifi_network_page.dart';
@@ -111,6 +112,7 @@ class AppRouter {
   static const customFeedServersPage = 'custom_feed_servers_page';
   static const allPlaylistsPage = 'all_playlists_page';
   static const allChannelsPage = 'all_channels_page';
+  static const connectFF1 = 'connect_ff1';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     log.info('[onGenerateRoute] Route: ${settings.name}');
@@ -512,6 +514,13 @@ class AppRouter {
             ),
             child: AllChannelsPage(payload: payload),
           ),
+        );
+
+      case connectFF1:
+        final payload = settings.arguments! as ConnectFF1PagePayload;
+        return CupertinoPageRoute(
+          settings: settings,
+          builder: (context) => ConnectFF1Page(payload: payload),
         );
 
       default:

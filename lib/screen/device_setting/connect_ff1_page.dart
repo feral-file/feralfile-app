@@ -1,15 +1,16 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/error/bluetooth_response_error.dart';
 import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/bluetooth_connected_device_config.dart';
-import 'package:autonomy_flutter/screen/device_setting/enter_wifi_password.dart';
-import 'package:autonomy_flutter/screen/device_setting/scan_wifi_network_page.dart';
 import 'package:autonomy_flutter/service/bluetooth_service.dart';
-import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
@@ -20,9 +21,6 @@ import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/loading.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 enum _ConnectFF1Status {
   connecting,
@@ -36,11 +34,15 @@ class ConnectFF1PagePayload {
     required this.device,
     required this.branchName,
     this.canSkipNetworkSetup = true,
+    this.onConnectedSuccess,
+    this.onConnectedFailed,
   });
 
   final BluetoothDevice device;
   final bool canSkipNetworkSetup;
   final String branchName;
+  final FutureOr<void> Function()? onConnectedSuccess;
+  final FutureOr<void> Function()? onConnectedFailed;
 }
 
 class ConnectFF1Page extends StatefulWidget {
@@ -60,6 +62,7 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
   Timer? _stillConnectingTimer;
   DateTime? _startTime;
   bool _isConnecting = false;
+  bool _cancelRequested = false;
 
   @override
   void initState() {
@@ -77,7 +80,7 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
 
   void _setupStillConnectingTimer() {
     _stillConnectingTimer = Timer(
-      const Duration(seconds: 9),
+      const Duration(seconds: 15),
       () {
         if (!mounted) {
           return;
@@ -96,7 +99,16 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
       return;
     }
     _isConnecting = true;
-    _status = _ConnectFF1Status.connecting;
+    _cancelRequested = false;
+    _stillConnectingTimer?.cancel();
+    _setupStillConnectingTimer();
+    if (mounted) {
+      setState(() {
+        _status = _ConnectFF1Status.connecting;
+      });
+    } else {
+      _status = _ConnectFF1Status.connecting;
+    }
     _startTime = DateTime.now();
     log.info('[ConnectFF1Page] Start connecting to FF1');
     try {
@@ -105,19 +117,29 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
         log.info(
           '[ConnectFF1Page] Device ${device.name} has empty remoteID, scan and connect',
         );
-        device = await injector<FFBluetoothService>().scanAndConnect(device);
+        device = await injector<FFBluetoothService>()
+            .scanAndConnect(device, shouldShowError: false);
       } else {
-        await injector<FFBluetoothService>().connectToDevice(device);
+        await injector<FFBluetoothService>().connectToDevice(
+          device,
+          shouldShowError: false,
+          shouldContinue: () => !_cancelRequested,
+        );
       }
 
       await _handlePostConnect(device);
     } catch (e) {
-      log.info('[ConnectFF1Page] Error connecting to device: $e');
-      _recordDuration(success: false);
-      if (mounted) {
-        setState(() {
-          _status = _ConnectFF1Status.error;
-        });
+      if (e is BluetoothConnectCancelledError) {
+        log.info('[ConnectFF1Page] Connection cancelled by user');
+      } else {
+        log.info('[ConnectFF1Page] Error connecting to device: $e');
+        _recordDuration(success: false);
+        if (mounted) {
+          setState(() {
+            _status = _ConnectFF1Status.error;
+          });
+        }
+        await widget.payload.onConnectedFailed?.call();
       }
     } finally {
       _isConnecting = false;
@@ -131,16 +153,10 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
       if (!mounted) {
         return;
       }
-      unawaited(
-        Navigator.of(context).pushNamed(
-          AppRouter.scanWifiNetworkPage,
-          arguments: ScanWifiNetworkPagePayload(
-            device,
-            _onWifiSelected,
-          ),
-        ),
-      );
-      await _showSuccessAndPop();
+      await _showSuccessAndPop(onContinue: () async {
+        injector<NavigationService>().goBack();
+        await widget.payload.onConnectedSuccess?.call();
+      });
       return;
     }
 
@@ -202,7 +218,7 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
     }
   }
 
-  Future<void> _showSuccessAndPop() async {
+  Future<void> _showSuccessAndPop({VoidCallback? onContinue}) async {
     if (!mounted) {
       return;
     }
@@ -213,9 +229,18 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
       context,
       'connected_to_ff1_title'.tr(),
       'connected_to_ff1_body'.tr(),
+      closeButton: 'continue'.tr(),
+      autoDismissAfter: 5,
+      onClose: () {
+        Navigator.pop(context);
+      },
     );
     if (mounted) {
-      Navigator.of(context).pop();
+      if (onContinue != null) {
+        onContinue();
+      } else {
+        Navigator.of(context).pop();
+      }
     }
   }
 
@@ -243,6 +268,7 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
     log.info('[ConnectFF1Page] Cancel pressed, disconnecting and popping');
     _stillConnectingTimer?.cancel();
     try {
+      _cancelRequested = true;
       await widget.payload.device.disconnect();
     } catch (e) {
       log.info('[ConnectFF1Page] Error while cancelling connection: $e');
@@ -266,23 +292,45 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
             children: [
               Expanded(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(
-                      child: LoadingWidget(
-                        backgroundColor: Colors.transparent,
+                    Expanded(
+                      child: SizedBox.shrink(),
+                      flex: 1,
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_status != _ConnectFF1Status.error) ...[
+                            Center(
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                child: LoadingWidget(
+                                  backgroundColor: Colors.transparent,
+                                  width: 108,
+                                  height: 108,
+                                  showText: false,
+                                ),
+                              ),
+                            ),
+                          ],
+                          Text(
+                            _titleText.tr(),
+                            style: theme.textTheme.ppMori700White24,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            _bodyText.tr(),
+                            style: theme.textTheme.ppMori400White14,
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 32),
-                    Text(
-                      _titleText.tr(),
-                      style: theme.textTheme.ppMori700White24,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _bodyText.tr(),
-                      style: theme.textTheme.ppMori400White14,
+                    Expanded(
+                      child: SizedBox.shrink(),
+                      flex: 1,
                     ),
                   ],
                 ),
@@ -295,6 +343,8 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
                       child: PrimaryButton(
                         text: 'try_again'.tr(),
                         onTap: _startConnectFlow,
+                        color: AppColor.white,
+                        textColor: AppColor.primaryBlack,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -302,8 +352,8 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
                       child: PrimaryButton(
                         text: 'cancel'.tr(),
                         onTap: _onCancel,
-                        color: AppColor.white.withOpacity(0.1),
-                        textColor: AppColor.white,
+                        color: AppColor.white,
+                        textColor: AppColor.primaryBlack,
                       ),
                     ),
                   ],
@@ -312,8 +362,8 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
                 PrimaryButton(
                   text: 'cancel'.tr(),
                   onTap: _onCancel,
-                  color: Colors.transparent,
-                  textColor: AppColor.white,
+                  color: AppColor.white,
+                  textColor: AppColor.primaryBlack,
                 ),
               ],
             ],
@@ -347,42 +397,5 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
       case _ConnectFF1Status.success:
         return 'connected_to_ff1_body';
     }
-  }
-
-  FutureOr<void> _onWifiSelected(WifiPoint accessPoint) async {
-    log.info('[ConnectFF1Page] onWifiSelected: $accessPoint');
-    final device = widget.payload.device;
-    final branchName = widget.payload.branchName;
-    final payload = SendWifiCredentialsPagePayload(
-      wifiAccessPoint: accessPoint,
-      device: device,
-      onSubmitted: (String? topicId, Object? error) async {
-        final res = topicId != null ? Pair(topicId, true) : null;
-        if (res != null) {
-          final ffDevice = device.toFFBluetoothDevice(
-            topicId: res.first,
-            deviceId: device.advName,
-            branchName: branchName,
-          );
-          await BluetoothDeviceManager().addDevice(ffDevice);
-          await injector<CanvasClientServiceV2>()
-              .showPairingQRCode(ffDevice, false);
-
-          injector<NavigationService>()
-              .popUntil(AppRouter.bluetoothDevicePortalPage);
-          unawaited(injector<NavigationService>().popAndPushNamed(
-            AppRouter.bluetoothConnectedDeviceConfig,
-            arguments: BluetoothConnectedDeviceConfigPayload(
-              isFromOnboarding: true,
-            ),
-          ));
-        } else if (error != null) {
-          injector<NavigationService>()
-            ..popUntil(AppRouter.bluetoothDevicePortalPage);
-        }
-      },
-    );
-    injector<NavigationService>()
-        .navigateTo(AppRouter.sendWifiCredentialPage, arguments: payload);
   }
 }
