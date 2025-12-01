@@ -30,6 +30,7 @@ final listRouteShouldNotShowNowDisplaying = [
   AppRouter.voiceCommandPage,
   AppRouter.releaseNotesPage,
   AppRouter.releaseNoteDetailPage,
+  AppRouter.connectFF1,
 ];
 
 class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {

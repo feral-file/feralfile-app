@@ -190,6 +190,13 @@ enum BluetoothCommand {
   }
 }
 
+class BluetoothConnectCancelledError implements Exception {
+  const BluetoothConnectCancelledError();
+
+  @override
+  String toString() => 'Bluetooth connection cancelled';
+}
+
 class FFBluetoothService {
   FFBluetoothService();
 
@@ -552,6 +559,7 @@ class FFBluetoothService {
     bool shouldShowError = true,
     Duration timeout = const Duration(seconds: 10),
     int maxRetries = 3,
+    bool Function()? shouldContinue,
   }) async {
     if (_multiConnectCompleter?.isCompleted == false) {
       log.info(
@@ -568,6 +576,7 @@ class FFBluetoothService {
       shouldShowError: shouldShowError,
       timeout: timeout,
       maxRetries: maxRetries,
+      shouldContinue: shouldContinue,
     ).then((_) {
       log.info('Connected to device: ${device.remoteId.str}');
 
@@ -594,6 +603,7 @@ class FFBluetoothService {
     bool shouldShowError = true,
     Duration timeout = const Duration(seconds: 30),
     int maxRetries = 1,
+    bool Function()? shouldContinue,
   }) async {
     log.info(
       '_connectDevice: maxRetries=$maxRetries, timeout=${timeout.inSeconds}s',
@@ -602,8 +612,14 @@ class FFBluetoothService {
     var attempt = 0;
 
     while (true) {
+      if (shouldContinue != null && !shouldContinue()) {
+        log.info('[connectDevice] Cancelled by caller, stopping retries');
+        throw const BluetoothConnectCancelledError();
+      }
       try {
         final isLastAttempt = attempt >= maxRetries;
+        log.info(
+            '[connectDevice] Connecting to device: ${device.remoteId.str} attempt $attempt/$maxRetries');
 
         await _connect(
           device,
@@ -616,6 +632,9 @@ class FFBluetoothService {
             '[connectDevice] Connected to device after $attempt attempts: ${device.remoteId.str}');
         return;
       } catch (e) {
+        if (e is BluetoothConnectCancelledError) {
+          rethrow;
+        }
         await device.disconnect();
         log.info(
             '[connectDevice] Disconnected from device and retrying... attempt $attempt/$maxRetries');
@@ -738,16 +757,22 @@ class FFBluetoothService {
           timeout,
           onTimeout: () {
             log.warning('Timeout waiting for connection to complete');
-            if (shouldShowError?.call(e) ?? true) {
+            final timeoutException = TimeoutException(
+                'Taking too long to connect to ${device.advName}');
+            if (_connectCompleter?.isCompleted == false) {
+              _connectCompleter?.completeError(timeoutException);
+            }
+            _connectCompleter = null;
+            if (shouldShowError?.call(timeoutException) ?? true) {
               unawaited(
                 injector<NavigationService>()
                     .showCannotConnectToBluetoothDevice(
                   device,
-                  TimeoutException('Taking too long to connect to device'),
+                  timeoutException,
                 ),
               );
             }
-            throw TimeoutException('Taking too long to connect to device');
+            throw timeoutException;
           },
         ).catchError((Object e) {
           log.warning('Error waiting for connection to complete: $e');
@@ -768,6 +793,10 @@ class FFBluetoothService {
               ),
             );
           }
+          if (_connectCompleter?.isCompleted == false) {
+            _connectCompleter?.completeError(e);
+          }
+          _connectCompleter = null;
           throw e;
         });
         log.info('Connected to device: ${device.remoteId.str}');
