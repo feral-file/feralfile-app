@@ -131,7 +131,7 @@ android {
         development {
             dimension "env"
             applicationIdSuffix ".inhouse"
-            resValue "string", "app_name", "Feral File (Dev)"
+            resValue "string", "app_name", "Feral File (Dev) (Legacy)"
             manifestPlaceholders = [
                     appIcon     : "@mipmap/ic_launcher_dev",
                     appIconRound: "@mipmap/ic_launcher_dev_round"
@@ -142,7 +142,7 @@ android {
 
         production {
             dimension "env"
-            resValue "string", "app_name", "Feral File"
+            resValue "string", "app_name", "Feral File (Legacy)"
             manifestPlaceholders = [
                     appIcon     : "@mipmap/ic_launcher",
                     appIconRound: "@mipmap/ic_launcher_round"

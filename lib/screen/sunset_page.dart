@@ -10,7 +10,6 @@ import 'dart:io';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/view/loading.dart';
-import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -82,11 +81,16 @@ class _SunsetPageState extends State<SunsetPage> {
     } catch (e) {
       // If loading fails, use defaults
       setState(() {
-        _title = 'Feral File Legacy App: End of Support';
+        _title = '';
+        // ignore: lines_longer_than_80_chars
         _description =
-            // ignore: lines_longer_than_80_chars
             'This version of the Feral File app is being retired in December 2025.\n\nWe\'ve rebuilt the app under our new company to focus on FF1 and daily digital art, so some settings (like saved addresses) need to be set up again. Your artworks and NFTs remain in your own wallets.\n\nTo use Feral File with FF1 and future exhibitions, please install our new app, Feral File, from this app store (subtitle: "Digital art & FF1 controller"). After you sign in there, you can re-add any wallet or account addresses you\'d like us to index.\n\nIf you need help, email support@feralfile.com.';
+        _downloadButtonText = 'Get Feral File in the App Store';
         _supportEmail = 'support@feralfile.com';
+        _iosAppStoreUrl =
+            'https://apps.apple.com/us/app/feral-file/id1544022728';
+        _androidAppStoreUrl =
+            'https://play.google.com/store/apps/details?id=com.bitmark.autonomy_client&pli=';
         _isLoading = false;
       });
     }
@@ -122,45 +126,92 @@ class _SunsetPageState extends State<SunsetPage> {
 
   TextSpan _buildDescriptionTextSpan(String text, TextStyle baseStyle) {
     final emailPattern = _supportEmail ?? 'support@feralfile.com';
+    final downloadButtonText =
+        _downloadButtonText ?? 'Get Feral File in the App Store';
 
-    // Build list of text spans handling all occurrences of the email
-    final spans = <TextSpan>[];
-    var lastIndex = 0;
-    var emailIndex = text.indexOf(emailPattern, lastIndex);
+    // Create a list of matches with their positions and handlers
+    final matches = <_TextMatch>[];
 
-    if (emailIndex == -1) {
-      // No email found, return simple text span
+    // Find all email occurrences (only if pattern is not empty)
+    if (emailPattern.isNotEmpty) {
+      var emailIndex = text.indexOf(emailPattern);
+      while (emailIndex != -1) {
+        matches.add(
+          _TextMatch(
+            start: emailIndex,
+            end: emailIndex + emailPattern.length,
+            text: emailPattern,
+            onTap: _openEmail,
+          ),
+        );
+        emailIndex = text.indexOf(emailPattern, emailIndex + 1);
+      }
+    }
+
+    // Find all download button text occurrences (only if pattern is not empty)
+    if (downloadButtonText.isNotEmpty) {
+      var buttonIndex = text.indexOf(downloadButtonText);
+      while (buttonIndex != -1) {
+        matches.add(
+          _TextMatch(
+            start: buttonIndex,
+            end: buttonIndex + downloadButtonText.length,
+            text: downloadButtonText,
+            onTap: _openAppStore,
+          ),
+        );
+        buttonIndex = text.indexOf(downloadButtonText, buttonIndex + 1);
+      }
+    }
+
+    // If no matches found, return simple text span
+    if (matches.isEmpty) {
       return TextSpan(text: text, style: baseStyle);
     }
 
-    while (emailIndex != -1 && lastIndex < text.length) {
-      // Add text before email
-      if (emailIndex > lastIndex) {
+    // Sort matches by start position
+    matches.sort((a, b) => a.start.compareTo(b.start));
+
+    // Remove overlapping matches (keep the first one)
+    final nonOverlappingMatches = <_TextMatch>[];
+    for (final match in matches) {
+      if (nonOverlappingMatches.isEmpty ||
+          nonOverlappingMatches.last.end <= match.start) {
+        nonOverlappingMatches.add(match);
+      }
+    }
+
+    // Build text spans
+    final spans = <TextSpan>[];
+    var lastIndex = 0;
+
+    for (final match in nonOverlappingMatches) {
+      // Add text before match
+      if (match.start > lastIndex) {
         spans.add(
           TextSpan(
-            text: text.substring(lastIndex, emailIndex),
+            text: text.substring(lastIndex, match.start),
             style: baseStyle,
           ),
         );
       }
 
-      // Add clickable email
+      // Add clickable match
       spans.add(
         TextSpan(
-          text: emailPattern,
+          text: match.text,
           style: baseStyle.copyWith(
             decoration: TextDecoration.underline,
             color: AppColor.white,
           ),
-          recognizer: TapGestureRecognizer()..onTap = _openEmail,
+          recognizer: TapGestureRecognizer()..onTap = match.onTap,
         ),
       );
 
-      lastIndex = emailIndex + emailPattern.length;
-      emailIndex = text.indexOf(emailPattern, lastIndex);
+      lastIndex = match.end;
     }
 
-    // Add remaining text after last email
+    // Add remaining text after last match
     if (lastIndex < text.length) {
       spans.add(
         TextSpan(
@@ -199,7 +250,7 @@ class _SunsetPageState extends State<SunsetPage> {
                     )
                   : Padding(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
+                        horizontal: 30,
                         vertical: 40,
                       ),
                       child: Column(
@@ -227,15 +278,6 @@ class _SunsetPageState extends State<SunsetPage> {
                               textAlign: TextAlign.left,
                             ),
                           ],
-                          if (_downloadButtonText != null &&
-                              _downloadButtonText!.isNotEmpty) ...[
-                            const SizedBox(height: 48),
-                            PrimaryButton(
-                              text: _downloadButtonText,
-                              onTap: _openAppStore,
-                              width: double.infinity,
-                            ),
-                          ],
                           const Spacer(),
                         ],
                       ),
@@ -246,4 +288,18 @@ class _SunsetPageState extends State<SunsetPage> {
       ),
     );
   }
+}
+
+// Helper class to represent a text match with its tap handler
+class _TextMatch {
+  _TextMatch({
+    required this.start,
+    required this.end,
+    required this.text,
+    required this.onTap,
+  });
+  final int start;
+  final int end;
+  final String text;
+  final VoidCallback onTap;
 }
