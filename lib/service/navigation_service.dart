@@ -63,15 +63,16 @@ class NavigationService {
   // current route
   Route<dynamic>? get currentRoute => CustomRouteObserver.currentRoute.value;
 
-  Future<dynamic>? navigateTo(String routeName, {Object? arguments}) {
+  Future<dynamic> navigateTo(String routeName, {Object? arguments}) {
     log.info('NavigationService.navigateTo: $routeName');
-    if (navigatorKey.currentState?.mounted != true ||
+    final navigatorState = navigatorKey.currentState;
+    if (navigatorState == null ||
+        !navigatorState.mounted ||
         navigatorKey.currentContext == null) {
-      return null;
+      return Future.value(null);
     }
 
-    return navigatorKey.currentState
-        ?.pushNamed(routeName, arguments: arguments);
+    return navigatorState.pushNamed(routeName, arguments: arguments);
   }
 
   Future<dynamic>? popAndPushNamed(String routeName, {Object? arguments}) {

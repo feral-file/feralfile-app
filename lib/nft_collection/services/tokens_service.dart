@@ -896,6 +896,7 @@ class NftTokensServiceImpl extends NftTokensService {
       NftCollection.logger.info(
         '[reindexAddresses][end] workflowId: ${result.result.workflowId}, runId: ${result.result.runId}',
       );
+      return;
     }
 
     if (result is ReindexAddressesFailure) {
@@ -904,6 +905,7 @@ class NftTokensServiceImpl extends NftTokensService {
       NftCollection.logger.info(
         '[reindexAddresses][error] ${result.uuid}: ${result.exception}',
       );
+      return;
     }
 
     if (result is ReindexTokensDone) {
@@ -912,6 +914,7 @@ class NftTokensServiceImpl extends NftTokensService {
       NftCollection.logger.info(
         '[reindexTokensByCids][end] workflowId: ${result.result.workflowId}, runId: ${result.result.runId}',
       );
+      return;
     }
 
     if (result is ReindexTokensFailure) {
@@ -920,6 +923,7 @@ class NftTokensServiceImpl extends NftTokensService {
       NftCollection.logger.info(
         '[reindexTokensByCids][error] ${result.uuid}: ${result.exception}',
       );
+      return;
     }
 
     if (result is UpdateTokensData) {

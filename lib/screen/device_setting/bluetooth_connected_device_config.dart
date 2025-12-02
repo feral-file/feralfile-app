@@ -285,8 +285,8 @@ class BluetoothConnectedDeviceConfigState
         if (widget.payload.isFromOnboarding)
           Positioned(
             bottom: 15,
-            left: 0,
-            right: 0,
+            left: 12,
+            right: 12,
             child: PrimaryAsyncButton(
               onTap: () async {
                 injector<NavigationService>().popUntilHome();

@@ -684,6 +684,10 @@ class FFBluetoothService {
         );
 
         attempt = nextAttempt;
+        log.info('[connectDevice] Delaying for 2 seconds');
+        await Future.delayed(const Duration(seconds: 2));
+        log.info(
+            '[connectDevice] Delaying for 2 seconds completed, retrying...');
       }
     }
   }

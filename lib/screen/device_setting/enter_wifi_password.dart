@@ -236,6 +236,22 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                           e.message,
                         ));
                       }
+                    } on TimeoutException catch (e) {
+                      log.info('Failed to send wifi credentials: $e');
+                      unawaited(
+                        Sentry.captureException(
+                          'Failed to send wifi credentials: $e',
+                        ),
+                      );
+                      unawaited(
+                        UIHelper.showInfoDialog(
+                          context,
+                          'Wi-Fi setup failed',
+                          'Wi-Fi setup couldn\'t be completed. Check your connection and attempt the setup again',
+                        ).then((_) {
+                          widget.payload.onSubmitted?.call(null, e);
+                        }),
+                      );
                     } catch (e) {
                       log.info('Failed to send wifi credentials: $e');
                       unawaited(
@@ -246,8 +262,8 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                       unawaited(
                         UIHelper.showInfoDialog(
                           context,
-                          'Send wifi credentials failed',
-                          '${e.toString()}',
+                          'Wi-Fi setup failed',
+                          'Wi-Fi setup couldn\'t be completed. Check your connection and attempt the setup again',
                         ).then((_) {
                           widget.payload.onSubmitted?.call(null, e);
                         }),

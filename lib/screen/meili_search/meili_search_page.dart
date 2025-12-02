@@ -162,22 +162,11 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Search Error',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            state.errorMessage ?? 'Unknown error occurred',
-            style: Theme.of(context).textTheme.bodyMedium,
+            'We couldn\'t complete your search',
+            style: Theme.of(context).textTheme.ppMori400White14,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {
-              _bloc.add(MeiliSearchQueryChanged([state.query]));
-            },
-            child: const Text('Retry'),
-          ),
+          const SizedBox(height: 32),
         ],
       ),
     );
