@@ -127,8 +127,7 @@ class BluetoothDevicePortalPageState extends State<BluetoothDevicePortalPage>
                 child: PrimaryAsyncButton(
                   onTap: () async {
                     unawaited(
-                      injector<NavigationService>()
-                          .navigateTo(
+                      injector<NavigationService>().navigateTo(
                         AppRouter.connectFF1,
                         arguments: ConnectFF1PagePayload(
                           device: widget.payload.device,
@@ -143,12 +142,10 @@ class BluetoothDevicePortalPageState extends State<BluetoothDevicePortalPage>
                                 _onWifiSelected,
                               ),
                             );
+                            await widget.payload.device.disconnect();
                           },
                         ),
-                      )
-                          .then((_) {
-                        widget.payload.device.disconnect();
-                      }),
+                      ),
                     );
                   },
                   color: AppColor.white,
@@ -298,6 +295,7 @@ class BluetoothDevicePortalPageState extends State<BluetoothDevicePortalPage>
         } else if (error != null) {
           injector<NavigationService>()
             ..popUntil(AppRouter.bluetoothDevicePortalPage);
+          injector<NavigationService>().goBack();
         }
       },
     );
