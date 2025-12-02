@@ -331,6 +331,7 @@ class FFBluetoothService {
     Duration timeout = const Duration(seconds: 10),
     bool shouldShowError = true,
     bool shouldWaitForReply = true,
+    FutureOr<void> Function(Object e)? onError,
   }) async {
     log.info(
       '[sendCommand] Sending command: $command to device: ${device.remoteId.str}',

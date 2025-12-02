@@ -4,17 +4,24 @@ import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/view/record_controller.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_title.dart';
+import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
+import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/notice-banner/notice_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/svg.dart';
 
 class PlaylistsPage extends StatefulWidget {
@@ -29,6 +36,7 @@ class PlaylistsPageState extends State<PlaylistsPage>
   final ScrollController _scrollController = ScrollController();
   late final PlaylistsBloc _curatedPlaylistsBloc;
   late final PlaylistsBloc _myPlaylistsBloc;
+  late final UserAllOwnCollectionBloc _userAllOwnCollectionBloc;
 
   @override
   bool get wantKeepAlive => true;
@@ -43,6 +51,7 @@ class PlaylistsPageState extends State<PlaylistsPage>
     _myPlaylistsBloc = injector<PlaylistsBloc>(
       instanceName: PlaylistsBlocInstance.my.instanceName,
     );
+    _userAllOwnCollectionBloc = injector<UserAllOwnCollectionBloc>();
   }
 
   @override
@@ -117,6 +126,7 @@ class PlaylistsPageState extends State<PlaylistsPage>
     final hasMore = state.hasMore;
 
     Widget? emptyView;
+    Widget? Function(PlaylistData playlistData)? playlistHeaderBuilder;
     if (playlistType == PlaylistType.me) {
       emptyView = Column(
         children: [
@@ -138,6 +148,8 @@ class PlaylistsPageState extends State<PlaylistsPage>
           ),
         ],
       );
+
+      playlistHeaderBuilder = _mePlaylistHeaderBuilder;
     }
 
     return PlaylistSection(
@@ -170,6 +182,95 @@ class PlaylistsPageState extends State<PlaylistsPage>
           );
         }
       },
+      playlistHeaderBuilder: playlistHeaderBuilder,
     );
+  }
+
+  Widget _mePlaylistHeaderBuilder(PlaylistData playlistData) {
+    final playlistReference = playlistData.playlistReference;
+    final playlist = playlistReference.playlist;
+    final owners = playlist.firstDynamicQuery?.params.owners ?? <String>[];
+
+    return BlocBuilder<UserAllOwnCollectionBloc, UserAllOwnCollectionState>(
+      bloc: _userAllOwnCollectionBloc,
+      builder: (context, collectionState) {
+        final theme = Theme.of(context);
+        String stateSuffix = '';
+
+        if (owners.isNotEmpty) {
+          final targetAddress = owners.first;
+          AddressState? targetState;
+
+          for (final addressState in collectionState.addressStates) {
+            if (addressState.address.address == targetAddress) {
+              targetState = addressState;
+              break;
+            }
+          }
+
+          stateSuffix = targetState?.state.description ?? '';
+        }
+
+        final child = PlaylistTitle(
+          primaryText: '${playlist.title}' +
+              (stateSuffix.isNotEmpty ? ' ($stateSuffix)' : ''),
+          secondaryText: playlistData.creator,
+        );
+
+        final slidableActions = [
+          if (playlistData is AddressPlaylistData)
+            ..._getAddressSlidableActions(playlistData),
+        ];
+
+        if (slidableActions.isEmpty) {
+          return child;
+        }
+
+        return Slidable(
+          groupTag: playlistData.playlistReference.playlist.id.toString(),
+          endActionPane: ActionPane(
+            extentRatio: 88 / 392,
+            motion: const DrawerMotion(),
+            children: slidableActions,
+          ),
+          child: child,
+        );
+      },
+    );
+  }
+
+  List<CustomSlidableAction> _getAddressSlidableActions(
+      AddressPlaylistData playlistData) {
+    return [
+      CustomSlidableAction(
+        backgroundColor: AppColor.primaryBlack,
+        padding: EdgeInsets.zero,
+        onPressed: (BuildContext context) async {
+          final address = playlistData.address;
+          UIHelper.showDeleteAccountConfirmation(address, (address) async {
+            await injector<AddressService>().deleteAddress(address);
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            vertical: 4,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SvgPicture.asset(
+                'assets/images/trash.svg',
+                height: 15,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Delete',
+                style: Theme.of(context).textTheme.ppMori400White12,
+              ),
+            ],
+          ),
+        ),
+      ),
+    ];
   }
 }

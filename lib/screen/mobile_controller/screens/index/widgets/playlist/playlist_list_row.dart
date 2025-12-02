@@ -19,6 +19,7 @@ class PlaylistRowItem extends StatefulWidget {
     this.playlistCreator,
     this.onItemTap,
     this.scrollController,
+    this.headerBuilder,
     super.key,
   });
 
@@ -26,6 +27,7 @@ class PlaylistRowItem extends StatefulWidget {
   final String? playlistCreator;
   final void Function(DP1NowDisplayingItem)? onItemTap;
   final ScrollController? scrollController;
+  final Widget? Function(PlaylistReference playlistReference)? headerBuilder;
 
   @override
   State<PlaylistRowItem> createState() => _PlaylistRowItemState();
@@ -123,10 +125,11 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            PlaylistTitle(
-              primaryText: playlistTitle,
-              secondaryText: creator,
-            ),
+            widget.headerBuilder?.call(widget.playlistReference) ??
+                PlaylistTitle(
+                  primaryText: playlistTitle,
+                  secondaryText: creator,
+                ),
             BlocBuilder<PlaylistDetailsBloc, PlaylistDetailsState>(
               bloc: _playlistDetailsBloc,
               builder: (context, state) {

@@ -328,15 +328,15 @@ class NavigationService {
 
   Future<void> showCannotConnectToBluetoothDevice(
     BluetoothDevice device,
-    Object? error,
+    Object? _error,
   ) async {
     hideInfoDialog();
     if (navigatorKey.currentContext != null &&
         navigatorKey.currentState?.mounted == true) {
       await UIHelper.showInfoDialog(
         context,
-        'Can not connect to ${device.getName}',
-        'Error: ${error}',
+        'Unable to connect to ${device.getName}.',
+        'Check the Bluetooth connection and try again.',
         onClose: () => UIHelper.hideInfoDialog(context),
       );
     }

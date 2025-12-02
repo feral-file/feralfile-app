@@ -2,6 +2,7 @@ import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/model/pair.dart';
+import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
@@ -401,29 +402,52 @@ class FeralFileFeedManager extends FeedManager {
   }
 }
 
-class PlaylistReference {
-  factory PlaylistReference.fromJson(Map<String, dynamic> json) =>
-      PlaylistReference(
-        playlist: DP1Call.fromJson(json['playlist'] as Map<String, dynamic>),
-        url: json['url'] as String,
-      );
+enum PlaylistReferenceType {
+  channel,
+  address,
+}
 
+class PlaylistReference {
   factory PlaylistReference.fromFeralFileDP1Call(DP1Call dp1Call) =>
-      PlaylistReference(playlist: dp1Call, url: Environment.dp1FeedUrl);
-  PlaylistReference({required this.playlist, required this.url});
+      PlaylistReference(
+          playlist: dp1Call,
+          url: Environment.dp1FeedUrl,
+          type: PlaylistReferenceType.channel);
+
+  PlaylistReference(
+      {required this.playlist,
+      required this.url,
+      this.type = PlaylistReferenceType.channel});
+
   final DP1Call playlist;
   final String url;
-
-  Map<String, dynamic> toJson() => {
-        'playlist': playlist.toJson(),
-        'url': url,
-      };
+  final PlaylistReferenceType type;
 
   bool get isExternalFeedService =>
       injector<FeralFileFeedManager>()
           .getFeedServiceByUrl(url)
           ?.isExternalFeedService ??
       false;
+}
+
+class AddressPlaylistReference extends PlaylistReference {
+  AddressPlaylistReference(
+      {required super.playlist,
+      required super.url,
+      required super.type,
+      required this.address});
+
+  final WalletAddress address;
+}
+
+extension PlaylistReferenceExtension on PlaylistReference {
+  /// Get creator title of the playlist from cached channel reference.
+  String get creator {
+    final channelReference = injector<FeralFileFeedManager>()
+        .getCachedChannelReferenceByPlaylist(playlist);
+
+    return channelReference != null ? channelReference.channel.title : '';
+  }
 }
 
 class ChannelReference {
@@ -447,16 +471,6 @@ class ChannelReference {
 
 class DP1PlaylistPlaylistReferenceResponse {
   DP1PlaylistPlaylistReferenceResponse(this.items, this.hasMore, this.cursor);
-
-  factory DP1PlaylistPlaylistReferenceResponse.fromJson(
-          Map<String, dynamic> json) =>
-      DP1PlaylistPlaylistReferenceResponse(
-        (json['items'] as List<dynamic>)
-            .map((e) => PlaylistReference.fromJson(e as Map<String, dynamic>))
-            .toList(),
-        json['hasMore'] as bool,
-        json['cursor'] as String?,
-      );
 
   final List<PlaylistReference> items;
   final bool hasMore;

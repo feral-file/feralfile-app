@@ -1,8 +1,8 @@
 import 'package:autonomy_flutter/design/build/components/PlaylistSection.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
+import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_list_row.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section_header.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:flutter/material.dart';
 
@@ -17,6 +17,7 @@ class PlaylistSection extends StatelessWidget {
     this.scrollController,
     this.hasMore = true,
     this.emptyView,
+    this.playlistHeaderBuilder,
     super.key,
   });
 
@@ -28,11 +29,10 @@ class PlaylistSection extends StatelessWidget {
   final ScrollController? scrollController;
   final Widget? emptyView;
   final bool hasMore;
+  final Widget? Function(PlaylistData playlistData)? playlistHeaderBuilder;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return ListView.builder(
       shrinkWrap: true,
       padding: EdgeInsets.zero,
@@ -68,6 +68,9 @@ class PlaylistSection extends StatelessWidget {
           playlistCreator: playlist.creator,
           onItemTap: onPlaylistItemTap,
           scrollController: scrollController,
+          headerBuilder: playlistHeaderBuilder == null
+              ? null
+              : (_) => playlistHeaderBuilder?.call(playlist),
         );
       },
     );
@@ -75,6 +78,7 @@ class PlaylistSection extends StatelessWidget {
 }
 
 /// Data model for playlist information
+///
 class PlaylistData {
   PlaylistData({
     required this.playlistReference,
@@ -93,4 +97,14 @@ class PlaylistData {
       creator: creator ?? this.creator,
     );
   }
+}
+
+class AddressPlaylistData extends PlaylistData {
+  AddressPlaylistData({
+    required super.playlistReference,
+    required super.creator,
+    required this.address,
+  });
+
+  final WalletAddress address;
 }

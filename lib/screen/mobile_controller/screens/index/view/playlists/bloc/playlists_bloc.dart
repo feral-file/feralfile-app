@@ -2,7 +2,6 @@ import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
@@ -88,8 +87,17 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     final nextCursor = end < allPlaylists.length ? end.toString() : null;
     final hasMore = nextCursor != null;
 
+    final playlistDataList = topPlaylists
+        .map(
+          (playlistRef) => PlaylistData(
+            playlistReference: playlistRef,
+            creator: playlistRef.creator,
+          ),
+        )
+        .toList();
+
     return LoadPlaylistPaginationResponse(
-      playlists: topPlaylists,
+      playlistData: playlistDataList,
       hasMore: hasMore,
       cursor: nextCursor,
     );
@@ -104,7 +112,7 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
         .firstDynamicQuery;
     if (dynamicQuery == null) {
       return LoadPlaylistPaginationResponse(
-        playlists: [],
+        playlistData: [],
         hasMore: false,
         cursor: null,
       );
@@ -115,24 +123,38 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     final addresses =
         allAddresses.where((e) => owners.contains(e.address)).toList();
 
-    final playlists = <PlaylistReference>[];
-    for (final address in addresses) {
-      final playlist = DP1CallExtension.fromOwner(
-          owners: [address.address], title: '${address.name}');
-      playlists.add(PlaylistReference.fromFeralFileDP1Call(playlist));
-    }
-
     final start = int.tryParse(cursor ?? '0') ?? 0;
     final end = start + pageSize;
 
-    final topPlaylists = playlists.safeSublist(start, end).toList();
-    final nextCursor =
-        end < playlists.length ? topPlaylists.length.toString() : null;
+    final topAddresses = addresses.safeSublist(start, end).toList();
+
+    final playlistDataList = <AddressPlaylistData>[];
+    for (final address in topAddresses) {
+      final playlist = DP1CallExtension.fromOwner(
+          owners: [address.address], title: '${address.name}');
+      final playlistRef = AddressPlaylistReference(
+          playlist: playlist,
+          url: '',
+          type: PlaylistReferenceType.address,
+          address: address);
+      final addressPlaylistData = AddressPlaylistData(
+          playlistReference: playlistRef,
+          creator: playlistRef.creator,
+          address: address);
+      playlistDataList.add(addressPlaylistData);
+    }
+
+    final nextCursor = end < addresses.length
+        ? (topAddresses.length + start).toString()
+        : null;
 
     final hasMore = nextCursor != null;
 
     return LoadPlaylistPaginationResponse(
-        playlists: topPlaylists, hasMore: hasMore, cursor: nextCursor);
+      playlistData: playlistDataList,
+      hasMore: hasMore,
+      cursor: nextCursor,
+    );
   }
 
   Future<LoadPlaylistPaginationResponse> _loadGlobalPlaylists({
@@ -140,7 +162,7 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     required String? cursor,
   }) async {
     return LoadPlaylistPaginationResponse(
-      playlists: [],
+      playlistData: [],
       hasMore: false,
       cursor: null,
     );
@@ -173,34 +195,9 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
               await _loadGlobalPlaylists(emit: emit, cursor: cursor);
       }
 
-      final playlists = paginationResponse.playlists;
-
-      // Collect all unique CIDs from top 5 playlists
-      final cids = <String>[];
-      for (final playlistRef in playlists) {
-        for (final item in playlistRef.playlist.items) {
-          if (item.cid != null) {
-            cids.add(item.cid!);
-          }
-        }
-      }
-      // Create PlaylistData list for playlists
-      final playlistDataList = <PlaylistData>[];
-      for (final playlistRef in playlists) {
-        final playlist = playlistRef.playlist;
-
-        final channelReference = injector<FeralFileFeedManager>()
-            .getCachedChannelReferenceByPlaylist(playlist);
-        final creator =
-            channelReference != null ? channelReference.channel.title : '';
-
-        playlistDataList.add(
-          PlaylistData(
-            playlistReference: playlistRef,
-            creator: creator,
-          ),
-        );
-      }
+      final playlistDataList = paginationResponse.playlistData;
+      final playlists =
+          playlistDataList.map((data) => data.playlistReference).toList();
 
       final newPlaylists =
           isLoadMore ? [...state.playlists, ...playlists] : playlists;
@@ -230,12 +227,12 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
 }
 
 class LoadPlaylistPaginationResponse {
-  final List<PlaylistReference> playlists;
+  final List<PlaylistData> playlistData;
   final bool hasMore;
   final String? cursor;
 
   LoadPlaylistPaginationResponse({
-    required this.playlists,
+    required this.playlistData,
     required this.hasMore,
     required this.cursor,
   });
