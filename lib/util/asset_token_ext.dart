@@ -151,19 +151,7 @@ extension AssetTokenExtension on AssetToken {
 
     if (mediaThumbnailUrl != null && mediaThumbnailUrl.isNotEmpty) {
       return mediaThumbnailUrl;
-    } else {
-      Sentry.captureEvent(SentryEvent(
-        message: SentryMessage('No media thumbnail url found for $cid'),
-        level: SentryLevel.warning,
-        extra: {
-          'cid': cid,
-          'thumbnailUrl': thumbnailUrl,
-          'enrichmentSourceVariantUrls': enrichmentSourceVariantUrls,
-          'metadataVariantUrls': metadataVariantUrls,
-          'mediaThumbnailUrl': mediaThumbnailUrl,
-        },
-      ));
-    }
+    } else {}
 
     if (thumbnailUrl?.isNotEmpty ?? false) {
       return thumbnailUrl;
