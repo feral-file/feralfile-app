@@ -9,8 +9,10 @@ import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
+import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
+import 'package:autonomy_flutter/view/no_pairing_device_dialog.dart';
 import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:flutter/material.dart';
@@ -61,6 +63,25 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
     }
   }
 
+  Future<void> showNoParingDialog() async {
+    const screenKey = 'No pairing';
+    if (UIHelper.currentDialogTitle == screenKey) {
+      return;
+    }
+
+    UIHelper.currentDialogTitle = screenKey;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      isScrollControlled: true,
+      builder: (context) => NoPairingDeviceDialog(),
+    );
+
+    UIHelper.currentDialogTitle = '';
+  }
+
   List<OptionItem> get _defaultOptions {
     return [
       // FF1 Setting
@@ -71,6 +92,11 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
           colorFilter: const ColorFilter.mode(AppColor.white, BlendMode.srcIn),
         ),
         onTap: () {
+          if (BluetoothDeviceManager().castingBluetoothDevice == null) {
+            showNoParingDialog();
+            return;
+          }
+
           injector<NavigationService>().navigateTo(
             AppRouter.bluetoothConnectedDeviceConfig,
             arguments: BluetoothConnectedDeviceConfigPayload(),
@@ -298,6 +324,10 @@ class _CombinedHeaderDelegate extends SliverPersistentHeaderDelegate {
           colorFilter: const ColorFilter.mode(AppColor.white, BlendMode.srcIn),
         ),
         onTap: () {
+          if (BluetoothDeviceManager().castingBluetoothDevice != null) {
+            return;
+          }
+
           injector<NavigationService>().navigateTo(
             AppRouter.bluetoothConnectedDeviceConfig,
             arguments: BluetoothConnectedDeviceConfigPayload(),
