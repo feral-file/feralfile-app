@@ -38,7 +38,6 @@ const DEEP_LINKS = [
   'https://autonomy.io',
   'https://au.bitmark.com',
   ...Constants.bluetoothConnectDeepLinks,
-  ...Constants.linkArtistDeepLinks,
 ];
 const WEB3_PRIMER_URL = 'https://autonomy.io/catalog/primer/';
 const COLLECTOR_RIGHTS_DEFAULT_DOCS =
@@ -385,10 +384,6 @@ class Constants {
   static const bluetoothConnectDeepLinks = [
     'feralfile://device_connect',
     'https://link.feralfile.com/device_connect',
-  ];
-
-  static const linkArtistDeepLinks = [
-    'https://link.feralfile.com/linkage_token',
   ];
 
   static const navigationPrefixes = [

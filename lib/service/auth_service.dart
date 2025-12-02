@@ -7,35 +7,23 @@
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/gateway/iap_api.dart';
-import 'package:autonomy_flutter/gateway/user_api.dart';
 import 'package:autonomy_flutter/model/jwt.dart';
 import 'package:autonomy_flutter/screen/bloc/subscription/subscription_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/subscription/subscription_state.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/hive_store_service.dart';
-import 'package:autonomy_flutter/service/navigation_service.dart';
-import 'package:autonomy_flutter/service/passkey_service.dart';
-import 'package:autonomy_flutter/service/remote_config_service.dart';
-import 'package:autonomy_flutter/util/exception.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 class AuthService {
-  final IAPApi _authApi;
-  final UserApi _userApi;
-  final ConfigurationService _configurationService;
-
   AuthService(
     this._authApi,
-    this._userApi,
     this._configurationService,
   );
+  final IAPApi _authApi;
+  final ConfigurationService _configurationService;
 
   final HiveStoreObjectService<String?> _authServiceStore =
       HiveStoreObjectServiceImpl<String?>(key: _authServiceStoreKey);
@@ -69,75 +57,10 @@ class AuthService {
 
   bool isBetaTester() {
     return true; // public for all users
-    if (kDebugMode) return true;
-    try {
-      final isBetaTesterFromLocalConfig =
-          injector<ConfigurationService>().isBetaTester();
-      if (isBetaTesterFromLocalConfig) {
-        return true;
-      }
-      final betaTester = injector<RemoteConfigService>()
-          .getConfig<List<dynamic>>(ConfigGroup.tester, ConfigKey.betaTester,
-              <String>[]).cast<String>();
-      return betaTester.contains(getUserId());
-    } catch (e) {
-      log.warning('Failed to get beta tester config: $e');
-      return false;
-    }
   }
 
   Future<void> reset() async {
     await setAuthToken(null);
-  }
-
-  Future<JWT> _refreshJWT({String? receiptData}) async {
-    final refreshToken = _jwt?.refreshToken;
-    if (refreshToken == null || refreshToken.isEmpty) {
-      throw JwtException(message: 'refresh_token_empty'.tr());
-    }
-    final Map<String, dynamic> payload = {'refreshToken': refreshToken};
-    if (receiptData != null) {
-      // add the receipt data if available
-      final String platform;
-      if (Platform.isIOS) {
-        platform = 'apple';
-      } else {
-        platform = 'google';
-      }
-      payload.addAll({
-        'inAppReceipt': {'platform': platform, 'receipt_data': receiptData}
-      });
-    }
-    final newJwt = await _userApi.refreshJWT(payload);
-    return newJwt;
-  }
-
-  Future<JWT> refreshJWT({String? receiptData, bool shouldRetry = true}) async {
-    JWT? refreshedJwt;
-    try {
-      final newJwt = await _refreshJWT(receiptData: receiptData);
-      refreshedJwt = _jwt!.copyWith(
-        jwtToken: newJwt.jwtToken,
-        expireIn: newJwt.expireIn,
-      );
-    } catch (e) {
-      unawaited(Sentry.captureException(
-          'Failed to refresh JWT, request passkey again, error: $e'));
-      if (shouldRetry) {
-        refreshedJwt =
-            await injector<NavigationService>().showRefreshJwtFailedDialog(
-          onRetry: () async {
-            final refreshJwt = await injector<PasskeyService>().requestJwt();
-            return refreshJwt;
-          },
-        );
-      }
-    }
-    if (refreshedJwt == null) {
-      throw JwtException(message: 'jwt_refresh_failed'.tr());
-    }
-    await setAuthToken(refreshedJwt, receiptData: receiptData);
-    return refreshedJwt;
   }
 
   void _refreshSubscriptionStatus(JWT? jwt, {String? receiptData}) {
@@ -165,9 +88,7 @@ class AuthService {
       return null;
     }
     if (shouldRefresh) {
-      if (!_jwt!.isValid()) {
-        await refreshJWT();
-      }
+      if (!_jwt!.isValid()) {}
     }
     return _jwt;
   }
@@ -182,19 +103,5 @@ class AuthService {
     await _authApi.registerReferralCode(body);
   }
 
-  Future<void> linkArtist(String token) async {
-    final res = await _authApi.linkArtist({'token': token});
-    // after link artist, we need to refresh the jwt
-    await refreshJWT();
-  }
 
-  bool isLinkArtist(List<String> addresses) {
-    if (addresses.isEmpty) {
-      return false;
-    }
-    final linkAddresses = _jwt?.linkAddresses ?? [];
-    final isArtist =
-        addresses.every((element) => linkAddresses.contains(element));
-    return isArtist;
-  }
 }

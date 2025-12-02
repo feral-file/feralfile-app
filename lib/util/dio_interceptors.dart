@@ -12,7 +12,6 @@ import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/gateway/customer_support_api.dart';
 import 'package:autonomy_flutter/model/ff_account.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/network_issue_manager.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
@@ -171,17 +170,8 @@ class AutonomyAuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    if (options.headers['Authorization'] == null &&
-        ['POST', 'PUT', 'DELETE'].contains(options.method.toUpperCase())) {
-      final jwt = await injector<AuthService>().getAuthToken();
-      if (jwt == null) {
-        unawaited(Sentry.captureMessage('JWT is null'));
-        log.info('JWT is null when calling ${options.uri}');
-        throw JwtException(message: 'can_not_authenticate_desc'.tr());
-      }
-
-      options.headers['Authorization'] = 'Bearer ${jwt.jwtToken}';
-    }
+    // JWT authentication removed - no longer adding JWT headers
+    // APIs that require authentication should use API keys instead
     return handler.next(options);
   }
 }
@@ -211,14 +201,11 @@ class CustomerSupportInterceptor extends Interceptor {
         options.headers[CustomerSupportApi.deviceIdHeader] =
             _configurationService.getAnonymousDeviceId();
       } else {
-        final jwt = await injector<AuthService>().getAuthToken();
-        // other api, add jwt
-        if (jwt != null) {
-          options.headers['Authorization'] = 'Bearer ${jwt.jwtToken}';
-        } else {
-          unawaited(Sentry.captureMessage('JWT is null'));
-          throw JwtException(message: 'can_not_authenticate_desc'.tr());
-        }
+        // JWT authentication removed - support API uses anonymous auth for now
+        // Backend should handle authentication via API key or other mechanism
+        log.info(
+            'CustomerSupportInterceptor: JWT auth removed, using anonymous');
+        throw JwtException(message: 'can_not_authenticate_desc'.tr());
       }
     }
 

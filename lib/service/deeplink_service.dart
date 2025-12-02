@@ -11,11 +11,9 @@ import 'dart:async';
 
 import 'package:app_links/app_links.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/model/ff_account.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/check_bluetooth_state.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
@@ -121,8 +119,6 @@ class DeeplinkServiceImpl extends DeeplinkService {
             link,
             onFinish: onFinishDeeplink,
           );
-        case DeepLinkHandlerType.linkArtist:
-          await _handleLinkArtistDeeplink(link);
         case DeepLinkHandlerType.unknown:
           unawaited(_navigationService.showUnknownLink());
       }
@@ -178,37 +174,6 @@ class DeeplinkServiceImpl extends DeeplinkService {
     );
   }
 
-  // handler for link artist deeplink
-  Future<void> _handleLinkArtistDeeplink(String link) async {
-    log.info('[DeeplinkService] _handleLinkArtistDeeplink');
-    final linkArtistPrefix = Constants.linkArtistDeepLinks
-        .firstWhereOrNull((prefix) => link.startsWith(prefix));
-    if (linkArtistPrefix == null) {
-      log.info('[DeeplinkService] _handleLinkArtistDeeplink prefix not found');
-      return;
-    }
-    final token = link.replaceFirst(linkArtistPrefix, '').split('/')[1];
-    try {
-      await injector<AuthService>().linkArtist(token);
-      unawaited(_navigationService.showLinkArtistSuccess());
-    } on DioException catch (e) {
-      if (e.error is FeralfileError) {
-        final error = e.error as FeralfileError;
-        if (error.isLinkArtistTokenNotFound) {
-          unawaited(_navigationService.showLinkArtistTokenNotFound());
-        } else if (error.isLinkArtistAddressAlreadyLinked) {
-          unawaited(_navigationService.showLinkArtistAddressAlreadyLinked());
-        } else if (error.isLinkArtistUserAlreadyLinked) {
-          unawaited(_navigationService.showLinkArtistAddressNotFound());
-        } else {
-          unawaited(_navigationService.showLinkArtistFailed(e));
-        }
-      }
-    } catch (e) {
-      unawaited(_navigationService.showLinkArtistFailed(e));
-    }
-  }
-
   @override
   Future<void> handleReferralCode(String referralCode) async {
     log.info('[DeeplinkService] handleReferralCode $referralCode');
@@ -238,7 +203,6 @@ class DeeplinkServiceImpl extends DeeplinkService {
 enum DeepLinkHandlerType {
   navigation,
   bluetoothConnect,
-  linkArtist,
   unknown,
   ;
 
@@ -251,11 +215,6 @@ enum DeepLinkHandlerType {
     if (Constants.bluetoothConnectDeepLinks
         .any((prefix) => value.startsWith(prefix))) {
       return DeepLinkHandlerType.bluetoothConnect;
-    }
-
-    if (Constants.linkArtistDeepLinks
-        .any((prefix) => value.startsWith(prefix))) {
-      return DeepLinkHandlerType.linkArtist;
     }
 
     return DeepLinkHandlerType.unknown;

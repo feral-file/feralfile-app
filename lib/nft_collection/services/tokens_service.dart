@@ -9,6 +9,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';
 
+import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
@@ -801,14 +802,10 @@ class NftTokensServiceImpl extends NftTokensService {
         NftCollection.logger.info('Auth op: $op');
         switch (op) {
           case AUTH_GET_TOKEN:
-            final jwt = await injector<AuthService>()
-                .getAuthToken(shouldRefresh: false);
-            NftCollection.logger.info('Auth get token: ${jwt?.jwtToken}');
-            _sendPort?.send([AUTH_OP, reqId, null, jwt?.jwtToken]);
+            _sendPort?.send([AUTH_OP, reqId, null, Environment.dp1FeedApiKey]);
             break;
           case AUTH_REFRESH:
-            final jwt = await injector<AuthService>().refreshJWT();
-            _sendPort?.send([AUTH_OP, reqId, null, jwt.jwtToken]);
+            _sendPort?.send([AUTH_OP, reqId, null, Environment.dp1FeedApiKey]);
             break;
           default:
             _sendPort?.send([AUTH_OP, reqId, 'Unsupported auth op', null]);

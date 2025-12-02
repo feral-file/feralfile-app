@@ -1970,54 +1970,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.1"
-  passkeys:
-    dependency: "direct main"
-    description:
-      name: passkeys
-      sha256: b96b53c7ed3bea288bbe6923188f7211abe6be98aa590a888ea23f8864910878
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.12.0"
-  passkeys_android:
-    dependency: transitive
-    description:
-      name: passkeys_android
-      sha256: a06851f8e6a51bd08c249d5e47d6f0e3e36f9b8db68b53a6cc6d4001c5755b40
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.10.0"
-  passkeys_doctor:
-    dependency: transitive
-    description:
-      name: passkeys_doctor
-      sha256: e380712ec530d8c1fbaa6d64cdc390767a505864c5f653812df3fdb0ce54a22b
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.0"
-  passkeys_ios:
-    dependency: transitive
-    description:
-      name: passkeys_ios
-      sha256: ed7b95444c9032d2aa9df71fe358ae842ccb173d2eb5266aa25d178689d3e474
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.7.0"
-  passkeys_platform_interface:
-    dependency: transitive
-    description:
-      name: passkeys_platform_interface
-      sha256: "6003fafa1da65b3d73c582fc7f7ada358d38f2d511b98f8b8fd3077786f4b71c"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.3.1"
-  passkeys_web:
-    dependency: transitive
-    description:
-      name: passkeys_web
-      sha256: "98d28223292738a9fbb24db33cdba00609675d54521694fdde45b7e5caf59b19"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.6.0"
   path:
     dependency: "direct main"
     description:
@@ -2783,14 +2735,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.0"
-  ua_client_hints:
-    dependency: transitive
-    description:
-      name: ua_client_hints
-      sha256: "1b8759a46bfeab355252881df27f2604c01bded86aa2b578869fb1b638b23118"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.4.1"
   undo:
     dependency: "direct main"
     description:

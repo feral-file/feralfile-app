@@ -18,7 +18,6 @@ import 'package:autonomy_flutter/gateway/mobile_controller_api.dart';
 import 'package:autonomy_flutter/gateway/pubdoc_api.dart';
 import 'package:autonomy_flutter/gateway/remote_config_api.dart';
 import 'package:autonomy_flutter/gateway/tv_cast_api.dart';
-import 'package:autonomy_flutter/gateway/user_api.dart';
 import 'package:autonomy_flutter/graphql/account_settings/account_settings_client.dart';
 import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/nft_collection/data/api/tzkt_api.dart';
@@ -64,7 +63,6 @@ import 'package:autonomy_flutter/service/mobile_controller_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/network_issue_manager.dart';
 import 'package:autonomy_flutter/service/network_service.dart';
-import 'package:autonomy_flutter/service/passkey_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/secure_storage_server.dart';
 import 'package:autonomy_flutter/service/settings_data_service.dart';
@@ -169,13 +167,6 @@ Future<void> setupInjector() async {
     instanceName: iapApiTimeout5secInstanceName,
   );
 
-  final userApiDio = DioManager().base(dioOptions);
-  userApiDio.interceptors.add(FeralfileErrorHandlerInterceptor());
-
-  injector.registerLazySingleton(
-    () => UserApi(userApiDio, baseUrl: Environment.autonomyAuthURL),
-  );
-
   final tzktUrl = Environment.appTestnetConfig
       ? Environment.tzktTestnetURL
       : Environment.tzktMainnetURL;
@@ -193,14 +184,7 @@ Future<void> setupInjector() async {
     ),
   );
   injector.registerLazySingleton(
-    () => AuthService(injector(), injector(), injector()),
-  );
-
-  injector.registerLazySingleton<PasskeyService>(
-    () => PasskeyServiceImpl(
-      injector(),
-      injector(),
-    ),
+    () => AuthService(injector(), injector()),
   );
 
   await NftCollection.initNftCollection(

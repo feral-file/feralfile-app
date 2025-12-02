@@ -28,7 +28,8 @@ abstract class IAPApi {
 
   @POST('/apis/v1/me/identity-hash')
   Future<OnesignalIdentityHash> generateIdentityHash(
-      @Body() Map<String, String> body);
+    @Body() Map<String, String> body,
+  );
 
   @GET('/apis/v2/notifications')
   Future<List<Announcement>> getAnnouncements(@Body() AnnouncementRequest body);
@@ -62,9 +63,6 @@ abstract class IAPApi {
 
   @GET('/apis/memberships/subscriptions/active')
   Future<dynamic> getCustomActiveSubscription();
-
-  @POST('/apis/users/addresses/link')
-  Future<void> linkArtist(@Body() Map<String, dynamic> body);
 
   @PATCH('/apis/users/devices/artwork-configurations')
   Future<dynamic> updateArtworkConfigurations(
