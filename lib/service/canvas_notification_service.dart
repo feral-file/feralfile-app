@@ -5,7 +5,7 @@ import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/canvas_notification.dart';
 import 'package:autonomy_flutter/model/device/base_device.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
+import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -15,7 +15,6 @@ class CanvasNotificationService {
   WebSocketChannel? _channel;
   final _notificationController =
       StreamController<NotificationRelayerMessage>.broadcast();
-  final _authService = injector<AuthService>();
   Timer? _pingTimer;
   Timer? _reconnectTimer;
   bool _isConnected = false;
@@ -31,7 +30,8 @@ class CanvasNotificationService {
     if (_isConnected) return true;
 
     try {
-      final userId = _authService.getUserId();
+      // TODO: Use the generated user ID in configuration
+      final userId = injector<ConfigurationService>().getAnonymousDeviceId();
       if (userId == null) {
         throw Exception('User not authenticated');
       }

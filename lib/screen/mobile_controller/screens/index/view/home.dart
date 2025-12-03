@@ -6,7 +6,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/pla
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/works/works_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/home_index_header.dart';
 import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
@@ -81,8 +80,7 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
           isNowDisplayingBarExpanded.value = false;
         },
       ),
-      if (injector<AuthService>().isBetaTester() &&
-          BluetoothDeviceManager().castingBluetoothDevice != null)
+      if (BluetoothDeviceManager().castingBluetoothDevice != null)
         // FF-X1 Setting
         OptionItem(
           title: 'FF1 Settings',
@@ -379,8 +377,7 @@ class _CombinedHeaderDelegate extends SliverPersistentHeaderDelegate {
           isNowDisplayingBarExpanded.value = false;
         },
       ),
-      if (injector<AuthService>().isBetaTester() &&
-          BluetoothDeviceManager().castingBluetoothDevice != null)
+      if (BluetoothDeviceManager().castingBluetoothDevice != null)
         // FF-X1 Setting
         OptionItem(
           title: 'FF1 Settings',

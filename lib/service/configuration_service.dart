@@ -7,7 +7,6 @@
 
 import 'dart:convert';
 
-import 'package:autonomy_flutter/model/jwt.dart';
 import 'package:autonomy_flutter/model/network.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/util/list_extension.dart';
@@ -56,13 +55,6 @@ abstract class ConfigurationService {
 
   bool getIsOldUser();
 
-  Future<void> setIAPReceipt(String? value);
-
-  String? getIAPReceipt();
-
-  Future<void> setIAPJWT(JWT? value);
-
-  JWT? getIAPJWT();
 
   Future<void> setDevicePasscodeEnabled(bool value);
 
@@ -146,10 +138,6 @@ abstract class ConfigurationService {
 
   bool getShowAddAddressBanner();
 
-  Future<void> setReferralCode(String referralCode);
-
-  String? getReferralCode();
-
   void setLinkAnnouncementToIssue(String announcementContentId, String issueId);
 
   String? getIssueIdByAnnouncementContentId(String announcementContentId);
@@ -218,8 +206,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
   static const String KEY_POSTCARD_CHAT_CONFIG = 'postcard_chat_config';
   static const String KEY_DID_MIGRATE_ADDRESS = 'did_migrate_address';
   static const String KEY_HIDDEN_FEEDS = 'hidden_feeds';
-  static const String KEY_IAP_RECEIPT = 'key_iap_receipt';
-  static const String KEY_IAP_JWT = 'key_iap_jwt';
   static const String IS_PREMIUM = 'is_premium';
   static const String KEY_DEVICE_PASSCODE = 'device_passcode';
   static const String KEY_NOTIFICATION = 'notifications';
@@ -284,8 +270,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
 
   static const String KEY_MERCHANDISE_ORDER_IDS = 'merchandise_order_ids';
 
-  static const String KEY_REFERRAL_CODE = 'referral_code';
-
   static const String LAST_CONNECTED_DEVICE = 'last_connected_device';
 
   static const String KEY_BETA_TESTER = 'beta_tester';
@@ -317,38 +301,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
 
   final SharedPreferences _preferences;
 
-  @override
-  Future<void> setIAPReceipt(String? value) async {
-    if (value != null) {
-      await _preferences.setString(KEY_IAP_RECEIPT, value);
-    } else {
-      await _preferences.remove(KEY_IAP_RECEIPT);
-    }
-  }
-
-  @override
-  String? getIAPReceipt() => _preferences.getString(KEY_IAP_RECEIPT);
-
-  @override
-  Future<void> setIAPJWT(JWT? value) async {
-    if (value == null) {
-      await _preferences.remove(KEY_IAP_JWT);
-      return;
-    }
-    final json = jsonEncode(value);
-    await _preferences.setString(KEY_IAP_JWT, json);
-  }
-
-  @override
-  JWT? getIAPJWT() {
-    final data = _preferences.getString(KEY_IAP_JWT);
-    if (data == null) {
-      return null;
-    } else {
-      final json = jsonDecode(data) as Map<String, dynamic>;
-      return JWT.fromJson(json);
-    }
-  }
 
   @override
   bool isDevicePasscodeEnabled() => true; // always enabled
@@ -593,13 +545,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
   @override
   Future<void> setMigrateToAccountSetting(bool value) =>
       _preferences.setBool(keyDidMigrateToAccountSetting, value);
-
-  @override
-  String? getReferralCode() => _preferences.getString(KEY_REFERRAL_CODE);
-
-  @override
-  Future<void> setReferralCode(String referralCode) =>
-      _preferences.setString(KEY_REFERRAL_CODE, referralCode);
 
   @override
   bool didShowLiveWithArt() =>

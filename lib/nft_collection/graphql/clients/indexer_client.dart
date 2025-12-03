@@ -1,7 +1,7 @@
 import 'dart:async';
 
+import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:sentry/sentry.dart';
@@ -9,16 +9,13 @@ import 'package:sentry/sentry.dart';
 class IndexerClient {
   IndexerClient(
     this._baseUrl, {
-    AuthService? authService,
-    Future<String> Function()? getTokenOverride,
-  })  : _authService = authService,
-        _getTokenOverride = getTokenOverride,
-        _httpClient = http.Client();
+    String? indexerAPIKey,
+  })  : _httpClient = http.Client(),
+        _indexerAPIKey = indexerAPIKey;
 
   final String _baseUrl;
-  final AuthService? _authService;
   final http.Client _httpClient;
-  final Future<String> Function()? _getTokenOverride;
+  final String? _indexerAPIKey;
 
   // Reusable base HttpLink to avoid creating new connections
   HttpLink? _baseHttpLink;
@@ -188,21 +185,11 @@ class IndexerClient {
   }
 
   Future<String> _getToken() async {
-    try {
-      if (_getTokenOverride != null) {
-        final authToken = await _getTokenOverride();
-        NftCollection.logger
-            .info('IndexerClient: getToken ${authToken.substring(0, 10)}');
-        return authToken;
-      }
-      if (_authService == null) return '';
-      final jwt = await _authService.getAuthToken();
-      NftCollection.logger
-          .info('IndexerClient: getToken ${jwt?.jwtToken.substring(0, 10)}');
-      return jwt != null ? 'Bearer ${jwt.jwtToken}' : '';
-    } catch (e) {
-      NftCollection.logger.warning('Failed to get auth token: $e');
-      return '';
+    final apiKey = _indexerAPIKey ?? Environment.indexerAPIKey;
+    if (apiKey.isEmpty) {
+      throw Exception('Indexer API key is not set');
     }
+
+    return 'ApiKey $apiKey';
   }
 }

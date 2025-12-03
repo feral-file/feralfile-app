@@ -12,8 +12,8 @@ import 'package:autonomy_flutter/model/error/bluetooth_error.dart';
 import 'package:autonomy_flutter/model/error/bluetooth_response_error.dart';
 import 'package:autonomy_flutter/screen/bloc/bluetooth_connect/bluetooth_connect_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/bluetooth_connect/bluetooth_connect_state.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/bluetooth_notification_service.dart';
+import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_ext.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
@@ -855,9 +855,10 @@ class FFBluetoothService {
     FutureOr<void> Function(dynamic)? onError,
     bool forceScan = false,
   }) async {
-    if (!injector<AuthService>().isBetaTester() && !forceScan) {
+    if (!forceScan) {
       return;
     }
+
     final deviceFound = await _startScan(
       timeout: timeout,
       onData: onData,
@@ -865,8 +866,10 @@ class FFBluetoothService {
     );
     if (!deviceFound) {
       log.info('No device found during second scan');
-      Sentry.captureMessage(
-        'Device scan completed: device not found',
+      unawaited(
+        Sentry.captureMessage(
+          'Device scan completed: device not found',
+        ),
       );
     }
   }
@@ -968,11 +971,13 @@ class FFBluetoothService {
         connectedDevice =
             await scanAndConnect(device, timeout: Duration(seconds: 10));
       }
-      final userId = injector<AuthService>().getUserId();
+      // TODO: Use the generated user ID in configuration
+      final anonymousDeviceId =
+          injector<ConfigurationService>().getAnonymousDeviceId() ?? '';
       final message = title ?? device.getName;
       final apiKey = Environment.supportApiKey;
-      final request =
-          SendLogRequest(userId: userId!, title: message, apiKey: apiKey);
+      final request = SendLogRequest(
+          userId: anonymousDeviceId, title: message, apiKey: apiKey);
       final res = await sendCommand(
         device: connectedDevice,
         command: BluetoothCommand.sendLog,

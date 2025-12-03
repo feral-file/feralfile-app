@@ -201,11 +201,22 @@ class CustomerSupportInterceptor extends Interceptor {
         options.headers[CustomerSupportApi.deviceIdHeader] =
             _configurationService.getAnonymousDeviceId();
       } else {
+        // final jwt = await injector<AuthService>().getAuthToken();
+        // // other api, add jwt
+        // if (jwt != null) {
+        //   options.headers['Authorization'] = 'Bearer ${jwt.jwtToken}';
+        // } else {
+        //   unawaited(Sentry.captureMessage('JWT is null'));
+        //   throw JwtException(message: 'can_not_authenticate_desc'.tr());
+        // }
+
+        // TODO: Use the API Key instead
+
         // JWT authentication removed - support API uses anonymous auth for now
         // Backend should handle authentication via API key or other mechanism
         log.info(
-            'CustomerSupportInterceptor: JWT auth removed, using anonymous');
-        throw JwtException(message: 'can_not_authenticate_desc'.tr());
+          'CustomerSupportInterceptor: JWT auth removed, using anonymous',
+        );
       }
     }
 

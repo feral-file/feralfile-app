@@ -255,6 +255,8 @@ class Environment {
 
   // Dev/Internal testing flags
   static bool get enableExploreDev =>
-      _readKey('ENABLE_EXPLORE_DEV', '').toUpperCase() == 'TRUE' ||
-      kDebugMode;
+      _readKey('ENABLE_EXPLORE_DEV', '').toUpperCase() == 'TRUE' || kDebugMode;
+
+  static String get indexerAPIKey =>
+      _readKey('INDEXER_API_KEY', '', isSecret: true);
 }

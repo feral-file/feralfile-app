@@ -13,16 +13,12 @@ import 'package:app_links/app_links.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/check_bluetooth_state.dart';
-import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
-import 'package:autonomy_flutter/util/dio_exception_ext.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:collection/collection.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 Completer<void> startHandleDeeplinkCompleter = Completer<void>();
 
@@ -30,8 +26,6 @@ abstract class DeeplinkService {
   Future<void> setup();
 
   void handleDeeplink(String? link, {Duration delay, Function? onFinished});
-
-  Future<void> handleReferralCode(String referralCode);
 }
 
 class DeeplinkServiceImpl extends DeeplinkService {
@@ -172,31 +166,6 @@ class DeeplinkServiceImpl extends DeeplinkService {
         onFinish: onFinish,
       ),
     );
-  }
-
-  @override
-  Future<void> handleReferralCode(String referralCode) async {
-    log.info('[DeeplinkService] handleReferralCode $referralCode');
-    // save referral code to local storage, for case when user register failed
-    await _configurationService.setReferralCode(referralCode);
-    try {
-      await injector<AddressService>()
-          .registerReferralCode(referralCode: referralCode);
-      // clear referral code after register success
-      await _configurationService.setReferralCode('');
-    } catch (e, s) {
-      log.info('[DeeplinkService] _handleReferralCode error $e');
-      unawaited(
-        Sentry.captureException('Referral code error: $e', stackTrace: s),
-      );
-      if (e is DioException) {
-        if (e.isAlreadySetReferralCode) {
-          log.info('[DeeplinkService] referral code already set');
-          // if referral code is already set, clear it
-          await _configurationService.setReferralCode('');
-        }
-      }
-    }
   }
 }
 

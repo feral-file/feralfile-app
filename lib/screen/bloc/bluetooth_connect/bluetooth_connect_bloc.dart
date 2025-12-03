@@ -1,7 +1,5 @@
 import 'package:autonomy_flutter/au_bloc.dart';
-import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/bloc/bluetooth_connect/bluetooth_connect_state.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 
 class BluetoothConnectBloc
@@ -14,8 +12,7 @@ class BluetoothConnectBloc
 
   @override
   void add(BluetoothConnectEvent event) {
-    if (injector<AuthService>().isBetaTester() ||
-        eventNotBetaTester.contains(event.runtimeType)) {
+    if (eventNotBetaTester.contains(event.runtimeType)) {
       super.add(event);
     } else {
       log.info(

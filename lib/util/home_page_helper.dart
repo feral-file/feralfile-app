@@ -15,7 +15,6 @@ import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/announcement/announcement_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
-import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
@@ -273,7 +272,6 @@ class HomePageHelper {
         memoryValues.isForeground = true;
       case FGBGType.background:
         memoryValues.isForeground = false;
-        _handleBackground();
     }
   }
 
@@ -289,16 +287,5 @@ class HomePageHelper {
     _triggerShowAnnouncement();
     // refresh stale/missing addresses when app resume
     unawaited(_refreshAddressesNeedingReindex());
-  }
-
-  void _handleBackground() {
-    unawaited(_checkForReferralCode());
-  }
-
-  Future<void> _checkForReferralCode() async {
-    final referralCode = injector<ConfigurationService>().getReferralCode();
-    if (referralCode != null && referralCode.isNotEmpty) {
-      await injector<DeeplinkService>().handleReferralCode(referralCode);
-    }
   }
 }

@@ -17,7 +17,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ex
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_intent.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
+import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/device_info_service.dart';
 import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/tv_cast_service.dart';
@@ -85,7 +85,8 @@ class CanvasClientServiceV2 {
   ) async {
     final stub = _getStub(device);
     final deviceInfo = clientDeviceInfo;
-    final userId = injector<AuthService>().getUserId();
+    // TODO: Use the generated user ID in configuration
+    final userId = injector<ConfigurationService>().getAnonymousDeviceId();
 
     final request = ConnectRequestV2(
       clientDevice: deviceInfo,

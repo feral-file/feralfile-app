@@ -1,11 +1,9 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/gateway/iap_api.dart';
 import 'package:autonomy_flutter/model/additional_data/additional_data.dart';
 import 'package:autonomy_flutter/model/announcement/announcement.dart';
 import 'package:autonomy_flutter/model/announcement/announcement_local.dart';
-import 'package:autonomy_flutter/model/announcement/announcement_request.dart';
 import 'package:autonomy_flutter/model/announcement/notification_setting_type.dart';
 import 'package:autonomy_flutter/service/announcement/announcement_store.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
@@ -35,12 +33,10 @@ abstract class AnnouncementService {
 }
 
 class AnnouncementServiceImpl implements AnnouncementService {
-  final IAPApi _iapApi;
   final AnnouncementStore _announcementStore;
   final ConfigurationService _configurationService;
 
   AnnouncementServiceImpl(
-    this._iapApi,
     this._announcementStore,
     this._configurationService,
   );

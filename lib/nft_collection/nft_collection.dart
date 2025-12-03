@@ -1,10 +1,8 @@
 import 'package:autonomy_flutter/common/database.dart';
-import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database_manager.dart';
 import 'package:autonomy_flutter/nft_collection/services/configuration_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -33,8 +31,6 @@ class NftCollection {
     final store = ObjectBox.store;
     database = IndexerDataBaseObjectBox(store);
     prefs = NftCollectionPrefs(await SharedPreferences.getInstance());
-    final authService = injector<AuthService>();
-
     tokenService = NftTokensServiceImpl(indexerUrl, database, prefs);
   }
 }

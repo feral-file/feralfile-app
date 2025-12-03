@@ -1,5 +1,3 @@
-import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
@@ -97,10 +95,12 @@ class AccountSettingsClient {
   }
 
   Future<String> _getToken() async {
-    final jwt = await injector<AuthService>().getAuthToken();
-    log.info(
-        'AccountSettingsClient: getToken ${jwt?.jwtToken.substring(0, 10)}');
-    return 'Bearer ${jwt ?? ''}';
+    // TODO: Remove this client
+    return '';
+    // final jwt = await injector<AuthService>().getAuthToken();
+    // log.info(
+    //     'AccountSettingsClient: getToken ${jwt?.jwtToken.substring(0, 10)}');
+    // return 'Bearer ${jwt ?? ''}';
   }
 
   static const String _queryDoc = r'''

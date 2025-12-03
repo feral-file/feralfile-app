@@ -117,8 +117,6 @@ class _DataManagementPageState extends State<DataManagementPage> {
         'forget_exist'.tr(),
         BlocProvider(
           create: (_) => ForgetExistBloc(
-            injector(),
-            injector(),
             injector<IndexerDatabaseAbstract>(),
             injector(),
           ),

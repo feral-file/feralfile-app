@@ -12,7 +12,6 @@ import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/bluetooth_service.dart';
 import 'package:autonomy_flutter/service/canvas_notification_manager.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
@@ -123,7 +122,6 @@ class _OnboardingPageState extends State<OnboardingPage>
     Environment.checkAllKeys();
     await DeviceInfo.instance.init();
     await injector<DeviceInfoService>().init();
-    await injector<AuthService>().init();
     await injector<MetricClientService>().initService();
     await injector<FFBluetoothService>().init();
     await injector<DLSService>().init();

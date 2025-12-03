@@ -12,13 +12,13 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/model/announcement/announcement.dart';
 import 'package:autonomy_flutter/model/customer_support.dart' as app;
 import 'package:autonomy_flutter/model/customer_support.dart';
 import 'package:autonomy_flutter/model/draft_customer_support.dart';
 import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/service/announcement/announcement_service.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
@@ -29,7 +29,6 @@ import 'package:autonomy_flutter/theme/extensions/button_style_extension.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/datetime_ext.dart';
-import 'package:autonomy_flutter/util/jwt.dart';
 import 'package:autonomy_flutter/util/log.dart' as log_util;
 import 'package:autonomy_flutter/util/native_log_reader.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
@@ -302,17 +301,16 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
       return;
     }
 
-    // if it is a normal issue, we need to get the userId
-    final jwt = await injector<AuthService>().getAuthToken();
-    if (jwt != null) {
-      final data = parseJwt(jwt.jwtToken);
-      final sub = data['sub'] as String;
-      if (sub != _userId) {
-        if (mounted) {
-          setState(() {
-            _userId = sub;
-          });
-        }
+
+    // TODO: Generate userID and store in configuration, then use it for this case
+    // Authentication removed - use anonymous device ID instead
+    final anonymousDeviceId =
+        injector<ConfigurationService>().getAnonymousDeviceId();
+    if (anonymousDeviceId != null && anonymousDeviceId != _userId) {
+      if (mounted) {
+        setState(() {
+          _userId = anonymousDeviceId;
+        });
       }
     }
   }
@@ -357,10 +355,69 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
       log_util.log.severe('Failed to get Flutter log: $e');
     }
 
+    // // Add account settings audit log
+    // try {
+    //   final accountSettingsAudit = await _generateAccountSettingsAudit();
+    //   final auditBytes = utf8.encode(accountSettingsAudit);
+    //   final auditFilename =
+    //       'account_settings_audit_${auditBytes.length}_${DateTime.now().microsecondsSinceEpoch}.json';
+    //   _debugLogs.add(Pair(auditFilename, auditBytes));
+    // } catch (e) {
+    //   log_util.log.severe('Failed to get account settings audit: $e');
+    // }
+
     setState(() {
       _isFileAttached = _debugLogs.isNotEmpty;
     });
   }
+
+  // Future<String> _generateAccountSettingsAudit() async {
+  //   try {
+  //     final cloudManager = injector<CloudManager>();
+  //     final configurationService = injector<ConfigurationService>();
+
+  //     // Get device settings
+  //     final deviceSettings = cloudManager.deviceSettingsDB.allInstance;
+
+  //     // Get user settings
+  //     final userSettings = cloudManager.userSettingsDB.allInstance;
+
+  //     // Get wallet addresses (imported/linked addresses)
+  //     final addresses = cloudManager.addressObject.getAllAddresses();
+
+  //     // Get configuration service settings
+  //     final auditData = <String, dynamic>{
+  //       'timestamp': DateTime.now().toIso8601String(),
+  //       'device_settings': deviceSettings,
+  //       'user_settings': userSettings,
+  //       'imported_addresses': addresses
+  //           .map((addr) => {
+  //                 'address': addr.address,
+  //                 'cryptoType': addr.cryptoType.toString(),
+  //                 'isHidden': addr.isHidden,
+  //                 'createdAt': addr.createdAt.toIso8601String(),
+  //                 'name': addr.name,
+  //               })
+  //           .toList(),
+  //       'configuration_preferences': {
+  //         'isAnalyticsEnabled': configurationService.isAnalyticsEnabled(),
+  //         'isDevicePasscodeEnabled':
+  //             configurationService.isDevicePasscodeEnabled(),
+  //         'isNotificationEnabled': configurationService.isNotificationEnabled(),
+  //         'isBetaFeaturesEnabled': configurationService.isBetaFeaturesEnabled(),
+  //         'isExploreBarEnabled': configurationService.isExploreBarEnabled(),
+  //         'hiddenTokenIDs': configurationService.getTempStorageHiddenTokenIDs(),
+  //         'selectedDeviceId': configurationService.getSelectedDeviceId(),
+  //       },
+  //     };
+
+  //     // Convert to JSON with pretty printing
+  //     const encoder = JsonEncoder.withIndent('  ');
+  //     return encoder.convert(auditData);
+  //   } catch (e) {
+  //     return '{"error": "Failed to generate account settings audit: $e"}';
+  //   }
+  // }
 
   @override
   void dispose() {

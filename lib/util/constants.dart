@@ -135,8 +135,6 @@ const int cellPerRowPhone = 3;
 const int cellPerRowTablet = 6;
 const double cellSpacing = 3;
 
-const Duration REFRESH_JWT_DURATION_BEFORE_EXPIRE = Duration(hours: 24);
-
 const TV_APP_STORE_URL =
     'https://play.google.com/store/apps/details?id=com.bitmark.autonomy_tv';
 

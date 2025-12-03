@@ -20,7 +20,6 @@ import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/nft_collection/services/configuration_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
@@ -30,11 +29,6 @@ import 'package:collection/collection.dart';
 import 'package:get_it/get_it.dart';
 import 'package:sentry/sentry.dart';
 import 'package:uuid/uuid.dart';
-
-// Auth bridge op-codes between isolates (top-level so both main and worker use them)
-const String AUTH_OP = 'AUTH_OP';
-const String AUTH_GET_TOKEN = 'AUTH_GET_TOKEN';
-const String AUTH_REFRESH = 'AUTH_REFRESH';
 
 abstract class NftTokensService {
   Future<List<AssetToken>> getManualTokens({
@@ -91,16 +85,18 @@ class NftTokensServiceImpl extends NftTokensService {
   NftTokensServiceImpl(
     this._indexerUrl,
     this._database,
-    this._configurationService,
-  ) {
+    this._configurationService, {
+    String? indexerAPIKey,
+  }) : _indexerAPIKey = indexerAPIKey ?? Environment.indexerAPIKey {
     final indexerClient = IndexerClient(
       _indexerUrl,
-      authService: injector<AuthService>(),
+      indexerAPIKey: _indexerAPIKey,
     );
     _indexerService = NftIndexerService(indexerClient);
   }
 
   final String _indexerUrl;
+  final String _indexerAPIKey;
   late NftIndexerService _indexerService;
   final IndexerDatabaseAbstract _database;
   final NftCollectionPrefs _configurationService;
@@ -141,13 +137,15 @@ class NftTokensServiceImpl extends NftTokensService {
     _receivePort!.listen(_handleMessageInMain);
 
     _isolate = await Isolate.spawn(
-        _isolateEntry,
-        [
-          _receivePort!.sendPort,
-          _indexerUrl,
-        ],
-        onError: errorPort.sendPort,
-        onExit: exitPort.sendPort);
+      _isolateEntry,
+      [
+        _receivePort!.sendPort,
+        _indexerUrl,
+        _indexerAPIKey,
+      ],
+      onError: errorPort.sendPort,
+      onExit: exitPort.sendPort,
+    );
 
     errorPort.listen((message) {
       Sentry.captureEvent(SentryEvent(
@@ -732,8 +730,11 @@ class NftTokensServiceImpl extends NftTokensService {
       final receivePort = ReceivePort()..listen(_handleMessageInIsolate);
       _isolateSendPort = sendPort;
 
-      _setupInjector(arguments[1] as String);
-      sendPort.send(receivePort.sendPort);
+      _setupInjector(
+        arguments[1] as String,
+        arguments[2] as String,
+      );
+      _isolateSendPort?.send(receivePort.sendPort);
     }, (error, stackTrace) {
       // Catch any unhandled exceptions to prevent isolate from crashing
       NftCollection.logger.warning(
@@ -758,26 +759,10 @@ class NftTokensServiceImpl extends NftTokensService {
     });
   }
 
-  static void _setupInjector(String indexerUrl) {
-    // Register a proxy AuthService that communicates with main isolate.
-    _isolateScopeInjector.registerLazySingleton<AuthServicePort>(
-      () => RemoteAuthService(_isolateSendPort!),
-    );
-
-    // Build IndexerClient with token provider that calls back to main via proxy
-    final authPort = _isolateScopeInjector<AuthServicePort>();
+  static void _setupInjector(String indexerUrl, String indexerAPIKey) {
     final indexerClient = IndexerClient(
       indexerUrl,
-      authService: null,
-      getTokenOverride: () async {
-        String? token;
-        try {
-          token = await authPort.getAccessTokenOrNull();
-        } catch (e) {
-          log.warning('[IndexerClient][isolate] getToken timeout/error: $e');
-        }
-        return (token != null && token.isNotEmpty) ? 'Bearer $token' : '';
-      },
+      indexerAPIKey: indexerAPIKey,
     );
 
     _isolateScopeInjector
@@ -791,28 +776,6 @@ class NftTokensServiceImpl extends NftTokensService {
     if (message is SendPort) {
       _sendPort = message;
       if (!_isolateReady.isCompleted) _isolateReady.complete();
-      return;
-    }
-
-    // Handle auth bridge requests from worker isolate
-    if (message is List && message.isNotEmpty && message[0] == AUTH_OP) {
-      final String op = message[1] as String;
-      final String reqId = message[2] as String;
-      try {
-        NftCollection.logger.info('Auth op: $op');
-        switch (op) {
-          case AUTH_GET_TOKEN:
-            _sendPort?.send([AUTH_OP, reqId, null, Environment.dp1FeedApiKey]);
-            break;
-          case AUTH_REFRESH:
-            _sendPort?.send([AUTH_OP, reqId, null, Environment.dp1FeedApiKey]);
-            break;
-          default:
-            _sendPort?.send([AUTH_OP, reqId, 'Unsupported auth op', null]);
-        }
-      } catch (e) {
-        _sendPort?.send([AUTH_OP, reqId, e.toString(), null]);
-      }
       return;
     }
 
@@ -1067,24 +1030,6 @@ class NftTokensServiceImpl extends NftTokensService {
           .info('[TokensService][Isolate] received message: $message');
       if (message is List<dynamic>) {
         switch (message[0]) {
-          case AUTH_OP:
-            if (message.length >= 4) {
-              final String reqId = message[1] as String;
-              final String? error = message[2] as String?;
-              final dynamic data = message[3];
-              final completer = _authRequestCompleters.remove(reqId);
-              if (completer != null && !completer.isCompleted) {
-                if (error != null) {
-                  completer.completeError(error);
-                } else {
-                  completer.complete(data);
-                }
-              } else {
-                NftCollection.logger.info(
-                    '[_handleMessageInIsolate] [AUTH_OP] complete is null');
-              }
-            }
-            return;
           case FETCH_ALL_TOKENS:
             final uuid = message[1] as String;
             final addresses = List<String>.from(message[2] as List);
@@ -1162,7 +1107,7 @@ class NftTokensServiceImpl extends NftTokensService {
       var numberOfToken = 0;
       var currentOffset = offset ?? 0;
 
-      while (total == null || numberOfToken < total!) {
+      while (total == null || numberOfToken < total) {
         final tokens = await getTokensPageWithAllOwners(
             isolateIndexerService, addresses, currentOffset);
 
@@ -1345,6 +1290,10 @@ class NftTokensServiceImpl extends NftTokensService {
 
 class AddressAnchor {
   AddressAnchor({required this.address, required this.anchor});
+  factory AddressAnchor.fromJson(Map<String, dynamic> json) => AddressAnchor(
+        address: json['address'] as String,
+        anchor: json['anchor'] as int,
+      );
 
   final String address;
   final int anchor;
@@ -1353,44 +1302,9 @@ class AddressAnchor {
         'address': address,
         'anchor': anchor,
       };
-
-  static AddressAnchor fromJson(Map<String, dynamic> json) => AddressAnchor(
-        address: json['address'] as String,
-        anchor: json['anchor'] as int,
-      );
 }
 
 abstract class TokensServiceResult {}
-
-// A minimal port of AuthService behavior that is safe across isolates.
-abstract class AuthServicePort {
-  Future<String?> getAccessTokenOrNull();
-  Future<String?> refreshToken();
-}
-
-// Track pending auth requests in the worker isolate
-final Map<String, Completer<dynamic>> _authRequestCompleters = {};
-
-class RemoteAuthService implements AuthServicePort {
-  RemoteAuthService(this._mainSendPort);
-
-  final SendPort _mainSendPort;
-
-  Future<T?> _call<T>(String op) async {
-    final reqId = const Uuid().v4();
-    final completer = Completer<dynamic>();
-    _authRequestCompleters[reqId] = completer;
-    _mainSendPort.send([AUTH_OP, op, reqId]);
-    final result = await completer.future;
-    return result as T?;
-  }
-
-  @override
-  Future<String?> getAccessTokenOrNull() => _call<String?>(AUTH_GET_TOKEN);
-
-  @override
-  Future<String?> refreshToken() => _call<String?>(AUTH_REFRESH);
-}
 
 class FetchTokensSuccess extends TokensServiceResult {
   FetchTokensSuccess(
