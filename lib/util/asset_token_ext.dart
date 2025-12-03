@@ -130,28 +130,32 @@ extension AssetTokenExtension on AssetToken {
 
   String? getGalleryThumbnailUrl({
     bool usingThumbnailID = true,
-    String size = 'xs',
+    String? size = 'xs',
   }) {
     String? thumbnailUrl;
 
     thumbnailUrl = enrichmentSource?.imageUrl ?? metadata?.imageUrl;
 
-    final metadataVariantUrls = metadataMediaAssets
-        ?.firstWhereOrNull((mediaAsset) => mediaAsset.sourceUrl == thumbnailUrl)
-        ?.variantUrls;
+    if (size != null) {
+      final metadataVariantUrls = metadataMediaAssets
+          ?.firstWhereOrNull(
+              (mediaAsset) => mediaAsset.sourceUrl == thumbnailUrl)
+          ?.variantUrls;
 
-    final enrichmentSourceVariantUrls = enrichmentSourceMediaAssets
-        ?.firstWhereOrNull((mediaAsset) => mediaAsset.sourceUrl == thumbnailUrl)
-        ?.variantUrls;
+      final enrichmentSourceVariantUrls = enrichmentSourceMediaAssets
+          ?.firstWhereOrNull(
+              (mediaAsset) => mediaAsset.sourceUrl == thumbnailUrl)
+          ?.variantUrls;
 
-    final mediaThumbnailUrl = (enrichmentSourceVariantUrls?[size] ??
-            enrichmentSourceVariantUrls?.values.firstOrNull) as String? ??
-        (metadataVariantUrls?[size] ?? metadataVariantUrls?.values.firstOrNull)
-            as String?;
+      final mediaThumbnailUrl = (enrichmentSourceVariantUrls?[size] ??
+              enrichmentSourceVariantUrls?.values.firstOrNull) as String? ??
+          (metadataVariantUrls?[size] ??
+              metadataVariantUrls?.values.firstOrNull) as String?;
 
-    if (mediaThumbnailUrl != null && mediaThumbnailUrl.isNotEmpty) {
-      return mediaThumbnailUrl;
-    } else {}
+      if (mediaThumbnailUrl != null && mediaThumbnailUrl.isNotEmpty) {
+        thumbnailUrl = mediaThumbnailUrl;
+      }
+    }
 
     if (thumbnailUrl?.isNotEmpty ?? false) {
       return thumbnailUrl;
@@ -208,45 +212,14 @@ extension AssetTokenExtension on AssetToken {
     return '';
   }
 
-  String? get previewUrl {
+  String? getPreviewUrl() {
     final animationUrl =
         enrichmentSource?.animationUrl ?? metadata?.animationUrl;
-
-    if (animationUrl == null) {
-      return null;
-    }
-
-    // search in enrichmentSourceMediaAssets
-    final enrichmentSourceMediaAssets = this.enrichmentSourceMediaAssets;
-    if (enrichmentSourceMediaAssets != null) {
-      final enrichmentSourceMediaAsset =
-          enrichmentSourceMediaAssets.firstWhereOrNull(
-              (mediaAsset) => mediaAsset.sourceUrl == animationUrl);
-      final variantUrl =
-          enrichmentSourceMediaAsset?.variantUrls.values.firstOrNull as String?;
-      if (variantUrl != null && variantUrl.isNotEmpty) {
-        return variantUrl;
-      }
-    }
-
-    // fallback to metadataMediaAssets
-    final metadataMediaAssets = this.metadataMediaAssets;
-    if (metadataMediaAssets != null) {
-      final metadataMediaAsset = metadataMediaAssets.firstWhereOrNull(
-          (mediaAsset) => mediaAsset.sourceUrl == animationUrl);
-
-      final variantUrl =
-          metadataMediaAsset?.variantUrls.values.firstOrNull as String?;
-      if (variantUrl != null && variantUrl.isNotEmpty) {
-        return variantUrl;
-      }
-    }
-
-    if (animationUrl.isNotEmpty) {
+    if (animationUrl?.isNotEmpty ?? false) {
       return animationUrl;
     }
 
-    return getGalleryThumbnailUrl(size: 'xl');
+    return getGalleryThumbnailUrl(size: null);
   }
 
   List<ProvenanceEvent> get provenance {
