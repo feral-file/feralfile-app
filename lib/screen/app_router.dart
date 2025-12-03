@@ -51,6 +51,7 @@ import 'package:autonomy_flutter/screen/onboarding/view_address/name_view_only_p
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address_bloc.dart';
 import 'package:autonomy_flutter/screen/onboarding_page.dart';
+import 'package:autonomy_flutter/onboarding/introduce_page.dart';
 import 'package:autonomy_flutter/screen/release_note_detail_page.dart';
 import 'package:autonomy_flutter/screen/release_notes_page.dart';
 import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
@@ -69,11 +70,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:page_transition/page_transition.dart';
 
-bool shouldShowOverlay = kDebugMode && Platform.isIOS && false;
+bool shouldShowOverlay = kDebugMode && Platform.isIOS;
 
 class AppRouter {
   static const previewPrimerPage = 'preview_primer_page';
   static const onboardingPage = 'onboarding_page';
+  static const onboardingIntroducePage = 'onboarding_introduce_page';
   static const nameLinkedAccountPage = 'name_linked_account_page';
   static const homePage = 'home_page';
   static const recordControllerPage = 'record_controller_page';
@@ -130,6 +132,16 @@ class AppRouter {
         return CupertinoPageRoute(
           settings: settings,
           builder: (context) => const OnboardingPage(),
+        );
+
+      case onboardingIntroducePage:
+        return CupertinoPageRoute(
+          settings: settings,
+          builder: (context) => IntroducePage(
+            onNext: () {
+              Navigator.of(context).pushReplacementNamed(AppRouter.homePage);
+            },
+          ),
         );
 
       case previewPrimerPage:

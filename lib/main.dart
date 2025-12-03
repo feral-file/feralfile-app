@@ -251,7 +251,7 @@ class AutonomyApp extends StatelessWidget {
               SentryNavigatorObserver(),
               HeroController(),
             ],
-            initialRoute: AppRouter.onboardingPage,
+            initialRoute: AppRouter.onboardingIntroducePage,
             onGenerateRoute: AppRouter.onGenerateRoute,
             builder: (context, child) => AutonomyAppScaffold(child: child!),
           );
@@ -369,7 +369,8 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold> {
             Overlay(
               initialEntries: [
                 OverlayEntry(
-                  builder: (context) => NotificationListener<UserScrollNotification>(
+                  builder: (context) =>
+                      NotificationListener<UserScrollNotification>(
                     onNotification: (notification) {
                       _handleScrollUpdate(notification);
                       return false; // Allow the notification to continue to be dispatched

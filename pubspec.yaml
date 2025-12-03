@@ -163,6 +163,7 @@ flutter:
     - assets/erc721-abi.json
     - assets/erc1155-abi.json
     - assets/images/
+    - assets/images/screenshots/
     - assets/translations/
     - assets/videos/
     - lib/dsl/bundle.js

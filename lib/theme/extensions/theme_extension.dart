@@ -370,6 +370,7 @@ extension TextThemeExtension on TextTheme {
       fontWeight: FontWeight.w700,
       fontFamily: AppTheme.ppMori,
       height: 1.4,
+      letterSpacing: 0.04,
     );
   }
 
