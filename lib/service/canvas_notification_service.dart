@@ -30,11 +30,8 @@ class CanvasNotificationService {
     if (_isConnected) return true;
 
     try {
-      // TODO: Use the generated user ID in configuration
-      final userId = injector<ConfigurationService>().getAnonymousDeviceId();
-      if (userId == null) {
-        throw Exception('User not authenticated');
-      }
+      final userId =
+          await injector<ConfigurationService>().getDeviceId();
 
       _reconnectTimer?.cancel();
       _stopPingTimer();

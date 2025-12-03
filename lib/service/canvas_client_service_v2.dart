@@ -70,12 +70,12 @@ class CanvasClientServiceV2 {
   ) async {
     final stub = _getStub(device);
     final deviceInfo = clientDeviceInfo;
-    // TODO: Use the generated user ID in configuration
-    final userId = injector<ConfigurationService>().getAnonymousDeviceId();
+    final userId =
+        await injector<ConfigurationService>().getDeviceId();
 
     final request = ConnectRequestV2(
       clientDevice: deviceInfo,
-      primaryAddress: userId ?? '',
+      primaryAddress: userId,
     );
     final response = await stub.connect(request);
     return response;

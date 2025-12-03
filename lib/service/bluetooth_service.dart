@@ -971,13 +971,16 @@ class FFBluetoothService {
         connectedDevice =
             await scanAndConnect(device, timeout: Duration(seconds: 10));
       }
-      // TODO: Use the generated user ID in configuration
-      final anonymousDeviceId =
-          injector<ConfigurationService>().getAnonymousDeviceId() ?? '';
+
+      final deviceId =
+          await injector<ConfigurationService>().getDeviceId();
       final message = title ?? device.getName;
       final apiKey = Environment.supportApiKey;
       final request = SendLogRequest(
-          userId: anonymousDeviceId, title: message, apiKey: apiKey);
+        userId: deviceId,
+        title: message,
+        apiKey: apiKey,
+      );
       final res = await sendCommand(
         device: connectedDevice,
         command: BluetoothCommand.sendLog,

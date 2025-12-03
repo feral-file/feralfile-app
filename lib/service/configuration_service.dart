@@ -23,9 +23,7 @@ abstract class ConfigurationService {
 
   Future<void> setDailyLikedCount(int count);
 
-  String? getAnonymousDeviceId();
-
-  Future<String> createAnonymousDeviceId();
+  Future<String> getDeviceId();
 
   List<String> getAnonymousIssueIds();
 
@@ -54,7 +52,6 @@ abstract class ConfigurationService {
   Future<void> setOldUser();
 
   bool getIsOldUser();
-
 
   Future<void> setDevicePasscodeEnabled(bool value);
 
@@ -186,7 +183,7 @@ class ConfigurationServiceImpl implements ConfigurationService {
   ConfigurationServiceImpl(this._preferences);
 
   static const String keyDailyLikedCount = 'daily_liked_count';
-  static const String keyAnonymousDeviceId = 'anonymous_device_id';
+  static const String keyDeviceId = 'device_id';
   static const String keyAnonymousIssueIds = 'anonymous_issue_ids';
   static const String keyDidMigrateToAccountSetting =
       'did_migrate_to_account_setting';
@@ -289,7 +286,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
 
   final SharedPreferences _preferences;
 
-
   @override
   bool isDevicePasscodeEnabled() => true; // always enabled
 
@@ -330,7 +326,8 @@ class ConfigurationServiceImpl implements ConfigurationService {
   }
 
   @override
-  bool isExploreBarEnabled() => _preferences.getBool(KEY_SHOW_EXPLORE_BAR) ?? false;
+  bool isExploreBarEnabled() =>
+      _preferences.getBool(KEY_SHOW_EXPLORE_BAR) ?? false;
 
   @override
   Future<void> setExploreBarEnabled(bool value) async {
@@ -570,16 +567,15 @@ class ConfigurationServiceImpl implements ConfigurationService {
     );
   }
 
-  @override
-  String? getAnonymousDeviceId() =>
-      _preferences.getString(keyAnonymousDeviceId);
+  Future<String> createDeviceId() async {
+    final uuid = const Uuid().v4();
+    await _preferences.setString(keyDeviceId, uuid);
+    return uuid;
+  }
 
   @override
-  Future<String> createAnonymousDeviceId() async {
-    final uuid = const Uuid().v4();
-    final anonymousDeviceId = 'device-$uuid';
-    await _preferences.setString(keyAnonymousDeviceId, anonymousDeviceId);
-    return anonymousDeviceId;
+  Future<String> getDeviceId() async {
+    return _preferences.getString(keyDeviceId) ?? createDeviceId();
   }
 
   @override

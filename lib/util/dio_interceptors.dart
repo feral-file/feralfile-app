@@ -199,7 +199,7 @@ class CustomerSupportInterceptor extends Interceptor {
         options.headers[CustomerSupportApi.apiKeyHeader] =
             Environment.supportApiKey;
         options.headers[CustomerSupportApi.deviceIdHeader] =
-            _configurationService.getAnonymousDeviceId();
+            await _configurationService.getDeviceId();
       } else {
         // final jwt = await injector<AuthService>().getAuthToken();
         // // other api, add jwt

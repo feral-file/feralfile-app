@@ -130,26 +130,14 @@ class CustomerSupportServiceImpl extends CustomerSupportService {
   Future<List<Issue>> _getIssues() async {
     final issues = <Issue>[];
     try {
-      // TODO: Use the generated user ID in configuration
-
-      // final jwt = await injector<AuthService>().getAuthToken();
-      // if (jwt != null) {
-      //   final listIssues = await _customerSupportApi.getIssues(
-      //     token: 'Bearer ${jwt.jwtToken}',
-      //   );
-      //   issues.addAll(listIssues);
-      // }
-
-      final anonymousDeviceId = _configurationService.getAnonymousDeviceId();
-      if (anonymousDeviceId != null) {
-        final listAnonymousIssues =
-            await _customerSupportApi.getAnonymousIssues(
-          apiKey: Environment.supportApiKey,
-          deviceId: anonymousDeviceId,
-        );
-        issues.addAll(listAnonymousIssues);
-      }
-      issues.sort((a, b) => b.sortTime.compareTo(a.sortTime));
+      final deviceId = await _configurationService.getDeviceId();
+      final listAnonymousIssues = await _customerSupportApi.getAnonymousIssues(
+        apiKey: Environment.supportApiKey,
+        deviceId: deviceId,
+      );
+      issues
+        ..addAll(listAnonymousIssues)
+        ..sort((a, b) => b.sortTime.compareTo(a.sortTime));
     } catch (e) {
       log.info('[CS-Service] getIssues error: $e');
       unawaited(Sentry.captureException(e));
@@ -519,24 +507,14 @@ class CustomerSupportServiceImpl extends CustomerSupportService {
       payload['artwork_report_id'] = artworkReportID;
     }
 
-    // TODO: Use the generated user ID in configuration
-    // final jwt = await injector<AuthService>().getAuthToken();
-    // if (jwt != null) {
-    //   return _customerSupportApi.createIssue(
-    //     payload,
-    //     token: 'Bearer ${jwt.jwtToken}',
-    //   );
-    // } else {
-      final anonymousDeviceId = _configurationService.getAnonymousDeviceId() ??
-          await _configurationService.createAnonymousDeviceId();
-      final issue = await _customerSupportApi.createAnonymousIssue(
-        payload,
-        apiKey: Environment.supportApiKey,
-        deviceId: anonymousDeviceId,
-      );
-      await _configurationService.addAnonymousIssueId([issue.issueID]);
-      return issue;
-    // }
+    final userId = await _configurationService.getDeviceId();
+    final issue = await _customerSupportApi.createAnonymousIssue(
+      payload,
+      apiKey: Environment.supportApiKey,
+      deviceId: userId,
+    );
+    await _configurationService.addAnonymousIssueId([issue.issueID]);
+    return issue;
   }
 
   Future<PostedMessageResponse> commentIssue(

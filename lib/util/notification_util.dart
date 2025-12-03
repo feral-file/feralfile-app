@@ -27,10 +27,9 @@ Future<bool> registerPushNotifications({bool askPermission = false}) async {
   }
 
   try {
-    // final userId = injector<AuthService>().getUserId();
-    // TODO: Get user id
-    const userId = '';
-    await OneSignal.login(userId!);
+    final userId =
+        await injector<ConfigurationService>().getDeviceId();
+    await OneSignal.login(userId);
     if (injector<ConfigurationService>().isNotificationEnabled() &&
         OneSignal.Notifications.permission) {
       await OneSignal.User.pushSubscription.optIn();

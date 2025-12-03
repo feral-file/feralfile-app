@@ -292,24 +292,13 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
     if (_userId != null) {
       return;
     }
-    // if it is an anonymous issue, we need to get the anonymous device id
+
     final configurationService = injector<ConfigurationService>();
-    final anonymousIssueIds = configurationService.getAnonymousIssueIds();
-
-    if (anonymousIssueIds.contains(issueId)) {
-      _userId = configurationService.getAnonymousDeviceId();
-      return;
-    }
-
-
-    // TODO: Generate userID and store in configuration, then use it for this case
-    // Authentication removed - use anonymous device ID instead
-    final anonymousDeviceId =
-        injector<ConfigurationService>().getAnonymousDeviceId();
-    if (anonymousDeviceId != null && anonymousDeviceId != _userId) {
+    final deviceId = await configurationService.getDeviceId();
+    if (deviceId != _userId) {
       if (mounted) {
         setState(() {
-          _userId = anonymousDeviceId;
+          _userId = deviceId;
         });
       }
     }
