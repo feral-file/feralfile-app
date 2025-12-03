@@ -19,7 +19,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_intent.dart
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/device_info_service.dart';
-import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/tv_cast_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/view/user_agent_utils.dart' as my_device;
@@ -66,20 +65,6 @@ class CanvasClientServiceV2 {
     }
   }
 
-  Future<void> _mergeUser(
-    String oldUserId,
-  ) async {
-    try {
-      final metricClientService = injector<MetricClientService>();
-      await metricClientService.mergeUser(oldUserId);
-    } catch (e) {
-      log.info('CanvasClientService: _mergeUser error: $e');
-      unawaited(
-        Sentry.captureException('CanvasClientService: _mergeUser error: $e'),
-      );
-    }
-  }
-
   Future<ConnectReplyV2> _connect(
     BaseDevice device,
   ) async {
@@ -93,7 +78,6 @@ class CanvasClientServiceV2 {
       primaryAddress: userId ?? '',
     );
     final response = await stub.connect(request);
-    await _mergeUser(device.deviceId);
     return response;
   }
 

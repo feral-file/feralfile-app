@@ -55,7 +55,6 @@ import 'package:autonomy_flutter/service/ethereum_service.dart';
 import 'package:autonomy_flutter/service/feed_registry_service.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
 import 'package:autonomy_flutter/service/meilisearch_service.dart';
-import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/mobile_controller_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/network_issue_manager.dart';
@@ -124,7 +123,6 @@ Future<void> setupInjector() async {
     ConfigurationServiceImpl(sharedPreferences),
   );
   injector.registerLazySingleton(http.Client.new);
-  injector.registerLazySingleton<MetricClientService>(MetricClientService.new);
   injector.registerLazySingleton<CacheManager>(AUImageCacheManage.new);
 
   injector.registerLazySingleton<AddressService>(

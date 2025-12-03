@@ -224,16 +224,6 @@ class CustomerSupportInterceptor extends Interceptor {
   }
 }
 
-class MetricsInterceptor extends Interceptor {
-  @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    if (options.headers['x-api-key'] == null) {
-      options.headers['x-api-key'] = Environment.metricSecretKey;
-    }
-    handler.next(options);
-  }
-}
-
 class FeralfileAuthInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {

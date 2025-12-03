@@ -115,14 +115,6 @@ abstract class ConfigurationService {
 
   Future<void> setDoneOnboardingTime(DateTime time);
 
-  // Do at once
-
-  /// to determine a hash value of the current addresses where
-  /// the app checked for Tezos artworks
-  int? sentTezosArtworkMetricValue();
-
-  Future<void> setSentTezosArtworkMetric(int hashedAddresses);
-
   // Reload
   Future<void> reload();
 
@@ -291,10 +283,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
 
   static const String KEY_LAST_UPDATE_CHANGE_AT = 'last_update_change_at';
 
-  // Do at once
-  static const String KEY_SENT_TEZOS_ARTWORK_METRIC =
-      'sent_tezos_artwork_metric';
-
   static const String POSTCARD_MINT = 'postcard_mint';
 
   static const String KEY_RECORDED_MESSAGES = 'recorded_messages';
@@ -441,14 +429,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
 
   @override
   Future<void> removeAll() => _preferences.clear();
-
-  @override
-  int? sentTezosArtworkMetricValue() =>
-      _preferences.getInt(KEY_SENT_TEZOS_ARTWORK_METRIC);
-
-  @override
-  Future<void> setSentTezosArtworkMetric(int hashedAddresses) async =>
-      _preferences.setInt(KEY_SENT_TEZOS_ARTWORK_METRIC, hashedAddresses);
 
   @override
   String? lastRemindReviewDate() => _preferences.getString(LAST_REMIND_REVIEW);

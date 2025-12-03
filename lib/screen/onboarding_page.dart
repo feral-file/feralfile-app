@@ -19,13 +19,11 @@ import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/device_info_service.dart';
 import 'package:autonomy_flutter/service/dls_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
-import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/util/metric_helper.dart';
 import 'package:autonomy_flutter/util/notification_util.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
@@ -49,7 +47,6 @@ class OnboardingPage extends StatefulWidget {
 
 class _OnboardingPageState extends State<OnboardingPage>
     with TickerProviderStateMixin, AfterLayoutMixin<OnboardingPage> {
-  final metricClient = injector.get<MetricClientService>();
   final deepLinkService = injector.get<DeeplinkService>();
   Timer? _timer;
 
@@ -122,7 +119,6 @@ class _OnboardingPageState extends State<OnboardingPage>
     Environment.checkAllKeys();
     await DeviceInfo.instance.init();
     await injector<DeviceInfoService>().init();
-    await injector<MetricClientService>().initService();
     await injector<FFBluetoothService>().init();
     await injector<DLSService>().init();
     await injector<FeralFileFeedManager>().init();
@@ -133,8 +129,6 @@ class _OnboardingPageState extends State<OnboardingPage>
     // Count open app times
     final countOpenApp = injector<ConfigurationService>().countOpenApp() ?? 0;
     await injector<ConfigurationService>().setCountOpenApp(countOpenApp + 1);
-    unawaited(metricClient.identity());
-    unawaited(metricClient.addEvent(MetricEventName.openApp));
 
     // Set version info for user agent
     final packageInfo = await PackageInfo.fromPlatform();

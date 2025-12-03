@@ -8,7 +8,6 @@ import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_rendering/nft_rendering_widget.dart';
 import 'package:autonomy_flutter/screen/detail/royalty/royalty_bloc.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
-import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/color_extension.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
@@ -24,10 +23,10 @@ import 'package:autonomy_flutter/view/loading.dart';
 import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // String getEditionSubTitle(AssetToken token) {
@@ -350,7 +349,6 @@ class BrokenTokenWidget extends StatefulWidget {
 
 class _BrokenTokenWidgetState extends State<BrokenTokenWidget>
     with AfterLayoutMixin<BrokenTokenWidget> {
-  final metricClient = injector.get<MetricClientService>();
 
   @override
   void afterFirstLayout(BuildContext context) {}
