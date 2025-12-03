@@ -135,7 +135,7 @@ class ArtworkPreviewWidgetState extends State<ArtworkPreviewWidget>
               if (assetToken != null) {
                 return Builder(
                   builder: (context) {
-                    final previewURL = assetToken.previewUrl ?? '';
+                    final previewURL = assetToken.getPreviewUrl() ?? '';
 
                     if (previewURL.isEmpty) {
                       return NoPreviewWidget(
