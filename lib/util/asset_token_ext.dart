@@ -274,6 +274,37 @@ extension AssetTokenExtension on AssetToken {
     // Update currentOwner if 'to' address is provided
     String? newOwner = (currentOwner == meta.from) ? meta.to : currentOwner;
 
+    final ProvenanceEventType provenanceEventType;
+    if (meta.isMint()) {
+      provenanceEventType = ProvenanceEventType.mint;
+    } else if (meta.isBurn()) {
+      provenanceEventType = ProvenanceEventType.burn;
+    } else if (meta.isTransfer()) {
+      provenanceEventType = ProvenanceEventType.transfer;
+    } else {
+      Sentry.captureEvent(SentryEvent(
+        message:
+            SentryMessage('Unknown provenance event type: ${meta.toJson()}'),
+        level: SentryLevel.warning,
+      ));
+      provenanceEventType = ProvenanceEventType.unknown;
+    }
+
+    final provenanceEvent = ProvenanceEvent(
+      chain: chain,
+      eventType: provenanceEventType,
+      fromAddress: meta.from,
+      toAddress: meta.to,
+      txHash: meta.txHash,
+      timestamp: changedAt,
+    );
+
+    // check if the provenance event is already in the list
+    if (provenanceEvents?.items.any((event) => event == provenanceEvent) ??
+        false) {
+      return this;
+    }
+
     // Update owners list if needed
     PaginatedOwners? newOwners = owners;
     PaginatedProvenanceEvents? newProvenanceEvents = provenanceEvents;
@@ -317,15 +348,6 @@ extension AssetTokenExtension on AssetToken {
       newOwners = (owners?.copyWith(items: updatedOwners)) ??
           PaginatedOwners(
               items: updatedOwners, offset: 0, total: updatedOwners.length);
-
-      final provenanceEvent = ProvenanceEvent(
-        chain: chain,
-        eventType: ProvenanceEventType.transfer,
-        fromAddress: meta.from,
-        toAddress: meta.to,
-        txHash: meta.txHash,
-        timestamp: changedAt,
-      );
 
       final newProvenanceEventsItems = (provenanceEvents?.items ?? []).toList();
       newProvenanceEventsItems.add(provenanceEvent);
