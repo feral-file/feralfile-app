@@ -7,10 +7,12 @@
 
 import 'package:autonomy_flutter/onboarding/debug_overlay.dart';
 import 'package:autonomy_flutter/onboarding/onboarding_shell.dart';
+import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 
 /// Introductory onboarding page:
 /// "Explore digital art playlists"
@@ -20,11 +22,9 @@ import 'package:flutter/material.dart';
 class IntroducePage extends StatelessWidget {
   const IntroducePage({
     super.key,
-    required this.onNext,
   });
 
   /// Callback triggered when the user taps the "Next" button.
-  final VoidCallback onNext;
 
   @override
   Widget build(BuildContext context) {
@@ -55,14 +55,24 @@ class IntroducePage extends StatelessWidget {
                   ),
                 ],
               ),
-              primaryLabel: 'Next',
-              onPrimaryPressed: onNext,
-              secondaryLabel: null,
+              primaryButton: Row(
+                children: [
+                  Text('Next', style: theme.textTheme.ppMori400Black14),
+                  const SizedBox(width: 7),
+                  SvgPicture.asset('assets/images/Left.svg'),
+                ],
+              ),
+              onPrimaryPressed: () => onNext(context),
+              secondaryButton: null,
               onSecondaryPressed: null,
             ),
           ],
         ),
       ),
     );
+  }
+
+  void onNext(BuildContext context) {
+    Navigator.of(context).pushNamed(AppRouter.onboardingAddAddressPage);
   }
 }

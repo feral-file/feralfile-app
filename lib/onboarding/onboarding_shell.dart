@@ -6,6 +6,7 @@
 //
 
 import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:flutter/material.dart';
 
 /// Generic shell widget for new onboarding screens.
@@ -20,35 +21,27 @@ class OnboardingShell extends StatelessWidget {
   const OnboardingShell({
     super.key,
     required this.content,
-    required this.primaryLabel,
+    required this.primaryButton,
     required this.onPrimaryPressed,
-    this.secondaryLabel,
+    this.secondaryButton,
     this.onSecondaryPressed,
     this.showBottomProgress = true,
-    this.primaryLeading,
-    this.secondaryLeading,
   });
 
   /// Main content of the onboarding step (usually title + body + illustration).
   final Widget content;
 
   /// Label for the primary (right) button – e.g., "Next", "Finish".
-  final String primaryLabel;
+  final Widget primaryButton;
 
   /// Callback when the primary button is pressed.
   final VoidCallback onPrimaryPressed;
 
   /// Optional label for the secondary (left) button – e.g., "Add Address", "Setup FF1".
-  final String? secondaryLabel;
+  final Widget? secondaryButton;
 
   /// Optional callback for the secondary button.
   final VoidCallback? onSecondaryPressed;
-
-  /// Optional leading widget/icon for the primary button.
-  final Widget? primaryLeading;
-
-  /// Optional leading widget/icon for the secondary button.
-  final Widget? secondaryLeading;
 
   /// Whether to show the white bottom progress line.
   final bool showBottomProgress;
@@ -60,7 +53,13 @@ class OnboardingShell extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 287.94),
+          SizedBox(
+            height: 287.94,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: Image.asset('assets/images/onboarding/close.png'),
+            ),
+          ),
           Container(
               constraints: const BoxConstraints(
                 minHeight: 255.06,
@@ -77,120 +76,26 @@ class OnboardingShell extends StatelessWidget {
     // left = secondary (outline), right = primary (filled).
     return Row(
       children: [
-        if (secondaryLabel != null && onSecondaryPressed != null) ...[
-          _OnboardingOutlinedButton(
-            label: secondaryLabel!,
-            leading: secondaryLeading,
-            onPressed: onSecondaryPressed!,
+        Expanded(
+          child: CustomPrimaryButton(
+            padding: const EdgeInsets.symmetric(vertical: 11.5),
+            onTap: onPrimaryPressed,
+            child: primaryButton,
           ),
-          const SizedBox(width: 12),
-        ],
-        _OnboardingFilledButton(
-          label: primaryLabel,
-          leading: primaryLeading,
-          onPressed: onPrimaryPressed,
         ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: (secondaryButton != null && onSecondaryPressed != null)
+              ? CustomPrimaryButton(
+                  padding: const EdgeInsets.symmetric(vertical: 11.5),
+                  onTap: onSecondaryPressed,
+                  child: secondaryButton!,
+                  borderColor: AppColor.feralFileLightBlue,
+                  color: Colors.transparent,
+                )
+              : const SizedBox.shrink(),
+        )
       ],
-    );
-  }
-}
-
-class _OnboardingFilledButton extends StatelessWidget {
-  const _OnboardingFilledButton({
-    required this.label,
-    required this.onPressed,
-    this.leading,
-  });
-
-  final String label;
-  final VoidCallback onPressed;
-  final Widget? leading;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextButton(
-      style: TextButton.styleFrom(
-        backgroundColor: AppColor.feralFileLightBlue,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 8,
-        ),
-        shape: const StadiumBorder(),
-        minimumSize: const Size(146, 43),
-      ),
-      onPressed: onPressed,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (leading != null) ...[
-            leading!,
-            const SizedBox(width: 7),
-          ],
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColor.primaryBlack,
-                  fontSize: 14,
-                ),
-          ),
-          if (leading == null) ...[
-            const SizedBox(width: 7),
-            const Icon(
-              Icons.arrow_forward_rounded,
-              size: 16,
-              color: AppColor.primaryBlack,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _OnboardingOutlinedButton extends StatelessWidget {
-  const _OnboardingOutlinedButton({
-    required this.label,
-    required this.onPressed,
-    this.leading,
-  });
-
-  final String label;
-  final VoidCallback onPressed;
-  final Widget? leading;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextButton(
-      style: TextButton.styleFrom(
-        backgroundColor: Colors.transparent,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 8,
-        ),
-        shape: const StadiumBorder(),
-        minimumSize: const Size(146, 43),
-        side: const BorderSide(
-          color: AppColor.feralFileLightBlue,
-          width: 1,
-        ),
-      ),
-      onPressed: onPressed,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (leading != null) ...[
-            leading!,
-            const SizedBox(width: 7),
-          ],
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColor.feralFileLightBlue,
-                  fontSize: 14,
-                ),
-          ),
-        ],
-      ),
     );
   }
 }

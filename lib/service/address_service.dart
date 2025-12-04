@@ -52,6 +52,7 @@ class AddressService {
   Future<WalletAddress> insertAddress(
     WalletAddress address, {
     bool checkAddressDuplicated = true,
+    bool refreshPlaylist = true,
   }) async {
     log.info('Insert address: ${address.address}');
     var checkSumAddress = address.address;
@@ -69,12 +70,14 @@ class AddressService {
     }
     final newAddress = address.copyWith(address: checkSumAddress);
     await _appDataManager.addressStorageService.insertAddresses([newAddress]);
-    injector<UserAllOwnCollectionBloc>().add(ReindexAddresses(
-      addresses: [newAddress.address],
-    ));
+    if (refreshPlaylist) {
+      injector<UserAllOwnCollectionBloc>().add(ReindexAddresses(
+        addresses: [newAddress.address],
+      ));
 
-    await injector<UserDp1PlaylistService>()
-        .insertAddressesToPlaylist([newAddress.address]);
+      await injector<UserDp1PlaylistService>()
+          .insertAddressesToPlaylist([newAddress.address]);
+    }
     log.info('Inserted address: ${newAddress.address}');
     return newAddress;
   }

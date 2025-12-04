@@ -12,6 +12,7 @@ import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/release_note.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
+import 'package:autonomy_flutter/onboarding/debug_overlay.dart';
 import 'package:autonomy_flutter/screen/autonomy_security_page.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
@@ -52,6 +53,10 @@ import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_ad
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address_bloc.dart';
 import 'package:autonomy_flutter/screen/onboarding_page.dart';
 import 'package:autonomy_flutter/onboarding/introduce_page.dart';
+import 'package:autonomy_flutter/onboarding/add_address_page.dart';
+import 'package:autonomy_flutter/onboarding/setup_ff1_page.dart';
+import 'package:autonomy_flutter/onboarding/start_setup_ff1_page.dart';
+import 'package:autonomy_flutter/onboarding/add_address_input_page.dart';
 import 'package:autonomy_flutter/screen/release_note_detail_page.dart';
 import 'package:autonomy_flutter/screen/release_notes_page.dart';
 import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
@@ -76,6 +81,11 @@ class AppRouter {
   static const previewPrimerPage = 'preview_primer_page';
   static const onboardingPage = 'onboarding_page';
   static const onboardingIntroducePage = 'onboarding_introduce_page';
+  static const onboardingAddAddressPage = 'onboarding_add_address_page';
+  static const onboardingAddAddressInputPage =
+      'onboarding_add_address_input_page';
+  static const onboardingSetupFf1Page = 'onboarding_setup_ff1_page';
+  static const onboardingStartSetupFf1Page = 'onboarding_start_setup_ff1_page';
   static const nameLinkedAccountPage = 'name_linked_account_page';
   static const homePage = 'home_page';
   static const recordControllerPage = 'record_controller_page';
@@ -137,11 +147,37 @@ class AppRouter {
       case onboardingIntroducePage:
         return CupertinoPageRoute(
           settings: settings,
-          builder: (context) => IntroducePage(
-            onNext: () {
-              Navigator.of(context).pushReplacementNamed(AppRouter.homePage);
-            },
+          builder: (context) => IntroducePage(),
+        );
+
+      case onboardingAddAddressPage:
+        return CupertinoPageRoute(
+          settings: settings,
+          builder: (context) => DebugOverlay(
+            imagePath: 'assets/images/screenshots/onboarding_2.png',
+            child: const OnboardingAddAddressPage(),
           ),
+        );
+
+      case onboardingAddAddressInputPage:
+        return CupertinoPageRoute(
+          settings: settings,
+          builder: (context) => const OnboardingAddAddressInputPage(),
+        );
+
+      case onboardingSetupFf1Page:
+        return CupertinoPageRoute(
+          settings: settings,
+          builder: (context) => DebugOverlay(
+            imagePath: 'assets/images/screenshots/onboarding_3.png',
+            child: const OnboardingSetupFf1Page(),
+          ),
+        );
+
+      case onboardingStartSetupFf1Page:
+        return CupertinoPageRoute(
+          settings: settings,
+          builder: (context) => const StartSetupFf1Page(),
         );
 
       case previewPrimerPage:
