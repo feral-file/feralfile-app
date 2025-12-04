@@ -14,7 +14,6 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sentry/sentry.dart';
 
@@ -96,7 +95,6 @@ class AuFileService extends FileService {
     final tempDir = (await getTemporaryDirectory()).path;
     _saveDir = '$tempDir/$_cacheKey/';
     await Directory(_saveDir).create(recursive: true);
-    FlutterImageCompress.validator.ignoreCheckExtName = true;
     IsolateNameServer.registerPortWithName(
       _port.sendPort,
       'downloader_send_port',
@@ -141,19 +139,13 @@ class AuFileService extends FileService {
         } else {
           try {
             final originalFile = _saveDir + info.localFile;
-            final compressedFile = '${_saveDir}resized_${info.localFile}.jpeg';
-            await FlutterImageCompress.compressAndGetFile(
-              originalFile,
-              compressedFile,
-              quality: 90,
-            );
-            final isFileExists = await File(compressedFile).exists();
+            final isFileExists = await File(originalFile).exists();
             if (isFileExists) {
               await File(originalFile).delete();
               info.task.complete(
                 AuFileServiceResponse(
-                  filePath: compressedFile,
-                  fileExt: 'jpeg',
+                  filePath: originalFile,
+                  fileExt: info.fileExt,
                 ),
               );
             } else {

@@ -5,7 +5,7 @@ buildscript {
         google()  // Google's Maven repository
         gradlePluginPortal()
     }
-    ext.kotlin_version = '1.9.0'
+    ext.kotlin_version = '2.1.0'
     dependencies {
         // ...
         // OneSignal-Gradle-Plugin
@@ -21,6 +21,7 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
     id 'kotlin-kapt'
     id 'kotlin-parcelize'
+    id 'org.jetbrains.kotlin.plugin.compose'
 }
 
 def localProperties = new Properties()
@@ -98,9 +99,9 @@ android {
         compose true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.2"
-    }
+    // composeOptions {
+    //     kotlinCompilerExtensionVersion = "1.5.2"
+    // }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -158,7 +159,6 @@ android {
             pickFirsts += ['**/*.so']
         }
         resources {
-            excludes += ['META-INF/*', '**/lib/libsodiumjni.dylib']
         }
     }
 
@@ -195,8 +195,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-process:$lifecycle_version")
     implementation("com.google.code.gson:gson:2.9.1")
     implementation("com.android.installreferrer:installreferrer:2.2")
-    implementation("com.google.android.gms:play-services-ads-identifier:18.0.1")
-    implementation("com.scottyab:rootbeer-lib:0.1.0")
 
     implementation 'com.github.bumptech.glide:glide:4.12.0'
 //    kapt 'com.github.bumptech.glide:compiler:4.12.0'
