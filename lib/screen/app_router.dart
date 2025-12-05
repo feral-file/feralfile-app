@@ -12,7 +12,11 @@ import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/release_note.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
+import 'package:autonomy_flutter/onboarding/add_address_input_page.dart';
+import 'package:autonomy_flutter/onboarding/add_address_page.dart';
 import 'package:autonomy_flutter/onboarding/debug_overlay.dart';
+import 'package:autonomy_flutter/onboarding/introduce_page.dart';
+import 'package:autonomy_flutter/onboarding/setup_ff1_page.dart';
 import 'package:autonomy_flutter/screen/autonomy_security_page.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
@@ -33,7 +37,7 @@ import 'package:autonomy_flutter/screen/device_setting/connect_ff1_page.dart';
 import 'package:autonomy_flutter/screen/device_setting/enter_wifi_password.dart';
 import 'package:autonomy_flutter/screen/device_setting/now_displaying_page.dart';
 import 'package:autonomy_flutter/screen/device_setting/scan_wifi_network_page.dart';
-import 'package:autonomy_flutter/screen/device_setting/start_setup_device_page.dart';
+import 'package:autonomy_flutter/screen/device_setting/start_setup_ff1_page.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
 import 'package:autonomy_flutter/screen/home/home_bloc.dart';
 import 'package:autonomy_flutter/screen/local_feed_server/add_local_feed_server.dart';
@@ -52,11 +56,6 @@ import 'package:autonomy_flutter/screen/onboarding/view_address/name_view_only_p
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address_bloc.dart';
 import 'package:autonomy_flutter/screen/onboarding_page.dart';
-import 'package:autonomy_flutter/onboarding/introduce_page.dart';
-import 'package:autonomy_flutter/onboarding/add_address_page.dart';
-import 'package:autonomy_flutter/onboarding/setup_ff1_page.dart';
-import 'package:autonomy_flutter/onboarding/start_setup_ff1_page.dart';
-import 'package:autonomy_flutter/onboarding/add_address_input_page.dart';
 import 'package:autonomy_flutter/screen/release_note_detail_page.dart';
 import 'package:autonomy_flutter/screen/release_notes_page.dart';
 import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
@@ -85,7 +84,6 @@ class AppRouter {
   static const onboardingAddAddressInputPage =
       'onboarding_add_address_input_page';
   static const onboardingSetupFf1Page = 'onboarding_setup_ff1_page';
-  static const onboardingStartSetupFf1Page = 'onboarding_start_setup_ff1_page';
   static const nameLinkedAccountPage = 'name_linked_account_page';
   static const homePage = 'home_page';
   static const recordControllerPage = 'record_controller_page';
@@ -171,15 +169,6 @@ class AppRouter {
           builder: (context) => DebugOverlay(
             imagePath: 'assets/images/screenshots/onboarding_3.png',
             child: const OnboardingSetupFf1Page(),
-          ),
-        );
-
-      case onboardingStartSetupFf1Page:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => DebugOverlay(
-            child: const StartSetupFf1Page(),
-            imagePath: 'assets/images/screenshots/FF1_Setup_01.png',
           ),
         );
 
@@ -415,7 +404,7 @@ class AppRouter {
         final payload = settings.arguments! as BluetoothDevicePortalPagePayload;
         return CupertinoPageRoute(
           settings: settings,
-          builder: (context) => BluetoothDevicePortalPage(payload: payload),
+          builder: (context) => StartSetupFf1Page(payload: payload),
         );
 
       case scanWifiNetworkPage:

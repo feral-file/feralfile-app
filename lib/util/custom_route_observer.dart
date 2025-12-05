@@ -32,7 +32,6 @@ final listRouteShouldNotShowNowDisplaying = [
   AppRouter.releaseNoteDetailPage,
   AppRouter.connectFF1,
   AppRouter.onboardingIntroducePage,
-  AppRouter.onboardingStartSetupFf1Page,
   AppRouter.onboardingSetupFf1Page,
   AppRouter.onboardingAddAddressPage,
   AppRouter.onboardingAddAddressInputPage,

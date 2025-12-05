@@ -30,11 +30,9 @@ abstract class DeeplinkService {
 
 class DeeplinkServiceImpl extends DeeplinkService {
   DeeplinkServiceImpl(
-    this._configurationService,
     this._navigationService,
   );
 
-  final ConfigurationService _configurationService;
   final NavigationService _navigationService;
 
   final Map<String, bool> _deepLinkHandlingMap = {};
@@ -106,8 +104,6 @@ class DeeplinkServiceImpl extends DeeplinkService {
 
       log.info('[DeeplinkService] handlerType $handlerType');
       switch (handlerType) {
-        case DeepLinkHandlerType.navigation:
-          await _handleNavigationDeeplink(link);
         case DeepLinkHandlerType.bluetoothConnect:
           await _handleBluetoothConnectDeeplink(
             link,
@@ -122,23 +118,6 @@ class DeeplinkServiceImpl extends DeeplinkService {
       // this function is called in onFinishDeeplink, so we don't need to call it here
       // _deepLinkHandlingMap.remove(link);
     });
-  }
-
-  Future<bool> _handleNavigationDeeplink(String link) async {
-    log.info('[DeeplinkService] _handleNavigationDeeplink');
-
-    final navigationPrefixes = [
-      'feralfile://navigation/',
-    ];
-
-    final callingNavigationPrefix = navigationPrefixes
-        .firstWhereOrNull((prefix) => link.startsWith(prefix));
-    if (callingNavigationPrefix != null) {
-      final navigationPath = link.replaceFirst(callingNavigationPrefix, '');
-      await _navigationService.navigatePath(navigationPath);
-      return true;
-    }
-    return false;
   }
 
   Future<void> _handleBluetoothConnectDeeplink(
@@ -170,17 +149,11 @@ class DeeplinkServiceImpl extends DeeplinkService {
 }
 
 enum DeepLinkHandlerType {
-  navigation,
   bluetoothConnect,
   unknown,
   ;
 
   static DeepLinkHandlerType fromString(String value) {
-    if (Constants.navigationPrefixes
-        .any((prefix) => value.startsWith(prefix))) {
-      return DeepLinkHandlerType.navigation;
-    }
-
     if (Constants.bluetoothConnectDeepLinks
         .any((prefix) => value.startsWith(prefix))) {
       return DeepLinkHandlerType.bluetoothConnect;
