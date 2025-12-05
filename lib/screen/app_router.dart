@@ -177,7 +177,10 @@ class AppRouter {
       case onboardingStartSetupFf1Page:
         return CupertinoPageRoute(
           settings: settings,
-          builder: (context) => const StartSetupFf1Page(),
+          builder: (context) => DebugOverlay(
+            child: const StartSetupFf1Page(),
+            imagePath: 'assets/images/screenshots/FF1_Setup_01.png',
+          ),
         );
 
       case previewPrimerPage:

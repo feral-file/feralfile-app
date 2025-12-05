@@ -39,9 +39,11 @@ AppBar getBackAppBar(
         statusBarBrightness: isWhite ? Brightness.light : Brightness.dark),
     centerTitle: true,
     scrolledUnderElevation: 0,
+    toolbarHeight: 54,
     leading: onBack != null
         ? backButton(context, onBack: onBack, color: primaryColor)
         : const SizedBox(width: 56),
+    leadingWidth: 56,
     automaticallyImplyLeading: false,
     title: Text(
       title,
@@ -424,7 +426,7 @@ AppBar getFFAppBar(
           statusBarIconBrightness: Brightness.light,
           statusBarBrightness: Brightness.dark),
       centerTitle: centerTitle,
-      toolbarHeight: 66,
+      toolbarHeight: 56,
       scrolledUnderElevation: 0,
       leading: onBack != null
           ? Semantics(

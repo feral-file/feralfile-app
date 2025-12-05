@@ -7,6 +7,7 @@
 
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -20,73 +21,46 @@ class StartSetupFf1Page extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       backgroundColor: AppColor.auGreyBackground,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 44),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _Header(onBack: () => Navigator.of(context).pop()),
-              const SizedBox(height: 32),
-              _HeroIllustration(),
-              const SizedBox(height: 40),
-              _BodyCopy(theme: theme),
-              const Spacer(),
-              _StartButton(
+      appBar: getBackAppBar(
+        context,
+        onBack: () {
+          Navigator.of(context).pop();
+        },
+        title: 'Setup FF1',
+        isWhite: false,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 44),
+        child: Stack(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // const SizedBox(height: 49),
+                // const SizedBox(height: 54),
+                const SizedBox(height: 64.48),
+                _HeroIllustration(),
+                const SizedBox(height: 64.48),
+                _BodyCopy(theme: Theme.of(context)),
+                const Spacer(),
+                const SizedBox(height: 32),
+                const SizedBox(height: 16),
+              ],
+            ),
+            Positioned(
+              bottom: 83,
+              left: 0,
+              right: 0,
+              child: _StartButton(
                 onPressed: () {
                   // TODO(feralfile): Wire up navigation into FF1 device setup flow.
                 },
               ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            ),
+          ],
         ),
-      ),
-    );
-  }
-}
-
-class _Header extends StatelessWidget {
-  const _Header({required this.onBack});
-
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return SizedBox(
-      height: 48,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: onBack,
-              child: const Padding(
-                padding: EdgeInsets.all(8),
-                child: Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  size: 18,
-                  color: AppColor.white,
-                ),
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.center,
-            child: Text(
-              'Setup FF1',
-              style: theme.textTheme.ppMori400White16,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -100,7 +74,7 @@ class _HeroIllustration extends StatelessWidget {
         height: 247,
         width: 305,
         child: SvgPicture.asset(
-          'assets/images/FF1.svg',
+          'assets/images/ff1_case.svg',
           fit: BoxFit.contain,
         ),
       ),
@@ -145,7 +119,7 @@ class _StartButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CustomPrimaryButton(
-      padding: const EdgeInsets.symmetric(vertical: 11.5),
+      padding: const EdgeInsets.only(top: 13, bottom: 10),
       color: AppColor.white,
       onTap: onPressed,
       child: Row(
@@ -153,6 +127,7 @@ class _StartButton extends StatelessWidget {
         children: [
           Text(
             'Start FF1 Setup',
+            style: Theme.of(context).textTheme.ppMori400Black14,
           ),
         ],
       ),

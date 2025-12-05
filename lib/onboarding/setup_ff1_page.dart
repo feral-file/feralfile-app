@@ -9,6 +9,7 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/onboarding/onboarding_shell.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
+import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:flutter/material.dart';
@@ -92,7 +93,11 @@ class OnboardingSetupFf1Page extends StatelessWidget {
   }
 
   void onLearnMore(BuildContext context) {
-    final uri = Uri.parse('https://feralfile.com/ff1');
+    final url = injector<RemoteConfigService>().getConfig<String>(
+        ConfigGroup.documentation,
+        ConfigKey.docsUrl,
+        'https://docs.feralfile.com/ff1?from=app');
+    final uri = Uri.parse(url);
     injector<NavigationService>().openUrl(uri);
   }
 }

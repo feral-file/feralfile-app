@@ -55,10 +55,6 @@ class OnboardingShell extends StatelessWidget {
         children: [
           SizedBox(
             height: 287.94,
-            child: GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
-              child: Image.asset('assets/images/onboarding/close.png'),
-            ),
           ),
           Container(
               constraints: const BoxConstraints(
