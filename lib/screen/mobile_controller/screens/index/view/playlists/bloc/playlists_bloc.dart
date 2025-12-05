@@ -4,7 +4,6 @@ import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
-import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:flutter/foundation.dart';
@@ -107,21 +106,9 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     required Emitter<PlaylistsState> emit,
     required String? cursor,
   }) async {
-    final dynamicQuery = injector<UserDp1PlaylistService>()
-        .cachedAllOwnedPlaylist
-        .firstDynamicQuery;
-    if (dynamicQuery == null) {
-      return LoadPlaylistPaginationResponse(
-        playlistData: [],
-        hasMore: false,
-        cursor: null,
-      );
-    }
-    final owners = dynamicQuery.params.owners;
     final allAddresses =
         await injector<AddressService>().getAllWalletAddresses();
-    final addresses =
-        allAddresses.where((e) => owners.contains(e.address)).toList();
+    final addresses = allAddresses.toList();
 
     final start = int.tryParse(cursor ?? '0') ?? 0;
     final end = start + pageSize;

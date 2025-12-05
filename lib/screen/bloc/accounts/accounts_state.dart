@@ -5,6 +5,9 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'dart:async';
+import 'dart:ui';
+
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/util/log.dart';
 
@@ -20,6 +23,14 @@ class ChangeAccountOrderEvent extends AccountsEvent {
 }
 
 class FetchAllAddressesEvent extends AccountsEvent {}
+
+class DeleteAddressEvent extends AccountsEvent {
+  DeleteAddressEvent(this.address, {this.onSuccess, this.onError});
+
+  final WalletAddress address;
+  final FutureOr<void> Function()? onSuccess;
+  final FutureOr<void> Function(Object error, StackTrace? stackTrace)? onError;
+}
 
 class GetAccountBalanceEvent extends AccountsEvent {
   GetAccountBalanceEvent(this.addresses);

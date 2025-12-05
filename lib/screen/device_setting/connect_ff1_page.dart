@@ -283,7 +283,7 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: getDarkEmptyAppBar(),
-      backgroundColor: AppColor.primaryBlack,
+      backgroundColor: AppColor.auGreyBackground,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),

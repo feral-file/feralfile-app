@@ -11,12 +11,10 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
-import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/exception.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/wallet_storage_ext.dart';
-import 'package:easy_localization/easy_localization.dart';
 
 class AddressService {
   AddressService(this._appDataManager);
@@ -52,6 +50,7 @@ class AddressService {
   Future<WalletAddress> insertAddress(
     WalletAddress address, {
     bool checkAddressDuplicated = true,
+    bool refreshPlaylist = true,
   }) async {
     log.info('Insert address: ${address.address}');
     var checkSumAddress = address.address;
@@ -61,20 +60,20 @@ class AddressService {
     }
     log.info('Check sum address: $checkSumAddress');
     if (checkAddressDuplicated) {
-      final walletAddress = _appDataManager.addressStorageService.getAllAddresses();
+      final walletAddress =
+          _appDataManager.addressStorageService.getAllAddresses();
       if (walletAddress.any((element) => element.address == checkSumAddress)) {
         log.info('Address already exists: $checkSumAddress');
-        throw LinkAddressException(message: 'already_imported_address'.tr());
+        throw AddAddressException(type: AddAddressExceptionType.alreadyAdded);
       }
     }
     final newAddress = address.copyWith(address: checkSumAddress);
     await _appDataManager.addressStorageService.insertAddresses([newAddress]);
-    injector<UserAllOwnCollectionBloc>().add(ReindexAddresses(
-      addresses: [newAddress.address],
-    ));
-
-    await injector<UserDp1PlaylistService>()
-        .insertAddressesToPlaylist([newAddress.address]);
+    if (refreshPlaylist) {
+      injector<UserAllOwnCollectionBloc>().add(ReindexAddresses(
+        addresses: [newAddress.address],
+      ));
+    }
     log.info('Inserted address: ${newAddress.address}');
     return newAddress;
   }
@@ -85,8 +84,6 @@ class AddressService {
 
   Future<void> deleteAddress(WalletAddress address) async {
     await _appDataManager.addressStorageService.deleteAddress(address);
-    await injector<UserDp1PlaylistService>()
-        .removeAddressesFromPlaylist([address.address]);
     log.info('Deleted address: ${address.address}');
   }
 
@@ -96,18 +93,10 @@ class AddressService {
   }) async {
     await Future.wait(
       addresses.map(
-        (e) => _appDataManager.addressStorageService.setAddressIsHidden(e, isHidden),
+        (e) => _appDataManager.addressStorageService
+            .setAddressIsHidden(e, isHidden),
       ),
     );
-    if (isHidden) {
-      // remove from playlist
-      await injector<UserDp1PlaylistService>()
-          .removeAddressesFromPlaylist(addresses);
-    } else {
-      // add to playlist
-      await injector<UserDp1PlaylistService>()
-          .insertAddressesToPlaylist(addresses);
-    }
   }
 
   Future<WalletAddress> nameAddress(WalletAddress address, String name) async {

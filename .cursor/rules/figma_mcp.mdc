@@ -18,6 +18,11 @@ Generate Flutter widgets directly from Figma nodes with pixel-accurate layout an
 - Extract properties strictly from Figma. Do not infer or add unspecified styles.
 - Preserve exact dimensions/positions when provided by the design.
 - Avoid hardcoding width and height in general layouts; only apply fixed sizes to images, icons, and logos.
+- Export raster/vector assets to Flutter `assets` using this structure:
+  - Save all SVG assets into `assets/images`.
+  - Save base-resolution PNG assets into `assets/images`.
+  - Save 2x PNG variants into `assets/images/2x`.
+  - Save 3x PNG variants into `assets/images/3x`.
 - Use built design tokens from `/lib/design/build` and `/lib/design/build/components`. If no token exists and Figma specifies a concrete value, use that value; otherwise, omit the style.
 - Variable linking: when a Figma Variable is linked for these properties — width, height, gap, padding, margin, fontSize, fontWeight, fontFamily, lineHeight, letterSpacing, color, backgroundColor, borderRadius, borderWidth, borderColor, opacity, boxShadow — map to design tokens first; if none, use the explicit Figma value. If no variable/value is specified, skip.
 - Do not introduce responsive patterns beyond what the design specifies. Follow constraints and safe areas as appropriate for Flutter.

@@ -369,7 +369,8 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold> {
             Overlay(
               initialEntries: [
                 OverlayEntry(
-                  builder: (context) => NotificationListener<UserScrollNotification>(
+                  builder: (context) =>
+                      NotificationListener<UserScrollNotification>(
                     onNotification: (notification) {
                       _handleScrollUpdate(notification);
                       return false; // Allow the notification to continue to be dispatched

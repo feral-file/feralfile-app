@@ -249,7 +249,6 @@ Future<void> setupInjector() async {
   injector.registerLazySingleton<DeeplinkService>(
     () => DeeplinkServiceImpl(
       injector(),
-      injector(),
     ),
   );
 
@@ -407,7 +406,7 @@ Future<void> setupInjector() async {
 
   // User playlist service (DP1)
   injector.registerLazySingleton<UserDp1PlaylistService>(
-    () => UserDp1PlaylistService(injector(), injector()),
+    () => UserDp1PlaylistService(),
   );
 
   // MeiliSearch SDK Service (using official SDK)

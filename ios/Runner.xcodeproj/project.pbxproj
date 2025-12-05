@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -13,7 +13,6 @@
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		58B2C4F12CFDBC0900FD14C5 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 58B2C4F02CFDBBF300FD14C5 /* libsqlite3.tbd */; };
 		58B371672D014747005A2188 /* Constant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58B371602D014747005A2188 /* Constant.swift */; };
-		58B3716F2D0153EB005A2188 /* URKit in Frameworks */ = {isa = PBXBuildFile; productRef = 58B3716E2D0153EB005A2188 /* URKit */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		7F1B982E2D19515000D9B5D0 /* LibWally.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7F1B975F2D15827200D9B5D0 /* LibWally.xcframework */; };
 		7F1B982F2D19515000D9B5D0 /* LibWally.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 7F1B975F2D15827200D9B5D0 /* LibWally.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -136,6 +135,8 @@
 		};
 		7FEC118E2D00485900FA7563 /* model */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = model;
 			sourceTree = "<group>";
 		};
@@ -153,7 +154,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				58B3716F2D0153EB005A2188 /* URKit in Frameworks */,
 				58B2C4F12CFDBC0900FD14C5 /* libsqlite3.tbd in Frameworks */,
 				D7E06ED089DD033803E83AAA /* Pods_Runner.framework in Frameworks */,
 				7F1B982E2D19515000D9B5D0 /* LibWally.xcframework in Frameworks */,
@@ -178,13 +178,6 @@
 				331C807B294A618700263BE5 /* RunnerTests.swift */,
 			);
 			path = RunnerTests;
-			sourceTree = "<group>";
-		};
-		58B371632D014747005A2188 /* model */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = model;
 			sourceTree = "<group>";
 		};
 		7F7694702D02B7300085C68C /* Recovered References */ = {
@@ -250,7 +243,6 @@
 			isa = PBXGroup;
 			children = (
 				58B371602D014747005A2188 /* Constant.swift */,
-				58B371632D014747005A2188 /* model */,
 				589279912CFFF88E00AB2134 /* Runner.entitlements */,
 				97C146FA1CF9000F007C117D /* Main.storyboard */,
 				97C146FD1CF9000F007C117D /* Assets.xcassets */,
@@ -391,9 +383,6 @@
 				Base,
 			);
 			mainGroup = 97C146E51CF9000F007C117D;
-			packageReferences = (
-				58B371692D014CEC005A2188 /* XCRemoteSwiftPackageReference "URKit" */,
-			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 97C146EF1CF9000F007C117D /* Products */;
 			projectDirPath = "";
@@ -464,12 +453,8 @@
 			);
 			inputFileListPaths = (
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -514,12 +499,8 @@
 			);
 			inputFileListPaths = (
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2307,25 +2288,6 @@
 			defaultConfigurationName = "Release-production";
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		58B371692D014CEC005A2188 /* XCRemoteSwiftPackageReference "URKit" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/BlockchainCommons/URKit";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 7.5.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		58B3716E2D0153EB005A2188 /* URKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 58B371692D014CEC005A2188 /* XCRemoteSwiftPackageReference "URKit" */;
-			productName = URKit;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 97C146E61CF9000F007C117D /* Project object */;
 }

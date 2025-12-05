@@ -94,26 +94,19 @@ class HomePageHelper {
     _collectionRefreshTimer =
         Timer.periodic(const Duration(seconds: 60), (_) async {
       try {
-        final allOwnedPlaylist =
-            injector<UserDp1PlaylistService>().cachedAllOwnedPlaylist;
-        final dynamicQuery = allOwnedPlaylist.firstDynamicQuery;
-        if (dynamicQuery != null) {
-          final owners = dynamicQuery.params.owners;
-          // filter out addresses that have not been indexed
-          final lastIndexedTime = injector<UserDp1PlaylistService>()
-              .getAddressOldestLastIndexTime(addresses: owners);
-          final addressesToRefresh =
-              owners.where((e) => lastIndexedTime[e] != null).toList();
-          log.info('Refreshing tokens for: ${addressesToRefresh}');
-          if (addressesToRefresh.isEmpty) {
-            log.info('No addresses to refresh');
-            return;
-          }
-          injector<UserAllOwnCollectionBloc>()
-              .add(UpdateTokensOfAddresses(addresses: addressesToRefresh));
-        } else {
-          log.info('No dynamic query found');
+        final owners = injector<AddressService>().getAllAddresses();
+        // filter out addresses that have not been indexed
+        final lastIndexedTime = injector<UserDp1PlaylistService>()
+            .getAddressOldestLastIndexTime(addresses: owners);
+        final addressesToRefresh =
+            owners.where((e) => lastIndexedTime[e] != null).toList();
+        log.info('Refreshing tokens for: ${addressesToRefresh}');
+        if (addressesToRefresh.isEmpty) {
+          log.info('No addresses to refresh');
+          return;
         }
+        injector<UserAllOwnCollectionBloc>()
+            .add(UpdateTokensOfAddresses(addresses: addressesToRefresh));
       } catch (e) {
         log.info('Error in refresh tokens : $e');
         unawaited(Sentry.captureEvent(SentryEvent(

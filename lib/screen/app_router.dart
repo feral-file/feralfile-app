@@ -12,6 +12,11 @@ import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/release_note.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
+import 'package:autonomy_flutter/onboarding/add_address_input_page.dart';
+import 'package:autonomy_flutter/onboarding/add_address_page.dart';
+import 'package:autonomy_flutter/onboarding/debug_overlay.dart';
+import 'package:autonomy_flutter/onboarding/introduce_page.dart';
+import 'package:autonomy_flutter/onboarding/setup_ff1_page.dart';
 import 'package:autonomy_flutter/screen/autonomy_security_page.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
@@ -32,7 +37,7 @@ import 'package:autonomy_flutter/screen/device_setting/connect_ff1_page.dart';
 import 'package:autonomy_flutter/screen/device_setting/enter_wifi_password.dart';
 import 'package:autonomy_flutter/screen/device_setting/now_displaying_page.dart';
 import 'package:autonomy_flutter/screen/device_setting/scan_wifi_network_page.dart';
-import 'package:autonomy_flutter/screen/device_setting/start_setup_device_page.dart';
+import 'package:autonomy_flutter/screen/device_setting/start_setup_ff1_page.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
 import 'package:autonomy_flutter/screen/home/home_bloc.dart';
 import 'package:autonomy_flutter/screen/local_feed_server/add_local_feed_server.dart';
@@ -69,11 +74,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:page_transition/page_transition.dart';
 
-bool shouldShowOverlay = kDebugMode && Platform.isIOS && false;
+bool shouldShowOverlay = kDebugMode && Platform.isIOS;
 
 class AppRouter {
   static const previewPrimerPage = 'preview_primer_page';
   static const onboardingPage = 'onboarding_page';
+  static const onboardingIntroducePage = 'onboarding_introduce_page';
+  static const onboardingAddAddressPage = 'onboarding_add_address_page';
+  static const onboardingAddAddressInputPage =
+      'onboarding_add_address_input_page';
+  static const onboardingSetupFf1Page = 'onboarding_setup_ff1_page';
   static const nameLinkedAccountPage = 'name_linked_account_page';
   static const homePage = 'home_page';
   static const recordControllerPage = 'record_controller_page';
@@ -132,6 +142,36 @@ class AppRouter {
           builder: (context) => const OnboardingPage(),
         );
 
+      case onboardingIntroducePage:
+        return CupertinoPageRoute(
+          settings: settings,
+          builder: (context) => IntroducePage(),
+        );
+
+      case onboardingAddAddressPage:
+        return CupertinoPageRoute(
+          settings: settings,
+          builder: (context) => DebugOverlay(
+            imagePath: 'assets/images/screenshots/onboarding_2.2.png',
+            child: const OnboardingAddAddressPage(),
+          ),
+        );
+
+      case onboardingAddAddressInputPage:
+        return CupertinoPageRoute(
+          settings: settings,
+          builder: (context) => const OnboardingAddAddressInputPage(),
+        );
+
+      case onboardingSetupFf1Page:
+        return CupertinoPageRoute(
+          settings: settings,
+          builder: (context) => DebugOverlay(
+            imagePath: 'assets/images/screenshots/onboarding_3.png',
+            child: const OnboardingSetupFf1Page(),
+          ),
+        );
+
       case previewPrimerPage:
         return PageTransition(
           type: PageTransitionType.fade,
@@ -159,7 +199,9 @@ class AppRouter {
               BlocProvider.value(value: canvasDeviceBloc),
               BlocProvider.value(value: subscriptionBloc),
             ],
-            child: const MobileControllerHomePage(),
+            child: DebugOverlay(
+                child: const MobileControllerHomePage(),
+                imagePath: 'assets/images/screenshots/No_Scroll.png'),
           ),
         );
 
@@ -364,7 +406,7 @@ class AppRouter {
         final payload = settings.arguments! as BluetoothDevicePortalPagePayload;
         return CupertinoPageRoute(
           settings: settings,
-          builder: (context) => BluetoothDevicePortalPage(payload: payload),
+          builder: (context) => StartSetupFf1Page(payload: payload),
         );
 
       case scanWifiNetworkPage:

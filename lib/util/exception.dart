@@ -1,6 +1,27 @@
-class LinkAddressException implements Exception {
-  LinkAddressException({required this.message});
-  final String message;
+enum AddAddressExceptionType {
+  invalidAddress,
+  alreadyAdded,
+  other;
+
+  String get message {
+    switch (this) {
+      case AddAddressExceptionType.invalidAddress:
+        return 'Invalid address';
+      case AddAddressExceptionType.alreadyAdded:
+        return 'Address already added';
+      case AddAddressExceptionType.other:
+        return 'Other error';
+    }
+  }
+}
+
+class AddAddressException implements Exception {
+  AddAddressException({
+    required this.type,
+  });
+  final AddAddressExceptionType type;
+
+  String get message => type.message;
 }
 
 class ErrorBindingException implements Exception {

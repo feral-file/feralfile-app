@@ -478,7 +478,7 @@ class QRScanViewState extends State<QRScanView>
       return const SizedBox();
     }
     return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 70),
         child: SingleChildScrollView(
           child: SplittedBanner(
               headerWidget: _instructionHeader(context),

@@ -20,7 +20,7 @@ class ViewExistingAddressState {
   final bool isError;
   final String? domain;
   final CryptoType? type;
-  final LinkAddressException? exception;
+  final AddAddressException? exception;
   final bool isAddConnectionLoading;
 
   // constructor
@@ -41,7 +41,7 @@ class ViewExistingAddressState {
     bool? isError,
     String? domain,
     CryptoType? type,
-    LinkAddressException? exception,
+    AddAddressException? exception,
     bool? isAddConnectionLoading,
   }) =>
       ViewExistingAddressState(

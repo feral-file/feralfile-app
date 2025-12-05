@@ -52,7 +52,7 @@ class ViewExistingAddressBloc
           walletAddress,
         );
         emit(ViewExistingAddressSuccessState(state, connection));
-      } on LinkAddressException catch (e) {
+      } on AddAddressException catch (e) {
         emit(
           state.copyWith(
             isError: true,

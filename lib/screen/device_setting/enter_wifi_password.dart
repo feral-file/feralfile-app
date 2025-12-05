@@ -95,7 +95,7 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
         title: 'select_network'.tr(),
         isWhite: false,
       ),
-      backgroundColor: AppColor.primaryBlack,
+      backgroundColor: AppColor.auGreyBackground,
       body: SafeArea(
         child: Padding(
           padding: ResponsiveLayout.pageEdgeInsets,
@@ -114,7 +114,7 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                       children: [
                         Text(
                           widget.payload.wifiAccessPoint.ssid,
-                          style: theme.textTheme.ppMori400White14,
+                          style: theme.textTheme.ppMori400White12,
                         ),
                         const SizedBox(
                           height: 16,
@@ -122,7 +122,7 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                         PasswordTextField(
                           controller: passwordController,
                           focusNode: _passwordFocusNode,
-                          style: Theme.of(context).textTheme.ppMori400White14,
+                          style: Theme.of(context).textTheme.ppMori400White12,
                           hintText: 'password'.tr(),
                           defaultObscure: false,
                           isEnabled: !_isProcessing,
@@ -330,7 +330,7 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
 
   @override
   Widget build(BuildContext context) {
-    const backgroundColor = AppColor.auGreyBackground;
+    const backgroundColor = AppColor.primaryBlack;
     return TextField(
       focusNode: widget.focusNode,
       autocorrect: false,
