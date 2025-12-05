@@ -38,7 +38,6 @@ const DEEP_LINKS = [
   'https://autonomy.io',
   'https://au.bitmark.com',
   ...Constants.bluetoothConnectDeepLinks,
-  ...Constants.linkArtistDeepLinks,
 ];
 const WEB3_PRIMER_URL = 'https://autonomy.io/catalog/primer/';
 const COLLECTOR_RIGHTS_DEFAULT_DOCS =
@@ -135,8 +134,6 @@ const artworkSectionDivider = Divider(
 const int cellPerRowPhone = 3;
 const int cellPerRowTablet = 6;
 const double cellSpacing = 3;
-
-const Duration REFRESH_JWT_DURATION_BEFORE_EXPIRE = Duration(hours: 24);
 
 const TV_APP_STORE_URL =
     'https://play.google.com/store/apps/details?id=com.bitmark.autonomy_tv';
@@ -385,10 +382,6 @@ class Constants {
   static const bluetoothConnectDeepLinks = [
     'feralfile://device_connect',
     'https://link.feralfile.com/device_connect',
-  ];
-
-  static const linkArtistDeepLinks = [
-    'https://link.feralfile.com/linkage_token',
   ];
 
   static const navigationPrefixes = [

@@ -10,8 +10,6 @@ import 'dart:async';
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
-import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
-import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_state.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -20,7 +18,6 @@ import 'package:sentry/sentry.dart';
 class ArtworkDetailBloc extends AuBloc<ArtworkDetailEvent, ArtworkDetailState> {
   final nftTokensService = injector<NftTokensService>();
   final database = injector<IndexerDatabaseAbstract>();
-  final indexerService = injector<NftIndexerService>();
   final tokenService = injector<NftTokensService>();
 
   ArtworkDetailBloc() : super(ArtworkDetailState()) {
@@ -55,7 +52,7 @@ class ArtworkDetailBloc extends AuBloc<ArtworkDetailEvent, ArtworkDetailState> {
 
   Future<void> _indexHistory(String cid) async {
     try {
-      // await indexerService.indexTokenHistory(cid);
+      // TODO: Implement index history
     } catch (e) {
       log.info('index history error: $e');
       unawaited(

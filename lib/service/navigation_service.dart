@@ -9,15 +9,12 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/model/jwt.dart';
 import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/screen/customer_support/support_thread_page.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
-import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_ext.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
@@ -25,7 +22,6 @@ import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/custom_route_observer.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
 import 'package:autonomy_flutter/util/feral_file_custom_tab.dart';
-import 'package:autonomy_flutter/util/gesture_constrain_widget.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
@@ -63,15 +59,16 @@ class NavigationService {
   // current route
   Route<dynamic>? get currentRoute => CustomRouteObserver.currentRoute.value;
 
-  Future<dynamic>? navigateTo(String routeName, {Object? arguments}) {
+  Future<dynamic> navigateTo(String routeName, {Object? arguments}) {
     log.info('NavigationService.navigateTo: $routeName');
-    if (navigatorKey.currentState?.mounted != true ||
+    final navigatorState = navigatorKey.currentState;
+    if (navigatorState == null ||
+        !navigatorState.mounted ||
         navigatorKey.currentContext == null) {
-      return null;
+      return Future.value(null);
     }
 
-    return navigatorKey.currentState
-        ?.pushNamed(routeName, arguments: arguments);
+    return navigatorState.pushNamed(routeName, arguments: arguments);
   }
 
   Future<dynamic>? popAndPushNamed(String routeName, {Object? arguments}) {
@@ -83,6 +80,20 @@ class NavigationService {
 
     return navigatorKey.currentState
         ?.popAndPushNamed(routeName, arguments: arguments);
+  }
+
+  // create a function to replace all current route and push a new route
+  Future<dynamic>? replaceAllAndPushNamed(String routeName,
+      {Object? arguments}) {
+    log.info('NavigationService.replaceAllAndPushNamed: $routeName');
+    if (navigatorKey.currentState?.mounted != true ||
+        navigatorKey.currentContext == null) {
+      return null;
+    }
+    // Pop all routes and push a new one
+    return navigatorKey.currentState?.pushNamedAndRemoveUntil(
+        routeName, (route) => false,
+        arguments: arguments);
   }
 
   Future<dynamic>? navigateUntil(
@@ -327,15 +338,15 @@ class NavigationService {
 
   Future<void> showCannotConnectToBluetoothDevice(
     BluetoothDevice device,
-    Object? error,
+    Object? _error,
   ) async {
     hideInfoDialog();
     if (navigatorKey.currentContext != null &&
         navigatorKey.currentState?.mounted == true) {
       await UIHelper.showInfoDialog(
         context,
-        'Can not connect to ${device.getName}',
-        'Error: ${error}',
+        'Unable to connect to ${device.getName}.',
+        'Check the Bluetooth connection and try again.',
         onClose: () => UIHelper.hideInfoDialog(context),
       );
     }
@@ -443,247 +454,12 @@ class NavigationService {
     await _browser.openUrl(uri.toString());
   }
 
-  Future<void> showBackupRecoveryPhraseDialog() async {
-    if (context.mounted) {
-      await UIHelper.showCenterSheet(
-        context,
-        content: PopScope(
-          canPop: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SelectableText(
-                  'upgrade_required'.tr(),
-                  style: Theme.of(context).textTheme.ppMori700White24,
-                ),
-                const SizedBox(height: 50),
-                SelectableText(
-                  'your_device_not_support_passkey_desc'.tr(),
-                  style: Theme.of(context).textTheme.ppMori400White14,
-                ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.only(left: 20),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '1. ',
-                        style: Theme.of(context).textTheme.ppMori400White14,
-                      ),
-                      Expanded(
-                        child: SelectableText(
-                          'step_1_backup_recovery'.tr(),
-                          style: Theme.of(context).textTheme.ppMori400White14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Padding(
-                  padding: const EdgeInsets.only(left: 20),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '2. ',
-                        style: Theme.of(context).textTheme.ppMori400White14,
-                      ),
-                      Expanded(
-                        child: SelectableText(
-                          'step_2_move_to_another_wallet'.tr(),
-                          style: Theme.of(context).textTheme.ppMori400White14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Column(
-                  children: [
-                    PrimaryButton(
-                      text: 'backup_recovery_phrase'.tr(),
-                      onTap: () {
-                        navigateTo(
-                          AppRouter.recoveryPhrasePage,
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    GestureDetector(
-                      child: GestureConstrainWidget(
-                        child: Text(
-                          'need_help'.tr(),
-                          style: Theme.of(context)
-                              .textTheme
-                              .ppMori400White14
-                              .copyWith(
-                                color: AppColor.auQuickSilver,
-                                decoration: TextDecoration.underline,
-                              ),
-                        ),
-                      ),
-                      onTap: () {
-                        navigateTo(
-                          AppRouter.supportThreadPage,
-                          arguments: NewIssuePayload(
-                            reportIssueType: ReportIssueType.Bug,
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-        backgroundColor: AppColor.auGreyBackground,
-        withExitButton: false,
-        verticalPadding: 0,
-      );
-    }
-  }
-
-  Future<void> showAuthenticationUpdateRequired() async {
-    await UIHelper.showCenterSheet(
-      context,
-      content: PopScope(
-        canPop: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'authentication_update_required'.tr(),
-                style: Theme.of(context).textTheme.ppMori700White24,
-              ),
-              const SizedBox(height: 50),
-              Text(
-                Platform.isAndroid
-                    ? 'authentication_update_required_desc_android'.tr()
-                    : 'authentication_update_required_desc_ios'.tr(),
-                style: Theme.of(context).textTheme.ppMori400White14,
-              ),
-              const SizedBox(height: 20),
-              Column(
-                children: [
-                  PrimaryButton(
-                    text: 'go_to_settings'.tr(),
-                    onTap: () {
-                      openAuthenticationSettings();
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  GestureDetector(
-                    child: GestureConstrainWidget(
-                      child: Text(
-                        'need_help'.tr(),
-                        style: Theme.of(context)
-                            .textTheme
-                            .ppMori400White14
-                            .copyWith(
-                              color: AppColor.auQuickSilver,
-                              decoration: TextDecoration.underline,
-                            ),
-                      ),
-                    ),
-                    onTap: () {
-                      navigateTo(
-                        AppRouter.supportThreadPage,
-                        arguments: NewIssuePayload(
-                          reportIssueType: ReportIssueType.Bug,
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-      backgroundColor: AppColor.auGreyBackground,
-      withExitButton: false,
-      verticalPadding: 0,
-    );
-  }
-
-  Future<JWT?> showRefreshJwtFailedDialog({
-    required Future<JWT> Function() onRetry,
-  }) async {
-    log.info('showRefreshJwtFailedDialog');
-    final res = await UIHelper.showCustomDialog<JWT>(
-      context: context,
-      child: PopScope(
-        canPop: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'session_expired'.tr(),
-              style: Theme.of(context).textTheme.ppMori700White24,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'session_expired_desc'.tr(),
-              style: Theme.of(context).textTheme.ppMori400White14,
-            ),
-            const SizedBox(height: 20),
-            PrimaryButton(
-              text: 'sign_in'.tr(),
-              onTap: () async {
-                final jwt = await onRetry();
-                if (context.mounted) {
-                  Navigator.pop(context, jwt);
-                }
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-    return res;
-  }
-
   void openGoogleChatSpace() {
     _browser.openUrl(googleChatSpaceUrl);
   }
 
   void openFF1GroupIo() {
     _browser.openUrl(ff1GroupIoUrl);
-  }
-
-  Future<void> showLinkArtistSuccess() async {
-    if (navigatorKey.currentContext != null &&
-        navigatorKey.currentState?.mounted == true) {
-      await UIHelper.showInfoDialog(
-        context,
-        'link_artist_success'.tr(),
-        'link_artist_success_desc'.tr(),
-        onClose: () => UIHelper.hideInfoDialog(context),
-      );
-    }
-  }
-
-  Future<void> showLinkArtistFailed(Object exception) async {
-    if (navigatorKey.currentContext != null &&
-        navigatorKey.currentState?.mounted == true) {
-      await UIHelper.showInfoDialog(
-        context,
-        'link_artist_failed'.tr(),
-        'link_artist_failed_desc'.tr(
-          namedArgs: {
-            'error': exception.toString(),
-          },
-        ),
-        onClose: () => UIHelper.hideInfoDialog(context),
-      );
-    }
   }
 
   void showArtistDisplaySettingSaved() {
@@ -704,30 +480,6 @@ class NavigationService {
         'Unable to save the artwork settings. '.tr() + ' $exception',
       );
     }
-  }
-
-  Future<void>? showLinkArtistTokenNotFound() async {
-    await UIHelper.showInfoDialog(
-      context,
-      'Linking Token Expired',
-      '	The token for linking the artist has expired or is missing. Please generate a new token and try again.',
-    );
-  }
-
-  Future<void>? showLinkArtistAddressAlreadyLinked() {
-    return UIHelper.showInfoDialog(
-      context,
-      'Artist Already Linked to Another User',
-      'The artist is already linked to a different user via passkey. If you want to link this artist to a new user, please unlink the previous user first.',
-    );
-  }
-
-  Future<void>? showLinkArtistAddressNotFound() {
-    return UIHelper.showInfoDialog(
-      context,
-      'User Already Has a Linked Artist',
-      'This user already has a linked artist. If you need to link a new artist, please unlink the current one first.',
-    );
   }
 
   Future<void> showDeviceSettings({
@@ -760,51 +512,6 @@ class NavigationService {
         Navigator.pop(navigatorKey.currentContext!);
       }
     }
-  }
-
-  Future<bool> showCreateNewAccountWithExistingPasskey() async {
-    final res = await UIHelper.showCenterDialog(
-      context,
-      showHideOtherDialog: false,
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Welcome back! It looks like you’re starting fresh. Would you like to continue?',
-            style: Theme.of(context).textTheme.ppMori400White14,
-          ),
-          const SizedBox(height: 36),
-          Row(
-            children: [
-              Expanded(
-                child: PrimaryAsyncButton(
-                  text: 'cancel'.tr(),
-                  textColor: AppColor.white,
-                  color: Colors.transparent,
-                  borderColor: AppColor.white,
-                  onTap: () {
-                    injector<NavigationService>().goBack(result: false);
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: PrimaryAsyncButton(
-                  text: 'OK',
-                  textColor: AppColor.white,
-                  borderColor: AppColor.white,
-                  color: Colors.transparent,
-                  onTap: () async {
-                    injector<NavigationService>().goBack(result: true);
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-    return (res is bool) ? res : false;
   }
 
   Future<void> showThePortalIsSet(

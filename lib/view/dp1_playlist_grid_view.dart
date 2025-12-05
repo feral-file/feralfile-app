@@ -7,6 +7,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/pla
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
@@ -44,7 +45,7 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
   void initState() {
     super.initState();
     _playlistDetailsBloc = PlaylistDetailsBloc(playlist: widget.playlist);
-    _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
+    _playlistDetailsBloc.add(LoadMorePlaylistDetailsEvent());
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
   }
@@ -109,7 +110,8 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
               SliverToBoxAdapter(
                 child: _loadingView(context),
               )
-            else if (state.nowDisplayingItems.isEmpty)
+            else if (state.nowDisplayingItems.isEmpty &&
+                state is! PlaylistDetailsLoadingMoreState)
               SliverToBoxAdapter(
                 child: _emptyView(context),
               )

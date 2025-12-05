@@ -4,25 +4,25 @@ abstract class PlaylistDetailsState {
   const PlaylistDetailsState({
     required this.nowDisplayingItems,
     required this.hasMore,
-    required this.currentPage,
+    required this.offset,
   });
   final List<DP1NowDisplayingItem> nowDisplayingItems;
   final bool hasMore;
-  final int currentPage;
+  final int offset;
 
   PlaylistDetailsState copyWith({
     List<DP1NowDisplayingItem>? nowDisplayingItems,
     bool? hasMore,
-    int? currentPage,
+    int? offset,
   }) {
     return PlaylistDetailsLoadedState(
       nowDisplayingItems: nowDisplayingItems ?? this.nowDisplayingItems,
       hasMore: hasMore ?? this.hasMore,
-      currentPage: currentPage ?? this.currentPage,
+      offset: offset ?? this.offset,
     );
   }
 
-  List<Object?> get props => [nowDisplayingItems, hasMore, currentPage];
+  List<Object?> get props => [nowDisplayingItems, hasMore, offset];
 }
 
 class PlaylistDetailsInitialState extends PlaylistDetailsState {
@@ -30,7 +30,7 @@ class PlaylistDetailsInitialState extends PlaylistDetailsState {
       : super(
           nowDisplayingItems: const [],
           hasMore: true,
-          currentPage: 0,
+          offset: 0,
         );
 }
 
@@ -38,7 +38,7 @@ class PlaylistDetailsLoadingState extends PlaylistDetailsState {
   const PlaylistDetailsLoadingState({
     required super.nowDisplayingItems,
     required super.hasMore,
-    required super.currentPage,
+    required super.offset,
   });
 }
 
@@ -46,7 +46,7 @@ class PlaylistDetailsLoadedState extends PlaylistDetailsState {
   const PlaylistDetailsLoadedState({
     required super.nowDisplayingItems,
     required super.hasMore,
-    required super.currentPage,
+    required super.offset,
   });
 }
 
@@ -54,7 +54,7 @@ class PlaylistDetailsLoadingMoreState extends PlaylistDetailsState {
   const PlaylistDetailsLoadingMoreState({
     required super.nowDisplayingItems,
     required super.hasMore,
-    required super.currentPage,
+    required super.offset,
   });
 }
 
@@ -63,7 +63,7 @@ class PlaylistDetailsErrorState extends PlaylistDetailsState {
     required this.error,
     required super.nowDisplayingItems,
     required super.hasMore,
-    required super.currentPage,
+    required super.offset,
   });
   final String error;
 

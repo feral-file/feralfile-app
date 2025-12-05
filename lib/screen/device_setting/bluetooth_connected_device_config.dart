@@ -7,6 +7,7 @@ import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/device/device_status.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
+import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/device_setting/device_config.dart';
@@ -19,6 +20,7 @@ import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
+import 'package:autonomy_flutter/util/bluetooth_device_ext.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/device_realtime_metric_helper.dart';
 import 'package:autonomy_flutter/util/inapp_notifications.dart';
@@ -283,8 +285,8 @@ class BluetoothConnectedDeviceConfigState
         if (widget.payload.isFromOnboarding)
           Positioned(
             bottom: 15,
-            left: 0,
-            right: 0,
+            left: 12,
+            right: 12,
             child: PrimaryAsyncButton(
               onTap: () async {
                 injector<NavigationService>().popUntilHome();
@@ -672,7 +674,18 @@ class BluetoothConnectedDeviceConfigState
     final payload = SendWifiCredentialsPagePayload(
       wifiAccessPoint: accessPoint,
       device: blDevice,
-      onSubmitted: (_, __) {
+      onSubmitted: (String? topicId, Object? error) async {
+        final res = topicId != null ? Pair(topicId, true) : null;
+        if (res != null) {
+          final ffDevice = blDevice.toFFBluetoothDevice(
+            topicId: res.first,
+            deviceId: blDevice.advName,
+            branchName: blDevice.branchName,
+          );
+          await BluetoothDeviceManager().addDevice(ffDevice);
+          await injector<CanvasClientServiceV2>()
+              .showPairingQRCode(ffDevice, false);
+        }
         injector<NavigationService>()
             .popUntil(AppRouter.bluetoothConnectedDeviceConfig);
       },

@@ -1,10 +1,10 @@
 import 'dart:convert';
 
-import 'package:autonomy_flutter/graphql/account_settings/setting_object.dart';
+import 'package:autonomy_flutter/model/base_object.dart';
 import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 
-class WalletAddress implements SettingObject {
+class WalletAddress implements BaseObject {
   WalletAddress({
     required this.address,
     required this.createdAt,

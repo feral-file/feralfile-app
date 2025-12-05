@@ -6,8 +6,10 @@ import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
+import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 
 class PlaylistDetailsHeader extends StatelessWidget {
   const PlaylistDetailsHeader({
@@ -17,6 +19,7 @@ class PlaylistDetailsHeader extends StatelessWidget {
     this.channelVisible = true,
     this.isFromPlaylistsPage = false,
     this.clickable = true,
+    this.options = const [],
     super.key,
   });
 
@@ -26,6 +29,7 @@ class PlaylistDetailsHeader extends StatelessWidget {
   final bool channelVisible;
   final bool isFromPlaylistsPage;
   final bool clickable;
+  final List<OptionItem> options;
 
   @override
   Widget build(BuildContext context) {
@@ -56,33 +60,56 @@ class PlaylistDetailsHeader extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  // Playlist info
                   Expanded(
-                    child: Text(
-                      playlist.title,
-                      style: theme.textTheme.ppMori400White12,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Playlist info
+                        Text(
+                          playlist.title,
+                          style: theme.textTheme.ppMori400White12,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (channelReference != null && channelVisible)
+                          GestureDetector(
+                            onTap: () {
+                              injector<NavigationService>().navigateTo(
+                                AppRouter.channelDetailPage,
+                                arguments: ChannelDetailPagePayload(
+                                  channelReference: channelReference!,
+                                  backTitle: isFromPlaylistsPage
+                                      ? 'Playlists'
+                                      : playlist.title,
+                                ),
+                              );
+                            },
+                            child: Text(
+                              channelReference!.channel.title,
+                              style: theme.textTheme.ppMori400Grey12,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                  if (channelReference != null && channelVisible)
-                    GestureDetector(
-                      onTap: () {
-                        injector<NavigationService>().navigateTo(
-                          AppRouter.channelDetailPage,
-                          arguments: ChannelDetailPagePayload(
-                            channelReference: channelReference!,
-                            backTitle: isFromPlaylistsPage
-                                ? 'Playlists'
-                                : playlist.title,
-                          ),
-                        );
-                      },
-                      child: Text(
-                        channelReference!.channel.title,
-                        style: theme.textTheme.ppMori400Grey12,
+                  if (options.isNotEmpty)
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () async => _showPlaylistOptionsDialog(
+                        context,
+                        playlistReference,
                       ),
-                    ),
+                      constraints: const BoxConstraints(
+                        maxWidth: 44,
+                        maxHeight: 44,
+                        minWidth: 44,
+                        minHeight: 44,
+                      ),
+                      icon: SvgPicture.asset(
+                        'assets/images/more_circle.svg',
+                      ),
+                    )
                 ],
               ),
             ),
@@ -93,6 +120,19 @@ class PlaylistDetailsHeader extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _showPlaylistOptionsDialog(
+    BuildContext context,
+    PlaylistReference playlistReference,
+  ) async {
+    await UIHelper.showDrawerAction(
+      context,
+      options: [
+        ...options,
+        OptionItem.emptyOptionItem,
+      ],
     );
   }
 }

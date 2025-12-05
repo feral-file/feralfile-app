@@ -13,6 +13,7 @@ import 'package:autonomy_flutter/objectbox.g.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:collection/collection.dart';
 import 'package:sentry/sentry.dart';
 
 /// Simple manager wrapping ObjectBox operations for Indexer persistence.
@@ -81,15 +82,26 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
       // Sort by latest provenance event timestamp (desc). Items without provenance go last.
       try {
         res.sort((a, b) {
-          final hasA = (a.provenanceEvents?.items.isNotEmpty ?? false);
-          final hasB = (b.provenanceEvents?.items.isNotEmpty ?? false);
-          if (!hasA && !hasB) return 0;
-          if (!hasB) return -1; // b has no events -> a before b
-          if (!hasA) return 1; // a has no events -> a after b
-          final tsA = a.provenanceEvents!.items.first.timestamp;
-          final tsB = b.provenanceEvents!.items.first.timestamp;
-          // Descending: newer first
-          return tsB.compareTo(tsA);
+          final lastestProvenanceEventA = a.provenanceEvents?.items
+                  .firstWhereOrNull((e) =>
+                      ownerAddress.toUpperCase() ==
+                          e.fromAddress?.toUpperCase() ||
+                      ownerAddress.toUpperCase() ==
+                          e.toAddress?.toUpperCase()) ??
+              a.provenanceEvents?.items.first;
+          final lastestProvenanceEventB = b.provenanceEvents?.items
+                  .firstWhereOrNull((e) =>
+                      ownerAddress.toUpperCase() ==
+                          e.fromAddress?.toUpperCase() ||
+                      ownerAddress.toUpperCase() ==
+                          e.toAddress?.toUpperCase()) ??
+              b.provenanceEvents?.items.first;
+          if (lastestProvenanceEventA == null &&
+              lastestProvenanceEventB == null) return 0;
+          if (lastestProvenanceEventB == null) return -1;
+          if (lastestProvenanceEventA == null) return 1;
+          return lastestProvenanceEventB.timestamp
+              .compareTo(lastestProvenanceEventA.timestamp);
         });
       } catch (e) {
         log.info('Error sorting tokens by owner: $e');
@@ -189,7 +201,36 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
         .build();
     try {
       final results = query.find();
-      return results.map((e) => e.toToken()).toList();
+      final res = results.map((e) => e.toToken()).toList();
+
+      try {
+        res.sort((a, b) {
+          final lastestProvenanceEventA = a.provenanceEvents?.items
+                  .firstWhereOrNull((e) =>
+                      owners.contains(e.fromAddress) ||
+                      owners.contains(e.toAddress)) ??
+              a.provenanceEvents?.items.first;
+          final lastestProvenanceEventB = b.provenanceEvents?.items
+                  .firstWhereOrNull((e) =>
+                      owners.contains(e.fromAddress) ||
+                      owners.contains(e.toAddress)) ??
+              b.provenanceEvents?.items.first;
+          if (lastestProvenanceEventA == null &&
+              lastestProvenanceEventB == null) return 0;
+          if (lastestProvenanceEventB == null) return -1;
+          if (lastestProvenanceEventA == null) return 1;
+          return lastestProvenanceEventB.timestamp
+              .compareTo(lastestProvenanceEventA.timestamp);
+        });
+      } catch (e) {
+        log.info('Error sorting tokens by owner: $e');
+        Sentry.captureEvent(SentryEvent(
+          message: SentryMessage('Error sorting tokens by owner: $e'),
+          level: SentryLevel.error,
+          throwable: e,
+        ));
+      }
+      return res;
     } catch (e) {
       log.info('Error getting tokens by owners: $e');
       Sentry.captureEvent(SentryEvent(

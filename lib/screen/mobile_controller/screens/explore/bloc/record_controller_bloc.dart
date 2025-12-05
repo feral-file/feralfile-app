@@ -413,7 +413,7 @@ class RecordBloc extends AuBloc<RecordEvent, RecordState> {
         walletAddress,
       );
       emit(AddAddressSuccessState());
-    } on LinkAddressException catch (e) {
+    } on AddAddressException catch (e) {
       emit(
         AddAddressErrorState(error: e.message),
       );

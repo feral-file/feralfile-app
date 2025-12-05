@@ -9,6 +9,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';
 
+import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
@@ -19,7 +20,6 @@ import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/nft_collection/services/configuration_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
@@ -30,11 +30,6 @@ import 'package:get_it/get_it.dart';
 import 'package:sentry/sentry.dart';
 import 'package:uuid/uuid.dart';
 
-// Auth bridge op-codes between isolates (top-level so both main and worker use them)
-const String AUTH_OP = 'AUTH_OP';
-const String AUTH_GET_TOKEN = 'AUTH_GET_TOKEN';
-const String AUTH_REFRESH = 'AUTH_REFRESH';
-
 abstract class NftTokensService {
   Future<List<AssetToken>> getManualTokens({
     required List<String> cids,
@@ -43,6 +38,8 @@ abstract class NftTokensService {
 
   Future<Stream<List<AssetToken>>> fetchTokensInIsolate(
     List<String> addresses,
+    int? offset,
+    int? total,
   );
 
   Future<TriggerIndexingResult?> reindexAddresses(List<String> addresses);
@@ -88,16 +85,18 @@ class NftTokensServiceImpl extends NftTokensService {
   NftTokensServiceImpl(
     this._indexerUrl,
     this._database,
-    this._configurationService,
-  ) {
+    this._configurationService, {
+    String? indexerAPIKey,
+  }) : _indexerAPIKey = indexerAPIKey ?? Environment.indexerAPIKey {
     final indexerClient = IndexerClient(
       _indexerUrl,
-      authService: injector<AuthService>(),
+      indexerAPIKey: _indexerAPIKey,
     );
     _indexerService = NftIndexerService(indexerClient);
   }
 
   final String _indexerUrl;
+  final String _indexerAPIKey;
   late NftIndexerService _indexerService;
   final IndexerDatabaseAbstract _database;
   final NftCollectionPrefs _configurationService;
@@ -111,7 +110,7 @@ class NftTokensServiceImpl extends NftTokensService {
   ReceivePort? _receivePort;
   Isolate? _isolate;
   var _isolateReady = Completer<void>();
-  // Map of addresses key to stream controller for deduplication
+  // Map of UUID to stream controller for deduplication
   final Map<String, StreamController<List<AssetToken>>> _fetchTokensWorkers =
       {};
 
@@ -138,13 +137,15 @@ class NftTokensServiceImpl extends NftTokensService {
     _receivePort!.listen(_handleMessageInMain);
 
     _isolate = await Isolate.spawn(
-        _isolateEntry,
-        [
-          _receivePort!.sendPort,
-          _indexerUrl,
-        ],
-        onError: errorPort.sendPort,
-        onExit: exitPort.sendPort);
+      _isolateEntry,
+      [
+        _receivePort!.sendPort,
+        _indexerUrl,
+        _indexerAPIKey,
+      ],
+      onError: errorPort.sendPort,
+      onExit: exitPort.sendPort,
+    );
 
     errorPort.listen((message) {
       Sentry.captureEvent(SentryEvent(
@@ -236,33 +237,41 @@ class NftTokensServiceImpl extends NftTokensService {
   @override
   Future<Stream<List<AssetToken>>> fetchTokensInIsolate(
     List<String> addresses,
+    int? offset,
+    int? total,
   ) async {
-    // Create key from addresses for deduplication
-    final addressesKey = addresses.join(',');
+    // Generate unique UUID for this request
+    final uuid = const Uuid().v4();
+    NftCollection.logger.info(
+        '[fetchTokensInIsolate] Creating new request with UUID: $uuid for addresses: $addresses');
 
-    // If same addresses are already being fetched, return the same stream
-    final existingWorker = _fetchTokensWorkers[addressesKey];
-    if (existingWorker != null && !existingWorker.isClosed) {
-      NftCollection.logger.info(
-          '[fetchTokensInIsolate] Addresses $addresses already being fetched, returning existing stream');
-      return existingWorker.stream;
-    }
-
-    NftCollection.logger
-        .info('[fetchTokensInIsolate] start for addresses: $addresses');
     await startIsolateOrWait();
 
-    // Create new stream controller for this addresses list
-    final worker = StreamController<List<AssetToken>>();
-    _fetchTokensWorkers[addressesKey] = worker;
+    // Create new broadcast stream controller for this request
+    // Use broadcast stream to allow multiple listeners (multiple bloc instances)
+    final worker = StreamController<List<AssetToken>>.broadcast();
+    _fetchTokensWorkers[uuid] = worker;
 
     _sendPort?.send([
       FETCH_ALL_TOKENS,
+      uuid,
       addresses,
+      offset,
+      total,
     ]);
 
-    NftCollection.logger
-        .info('[FETCH_ALL_TOKENS][start] addresses: $addresses');
+    NftCollection.logger.info(
+        '[FETCH_ALL_TOKENS][start] UUID: $uuid, addresses: $addresses, offset: $offset, total: $total');
+    worker.stream.listen((tokens) {
+      NftCollection.logger.info(
+          '[fetchTokensInIsolate] Received ${tokens.length} tokens from stream for UUID: $uuid addresses: ${addresses.join(',')}');
+    }, onError: (Object error, StackTrace stackTrace) {
+      NftCollection.logger.warning(
+          '[fetchTokensInIsolate] Error for addresses: ${addresses.join(',')} UUID $uuid: $error');
+    }, onDone: () {
+      NftCollection.logger.info(
+          '[fetchTokensInIsolate] Stream done for addresses: ${addresses.join(',')} UUID: $uuid');
+    });
 
     return worker.stream;
   }
@@ -615,9 +624,10 @@ class NftTokensServiceImpl extends NftTokensService {
     for (final assetToken in assetTokens) {
       _database.insertToken(assetToken);
     }
+
     final tokensLog = assetTokens.map((e) => 'cid: ${e.cid}').toList();
-    NftCollection.logger
-        .info('[insertAssetsWithProvenance][tokens] $tokensLog');
+    NftCollection.logger.info(
+        '[insertAssetsWithProvenance][tokens] ${assetTokens.length} $tokensLog');
   }
 
   // fetch manual tokens from indexer in batches of 20
@@ -720,8 +730,11 @@ class NftTokensServiceImpl extends NftTokensService {
       final receivePort = ReceivePort()..listen(_handleMessageInIsolate);
       _isolateSendPort = sendPort;
 
-      _setupInjector(arguments[1] as String);
-      sendPort.send(receivePort.sendPort);
+      _setupInjector(
+        arguments[1] as String,
+        arguments[2] as String,
+      );
+      _isolateSendPort?.send(receivePort.sendPort);
     }, (error, stackTrace) {
       // Catch any unhandled exceptions to prevent isolate from crashing
       NftCollection.logger.warning(
@@ -746,26 +759,10 @@ class NftTokensServiceImpl extends NftTokensService {
     });
   }
 
-  static void _setupInjector(String indexerUrl) {
-    // Register a proxy AuthService that communicates with main isolate.
-    _isolateScopeInjector.registerLazySingleton<AuthServicePort>(
-      () => RemoteAuthService(_isolateSendPort!),
-    );
-
-    // Build IndexerClient with token provider that calls back to main via proxy
-    final authPort = _isolateScopeInjector<AuthServicePort>();
+  static void _setupInjector(String indexerUrl, String indexerAPIKey) {
     final indexerClient = IndexerClient(
       indexerUrl,
-      authService: null,
-      getTokenOverride: () async {
-        String? token;
-        try {
-          token = await authPort.getAccessTokenOrNull();
-        } catch (e) {
-          log.warning('[IndexerClient][isolate] getToken timeout/error: $e');
-        }
-        return (token != null && token.isNotEmpty) ? 'Bearer $token' : '';
-      },
+      indexerAPIKey: indexerAPIKey,
     );
 
     _isolateScopeInjector
@@ -782,32 +779,6 @@ class NftTokensServiceImpl extends NftTokensService {
       return;
     }
 
-    // Handle auth bridge requests from worker isolate
-    if (message is List && message.isNotEmpty && message[0] == AUTH_OP) {
-      final String op = message[1] as String;
-      final String reqId = message[2] as String;
-      try {
-        NftCollection.logger.info('Auth op: $op');
-        switch (op) {
-          case AUTH_GET_TOKEN:
-            final jwt = await injector<AuthService>()
-                .getAuthToken(shouldRefresh: false);
-            NftCollection.logger.info('Auth get token: ${jwt?.jwtToken}');
-            _sendPort?.send([AUTH_OP, reqId, null, jwt?.jwtToken]);
-            break;
-          case AUTH_REFRESH:
-            final jwt = await injector<AuthService>().refreshJWT();
-            _sendPort?.send([AUTH_OP, reqId, null, jwt.jwtToken]);
-            break;
-          default:
-            _sendPort?.send([AUTH_OP, reqId, 'Unsupported auth op', null]);
-        }
-      } catch (e) {
-        _sendPort?.send([AUTH_OP, reqId, e.toString(), null]);
-      }
-      return;
-    }
-
     final result = message;
     if (result is FetchTokensSuccess) {
       if (result.assets.isNotEmpty) {
@@ -817,23 +788,38 @@ class NftTokensServiceImpl extends NftTokensService {
           .info('[${result.key}] receive ${result.assets.length} tokens');
 
       if (result.key == FETCH_ALL_TOKENS) {
-        // Create key from addresses to find the correct stream controller
-        final addressesKey = result.addresses.join(',');
-        final worker = _fetchTokensWorkers[addressesKey];
+        // Use UUID to find the correct stream controller
+        final uuid = result.uuid;
+        final worker = _fetchTokensWorkers[uuid];
 
         if (worker != null && !worker.isClosed) {
+          // Send data to stream
           worker.sink.add(result.assets);
-        }
-
-        if (result.done) {
-          await worker?.close();
-          _fetchTokensWorkers.remove(addressesKey);
-          NftCollection.logger.fine(
-            '[FETCH_ALL_TOKENS]'
-            ' ${result.addresses.join(',')} at ${DateTime.now()}',
+          NftCollection.logger.info(
+            '[FETCH_ALL_TOKENS] Sent ${result.assets.length} tokens to stream for UUID: $uuid, done: ${result.done}',
           );
-          NftCollection.logger
-              .info('[FETCH_ALL_TOKENS][end] addresses: $addressesKey');
+
+          // Close stream after sending data when done
+          if (result.done) {
+            await worker.close();
+            _fetchTokensWorkers.remove(uuid);
+            NftCollection.logger.fine(
+              '[FETCH_ALL_TOKENS]'
+              ' ${result.addresses.join(',')} at ${DateTime.now()}',
+            );
+            NftCollection.logger.info(
+                '[FETCH_ALL_TOKENS][end] Stream closed for UUID: $uuid, addresses: ${result.addresses.join(',')}');
+          }
+        } else if (worker != null && worker.isClosed) {
+          // Stream was already closed, remove from map
+          _fetchTokensWorkers.remove(uuid);
+          NftCollection.logger.warning(
+            '[FETCH_ALL_TOKENS] Stream was already closed for UUID: $uuid, cannot send ${result.assets.length} tokens',
+          );
+        } else if (worker == null) {
+          NftCollection.logger.warning(
+            '[FETCH_ALL_TOKENS] No worker found for UUID: $uuid, cannot send ${result.assets.length} tokens',
+          );
         }
       }
 
@@ -843,17 +829,24 @@ class NftTokensServiceImpl extends NftTokensService {
     if (result is FetchTokenFailure) {
       NftCollection.logger.info(
           '[FETCH_ALL_TOKENS] end in error ${result.exception} for addresses: ${result.addresses}');
+      unawaited(Sentry.captureEvent(SentryEvent(
+        message: SentryMessage('FetchTokenFailure: ${result.exception}'),
+        level: SentryLevel.error,
+        extra: {
+          'addresses': result.addresses,
+        },
+      )));
 
-      if (result.key == FETCH_ALL_TOKENS) {
-        // Create key from addresses to find the correct stream controller (sort to handle same addresses in different order)
-        final addressesKey = result.addresses.join(',');
-        final worker = _fetchTokensWorkers[addressesKey];
+      // Use UUID to find the correct stream controller
+      final uuid = result.uuid;
+      final worker = _fetchTokensWorkers[uuid];
 
-        if (worker != null && !worker.isClosed) {
-          await worker.close();
-          _fetchTokensWorkers.remove(addressesKey);
-        }
+      if (worker != null && !worker.isClosed) {
+        await worker.close();
+        _fetchTokensWorkers.remove(uuid);
       }
+      _reindexAddressesCompleters[result.uuid]?.completeError(result.exception);
+      _reindexAddressesCompleters.remove(result.uuid);
       return;
     }
 
@@ -863,6 +856,7 @@ class NftTokensServiceImpl extends NftTokensService {
       NftCollection.logger.info(
         '[reindexAddresses][end] workflowId: ${result.result.workflowId}, runId: ${result.result.runId}',
       );
+      return;
     }
 
     if (result is ReindexAddressesFailure) {
@@ -871,6 +865,7 @@ class NftTokensServiceImpl extends NftTokensService {
       NftCollection.logger.info(
         '[reindexAddresses][error] ${result.uuid}: ${result.exception}',
       );
+      return;
     }
 
     if (result is ReindexTokensDone) {
@@ -879,6 +874,7 @@ class NftTokensServiceImpl extends NftTokensService {
       NftCollection.logger.info(
         '[reindexTokensByCids][end] workflowId: ${result.result.workflowId}, runId: ${result.result.runId}',
       );
+      return;
     }
 
     if (result is ReindexTokensFailure) {
@@ -887,6 +883,7 @@ class NftTokensServiceImpl extends NftTokensService {
       NftCollection.logger.info(
         '[reindexTokensByCids][error] ${result.uuid}: ${result.exception}',
       );
+      return;
     }
 
     if (result is UpdateTokensData) {
@@ -986,6 +983,7 @@ class NftTokensServiceImpl extends NftTokensService {
               .updateLastUpdateChangeAnchor(addressAnchors: addressAnchors);
         }
       }
+      return;
     }
 
     if (result is UpdateTokensSuccess) {
@@ -998,6 +996,7 @@ class NftTokensServiceImpl extends NftTokensService {
       NftCollection.logger.info(
         '[UPDATE_TOKENS_IN_ISOLATE][end] ${result.uuid} - Stream closed',
       );
+      return;
     }
 
     if (result is UpdateTokensFailure) {
@@ -1011,7 +1010,16 @@ class NftTokensServiceImpl extends NftTokensService {
       NftCollection.logger.info(
         '[UPDATE_TOKENS_IN_ISOLATE][error] ${result.uuid} - ${result.exception}',
       );
+      return;
     }
+
+    NftCollection.logger
+        .info('[TokensService][_handleMessageInMain] Unknown message: $result');
+    unawaited(Sentry.captureEvent(SentryEvent(
+      message: SentryMessage('Unknown message: $result'),
+      level: SentryLevel.error,
+    )));
+    return;
   }
 
   static SendPort? _isolateSendPort;
@@ -1022,29 +1030,17 @@ class NftTokensServiceImpl extends NftTokensService {
           .info('[TokensService][Isolate] received message: $message');
       if (message is List<dynamic>) {
         switch (message[0]) {
-          case AUTH_OP:
-            if (message.length >= 4) {
-              final String reqId = message[1] as String;
-              final String? error = message[2] as String?;
-              final dynamic data = message[3];
-              final completer = _authRequestCompleters.remove(reqId);
-              if (completer != null && !completer.isCompleted) {
-                if (error != null) {
-                  completer.completeError(error);
-                } else {
-                  completer.complete(data);
-                }
-              } else {
-                NftCollection.logger.info(
-                    '[_handleMessageInIsolate] [AUTH_OP] complete is null');
-              }
-            }
-            return;
           case FETCH_ALL_TOKENS:
+            final uuid = message[1] as String;
+            final addresses = List<String>.from(message[2] as List);
+            final offset = message[3] as int?;
+            final size = message[4] as int?;
             _fetchAllTokens(
               FETCH_ALL_TOKENS,
-              const Uuid().v4(),
-              List<String>.from(message[1] as List),
+              uuid,
+              addresses,
+              offset,
+              size,
             );
             break;
 
@@ -1103,31 +1099,38 @@ class NftTokensServiceImpl extends NftTokensService {
     String key,
     String uuid,
     List<String> addresses,
+    int? offset,
+    int? total,
   ) async {
     try {
       final isolateIndexerService = _isolateScopeInjector<NftIndexerService>();
-      var offset = 0;
+      var numberOfToken = 0;
+      var currentOffset = offset ?? 0;
 
-      do {
-        final tokens = await _getTokensPageWithAllOwners(
-            isolateIndexerService, addresses, offset);
+      while (total == null || numberOfToken < total) {
+        final tokens = await getTokensPageWithAllOwners(
+            isolateIndexerService, addresses, currentOffset);
 
         if (tokens.isEmpty) {
           break;
-        } else {
-          _isolateSendPort?.send(
-            FetchTokensSuccess(
-              key,
-              uuid,
-              addresses,
-              tokens,
-              false,
-            ),
-          );
-
-          offset += tokens.length;
         }
-      } while (true);
+        final sentTokens = total == null
+            ? tokens
+            : tokens.safeSublist(
+                0, (total - numberOfToken).clamp(0, tokens.length));
+        _isolateSendPort?.send(
+          FetchTokensSuccess(
+            key,
+            uuid,
+            addresses,
+            sentTokens,
+            false,
+          ),
+        );
+
+        currentOffset += sentTokens.length;
+        numberOfToken += sentTokens.length;
+      }
 
       _isolateSendPort
           ?.send(FetchTokensSuccess(key, uuid, addresses, [], true));
@@ -1139,7 +1142,7 @@ class NftTokensServiceImpl extends NftTokensService {
 
   // Fetch a single tokens page (by offset) and progressively increase ownersLimit
   // until owners lists are fully retrieved (heuristic) or a safety cap is reached.
-  static Future<List<AssetToken>> _getTokensPageWithAllOwners(
+  static Future<List<AssetToken>> getTokensPageWithAllOwners(
     NftIndexerService indexerService,
     List<String> addresses,
     int offset,
@@ -1287,6 +1290,10 @@ class NftTokensServiceImpl extends NftTokensService {
 
 class AddressAnchor {
   AddressAnchor({required this.address, required this.anchor});
+  factory AddressAnchor.fromJson(Map<String, dynamic> json) => AddressAnchor(
+        address: json['address'] as String,
+        anchor: json['anchor'] as int,
+      );
 
   final String address;
   final int anchor;
@@ -1295,44 +1302,9 @@ class AddressAnchor {
         'address': address,
         'anchor': anchor,
       };
-
-  static AddressAnchor fromJson(Map<String, dynamic> json) => AddressAnchor(
-        address: json['address'] as String,
-        anchor: json['anchor'] as int,
-      );
 }
 
 abstract class TokensServiceResult {}
-
-// A minimal port of AuthService behavior that is safe across isolates.
-abstract class AuthServicePort {
-  Future<String?> getAccessTokenOrNull();
-  Future<String?> refreshToken();
-}
-
-// Track pending auth requests in the worker isolate
-final Map<String, Completer<dynamic>> _authRequestCompleters = {};
-
-class RemoteAuthService implements AuthServicePort {
-  RemoteAuthService(this._mainSendPort);
-
-  final SendPort _mainSendPort;
-
-  Future<T?> _call<T>(String op) async {
-    final reqId = const Uuid().v4();
-    final completer = Completer<dynamic>();
-    _authRequestCompleters[reqId] = completer;
-    _mainSendPort.send([AUTH_OP, op, reqId]);
-    final result = await completer.future;
-    return result as T?;
-  }
-
-  @override
-  Future<String?> getAccessTokenOrNull() => _call<String?>(AUTH_GET_TOKEN);
-
-  @override
-  Future<String?> refreshToken() => _call<String?>(AUTH_REFRESH);
-}
 
 class FetchTokensSuccess extends TokensServiceResult {
   FetchTokensSuccess(

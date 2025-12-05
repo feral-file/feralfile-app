@@ -57,7 +57,7 @@ abstract class CustomerSupportApi {
   );
 
   @PATCH('/v1/issues/{issueID}/reopen')
-  Future reOpenIssue(
+  Future<void> reOpenIssue(
     @Path('issueID') String issueID,
   );
 

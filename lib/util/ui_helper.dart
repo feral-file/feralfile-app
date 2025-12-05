@@ -13,7 +13,6 @@ import 'dart:async';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/model/ff_account.dart';
-import 'package:autonomy_flutter/model/jwt.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
@@ -25,7 +24,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/service/base_dp1_feed_service_impl.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
-import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/color_extension.dart';
@@ -41,8 +39,6 @@ import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:autonomy_flutter/view/au_button_clipper.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/expandable_sticky_headers.dart';
-import 'package:autonomy_flutter/view/passkey/passkey_login_view.dart';
-import 'package:autonomy_flutter/view/passkey/passkey_register_view.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
@@ -71,7 +67,6 @@ void nameContinue(BuildContext context) {
 
 class UIHelper {
   static String currentDialogTitle = '';
-  static final metricClient = injector.get<MetricClientService>();
   static const String ignoreBackLayerPopUpRouteName = 'popUp.ignoreBackLayer';
   static const String homeMenu = 'homeMenu';
   static const String artDisplaySettingModal = 'artDisplaySettingModal';
@@ -794,65 +789,6 @@ class UIHelper {
     );
   }
 
-  static Future<JWT?> showPasskeyRegisterDialog(
-    BuildContext context,
-  ) async {
-    final jwt = await showRawCenterSheet(
-      context,
-      content: const PasskeyRegisterView(),
-    );
-    return jwt as JWT?;
-  }
-
-  static Future<JWT?> showPasskeyLoginDialog(
-    BuildContext context,
-    Future<JWT?> Function() onRetry,
-  ) async {
-    final jwt = await showRawCenterSheet(
-      context,
-      content: PasskeyLoginRetryView(onRetry: onRetry),
-    ) as JWT?;
-    return jwt;
-  }
-
-  static Future<dynamic> showRawCenterSheet(
-    BuildContext context, {
-    required Widget content,
-    double horizontalPadding = 20,
-    Color boxColor = AppColor.white,
-    Color backgroundColor = Colors.transparent,
-  }) async {
-    log.info('[UIHelper] showRawCenterSheet');
-    UIHelper.hideInfoDialog(context);
-    return await showCupertinoModalPopup(
-      context: context,
-      builder: (context) => Scaffold(
-        backgroundColor: backgroundColor,
-        body: Padding(
-          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-          child: Center(
-            child: Container(
-              decoration: BoxDecoration(
-                color: boxColor,
-                borderRadius: BorderRadius.circular(5),
-              ),
-              padding: const EdgeInsets.symmetric(
-                vertical: 20,
-                horizontal: 20,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  content,
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   static Future<void> showCenterSheet(
     BuildContext context, {
     required Widget content,
@@ -1395,49 +1331,6 @@ class UIHelper {
       content: 'upgraded_notification_body'.tr(),
       // vibrateFeedbackType: FeedbackType.warning,
     );
-  }
-
-  static Future<JWT?> showRegisterOrLoginDialog(BuildContext context,
-      {required FutureOr<JWT?> Function() onRegister,
-      required FutureOr<JWT?> Function() onLogin}) async {
-    final jwt = await showCenterDialog(
-      context,
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'register_or_login'.tr(),
-            style: Theme.of(context).textTheme.ppMori700White24,
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'register_or_login_desc'.tr(),
-            style: Theme.of(context).textTheme.ppMori400White14,
-          ),
-          const SizedBox(height: 20),
-          PrimaryButton(
-            onTap: () async {
-              final jwt = await onRegister();
-              if (context.mounted) {
-                Navigator.of(context).pop(jwt);
-              }
-            },
-            text: 'register'.tr(),
-          ),
-          const SizedBox(height: 10),
-          PrimaryButton(
-            onTap: () async {
-              final jwt = await onLogin();
-              if (context.mounted) {
-                Navigator.of(context).pop(jwt);
-              }
-            },
-            text: 'login'.tr(),
-          ),
-        ],
-      ),
-    );
-    return jwt as JWT?;
   }
 
   static SliverGrid dp1ItemSliverGrid(BuildContext context,

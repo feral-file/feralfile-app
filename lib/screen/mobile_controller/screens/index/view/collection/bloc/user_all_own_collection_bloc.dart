@@ -113,7 +113,8 @@ class UserAllOwnCollectionBloc
             '[UserAllOwnCollectionBloc] Reindex addresses: $addressesToReindex, attempt: $attempts');
 
         try {
-          add(FetchTokensOfAddresses(addresses: addressesToReindex));
+          add(FetchTokensOfAddresses(
+              addresses: addressesToReindex, shouldUpdateAddressState: false));
           await _tokensService.reindexAddressesAndPullStatus(
             addresses: addressesToReindex,
             timeout: const Duration(days: 1),
@@ -153,7 +154,9 @@ class UserAllOwnCollectionBloc
                 }
               } else {
                 // Still indexing, fetch tokens
-                add(FetchTokensOfAddresses(addresses: batchAddresses));
+                add(FetchTokensOfAddresses(
+                    addresses: batchAddresses,
+                    shouldUpdateAddressState: false));
               }
               add(
                 WorkflowStatusTick(
@@ -279,17 +282,20 @@ class UserAllOwnCollectionBloc
       _activeCompleters[subType] = completer;
 
       // Update state to fetchingArtworks when starting to fetch
-      final updatedStatesStart = state.addressStates.updateStates(
-        event.addresses,
-        AddressStateType.fetchingArtworks,
-      );
-      emit(state.copyWith(
-        addressStates: updatedStatesStart,
-        status: UserAllOwnCollectionStatus.loading,
-      ));
+      if (event.shouldUpdateAddressState) {
+        final updatedStatesStart = state.addressStates.updateStates(
+          event.addresses,
+          AddressStateType.fetchingArtworks,
+        );
+        emit(state.copyWith(
+          addressStates: updatedStatesStart,
+          status: UserAllOwnCollectionStatus.loading,
+        ));
+      }
 
       // get the stream
-      final stream = await _tokensService.fetchTokensInIsolate(event.addresses);
+      final stream = await _tokensService.fetchTokensInIsolate(
+          event.addresses, null, null);
 
       final List<AssetToken> collected = [];
 
@@ -325,14 +331,16 @@ class UserAllOwnCollectionBloc
         },
         onDone: () {
           // Update state to artworksReady when done
-          final updatedStates = state.addressStates.updateStates(
-            event.addresses,
-            AddressStateType.fetchingArtworksDone,
-          );
-          emit(state.copyWith(
-            addressStates: updatedStates,
-            status: UserAllOwnCollectionStatus.loaded,
-          ));
+          if (event.shouldUpdateAddressState) {
+            final updatedStates = state.addressStates.updateStates(
+              event.addresses,
+              AddressStateType.fetchingArtworksDone,
+            );
+            emit(state.copyWith(
+              addressStates: updatedStates,
+              status: UserAllOwnCollectionStatus.loaded,
+            ));
+          }
           log.info(
               '[${event.runtimeType}] Stream done with total ${collected.length} tokens');
           _activeCompleters[subType]?.complete();

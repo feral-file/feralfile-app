@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/model/additional_data/additional_data.dart';
 import 'package:autonomy_flutter/model/token.dart' as v2;
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
@@ -15,7 +14,6 @@ import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/announcement/announcement_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
-import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
@@ -96,26 +94,19 @@ class HomePageHelper {
     _collectionRefreshTimer =
         Timer.periodic(const Duration(seconds: 60), (_) async {
       try {
-        final allOwnedPlaylist =
-            injector<UserDp1PlaylistService>().cachedAllOwnedPlaylist;
-        final dynamicQuery = allOwnedPlaylist.firstDynamicQuery;
-        if (dynamicQuery != null) {
-          final owners = dynamicQuery.params.owners;
-          // filter out addresses that have not been indexed
-          final lastIndexedTime = injector<UserDp1PlaylistService>()
-              .getAddressOldestLastIndexTime(addresses: owners);
-          final addressesToRefresh =
-              owners.where((e) => lastIndexedTime[e] != null).toList();
-          log.info('Refreshing tokens for: ${addressesToRefresh}');
-          if (addressesToRefresh.isEmpty) {
-            log.info('No addresses to refresh');
-            return;
-          }
-          injector<UserAllOwnCollectionBloc>()
-              .add(UpdateTokensOfAddresses(addresses: addressesToRefresh));
-        } else {
-          log.info('No dynamic query found');
+        final owners = injector<AddressService>().getAllAddresses();
+        // filter out addresses that have not been indexed
+        final lastIndexedTime = injector<UserDp1PlaylistService>()
+            .getAddressOldestLastIndexTime(addresses: owners);
+        final addressesToRefresh =
+            owners.where((e) => lastIndexedTime[e] != null).toList();
+        log.info('Refreshing tokens for: ${addressesToRefresh}');
+        if (addressesToRefresh.isEmpty) {
+          log.info('No addresses to refresh');
+          return;
         }
+        injector<UserAllOwnCollectionBloc>()
+            .add(UpdateTokensOfAddresses(addresses: addressesToRefresh));
       } catch (e) {
         log.info('Error in refresh tokens : $e');
         unawaited(Sentry.captureEvent(SentryEvent(
@@ -273,14 +264,12 @@ class HomePageHelper {
         memoryValues.isForeground = true;
       case FGBGType.background:
         memoryValues.isForeground = false;
-        _handleBackground();
     }
   }
 
   Future<void> _handleForeground() async {
     memoryValues.inForegroundAt = DateTime.now();
     await injector<ConfigurationService>().reload();
-    await injector<CloudManager>().downloadAll(includePlaylists: true);
     unawaited(injector<VersionService>().checkForUpdate());
     await _remoteConfig.loadConfigs(forceRefresh: true);
     unawaited(NowDisplayingManager().updateDisplayingNow());
@@ -289,16 +278,5 @@ class HomePageHelper {
     _triggerShowAnnouncement();
     // refresh stale/missing addresses when app resume
     unawaited(_refreshAddressesNeedingReindex());
-  }
-
-  void _handleBackground() {
-    unawaited(_checkForReferralCode());
-  }
-
-  Future<void> _checkForReferralCode() async {
-    final referralCode = injector<ConfigurationService>().getReferralCode();
-    if (referralCode != null && referralCode.isNotEmpty) {
-      await injector<DeeplinkService>().handleReferralCode(referralCode);
-    }
   }
 }

@@ -130,39 +130,31 @@ extension AssetTokenExtension on AssetToken {
 
   String? getGalleryThumbnailUrl({
     bool usingThumbnailID = true,
-    String size = 'xs',
+    String? size = 'xs',
   }) {
     String? thumbnailUrl;
 
     thumbnailUrl = enrichmentSource?.imageUrl ?? metadata?.imageUrl;
 
-    final metadataVariantUrls = metadataMediaAssets
-        ?.firstWhereOrNull((mediaAsset) => mediaAsset.sourceUrl == thumbnailUrl)
-        ?.variantUrls;
+    if (size != null) {
+      final metadataVariantUrls = metadataMediaAssets
+          ?.firstWhereOrNull(
+              (mediaAsset) => mediaAsset.sourceUrl == thumbnailUrl)
+          ?.variantUrls;
 
-    final enrichmentSourceVariantUrls = enrichmentSourceMediaAssets
-        ?.firstWhereOrNull((mediaAsset) => mediaAsset.sourceUrl == thumbnailUrl)
-        ?.variantUrls;
+      final enrichmentSourceVariantUrls = enrichmentSourceMediaAssets
+          ?.firstWhereOrNull(
+              (mediaAsset) => mediaAsset.sourceUrl == thumbnailUrl)
+          ?.variantUrls;
 
-    final mediaThumbnailUrl = (enrichmentSourceVariantUrls?[size] ??
-            enrichmentSourceVariantUrls?.values.firstOrNull) as String? ??
-        (metadataVariantUrls?[size] ?? metadataVariantUrls?.values.firstOrNull)
-            as String?;
+      final mediaThumbnailUrl = (enrichmentSourceVariantUrls?[size] ??
+              enrichmentSourceVariantUrls?.values.firstOrNull) as String? ??
+          (metadataVariantUrls?[size] ??
+              metadataVariantUrls?.values.firstOrNull) as String?;
 
-    if (mediaThumbnailUrl != null && mediaThumbnailUrl.isNotEmpty) {
-      return mediaThumbnailUrl;
-    } else {
-      Sentry.captureEvent(SentryEvent(
-        message: SentryMessage('No media thumbnail url found for $cid'),
-        level: SentryLevel.warning,
-        extra: {
-          'cid': cid,
-          'thumbnailUrl': thumbnailUrl,
-          'enrichmentSourceVariantUrls': enrichmentSourceVariantUrls,
-          'metadataVariantUrls': metadataVariantUrls,
-          'mediaThumbnailUrl': mediaThumbnailUrl,
-        },
-      ));
+      if (mediaThumbnailUrl != null && mediaThumbnailUrl.isNotEmpty) {
+        thumbnailUrl = mediaThumbnailUrl;
+      }
     }
 
     if (thumbnailUrl?.isNotEmpty ?? false) {
@@ -220,45 +212,14 @@ extension AssetTokenExtension on AssetToken {
     return '';
   }
 
-  String? get previewUrl {
+  String? getPreviewUrl() {
     final animationUrl =
         enrichmentSource?.animationUrl ?? metadata?.animationUrl;
-
-    if (animationUrl == null) {
-      return null;
-    }
-
-    // search in enrichmentSourceMediaAssets
-    final enrichmentSourceMediaAssets = this.enrichmentSourceMediaAssets;
-    if (enrichmentSourceMediaAssets != null) {
-      final enrichmentSourceMediaAsset =
-          enrichmentSourceMediaAssets.firstWhereOrNull(
-              (mediaAsset) => mediaAsset.sourceUrl == animationUrl);
-      final variantUrl =
-          enrichmentSourceMediaAsset?.variantUrls.values.firstOrNull as String?;
-      if (variantUrl != null && variantUrl.isNotEmpty) {
-        return variantUrl;
-      }
-    }
-
-    // fallback to metadataMediaAssets
-    final metadataMediaAssets = this.metadataMediaAssets;
-    if (metadataMediaAssets != null) {
-      final metadataMediaAsset = metadataMediaAssets.firstWhereOrNull(
-          (mediaAsset) => mediaAsset.sourceUrl == animationUrl);
-
-      final variantUrl =
-          metadataMediaAsset?.variantUrls.values.firstOrNull as String?;
-      if (variantUrl != null && variantUrl.isNotEmpty) {
-        return variantUrl;
-      }
-    }
-
-    if (animationUrl.isNotEmpty) {
+    if (animationUrl?.isNotEmpty ?? false) {
       return animationUrl;
     }
 
-    return getGalleryThumbnailUrl(size: 'xl');
+    return getGalleryThumbnailUrl(size: null);
   }
 
   List<ProvenanceEvent> get provenance {
@@ -313,6 +274,37 @@ extension AssetTokenExtension on AssetToken {
     // Update currentOwner if 'to' address is provided
     String? newOwner = (currentOwner == meta.from) ? meta.to : currentOwner;
 
+    final ProvenanceEventType provenanceEventType;
+    if (meta.isMint()) {
+      provenanceEventType = ProvenanceEventType.mint;
+    } else if (meta.isBurn()) {
+      provenanceEventType = ProvenanceEventType.burn;
+    } else if (meta.isTransfer()) {
+      provenanceEventType = ProvenanceEventType.transfer;
+    } else {
+      Sentry.captureEvent(SentryEvent(
+        message:
+            SentryMessage('Unknown provenance event type: ${meta.toJson()}'),
+        level: SentryLevel.warning,
+      ));
+      provenanceEventType = ProvenanceEventType.unknown;
+    }
+
+    final provenanceEvent = ProvenanceEvent(
+      chain: chain,
+      eventType: provenanceEventType,
+      fromAddress: meta.from,
+      toAddress: meta.to,
+      txHash: meta.txHash,
+      timestamp: changedAt,
+    );
+
+    // check if the provenance event is already in the list
+    if (provenanceEvents?.items.any((event) => event == provenanceEvent) ??
+        false) {
+      return this;
+    }
+
     // Update owners list if needed
     PaginatedOwners? newOwners = owners;
     PaginatedProvenanceEvents? newProvenanceEvents = provenanceEvents;
@@ -356,15 +348,6 @@ extension AssetTokenExtension on AssetToken {
       newOwners = (owners?.copyWith(items: updatedOwners)) ??
           PaginatedOwners(
               items: updatedOwners, offset: 0, total: updatedOwners.length);
-
-      final provenanceEvent = ProvenanceEvent(
-        chain: chain,
-        eventType: ProvenanceEventType.transfer,
-        fromAddress: meta.from,
-        toAddress: meta.to,
-        txHash: meta.txHash,
-        timestamp: changedAt,
-      );
 
       final newProvenanceEventsItems = (provenanceEvents?.items ?? []).toList();
       newProvenanceEventsItems.add(provenanceEvent);

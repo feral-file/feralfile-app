@@ -1,5 +1,6 @@
 import 'package:autonomy_flutter/design/build/components/PlaylistSection.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
+import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_list_row.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section_header.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
@@ -15,6 +16,8 @@ class PlaylistSection extends StatelessWidget {
     this.onPlaylistItemTap,
     this.scrollController,
     this.hasMore = true,
+    this.emptyView,
+    this.playlistHeaderBuilder,
     super.key,
   });
 
@@ -24,7 +27,9 @@ class PlaylistSection extends StatelessWidget {
   final VoidCallback? onViewAllTap;
   final void Function(DP1NowDisplayingItem)? onPlaylistItemTap;
   final ScrollController? scrollController;
+  final Widget? emptyView;
   final bool hasMore;
+  final Widget? Function(PlaylistData playlistData)? playlistHeaderBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +37,7 @@ class PlaylistSection extends StatelessWidget {
       shrinkWrap: true,
       padding: EdgeInsets.zero,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: playlists.length + 2,
+      itemCount: 2 + (playlists.isNotEmpty ? playlists.length : 1),
       itemBuilder: (context, index) {
         // Header
         if (index == 0) {
@@ -51,6 +56,10 @@ class PlaylistSection extends StatelessWidget {
           );
         }
 
+        if (playlists.isEmpty) {
+          return emptyView ?? SizedBox.shrink();
+        }
+
         // List items
         final playlistIndex = index - 2;
         final playlist = playlists[playlistIndex];
@@ -59,6 +68,9 @@ class PlaylistSection extends StatelessWidget {
           playlistCreator: playlist.creator,
           onItemTap: onPlaylistItemTap,
           scrollController: scrollController,
+          headerBuilder: playlistHeaderBuilder == null
+              ? null
+              : (_) => playlistHeaderBuilder?.call(playlist),
         );
       },
     );
@@ -66,6 +78,7 @@ class PlaylistSection extends StatelessWidget {
 }
 
 /// Data model for playlist information
+///
 class PlaylistData {
   PlaylistData({
     required this.playlistReference,
@@ -84,4 +97,14 @@ class PlaylistData {
       creator: creator ?? this.creator,
     );
   }
+}
+
+class AddressPlaylistData extends PlaylistData {
+  AddressPlaylistData({
+    required super.playlistReference,
+    required super.creator,
+    required this.address,
+  });
+
+  final WalletAddress address;
 }

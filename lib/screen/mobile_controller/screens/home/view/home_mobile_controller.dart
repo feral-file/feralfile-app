@@ -26,10 +26,6 @@ class _MobileControllerHomePageState
 
   final _curatedChannelsBloc = injector<ChannelsBloc>(
       instanceName: ChannelsBlocInstance.curated.instanceName);
-  final _myChannelsBloc = injector<ChannelsBloc>(
-      instanceName: ChannelsBlocInstance.me.instanceName);
-  final _globalChannelsBloc = injector<ChannelsBloc>(
-      instanceName: ChannelsBlocInstance.global.instanceName);
   final _curatedPlaylistsBloc = injector<PlaylistsBloc>(
       instanceName: PlaylistsBlocInstance.curated.instanceName);
   final _myPlaylistsBloc = injector<PlaylistsBloc>(
@@ -43,11 +39,8 @@ class _MobileControllerHomePageState
 
     // load channel and playlist
     _curatedChannelsBloc.add(const LoadChannelsEvent());
-    _myChannelsBloc.add(const LoadChannelsEvent());
-    _globalChannelsBloc.add(const LoadChannelsEvent());
     _curatedPlaylistsBloc.add(LoadPlaylistsEvent());
     _myPlaylistsBloc.add(LoadPlaylistsEvent());
-    // _globalPlaylistsBloc.add(LoadPlaylistsEvent());
 
     HomePageHelper.instance.onHomePageInit(context, this);
   }

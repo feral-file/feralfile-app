@@ -8,7 +8,24 @@ enum AddressStateType {
   indexingIncomplete,
   fetchingArtworks,
   fetchingArtworksFailed,
-  fetchingArtworksDone,
+  fetchingArtworksDone;
+
+  String get description {
+    switch (this) {
+      case AddressStateType.indexing:
+        return 'Indexing';
+      case AddressStateType.indexingDone:
+        return 'Indexing complete';
+      case AddressStateType.indexingIncomplete:
+        return 'Indexing incomplete';
+      case AddressStateType.fetchingArtworks:
+        return 'Getting artworks';
+      case AddressStateType.fetchingArtworksFailed:
+        return 'Get artworks incomplete';
+      case AddressStateType.fetchingArtworksDone:
+        return '';
+    }
+  }
 }
 
 class AddressAssetTokens {

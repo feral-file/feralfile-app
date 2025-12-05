@@ -1,27 +1,34 @@
-class AccountException implements Exception {
-  final String? message;
+enum AddAddressExceptionType {
+  invalidAddress,
+  alreadyAdded,
+  other;
 
-  AccountException({this.message});
+  String get message {
+    switch (this) {
+      case AddAddressExceptionType.invalidAddress:
+        return 'Invalid address';
+      case AddAddressExceptionType.alreadyAdded:
+        return 'Address already added';
+      case AddAddressExceptionType.other:
+        return 'Other error';
+    }
+  }
 }
 
-class LinkAddressException implements Exception {
-  final String message;
+class AddAddressException implements Exception {
+  AddAddressException({
+    required this.type,
+  });
+  final AddAddressExceptionType type;
 
-  LinkAddressException({required this.message});
-}
-
-class JwtException implements Exception {
-  final String message;
-
-  JwtException({required this.message});
+  String get message => type.message;
 }
 
 class ErrorBindingException implements Exception {
-  final String message;
-  final Exception originalException;
-
   ErrorBindingException({
     required this.message,
     required this.originalException,
   });
+  final String message;
+  final Exception originalException;
 }

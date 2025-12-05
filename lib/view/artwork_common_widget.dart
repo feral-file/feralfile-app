@@ -8,7 +8,6 @@ import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_rendering/nft_rendering_widget.dart';
 import 'package:autonomy_flutter/screen/detail/royalty/royalty_bloc.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
-import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/color_extension.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
@@ -27,6 +26,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // String getEditionSubTitle(AssetToken token) {
@@ -306,38 +306,21 @@ class GalleryThumbnailPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    // return const SizedBox();
+
     return Semantics(
       label: loading ? 'loading' : '',
       child: AspectRatio(
         aspectRatio: 1,
-        child: Container(
-          padding: const EdgeInsets.all(10),
-          color: theme.auLightGrey,
-          child: Stack(
-            children: [
-              Visibility(
-                visible: loading,
-                child: Center(
-                  child: loadingIndicator(
-                    size: 22,
-                    strokeWidth: 1.5,
-                    valueColor: theme.colorScheme.primary,
-                    backgroundColor: theme.colorScheme.primary.withOpacity(0.5),
-                  ),
-                ),
-              ),
-              Visibility(
-                visible: loading,
-                child: Align(
-                  alignment: AlignmentDirectional.bottomStart,
-                  child: Text(
-                    'loading'.tr(),
-                    style: theme.textTheme.ppMori700QuickSilver8,
-                  ),
-                ),
-              ),
-            ],
+        child: Shimmer.fromColors(
+          baseColor: Colors.transparent,
+          highlightColor: Colors.white.withAlpha(10),
+          period: const Duration(milliseconds: 1000),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.amber,
+              borderRadius: BorderRadius.circular(0),
+            ),
           ),
         ),
       ),
@@ -366,7 +349,6 @@ class BrokenTokenWidget extends StatefulWidget {
 
 class _BrokenTokenWidgetState extends State<BrokenTokenWidget>
     with AfterLayoutMixin<BrokenTokenWidget> {
-  final metricClient = injector.get<MetricClientService>();
 
   @override
   void afterFirstLayout(BuildContext context) {}

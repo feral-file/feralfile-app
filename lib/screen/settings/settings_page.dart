@@ -8,10 +8,10 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
-import 'package:autonomy_flutter/service/settings_data_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/app_theme.dart';
@@ -84,7 +84,6 @@ class _SettingsPageState extends State<SettingsPage>
         statusBarBrightness: Brightness.light,
       ),
     );
-    unawaited(injector<SettingsDataService>().backupDeviceSettings());
   }
 
   Widget _settingItem({
@@ -137,7 +136,10 @@ class _SettingsPageState extends State<SettingsPage>
                 children: [
                   _settingItem(
                     title: 'preferences'.tr(),
-                    icon: const Icon(AuIcon.preferences),
+                    icon: const Icon(
+                      AuIcon.preferences,
+                      color: PrimitivesTokens.colorsBlack,
+                    ),
                     onTap: () async {
                       await Navigator.of(context)
                           .pushNamed(AppRouter.preferencesPage);
@@ -146,7 +148,10 @@ class _SettingsPageState extends State<SettingsPage>
                   addOnlyDivider(),
                   _settingItem(
                     title: 'data_management'.tr(),
-                    icon: const Icon(AuIcon.data_management),
+                    icon: const Icon(
+                      AuIcon.data_management,
+                      color: PrimitivesTokens.colorsBlack,
+                    ),
                     onTap: () async {
                       await Navigator.of(context)
                           .pushNamed(AppRouter.dataManagementPage);

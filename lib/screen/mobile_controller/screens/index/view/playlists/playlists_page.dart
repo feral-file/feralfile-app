@@ -3,28 +3,43 @@ import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/view/record_controller.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_title.dart';
+import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
+import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/util/ui_helper.dart';
+import 'package:autonomy_flutter/view/responsive.dart';
+import 'package:autonomy_flutter/widgets/notice-banner/notice_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/svg.dart';
 
 class PlaylistsPage extends StatefulWidget {
   const PlaylistsPage({super.key});
 
   @override
-  State<PlaylistsPage> createState() => _PlaylistsPageState();
+  State<PlaylistsPage> createState() => PlaylistsPageState();
 }
 
-class _PlaylistsPageState extends State<PlaylistsPage> {
+class PlaylistsPageState extends State<PlaylistsPage>
+    with AutomaticKeepAliveClientMixin {
   final ScrollController _scrollController = ScrollController();
   late final PlaylistsBloc _curatedPlaylistsBloc;
   late final PlaylistsBloc _myPlaylistsBloc;
+  late final UserAllOwnCollectionBloc _userAllOwnCollectionBloc;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -36,6 +51,7 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
     _myPlaylistsBloc = injector<PlaylistsBloc>(
       instanceName: PlaylistsBlocInstance.my.instanceName,
     );
+    _userAllOwnCollectionBloc = injector<UserAllOwnCollectionBloc>();
   }
 
   @override
@@ -49,13 +65,14 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
   void _onScroll() {
     if (_scrollController.position.pixels + 100 >=
         _scrollController.position.maxScrollExtent) {
-      _curatedPlaylistsBloc.add(const LoadMorePlaylistsEvent());
-      _myPlaylistsBloc.add(const LoadMorePlaylistsEvent());
+      _curatedPlaylistsBloc.add(LoadMorePlaylistsEvent());
+      _myPlaylistsBloc.add(LoadMorePlaylistsEvent());
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return CustomScrollView(
       shrinkWrap: true,
       controller: _scrollController,
@@ -108,6 +125,33 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
 
     final hasMore = state.hasMore;
 
+    Widget? emptyView;
+    Widget? Function(PlaylistData playlistData)? playlistHeaderBuilder;
+    if (playlistType == PlaylistType.me) {
+      emptyView = Column(
+        children: [
+          SizedBox(height: 12),
+          Padding(
+            padding: ResponsiveLayout.pageHorizontalEdgeInsets,
+            child: NoticeBanner(
+              message: '''
+      Type or paste an address into the command bar to load''',
+              onTap: () {
+                injector<NavigationService>().popToRouteOrPush(
+                  AppRouter.voiceCommandPage,
+                  arguments: RecordControllerScreenPayload(
+                    isListening: false,
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      );
+
+      playlistHeaderBuilder = _mePlaylistHeaderBuilder;
+    }
+
     return PlaylistSection(
       sectionName: playlistType.name,
       sectionIcon: SvgPicture.asset(
@@ -119,6 +163,7 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
           BlendMode.srcIn,
         ),
       ),
+      emptyView: emptyView,
       playlists: playlistDataList,
       hasMore: hasMore,
       onViewAllTap: () {
@@ -132,10 +177,100 @@ class _PlaylistsPageState extends State<PlaylistsPage> {
         if (assetToken != null) {
           injector<NavigationService>().navigateTo(
             AppRouter.artworkDetailsPage,
-            arguments: ArtworkDetailPayload(ArtworkIdentity(assetToken.cid)),
+            arguments: ArtworkDetailPayload(ArtworkIdentity(assetToken.cid),
+                useIndexer: true),
           );
         }
       },
+      playlistHeaderBuilder: playlistHeaderBuilder,
     );
+  }
+
+  Widget _mePlaylistHeaderBuilder(PlaylistData playlistData) {
+    final playlistReference = playlistData.playlistReference;
+    final playlist = playlistReference.playlist;
+    final owners = playlist.firstDynamicQuery?.params.owners ?? <String>[];
+
+    return BlocBuilder<UserAllOwnCollectionBloc, UserAllOwnCollectionState>(
+      bloc: _userAllOwnCollectionBloc,
+      builder: (context, collectionState) {
+        final theme = Theme.of(context);
+        String stateSuffix = '';
+
+        if (owners.isNotEmpty) {
+          final targetAddress = owners.first;
+          AddressState? targetState;
+
+          for (final addressState in collectionState.addressStates) {
+            if (addressState.address.address == targetAddress) {
+              targetState = addressState;
+              break;
+            }
+          }
+
+          stateSuffix = targetState?.state.description ?? '';
+        }
+
+        final child = PlaylistTitle(
+          primaryText: '${playlist.title}' +
+              (stateSuffix.isNotEmpty ? ' ($stateSuffix)' : ''),
+          secondaryText: playlistData.creator,
+        );
+
+        final slidableActions = [
+          if (playlistData is AddressPlaylistData)
+            ..._getAddressSlidableActions(playlistData),
+        ];
+
+        if (slidableActions.isEmpty) {
+          return child;
+        }
+
+        return Slidable(
+          groupTag: playlistData.playlistReference.playlist.id.toString(),
+          endActionPane: ActionPane(
+            extentRatio: 88 / 392,
+            motion: const DrawerMotion(),
+            children: slidableActions,
+          ),
+          child: child,
+        );
+      },
+    );
+  }
+
+  List<CustomSlidableAction> _getAddressSlidableActions(
+      AddressPlaylistData playlistData) {
+    return [
+      CustomSlidableAction(
+        backgroundColor: AppColor.primaryBlack,
+        padding: EdgeInsets.zero,
+        onPressed: (BuildContext context) async {
+          final address = playlistData.address;
+          UIHelper.showDeleteAccountConfirmation(address, (address) async {
+            await injector<AddressService>().deleteAddress(address);
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            vertical: 4,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SvgPicture.asset(
+                'assets/images/trash.svg',
+                height: 15,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Delete',
+                style: Theme.of(context).textTheme.ppMori400White12,
+              ),
+            ],
+          ),
+        ),
+      ),
+    ];
   }
 }

@@ -251,4 +251,10 @@ class Environment {
   // MeiliSearch configuration
   static String get meiliSearchUrl => _readKey('MEILISEARCH_URL', '');
   static String get meiliSearchKey => _readKey('MEILISEARCH_KEY', '');
+
+  static bool get enableExploreDev =>
+      _readKey('ENABLE_EXPLORE_DEV', '').toUpperCase() == 'TRUE';
+
+  static String get indexerAPIKey =>
+      _readKey('INDEXER_API_KEY', '', isSecret: true);
 }

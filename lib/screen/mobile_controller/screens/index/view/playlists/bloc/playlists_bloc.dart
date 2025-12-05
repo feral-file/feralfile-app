@@ -1,12 +1,9 @@
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
-import 'package:autonomy_flutter/service/user_playlist_service.dart';
+import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:flutter/foundation.dart';
@@ -34,10 +31,12 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     LoadPlaylistsEvent event,
     Emitter<PlaylistsState> emit,
   ) async {
+    log.info("LoadPlaylistsEvent for ${playlistType.name}");
     await _loadPlaylists(
       emit: emit,
       cursor: null,
     );
+    log.info("LoadPlaylistsEvent for ${playlistType.name} done");
   }
 
   Future<void> _onLoadMorePlaylists(
@@ -87,8 +86,17 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     final nextCursor = end < allPlaylists.length ? end.toString() : null;
     final hasMore = nextCursor != null;
 
+    final playlistDataList = topPlaylists
+        .map(
+          (playlistRef) => PlaylistData(
+            playlistReference: playlistRef,
+            creator: playlistRef.creator,
+          ),
+        )
+        .toList();
+
     return LoadPlaylistPaginationResponse(
-      playlists: topPlaylists,
+      playlistData: playlistDataList,
       hasMore: hasMore,
       cursor: nextCursor,
     );
@@ -98,80 +106,52 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     required Emitter<PlaylistsState> emit,
     required String? cursor,
   }) async {
-    final dynamicQuery = injector<UserDp1PlaylistService>()
-        .cachedAllOwnedPlaylist
-        .firstDynamicQuery;
-    if (dynamicQuery == null) {
-      return LoadPlaylistPaginationResponse(
-        playlists: [],
-        hasMore: false,
-        cursor: null,
-      );
-    }
-    final assetTokenGroupByAddress = injector<IndexerDatabaseAbstract>()
-        .getGroupAssetTokensByOwnersGroupByAddress(
-      owners: dynamicQuery.params.owners,
-    );
-    if (assetTokenGroupByAddress.isEmpty) {
-      return LoadPlaylistPaginationResponse(
-        playlists: [],
-        hasMore: false,
-        cursor: null,
-      );
-    }
-    final playlists = <PlaylistReference>[];
-    for (final addressAssetTokens in assetTokenGroupByAddress) {
-      final assetTokens = addressAssetTokens.assetTokens;
-      final items = <DP1Item>[];
-      for (final assetToken in assetTokens) {
-        final item = DP1PlaylistItemExtension.fromAssetToken(token: assetToken);
-        items.add(item);
-      }
-      final title = '${addressAssetTokens.address.name}';
-      final playlist = DP1CallExtension.fromItems(
-          items: items,
-          title: title,
-          playlistId: addressAssetTokens.address.address);
-      playlists.add(PlaylistReference.fromFeralFileDP1Call(playlist));
-    }
+    final allAddresses =
+        await injector<AddressService>().getAllWalletAddresses();
+    final addresses = allAddresses.toList();
 
     final start = int.tryParse(cursor ?? '0') ?? 0;
     final end = start + pageSize;
 
-    final topPlaylists = playlists.safeSublist(start, end).toList();
-    final nextCursor =
-        end < playlists.length ? topPlaylists.length.toString() : null;
+    final topAddresses = addresses.safeSublist(start, end).toList();
+
+    final playlistDataList = <AddressPlaylistData>[];
+    for (final address in topAddresses) {
+      final playlist = DP1CallExtension.fromOwner(
+          owners: [address.address], title: '${address.name}');
+      final playlistRef = AddressPlaylistReference(
+          playlist: playlist,
+          url: '',
+          type: PlaylistReferenceType.address,
+          address: address);
+      final addressPlaylistData = AddressPlaylistData(
+          playlistReference: playlistRef,
+          creator: playlistRef.creator,
+          address: address);
+      playlistDataList.add(addressPlaylistData);
+    }
+
+    final nextCursor = end < addresses.length
+        ? (topAddresses.length + start).toString()
+        : null;
 
     final hasMore = nextCursor != null;
 
     return LoadPlaylistPaginationResponse(
-        playlists: topPlaylists, hasMore: hasMore, cursor: nextCursor);
+      playlistData: playlistDataList,
+      hasMore: hasMore,
+      cursor: nextCursor,
+    );
   }
 
   Future<LoadPlaylistPaginationResponse> _loadGlobalPlaylists({
     required Emitter<PlaylistsState> emit,
     required String? cursor,
   }) async {
-    // Get all cached playlists
-    final allPlaylists =
-        await injector<FeralFileFeedManager>().getAllCachedPlaylists();
-
-    final start = int.tryParse(cursor ?? '0') ?? 0;
-    final end = start + pageSize;
-
-    // Get playlists based on total
-    // If total is null, get all playlists
-    final topPlaylists = total != null
-        ? allPlaylists.take(total!).toList()
-        : allPlaylists.safeSublist(start, end).toList();
-
-    final nextCursor = end < allPlaylists.length ? end.toString() : null;
-    final hasMore = nextCursor != null;
-
     return LoadPlaylistPaginationResponse(
-      playlists: topPlaylists,
-      hasMore: hasMore,
-      cursor: nextCursor,
+      playlistData: [],
+      hasMore: false,
+      cursor: null,
     );
   }
 
@@ -202,34 +182,9 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
               await _loadGlobalPlaylists(emit: emit, cursor: cursor);
       }
 
-      final playlists = paginationResponse.playlists;
-
-      // Collect all unique CIDs from top 5 playlists
-      final cids = <String>[];
-      for (final playlistRef in playlists) {
-        for (final item in playlistRef.playlist.items) {
-          if (item.cid != null) {
-            cids.add(item.cid!);
-          }
-        }
-      }
-      // Create PlaylistData list for playlists
-      final playlistDataList = <PlaylistData>[];
-      for (final playlistRef in playlists) {
-        final playlist = playlistRef.playlist;
-
-        final channelReference = injector<FeralFileFeedManager>()
-            .getCachedChannelReferenceByPlaylist(playlist);
-        final creator =
-            channelReference != null ? channelReference.channel.title : '';
-
-        playlistDataList.add(
-          PlaylistData(
-            playlistReference: playlistRef,
-            creator: creator,
-          ),
-        );
-      }
+      final playlistDataList = paginationResponse.playlistData;
+      final playlists =
+          playlistDataList.map((data) => data.playlistReference).toList();
 
       final newPlaylists =
           isLoadMore ? [...state.playlists, ...playlists] : playlists;
@@ -245,6 +200,8 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
         cursor: paginationResponse.cursor,
         error: '',
       ));
+      log.info(
+          "LoadPlaylistsEvent for ${playlistType.name}: ${newPlaylists.length}");
     } catch (e) {
       emit(
         state.copyWith(
@@ -257,12 +214,12 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
 }
 
 class LoadPlaylistPaginationResponse {
-  final List<PlaylistReference> playlists;
+  final List<PlaylistData> playlistData;
   final bool hasMore;
   final String? cursor;
 
   LoadPlaylistPaginationResponse({
-    required this.playlists,
+    required this.playlistData,
     required this.hasMore,
     required this.cursor,
   });

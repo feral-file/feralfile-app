@@ -12,7 +12,6 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/deeplink_service.dart';
-import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/constants.dart';
@@ -249,7 +248,6 @@ class QRScanViewState extends State<QRScanView>
   bool _isLoading = false;
   bool? _cameraPermission;
   String? currentCode;
-  final metricClient = injector<MetricClientService>();
   Timer? _timer;
 
   Barcode? _barcode;
@@ -480,7 +478,7 @@ class QRScanViewState extends State<QRScanView>
       return const SizedBox();
     }
     return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 70),
         child: SingleChildScrollView(
           child: SplittedBanner(
               headerWidget: _instructionHeader(context),

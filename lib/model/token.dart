@@ -434,6 +434,18 @@ class ProvenanceEvent {
       return null;
     }
   }
+
+  bool operator ==(Object other) {
+    if (other is ProvenanceEvent) {
+      return chain == other.chain &&
+          eventType == other.eventType &&
+          fromAddress == other.fromAddress &&
+          toAddress == other.toAddress &&
+          txHash == other.txHash &&
+          timestamp == other.timestamp;
+    }
+    return false;
+  }
 }
 
 class PaginatedProvenanceEvents {

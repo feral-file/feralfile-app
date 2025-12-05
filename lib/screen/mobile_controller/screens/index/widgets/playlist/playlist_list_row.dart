@@ -8,6 +8,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_title.dart';
 import 'package:autonomy_flutter/util/debouce_util.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
+import 'package:autonomy_flutter/util/log.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -18,6 +19,7 @@ class PlaylistRowItem extends StatefulWidget {
     this.playlistCreator,
     this.onItemTap,
     this.scrollController,
+    this.headerBuilder,
     super.key,
   });
 
@@ -25,6 +27,7 @@ class PlaylistRowItem extends StatefulWidget {
   final String? playlistCreator;
   final void Function(DP1NowDisplayingItem)? onItemTap;
   final ScrollController? scrollController;
+  final Widget? Function(PlaylistReference playlistReference)? headerBuilder;
 
   @override
   State<PlaylistRowItem> createState() => _PlaylistRowItemState();
@@ -40,7 +43,10 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
     _playlistDetailsBloc = PlaylistDetailsBloc(
       playlist: widget.playlistReference.playlist,
     );
-    _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
+    // Ensure BlocBuilder is mounted before dispatching event
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _playlistDetailsBloc.add(LoadMorePlaylistDetailsEvent());
+    });
 
     _carouselScrollController = widget.scrollController ?? ScrollController();
     _carouselScrollController.addListener(_onScrollListener);
@@ -67,7 +73,10 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
       _playlistDetailsBloc = PlaylistDetailsBloc(
         playlist: widget.playlistReference.playlist,
       );
-      _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
+      // Ensure BlocBuilder is mounted before dispatching event
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _playlistDetailsBloc.add(LoadMorePlaylistDetailsEvent());
+      });
     }
   }
 
@@ -116,10 +125,11 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            PlaylistTitle(
-              primaryText: playlistTitle,
-              secondaryText: creator,
-            ),
+            widget.headerBuilder?.call(widget.playlistReference) ??
+                PlaylistTitle(
+                  primaryText: playlistTitle,
+                  secondaryText: creator,
+                ),
             BlocBuilder<PlaylistDetailsBloc, PlaylistDetailsState>(
               bloc: _playlistDetailsBloc,
               builder: (context, state) {

@@ -1,10 +1,10 @@
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
-import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/dp1_now_displaying_item_ext.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
@@ -71,15 +71,22 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
         child: IgnorePointer(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: MainAxisSize.max,
             children: [
-              Expanded(
-                child: Center(
-                  child: Builder(
-                    builder: (context) {
-                      return _thumbnail(context);
-                    },
-                  ),
+              Flexible(
+                fit: FlexFit.tight,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return ClipRect(
+                      child: SizedBox(
+                        width: constraints.maxWidth,
+                        height: constraints.maxHeight,
+                        child: Center(
+                          child: _thumbnail(context),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 10),
@@ -96,6 +103,7 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
                         : 'Unknown Artist';
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           displayArtist,
@@ -130,7 +138,9 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
     }
     return FFArtworkThumbnailView(
       url: url,
-      fit: BoxFit.fitWidth,
+      // Use BoxFit.contain so the artwork scales up as much as possible
+      // within the available box (full width or full height) without cropping.
+      fit: BoxFit.contain,
     );
   }
 }

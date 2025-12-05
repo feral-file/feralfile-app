@@ -39,9 +39,13 @@ class LoadPlaylistsEvent extends PlaylistsEvent {
 }
 
 class LoadMorePlaylistsEvent extends PlaylistsEvent {
-  const LoadMorePlaylistsEvent();
+  LoadMorePlaylistsEvent() {
+    log.info("Create LoadMorePlaylistsEvent");
+  }
 }
 
 class RefreshPlaylistsEvent extends PlaylistsEvent {
-  const RefreshPlaylistsEvent();
+  RefreshPlaylistsEvent() {
+    log.info("Create RefreshPlaylistsEvent");
+  }
 }

@@ -78,6 +78,62 @@ class PreferenceView extends StatelessWidget {
               },
             ),
           ),
+          const SizedBox(height: 24),
+          Padding(
+            padding: padding,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _preferenceItemWithBuilder(
+                  context,
+                  'beta_features'.tr(),
+                  description: (context) => Padding(
+                    padding: const EdgeInsets.only(top: 7),
+                    child: Text(
+                      'beta_features_description'.tr(),
+                      style: theme.textTheme.ppMori400Black14,
+                    ),
+                  ),
+                  isEnabled: state.isBetaFeaturesEnabled,
+                  onChanged: (value) {
+                    final newState = state.copyWith(
+                      isBetaFeaturesEnabled: value,
+                      // If disabling beta features, also disable explore bar
+                      isExploreBarEnabled: value && state.isExploreBarEnabled,
+                    );
+                    context
+                        .read<PreferencesBloc>()
+                        .add(PreferenceUpdateEvent(newState));
+                  },
+                ),
+                if (state.isBetaFeaturesEnabled) ...[
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16),
+                    child: _preferenceItemWithBuilder(
+                      context,
+                      'show_explore_bar'.tr(),
+                      description: (context) => Padding(
+                        padding: const EdgeInsets.only(top: 7),
+                        child: Text(
+                          'show_explore_bar_description'.tr(),
+                          style: theme.textTheme.ppMori400Black14,
+                        ),
+                      ),
+                      isEnabled: state.isExploreBarEnabled,
+                      onChanged: (value) {
+                        final newState =
+                            state.copyWith(isExploreBarEnabled: value);
+                        context
+                            .read<PreferencesBloc>()
+                            .add(PreferenceUpdateEvent(newState));
+                      },
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ],
       );
     });

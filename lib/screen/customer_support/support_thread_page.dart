@@ -18,7 +18,6 @@ import 'package:autonomy_flutter/model/customer_support.dart';
 import 'package:autonomy_flutter/model/draft_customer_support.dart';
 import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/service/announcement/announcement_service.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
@@ -29,7 +28,6 @@ import 'package:autonomy_flutter/theme/extensions/button_style_extension.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/datetime_ext.dart';
-import 'package:autonomy_flutter/util/jwt.dart';
 import 'package:autonomy_flutter/util/log.dart' as log_util;
 import 'package:autonomy_flutter/util/native_log_reader.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
@@ -293,26 +291,14 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
     if (_userId != null) {
       return;
     }
-    // if it is an anonymous issue, we need to get the anonymous device id
+
     final configurationService = injector<ConfigurationService>();
-    final anonymousIssueIds = configurationService.getAnonymousIssueIds();
-
-    if (anonymousIssueIds.contains(issueId)) {
-      _userId = configurationService.getAnonymousDeviceId();
-      return;
-    }
-
-    // if it is a normal issue, we need to get the userId
-    final jwt = await injector<AuthService>().getAuthToken();
-    if (jwt != null) {
-      final data = parseJwt(jwt.jwtToken);
-      final sub = data['sub'] as String;
-      if (sub != _userId) {
-        if (mounted) {
-          setState(() {
-            _userId = sub;
-          });
-        }
+    final deviceId = await configurationService.getDeviceId();
+    if (deviceId != _userId) {
+      if (mounted) {
+        setState(() {
+          _userId = deviceId;
+        });
       }
     }
   }
@@ -357,10 +343,70 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
       log_util.log.severe('Failed to get Flutter log: $e');
     }
 
+    // // Add account settings audit log
+    // try {
+    //   final accountSettingsAudit = await _generateAccountSettingsAudit();
+    //   final auditBytes = utf8.encode(accountSettingsAudit);
+    //   final auditFilename =
+    //       'account_settings_audit_${auditBytes.length}_${DateTime.now().microsecondsSinceEpoch}.json';
+    //   _debugLogs.add(Pair(auditFilename, auditBytes));
+    // } catch (e) {
+    //   log_util.log.severe('Failed to get account settings audit: $e');
+    // }
+
     setState(() {
       _isFileAttached = _debugLogs.isNotEmpty;
     });
   }
+
+  // Future<String> _generateAccountSettingsAudit() async {
+  //   try {
+  //     final appDataManager = injector<AppDataManager>();
+
+  //     // Get app settings (merged device + user settings)
+  //     final appSettings = appDataManager.appSettingsStorageService.allInstance;
+
+  //     // Get wallet addresses (imported/linked addresses)
+  //     final addresses = appDataManager.addressStorageService.getAllAddresses();
+
+  //     // Get configuration service settings
+  //     final auditData = <String, dynamic>{
+  //       'timestamp': DateTime.now().toIso8601String(),
+  //       'app_settings': appSettings,
+  //       'imported_addresses': addresses
+  //           .map((addr) => {
+  //                 'address': addr.address,
+  //                 'cryptoType': addr.cryptoType.toString(),
+  //                 'isHidden': addr.isHidden,
+  //                 'createdAt': addr.createdAt.toIso8601String(),
+  //                 'name': addr.name,
+  //               })
+  //           .toList(),
+  //       'configuration_preferences': {
+  //         'isAnalyticsEnabled':
+  //             appDataManager.appSettingsStorageService.isAnalyticsEnabled,
+  //         'isDevicePasscodeEnabled':
+  //             appDataManager.appSettingsStorageService.isDevicePasscodeEnabled,
+  //         'isNotificationEnabled':
+  //             appDataManager.appSettingsStorageService.isNotificationEnabled,
+  //         'isBetaFeaturesEnabled':
+  //             appDataManager.appSettingsStorageService.isBetaFeaturesEnabled,
+  //         'isExploreBarEnabled':
+  //             appDataManager.appSettingsStorageService.isExploreBarEnabled,
+  //         'hiddenTokenIDs':
+  //             appDataManager.appSettingsStorageService.hiddenTokenIDs,
+  //         'selectedDeviceId':
+  //             appDataManager.appSettingsStorageService.selectedDeviceId,
+  //       },
+  //     };
+
+  //     // Convert to JSON with pretty printing
+  //     const encoder = JsonEncoder.withIndent('  ');
+  //     return encoder.convert(auditData);
+  //   } catch (e) {
+  //     return '{"error": "Failed to generate account settings audit: $e"}';
+  //   }
+  // }
 
   @override
   void dispose() {

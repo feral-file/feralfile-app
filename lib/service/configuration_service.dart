@@ -7,8 +7,6 @@
 
 import 'dart:convert';
 
-import 'package:autonomy_flutter/model/jwt.dart';
-import 'package:autonomy_flutter/model/network.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/util/list_extension.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -24,17 +22,11 @@ abstract class ConfigurationService {
 
   Future<void> setDailyLikedCount(int count);
 
-  String? getAnonymousDeviceId();
-
-  Future<String> createAnonymousDeviceId();
+  Future<String> getDeviceId();
 
   List<String> getAnonymousIssueIds();
 
   Future<void> addAnonymousIssueId(List<String> issueIds);
-
-  bool didMigrateToAccountSetting();
-
-  Future<void> setMigrateToAccountSetting(bool value);
 
   Future<void> setDidShowLiveWithArt(bool value);
 
@@ -44,10 +36,6 @@ abstract class ConfigurationService {
 
   int getLastPullAnnouncementTime();
 
-  Future<void> setDidMigrateAddress(bool value);
-
-  bool getDidMigrateAddress();
-
   Future<void> setAnnouncementLastPullTime(int lastPullTime);
 
   int? getAnnouncementLastPullTime();
@@ -56,38 +44,9 @@ abstract class ConfigurationService {
 
   bool getIsOldUser();
 
-  Future<void> setIAPReceipt(String? value);
-
-  String? getIAPReceipt();
-
-  Future<void> setIAPJWT(JWT? value);
-
-  JWT? getIAPJWT();
-
-  Future<void> setDevicePasscodeEnabled(bool value);
-
-  bool isDevicePasscodeEnabled();
-
-  Future<void> setNotificationEnabled(bool value);
-
-  bool isNotificationEnabled();
-
-  Future<void> setAnalyticEnabled(bool value);
-
-  bool isAnalyticsEnabled();
-
   Future<void> setDoneOnboarding(bool value);
 
   bool isDoneOnboarding();
-
-  List<String> getTempStorageHiddenTokenIDs({Network? network});
-
-  Future<void> updateTempStorageHiddenTokenIDs(
-    List<String> tokenIDs,
-    bool isAdd, {
-    Network? network,
-    bool override = false,
-  });
 
   Future<void> setReadReleaseNotesInVersion(String version);
 
@@ -115,14 +74,6 @@ abstract class ConfigurationService {
 
   Future<void> setDoneOnboardingTime(DateTime time);
 
-  // Do at once
-
-  /// to determine a hash value of the current addresses where
-  /// the app checked for Tezos artworks
-  int? sentTezosArtworkMetricValue();
-
-  Future<void> setSentTezosArtworkMetric(int hashedAddresses);
-
   // Reload
   Future<void> reload();
 
@@ -134,13 +85,7 @@ abstract class ConfigurationService {
 
   Future<void> setVersionInfo(String version);
 
-  List<String> getHiddenTokenIDs();
-
   bool getShowAddAddressBanner();
-
-  Future<void> setReferralCode(String referralCode);
-
-  String? getReferralCode();
 
   void setLinkAnnouncementToIssue(String announcementContentId, String issueId);
 
@@ -155,10 +100,6 @@ abstract class ConfigurationService {
   String? getPilotVersion();
 
   Future<void> setPilotVersion(String version);
-
-  String? getSelectedDeviceId();
-
-  Future<void> setSelectedDeviceId(String? deviceId);
 
   List<String> getRecordedMessages();
 
@@ -198,29 +139,19 @@ class ConfigurationServiceImpl implements ConfigurationService {
   ConfigurationServiceImpl(this._preferences);
 
   static const String keyDailyLikedCount = 'daily_liked_count';
-  static const String keyAnonymousDeviceId = 'anonymous_device_id';
+  static const String keyDeviceId = 'device_id';
   static const String keyAnonymousIssueIds = 'anonymous_issue_ids';
-  static const String keyDidMigrateToAccountSetting =
-      'did_migrate_to_account_setting';
   static const String keyDidShowLiveWithArt = 'did_show_live_with_art';
   static const String keyLastPullAnnouncementTime =
       'last_pull_announcement_time';
   static const String KEY_HAS_MERCHANDISE_SUPPORT_INDEX_ID =
       'has_merchandise_support';
   static const String KEY_POSTCARD_CHAT_CONFIG = 'postcard_chat_config';
-  static const String KEY_DID_MIGRATE_ADDRESS = 'did_migrate_address';
   static const String KEY_HIDDEN_FEEDS = 'hidden_feeds';
-  static const String KEY_IAP_RECEIPT = 'key_iap_receipt';
-  static const String KEY_IAP_JWT = 'key_iap_jwt';
   static const String IS_PREMIUM = 'is_premium';
-  static const String KEY_DEVICE_PASSCODE = 'device_passcode';
-  static const String KEY_NOTIFICATION = 'notifications';
-  static const String KEY_ANALYTICS = 'analytics';
-  static const String KEY_DONE_ONBOARING = 'done_onboarding';
+  static const String KEY_DONE_ONBOARING = 'done_onboarding_v2';
   static const String KEY_LAST_TIME_ASK_SUBSCRIPTION =
       'last_time_ask_subscription';
-  static const String KEY_TEMP_STORAGE_HIDDEN_TOKEN_IDS =
-      'temp_storage_hidden_token_ids_mainnet';
   static const String KEY_RECENTLY_SENT_TOKEN = 'recently_sent_token_mainnet';
   static const String KEY_READ_RELEASE_NOTES_VERSION =
       'read_release_notes_version';
@@ -274,15 +205,11 @@ class ConfigurationServiceImpl implements ConfigurationService {
 
   static const String KEY_MERCHANDISE_ORDER_IDS = 'merchandise_order_ids';
 
-  static const String KEY_REFERRAL_CODE = 'referral_code';
-
   static const String LAST_CONNECTED_DEVICE = 'last_connected_device';
 
   static const String KEY_BETA_TESTER = 'beta_tester';
 
   static const String PILOT_VERSION = 'pilot_version';
-
-  static const String KEY_SELECTED_DEVICE_ID = 'selected_device_id';
 
   static const String KEY_ADDRESS_LAST_REFRESHED_TIME =
       'address_last_refreshed_time_v2';
@@ -297,10 +224,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
 
   static const String KEY_LAST_UPDATE_CHANGE_AT = 'last_update_change_at';
 
-  // Do at once
-  static const String KEY_SENT_TEZOS_ARTWORK_METRIC =
-      'sent_tezos_artwork_metric';
-
   static const String POSTCARD_MINT = 'postcard_mint';
 
   static const String KEY_RECORDED_MESSAGES = 'recorded_messages';
@@ -308,62 +231,7 @@ class ConfigurationServiceImpl implements ConfigurationService {
   final SharedPreferences _preferences;
 
   @override
-  Future<void> setIAPReceipt(String? value) async {
-    if (value != null) {
-      await _preferences.setString(KEY_IAP_RECEIPT, value);
-    } else {
-      await _preferences.remove(KEY_IAP_RECEIPT);
-    }
-  }
-
-  @override
-  String? getIAPReceipt() => _preferences.getString(KEY_IAP_RECEIPT);
-
-  @override
-  Future<void> setIAPJWT(JWT? value) async {
-    if (value == null) {
-      await _preferences.remove(KEY_IAP_JWT);
-      return;
-    }
-    final json = jsonEncode(value);
-    await _preferences.setString(KEY_IAP_JWT, json);
-  }
-
-  @override
-  JWT? getIAPJWT() {
-    final data = _preferences.getString(KEY_IAP_JWT);
-    if (data == null) {
-      return null;
-    } else {
-      final json = jsonDecode(data) as Map<String, dynamic>;
-      return JWT.fromJson(json);
-    }
-  }
-
-  @override
-  bool isDevicePasscodeEnabled() => true; // always enabled
-
-  @override
-  Future<void> setDevicePasscodeEnabled(bool value) async {
-    log.info('setDevicePasscodeEnabled: $value');
-    await _preferences.setBool(KEY_DEVICE_PASSCODE, true);
-  }
-
-  @override
-  bool isAnalyticsEnabled() => _preferences.getBool(KEY_ANALYTICS) ?? true;
-
-  @override
-  bool isNotificationEnabled() =>
-      _preferences.getBool(KEY_NOTIFICATION) ?? false;
-
-  @override
   bool isDoneOnboarding() => _preferences.getBool(KEY_DONE_ONBOARING) ?? false;
-
-  @override
-  Future<void> setAnalyticEnabled(bool value) async {
-    log.info('setAnalyticEnabled: $value');
-    await _preferences.setBool(KEY_ANALYTICS, value);
-  }
 
   @override
   Future<void> setDoneOnboarding(bool value) async {
@@ -374,41 +242,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
     if (!currentValue && value && !getIsOldUser()) {
       await setDoneOnboardingTime(DateTime.now());
       await setOldUser();
-    }
-  }
-
-  @override
-  Future<void> setNotificationEnabled(bool value) async {
-    log.info('setNotificationEnabled: $value');
-    await _preferences.setBool(KEY_NOTIFICATION, value);
-  }
-
-  @override
-  List<String> getTempStorageHiddenTokenIDs({Network? network}) =>
-      _preferences.getStringList(KEY_TEMP_STORAGE_HIDDEN_TOKEN_IDS) ?? [];
-
-  @override
-  Future<void> updateTempStorageHiddenTokenIDs(
-    List<String> tokenIDs,
-    bool isAdd, {
-    Network? network,
-    bool override = false,
-  }) async {
-    const key = KEY_TEMP_STORAGE_HIDDEN_TOKEN_IDS;
-
-    if (override && isAdd) {
-      await _preferences.setStringList(key, tokenIDs);
-    } else {
-      final tempHiddenTokenIDs = _preferences.getStringList(key) ?? [];
-
-      isAdd
-          ? tempHiddenTokenIDs.addAll(tokenIDs)
-          : tempHiddenTokenIDs
-              .removeWhere((element) => tokenIDs.contains(element));
-      await _preferences.setStringList(
-        key,
-        tempHiddenTokenIDs.toSet().toList(),
-      );
     }
   }
 
@@ -456,14 +289,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
 
   @override
   Future<void> removeAll() => _preferences.clear();
-
-  @override
-  int? sentTezosArtworkMetricValue() =>
-      _preferences.getInt(KEY_SENT_TEZOS_ARTWORK_METRIC);
-
-  @override
-  Future<void> setSentTezosArtworkMetric(int hashedAddresses) async =>
-      _preferences.setInt(KEY_SENT_TEZOS_ARTWORK_METRIC, hashedAddresses);
 
   @override
   String? lastRemindReviewDate() => _preferences.getString(LAST_REMIND_REVIEW);
@@ -526,22 +351,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
   }
 
   @override
-  bool getDidMigrateAddress() =>
-      _preferences.getBool(KEY_DID_MIGRATE_ADDRESS) ?? false;
-
-  @override
-  Future<void> setDidMigrateAddress(bool value) async {
-    await _preferences.setBool(KEY_DID_MIGRATE_ADDRESS, value);
-  }
-
-  @override
-  List<String> getHiddenTokenIDs() {
-    final hiddenTokens = getTempStorageHiddenTokenIDs();
-    log.info('[ConfigurationService] Hidden tokens: $hiddenTokens');
-    return hiddenTokens;
-  }
-
-  @override
   bool getShowAddAddressBanner() =>
       _preferences.getBool(KEY_SHOW_ADD_ADDRESS_BANNER) ?? true;
 
@@ -552,21 +361,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
   @override
   Future<void> setLastPullAnnouncementTime(int lastPullTime) =>
       _preferences.setInt(keyLastPullAnnouncementTime, lastPullTime);
-
-  @override
-  bool didMigrateToAccountSetting() =>
-      _preferences.getBool(keyDidMigrateToAccountSetting) ?? false;
-
-  @override
-  Future<void> setMigrateToAccountSetting(bool value) =>
-      _preferences.setBool(keyDidMigrateToAccountSetting, value);
-
-  @override
-  String? getReferralCode() => _preferences.getString(KEY_REFERRAL_CODE);
-
-  @override
-  Future<void> setReferralCode(String referralCode) =>
-      _preferences.setString(KEY_REFERRAL_CODE, referralCode);
 
   @override
   bool didShowLiveWithArt() =>
@@ -612,16 +406,15 @@ class ConfigurationServiceImpl implements ConfigurationService {
     );
   }
 
-  @override
-  String? getAnonymousDeviceId() =>
-      _preferences.getString(keyAnonymousDeviceId);
+  Future<String> createDeviceId() async {
+    final uuid = const Uuid().v4();
+    await _preferences.setString(keyDeviceId, uuid);
+    return uuid;
+  }
 
   @override
-  Future<String> createAnonymousDeviceId() async {
-    final uuid = const Uuid().v4();
-    final anonymousDeviceId = 'device-$uuid';
-    await _preferences.setString(keyAnonymousDeviceId, anonymousDeviceId);
-    return anonymousDeviceId;
+  Future<String> getDeviceId() async {
+    return _preferences.getString(keyDeviceId) ?? createDeviceId();
   }
 
   @override
@@ -662,19 +455,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
   @override
   Future<void> setPilotVersion(String version) {
     return _preferences.setString(PILOT_VERSION, version);
-  }
-
-  @override
-  String? getSelectedDeviceId() {
-    return _preferences.getString(KEY_SELECTED_DEVICE_ID);
-  }
-
-  @override
-  Future<void> setSelectedDeviceId(String? deviceId) {
-    if (deviceId == null) {
-      return _preferences.remove(KEY_SELECTED_DEVICE_ID);
-    }
-    return _preferences.setString(KEY_SELECTED_DEVICE_ID, deviceId);
   }
 
   @override

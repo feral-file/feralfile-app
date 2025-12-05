@@ -19,10 +19,10 @@ class ChannelsPage extends StatefulWidget {
   const ChannelsPage({super.key});
 
   @override
-  State<ChannelsPage> createState() => _ChannelsPageState();
+  State<ChannelsPage> createState() => ChannelsPageState();
 }
 
-class _ChannelsPageState extends State<ChannelsPage>
+class ChannelsPageState extends State<ChannelsPage>
     with AutomaticKeepAliveClientMixin, RouteAware {
   final ScrollController _scrollController = ScrollController();
   late final ChannelsBloc _curatedChannelsBloc;

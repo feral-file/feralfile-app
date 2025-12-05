@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/service/configuration_service.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/util/biometrics_util.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -38,10 +38,10 @@ class LocalAuthenticationService {
   }
 
   static Future<bool> checkLocalAuth() async {
-    final configurationService = injector<ConfigurationService>();
+    final appDataManager = injector<AppDataManager>();
     final isAvailable = await authenticateIsAvailable();
     final isDevicePasscodeEnabled =
-        configurationService.isDevicePasscodeEnabled();
+        appDataManager.appSettingsStorageService.isDevicePasscodeEnabled;
 
     if (isDevicePasscodeEnabled && isAvailable) {
       bool didAuthenticate = false;

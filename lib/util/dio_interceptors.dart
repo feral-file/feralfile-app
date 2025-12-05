@@ -12,7 +12,6 @@ import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/gateway/customer_support_api.dart';
 import 'package:autonomy_flutter/model/ff_account.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/network_issue_manager.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
@@ -163,29 +162,6 @@ class SentryInterceptor extends InterceptorsWrapper {
   }
 }
 
-class AutonomyAuthInterceptor extends Interceptor {
-  AutonomyAuthInterceptor();
-
-  @override
-  Future<void> onRequest(
-    RequestOptions options,
-    RequestInterceptorHandler handler,
-  ) async {
-    if (options.headers['Authorization'] == null &&
-        ['POST', 'PUT', 'DELETE'].contains(options.method.toUpperCase())) {
-      final jwt = await injector<AuthService>().getAuthToken();
-      if (jwt == null) {
-        unawaited(Sentry.captureMessage('JWT is null'));
-        log.info('JWT is null when calling ${options.uri}');
-        throw JwtException(message: 'can_not_authenticate_desc'.tr());
-      }
-
-      options.headers['Authorization'] = 'Bearer ${jwt.jwtToken}';
-    }
-    return handler.next(options);
-  }
-}
-
 class CustomerSupportInterceptor extends Interceptor {
   CustomerSupportInterceptor();
 
@@ -209,30 +185,13 @@ class CustomerSupportInterceptor extends Interceptor {
         options.headers[CustomerSupportApi.apiKeyHeader] =
             Environment.supportApiKey;
         options.headers[CustomerSupportApi.deviceIdHeader] =
-            _configurationService.getAnonymousDeviceId();
+            await _configurationService.getDeviceId();
       } else {
-        final jwt = await injector<AuthService>().getAuthToken();
-        // other api, add jwt
-        if (jwt != null) {
-          options.headers['Authorization'] = 'Bearer ${jwt.jwtToken}';
-        } else {
-          unawaited(Sentry.captureMessage('JWT is null'));
-          throw JwtException(message: 'can_not_authenticate_desc'.tr());
-        }
+        throw Exception('can_not_authenticate_desc'.tr());
       }
     }
 
     return handler.next(options);
-  }
-}
-
-class MetricsInterceptor extends Interceptor {
-  @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    if (options.headers['x-api-key'] == null) {
-      options.headers['x-api-key'] = Environment.metricSecretKey;
-    }
-    handler.next(options);
   }
 }
 
@@ -428,7 +387,8 @@ class MeiliSearchInterceptor extends Interceptor {
 class DP1FeedAuthInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    if (options.method.toUpperCase() == 'POST' &&
+    if ((options.method.toUpperCase() == 'POST' ||
+            options.method.toUpperCase() == 'PUT') &&
         options.headers['Authorization'] == null) {
       options.headers['Authorization'] = 'Bearer ${Environment.dp1FeedApiKey}';
     }

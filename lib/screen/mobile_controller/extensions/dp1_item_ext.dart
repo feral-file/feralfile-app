@@ -19,7 +19,7 @@ extension DP1PlaylistItemExtension on DP1Item {
     return DP1Item(
       id: token.cid,
       title: token.displayTitle,
-      source: token.previewUrl,
+      source: token.getPreviewUrl(),
       duration: duration.inSeconds,
       license: license,
       provenance: dp1Provenance,

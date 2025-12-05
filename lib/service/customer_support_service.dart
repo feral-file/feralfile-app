@@ -16,7 +16,6 @@ import 'package:autonomy_flutter/model/announcement/announcement_local.dart';
 import 'package:autonomy_flutter/model/customer_support.dart';
 import 'package:autonomy_flutter/model/draft_customer_support.dart';
 import 'package:autonomy_flutter/service/announcement/announcement_service.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/bluetooth_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/hive_store_service.dart';
@@ -131,23 +130,14 @@ class CustomerSupportServiceImpl extends CustomerSupportService {
   Future<List<Issue>> _getIssues() async {
     final issues = <Issue>[];
     try {
-      final jwt = await injector<AuthService>().getAuthToken();
-      if (jwt != null) {
-        final listIssues = await _customerSupportApi.getIssues(
-          token: 'Bearer ${jwt.jwtToken}',
-        );
-        issues.addAll(listIssues);
-      }
-      final anonymousDeviceId = _configurationService.getAnonymousDeviceId();
-      if (anonymousDeviceId != null) {
-        final listAnonymousIssues =
-            await _customerSupportApi.getAnonymousIssues(
-          apiKey: Environment.supportApiKey,
-          deviceId: anonymousDeviceId,
-        );
-        issues.addAll(listAnonymousIssues);
-      }
-      issues.sort((a, b) => b.sortTime.compareTo(a.sortTime));
+      final deviceId = await _configurationService.getDeviceId();
+      final listAnonymousIssues = await _customerSupportApi.getAnonymousIssues(
+        apiKey: Environment.supportApiKey,
+        deviceId: deviceId,
+      );
+      issues
+        ..addAll(listAnonymousIssues)
+        ..sort((a, b) => b.sortTime.compareTo(a.sortTime));
     } catch (e) {
       log.info('[CS-Service] getIssues error: $e');
       unawaited(Sentry.captureException(e));
@@ -516,23 +506,15 @@ class CustomerSupportServiceImpl extends CustomerSupportService {
     if (artworkReportID != null && artworkReportID.isNotEmpty) {
       payload['artwork_report_id'] = artworkReportID;
     }
-    final jwt = await injector<AuthService>().getAuthToken();
-    if (jwt != null) {
-      return _customerSupportApi.createIssue(
-        payload,
-        token: 'Bearer ${jwt.jwtToken}',
-      );
-    } else {
-      final anonymousDeviceId = _configurationService.getAnonymousDeviceId() ??
-          await _configurationService.createAnonymousDeviceId();
-      final issue = await _customerSupportApi.createAnonymousIssue(
-        payload,
-        apiKey: Environment.supportApiKey,
-        deviceId: anonymousDeviceId,
-      );
-      await _configurationService.addAnonymousIssueId([issue.issueID]);
-      return issue;
-    }
+
+    final userId = await _configurationService.getDeviceId();
+    final issue = await _customerSupportApi.createAnonymousIssue(
+      payload,
+      apiKey: Environment.supportApiKey,
+      deviceId: userId,
+    );
+    await _configurationService.addAnonymousIssueId([issue.issueID]);
+    return issue;
   }
 
   Future<PostedMessageResponse> commentIssue(

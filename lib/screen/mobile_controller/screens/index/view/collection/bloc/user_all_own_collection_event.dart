@@ -6,11 +6,13 @@ class FetchTokensOfAddresses extends UserAllOwnCollectionEvent {
   FetchTokensOfAddresses({
     required this.addresses,
     this.shouldUpdateLastRefreshedTime = false,
+    this.shouldUpdateAddressState = true,
     this.onDone,
     this.onError,
   });
   final List<String> addresses;
   final bool shouldUpdateLastRefreshedTime;
+  final bool shouldUpdateAddressState;
   final void Function()? onDone;
   final void Function(Object error, StackTrace stackTrace)? onError;
 }

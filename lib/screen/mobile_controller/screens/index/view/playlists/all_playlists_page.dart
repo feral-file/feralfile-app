@@ -2,15 +2,19 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_list_row.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_title.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/section_details_header.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:flutter/material.dart';
@@ -44,13 +48,15 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
     with AutomaticKeepAliveClientMixin, RouteAware {
   final ScrollController _scrollController = ScrollController();
   late final PlaylistsBloc _playlistsBloc;
+  late final UserAllOwnCollectionBloc _userAllOwnCollectionBloc;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
     _playlistsBloc = _getPlaylistsBloc();
-    _playlistsBloc.add(LoadPlaylistsEvent());
+    _userAllOwnCollectionBloc = injector<UserAllOwnCollectionBloc>();
+    _playlistsBloc.add(LoadMorePlaylistsEvent());
   }
 
   PlaylistsBloc _getPlaylistsBloc() {
@@ -89,7 +95,7 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
   void _onScroll() {
     if (_scrollController.position.pixels + 100 >=
         _scrollController.position.maxScrollExtent) {
-      _playlistsBloc.add(const LoadMorePlaylistsEvent());
+      _playlistsBloc.add(LoadMorePlaylistsEvent());
     }
   }
 
@@ -113,7 +119,7 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
           builder: (context, state) {
             return RefreshIndicator(
               onRefresh: () async {
-                _playlistsBloc.add(const RefreshPlaylistsEvent());
+                _playlistsBloc.add(RefreshPlaylistsEvent());
                 // Wait for the refresh to complete
                 await _playlistsBloc.stream.firstWhere(
                   (state) => state.isLoaded || state.isError,
@@ -189,6 +195,10 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
             return PlaylistRowItem(
               playlistReference: playlistData.playlistReference,
               playlistCreator: playlistData.creator,
+              headerBuilder: widget.payload.playlistType == PlaylistType.me
+                  ? (playlistReference) =>
+                      _mePlaylistHeaderBuilder(playlistData, playlistReference)
+                  : null,
               onItemTap: (item) {
                 final assetToken = item.assetToken;
                 if (assetToken != null) {
@@ -213,6 +223,41 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
           child: BottomSpacing(),
         ),
       ],
+    );
+  }
+
+  /// Builds header for "me" playlists with address indexing state.
+  Widget _mePlaylistHeaderBuilder(
+    PlaylistData playlistData,
+    PlaylistReference playlistReference,
+  ) {
+    final playlist = playlistReference.playlist;
+    final owners = playlist.firstDynamicQuery?.params.owners ?? <String>[];
+
+    return BlocBuilder<UserAllOwnCollectionBloc, UserAllOwnCollectionState>(
+      bloc: _userAllOwnCollectionBloc,
+      builder: (context, collectionState) {
+        String stateSuffix = '';
+
+        if (owners.isNotEmpty) {
+          final targetAddress = owners.first;
+          AddressState? targetState;
+
+          for (final addressState in collectionState.addressStates) {
+            if (addressState.address.address == targetAddress) {
+              targetState = addressState;
+              break;
+            }
+          }
+
+          stateSuffix = targetState?.state.description ?? '';
+        }
+
+        return PlaylistTitle(
+          primaryText: '${playlist.title} ($stateSuffix)',
+          secondaryText: playlistData.creator,
+        );
+      },
     );
   }
 

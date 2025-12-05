@@ -9,18 +9,16 @@
 
 import 'package:autonomy_flutter/common/database.dart';
 import 'package:autonomy_flutter/common/environment.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
+import 'package:autonomy_flutter/database/hive_database.dart';
 import 'package:autonomy_flutter/gateway/customer_support_api.dart';
 import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
 import 'package:autonomy_flutter/gateway/feralfile_api.dart';
 import 'package:autonomy_flutter/gateway/feralfile_docs_api.dart';
-import 'package:autonomy_flutter/gateway/iap_api.dart';
 import 'package:autonomy_flutter/gateway/mobile_controller_api.dart';
 import 'package:autonomy_flutter/gateway/pubdoc_api.dart';
 import 'package:autonomy_flutter/gateway/remote_config_api.dart';
 import 'package:autonomy_flutter/gateway/tv_cast_api.dart';
-import 'package:autonomy_flutter/gateway/user_api.dart';
-import 'package:autonomy_flutter/graphql/account_settings/account_settings_client.dart';
-import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/nft_collection/data/api/tzkt_api.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/clients/indexer_client.dart';
@@ -44,7 +42,6 @@ import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/announcement/announcement_service.dart';
 import 'package:autonomy_flutter/service/announcement/announcement_store.dart';
 import 'package:autonomy_flutter/service/audio_service.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/bluetooth_service.dart';
 import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
@@ -59,19 +56,15 @@ import 'package:autonomy_flutter/service/ethereum_service.dart';
 import 'package:autonomy_flutter/service/feed_registry_service.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
 import 'package:autonomy_flutter/service/meilisearch_service.dart';
-import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/mobile_controller_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/network_issue_manager.dart';
 import 'package:autonomy_flutter/service/network_service.dart';
-import 'package:autonomy_flutter/service/passkey_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/secure_storage_server.dart';
-import 'package:autonomy_flutter/service/settings_data_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/util/au_file_service.dart';
-import 'package:autonomy_flutter/util/dio_interceptors.dart';
 import 'package:autonomy_flutter/util/dio_manager.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -86,8 +79,6 @@ import 'package:web3dart/web3dart.dart';
 
 final injector = GetIt.instance;
 final testnetInjector = GetIt.asNewInstance();
-
-const iapApiTimeout5secInstanceName = 'iapApiTimeout5sec';
 
 Future<void> setupLogger() async {
   await FileLogger.initializeLogging();
@@ -125,24 +116,6 @@ Future<void> setupInjector() async {
     await ObjectBox.create();
   }
 
-  final authenticatedDio = DioManager()
-      .base(dioOptions); // Authenticated dio instance for AU servers
-  authenticatedDio.interceptors.add(AutonomyAuthInterceptor());
-  authenticatedDio.interceptors.add(FeralfileErrorHandlerInterceptor());
-  authenticatedDio.interceptors.add(MetricsInterceptor());
-
-  final authenticatedDioWithTimeout5sec = DioManager().base(
-    dioOptions.copyWith(
-      connectTimeout: const Duration(seconds: 5),
-      receiveTimeout: const Duration(seconds: 5),
-    ),
-  );
-
-  authenticatedDioWithTimeout5sec.interceptors.add(AutonomyAuthInterceptor());
-  authenticatedDioWithTimeout5sec.interceptors
-      .add(FeralfileErrorHandlerInterceptor());
-  authenticatedDioWithTimeout5sec.interceptors.add(MetricsInterceptor());
-
   injector.registerLazySingleton<NetworkService>(NetworkService.new);
   // Services
 
@@ -150,30 +123,14 @@ Future<void> setupInjector() async {
     ConfigurationServiceImpl(sharedPreferences),
   );
   injector.registerLazySingleton(http.Client.new);
-  injector.registerLazySingleton<MetricClientService>(MetricClientService.new);
   injector.registerLazySingleton<CacheManager>(AUImageCacheManage.new);
+
+  injector.registerLazySingleton<HiveDatabase>(
+    HiveDatabase.new,
+  );
 
   injector.registerLazySingleton<AddressService>(
     () => AddressService(injector()),
-  );
-
-  injector.registerLazySingleton(
-    () => IAPApi(authenticatedDio, baseUrl: Environment.autonomyAuthURL),
-  );
-
-  injector.registerLazySingleton(
-    () => IAPApi(
-      authenticatedDioWithTimeout5sec,
-      baseUrl: Environment.autonomyAuthURL,
-    ),
-    instanceName: iapApiTimeout5secInstanceName,
-  );
-
-  final userApiDio = DioManager().base(dioOptions);
-  userApiDio.interceptors.add(FeralfileErrorHandlerInterceptor());
-
-  injector.registerLazySingleton(
-    () => UserApi(userApiDio, baseUrl: Environment.autonomyAuthURL),
   );
 
   final tzktUrl = Environment.appTestnetConfig
@@ -190,16 +147,6 @@ Future<void> setupInjector() async {
   injector.registerLazySingleton<RemoteConfigService>(
     () => RemoteConfigServiceImpl(
       RemoteConfigApi(dio, baseUrl: Environment.remoteConfigURL),
-    ),
-  );
-  injector.registerLazySingleton(
-    () => AuthService(injector(), injector(), injector()),
-  );
-
-  injector.registerLazySingleton<PasskeyService>(
-    () => PasskeyServiceImpl(
-      injector(),
-      injector(),
     ),
   );
 
@@ -221,13 +168,6 @@ Future<void> setupInjector() async {
   );
 
   injector<FFBluetoothService>().startListen();
-
-  injector.registerLazySingleton<SettingsDataService>(
-    () => SettingsDataServiceImpl(
-      injector(),
-      injector(),
-    ),
-  );
 
   injector.registerLazySingleton(
     () => TvCastApi(
@@ -282,7 +222,6 @@ Future<void> setupInjector() async {
 
   final indexerClient = IndexerClient(
     Environment.indexerURL,
-    authService: injector<AuthService>(),
   );
   injector.registerLazySingleton<NftIndexerService>(
     () => NftIndexerService(indexerClient),
@@ -309,7 +248,6 @@ Future<void> setupInjector() async {
 
   injector.registerLazySingleton<DeeplinkService>(
     () => DeeplinkServiceImpl(
-      injector(),
       injector(),
     ),
   );
@@ -343,15 +281,11 @@ Future<void> setupInjector() async {
   await injector<AnnouncementStore>().init();
 
   injector.registerLazySingleton<AnnouncementService>(
-    () => AnnouncementServiceImpl(injector(), injector(), injector()),
+    () => AnnouncementServiceImpl(injector(), injector()),
   );
 
-  injector.registerLazySingleton<AccountSettingsClient>(
-    () => AccountSettingsClient(Environment.accountSettingUrl),
-  );
-
-  injector.registerLazySingleton<CloudManager>(CloudManager.new);
-  await injector<CloudManager>().init();
+  injector.registerLazySingleton<AppDataManager>(AppDataManager.new);
+  await injector<AppDataManager>().init();
 
   injector.registerLazySingleton<FeedRegistryService>(
     FeedRegistryServiceImpl.new,
@@ -447,10 +381,8 @@ Future<void> setupInjector() async {
     ),
   );
 
-  injector.registerFactory<WorksBloc>(
-    () => WorksBloc(
-      indexerService: injector(),
-    ),
+  injector.registerLazySingleton<WorksBloc>(
+    WorksBloc.new,
   );
 
   final feedManager = FeralFileFeedManager();
@@ -474,7 +406,7 @@ Future<void> setupInjector() async {
 
   // User playlist service (DP1)
   injector.registerLazySingleton<UserDp1PlaylistService>(
-    () => UserDp1PlaylistService(injector(), injector()),
+    () => UserDp1PlaylistService(),
   );
 
   // MeiliSearch SDK Service (using official SDK)

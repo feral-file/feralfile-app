@@ -13,10 +13,10 @@ class WorksPage extends StatefulWidget {
   const WorksPage({super.key});
 
   @override
-  State<WorksPage> createState() => _WorksPageState();
+  State<WorksPage> createState() => WorksPageState();
 }
 
-class _WorksPageState extends State<WorksPage>
+class WorksPageState extends State<WorksPage>
     with AutomaticKeepAliveClientMixin {
   late final WorksBloc _worksBloc;
 

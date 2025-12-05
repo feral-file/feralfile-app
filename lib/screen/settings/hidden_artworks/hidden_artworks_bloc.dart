@@ -6,24 +6,22 @@
 //
 
 import 'package:autonomy_flutter/au_bloc.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
-import 'package:autonomy_flutter/service/configuration_service.dart';
 
 class HiddenArtworksBloc extends AuBloc<HiddenArtworksEvent, List<AssetToken>> {
-  final ConfigurationService configurationService;
-  final IndexerDatabaseAbstract database;
-
-  HiddenArtworksBloc(this.configurationService, this.database) : super([]) {
+  HiddenArtworksBloc(this.appDataManager, this.database) : super([]) {
     on<HiddenArtworksEvent>((event, emit) async {
       final hiddenArtworks =
-          configurationService.getTempStorageHiddenTokenIDs();
-      final tokens = database.getTokensByCIDs(cids: hiddenArtworks);
-
-      tokens.removeWhere((element) => !hiddenArtworks.contains(element.cid));
+          appDataManager.appSettingsStorageService.hiddenTokenIDs;
+      final tokens = database.getTokensByCIDs(cids: hiddenArtworks)
+        ..removeWhere((element) => !hiddenArtworks.contains(element.cid));
       emit(tokens);
     });
   }
+  final AppDataManager appDataManager;
+  final IndexerDatabaseAbstract database;
 }
 
 class HiddenArtworksEvent {}

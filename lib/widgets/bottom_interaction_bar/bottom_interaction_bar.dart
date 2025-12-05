@@ -5,6 +5,9 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/common/environment.dart';
+import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/design/build/components/CommandDot.dart';
 import 'package:autonomy_flutter/design/build/components/LLMTextInput.dart';
 import 'package:autonomy_flutter/design/build/components/NowPlayingBar.dart';
@@ -17,6 +20,7 @@ import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
 import 'package:autonomy_flutter/view/now_displaying/now_displaying_bar.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/llm_text_input/llm_text_input.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// Widget that wraps LLMTextInput and NowDisplayingBar with shared scroll-based visibility
@@ -43,6 +47,21 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
   double _actualNowDisplayingBarHeight = _nowDisplayingBarHeight;
 
   bool _isShowing = false;
+
+  /// Check if explore bar should be shown
+  /// Returns true if:
+  /// - Dev override is enabled (ENABLE_EXPLORE_DEV env var or kDebugMode), OR
+  /// - Beta features are enabled AND explore bar is enabled
+  bool _shouldShowExploreBar() {
+    if (Environment.enableExploreDev || kDebugMode) {
+      return true;
+    }
+
+    final appSettingsStorageService =
+        injector<AppDataManager>().appSettingsStorageService;
+    return appSettingsStorageService.isBetaFeaturesEnabled &&
+        appSettingsStorageService.isExploreBarEnabled;
+  }
 
   void _updateHeights() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -173,7 +192,7 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
                 ),
 
                 // LLMTextInput
-                if (!isExpanded)
+                if (_shouldShowExploreBar() && !isExpanded)
                   Positioned(
                     bottom: paddingBottom +
                         UIConstants.nowDisplayingBarBottomPadding +

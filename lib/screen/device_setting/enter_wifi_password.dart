@@ -95,7 +95,7 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
         title: 'select_network'.tr(),
         isWhite: false,
       ),
-      backgroundColor: AppColor.primaryBlack,
+      backgroundColor: AppColor.auGreyBackground,
       body: SafeArea(
         child: Padding(
           padding: ResponsiveLayout.pageEdgeInsets,
@@ -114,7 +114,7 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                       children: [
                         Text(
                           widget.payload.wifiAccessPoint.ssid,
-                          style: theme.textTheme.ppMori400White14,
+                          style: theme.textTheme.ppMori400White12,
                         ),
                         const SizedBox(
                           height: 16,
@@ -122,7 +122,7 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                         PasswordTextField(
                           controller: passwordController,
                           focusNode: _passwordFocusNode,
-                          style: Theme.of(context).textTheme.ppMori400White14,
+                          style: Theme.of(context).textTheme.ppMori400White12,
                           hintText: 'password'.tr(),
                           defaultObscure: false,
                           isEnabled: !_isProcessing,
@@ -236,6 +236,22 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                           e.message,
                         ));
                       }
+                    } on TimeoutException catch (e) {
+                      log.info('Failed to send wifi credentials: $e');
+                      unawaited(
+                        Sentry.captureException(
+                          'Failed to send wifi credentials: $e',
+                        ),
+                      );
+                      unawaited(
+                        UIHelper.showInfoDialog(
+                          context,
+                          'Wi-Fi setup failed',
+                          'Wi-Fi setup couldn\'t be completed. Check your connection and attempt the setup again',
+                        ).then((_) {
+                          widget.payload.onSubmitted?.call(null, e);
+                        }),
+                      );
                     } catch (e) {
                       log.info('Failed to send wifi credentials: $e');
                       unawaited(
@@ -246,8 +262,8 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                       unawaited(
                         UIHelper.showInfoDialog(
                           context,
-                          'Send wifi credentials failed',
-                          '${e.toString()}',
+                          'Wi-Fi setup failed',
+                          'Wi-Fi setup couldn\'t be completed. Check your connection and attempt the setup again',
                         ).then((_) {
                           widget.payload.onSubmitted?.call(null, e);
                         }),
@@ -314,7 +330,7 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
 
   @override
   Widget build(BuildContext context) {
-    const backgroundColor = AppColor.auGreyBackground;
+    const backgroundColor = AppColor.primaryBlack;
     return TextField(
       focusNode: widget.focusNode,
       autocorrect: false,

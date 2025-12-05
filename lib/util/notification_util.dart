@@ -9,10 +9,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/gateway/iap_api.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
-import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:sentry/sentry.dart';
@@ -30,10 +28,12 @@ Future<bool> registerPushNotifications({bool askPermission = false}) async {
   }
 
   try {
-    final userId = injector<AuthService>().getUserId();
-    await OneSignal.login(userId!);
-    if ((injector<ConfigurationService>().isNotificationEnabled() &&
-        OneSignal.Notifications.permission)) {
+    final userId = await injector<ConfigurationService>().getDeviceId();
+    await OneSignal.login(userId);
+    if (injector<AppDataManager>()
+            .appSettingsStorageService
+            .isNotificationEnabled &&
+        OneSignal.Notifications.permission) {
       await OneSignal.User.pushSubscription.optIn();
     }
     return true;
@@ -52,20 +52,4 @@ Future<void> deregisterPushNotification() async {
   log.info('unregister notification');
   await OneSignal.User.pushSubscription.optOut();
   await OneSignal.logout();
-}
-
-class OneSignalHelper {
-  static Future<void> setExternalUserId({
-    required String userId,
-    String? authHashToken,
-  }) async {
-    await OneSignal.login(userId);
-  }
-
-  static Future<String> getIdentityHash() async {
-    final environment = await getAppVariant();
-    return (await injector<IAPApi>()
-            .generateIdentityHash({'environment': environment}))
-        .hash;
-  }
 }

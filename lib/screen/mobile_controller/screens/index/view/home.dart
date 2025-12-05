@@ -6,7 +6,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/pla
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/works/works_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/home_index_header.dart';
 import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
@@ -21,6 +20,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
 /// Home Index Page - Main navigation with playlist sections
+///
+
+final GlobalKey<PlaylistsPageState> _playlistsPageKey =
+    GlobalKey<PlaylistsPageState>();
+final GlobalKey<ChannelsPageState> _channelsPageKey =
+    GlobalKey<ChannelsPageState>();
+final GlobalKey<WorksPageState> _worksPageKey = GlobalKey<WorksPageState>();
+
 class HomeIndexPage extends StatefulWidget {
   const HomeIndexPage({super.key});
 
@@ -73,8 +80,7 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
           isNowDisplayingBarExpanded.value = false;
         },
       ),
-      if (injector<AuthService>().isBetaTester() &&
-          BluetoothDeviceManager().castingBluetoothDevice != null)
+      if (BluetoothDeviceManager().castingBluetoothDevice != null)
         // FF-X1 Setting
         OptionItem(
           title: 'FF1 Settings',
@@ -168,152 +174,128 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColor.auGreyBackground,
-      body: InteractiveViewer(
-        transformationController: _transformationController,
-        minScale: 1.0,
-        maxScale: shouldShowOverlay ? 16.0 : 1.0,
-        child: Stack(
-          children: [
-            NestedScrollView(
-              controller: _scrollController,
-              floatHeaderSlivers: true,
-              headerSliverBuilder: (context, innerBoxIsScrolled) {
-                final height = innerBoxIsScrolled ? 75.0 : 123.0;
-                final hamburgerButton = GestureDetector(
-                  onTap: () {
-                    // Handle back button tap
-                    UIHelper.showCenterMenu(
-                      context,
-                      options: _defaultOptions,
-                    );
-                  },
-                  child: Container(
-                    color: Colors.transparent,
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                        right: 15,
-                        top: 16,
-                        left: 15,
-                        bottom: 16,
-                      ),
-                      child: SvgPicture.asset(
-                        'assets/images/Drawer.svg',
-                        width: 22,
-                        height: 14,
-                        colorFilter: const ColorFilter.mode(
-                          AppColor.white,
-                          BlendMode.srcIn,
-                        ),
-                      ),
-                    ),
+      body: NestedScrollView(
+        controller: _scrollController,
+        floatHeaderSlivers: true,
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          final height = 43.5;
+          final hamburgerButton = GestureDetector(
+            onTap: () {
+              // Handle back button tap
+              UIHelper.showCenterMenu(
+                context,
+                options: _defaultOptions,
+              );
+            },
+            child: Container(
+              color: Colors.transparent,
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  right: 15,
+                  top: 14,
+                  left: 15,
+                  bottom: 14,
+                ),
+                child: SvgPicture.asset(
+                  'assets/images/Drawer.svg',
+                  width: 22,
+                  height: 14,
+                  colorFilter: const ColorFilter.mode(
+                    AppColor.white,
+                    BlendMode.srcIn,
                   ),
-                );
-                return [
-                  SliverAppBar(
-                    pinned: false,
-                    floating: true,
-                    snap: true,
-                    elevation: 0,
-                    toolbarHeight: height,
-                    expandedHeight: height,
-                    flexibleSpace: FlexibleSpaceBar(
-                      background: Container(
-                        color: AppColor.auGreyBackground,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            if (!innerBoxIsScrolled)
-                              SizedBox(
-                                height: 106,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    hamburgerButton,
-                                  ],
-                                ),
-                              ),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: HomeIndexHeader(
-                                    selectedTab: _selectedTab,
-                                    onTabChanged: (tab) {
-                                      setState(() {
-                                        _selectedTab = tab;
-                                      });
-                                    },
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: 16,
-                                ),
-                                if (innerBoxIsScrolled) hamburgerButton,
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  // SliverPadding(
-                  //   padding: const EdgeInsets.only(top: 48),
-                  //   sliver: SliverPersistentHeader(
-                  //     pinned: false,
-                  //     floating: false,
-                  //     delegate: _CombinedHeaderDelegate(
-                  //       selectedTab: _selectedTab,
-                  //       onTabChanged: (tab) {
-                  //         setState(() {
-                  //           _selectedTab = tab;
-                  //         });
-                  //       },
-                  //       isBodyScrolling: innerBoxIsScrolled,
-                  //     ),
-                  //   ),
-                  // ),
-                ];
-              },
-              body: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 50),
-                    _buildContent(),
-                    const BottomSpacing()
-                  ],
                 ),
               ),
             ),
-            // Figma design overlay for comparison - zooms with content
-            if (shouldShowOverlay)
-              IgnorePointer(
-                ignoring: true,
-                child: Opacity(
-                  opacity: 0.3,
-                  child: Container(
-                    width: double.infinity,
-                    height: double.infinity,
-                    child: Image.asset(
-                      'assets/images/Channels.png',
-                      fit: BoxFit.fitWidth,
-                    ),
+          );
+          return [
+            SliverAppBar(
+              pinned: false,
+              floating: true,
+              snap: true,
+              elevation: 0,
+              toolbarHeight: height,
+              expandedHeight: height,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Container(
+                  color: AppColor.auGreyBackground,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      // if (!innerBoxIsScrolled)
+                      //   SizedBox(
+                      //     height: 106,
+                      //     child: Row(
+                      //       mainAxisAlignment: MainAxisAlignment.end,
+                      //       children: [
+                      //         hamburgerButton,
+                      //       ],
+                      //     ),
+                      //   ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 15),
+                              child: HomeIndexHeader(
+                                selectedTab: _selectedTab,
+                                onTabChanged: (tab) {
+                                  setState(() {
+                                    _selectedTab = tab;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 16,
+                          ),
+                          hamburgerButton,
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
-          ],
+            ),
+          ];
+        },
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              const SizedBox(height: 37),
+              _buildContent(),
+              const BottomSpacing()
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildContent() {
-    switch (_selectedTab) {
-      case HomeIndexTab.playlists:
-        return Container(child: const PlaylistsPage());
-      case HomeIndexTab.channels:
-        return const ChannelsPage();
-      case HomeIndexTab.works:
-        return const WorksPage();
-    }
+    // Use Stack with Offstage instead of IndexedStack
+    // Offstage keeps widgets alive (not disposed) while hiding them
+    // This allows each page to have independent constraints
+    // Combined with AutomaticKeepAliveClientMixin in each page, state is preserved
+    // Each page can determine its own height (limited or unlimited) independently
+    return Stack(
+      children: [
+        Offstage(
+          offstage: _selectedTab != HomeIndexTab.playlists,
+          child: PlaylistsPage(key: _playlistsPageKey),
+        ),
+        Offstage(
+          offstage: _selectedTab != HomeIndexTab.channels,
+          child: ChannelsPage(key: _channelsPageKey),
+        ),
+        Offstage(
+          offstage: _selectedTab != HomeIndexTab.works,
+          child: WorksPage(key: _worksPageKey),
+        ),
+      ],
+    );
   }
 }
 
@@ -358,8 +340,7 @@ class _CombinedHeaderDelegate extends SliverPersistentHeaderDelegate {
           isNowDisplayingBarExpanded.value = false;
         },
       ),
-      if (injector<AuthService>().isBetaTester() &&
-          BluetoothDeviceManager().castingBluetoothDevice != null)
+      if (BluetoothDeviceManager().castingBluetoothDevice != null)
         // FF-X1 Setting
         OptionItem(
           title: 'FF1 Settings',

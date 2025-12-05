@@ -1,11 +1,9 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/gateway/iap_api.dart';
 import 'package:autonomy_flutter/model/additional_data/additional_data.dart';
 import 'package:autonomy_flutter/model/announcement/announcement.dart';
 import 'package:autonomy_flutter/model/announcement/announcement_local.dart';
-import 'package:autonomy_flutter/model/announcement/announcement_request.dart';
 import 'package:autonomy_flutter/model/announcement/notification_setting_type.dart';
 import 'package:autonomy_flutter/service/announcement/announcement_store.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
@@ -35,12 +33,10 @@ abstract class AnnouncementService {
 }
 
 class AnnouncementServiceImpl implements AnnouncementService {
-  final IAPApi _iapApi;
   final AnnouncementStore _announcementStore;
   final ConfigurationService _configurationService;
 
   AnnouncementServiceImpl(
-    this._iapApi,
     this._announcementStore,
     this._configurationService,
   );
@@ -53,39 +49,7 @@ class AnnouncementServiceImpl implements AnnouncementService {
 
   @override
   Future<List<Announcement>> fetchAnnouncements() async {
-    final lastPullTime = _configurationService.getLastPullAnnouncementTime();
-    final request = AnnouncementRequest(
-      lastPullTime: lastPullTime,
-      size: _fetchSize,
-    );
-    log.info('Fetching announcements with request: ${request.toJson()}');
-    late List<Announcement> announcements;
-    try {
-      announcements = await _iapApi.getAnnouncements(request);
-      final localAnnouncement = _announcementStore.getAll();
-      announcements.removeWhere((element) => localAnnouncement.any((local) =>
-          local.announcementContentId == element.announcementContentId));
-      for (final announcement in announcements) {
-        final localAnnouncement =
-            AnnouncementLocal.fromAnnouncement(announcement);
-        await _saveAnnouncement(localAnnouncement);
-
-        if (_queue.isNotEmpty &&
-            !_queue.any((element) =>
-                element.announcementContentId ==
-                localAnnouncement.announcementContentId)) {
-          _queue.add(localAnnouncement);
-        }
-      }
-      await _configurationService.setLastPullAnnouncementTime(
-          DateTime.now().millisecondsSinceEpoch ~/ 1000);
-    } catch (e) {
-      log.info('Error fetching announcements: $e');
-      return [];
-    }
-    log.info('Fetched announcements: ${announcements.length}');
-    _updateBadger(_queue.length);
-    return announcements;
+    return [];
   }
 
   @override

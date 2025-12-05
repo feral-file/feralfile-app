@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:autonomy_flutter/graphql/account_settings/setting_object.dart';
+import 'package:autonomy_flutter/model/base_object.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
@@ -37,7 +37,7 @@ enum PlayListSource {
   }
 }
 
-class PlayListModel implements SettingObject {
+class PlayListModel implements BaseObject {
   String id;
   String? name;
   String? thumbnailURL;

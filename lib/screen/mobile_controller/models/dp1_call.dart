@@ -60,6 +60,7 @@ class DP1Call {
       'defaults': defaults,
       'items': items.map((e) => e.toJson()).toList(),
       'signature': signature,
+      'dynamicQueries': dynamicQueries.map((e) => e.toJson()).toList(),
     };
   }
 

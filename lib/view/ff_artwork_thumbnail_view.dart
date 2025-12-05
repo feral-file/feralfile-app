@@ -1,10 +1,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:autonomy_flutter/util/svg_utils.dart';
-
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
+import 'package:autonomy_flutter/util/svg_utils.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:autonomy_flutter/view/feralfile_cache_network_image.dart';
 import 'package:flutter/material.dart';
@@ -18,7 +17,7 @@ class FFArtworkThumbnailView extends StatefulWidget {
     this.cacheHeight,
     super.key,
     this.onTap,
-    this.fit = BoxFit.cover,
+    this.fit = BoxFit.contain,
     this.placeholder,
     this.errorWidget,
     this.cacheScale = 3.0,
@@ -104,6 +103,7 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
               cacheHeight: widget.cacheHeight?.toDouble(),
               placeholder: widget.placeholder,
               errorWidget: widget.errorWidget,
+              fit: widget.fit,
               onError: () {
                 if (mounted) {
                   setState(() {
@@ -119,7 +119,7 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
                 imageBytes,
                 width: widget.cacheWidth?.toDouble(),
                 height: widget.cacheHeight?.toDouble(),
-                fit: BoxFit.cover,
+                fit: widget.fit,
                 placeholderBuilder: (context) =>
                     widget.placeholder ?? const GalleryThumbnailPlaceholder(),
               );
@@ -157,7 +157,7 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
         widget.url,
         width: widget.cacheWidth?.toDouble(),
         height: widget.cacheHeight?.toDouble(),
-        fit: BoxFit.cover,
+        fit: widget.fit,
         placeholderBuilder: (context) =>
             widget.placeholder ?? const GalleryThumbnailPlaceholder(),
         errorBuilder: (context, error, stackTrace) =>
@@ -198,6 +198,7 @@ class _SvgPictureWidget extends StatefulWidget {
     this.placeholder,
     this.errorWidget,
     this.onError,
+    this.fit = BoxFit.contain,
   });
 
   final String svgString;
@@ -206,6 +207,7 @@ class _SvgPictureWidget extends StatefulWidget {
   final double? cacheHeight;
   final Widget? placeholder;
   final Widget? errorWidget;
+  final BoxFit fit;
   final VoidCallback? onError;
 
   @override
@@ -227,7 +229,7 @@ class _SvgPictureWidgetState extends State<_SvgPictureWidget> {
         widget.svgString,
         width: widget.cacheWidth,
         height: widget.cacheHeight,
-        fit: BoxFit.cover,
+        fit: widget.fit,
         allowDrawingOutsideViewBox: true,
         placeholderBuilder: (context) =>
             widget.placeholder ?? const GalleryThumbnailPlaceholder(),
@@ -240,7 +242,7 @@ class _SvgPictureWidgetState extends State<_SvgPictureWidget> {
           Uint8List.fromList(convertedBytes),
           width: widget.cacheWidth,
           height: widget.cacheHeight,
-          fit: BoxFit.cover,
+          fit: widget.fit,
           allowDrawingOutsideViewBox: true,
           placeholderBuilder: (context) =>
               widget.placeholder ?? const GalleryThumbnailPlaceholder(),
