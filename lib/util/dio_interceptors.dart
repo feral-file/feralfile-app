@@ -387,7 +387,8 @@ class MeiliSearchInterceptor extends Interceptor {
 class DP1FeedAuthInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    if (options.method.toUpperCase() == 'POST' &&
+    if ((options.method.toUpperCase() == 'POST' ||
+            options.method.toUpperCase() == 'PUT') &&
         options.headers['Authorization'] == null) {
       options.headers['Authorization'] = 'Bearer ${Environment.dp1FeedApiKey}';
     }
