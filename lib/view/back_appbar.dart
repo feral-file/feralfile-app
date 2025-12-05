@@ -80,8 +80,8 @@ AppBar getBackAppBar(
     bottom: withDivider
         ? PreferredSize(
             preferredSize: const Size.fromHeight(1),
-            child: addOnlyDivider(
-                color: isWhite ? null : AppColor.auGreyBackground),
+            child:
+                addOnlyDivider(color: isWhite ? null : AppColor.primaryBlack),
           )
         : null,
   );

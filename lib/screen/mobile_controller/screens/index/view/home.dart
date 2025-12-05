@@ -184,7 +184,7 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
               controller: _scrollController,
               floatHeaderSlivers: true,
               headerSliverBuilder: (context, innerBoxIsScrolled) {
-                final height = innerBoxIsScrolled ? 75.0 : 123.0;
+                final height = 44.0;
                 final hamburgerButton = GestureDetector(
                   onTap: () {
                     // Handle back button tap
@@ -228,16 +228,16 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            if (!innerBoxIsScrolled)
-                              SizedBox(
-                                height: 106,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    hamburgerButton,
-                                  ],
-                                ),
-                              ),
+                            // if (!innerBoxIsScrolled)
+                            //   SizedBox(
+                            //     height: 106,
+                            //     child: Row(
+                            //       mainAxisAlignment: MainAxisAlignment.end,
+                            //       children: [
+                            //         hamburgerButton,
+                            //       ],
+                            //     ),
+                            //   ),
                             Row(
                               children: [
                                 Expanded(
@@ -253,7 +253,7 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
                                 SizedBox(
                                   width: 16,
                                 ),
-                                if (innerBoxIsScrolled) hamburgerButton,
+                                hamburgerButton,
                               ],
                             ),
                           ],

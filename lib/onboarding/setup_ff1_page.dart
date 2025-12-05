@@ -8,6 +8,8 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/onboarding/onboarding_shell.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
+import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
@@ -85,7 +87,10 @@ class OnboardingSetupFf1Page extends StatelessWidget {
   }
 
   void onSetupFf1(BuildContext context) {
-    Navigator.of(context).pushNamed(AppRouter.onboardingStartSetupFf1Page);
+    startHandleDeeplinkCompleter.complete(true);
+    injector<NavigationService>().navigateTo(AppRouter.scanQRPage,
+        arguments: const ScanQRPagePayload(scannerItem: ScannerItem.GLOBAL));
+    // Navigator.of(context).pushNamed(AppRouter.onboardingStartSetupFf1Page);
   }
 
   void onFinish(BuildContext context) {
