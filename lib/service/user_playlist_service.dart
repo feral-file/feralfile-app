@@ -222,7 +222,7 @@ class UserDp1PlaylistService {
     try {
       log.info('Delete playlist: $id');
       final deleted = _dp1FeedService.deletePlaylist(id);
-      _appDataManager.dp1FeedStorageService.removeOwnedPlaylistId(id);
+      await _appDataManager.dp1FeedStorageService.removeOwnedPlaylistId(id);
       log.info('Deleted playlist: $id');
       return deleted;
     } catch (e) {

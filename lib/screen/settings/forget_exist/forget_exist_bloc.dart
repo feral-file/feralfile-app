@@ -39,17 +39,9 @@ class ForgetExistBloc extends AuBloc<ForgetExistEvent, ForgetExistState> {
     on<ConfirmForgetExistEvent>((event, emit) async {
       emit(ForgetExistState(state.isChecked, true));
 
-      // TODO: remove userId
-      // unawaited(_addressService.clearPrimaryAddress());
       unawaited(deregisterPushNotification());
 
-      try {
-        // TODO: Delete user data
-      } catch (e) {
-        log.info('Error when delete all profiles: $e');
-      }
-
-      // remove all local cache
+      // remove all local data
       _indexerDatabase.clearAll();
       await _configurationService.removeAll();
       await injector<CacheManager>().emptyCache();

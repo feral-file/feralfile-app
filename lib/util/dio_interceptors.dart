@@ -162,20 +162,6 @@ class SentryInterceptor extends InterceptorsWrapper {
   }
 }
 
-class AutonomyAuthInterceptor extends Interceptor {
-  AutonomyAuthInterceptor();
-
-  @override
-  Future<void> onRequest(
-    RequestOptions options,
-    RequestInterceptorHandler handler,
-  ) async {
-    // JWT authentication removed - no longer adding JWT headers
-    // APIs that require authentication should use API keys instead
-    return handler.next(options);
-  }
-}
-
 class CustomerSupportInterceptor extends Interceptor {
   CustomerSupportInterceptor();
 
@@ -201,22 +187,7 @@ class CustomerSupportInterceptor extends Interceptor {
         options.headers[CustomerSupportApi.deviceIdHeader] =
             await _configurationService.getDeviceId();
       } else {
-        // final jwt = await injector<AuthService>().getAuthToken();
-        // // other api, add jwt
-        // if (jwt != null) {
-        //   options.headers['Authorization'] = 'Bearer ${jwt.jwtToken}';
-        // } else {
-        //   unawaited(Sentry.captureMessage('JWT is null'));
-        //   throw JwtException(message: 'can_not_authenticate_desc'.tr());
-        // }
-
-        // TODO: Use the API Key instead
-
-        // JWT authentication removed - support API uses anonymous auth for now
-        // Backend should handle authentication via API key or other mechanism
-        log.info(
-          'CustomerSupportInterceptor: JWT auth removed, using anonymous',
-        );
+        throw Exception('can_not_authenticate_desc'.tr());
       }
     }
 
