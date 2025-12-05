@@ -7,6 +7,7 @@
 
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/design/build/components/CommandDot.dart';
 import 'package:autonomy_flutter/design/build/components/LLMTextInput.dart';
 import 'package:autonomy_flutter/design/build/components/NowPlayingBar.dart';
@@ -14,7 +15,6 @@ import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
-import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/util/custom_route_observer.dart';
 import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
 import 'package:autonomy_flutter/view/now_displaying/now_displaying_bar.dart';
@@ -56,9 +56,10 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
       return true;
     }
 
-    final configService = injector<ConfigurationService>();
-    return configService.isBetaFeaturesEnabled() &&
-        configService.isExploreBarEnabled();
+    final appSettingsStorageService =
+        injector<AppDataManager>().appSettingsStorageService;
+    return appSettingsStorageService.isBetaFeaturesEnabled &&
+        appSettingsStorageService.isExploreBarEnabled;
   }
 
   void _updateHeights() {

@@ -12,7 +12,6 @@ import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
-import 'package:autonomy_flutter/service/settings_data_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/app_theme.dart';
@@ -85,7 +84,6 @@ class _SettingsPageState extends State<SettingsPage>
         statusBarBrightness: Brightness.light,
       ),
     );
-    unawaited(injector<SettingsDataService>().backupDeviceSettings());
   }
 
   Widget _settingItem({

@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
-import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_create_playlist_request.dart';
@@ -13,9 +13,10 @@ import 'package:autonomy_flutter/util/log.dart';
 
 /// Base implementation of DP1 feed service containing common playlist and item methods
 class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
-  BaseDP1FeedServiceImpl(
-      {required String baseUrl, this.isExternalFeedService = false})
-      : super(baseUrl: baseUrl) {}
+  BaseDP1FeedServiceImpl({
+    required super.baseUrl,
+    this.isExternalFeedService = false,
+  });
 
   @override
   final bool isExternalFeedService;
@@ -52,7 +53,7 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
     try {
       final created = await api.createPlaylist(request.toJson());
       if (isSyncToCloud) {
-        final cloud = injector<CloudManager>().dp1FeedCloudObject;
+        final cloud = injector<AppDataManager>().dp1FeedStorageService;
         await cloud.insertPlaylists([created]);
       }
       return created;

@@ -8,6 +8,7 @@
 import 'dart:io';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/release_note.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
@@ -61,7 +62,6 @@ import 'package:autonomy_flutter/screen/settings/preferences/preferences_bloc.da
 import 'package:autonomy_flutter/screen/settings/preferences/preferences_page.dart';
 import 'package:autonomy_flutter/screen/settings/settings_page.dart';
 import 'package:autonomy_flutter/screen/wallet/wallet_page.dart';
-import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/view/transparent_router.dart';
 import 'package:flutter/cupertino.dart';
@@ -285,7 +285,7 @@ class AppRouter {
             providers: [
               BlocProvider(
                 create: (_) => HiddenArtworksBloc(
-                  injector<ConfigurationService>(),
+                  injector<AppDataManager>(),
                   injector(),
                 ),
               ),

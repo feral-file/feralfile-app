@@ -10,6 +10,7 @@ import 'dart:collection';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/model/play_list_model.dart';
 import 'package:autonomy_flutter/model/token.dart';
@@ -28,7 +29,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ex
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_intent.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
-import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
@@ -611,8 +611,9 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
         ),
       );
 
-  bool _isHidden(AssetToken token) => injector<ConfigurationService>()
-      .getTempStorageHiddenTokenIDs()
+  bool _isHidden(AssetToken token) => injector<AppDataManager>()
+      .appSettingsStorageService
+      .hiddenTokenIDs
       .contains(token.cid);
 
   Future<void> _showArtworkOptionsDialog(

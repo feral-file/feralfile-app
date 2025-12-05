@@ -8,7 +8,7 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
@@ -19,9 +19,9 @@ import 'package:autonomy_flutter/util/wallet_storage_ext.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class AddressService {
-  AddressService(this._cloudObject);
+  AddressService(this._appDataManager);
 
-  final CloudManager _cloudObject;
+  final AppDataManager _appDataManager;
 
   List<String> getAllAddresses({CryptoType? chain, bool? isHidden}) {
     return getAllWalletAddresses(chain: chain, isHidden: isHidden)
@@ -33,7 +33,7 @@ class AddressService {
     CryptoType? chain,
     bool? isHidden,
   }) {
-    final addresses = _cloudObject.addressObject.getAllAddresses();
+    final addresses = _appDataManager.addressStorageService.getAllAddresses();
     if (chain != null) {
       addresses.removeWhere((element) => element.cryptoType == chain);
     }
@@ -46,7 +46,7 @@ class AddressService {
   }
 
   WalletAddress? getWalletAddress(String address) {
-    return _cloudObject.addressObject.getWalletAddress(address);
+    return _appDataManager.addressStorageService.getWalletAddress(address);
   }
 
   Future<WalletAddress> insertAddress(
@@ -61,14 +61,14 @@ class AddressService {
     }
     log.info('Check sum address: $checkSumAddress');
     if (checkAddressDuplicated) {
-      final walletAddress = _cloudObject.addressObject.getAllAddresses();
+      final walletAddress = _appDataManager.addressStorageService.getAllAddresses();
       if (walletAddress.any((element) => element.address == checkSumAddress)) {
         log.info('Address already exists: $checkSumAddress');
         throw LinkAddressException(message: 'already_imported_address'.tr());
       }
     }
     final newAddress = address.copyWith(address: checkSumAddress);
-    await _cloudObject.addressObject.insertAddresses([newAddress]);
+    await _appDataManager.addressStorageService.insertAddresses([newAddress]);
     injector<UserAllOwnCollectionBloc>().add(ReindexAddresses(
       addresses: [newAddress.address],
     ));
@@ -84,7 +84,7 @@ class AddressService {
   }
 
   Future<void> deleteAddress(WalletAddress address) async {
-    await _cloudObject.addressObject.deleteAddress(address);
+    await _appDataManager.addressStorageService.deleteAddress(address);
     await injector<UserDp1PlaylistService>()
         .removeAddressesFromPlaylist([address.address]);
     log.info('Deleted address: ${address.address}');
@@ -96,7 +96,7 @@ class AddressService {
   }) async {
     await Future.wait(
       addresses.map(
-        (e) => _cloudObject.addressObject.setAddressIsHidden(e, isHidden),
+        (e) => _appDataManager.addressStorageService.setAddressIsHidden(e, isHidden),
       ),
     );
     if (isHidden) {
@@ -112,7 +112,7 @@ class AddressService {
 
   Future<WalletAddress> nameAddress(WalletAddress address, String name) async {
     final newAddress = address.copyWith(name: name);
-    await _cloudObject.addressObject.updateAddresses([newAddress]);
+    await _appDataManager.addressStorageService.updateAddresses([newAddress]);
     return newAddress;
   }
 }

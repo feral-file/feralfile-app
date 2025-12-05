@@ -1,6 +1,6 @@
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
@@ -190,8 +190,8 @@ class FeralFileFeedManager extends FeedManager {
     log.info(
         'Finish Setup remote config channels: ${remoteConfigChannels.map((e) => e.channelId).toList()}');
 
-    final customFeedServers = injector<CloudManager>()
-        .dp1FeedCloudObject
+    final customFeedServers = injector<AppDataManager>()
+        .dp1FeedStorageService
         .getCustomFeedServersByUrls();
     for (final customFeedServer in customFeedServers) {
       final service = BaseDP1FeedServiceImpl(
@@ -221,8 +221,8 @@ class FeralFileFeedManager extends FeedManager {
           continue;
         }
         addFeedService(service);
-        await injector<CloudManager>()
-            .dp1FeedCloudObject
+        await injector<AppDataManager>()
+            .dp1FeedStorageService
             .insertCustomFeedServersByUrls([service.baseUrl]);
         log.info('Added custom feed service: ${service.baseUrl}');
       } catch (e) {

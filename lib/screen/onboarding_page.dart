@@ -10,7 +10,7 @@ import 'dart:async';
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/bluetooth_service.dart';
 import 'package:autonomy_flutter/service/canvas_notification_manager.dart';
@@ -134,7 +134,9 @@ class _OnboardingPageState extends State<OnboardingPage>
     final packageInfo = await PackageInfo.fromPlatform();
     await injector<ConfigurationService>().setVersionInfo(packageInfo.version);
 
-    if (injector<ConfigurationService>().isNotificationEnabled()) {
+    if (injector<AppDataManager>()
+        .appSettingsStorageService
+        .isNotificationEnabled) {
       unawaited(_registerPushNotifications());
     }
 
@@ -172,8 +174,6 @@ class _OnboardingPageState extends State<OnboardingPage>
 
   Future<void> _fetchRuntimeCache() async {
     log.info('[_fetchRuntimeCache] start');
-    // download user data
-    await injector<CloudManager>().downloadAll(includePlaylists: true);
 
     // migrate
     try {

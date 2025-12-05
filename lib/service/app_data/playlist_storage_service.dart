@@ -1,18 +1,16 @@
 import 'dart:convert';
 
-import 'package:autonomy_flutter/graphql/account_settings/account_settings_db.dart';
+import 'package:autonomy_flutter/database/hive_storage_service.dart';
 import 'package:autonomy_flutter/model/play_list_model.dart';
 
-class PlaylistCloudObject {
-  PlaylistCloudObject(this._db);
-
-  final CloudDB _db;
+class PlaylistStorageService extends HiveStorageService {
+  PlaylistStorageService(super.db, super._prefix);
 
   Future<bool> deletePlaylists(List<PlayListModel> playlists) =>
-      _db.delete(playlists.map((e) => e.key).toList());
+      delete(playlists.map((e) => e.key).toList());
 
   List<PlayListModel> getPlaylists() {
-    final playlists = _db.values
+    final playlists = values
         .map((e) =>
             PlayListModel.fromJson(jsonDecode(e) as Map<String, dynamic>))
         .toList();
@@ -20,7 +18,7 @@ class PlaylistCloudObject {
   }
 
   PlayListModel? getPlaylistById(String id) {
-    final rawString = _db.query([id]).firstOrNull?['value'];
+    final rawString = query([id]).firstOrNull?['value'];
     if (rawString == null || rawString.isEmpty) {
       return null;
     }
@@ -29,15 +27,6 @@ class PlaylistCloudObject {
   }
 
   Future<void> setPlaylists(List<PlayListModel> playlists) async {
-    await _db.write(playlists.map((e) => e.toKeyValue).toList());
-  }
-
-  Future<void> download() async {
-    await _db.download();
-  }
-
-  // clear cache
-  void clearCache() {
-    _db.clearCache();
+    await write(playlists.map((e) => e.toKeyValue).toList());
   }
 }

@@ -2,13 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/graphql/account_settings/account_settings_db.dart';
-import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
+import 'package:autonomy_flutter/database/hive_storage_service.dart';
 import 'package:autonomy_flutter/model/device/device_status.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/service/canvas_notification_manager.dart';
-import 'package:autonomy_flutter/service/configuration_service.dart';
-import 'package:autonomy_flutter/service/settings_data_service.dart';
 import 'package:autonomy_flutter/util/device_realtime_metric_helper.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/now_displaying_manager.dart';
@@ -24,7 +22,8 @@ class BluetoothDeviceManager {
 
   static final BluetoothDeviceManager _instance = BluetoothDeviceManager._();
 
-  static CloudDB get _ffDeviceDB => injector<CloudManager>().ffDeviceDB;
+  static StorageService get _ffDeviceDB =>
+      injector<AppDataManager>().ffDeviceStorageService;
 
   static List<FFBluetoothDevice> get pairedDevices {
     final rawData = _ffDeviceDB.values;
@@ -128,11 +127,9 @@ class BluetoothDeviceManager {
     if (device == _castingBluetoothDevice) {
       return;
     }
-    injector<ConfigurationService>()
-        .setSelectedDeviceId(device?.deviceId)
-        .then((_) {
-      injector<SettingsDataService>().backupUserSettings();
-    });
+    injector<AppDataManager>()
+        .appSettingsStorageService
+        .setSelectedDeviceId(device?.deviceId);
     _castingBluetoothDevice = device;
     NowDisplayingManager().updateDisplayingNow();
   }
@@ -143,7 +140,7 @@ class BluetoothDeviceManager {
     }
 
     final selectedDeviceId =
-        injector<ConfigurationService>().getSelectedDeviceId();
+        injector<AppDataManager>().appSettingsStorageService.selectedDeviceId;
     if (selectedDeviceId != null) {
       final device = BluetoothDeviceManager.pairedDevices.lastWhereOrNull(
         (device) => device.deviceId == selectedDeviceId,

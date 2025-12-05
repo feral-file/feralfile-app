@@ -1,6 +1,6 @@
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -20,8 +20,8 @@ class CustomFeedServersBloc
     Emitter<CustomFeedServersState> emit,
   ) async {
     emit(state.copyWith(isLoading: true));
-    final urls = injector<CloudManager>()
-        .dp1FeedCloudObject
+    final urls = injector<AppDataManager>()
+        .dp1FeedStorageService
         .getCustomFeedServersByUrls();
     final feedServices = urls
         .map((url) => injector<FeralFileFeedManager>().getFeedServiceByUrl(url))
@@ -34,8 +34,8 @@ class CustomFeedServersBloc
     RefreshCustomFeedServersEvent event,
     Emitter<CustomFeedServersState> emit,
   ) async {
-    final urls = injector<CloudManager>()
-        .dp1FeedCloudObject
+    final urls = injector<AppDataManager>()
+        .dp1FeedStorageService
         .getCustomFeedServersByUrls();
     final feedServices = urls
         .map((url) => injector<FeralFileFeedManager>().getFeedServiceByUrl(url))
@@ -51,13 +51,13 @@ class CustomFeedServersBloc
     final url = event.url;
     // Remove from in-memory manager
     injector<FeralFileFeedManager>().removeFeedServiceByUrl(url);
-    // Remove from cloud
-    await injector<CloudManager>()
-        .dp1FeedCloudObject
+    // Remove from local settings
+    await injector<AppDataManager>()
+        .dp1FeedStorageService
         .deleteCustomFeedServersByUrls([url]);
     // Refresh list
-    final urls = injector<CloudManager>()
-        .dp1FeedCloudObject
+    final urls = injector<AppDataManager>()
+        .dp1FeedStorageService
         .getCustomFeedServersByUrls();
     final feedServices = urls
         .map((url) => injector<FeralFileFeedManager>().getFeedServiceByUrl(url))

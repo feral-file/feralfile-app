@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/error/dp1_error.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
@@ -17,12 +17,12 @@ import 'package:uuid/uuid.dart';
 /// A high-level service to manage a user's DP1 playlists.
 ///
 /// This service coordinates between the remote DP1 feed API (via DP1FeedService)
-/// and local cloud storage (via CloudManager.dp1FeedCloudObject).
+/// and local storage (via AppDataManager.dp1FeedStorageService).
 class UserDp1PlaylistService {
-  UserDp1PlaylistService(this._dp1FeedService, this._cloudManager);
+  UserDp1PlaylistService(this._dp1FeedService, this._appDataManager);
 
   final FeralFileDP1FeedService _dp1FeedService;
-  final CloudManager _cloudManager;
+  final AppDataManager _appDataManager;
 
   DP1Call? _cachedAllOwnedPlaylist;
 
@@ -48,7 +48,7 @@ class UserDp1PlaylistService {
 
   Future<DP1Call> allOwnedPlaylist() async {
     final allOwnedPlaylistIds =
-        _cloudManager.dp1FeedCloudObject.getOwnedPlaylistIds();
+        _appDataManager.dp1FeedStorageService.getOwnedPlaylistIds();
     if (allOwnedPlaylistIds.isEmpty) {
       throw DP1AllOwnCollectionEmptyError(
           message: 'All owned playlist not found');
@@ -67,7 +67,7 @@ class UserDp1PlaylistService {
   /// Create a new playlist remotely and cache it locally under owned playlists.
   Future<DP1Call> createAllOwnedPlaylistIfNotExists() async {
     final allOwnedPlaylistIds =
-        _cloudManager.dp1FeedCloudObject.getOwnedPlaylistIds();
+        _appDataManager.dp1FeedStorageService.getOwnedPlaylistIds();
     if (allOwnedPlaylistIds.isNotEmpty) {
       final playlistId = allOwnedPlaylistIds.first;
       DP1Call? playlist =
@@ -94,11 +94,11 @@ class UserDp1PlaylistService {
         unawaited(Sentry.captureMessage(
             '[createAllOwnedPlaylistIfNotExists] All owned playlist not found in DP1 service, id: $playlistId'));
         // If the playlist ID exists in cloud but not found in DP1 service, remove it from cloud
-        _cloudManager.dp1FeedCloudObject.removeOwnedPlaylistId(playlistId);
+        _appDataManager.dp1FeedStorageService.removeOwnedPlaylistId(playlistId);
       }
     }
 
-    final allOwnedAddresses = await _cloudManager.addressObject
+    final allOwnedAddresses = _appDataManager.addressStorageService
         .getAllAddresses()
         .where((e) => !e.isHidden);
     final title = 'All Own ${const Uuid().v1()}';
@@ -120,7 +120,7 @@ class UserDp1PlaylistService {
       isSyncToCloud: true,
     );
 
-    await _cloudManager.dp1FeedCloudObject.addOwnedPlaylistId(created.id);
+    await _appDataManager.dp1FeedStorageService.addOwnedPlaylistId(created.id);
     cachedAllOwnedPlaylist = created;
     return created;
   }
@@ -133,7 +133,7 @@ class UserDp1PlaylistService {
   Future<DP1Call> insertAddressesToPlaylist(List<String> addresses) async {
     log.info('Insert addresses to playlist: $addresses');
     final allOwnedPlaylistIds =
-        _cloudManager.dp1FeedCloudObject.getOwnedPlaylistIds();
+        _appDataManager.dp1FeedStorageService.getOwnedPlaylistIds();
     if (allOwnedPlaylistIds.isEmpty) {
       log.info('All owned playlist is empty');
       throw DP1AllOwnCollectionEmptyError(
@@ -165,7 +165,7 @@ class UserDp1PlaylistService {
 
   Future<DP1Call> removeAddressesFromPlaylist(List<String> addresses) async {
     final allOwnedPlaylistIds =
-        _cloudManager.dp1FeedCloudObject.getOwnedPlaylistIds();
+        _appDataManager.dp1FeedStorageService.getOwnedPlaylistIds();
     if (allOwnedPlaylistIds.isEmpty) {
       log.info('All owned playlist is empty');
       throw DP1AllOwnCollectionEmptyError(
@@ -201,7 +201,7 @@ class UserDp1PlaylistService {
 
   Future<bool> deleteAllPlaylists() async {
     final allOwnedPlaylistIds =
-        _cloudManager.dp1FeedCloudObject.getOwnedPlaylistIds();
+        _appDataManager.dp1FeedStorageService.getOwnedPlaylistIds();
     if (allOwnedPlaylistIds.isEmpty) {
       log.info('All owned playlists are empty');
       return true;
@@ -222,7 +222,7 @@ class UserDp1PlaylistService {
     try {
       log.info('Delete playlist: $id');
       final deleted = _dp1FeedService.deletePlaylist(id);
-      _cloudManager.dp1FeedCloudObject.removeOwnedPlaylistId(id);
+      _appDataManager.dp1FeedStorageService.removeOwnedPlaylistId(id);
       log.info('Deleted playlist: $id');
       return deleted;
     } catch (e) {

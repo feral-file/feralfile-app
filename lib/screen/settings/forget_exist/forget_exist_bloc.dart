@@ -9,7 +9,7 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
@@ -58,9 +58,8 @@ class ForgetExistBloc extends AuBloc<ForgetExistEvent, ForgetExistState> {
 
       // delete dp1 data: playlists, channels;
       await injector<UserDp1PlaylistService>().deleteAllPlaylists();
-      // remove all cloud data
-      unawaited(injector<CloudManager>().deleteAll());
-      injector<CloudManager>().clearCache();
+      // remove all local settings data
+      unawaited(injector<AppDataManager>().deleteAll());
 
       await injector<CustomerSupportService>().clear();
       await injector<IdentityBloc>().clear();

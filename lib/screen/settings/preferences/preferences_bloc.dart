@@ -9,11 +9,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:autonomy_flutter/au_bloc.dart';
-import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/screen/settings/preferences/preferences_state.dart';
-import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/local_auth_service.dart';
-import 'package:autonomy_flutter/service/settings_data_service.dart';
 import 'package:autonomy_flutter/util/biometrics_util.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/notification_util.dart';
@@ -22,27 +20,23 @@ import 'package:local_auth/local_auth.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class PreferencesBloc extends AuBloc<PreferenceEvent, PreferenceState> {
-  final ConfigurationService _configurationService;
-  final LocalAuthentication _localAuth = LocalAuthentication();
-  List<BiometricType> _availableBiometrics = List.empty();
-  static bool _isOnChanging = false;
-
-  static bool get isOnChanging => _isOnChanging;
-
-  PreferencesBloc(this._configurationService)
+  PreferencesBloc(this._appDataManager)
       : super(PreferenceState(false, false, false, '', false, false, false)) {
+    final appSettingsStorageService = _appDataManager.appSettingsStorageService;
     on<PreferenceInfoEvent>((event, emit) async {
       _availableBiometrics = await _localAuth.getAvailableBiometrics();
       final canCheckBiometrics = await authenticateIsAvailable();
 
-      final passcodeEnabled = _configurationService.isDevicePasscodeEnabled();
-      final notificationEnabled = _configurationService.isNotificationEnabled();
-      final analyticsEnabled = _configurationService.isAnalyticsEnabled();
-      final betaFeaturesEnabled = _configurationService.isBetaFeaturesEnabled();
-      final exploreBarEnabled = _configurationService.isExploreBarEnabled();
+      final passcodeEnabled = appSettingsStorageService.isDevicePasscodeEnabled;
+      final notificationEnabled =
+          appSettingsStorageService.isNotificationEnabled;
+      final analyticsEnabled = appSettingsStorageService.isAnalyticsEnabled;
+      final betaFeaturesEnabled =
+          appSettingsStorageService.isBetaFeaturesEnabled;
+      final exploreBarEnabled = appSettingsStorageService.isExploreBarEnabled;
 
       final hasHiddenArtwork =
-          _configurationService.getTempStorageHiddenTokenIDs().isNotEmpty;
+          appSettingsStorageService.hiddenTokenIDs.isNotEmpty;
 
       emit(PreferenceState(
           passcodeEnabled && canCheckBiometrics,
@@ -68,7 +62,7 @@ class PreferencesBloc extends AuBloc<PreferenceEvent, PreferenceState> {
             log.info(e);
           }
           if (didAuthenticate) {
-            await _configurationService.setDevicePasscodeEnabled(
+            await appSettingsStorageService.setDevicePasscodeEnabled(
                 event.newState.isDevicePasscodeEnabled);
           } else {
             event.newState.isDevicePasscodeEnabled =
@@ -89,7 +83,7 @@ class PreferencesBloc extends AuBloc<PreferenceEvent, PreferenceState> {
             unawaited(deregisterPushNotification());
           }
 
-          await _configurationService
+          await appSettingsStorageService
               .setNotificationEnabled(event.newState.isNotificationEnabled);
         } catch (error) {
           log.warning('Error when setting notification: $error');
@@ -97,12 +91,12 @@ class PreferencesBloc extends AuBloc<PreferenceEvent, PreferenceState> {
       }
 
       if (event.newState.isAnalyticEnabled != state.isAnalyticEnabled) {
-        await _configurationService
-            .setAnalyticEnabled(event.newState.isAnalyticEnabled);
+        await appSettingsStorageService
+            .setAnalyticsEnabled(event.newState.isAnalyticEnabled);
       }
 
       if (event.newState.isBetaFeaturesEnabled != state.isBetaFeaturesEnabled) {
-        await _configurationService
+        await appSettingsStorageService
             .setBetaFeaturesEnabled(event.newState.isBetaFeaturesEnabled);
         // If beta features are disabled, also disable explore bar
         if (!event.newState.isBetaFeaturesEnabled) {
@@ -116,20 +110,21 @@ class PreferencesBloc extends AuBloc<PreferenceEvent, PreferenceState> {
             !event.newState.isBetaFeaturesEnabled) {
           event.newState.isExploreBarEnabled = false;
         } else {
-          await _configurationService
+          await appSettingsStorageService
               .setExploreBarEnabled(event.newState.isExploreBarEnabled);
         }
       }
 
-      unawaited(injector<SettingsDataService>()
-          .backupDeviceSettings()
-          .then((value) => _isOnChanging = false, onError: (Object error) {
-        log.warning('Error when backup device settings: $error');
-        _isOnChanging = false;
-      }));
+      _isOnChanging = false;
       emit(event.newState);
     });
   }
+  final AppDataManager _appDataManager;
+  final LocalAuthentication _localAuth = LocalAuthentication();
+  List<BiometricType> _availableBiometrics = List.empty();
+  static bool _isOnChanging = false;
+
+  static bool get isOnChanging => _isOnChanging;
 
   String _authMethodTitle() {
     if (Platform.isIOS) {

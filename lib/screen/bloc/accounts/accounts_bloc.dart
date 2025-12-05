@@ -10,7 +10,7 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/au_bloc.dart';
-import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_state.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
@@ -19,12 +19,12 @@ import 'package:sentry/sentry.dart';
 
 class AccountsBloc extends AuBloc<AccountsEvent, AccountsState> {
   final AddressService _addressService;
-  final CloudManager _cloudObject;
+  final AppDataManager _appDataManager;
 
-  AccountsBloc(this._addressService, this._cloudObject)
+  AccountsBloc(this._addressService, this._appDataManager)
       : super(AccountsState()) {
     on<GetAccountsEvent>((event, emit) async {
-      final addresses = _cloudObject.addressObject.getAllAddresses();
+      final addresses = _appDataManager.addressStorageService.getAllAddresses();
       emit(
         state.copyWith(
           addresses: addresses,

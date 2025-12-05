@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/model/additional_data/additional_data.dart';
 import 'package:autonomy_flutter/model/token.dart' as v2;
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
@@ -278,7 +277,6 @@ class HomePageHelper {
   Future<void> _handleForeground() async {
     memoryValues.inForegroundAt = DateTime.now();
     await injector<ConfigurationService>().reload();
-    await injector<CloudManager>().downloadAll(includePlaylists: true);
     unawaited(injector<VersionService>().checkForUpdate());
     await _remoteConfig.loadConfigs(forceRefresh: true);
     unawaited(NowDisplayingManager().updateDisplayingNow());

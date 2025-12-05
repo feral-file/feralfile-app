@@ -9,6 +9,8 @@
 
 import 'package:autonomy_flutter/common/database.dart';
 import 'package:autonomy_flutter/common/environment.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
+import 'package:autonomy_flutter/database/hive_database.dart';
 import 'package:autonomy_flutter/gateway/customer_support_api.dart';
 import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
 import 'package:autonomy_flutter/gateway/feralfile_api.dart';
@@ -17,7 +19,6 @@ import 'package:autonomy_flutter/gateway/mobile_controller_api.dart';
 import 'package:autonomy_flutter/gateway/pubdoc_api.dart';
 import 'package:autonomy_flutter/gateway/remote_config_api.dart';
 import 'package:autonomy_flutter/gateway/tv_cast_api.dart';
-import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/nft_collection/data/api/tzkt_api.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/clients/indexer_client.dart';
@@ -61,7 +62,6 @@ import 'package:autonomy_flutter/service/network_issue_manager.dart';
 import 'package:autonomy_flutter/service/network_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/secure_storage_server.dart';
-import 'package:autonomy_flutter/service/settings_data_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/util/au_file_service.dart';
@@ -125,6 +125,10 @@ Future<void> setupInjector() async {
   injector.registerLazySingleton(http.Client.new);
   injector.registerLazySingleton<CacheManager>(AUImageCacheManage.new);
 
+  injector.registerLazySingleton<HiveDatabase>(
+    HiveDatabase.new,
+  );
+
   injector.registerLazySingleton<AddressService>(
     () => AddressService(injector()),
   );
@@ -164,13 +168,6 @@ Future<void> setupInjector() async {
   );
 
   injector<FFBluetoothService>().startListen();
-
-  injector.registerLazySingleton<SettingsDataService>(
-    () => SettingsDataServiceImpl(
-      injector(),
-      injector(),
-    ),
-  );
 
   injector.registerLazySingleton(
     () => TvCastApi(
@@ -288,8 +285,8 @@ Future<void> setupInjector() async {
     () => AnnouncementServiceImpl(injector(), injector()),
   );
 
-  injector.registerLazySingleton<CloudManager>(CloudManager.new);
-  await injector<CloudManager>().init();
+  injector.registerLazySingleton<AppDataManager>(AppDataManager.new);
+  await injector<AppDataManager>().init();
 
   injector.registerLazySingleton<FeedRegistryService>(
     FeedRegistryServiceImpl.new,

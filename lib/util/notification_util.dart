@@ -9,6 +9,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
@@ -27,10 +28,11 @@ Future<bool> registerPushNotifications({bool askPermission = false}) async {
   }
 
   try {
-    final userId =
-        await injector<ConfigurationService>().getDeviceId();
+    final userId = await injector<ConfigurationService>().getDeviceId();
     await OneSignal.login(userId);
-    if (injector<ConfigurationService>().isNotificationEnabled() &&
+    if (injector<AppDataManager>()
+            .appSettingsStorageService
+            .isNotificationEnabled &&
         OneSignal.Notifications.permission) {
       await OneSignal.User.pushSubscription.optIn();
     }

@@ -1,4 +1,4 @@
-abstract class SettingObject {
+abstract class BaseObject {
   String get key;
 
   String get value;

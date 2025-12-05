@@ -12,7 +12,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/graphql/account_settings/cloud_manager.dart';
 import 'package:autonomy_flutter/model/announcement/announcement.dart';
 import 'package:autonomy_flutter/model/customer_support.dart' as app;
 import 'package:autonomy_flutter/model/customer_support.dart';
@@ -362,23 +361,18 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
 
   // Future<String> _generateAccountSettingsAudit() async {
   //   try {
-  //     final cloudManager = injector<CloudManager>();
-  //     final configurationService = injector<ConfigurationService>();
+  //     final appDataManager = injector<AppDataManager>();
 
-  //     // Get device settings
-  //     final deviceSettings = cloudManager.deviceSettingsDB.allInstance;
-
-  //     // Get user settings
-  //     final userSettings = cloudManager.userSettingsDB.allInstance;
+  //     // Get app settings (merged device + user settings)
+  //     final appSettings = appDataManager.appSettingsStorageService.allInstance;
 
   //     // Get wallet addresses (imported/linked addresses)
-  //     final addresses = cloudManager.addressObject.getAllAddresses();
+  //     final addresses = appDataManager.addressStorageService.getAllAddresses();
 
   //     // Get configuration service settings
   //     final auditData = <String, dynamic>{
   //       'timestamp': DateTime.now().toIso8601String(),
-  //       'device_settings': deviceSettings,
-  //       'user_settings': userSettings,
+  //       'app_settings': appSettings,
   //       'imported_addresses': addresses
   //           .map((addr) => {
   //                 'address': addr.address,
@@ -389,14 +383,20 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
   //               })
   //           .toList(),
   //       'configuration_preferences': {
-  //         'isAnalyticsEnabled': configurationService.isAnalyticsEnabled(),
+  //         'isAnalyticsEnabled':
+  //             appDataManager.appSettingsStorageService.isAnalyticsEnabled,
   //         'isDevicePasscodeEnabled':
-  //             configurationService.isDevicePasscodeEnabled(),
-  //         'isNotificationEnabled': configurationService.isNotificationEnabled(),
-  //         'isBetaFeaturesEnabled': configurationService.isBetaFeaturesEnabled(),
-  //         'isExploreBarEnabled': configurationService.isExploreBarEnabled(),
-  //         'hiddenTokenIDs': configurationService.getTempStorageHiddenTokenIDs(),
-  //         'selectedDeviceId': configurationService.getSelectedDeviceId(),
+  //             appDataManager.appSettingsStorageService.isDevicePasscodeEnabled,
+  //         'isNotificationEnabled':
+  //             appDataManager.appSettingsStorageService.isNotificationEnabled,
+  //         'isBetaFeaturesEnabled':
+  //             appDataManager.appSettingsStorageService.isBetaFeaturesEnabled,
+  //         'isExploreBarEnabled':
+  //             appDataManager.appSettingsStorageService.isExploreBarEnabled,
+  //         'hiddenTokenIDs':
+  //             appDataManager.appSettingsStorageService.hiddenTokenIDs,
+  //         'selectedDeviceId':
+  //             appDataManager.appSettingsStorageService.selectedDeviceId,
   //       },
   //     };
 
