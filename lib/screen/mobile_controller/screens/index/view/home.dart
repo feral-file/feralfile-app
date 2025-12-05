@@ -174,138 +174,101 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColor.auGreyBackground,
-      body: InteractiveViewer(
-        transformationController: _transformationController,
-        minScale: 1.0,
-        maxScale: shouldShowOverlay ? 16.0 : 1.0,
-        child: Stack(
-          children: [
-            NestedScrollView(
-              controller: _scrollController,
-              floatHeaderSlivers: true,
-              headerSliverBuilder: (context, innerBoxIsScrolled) {
-                final height = 44.0;
-                final hamburgerButton = GestureDetector(
-                  onTap: () {
-                    // Handle back button tap
-                    UIHelper.showCenterMenu(
-                      context,
-                      options: _defaultOptions,
-                    );
-                  },
-                  child: Container(
-                    color: Colors.transparent,
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                        right: 15,
-                        top: 16,
-                        left: 15,
-                        bottom: 16,
-                      ),
-                      child: SvgPicture.asset(
-                        'assets/images/Drawer.svg',
-                        width: 22,
-                        height: 14,
-                        colorFilter: const ColorFilter.mode(
-                          AppColor.white,
-                          BlendMode.srcIn,
-                        ),
-                      ),
-                    ),
+      body: NestedScrollView(
+        controller: _scrollController,
+        floatHeaderSlivers: true,
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          final height = 43.5;
+          final hamburgerButton = GestureDetector(
+            onTap: () {
+              // Handle back button tap
+              UIHelper.showCenterMenu(
+                context,
+                options: _defaultOptions,
+              );
+            },
+            child: Container(
+              color: Colors.transparent,
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  right: 15,
+                  top: 14,
+                  left: 15,
+                  bottom: 14,
+                ),
+                child: SvgPicture.asset(
+                  'assets/images/Drawer.svg',
+                  width: 22,
+                  height: 14,
+                  colorFilter: const ColorFilter.mode(
+                    AppColor.white,
+                    BlendMode.srcIn,
                   ),
-                );
-                return [
-                  SliverAppBar(
-                    pinned: false,
-                    floating: true,
-                    snap: true,
-                    elevation: 0,
-                    toolbarHeight: height,
-                    expandedHeight: height,
-                    flexibleSpace: FlexibleSpaceBar(
-                      background: Container(
-                        color: AppColor.auGreyBackground,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            // if (!innerBoxIsScrolled)
-                            //   SizedBox(
-                            //     height: 106,
-                            //     child: Row(
-                            //       mainAxisAlignment: MainAxisAlignment.end,
-                            //       children: [
-                            //         hamburgerButton,
-                            //       ],
-                            //     ),
-                            //   ),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: HomeIndexHeader(
-                                    selectedTab: _selectedTab,
-                                    onTabChanged: (tab) {
-                                      setState(() {
-                                        _selectedTab = tab;
-                                      });
-                                    },
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: 16,
-                                ),
-                                hamburgerButton,
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  // SliverPadding(
-                  //   padding: const EdgeInsets.only(top: 48),
-                  //   sliver: SliverPersistentHeader(
-                  //     pinned: false,
-                  //     floating: false,
-                  //     delegate: _CombinedHeaderDelegate(
-                  //       selectedTab: _selectedTab,
-                  //       onTabChanged: (tab) {
-                  //         setState(() {
-                  //           _selectedTab = tab;
-                  //         });
-                  //       },
-                  //       isBodyScrolling: innerBoxIsScrolled,
-                  //     ),
-                  //   ),
-                  // ),
-                ];
-              },
-              body: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 50),
-                    _buildContent(),
-                    const BottomSpacing()
-                  ],
                 ),
               ),
             ),
-            // Figma design overlay for comparison - zooms with content
-            if (shouldShowOverlay)
-              IgnorePointer(
-                ignoring: true,
-                child: Opacity(
-                  opacity: 0.3,
-                  child: Container(
-                    width: double.infinity,
-                    height: double.infinity,
-                    child: Image.asset(
-                      'assets/images/Channels.png',
-                      fit: BoxFit.fitWidth,
-                    ),
+          );
+          return [
+            SliverAppBar(
+              pinned: false,
+              floating: true,
+              snap: true,
+              elevation: 0,
+              toolbarHeight: height,
+              expandedHeight: height,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Container(
+                  color: AppColor.auGreyBackground,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      // if (!innerBoxIsScrolled)
+                      //   SizedBox(
+                      //     height: 106,
+                      //     child: Row(
+                      //       mainAxisAlignment: MainAxisAlignment.end,
+                      //       children: [
+                      //         hamburgerButton,
+                      //       ],
+                      //     ),
+                      //   ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 15),
+                              child: HomeIndexHeader(
+                                selectedTab: _selectedTab,
+                                onTabChanged: (tab) {
+                                  setState(() {
+                                    _selectedTab = tab;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 16,
+                          ),
+                          hamburgerButton,
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
-          ],
+            ),
+          ];
+        },
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              const SizedBox(height: 37),
+              _buildContent(),
+              const BottomSpacing()
+            ],
+          ),
         ),
       ),
     );

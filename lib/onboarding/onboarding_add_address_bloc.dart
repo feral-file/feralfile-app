@@ -5,8 +5,9 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'package:autonomy_flutter/au_bloc.dart';
-import 'package:autonomy_flutter/model/address.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/domain_address_service.dart';
@@ -59,69 +60,76 @@ class OnboardingAddAddressBloc
   )   : _domainAddressService = domainAddressService,
         _addressService = addressService,
         super(const OnboardingAddAddressState()) {
-    on<OnboardingAddConnectionEvent>((event, emit) async {
-      final rawAddress = event.address.trim();
-      if (rawAddress.isEmpty) {
+    on<OnboardingAddConnectionEvent>(_onAddConnection);
+  }
+
+  Future<void> _onAddConnection(
+    OnboardingAddConnectionEvent event,
+    Emitter<OnboardingAddAddressState> emit,
+  ) async {
+    final text = event.address.trim();
+    if (text.isEmpty) {
+      emit(
+        state.copyWith(
+          error: Exception('Address is empty'),
+          isSubmitting: false,
+        ),
+      );
+      return;
+    }
+
+    String? address;
+    String? domain;
+
+    emit(
+      state.copyWith(
+        error: null,
+        isSubmitting: true,
+      ),
+    );
+
+    try {
+      final addressInfo =
+          await _domainAddressService.verifyAddressOrDomain(text);
+      if (addressInfo == null) {
         emit(
           state.copyWith(
-            error: Exception('Address is empty'),
+            error: AddAddressException(
+                type: AddAddressExceptionType.invalidAddress),
             isSubmitting: false,
           ),
         );
         return;
       }
-
+      address = addressInfo.address;
+      domain = addressInfo.domain;
+      final walletAddress = WalletAddress(
+        address: address,
+        name: domain ?? text,
+        createdAt: DateTime.now(),
+      );
+      final connection = await _addressService.insertAddress(
+        walletAddress,
+        refreshPlaylist: false,
+      );
+      emit(OnboardingAddAddressSuccessState(connection));
+    } on AddAddressException catch (e) {
       emit(
         state.copyWith(
-          error: null,
-          isSubmitting: true,
+          error: e,
+          isSubmitting: false,
         ),
       );
-      try {
-        final domainInfo = await _checkDomain(rawAddress);
-
-        if (domainInfo == null) {
-          emit(
-            state.copyWith(
-              error: Exception('Invalid address'),
-              isSubmitting: false,
-            ),
-          );
-          return;
-        }
-
-        final walletAddress = WalletAddress(
-          address: domainInfo.address,
-          name: domainInfo.domain,
-          createdAt: DateTime.now(),
-        );
-        final connection = await _addressService.insertAddress(
-          walletAddress,
-          refreshPlaylist: false,
-        );
-        emit(OnboardingAddAddressSuccessState(connection));
-      } on LinkAddressException catch (e) {
-        emit(
-          state.copyWith(
-            error: e,
-            isSubmitting: false,
-          ),
-        );
-      } catch (e) {
-        emit(
-          state.copyWith(
-            error: e is Exception ? e : Exception(e.toString()),
-            isSubmitting: false,
-          ),
-        );
-      }
-    });
+    } catch (e) {
+      emit(
+        state.copyWith(
+          error: AddAddressException(type: AddAddressExceptionType.other),
+          isSubmitting: false,
+        ),
+      );
+    }
   }
 
   final DomainAddressService _domainAddressService;
   final AddressService _addressService;
-
-  Future<Address?> _checkDomain(String text) async {
-    return _domainAddressService.verifyAddressOrDomain(text);
-  }
 }

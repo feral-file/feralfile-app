@@ -10,6 +10,7 @@ import 'package:autonomy_flutter/onboarding/onboarding_shell.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -33,10 +34,10 @@ class IntroducePage extends StatelessWidget {
       imagePath: 'assets/images/screenshots/onboarding_introduce_page.png',
       child: Scaffold(
         backgroundColor: AppColor.auGreyBackground,
-        // appBar: getDarkEmptyAppBar(AppColor.auGreyBackground),
+        appBar: getDarkEmptyAppBar(AppColor.auGreyBackground),
         body: Column(
           children: [
-            SizedBox(height: 46.3),
+            SizedBox(height: 69),
             OnboardingShell(
               content: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

@@ -5,6 +5,8 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'dart:async';
+
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/onboarding/onboarding_shell.dart';
@@ -13,6 +15,9 @@ import 'package:autonomy_flutter/screen/bloc/accounts/accounts_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_state.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/util/style.dart';
+import 'package:autonomy_flutter/util/ui_helper.dart';
+import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -55,11 +60,13 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
 
     return Scaffold(
       backgroundColor: AppColor.auGreyBackground,
+      appBar: CustomAppBar(
+        backTitle: 'Back',
+      ),
       body: BlocProvider.value(
         value: _accountsBloc,
         child: Column(
           children: [
-            SizedBox(height: 46.3),
             OnboardingShell(
               content: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,8 +82,8 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
                     'even before you connect a device.',
                     style: theme.textTheme.ppMori400White12,
                   ),
-                  const SizedBox(height: 24),
-                  _AddressList(theme: theme),
+                  const SizedBox(height: 20),
+                  _AddressList(theme: theme, onDelete: onDelete),
                 ],
               ),
               secondaryButton: Row(
@@ -104,8 +111,24 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
     );
   }
 
-  void onAddAddress(BuildContext context) {
-    Navigator.of(context).pushNamed(AppRouter.onboardingAddAddressInputPage);
+  void onDelete(WalletAddress address) {
+    UIHelper.showDeleteAccountConfirmation(address, (address) async {
+      final completer = Completer<void>();
+      _accountsBloc.add(DeleteAddressEvent(address, onSuccess: () {
+        completer.complete();
+      }, onError: (error, stackTrace) {
+        completer.completeError(error);
+      }));
+      await completer.future;
+    });
+  }
+
+  Future<void> onAddAddress(BuildContext context) async {
+    final result = await Navigator.of(context)
+        .pushNamed(AppRouter.onboardingAddAddressInputPage);
+    if (result != null && result is WalletAddress) {
+      _accountsBloc.add(FetchAllAddressesEvent());
+    }
   }
 
   void onNext(BuildContext context) {
@@ -114,9 +137,11 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
 }
 
 class _AddressList extends StatelessWidget {
-  const _AddressList({required this.theme});
+  const _AddressList({required this.theme, required this.onDelete});
 
   final ThemeData theme;
+
+  final Function(WalletAddress) onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -132,13 +157,17 @@ class _AddressList extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
-        return Column(
-          children: [
-            for (final address in addresses) ...[
-              _AddressRow(address: address),
-              if (address != addresses.last) const SizedBox(height: 12),
-            ],
-          ],
+        return ListView.builder(
+          padding: EdgeInsets.zero,
+          shrinkWrap: true,
+          itemCount: addresses.length,
+          itemBuilder: (context, index) {
+            return Column(
+              children: [
+                _AddressRow(address: addresses[index], onDelete: onDelete),
+              ],
+            );
+          },
         );
       },
     );
@@ -146,39 +175,47 @@ class _AddressList extends StatelessWidget {
 }
 
 class _AddressRow extends StatelessWidget {
-  const _AddressRow({required this.address});
+  const _AddressRow({required this.address, required this.onDelete});
 
   final WalletAddress address;
-
+  final Function(WalletAddress) onDelete;
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.zero,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: AppColor.primaryBlack,
-          width: 1,
+        // top border only
+        border: Border(
+          top: BorderSide(
+            color: AppColor.primaryBlack,
+            width: 1,
+          ),
         ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
-            child: Text(
-              address.name,
-              style: theme.textTheme.ppMori400White12.copyWith(
-                color: AppColor.feralFileMediumGrey,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 11, bottom: 12),
+              child: Text(
+                address.name,
+                style: theme.textTheme.ppMori400White12.copyWith(
+                  color: AppColor.feralFileMediumGrey,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
-              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const Icon(
-            Icons.add,
-            size: 16,
-            color: AppColor.white,
+          GestureDetector(
+            onTap: () => onDelete(address),
+            child: Container(
+              color: Colors.transparent,
+              padding: const EdgeInsets.only(top: 11, bottom: 12, left: 12),
+              child: SvgPicture.asset('assets/images/minus.svg'),
+            ),
           ),
         ],
       ),

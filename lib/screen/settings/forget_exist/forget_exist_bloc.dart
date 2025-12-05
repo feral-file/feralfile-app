@@ -49,7 +49,7 @@ class ForgetExistBloc extends AuBloc<ForgetExistEvent, ForgetExistState> {
       await injector<NftTokensService>().purgeCachedGallery();
 
       // delete dp1 data: playlists, channels;
-      await injector<UserDp1PlaylistService>().deleteAllPlaylists();
+      await injector<UserDp1PlaylistService>().clearData();
       // remove all local settings data
       unawaited(injector<AppDataManager>().deleteAll());
 

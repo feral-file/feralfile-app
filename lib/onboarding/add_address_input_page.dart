@@ -14,6 +14,7 @@ import 'package:autonomy_flutter/service/domain_address_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -58,16 +59,8 @@ class _OnboardingAddAddressInputPageState
 
     return Scaffold(
       backgroundColor: AppColor.auGreyBackground,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: AppColor.white,
-          ),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+      appBar: CustomAppBar(
+        backTitle: 'Onboarding',
       ),
       body: BlocConsumer<OnboardingAddAddressBloc, OnboardingAddAddressState>(
           bloc: _bloc,

@@ -15,6 +15,7 @@ import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/completer_ext.dart';
+import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -33,9 +34,11 @@ class OnboardingSetupFf1Page extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColor.auGreyBackground,
+      appBar: CustomAppBar(
+        backTitle: 'Back',
+      ),
       body: Column(
         children: [
-          SizedBox(height: 46.3),
           OnboardingShell(
             content: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,17 +92,18 @@ class OnboardingSetupFf1Page extends StatelessWidget {
 
   void onSetupFf1(BuildContext context) {
     startHandleDeeplinkCompleter.safeComplete(true);
+    injector<NavigationService>().replaceAllAndPushNamed(
+      AppRouter.homePage,
+    );
     injector<NavigationService>().navigateTo(
       AppRouter.bluetoothDevicePortalPage,
       arguments: BluetoothDevicePortalPagePayload(deeplink: null),
     );
-    // injector<NavigationService>().navigateTo(AppRouter.scanQRPage,
-    //     arguments: const ScanQRPagePayload(scannerItem: ScannerItem.GLOBAL));
-    // Navigator.of(context).pushNamed(AppRouter.onboardingStartSetupFf1Page);
   }
 
   void onFinish(BuildContext context) {
-    Navigator.of(context).pushNamed(AppRouter.homePage);
+    startHandleDeeplinkCompleter.safeComplete(true);
+    injector<NavigationService>().replaceAllAndPushNamed(AppRouter.homePage);
   }
 
   void onLearnMore(BuildContext context) {

@@ -89,5 +89,16 @@ class AccountsBloc extends AuBloc<AccountsEvent, AccountsState> {
       );
       emit(newState);
     });
+
+    on<DeleteAddressEvent>((event, emit) async {
+      try {
+        await _addressService.deleteAddress(event.address);
+        final addresses = _addressService.getAllWalletAddresses();
+        emit(state.copyWith(addresses: addresses));
+        await event.onSuccess?.call();
+      } catch (e, s) {
+        await event.onError?.call(e, s);
+      }
+    });
   }
 }

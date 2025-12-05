@@ -148,8 +148,6 @@ class _DataManagementPageState extends State<DataManagementPage> {
               .add(ReloadAssetTokensFromIndexerDatabase());
           injector<FeralFileFeedManager>().clearAllCache();
           //redownload data
-          await injector<UserDp1PlaylistService>()
-              .createAllOwnedPlaylistIfNotExists();
           final addresses = injector<AddressService>().getAllAddresses();
           injector<UserAllOwnCollectionBloc>().add(FetchTokensOfAddresses(
               addresses: addresses, shouldUpdateLastRefreshedTime: true));

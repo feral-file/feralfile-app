@@ -20,7 +20,6 @@ import 'package:autonomy_flutter/service/device_info_service.dart';
 import 'package:autonomy_flutter/service/dls_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
-import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -166,23 +165,21 @@ class _OnboardingPageState extends State<OnboardingPage>
 
   Future<void> _goToHomePage(BuildContext context) async {
     log.info('[_goToHomePage]');
-    unawaited(
-      Navigator.of(context).pushReplacementNamed(AppRouter.homePage),
-    );
+    final isDoneOnboarding =
+        injector<ConfigurationService>().isDoneOnboarding();
+    if (isDoneOnboarding) {
+      unawaited(
+        Navigator.of(context).pushReplacementNamed(AppRouter.homePage),
+      );
+      return;
+    }
+    await Navigator.of(context)
+        .pushReplacementNamed(AppRouter.onboardingIntroducePage);
     await injector<ConfigurationService>().setDoneOnboarding(true);
   }
 
   Future<void> _fetchRuntimeCache() async {
     log.info('[_fetchRuntimeCache] start');
-
-    // migrate
-    try {
-      await injector<UserDp1PlaylistService>()
-          .createAllOwnedPlaylistIfNotExists();
-    } catch (e, s) {
-      log.info('Failed to create owned playlist: $e');
-      unawaited(Sentry.captureException(e, stackTrace: s));
-    }
 
     // try {
     //   await injector<FeedRegistryService>().ensureUserEcdsaKeypair();

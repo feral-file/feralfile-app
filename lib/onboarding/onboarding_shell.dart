@@ -54,13 +54,14 @@ class OnboardingShell extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            height: 287.94,
+            height: 206.94,
           ),
           Container(
               constraints: const BoxConstraints(
-                minHeight: 255.06,
+                minHeight: 245.06,
               ),
               child: content),
+          const SizedBox(height: 10),
           _buildButtonsRow(context),
         ],
       ),

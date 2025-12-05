@@ -54,37 +54,37 @@ Playlist
   Future<bool> deletePlaylistsByIds(List<String> ids) => delete(ids);
 
   // Owned playlist IDs helpers
-  List<String> getOwnedPlaylistIds() {
-    final raw = query([_ownedIdsKey]).firstOrNull?['value'];
-    if (raw == null || raw.isEmpty) return <String>[];
-    final list = (jsonDecode(raw) as List).cast<String>();
-    return list;
-  }
+  // List<String> getOwnedPlaylistIds() {
+  //   final raw = query([_ownedIdsKey]).firstOrNull?['value'];
+  //   if (raw == null || raw.isEmpty) return <String>[];
+  //   final list = (jsonDecode(raw) as List).cast<String>();
+  //   return list;
+  // }
 
-  Future<void> setOwnedPlaylistIds(List<String> ids,
-      {OnConflict onConflict = OnConflict.override}) async {
-    await write([
-      {
-        'key': _ownedIdsKey,
-        'value': jsonEncode(ids),
-      }
-    ], onConflict: onConflict);
-  }
+  // Future<void> setOwnedPlaylistIds(List<String> ids,
+  //     {OnConflict onConflict = OnConflict.override}) async {
+  //   await write([
+  //     {
+  //       'key': _ownedIdsKey,
+  //       'value': jsonEncode(ids),
+  //     }
+  //   ], onConflict: onConflict);
+  // }
 
-  Future<void> addOwnedPlaylistId(String id) async {
-    final ids = getOwnedPlaylistIds();
-    if (!ids.contains(id)) {
-      ids.add(id);
-      await setOwnedPlaylistIds(ids);
-    }
-  }
-
-  Future<void> removeOwnedPlaylistId(String id) async {
-    final ids = getOwnedPlaylistIds();
-    if (ids.remove(id)) {
-      await setOwnedPlaylistIds(ids);
-    }
-  }
+  // Future<void> addOwnedPlaylistId(String id) async {
+  //   final ids = getOwnedPlaylistIds();
+  //   if (!ids.contains(id)) {
+  //     ids.add(id);
+  //     await setOwnedPlaylistIds(ids);
+  //   }
+  // }
+  //
+  // Future<void> removeOwnedPlaylistId(String id) async {
+  //   final ids = getOwnedPlaylistIds();
+  //   if (ids.remove(id)) {
+  //     await setOwnedPlaylistIds(ids);
+  //   }
+  // }
 
 /*
 =======================================================================

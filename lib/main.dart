@@ -251,7 +251,7 @@ class AutonomyApp extends StatelessWidget {
               SentryNavigatorObserver(),
               HeroController(),
             ],
-            initialRoute: AppRouter.onboardingIntroducePage,
+            initialRoute: AppRouter.onboardingPage,
             onGenerateRoute: AppRouter.onGenerateRoute,
             builder: (context, child) => AutonomyAppScaffold(child: child!),
           );

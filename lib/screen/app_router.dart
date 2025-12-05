@@ -152,7 +152,7 @@ class AppRouter {
         return CupertinoPageRoute(
           settings: settings,
           builder: (context) => DebugOverlay(
-            imagePath: 'assets/images/screenshots/onboarding_2.png',
+            imagePath: 'assets/images/screenshots/onboarding_2.2.png',
             child: const OnboardingAddAddressPage(),
           ),
         );
@@ -199,7 +199,9 @@ class AppRouter {
               BlocProvider.value(value: canvasDeviceBloc),
               BlocProvider.value(value: subscriptionBloc),
             ],
-            child: const MobileControllerHomePage(),
+            child: DebugOverlay(
+                child: const MobileControllerHomePage(),
+                imagePath: 'assets/images/screenshots/No_Scroll.png'),
           ),
         );
 

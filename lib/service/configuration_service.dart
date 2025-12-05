@@ -149,7 +149,7 @@ class ConfigurationServiceImpl implements ConfigurationService {
   static const String KEY_POSTCARD_CHAT_CONFIG = 'postcard_chat_config';
   static const String KEY_HIDDEN_FEEDS = 'hidden_feeds';
   static const String IS_PREMIUM = 'is_premium';
-  static const String KEY_DONE_ONBOARING = 'done_onboarding';
+  static const String KEY_DONE_ONBOARING = 'done_onboarding_v2';
   static const String KEY_LAST_TIME_ASK_SUBSCRIPTION =
       'last_time_ask_subscription';
   static const String KEY_RECENTLY_SENT_TOKEN = 'recently_sent_token_mainnet';
