@@ -20,6 +20,7 @@ import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
 import 'package:autonomy_flutter/view/now_displaying/now_displaying_bar.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/llm_text_input/llm_text_input.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// Widget that wraps LLMTextInput and NowDisplayingBar with shared scroll-based visibility
@@ -52,7 +53,7 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
   /// - Dev override is enabled (ENABLE_EXPLORE_DEV env var or kDebugMode), OR
   /// - Beta features are enabled AND explore bar is enabled
   bool _shouldShowExploreBar() {
-    if (Environment.enableExploreDev) {
+    if (Environment.enableExploreDev || kDebugMode) {
       return true;
     }
 
