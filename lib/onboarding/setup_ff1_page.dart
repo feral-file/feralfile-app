@@ -9,6 +9,7 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/onboarding/onboarding_shell.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/start_setup_ff1_page.dart';
+import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
@@ -95,6 +96,7 @@ class OnboardingSetupFf1Page extends StatelessWidget {
     injector<NavigationService>().replaceAllAndPushNamed(
       AppRouter.homePage,
     );
+    injector<ConfigurationService>().setDoneOnboarding(true);
     injector<NavigationService>().navigateTo(
       AppRouter.bluetoothDevicePortalPage,
       arguments: BluetoothDevicePortalPagePayload(deeplink: null),
@@ -103,6 +105,8 @@ class OnboardingSetupFf1Page extends StatelessWidget {
 
   void onFinish(BuildContext context) {
     startHandleDeeplinkCompleter.safeComplete(true);
+    injector<ConfigurationService>().setDoneOnboarding(true);
+
     injector<NavigationService>().replaceAllAndPushNamed(AppRouter.homePage);
   }
 

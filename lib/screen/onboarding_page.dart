@@ -175,7 +175,6 @@ class _OnboardingPageState extends State<OnboardingPage>
     }
     await Navigator.of(context)
         .pushReplacementNamed(AppRouter.onboardingIntroducePage);
-    await injector<ConfigurationService>().setDoneOnboarding(true);
   }
 
   Future<void> _fetchRuntimeCache() async {
