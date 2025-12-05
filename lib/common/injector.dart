@@ -249,7 +249,6 @@ Future<void> setupInjector() async {
   injector.registerLazySingleton<DeeplinkService>(
     () => DeeplinkServiceImpl(
       injector(),
-      injector(),
     ),
   );
 
