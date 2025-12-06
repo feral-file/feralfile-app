@@ -87,7 +87,11 @@ class IndexerClient {
           },
           throwable: result.exception,
         ));
-        throw Exception('Error querying: ${result.exception?.raw}');
+        throw Exception(
+          'Error querying: raw: ${result.exception?.raw}, '
+          'graphql: ${result.exception?.graphqlErrors.map((e) => e.message).join(', ')}, '
+          'link: ${result.exception?.linkException},',
+        );
       }
       if (subKey != null) {
         return result.data?[subKey];
@@ -103,7 +107,7 @@ class IndexerClient {
           'vars': vars.toString(),
         },
       ));
-      throw Exception('Error querying: $e');
+      throw Exception('Error querying: ${e.toString()}');
     }
   }
 
@@ -155,7 +159,11 @@ class IndexerClient {
           },
           throwable: result.exception,
         ));
-        throw Exception('Error mutating: ${result.exception?.raw}');
+        throw Exception(
+          'Error mutating: raw: ${result.exception?.raw}, '
+          'graphql: ${result.exception?.graphqlErrors.map((e) => e.message).join(', ')}, '
+          'link: ${result.exception?.linkException},',
+        );
       }
       return result.data;
     } catch (e) {
@@ -168,7 +176,7 @@ class IndexerClient {
           'vars': vars.toString(),
         },
       ));
-      throw Exception('Error mutating: $e');
+      throw Exception('Error mutating: ${e.toString()}');
     }
   }
 
