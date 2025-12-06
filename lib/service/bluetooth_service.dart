@@ -853,12 +853,7 @@ class FFBluetoothService {
     Duration timeout = const Duration(seconds: 30),
     FutureOr<bool> Function(List<BluetoothDevice>)? onData,
     FutureOr<void> Function(dynamic)? onError,
-    bool forceScan = false,
   }) async {
-    if (!forceScan) {
-      return;
-    }
-
     final deviceFound = await _startScan(
       timeout: timeout,
       onData: onData,
@@ -972,8 +967,7 @@ class FFBluetoothService {
             await scanAndConnect(device, timeout: Duration(seconds: 10));
       }
 
-      final deviceId =
-          await injector<ConfigurationService>().getDeviceId();
+      final deviceId = await injector<ConfigurationService>().getDeviceId();
       final message = title ?? device.getName;
       final apiKey = Environment.supportApiKey;
       final request = SendLogRequest(
