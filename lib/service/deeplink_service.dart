@@ -145,17 +145,17 @@ class DeeplinkServiceImpl extends DeeplinkService {
 
     if (isFromOnboarding) {
       await injector<NavigationService>().navigateTo(
-        AppRouter.bluetoothDevicePortalPage,
-        arguments: BluetoothDevicePortalPagePayload(
-          deeplink: link,
-        ),
-      );
-    } else {
-      await injector<NavigationService>().navigateTo(
         AppRouter.handleBluetoothDeviceScanDeeplinkScreen,
         arguments: HandleBluetoothDeviceScanDeeplinkScreenPayload(
           deeplink: link,
           onFinish: onFinish,
+        ),
+      );
+    } else {
+      await injector<NavigationService>().navigateTo(
+        AppRouter.bluetoothDevicePortalPage,
+        arguments: BluetoothDevicePortalPagePayload(
+          deeplink: link,
         ),
       );
     }
