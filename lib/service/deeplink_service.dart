@@ -13,6 +13,7 @@ import 'package:app_links/app_links.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/check_bluetooth_state.dart';
+import 'package:autonomy_flutter/screen/device_setting/start_setup_ff1_page.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
@@ -25,7 +26,8 @@ Completer<void> startHandleDeeplinkCompleter = Completer<void>();
 abstract class DeeplinkService {
   Future<void> setup();
 
-  void handleDeeplink(String? link, {Duration delay, Function? onFinished});
+  void handleDeeplink(String? link,
+      {Duration delay, Function? onFinished, bool isFromOnboarding = false});
 }
 
 class DeeplinkServiceImpl extends DeeplinkService {
@@ -63,6 +65,7 @@ class DeeplinkServiceImpl extends DeeplinkService {
     String? rawLink, {
     Duration delay = Duration.zero,
     Function? onFinished,
+    bool isFromOnboarding = false,
   }) {
     // return for case when FeralFile pass empty deeplink to return Autonomy
     if (rawLink == 'autonomy://') {
@@ -108,6 +111,7 @@ class DeeplinkServiceImpl extends DeeplinkService {
           await _handleBluetoothConnectDeeplink(
             link,
             onFinish: onFinishDeeplink,
+            isFromOnboarding: isFromOnboarding,
           );
         case DeepLinkHandlerType.unknown:
           unawaited(_navigationService.showUnknownLink());
@@ -123,6 +127,7 @@ class DeeplinkServiceImpl extends DeeplinkService {
   Future<void> _handleBluetoothConnectDeeplink(
     String link, {
     Function? onFinish,
+    bool isFromOnboarding = false,
   }) async {
     final prefix = Constants.bluetoothConnectDeepLinks
         .firstWhereOrNull((prefix) => link.startsWith(prefix));
@@ -138,13 +143,22 @@ class DeeplinkServiceImpl extends DeeplinkService {
       }),
     );
 
-    await injector<NavigationService>().navigateTo(
-      AppRouter.handleBluetoothDeviceScanDeeplinkScreen,
-      arguments: HandleBluetoothDeviceScanDeeplinkScreenPayload(
-        deeplink: link,
-        onFinish: onFinish,
-      ),
-    );
+    if (isFromOnboarding) {
+      await injector<NavigationService>().navigateTo(
+        AppRouter.handleBluetoothDeviceScanDeeplinkScreen,
+        arguments: HandleBluetoothDeviceScanDeeplinkScreenPayload(
+          deeplink: link,
+          onFinish: onFinish,
+        ),
+      );
+    } else {
+      await injector<NavigationService>().navigateTo(
+        AppRouter.bluetoothDevicePortalPage,
+        arguments: BluetoothDevicePortalPagePayload(
+          deeplink: link,
+        ),
+      );
+    }
   }
 }
 

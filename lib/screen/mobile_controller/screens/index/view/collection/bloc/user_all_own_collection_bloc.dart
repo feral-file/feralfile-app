@@ -23,11 +23,9 @@ class UserAllOwnCollectionBloc
   final Map<Type, StreamSubscription<List<AssetToken>>?> _tokensStreamSubs = {};
   final Map<Type, Completer<void>?> _activeCompleters = {};
   final Map<String, Timer> _workflowStatusTimers = {};
-  DynamicQuery? _dynamicQuery;
   UserAllOwnCollectionBloc(this._tokensService)
       : super(const UserAllOwnCollectionState()) {
     on<FetchTokensOfAddresses>(_onFetchTokensOfAddresses);
-    on<UpdateDynamicQueryEvent>(_onUpdateDynamicQuery);
     on<ReloadAssetTokensFromIndexerDatabase>(
         _onReloadAssetTokensFromIndexerDatabase);
     on<ClearDataEvent>(_onClearData);
@@ -37,36 +35,6 @@ class UserAllOwnCollectionBloc
   }
 
   final NftTokensService _tokensService;
-
-  void _onUpdateDynamicQuery(
-    UpdateDynamicQueryEvent event,
-    Emitter<UserAllOwnCollectionState> emit,
-  ) {
-    log.info('[UserAllOwnCollectionBloc] onUpdateDynamicQuery');
-    log.info(
-        '[UserAllOwnCollectionBloc] dynamicQuery: ${event.dynamicQuery.toString()}');
-    final isSameQuery = _dynamicQuery == event.dynamicQuery;
-    _dynamicQuery = event.dynamicQuery;
-    // Get addresses for the query
-    final dynamicQueryOwners = event.dynamicQuery.params.owners;
-    final allAddresses = injector<AddressService>().getAllAddresses();
-    final missingAddresses =
-        dynamicQueryOwners.where((e) => !allAddresses.contains(e)).toList();
-    final owners = [
-      ...missingAddresses,
-    ].toSet().toList();
-
-    if (missingAddresses.isNotEmpty) {
-      add(FetchTokensOfAddresses(
-          addresses: owners, shouldUpdateLastRefreshedTime: true));
-    }
-
-    if (isSameQuery) {
-      add(ReloadAssetTokensFromIndexerDatabase());
-    } else {
-      add(ReloadAssetTokensFromIndexerDatabase());
-    }
-  }
 
   Future<void> _onReindexAddresses(
     ReindexAddresses event,
@@ -304,9 +272,6 @@ class UserAllOwnCollectionBloc
           log.info(
               '[${event.runtimeType}] Received ${tokens.length} tokens from stream for addresses: ${event.addresses.join(',')}');
           collected.addAll(tokens);
-          emit(state.copyWith(
-            status: UserAllOwnCollectionStatus.loaded,
-          ));
           if (tokens.isNotEmpty) {
             add(ReloadAssetTokensFromIndexerDatabase());
           }
@@ -376,14 +341,14 @@ class UserAllOwnCollectionBloc
     ReloadAssetTokensFromIndexerDatabase event,
     Emitter<UserAllOwnCollectionState> emit,
   ) async {
-    final owners = _dynamicQuery?.params.owners;
-    if (owners == null) {
+    final owners = injector<AddressService>().getAllAddresses();
+    if (owners.isEmpty) {
       emit(state.copyWith(addressStates: []));
       return;
     }
     final assetTokenGroupByAddress = injector<IndexerDatabaseAbstract>()
         .getGroupAssetTokensByOwnersGroupByAddress(
-      owners: _dynamicQuery!.params.owners,
+      owners: owners,
     );
 
     // Preserve existing states when reloading
@@ -424,7 +389,6 @@ class UserAllOwnCollectionBloc
     _workflowStatusTimers.clear();
     _tokensStreamSubs.clear();
     _activeCompleters.clear();
-    _dynamicQuery = null;
 
     emit(const UserAllOwnCollectionState());
   }

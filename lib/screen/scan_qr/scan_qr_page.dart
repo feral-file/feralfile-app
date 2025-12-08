@@ -46,10 +46,12 @@ enum QRScanTab {
 class ScanQRPagePayload {
   final ScannerItem scannerItem;
   final Function? onHandleFinished;
+  final bool isFromOnboarding;
 
   const ScanQRPagePayload({
     required this.scannerItem,
     this.onHandleFinished,
+    this.isFromOnboarding = false,
   });
 }
 
@@ -111,6 +113,7 @@ class ScanQRPageState extends State<ScanQRPage>
         children: [
           Expanded(
             child: QRScanView(
+              isFromOnboarding: widget.payload.isFromOnboarding,
               key: _qrScanViewKey,
               scannerItem: widget.payload.scannerItem,
               onHandleFinished: widget.payload.onHandleFinished,
@@ -225,9 +228,12 @@ class ScannerInstruction {
 class QRScanView extends StatefulWidget {
   final ScannerItem scannerItem;
   final Function? onHandleFinished;
-
+  final bool isFromOnboarding;
   const QRScanView(
-      {required this.scannerItem, super.key, this.onHandleFinished});
+      {required this.scannerItem,
+      super.key,
+      this.onHandleFinished,
+      this.isFromOnboarding = false});
 
   @override
   State<QRScanView> createState() => QRScanViewState();
@@ -592,6 +598,7 @@ class QRScanViewState extends State<QRScanView>
             }
             widget.onHandleFinished?.call(object);
           },
+          isFromOnboarding: widget.isFromOnboarding,
         );
         return;
       } else {

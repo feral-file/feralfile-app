@@ -82,7 +82,9 @@ class _StartSetupFf1PageState extends State<StartSetupFf1Page> {
                     final result = await injector<NavigationService>()
                         .navigateTo(AppRouter.scanQRPage,
                             arguments: const ScanQRPagePayload(
-                                scannerItem: ScannerItem.GLOBAL));
+                              scannerItem: ScannerItem.GLOBAL,
+                              isFromOnboarding: true,
+                            ));
                     if (result != null) {
                       deeplink = result as String;
                     } else {

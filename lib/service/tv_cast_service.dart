@@ -71,6 +71,14 @@ abstract class TvCastService {
     SafeRestartRequest request,
   );
 
+  Future<SafeFactoryResetReply> safeFactoryReset(
+    SafeFactoryResetRequest request,
+  );
+
+  Future<SendLogReply> sendLog(
+    SendLogRequest request,
+  );
+
   Future<DeviceRealtimeMetricsReply> deviceMetrics(
     DeviceRealtimeMetricsRequest request,
   );
@@ -256,6 +264,32 @@ abstract class BaseTvCastService implements TvCastService {
       await _sendData(_getBody(request));
     } catch (e) {
       log.warning('Failed to perform safe restart: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<SafeFactoryResetReply> safeFactoryReset(
+      SafeFactoryResetRequest request) async {
+    try {
+      final result = await _sendData(_getBody(request));
+      return SafeFactoryResetReply.fromJson(result);
+    } catch (e) {
+      log.warning('Failed to perform factory reset: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<SendLogReply> sendLog(SendLogRequest request) async {
+    try {
+      final result = await _sendData(
+        _getBody(request),
+        timeout: const Duration(seconds: 30),
+      );
+      return SendLogReply.fromJson(result);
+    } catch (e) {
+      log.warning('Failed to send log: $e');
       rethrow;
     }
   }

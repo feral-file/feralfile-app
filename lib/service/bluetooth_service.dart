@@ -33,7 +33,7 @@ enum BluetoothCommand {
   scanWifi,
   keepWifi,
   factoryReset,
-  sendLog,
+  uploadLogs,
   setTimezone;
 
   String get name {
@@ -46,8 +46,8 @@ enum BluetoothCommand {
         return 'keep_wifi';
       case BluetoothCommand.factoryReset:
         return 'factory_reset';
-      case BluetoothCommand.sendLog:
-        return 'send_log';
+      case BluetoothCommand.uploadLogs:
+        return 'upload_logs';
       case BluetoothCommand.setTimezone:
         return 'set_time';
     }
@@ -151,7 +151,7 @@ enum BluetoothCommand {
         return Completer<KeepWifiResponse>();
       case BluetoothCommand.factoryReset:
         return Completer<FactoryResetResponse>();
-      case BluetoothCommand.sendLog:
+      case BluetoothCommand.uploadLogs:
         return Completer<SendLogResponse>();
       case BluetoothCommand.setTimezone:
         return Completer<SetTimezoneReply>();
@@ -178,7 +178,7 @@ enum BluetoothCommand {
         return _factoryResetCallback(
           completer as Completer<FactoryResetResponse>,
         );
-      case BluetoothCommand.sendLog:
+      case BluetoothCommand.uploadLogs:
         return _sendLogCallback(
           completer as Completer<SendLogResponse>,
         );
@@ -853,12 +853,7 @@ class FFBluetoothService {
     Duration timeout = const Duration(seconds: 30),
     FutureOr<bool> Function(List<BluetoothDevice>)? onData,
     FutureOr<void> Function(dynamic)? onError,
-    bool forceScan = false,
   }) async {
-    if (!forceScan) {
-      return;
-    }
-
     final deviceFound = await _startScan(
       timeout: timeout,
       onData: onData,
@@ -972,8 +967,7 @@ class FFBluetoothService {
             await scanAndConnect(device, timeout: Duration(seconds: 10));
       }
 
-      final deviceId =
-          await injector<ConfigurationService>().getDeviceId();
+      final deviceId = await injector<ConfigurationService>().getDeviceId();
       final message = title ?? device.getName;
       final apiKey = Environment.supportApiKey;
       final request = SendLogRequest(
@@ -983,7 +977,7 @@ class FFBluetoothService {
       );
       final res = await sendCommand(
         device: connectedDevice,
-        command: BluetoothCommand.sendLog,
+        command: BluetoothCommand.uploadLogs,
         request: request.toJson(),
         timeout: const Duration(seconds: 30),
       );
@@ -1092,31 +1086,6 @@ class FactoryResetRequest extends BluetoothRequest {
 }
 
 class FactoryResetResponse extends BluetoothResponse {}
-
-class SendLogRequest implements FF1Request {
-  SendLogRequest({
-    required this.userId,
-    required this.title,
-    required this.apiKey,
-  });
-
-  factory SendLogRequest.fromJson(Map<String, dynamic> json) => SendLogRequest(
-        userId: json['userId'] as String,
-        apiKey: json['apiKey'] as String,
-        title: json['title'] as String?,
-      );
-
-  final String userId;
-  final String? title;
-  final String apiKey;
-
-  @override
-  Map<String, dynamic> toJson() => {
-        'userId': userId,
-        'apiKey': apiKey,
-        'title': title,
-      };
-}
 
 class SendLogResponse extends BluetoothResponse {}
 
