@@ -17,6 +17,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ex
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_intent.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
+import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/device_info_service.dart';
 import 'package:autonomy_flutter/service/tv_cast_service.dart';
@@ -70,8 +71,7 @@ class CanvasClientServiceV2 {
   ) async {
     final stub = _getStub(device);
     final deviceInfo = clientDeviceInfo;
-    final userId =
-        await injector<ConfigurationService>().getDeviceId();
+    final userId = await injector<ConfigurationService>().getDeviceId();
 
     final request = ConnectRequestV2(
       clientDevice: deviceInfo,
@@ -352,6 +352,52 @@ class CanvasClientServiceV2 {
         ),
       );
       return false;
+    }
+  }
+
+  Future<bool> safeFactoryReset(BaseDevice device) async {
+    try {
+      final stub = _getStub(device);
+      final request = SafeFactoryResetRequest();
+      final response = await stub.safeFactoryReset(request);
+      return response.ok;
+    } catch (e) {
+      log.info('CanvasClientService: safeFactoryReset error: $e');
+      unawaited(
+        Sentry.captureException(
+          'CanvasClientService: safeFactoryReset error: $e',
+        ),
+      );
+      rethrow;
+    }
+  }
+
+  Future<bool> sendLog(BaseDevice device, String? title) async {
+    try {
+      final stub = _getStub(device);
+      final deviceId = await injector<ConfigurationService>().getDeviceId();
+      final message = title ?? device.name;
+      final apiKey = Environment.supportApiKey;
+      final request = SendLogRequest(
+        userId: deviceId,
+        title: message,
+        apiKey: apiKey,
+      );
+      final response = await stub.sendLog(request);
+      if (response.ok) {
+        log.info('CanvasClientService: sendLog success');
+      } else {
+        log.info('CanvasClientService: sendLog failed');
+      }
+      return response.ok;
+    } catch (e) {
+      log.info('CanvasClientService: sendLog error: $e');
+      unawaited(
+        Sentry.captureException(
+          'CanvasClientService: sendLog error: $e',
+        ),
+      );
+      rethrow;
     }
   }
 
