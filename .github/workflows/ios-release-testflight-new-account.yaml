@@ -1,0 +1,130 @@
+name: Deploy the iOS app for TestFlight to the FF account
+on:
+  # Enable manual run
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "App version"
+        required: true
+      message:
+        description: Change logs
+        required: false
+
+jobs:
+  fastlane-deploy:
+    runs-on: macOS-15
+    steps:
+      # Set up Flutter.
+      - name: Clone Flutter repository with master channel
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.27.2"
+          channel: stable
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "16.4" #latest-stable
+
+      - name: Set env
+        run: |
+          ${{ github.event.inputs.testnet == 'true' }} && echo FASTLAN_ENV=test >> $GITHUB_ENV || echo FASTLAN_ENV=main >> $GITHUB_ENV
+
+      # Checkout code and get packages.
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Setup Ruby, Bundler, and Gemfile dependencies
+      - name: Setup Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.1"
+          bundler-cache: true
+          working-directory: ios
+
+      - name: Update cocoapods
+        run: gem install cocoapods
+
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: |
+            ${{ secrets.KEY_VAULT_DEPLOYMENT_KEY }}
+            ${{ secrets.SSH_ASSETS_KEY }}
+
+      - name: Create env file
+        run: |
+          touch .env
+          echo -e "${{ secrets.PRODUCTION_ENV_VARS }}" | sed 's/\\n/\n/g' >> .env
+          cat .env
+
+      - name: Flutter doctor
+        run: flutter doctor
+      - name: Submoudles update
+        run: git -c submodule.auto-test.update=none submodule update --init --recursive
+
+      # Precache to fix iOS pod install issue
+      - run: flutter precache --ios
+
+      - name: cache pods
+        uses: actions/cache@v3
+        with:
+          path: ios/Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('**/ios/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
+      - name: pod install
+        if: steps.cache-cocoapods.outputs.cache-hit != 'true'
+        run: |
+          flutter pub cache repair
+          flutter clean
+          flutter pub get
+          cd ios/
+          pod install
+
+      - uses: mathieu-bour/setup-sentry-cli@main
+
+      - name: Install Platform
+        run: xcodebuild -downloadPlatform iOS -buildVersion 18.5
+
+      - name: Show installed SDKs
+        run: xcodebuild -showsdks
+
+      - name: Show available runtimes`
+        run: xcrun simctl list runtimes
+
+      - name: Verify Xcode
+        run: |
+          xcode-select -p
+          xcodebuild -version
+          xcodebuild -showsdks
+
+      - name: Verify Swift and iOS versions
+        run: |
+          cd ios/
+          echo "Checking Swift version in Pods..."
+          find Pods -name "*.pbxproj" -exec grep -l "SWIFT_VERSION" {} \; | head -5 | xargs -I {} grep "SWIFT_VERSION" {}
+          echo "Checking iOS deployment targets in Pods..."
+          find Pods -name "*.pbxproj" -exec grep -l "IPHONEOS_DEPLOYMENT_TARGET" {} \; | head -5 | xargs -I {} grep "IPHONEOS_DEPLOYMENT_TARGET" {}
+
+      # Build and deploy with Fastlane (by default, to ciappcenter track) 🚀.
+      - name: Build and deploy with Fastlane
+        env:
+          ENTERPRISE_CERTIFICATE_PASSWORD: ${{ secrets.ENTERPRISE_CERTIFICATE_PASSWORD }}
+          APPSTORE_CERTIFICATE_PASSWORD: ${{ secrets.APPSTORE_CERTIFICATE_PASSWORD }}
+          JSON_FILE: ${{ secrets.JSON_FILE }}
+          SENTRY_AUTH: ${{ secrets.SENTRY_AUTH }}
+          APPCENTER_API_TOKEN: ${{ secrets.APPCENTER_API_TOKEN }}
+          TESTFLIGHT_KEY_ID: ${{ secrets.FF_TESTFLIGHT_KEY_ID }}
+          TESTFLIGHT_ISSUER_ID: ${{ secrets.FF_TESTFLIGHT_ISSUER_ID }}
+          TESTFLIGHT_API_TOKEN: ${{ secrets.FF_TESTFLIGHT_API_TOKEN }}
+          APP_VERSION: ${{ github.event.inputs.version }}
+          RELEASE_NOTES: ${{ github.event.inputs.message }}
+
+        run: |
+          git clone git@github.com:bitmark-inc/mobile-signing-key-vault.git --depth 1
+          echo $JSON_FILE >> key.json
+          bundle exec fastlane install_plugins
+          echo "APP_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+          bundle exec fastlane citestflight env:${{ env.FASTLAN_ENV }}
+
+        working-directory: ios
