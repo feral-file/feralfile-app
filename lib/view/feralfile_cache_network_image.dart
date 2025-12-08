@@ -1,4 +1,5 @@
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/util/log.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cached_network_image_platform_interface/cached_network_image_platform_interface.dart';
 import 'package:flutter/cupertino.dart';
@@ -147,6 +148,8 @@ class FFCacheNetworkImage extends CachedNetworkImage {
     Object error,
     StackTrace? stackTrace,
   ) {
+    log.info(
+        'FFCacheNetworkImageError: url: $imageUrl, error: $error, stackTrace: $stackTrace');
     return errorWidget!(context, imageUrl, error);
   }
 }
