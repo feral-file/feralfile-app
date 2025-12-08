@@ -99,7 +99,7 @@ class _OnboardingAddAddressInputPageState
                             decoration: InputDecoration(
                               isCollapsed: true,
                               border: InputBorder.none,
-                              hintText: 'Address',
+                              hintText: 'Address or ENS / Tezos domain',
                               hintStyle: theme.textTheme.ppMori400White14,
                             ),
                             onSubmitted: state.isSubmitting

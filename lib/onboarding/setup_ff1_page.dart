@@ -69,22 +69,25 @@ class OnboardingSetupFf1Page extends StatelessWidget {
                 ),
               ],
             ),
-            secondaryButton: Row(
-              children: [
-                SvgPicture.asset('assets/images/FF1.svg'),
-                const SizedBox(width: 7),
-                Text('Setup FF1',
-                    style: theme.textTheme.ppMori400Black14
-                        .copyWith(color: AppColor.feralFileLightBlue)),
-              ],
-            ),
-            onSecondaryPressed: () => onSetupFf1(context),
             primaryButton: Row(
               children: [
-                Text('Finish', style: theme.textTheme.ppMori400Black14),
+                SvgPicture.asset('assets/images/FF1.svg',
+                    colorFilter: ColorFilter.mode(
+                        AppColor.primaryBlack, BlendMode.srcIn)),
+                const SizedBox(width: 7),
+                Text('Setup FF1', style: theme.textTheme.ppMori400Black14),
               ],
             ),
-            onPrimaryPressed: () => onFinish(context),
+            onPrimaryPressed: () => onSetupFf1(context),
+            secondaryButton: Row(
+              children: [
+                Text(
+                  'Finish',
+                  style: theme.textTheme.ppMori400White14,
+                ),
+              ],
+            ),
+            onSecondaryPressed: () => onFinish(context),
           ),
         ],
       ),
