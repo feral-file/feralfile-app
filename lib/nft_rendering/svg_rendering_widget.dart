@@ -24,16 +24,9 @@ class SVGNFTRenderingWidget extends NFTRenderingWidget {
 }
 
 class _SVGNFTRenderingWidgetState extends State<SVGNFTRenderingWidget> {
-  bool _isLoading = true;
-
   @override
   void initState() {
     super.initState();
-    if (widget.previewURL.isEmpty) {
-      setState(() {
-        _isLoading = false;
-      });
-    }
   }
 
   Widget _buildSvgWidget() {
@@ -46,7 +39,9 @@ class _SVGNFTRenderingWidgetState extends State<SVGNFTRenderingWidget> {
       fallbackToWebView: true,
       loadingWidgetBuilder: (context) =>
           widget.loadingWidget ?? const LoadingWidget(),
-      onLoaded: () => widget.onLoaded?.call(),
+      onLoaded: () {
+        widget.onLoaded?.call();
+      },
       onError: () {
         widget.onError?.call();
       },
@@ -54,7 +49,5 @@ class _SVGNFTRenderingWidgetState extends State<SVGNFTRenderingWidget> {
   }
 
   @override
-  Widget build(BuildContext context) => _isLoading
-      ? widget.loadingWidget ?? const SizedBox.shrink()
-      : _buildSvgWidget();
+  Widget build(BuildContext context) => _buildSvgWidget();
 }
