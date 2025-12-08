@@ -35,6 +35,8 @@ enum CastCommand {
   showPairingQRCode,
   shutdown,
   reboot,
+  factoryReset,
+  uploadLogs,
   deviceMetrics;
 
   static CastCommand fromString(String command) {
@@ -81,6 +83,10 @@ enum CastCommand {
         return CastCommand.shutdown;
       case 'reboot':
         return CastCommand.reboot;
+      case 'factoryReset':
+        return CastCommand.factoryReset;
+      case 'uploadLogs':
+        return CastCommand.uploadLogs;
       case 'deviceMetrics':
         return CastCommand.deviceMetrics;
       default:
@@ -132,6 +138,10 @@ enum CastCommand {
         return CastCommand.shutdown;
       case const (SafeRestartRequest):
         return CastCommand.reboot;
+      case const (SafeFactoryResetRequest):
+        return CastCommand.factoryReset;
+      case const (SendLogRequest):
+        return CastCommand.uploadLogs;
       case const (DeviceRealtimeMetricsRequest):
         return CastCommand.deviceMetrics;
       default:
@@ -1040,6 +1050,65 @@ class SafeRestartRequest implements FF1Request {
 
   @override
   Map<String, dynamic> toJson() => {};
+}
+
+class SafeFactoryResetRequest implements FF1Request {
+  SafeFactoryResetRequest();
+
+  factory SafeFactoryResetRequest.fromJson(Map<String, dynamic> json) =>
+      SafeFactoryResetRequest();
+
+  @override
+  Map<String, dynamic> toJson() => {};
+}
+
+class SafeFactoryResetReply extends ReplyWithOK {
+  SafeFactoryResetReply({required super.ok});
+
+  factory SafeFactoryResetReply.fromJson(Map<String, dynamic> json) =>
+      SafeFactoryResetReply(ok: json['ok'] as bool);
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'ok': ok,
+      };
+}
+
+class SendLogRequest implements FF1Request {
+  SendLogRequest({
+    required this.userId,
+    required this.title,
+    required this.apiKey,
+  });
+
+  factory SendLogRequest.fromJson(Map<String, dynamic> json) => SendLogRequest(
+        userId: json['userId'] as String,
+        apiKey: json['apiKey'] as String,
+        title: json['title'] as String?,
+      );
+
+  final String userId;
+  final String? title;
+  final String apiKey;
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'userId': userId,
+        'apiKey': apiKey,
+        'title': title,
+      };
+}
+
+class SendLogReply extends ReplyWithOK {
+  SendLogReply({required super.ok});
+
+  factory SendLogReply.fromJson(Map<String, dynamic> json) =>
+      SendLogReply(ok: json['ok'] as bool);
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'ok': ok,
+      };
 }
 
 class DeviceRealtimeMetrics {

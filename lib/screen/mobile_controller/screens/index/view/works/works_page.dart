@@ -88,7 +88,7 @@ class WorksPageState extends State<WorksPage>
         physics: const NeverScrollableScrollPhysics(),
         shrinkWrap: true,
         slivers: [
-          UIHelper.dp1ItemSliverGrid(context, nowDisplayingItems, 'Haha'),
+          UIHelper.dp1ItemSliverGrid(context, nowDisplayingItems, 'Works'),
           if (hasMore || isLoadingMore)
             SliverToBoxAdapter(
               child: Padding(

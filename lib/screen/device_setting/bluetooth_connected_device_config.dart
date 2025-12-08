@@ -40,6 +40,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sentry/sentry.dart';
 
 enum ScreenOrientation {
   landscape,
@@ -1621,13 +1622,68 @@ class BluetoothConnectedDeviceConfigState
                   onTap: () async {
                     try {
                       final device = selectedDevice;
-                      await injector<FFBluetoothService>().factoryReset(device);
-                      unawaited(device.disconnect());
-                      await BluetoothDeviceManager()
-                          .removeDevice(device.deviceId);
-                      injector<NavigationService>().goBack(result: true);
+                      bool success = false;
+
+                      // Try WiFi first if device has WiFi connection
+                      final state = injector<CanvasDeviceBloc>().state;
+                      final isOnline = state.isDeviceAlive(device);
+
+                      if (isOnline) {
+                        try {
+                          log.info('[Factory Reset] Attempting via WiFi');
+                          success = await injector<CanvasClientServiceV2>()
+                              .safeFactoryReset(device);
+                          if (success) {
+                            log.info('[Factory Reset] Success via WiFi');
+                          } else {
+                            log.warning(
+                                '[Factory Reset] WiFi failed, falling back to Bluetooth');
+                            unawaited(Sentry.captureEvent(
+                              SentryEvent(
+                                message: SentryMessage(
+                                    'Factory Reset WiFi failed, falling back to Bluetooth'),
+                                level: SentryLevel.warning,
+                                extra: {
+                                  'device': device.deviceId,
+                                },
+                              ),
+                            ));
+                          }
+                        } catch (e) {
+                          log.warning(
+                              '[Factory Reset] WiFi error: $e, falling back to Bluetooth');
+                          unawaited(Sentry.captureEvent(SentryEvent(
+                            message: SentryMessage(
+                                'Factory Reset WiFi error: $e, falling back to Bluetooth'),
+                            level: SentryLevel.warning,
+                            extra: {
+                              'device': device.deviceId,
+                            },
+                          )));
+                        }
+                      }
+
+                      // Fallback to Bluetooth if WiFi failed or not available
+                      if (!success) {
+                        log.info('[Factory Reset] Attempting via Bluetooth');
+                        await injector<FFBluetoothService>()
+                            .factoryReset(device);
+                        unawaited(device.disconnect());
+                        success = true;
+                      }
+
+                      if (success) {
+                        await BluetoothDeviceManager()
+                            .removeDevice(device.deviceId);
+                        injector<NavigationService>().goBack(result: true);
+                      }
                     } catch (e) {
-                      // injector<NavigationService>().goBack(result: e);
+                      log.info('[Factory Reset] Failed: $e');
+                      unawaited(Sentry.captureEvent(SentryEvent(
+                        message: SentryMessage('Factory Reset Failed: $e'),
+                        level: SentryLevel.warning,
+                      )));
+                      injector<NavigationService>().goBack(result: e);
                     }
                   },
                 ),
@@ -1760,21 +1816,81 @@ class BluetoothConnectedDeviceConfigState
     final theme = Theme.of(context);
     try {
       final device = selectedDevice;
-      await injector<FFBluetoothService>().sendLog(device, null);
-      UIHelper.showDialog(
-          context,
-          'Log sent',
-          Text(
-            'Log sent to support',
-            style: theme.textTheme.ppMori400White14,
-          ));
+      bool success = false;
+
+      // Try WiFi first if device is online
+      final state = injector<CanvasDeviceBloc>().state;
+      final isOnline = state.isDeviceAlive(device);
+
+      if (isOnline) {
+        try {
+          log.info('[Send Log] Attempting via WiFi');
+          success =
+              await injector<CanvasClientServiceV2>().sendLog(device, null);
+          if (success) {
+            log.info('[Send Log] Success via WiFi');
+          } else {
+            log.warning('[Send Log] WiFi failed, falling back to Bluetooth');
+            unawaited(Sentry.captureEvent(
+              SentryEvent(
+                message: SentryMessage(
+                    'Send Log WiFi unsuccessful, falling back to Bluetooth'),
+                level: SentryLevel.warning,
+                extra: {
+                  'device': device.deviceId,
+                },
+              ),
+            ));
+          }
+        } catch (e) {
+          log.warning('[Send Log] WiFi error: $e, falling back to Bluetooth');
+          unawaited(Sentry.captureEvent(SentryEvent(
+            message: SentryMessage(
+                'Send Log WiFi error: $e, falling back to Bluetooth'),
+            level: SentryLevel.warning,
+            extra: {
+              'device': device.deviceId,
+            },
+          )));
+        }
+      }
+
+      // Fallback to Bluetooth if WiFi failed or not available
+      if (!success) {
+        log.info('[Send Log] Attempting via Bluetooth');
+        await injector<FFBluetoothService>().sendLog(device, null);
+        success = true;
+      }
+
+      if (success) {
+        UIHelper.showDialog(
+            context,
+            'Log sent',
+            Text(
+              'Your log has been sent to support. Thank you for your help!',
+              style: theme.textTheme.ppMori400White14,
+            ));
+      } else {
+        UIHelper.showDialog(
+            context,
+            'Failed to send log',
+            Text(
+              'The FF1 failed to send log to support.',
+              style: theme.textTheme.ppMori400White14,
+            ));
+      }
     } catch (e) {
       log.info('Error sending log: $e');
+      unawaited(Sentry.captureEvent(SentryEvent(
+        message: SentryMessage('Failed to send log to support'),
+        level: SentryLevel.warning,
+        throwable: e,
+      )));
       UIHelper.showDialog(
           context,
           'Failed to send log',
           Text(
-            'Failed to send log to support. Error: $e',
+            'Failed to send log to support. Please try again.',
             style: theme.textTheme.ppMori400White14,
           ));
     }
