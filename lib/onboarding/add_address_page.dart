@@ -86,24 +86,26 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
                   _AddressList(theme: theme, onDelete: onDelete),
                 ],
               ),
-              secondaryButton: Row(
-                children: [
-                  SvgPicture.asset('assets/images/Add_blue.svg'),
-                  const SizedBox(width: 7),
-                  Text('Add Address',
-                      style: theme.textTheme.ppMori400Black14
-                          .copyWith(color: AppColor.feralFileLightBlue)),
-                ],
-              ),
-              onSecondaryPressed: () => onAddAddress(context),
               primaryButton: Row(
                 children: [
-                  Text('Next', style: theme.textTheme.ppMori400Black14),
+                  SvgPicture.asset('assets/images/Add_blue.svg',
+                      colorFilter: ColorFilter.mode(
+                          AppColor.primaryBlack, BlendMode.srcIn)),
                   const SizedBox(width: 7),
-                  SvgPicture.asset('assets/images/Left.svg'),
+                  Text('Add Address', style: theme.textTheme.ppMori400Black14),
                 ],
               ),
-              onPrimaryPressed: () => onNext(context),
+              onPrimaryPressed: () => onAddAddress(context),
+              secondaryButton: Row(
+                children: [
+                  Text('Next', style: theme.textTheme.ppMori400White14),
+                  const SizedBox(width: 7),
+                  SvgPicture.asset('assets/images/Left.svg',
+                      colorFilter:
+                          ColorFilter.mode(AppColor.white, BlendMode.srcIn)),
+                ],
+              ),
+              onSecondaryPressed: () => onNext(context),
             ),
           ],
         ),

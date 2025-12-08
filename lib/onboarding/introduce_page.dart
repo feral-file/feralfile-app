@@ -55,16 +55,18 @@ class IntroducePage extends StatelessWidget {
                   ),
                 ],
               ),
-              primaryButton: Row(
+              secondaryButton: Row(
                 children: [
-                  Text('Next', style: theme.textTheme.ppMori400Black14),
+                  Text('Next', style: theme.textTheme.ppMori400White14),
                   const SizedBox(width: 7),
-                  SvgPicture.asset('assets/images/Left.svg'),
+                  SvgPicture.asset('assets/images/Left.svg',
+                      colorFilter:
+                          ColorFilter.mode(AppColor.white, BlendMode.srcIn)),
                 ],
               ),
-              onPrimaryPressed: () => onNext(context),
-              secondaryButton: null,
-              onSecondaryPressed: null,
+              onSecondaryPressed: () => onNext(context),
+              primaryButton: null,
+              onPrimaryPressed: null,
             ),
           ],
         ),

@@ -21,8 +21,8 @@ class OnboardingShell extends StatelessWidget {
   const OnboardingShell({
     super.key,
     required this.content,
-    required this.primaryButton,
-    required this.onPrimaryPressed,
+    this.primaryButton,
+    this.onPrimaryPressed,
     this.secondaryButton,
     this.onSecondaryPressed,
     this.showBottomProgress = true,
@@ -32,10 +32,10 @@ class OnboardingShell extends StatelessWidget {
   final Widget content;
 
   /// Label for the primary (right) button – e.g., "Next", "Finish".
-  final Widget primaryButton;
+  final Widget? primaryButton;
 
   /// Callback when the primary button is pressed.
-  final VoidCallback onPrimaryPressed;
+  final VoidCallback? onPrimaryPressed;
 
   /// Optional label for the secondary (left) button – e.g., "Add Address", "Setup FF1".
   final Widget? secondaryButton;
@@ -74,14 +74,6 @@ class OnboardingShell extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: CustomPrimaryButton(
-            padding: const EdgeInsets.symmetric(vertical: 11.5),
-            onTap: onPrimaryPressed,
-            child: primaryButton,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
           child: (secondaryButton != null && onSecondaryPressed != null)
               ? CustomPrimaryButton(
                   padding: const EdgeInsets.symmetric(vertical: 11.5),
@@ -91,7 +83,17 @@ class OnboardingShell extends StatelessWidget {
                   color: Colors.transparent,
                 )
               : const SizedBox.shrink(),
-        )
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: (primaryButton != null && onPrimaryPressed != null)
+              ? CustomPrimaryButton(
+                  padding: const EdgeInsets.symmetric(vertical: 11.5),
+                  onTap: onPrimaryPressed,
+                  child: primaryButton!,
+                )
+              : const SizedBox.shrink(),
+        ),
       ],
     );
   }
