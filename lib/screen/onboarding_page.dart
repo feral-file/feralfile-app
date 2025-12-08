@@ -123,8 +123,6 @@ class _OnboardingPageState extends State<OnboardingPage>
     await injector<FeralFileFeedManager>().init();
     await injector<FeralFileDP1FeedService>().init();
 
-    unawaited(loadRemoteConfigs());
-
     // Count open app times
     final countOpenApp = injector<ConfigurationService>().countOpenApp() ?? 0;
     await injector<ConfigurationService>().setCountOpenApp(countOpenApp + 1);

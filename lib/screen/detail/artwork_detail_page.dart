@@ -765,6 +765,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
     await enableLandscapeMode();
     unawaited(WakelockPlus.enable());
     setState(() {
+      shouldShowNowDisplaying.value = false;
       _isFullScreen = true;
     });
   }
@@ -777,6 +778,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
     unawaited(WakelockPlus.disable());
     await disableLandscapeMode();
     setState(() {
+      shouldShowNowDisplaying.value = true;
       _isFullScreen = false;
     });
   }
