@@ -8,6 +8,7 @@ import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/device/device_status.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/pair.dart';
+import 'package:autonomy_flutter/nft_rendering/feralfile_webview.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/device_setting/device_config.dart';
@@ -17,6 +18,7 @@ import 'package:autonomy_flutter/service/bluetooth_notification_service.dart';
 import 'package:autonomy_flutter/service/bluetooth_service.dart';
 import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
+import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
@@ -437,6 +439,17 @@ class BluetoothConnectedDeviceConfigState
                     ),
                   ),
                 ],
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: ResponsiveLayout.pageHorizontalEdgeInsets,
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.7,
+                      child: _WebViewScrollWrapper(
+                        child: _docsWebviewWidget(context),
+                      ),
+                    ),
+                  ),
+                ),
               ],
               const SliverToBoxAdapter(
                 child: SizedBox(
@@ -1533,6 +1546,17 @@ class BluetoothConnectedDeviceConfigState
     );
   }
 
+  Widget _docsWebviewWidget(BuildContext context) {
+    final url = injector<RemoteConfigService>().getConfig<String>(
+        ConfigGroup.documentation,
+        ConfigKey.docsUrl,
+        'https://docs.feralfile.com/ff1?from=app');
+    final uri = Uri.parse(url);
+    return FeralFileWebview(
+      uri: uri,
+    );
+  }
+
   void _showOption(BuildContext context, CanvasDeviceState state) {
     final isDeviceAlive = selectedDevice.isAlive;
     final isQEMU = selectedDevice.isQEMU;
@@ -1894,5 +1918,63 @@ class BluetoothConnectedDeviceConfigState
             style: theme.textTheme.ppMori400White14,
           ));
     }
+  }
+}
+
+// Widget wrapper to prevent parent scroll when interacting with WebView
+// This solution uses a combination of approaches:
+// 1. NotificationListener to prevent scroll notifications from propagating
+// 2. GestureDetector to detect vertical drags and prevent parent scroll
+class _WebViewScrollWrapper extends StatefulWidget {
+  const _WebViewScrollWrapper({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_WebViewScrollWrapper> createState() => _WebViewScrollWrapperState();
+}
+
+class _WebViewScrollWrapperState extends State<_WebViewScrollWrapper> {
+  bool _isInteracting = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        // Prevent parent scroll when interacting with WebView
+        if (_isInteracting) {
+          return true;
+        }
+        return false;
+      },
+      child: GestureDetector(
+        // Detect when user starts dragging in WebView area
+        onVerticalDragStart: (_) {
+          setState(() {
+            _isInteracting = true;
+          });
+        },
+        onVerticalDragEnd: (_) {
+          // Reset after a delay to allow WebView to handle the gesture
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (mounted) {
+              setState(() {
+                _isInteracting = false;
+              });
+            }
+          });
+        },
+        onVerticalDragCancel: () {
+          if (mounted) {
+            setState(() {
+              _isInteracting = false;
+            });
+          }
+        },
+        // Allow gestures to pass through to WebView
+        behavior: HitTestBehavior.translucent,
+        child: widget.child,
+      ),
+    );
   }
 }
