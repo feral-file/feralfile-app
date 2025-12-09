@@ -5,10 +5,10 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/onboarding/debug_overlay.dart';
 import 'package:autonomy_flutter/onboarding/onboarding_shell.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:flutter/material.dart';
@@ -33,40 +33,47 @@ class IntroducePage extends StatelessWidget {
     return DebugOverlay(
       imagePath: 'assets/images/screenshots/onboarding_introduce_page.png',
       child: Scaffold(
-        backgroundColor: AppColor.auGreyBackground,
-        appBar: getDarkEmptyAppBar(AppColor.auGreyBackground),
+        backgroundColor: PrimitivesTokens.colorsDarkGrey,
+        appBar: getDarkEmptyAppBar(PrimitivesTokens.colorsDarkGrey),
         body: Column(
           children: [
-            SizedBox(height: 69),
+            const SizedBox(height: 69),
             OnboardingShell(
               content: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Explore digital art playlists',
-                    style: theme.textTheme.ppMori700White18,
+                    style: theme.textTheme.h3,
                   ),
                   const SizedBox(height: 20),
                   Text(
                     'Browse curated playlists and channels from Feral File and '
                     'invited collaborators—right on your phone. You don’t need '
                     'any hardware to start exploring.',
-                    style: theme.textTheme.ppMori400White12,
+                    style: theme.textTheme.small,
                   ),
                 ],
               ),
-              secondaryButton: Row(
+              primaryButton: Row(
                 children: [
-                  Text('Next', style: theme.textTheme.ppMori400White14),
+                  Text(
+                    'Next',
+                    style: theme.textTheme.small.copyWith(
+                      color: PrimitivesTokens.colorsBlack,
+                    ),
+                  ),
                   const SizedBox(width: 7),
-                  SvgPicture.asset('assets/images/Left.svg',
-                      colorFilter:
-                          ColorFilter.mode(AppColor.white, BlendMode.srcIn)),
+                  SvgPicture.asset(
+                    'assets/images/Left.svg',
+                    colorFilter: const ColorFilter.mode(
+                      PrimitivesTokens.colorsBlack,
+                      BlendMode.srcIn,
+                    ),
+                  ),
                 ],
               ),
-              onSecondaryPressed: () => onNext(context),
-              primaryButton: null,
-              onPrimaryPressed: null,
+              onPrimaryPressed: () => onNext(context),
             ),
           ],
         ),

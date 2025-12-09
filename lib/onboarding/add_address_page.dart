@@ -8,14 +8,13 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/onboarding/onboarding_shell.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_state.dart';
-import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
-import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:flutter/cupertino.dart';
@@ -59,8 +58,8 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppColor.auGreyBackground,
-      appBar: CustomAppBar(
+      backgroundColor: PrimitivesTokens.colorsDarkGrey,
+      appBar: const CustomAppBar(
         backTitle: 'Back',
       ),
       body: BlocProvider.value(
@@ -73,14 +72,14 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
                 children: [
                   Text(
                     'See the art you already own',
-                    style: theme.textTheme.ppMori700White18,
+                    style: theme.textTheme.h3,
                   ),
                   const SizedBox(height: 20),
                   Text(
                     'Add your Ethereum and Tezos addresses to pull in the works you '
                     'collect. Use the app as a clear lens on your digital collection, '
                     'even before you connect a device.',
-                    style: theme.textTheme.ppMori400White12,
+                    style: theme.textTheme.small,
                   ),
                   const SizedBox(height: 20),
                   _AddressList(theme: theme, onDelete: onDelete),
@@ -88,24 +87,51 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
               ),
               primaryButton: Row(
                 children: [
-                  SvgPicture.asset('assets/images/Add_blue.svg',
-                      colorFilter: ColorFilter.mode(
-                          AppColor.primaryBlack, BlendMode.srcIn)),
+                  SvgPicture.asset(
+                    'assets/images/Add_blue.svg',
+                    colorFilter: const ColorFilter.mode(
+                      PrimitivesTokens.colorsBlack,
+                      BlendMode.srcIn,
+                    ),
+                  ),
                   const SizedBox(width: 7),
-                  Text('Add Address', style: theme.textTheme.ppMori400Black14),
+                  Text(
+                    'Add Address',
+                    style: theme.textTheme.small.copyWith(
+                      color: PrimitivesTokens.colorsBlack,
+                    ),
+                  ),
                 ],
               ),
               onPrimaryPressed: () => onAddAddress(context),
-              secondaryButton: Row(
-                children: [
-                  Text('Next', style: theme.textTheme.ppMori400White14),
-                  const SizedBox(width: 7),
-                  SvgPicture.asset('assets/images/Left.svg',
-                      colorFilter:
-                          ColorFilter.mode(AppColor.white, BlendMode.srcIn)),
-                ],
+              secondaryButton: BlocBuilder<AccountsBloc, AccountsState>(
+                builder: (context, state) {
+                  final addresses = state.addresses;
+                  final isEmpty = addresses == null || addresses.isEmpty;
+                  final buttonText = isEmpty ? 'Skip for now' : 'Next';
+
+                  return Row(
+                    children: [
+                      Text(
+                        buttonText,
+                        style: theme.textTheme.small.copyWith(
+                          color: PrimitivesTokens.colorsLightBlue,
+                        ),
+                      ),
+                      const SizedBox(width: 7),
+                      SvgPicture.asset(
+                        'assets/images/Left.svg',
+                        colorFilter: const ColorFilter.mode(
+                          PrimitivesTokens.colorsLightBlue,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
               onSecondaryPressed: () => onNext(context),
+              hintText: 'You can always add addresses later.',
             ),
           ],
         ),
@@ -143,7 +169,7 @@ class _AddressList extends StatelessWidget {
 
   final ThemeData theme;
 
-  final Function(WalletAddress) onDelete;
+  final void Function(WalletAddress) onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -180,20 +206,17 @@ class _AddressRow extends StatelessWidget {
   const _AddressRow({required this.address, required this.onDelete});
 
   final WalletAddress address;
-  final Function(WalletAddress) onDelete;
+  final void Function(WalletAddress) onDelete;
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Container(
       padding: EdgeInsets.zero,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         // top border only
         border: Border(
-          top: BorderSide(
-            color: AppColor.primaryBlack,
-            width: 1,
-          ),
+          top: BorderSide(),
         ),
       ),
       child: Row(
@@ -204,8 +227,8 @@ class _AddressRow extends StatelessWidget {
               padding: const EdgeInsets.only(top: 11, bottom: 12),
               child: Text(
                 address.name,
-                style: theme.textTheme.ppMori400White12.copyWith(
-                  color: AppColor.feralFileMediumGrey,
+                style: theme.textTheme.small.copyWith(
+                  color: PrimitivesTokens.colorsGrey,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),

@@ -6,6 +6,7 @@
 //
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/onboarding/onboarding_shell.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/start_setup_ff1_page.dart';
@@ -13,7 +14,6 @@ import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
-import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/completer_ext.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
@@ -34,8 +34,8 @@ class OnboardingSetupFf1Page extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppColor.auGreyBackground,
-      appBar: CustomAppBar(
+      backgroundColor: PrimitivesTokens.colorsDarkGrey,
+      appBar: const CustomAppBar(
         backTitle: 'Back',
       ),
       body: Column(
@@ -61,8 +61,8 @@ class OnboardingSetupFf1Page extends StatelessWidget {
                   behavior: HitTestBehavior.opaque,
                   child: Text(
                     'Learn more about the FF1 Art Computer',
-                    style: theme.textTheme.ppMori400White12.copyWith(
-                      color: AppColor.feralFileMediumGrey,
+                    style: theme.textTheme.small.copyWith(
+                      color: PrimitivesTokens.colorsGrey,
                       decoration: TextDecoration.underline,
                     ),
                   ),
@@ -71,9 +71,13 @@ class OnboardingSetupFf1Page extends StatelessWidget {
             ),
             primaryButton: Row(
               children: [
-                SvgPicture.asset('assets/images/FF1.svg',
-                    colorFilter: ColorFilter.mode(
-                        AppColor.primaryBlack, BlendMode.srcIn)),
+                SvgPicture.asset(
+                  'assets/images/FF1.svg',
+                  colorFilter: const ColorFilter.mode(
+                    PrimitivesTokens.colorsBlack,
+                    BlendMode.srcIn,
+                  ),
+                ),
                 const SizedBox(width: 7),
                 Text('Setup FF1', style: theme.textTheme.ppMori400Black14),
               ],

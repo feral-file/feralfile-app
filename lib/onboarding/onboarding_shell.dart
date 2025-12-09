@@ -5,7 +5,9 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:flutter/material.dart';
 
@@ -26,6 +28,7 @@ class OnboardingShell extends StatelessWidget {
     this.secondaryButton,
     this.onSecondaryPressed,
     this.showBottomProgress = true,
+    this.hintText,
   });
 
   /// Main content of the onboarding step (usually title + body + illustration).
@@ -46,6 +49,8 @@ class OnboardingShell extends StatelessWidget {
   /// Whether to show the white bottom progress line.
   final bool showBottomProgress;
 
+  final String? hintText;
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -63,6 +68,15 @@ class OnboardingShell extends StatelessWidget {
               child: content),
           const SizedBox(height: 10),
           _buildButtonsRow(context),
+          if (hintText != null) ...[
+            const SizedBox(height: 20),
+            Text(
+              hintText!,
+              style: Theme.of(context).textTheme.small.copyWith(
+                    color: PrimitivesTokens.colorsGrey,
+                  ),
+            ),
+          ],
         ],
       ),
     );
@@ -74,23 +88,23 @@ class OnboardingShell extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: (secondaryButton != null && onSecondaryPressed != null)
+          child: (primaryButton != null && onPrimaryPressed != null)
               ? CustomPrimaryButton(
-                  padding: const EdgeInsets.symmetric(vertical: 11.5),
-                  onTap: onSecondaryPressed,
-                  child: secondaryButton!,
-                  borderColor: AppColor.feralFileLightBlue,
-                  color: Colors.transparent,
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  onTap: onPrimaryPressed,
+                  child: primaryButton!,
                 )
               : const SizedBox.shrink(),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: (primaryButton != null && onPrimaryPressed != null)
+          child: (secondaryButton != null && onSecondaryPressed != null)
               ? CustomPrimaryButton(
-                  padding: const EdgeInsets.symmetric(vertical: 11.5),
-                  onTap: onPrimaryPressed,
-                  child: primaryButton!,
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  onTap: onSecondaryPressed,
+                  borderColor: AppColor.feralFileLightBlue,
+                  color: Colors.transparent,
+                  child: secondaryButton!,
                 )
               : const SizedBox.shrink(),
         ),

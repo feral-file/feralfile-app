@@ -59,7 +59,7 @@ class _OnboardingAddAddressInputPageState
 
     return Scaffold(
       backgroundColor: AppColor.auGreyBackground,
-      appBar: CustomAppBar(
+      appBar: const CustomAppBar(
         backTitle: 'Onboarding',
       ),
       body: BlocConsumer<OnboardingAddAddressBloc, OnboardingAddAddressState>(

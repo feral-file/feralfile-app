@@ -107,7 +107,7 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     required String? cursor,
   }) async {
     final allAddresses =
-        await injector<AddressService>().getAllWalletAddresses();
+        injector<AddressService>().getAllWalletAddresses();
     final addresses = allAddresses.toList();
 
     final start = int.tryParse(cursor ?? '0') ?? 0;

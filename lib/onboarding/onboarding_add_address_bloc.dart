@@ -95,7 +95,8 @@ class OnboardingAddAddressBloc
         emit(
           state.copyWith(
             error: AddAddressException(
-                type: AddAddressExceptionType.invalidAddress),
+              type: AddAddressExceptionType.invalidAddress,
+            ),
             isSubmitting: false,
           ),
         );
