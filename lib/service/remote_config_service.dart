@@ -2,15 +2,18 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:autonomy_flutter/gateway/remote_config_api.dart';
+import 'package:autonomy_flutter/util/completer_ext.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:sentry/sentry.dart';
 //ignore_for_file: lines_longer_than_80_chars
 
 abstract class RemoteConfigService {
-  Future<void> loadConfigs({bool forceRefresh = false});
+  Future<Map<String, dynamic>> loadConfigs({bool forceRefresh = false});
 
   bool getBool(final ConfigGroup group, final ConfigKey key);
 
-  T getConfig<T>(final ConfigGroup group, final ConfigKey key, T defaultValue);
+  T getConfig<T>(final ConfigGroup group, final ConfigKey key, T defaultValue,
+      {T Function(dynamic)? parser});
 
   bool get isLoaded;
 }
@@ -152,7 +155,7 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
     },
     ConfigGroup.dp1Playlist.getString: {
       ConfigKey.dp1PlaylistChannelUrls.getString: [
-        "https://dp1-feed-operator-api-prod.autonomy-system.workers.dev/api/v1/channels/dae709d7-26da-4b4c-b881-39cd681cc82f",
+        "https://dp1-feed-operator-api-prod.autonomy-system.workers.dev/api/v1/channels/0fdd0465-217c-4734-9bfd-2d807b414482",
       ],
       ConfigKey.dp1FeedCacheDuration.getString: '86400',
       ConfigKey.dp1FeedLastUpdated.getString: '2025-01-01T00:00:00Z',
@@ -164,6 +167,9 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
     ConfigGroup.documentation.getString: {
       ConfigKey.docsUrl.getString: 'https://docs.feralfile.com/ff1?from=app',
     },
+    ConfigGroup.ff1Config.getString: {
+      ConfigKey.ff1LearnMoreUrl.getString: 'https://feralfile.com/install',
+    },
     // Token metadata rebuild policy
     'token_metadata_rebuild': {
       'cache_valid_duration': null, // may be missing or null
@@ -173,64 +179,96 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
 
   static Map<String, dynamic>? _configs;
   bool _isLoading = false;
+  Completer<Map<String, dynamic>>? _completer;
 
   @override
   bool get isLoaded => _configs != null;
 
   @override
-  Future<void> loadConfigs({bool forceRefresh = false}) async {
-    if ((_configs != null && !forceRefresh) || _isLoading) {
-      return;
-    }
-    log.fine('RemoteConfigService: loadConfigs start');
-    _isLoading = true;
+  Future<Map<String, dynamic>> loadConfigs({bool forceRefresh = false}) async {
     try {
-      final data = await _api.getConfigs();
-      _configs = jsonDecode(data) as Map<String, dynamic>;
-      log.fine('RemoteConfigService: loadConfigs: $_configs');
+      if ((_configs != null && !forceRefresh)) {
+        return _configs!;
+      }
+
+      if (_completer != null && !_completer!.isCompleted) {
+        log.info(
+            'RemoteConfigService: loadConfigs: already loading, return the completer');
+        return _completer!.future;
+      }
+      _completer = Completer<Map<String, dynamic>>();
+      log.fine('RemoteConfigService: loadConfigs start');
+      await Future.delayed(Duration(seconds: 3));
+
+      try {
+        final data = await _api.getConfigs();
+        _configs = jsonDecode(data) as Map<String, dynamic>;
+        log.fine('RemoteConfigService: loadConfigs: $_configs');
+      } catch (e) {
+        log.warning('RemoteConfigService: loadConfigs: $e');
+      } finally {
+        _completer?.safeComplete(_configs!);
+        _completer = null;
+      }
+      return _configs!;
     } catch (e) {
       log.warning('RemoteConfigService: loadConfigs: $e');
-    } finally {
-      _isLoading = false;
+      Sentry.captureEvent(
+        SentryEvent(
+          message: SentryMessage('RemoteConfigService: loadConfigs: $e'),
+          level: SentryLevel.error,
+          throwable: e,
+        ),
+      );
+      return _defaults;
+    }
+  }
+
+  Map<String, dynamic> get configs {
+    if (_configs == null) {
+      unawaited(loadConfigs());
+      return _defaults;
+    } else {
+      return _configs!;
     }
   }
 
   @override
   bool getBool(final ConfigGroup group, final ConfigKey key) {
-    if (_configs == null) {
-      unawaited(loadConfigs());
-      return _defaults[group.getString]![key.getString] as bool;
-    } else {
-      return _configs![group.getString]?[key.getString] as bool? ??
-          _defaults[group.getString]?[key.getString] as bool? ??
-          false;
-    }
+    return configs[group.getString]?[key.getString] as bool? ?? false;
   }
 
   @override
-  T getConfig<T>(final ConfigGroup group, final ConfigKey key, T defaultValue) {
-    if (_configs == null) {
-      unawaited(loadConfigs());
-      return _defaults[group.getString]![key.getString] as T ?? defaultValue;
-    } else {
-      final hasKey = (_configs?.keys.contains(group.getString) ?? false) &&
-          (_configs![group.getString] as Map<String, dynamic>)
+  T getConfig<T>(final ConfigGroup group, final ConfigKey key, T defaultValue,
+      {T Function(dynamic)? parser}) {
+    try {
+      final hasKey = (configs.keys.contains(group.getString) &&
+          (configs[group.getString] as Map<String, dynamic>)
               .keys
-              .contains(key.getString);
+              .contains(key.getString));
       if (!hasKey) {
-        final hasDefaultKey = _defaults.keys.contains(group.getString) &&
-            (_defaults[group.getString] as Map<String, dynamic>)
-                .keys
-                .contains(key.getString);
-        if (!hasDefaultKey) {
-          log.warning('RemoteConfigService: getConfig: $group, $key not found');
-          return defaultValue;
-        }
-        final res = _defaults[group.getString]![key.getString] as T;
-        return res;
+        // no key found, return the default value
+        return defaultValue;
       }
-      final res = _configs![group.getString]?[key.getString] as T;
-      return res;
+      final value = configs[group.getString]?[key.getString];
+      if (value == null) {
+        return defaultValue;
+      }
+      if (parser != null) {
+        return parser(value);
+      }
+      return value as T;
+    } catch (e) {
+      log.warning(
+          'RemoteConfigService: getConfig: $e, group: ${group.getString}, key: ${key.getString}');
+      Sentry.captureEvent(
+        SentryEvent(
+          message: SentryMessage('RemoteConfigService: getConfig: $e'),
+          level: SentryLevel.warning,
+          throwable: e,
+        ),
+      );
+      return defaultValue;
     }
   }
 }
@@ -254,6 +292,7 @@ enum ConfigGroup {
   dp1Playlist,
   documentation,
   tokenMetadataRebuild,
+  ff1Config,
 }
 
 // ConfigGroup getString extension
@@ -296,6 +335,8 @@ extension ConfigGroupExtension on ConfigGroup {
         return 'documentation';
       case ConfigGroup.tokenMetadataRebuild:
         return 'token_metadata_rebuild';
+      case ConfigGroup.ff1Config:
+        return 'ff1_config';
     }
   }
 }
@@ -347,6 +388,7 @@ enum ConfigKey {
   docsUrl,
   cacheValidDuration,
   lastForceUpdateTime,
+  ff1LearnMoreUrl,
 }
 
 // ConfigKey getString extension
@@ -445,6 +487,8 @@ extension ConfigKeyExtension on ConfigKey {
         return 'cache_valid_duration';
       case ConfigKey.lastForceUpdateTime:
         return 'last_force_update_time';
+      case ConfigKey.ff1LearnMoreUrl:
+        return 'ff1_learn_more_url';
     }
   }
 }
