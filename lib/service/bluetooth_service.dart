@@ -945,18 +945,26 @@ class FFBluetoothService {
 
   Future<void> factoryReset(FFBluetoothDevice device) async {
     FFBluetoothDevice connectedDevice = device;
-    if (device.isDisconnected) {
-      connectedDevice =
-          await scanAndConnect(device, timeout: Duration(seconds: 10));
-    }
+    try {
+      if (device.isDisconnected) {
+        connectedDevice =
+            await scanAndConnect(device, timeout: Duration(seconds: 10));
+      }
 
-    final res = await sendCommand(
-      device: connectedDevice,
-      command: BluetoothCommand.factoryReset,
-      request: FactoryResetRequest().toJson(),
-      timeout: const Duration(seconds: 30),
-    );
-    log.info('[factoryReset] res: $res');
+      final res = await sendCommand(
+        device: connectedDevice,
+        command: BluetoothCommand.factoryReset,
+        request: FactoryResetRequest().toJson(),
+        timeout: const Duration(seconds: 30),
+      );
+      log.info('[factoryReset] res: $res');
+    } catch (e) {
+      log.warning('Failed to factory reset: $e');
+      unawaited(Sentry.captureException('Failed to factory reset: $e'));
+      rethrow;
+    } finally {
+      await device.disconnect();
+    }
   }
 
   Future<void> sendLog(FFBluetoothDevice device, String? title) async {
