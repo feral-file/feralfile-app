@@ -198,7 +198,6 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
       }
       _completer = Completer<Map<String, dynamic>>();
       log.fine('RemoteConfigService: loadConfigs start');
-      await Future.delayed(Duration(seconds: 3));
 
       try {
         final data = await _api.getConfigs();
