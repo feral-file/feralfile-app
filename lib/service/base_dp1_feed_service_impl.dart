@@ -200,6 +200,9 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
       ConfigGroup.dp1Playlist,
       ConfigKey.dp1FeedServerUrlToName,
       {},
+      parser: (dynamic value) {
+        return Map<String, String>.from(value as Map);
+      },
     );
   }
 

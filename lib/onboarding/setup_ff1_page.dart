@@ -115,9 +115,10 @@ class OnboardingSetupFf1Page extends StatelessWidget {
 
   void onLearnMore(BuildContext context) {
     final url = injector<RemoteConfigService>().getConfig<String>(
-        ConfigGroup.documentation,
-        ConfigKey.docsUrl,
-        'https://docs.feralfile.com/ff1?from=app');
+      ConfigGroup.ff1Config,
+      ConfigKey.ff1LearnMoreUrl,
+      'https://feralfile.com/install',
+    );
     final uri = Uri.parse(url);
     injector<NavigationService>().openUrl(uri);
   }
