@@ -42,3 +42,15 @@ extension ListExtensions<T> on List<T> {
     return sublist(clampedStart, clampedEnd);
   }
 }
+
+extension IterableExtensions<T> on Iterable<T> {
+  Iterable<List<T>> batch(int batchSize) {
+    if (batchSize <= 0) throw ArgumentError("Batch size must be positive");
+    List<List<T>> result = [];
+    for (var i = 0; i < length; i += batchSize) {
+      var end = (i + batchSize).clamp(0, length);
+      result.add(toList().sublist(i, end));
+    }
+    return result.toSet();
+  }
+}

@@ -273,3 +273,46 @@ const String getTokenByCidQuery = r'''
     }
   }
 ''';
+
+const String getTokenWithOwnersAndProvenanceQuery = r'''
+  query getToken(
+    $cid: String!
+    $owners_limit: Uint8 = 255
+    $owners_offset: Uint64 = 0
+    $provenance_events_limit: Uint8 = 255
+    $provenance_events_offset: Uint64 = 0
+    $provenance_events_order: Order = desc
+  ) {
+    token(
+      cid: $cid
+      provenance_events_order: $provenance_events_order
+      provenance_events_limit: $provenance_events_limit
+      provenance_events_offset: $provenance_events_offset
+      owners_offset: $owners_offset
+      owners_limit: $owners_limit
+    ) {
+      id
+      token_cid
+      owners {
+        items {
+          quantity
+          owner_address
+        }
+        total
+        offset
+      }
+      provenance_events {
+        items {
+          event_type
+          from_address
+          to_address
+          tx_hash
+          timestamp
+          chain
+        }
+        total
+        offset
+      }
+    }
+  }
+''';
