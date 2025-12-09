@@ -13,6 +13,7 @@ class LoadingWidget extends StatelessWidget {
   final int? frameRate;
   final String? text;
   final bool showText;
+  final bool centered;
 
   const LoadingWidget(
       {super.key,
@@ -22,7 +23,8 @@ class LoadingWidget extends StatelessWidget {
       this.showText = true,
       this.width,
       this.height,
-      this.frameRate});
+      this.frameRate,
+      this.centered = false});
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +35,8 @@ class LoadingWidget extends StatelessWidget {
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+              centered ? CrossAxisAlignment.center : CrossAxisAlignment.start,
           children: [
             GifView.asset(
               'assets/images/loading_white.gif',

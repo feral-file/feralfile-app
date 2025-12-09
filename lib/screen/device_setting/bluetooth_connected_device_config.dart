@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/device/device_status.dart';
@@ -295,7 +296,7 @@ class BluetoothConnectedDeviceConfigState
                 injector<NavigationService>().popUntilHome();
               },
               text: 'finish'.tr(),
-              color: AppColor.white,
+              color: PrimitivesTokens.colorsLightBlue,
             ),
           ),
         if (widget.payload.isFromOnboarding && !_isBLEDeviceConnected)
@@ -318,6 +319,7 @@ class BluetoothConnectedDeviceConfigState
                     child: LoadingWidget(
                       backgroundColor: Colors.black.withOpacity(0.8),
                       text: 'FF1 is getting ready',
+                      centered: true,
                     ),
                   );
                 }),

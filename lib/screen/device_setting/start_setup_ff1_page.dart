@@ -5,18 +5,18 @@
 //  that can be found in the LICENSE file.
 //
 
-import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/check_bluetooth_state.dart';
 import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
-import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
+import 'package:autonomy_flutter/widgets/app_bar.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 /// Start FF1 setup page:
 /// "Welcome to FF1" → "Start FF1 Setup".
@@ -44,14 +44,9 @@ class _StartSetupFf1PageState extends State<StartSetupFf1Page> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColor.auGreyBackground,
-      appBar: getBackAppBar(
-        context,
-        onBack: () {
-          Navigator.of(context).pop();
-        },
-        title: 'Setup FF1',
-        isWhite: false,
+      backgroundColor: PrimitivesTokens.colorsDarkGrey,
+      appBar: const CustomAppBar(
+        backTitle: 'Setup FF1',
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 44),
@@ -79,12 +74,14 @@ class _StartSetupFf1PageState extends State<StartSetupFf1Page> {
                   if (widget.payload.deeplink != null) {
                     deeplink = widget.payload.deeplink!;
                   } else {
-                    final result = await injector<NavigationService>()
-                        .navigateTo(AppRouter.scanQRPage,
-                            arguments: const ScanQRPagePayload(
-                              scannerItem: ScannerItem.GLOBAL,
-                              isFromOnboarding: true,
-                            ));
+                    final result =
+                        await injector<NavigationService>().navigateTo(
+                      AppRouter.scanQRPage,
+                      arguments: const ScanQRPagePayload(
+                        scannerItem: ScannerItem.GLOBAL,
+                        isFromOnboarding: true,
+                      ),
+                    );
                     if (result != null) {
                       deeplink = result as String;
                     } else {
@@ -121,7 +118,6 @@ class _HeroIllustration extends StatelessWidget {
         width: 305,
         child: SvgPicture.asset(
           'assets/images/ff1_case.svg',
-          fit: BoxFit.contain,
         ),
       ),
     );
@@ -140,7 +136,7 @@ class _BodyCopy extends StatelessWidget {
       children: [
         Text(
           'Welcome to FF1',
-          style: theme.textTheme.ppMori700White18,
+          style: theme.textTheme.h3,
         ),
         const SizedBox(height: 20),
         Text(
@@ -150,7 +146,7 @@ class _BodyCopy extends StatelessWidget {
           'and part of your everyday life. As an early adopter, your '
           'experience will help us understand how FF1 fits into real spaces '
           'and routines—and where we should take it next.',
-          style: theme.textTheme.ppMori400White12,
+          style: theme.textTheme.small,
         ),
       ],
     );
@@ -166,14 +162,16 @@ class _StartButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomPrimaryButton(
       padding: const EdgeInsets.only(top: 13, bottom: 10),
-      color: AppColor.white,
+      color: PrimitivesTokens.colorsLightBlue,
       onTap: onPressed,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             'Start FF1 Setup',
-            style: Theme.of(context).textTheme.ppMori400Black14,
+            style: Theme.of(context).textTheme.body.copyWith(
+                  color: PrimitivesTokens.colorsBlack,
+                ),
           ),
         ],
       ),

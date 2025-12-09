@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
@@ -30,6 +31,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:gif_view/gif_view.dart';
 
 class HandleBluetoothDeviceScanDeeplinkScreenPayload {
   HandleBluetoothDeviceScanDeeplinkScreenPayload({
@@ -59,6 +61,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
     with WidgetsBindingObserver {
   late String _deeplink;
   bool _isScanning = false;
+  bool _portalIsSet = false;
   BluetoothDevice? _resultDevice;
   final bloc = injector<BluetoothConnectBloc>();
 
@@ -106,20 +109,25 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: getDarkEmptyAppBar(),
-      backgroundColor: AppColor.primaryBlack,
+      backgroundColor: PrimitivesTokens.colorsDarkGrey,
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 44),
         child: BlocConsumer<BluetoothConnectBloc, BluetoothConnectState>(
           bloc: injector<BluetoothConnectBloc>(),
           builder: (context, state) {
             final isBluetoothEnabled =
                 state.bluetoothAdapterState == BluetoothAdapterState.on;
+
             if (!isBluetoothEnabled) {
               return bluetoothNotAvailable(context);
             }
 
             if (_isScanning) {
               return scanning(context);
+            }
+
+            if (_portalIsSet) {
+              return portalIsSet(context);
             }
 
             if (_resultDevice == null) {
@@ -143,48 +151,105 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
   }
 
   Widget bluetoothNotAvailable(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const SizedBox(height: 16),
-          Expanded(
-            child: Center(
-              child: Text(
-                'Bluetooth is required for setup. Please turn it on to continue.',
-                style: Theme.of(context)
-                    .textTheme
-                    .ppMori700White24
-                    .copyWith(fontSize: 40),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          PrimaryButton(
-            text: 'Open Bluetooth Settings',
-            onTap: () {
-              injector<NavigationService>().openBluetoothSettings();
-            },
-          ),
-          const SizedBox(height: 40),
-        ],
-      ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(
+          Icons.error,
+          size: 48,
+          color: AppColor.feralFileLightBlue,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Bluetooth is required for setup. Please turn it on to continue.',
+          style: Theme.of(context).textTheme.h3,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 20),
+        PrimaryButton(
+          text: 'Open Bluetooth Settings',
+          onTap: () {
+            injector<NavigationService>().openBluetoothSettings();
+          },
+        ),
+      ],
     );
   }
 
   Widget scanning(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const SizedBox(height: 16),
-          Text(
-            'Scanning for FF1',
-            style: Theme.of(context).textTheme.ppMori700White16,
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        GifView.asset(
+          'assets/images/loading.gif',
+          width: 139,
+          height: 92.67,
+          frameRate: 12,
+        ),
+        const SizedBox(height: 85),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Connecting via Bluetooth...',
+              style: Theme.of(context).textTheme.h3,
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Keep your phone near FF1 and remain on this screen',
+              style: Theme.of(context).textTheme.small,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget portalIsSet(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Image.asset(
+          'assets/images/ff_logo.png',
+          width: 139,
+          height: 92.67,
+        ),
+        const SizedBox(height: 85),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'The FF1 is All Set',
+              style: Theme.of(context).textTheme.h3,
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Your FF1 is already set up and connected. You can head to settings to make changes or check the status.',
+              style: Theme.of(context).textTheme.small,
+            ),
+            const SizedBox(height: 20),
+            PrimaryButton(
+              onTap: () async {
+                unawaited(
+                  injector<NavigationService>().navigateTo(
+                    AppRouter.bluetoothConnectedDeviceConfig,
+                    arguments: BluetoothConnectedDeviceConfigPayload(
+                      isFromOnboarding: true,
+                    ),
+                  ),
+                );
+
+                try {
+                  await widget.payload.onFinish?.call();
+                } catch (e) {
+                  log.info('Failed to call onFinish: $e');
+                }
+              },
+              text: 'Go to Settings',
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -201,9 +266,9 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
           const SizedBox(height: 16),
           Text(
             'FF1 not found',
-            style: Theme.of(context).textTheme.ppMori700White16,
+            style: Theme.of(context).textTheme.h3,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           PrimaryButton(
             text: 'Try again',
             onTap: () {
@@ -237,9 +302,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
     final isConnectedToInternet = data.atIndexOrNull(2) == 'true';
     final branchNameRaw = data.atIndexOrNull(3);
 
-    final branchName = branchNameRaw != null
-        ? branchNameRaw
-        : DeviceReleaseBranch.release.name;
+    final branchName = branchNameRaw ?? DeviceReleaseBranch.release.name;
     final version = data.atIndexOrNull(4);
 
     final compatible = await injector<VersionService>()
@@ -273,16 +336,13 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
 
       // Hide QR code on device
       unawaited(
-          injector<CanvasClientServiceV2>().showPairingQRCode(ffDevice, false));
+        injector<CanvasClientServiceV2>().showPairingQRCode(ffDevice, false),
+      );
 
-      await injector<NavigationService>().showThePortalIsSet(ffDevice, null);
-
-      unawaited(injector<NavigationService>().navigateTo(
-        AppRouter.bluetoothConnectedDeviceConfig,
-        arguments: BluetoothConnectedDeviceConfigPayload(
-          isFromOnboarding: true,
-        ),
-      ));
+      setState(() {
+        _isScanning = false;
+        _portalIsSet = true;
+      });
     } else {
       log.info('Starting scan for FF1: $deviceName');
       resultDevice = await injector<FFBluetoothService>().scanForName(
@@ -352,12 +412,12 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
       } else {
         log.info('FF1 not found after scanning: $deviceName');
       }
-    }
 
-    try {
-      await onFinish?.call();
-    } catch (e) {
-      log.info('Failed to call onFinish: $e');
+      try {
+        await onFinish?.call();
+      } catch (e) {
+        log.info('Failed to call onFinish: $e');
+      }
     }
   }
 
