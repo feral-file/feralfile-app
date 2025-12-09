@@ -33,7 +33,7 @@ enum BluetoothCommand {
   scanWifi,
   keepWifi,
   factoryReset,
-  uploadLogs,
+  sendLog,
   setTimezone;
 
   String get name {
@@ -46,8 +46,8 @@ enum BluetoothCommand {
         return 'keep_wifi';
       case BluetoothCommand.factoryReset:
         return 'factory_reset';
-      case BluetoothCommand.uploadLogs:
-        return 'upload_logs';
+      case BluetoothCommand.sendLog:
+        return 'send_log';
       case BluetoothCommand.setTimezone:
         return 'set_time';
     }
@@ -151,7 +151,7 @@ enum BluetoothCommand {
         return Completer<KeepWifiResponse>();
       case BluetoothCommand.factoryReset:
         return Completer<FactoryResetResponse>();
-      case BluetoothCommand.uploadLogs:
+      case BluetoothCommand.sendLog:
         return Completer<SendLogResponse>();
       case BluetoothCommand.setTimezone:
         return Completer<SetTimezoneReply>();
@@ -178,7 +178,7 @@ enum BluetoothCommand {
         return _factoryResetCallback(
           completer as Completer<FactoryResetResponse>,
         );
-      case BluetoothCommand.uploadLogs:
+      case BluetoothCommand.sendLog:
         return _sendLogCallback(
           completer as Completer<SendLogResponse>,
         );
@@ -977,7 +977,7 @@ class FFBluetoothService {
       );
       final res = await sendCommand(
         device: connectedDevice,
-        command: BluetoothCommand.uploadLogs,
+        command: BluetoothCommand.sendLog,
         request: request.toJson(),
         timeout: const Duration(seconds: 30),
       );
