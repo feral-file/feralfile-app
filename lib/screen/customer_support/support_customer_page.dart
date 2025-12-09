@@ -89,7 +89,6 @@ class _SupportCustomerPageState extends State<SupportCustomerPage>
             const SizedBox(height: 30),
             addOnlyDivider(),
             _resourcesWidget(),
-            Expanded(child: _docsWebviewWidget(context))
           ],
         ),
       ),
@@ -168,17 +167,6 @@ class _SupportCustomerPageState extends State<SupportCustomerPage>
           ],
         );
       },
-    );
-  }
-
-  Widget _docsWebviewWidget(BuildContext context) {
-    final url = injector<RemoteConfigService>().getConfig<String>(
-        ConfigGroup.documentation,
-        ConfigKey.docsUrl,
-        'https://docs.feralfile.com/ff1?from=app');
-    final uri = Uri.parse(url);
-    return FeralFileWebview(
-      uri: uri,
     );
   }
 }
