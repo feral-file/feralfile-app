@@ -722,6 +722,176 @@ class NftTokensServiceImpl extends NftTokensService {
     }
   }
 
+  /// Get owners and provenance events for a token by CID
+  /// This method only returns owners and provenance events, not the full token
+  ///
+  /// [cid] - Token CID
+  /// [ownersLimit] - Maximum number of owners to return (default: 255)
+  /// [ownersOffset] - Offset for owners pagination (default: 0)
+  /// [provenanceEventsLimit] - Maximum number of provenance events to return (default: 255)
+  /// [provenanceEventsOffset] - Offset for provenance events pagination (default: 0)
+  ///
+  /// Returns TokenOwnersAndProvenance with owners and provenance_events including total and offset
+  Future<TokenOwnersAndProvenance?> getOwnerAndProvenanceOfToken({
+    required String cid,
+    int ownersLimit = 255,
+    int ownersOffset = 0,
+    int provenanceEventsLimit = 255,
+    int provenanceEventsOffset = 0,
+  }) async {
+    try {
+      final result = await _indexerService.getOwnerAndProvenanceOfToken(
+        cid: cid,
+        ownersLimit: ownersLimit,
+        ownersOffset: ownersOffset,
+        provenanceEventsLimit: provenanceEventsLimit,
+        provenanceEventsOffset: provenanceEventsOffset,
+      );
+
+      return result;
+    } catch (e, st) {
+      NftCollection.logger.warning(
+        '[TokensService] getOwnerAndProvenanceOfToken error: $e',
+      );
+      unawaited(Sentry.captureEvent(SentryEvent(
+        message: SentryMessage('getOwnerAndProvenanceOfToken error: $e'),
+        level: SentryLevel.error,
+        extra: {
+          'stackTrace': st.toString(),
+          'cid': cid,
+        },
+        throwable: e,
+      )));
+
+      return null;
+    }
+  }
+
+  /// Get ALL owners and provenance events for a token by CID
+  /// This method loops until all owners and provenance events are fetched
+  /// Fetches both owners and provenance events together in each request
+  ///
+  /// [cid] - Token CID
+  /// [startOwnerOffset] - Starting offset for owners pagination (default: 0)
+  /// [startProvenanceOffset] - Starting offset for provenance events pagination (default: 0)
+  ///
+  /// Returns TokenOwnersAndProvenance with all owners and provenance_events combined
+  static Future<TokenOwnersAndProvenance?> getAllOwnerAndProvenanceOfToken({
+    required String cid,
+    int startOwnerOffset = 0,
+    int startProvenanceOffset = 0,
+    required NftIndexerService indexerService,
+  }) async {
+    try {
+      final allOwners = <Owner>[];
+      final allProvenanceEvents = <ProvenanceEvent>[];
+
+      int? currentOwnerOffset = startOwnerOffset;
+      int? currentProvenanceOffset = startProvenanceOffset;
+      int totalOwners = 0;
+      int totalProvenanceEvents = 0;
+      bool ownersComplete = false;
+      bool provenanceComplete = false;
+      int maxLoops = 10;
+      int loopCount = 0;
+
+      // Fetch owners and provenance events together until both are complete
+      while ((!ownersComplete || !provenanceComplete) && loopCount < maxLoops) {
+        loopCount++;
+        NftCollection.logger.info(
+          '[TokensService] getAllOwnerAndProvenanceOfToken $cid loop $loopCount, currentOwnerOffset: $currentOwnerOffset, currentProvenanceOffset: $currentProvenanceOffset',
+        );
+        final result = await indexerService.getOwnerAndProvenanceOfToken(
+          cid: cid,
+          ownersLimit: ownersComplete ? 0 : 255,
+          ownersOffset: currentOwnerOffset ?? 0,
+          provenanceEventsLimit: provenanceComplete ? 0 : 255,
+          provenanceEventsOffset: currentProvenanceOffset ?? 0,
+        );
+
+        if (result == null) {
+          break;
+        }
+
+        NftCollection.logger.info(
+          '[TokensService] getAllOwnerAndProvenanceOfToken $cid loop $loopCount, result: owners: ${result.owners?.items.length}, provenanceEvents: ${result.provenanceEvents?.items.length}',
+          'ownersComplete: $ownersComplete, provenanceComplete: $provenanceComplete',
+        );
+
+        totalOwners = result.owners?.total ?? 0;
+        totalProvenanceEvents = result.provenanceEvents?.total ?? 0;
+
+        // Process owners
+        if (!ownersComplete && result.owners != null) {
+          final owners = result.owners!;
+          allOwners.addAll(owners.items);
+          totalOwners = owners.total;
+
+          // Check if owners are complete
+          final nextOffset = owners.offset;
+          if (nextOffset == null ||
+              owners.items.isEmpty ||
+              allOwners.length >= totalOwners) {
+            ownersComplete = true;
+            currentOwnerOffset = nextOffset;
+          } else {
+            currentOwnerOffset = nextOffset;
+          }
+        } else if (!ownersComplete) {
+          ownersComplete = true;
+        }
+
+        // Process provenance events
+        if (!provenanceComplete && result.provenanceEvents != null) {
+          final provenanceEvents = result.provenanceEvents!;
+          allProvenanceEvents.addAll(provenanceEvents.items);
+
+          // Check if provenance events are complete
+          // Use same logic as owners: check offset, items empty, or total reached
+          final nextOffset = provenanceEvents.offset;
+          if (nextOffset == null ||
+              provenanceEvents.items.isEmpty ||
+              allProvenanceEvents.length >= provenanceEvents.total) {
+            provenanceComplete = true;
+            currentProvenanceOffset = nextOffset;
+          } else {
+            currentProvenanceOffset = nextOffset;
+          }
+        } else if (!provenanceComplete) {
+          provenanceComplete = true;
+        }
+      }
+
+      final result = TokenOwnersAndProvenance(
+          owners: PaginatedOwners(
+            items: allOwners,
+            total: totalOwners,
+            offset: currentOwnerOffset,
+          ),
+          provenanceEvents: PaginatedProvenanceEvents(
+            items: allProvenanceEvents,
+            total: totalProvenanceEvents,
+            offset: currentProvenanceOffset,
+          ));
+      return result;
+    } catch (e, st) {
+      NftCollection.logger.warning(
+        '[TokensService] getAllOwnerAndProvenanceOfToken error: $e',
+      );
+      unawaited(Sentry.captureEvent(SentryEvent(
+        message: SentryMessage('getAllOwnerAndProvenanceOfToken error: $e'),
+        level: SentryLevel.error,
+        extra: {
+          'stackTrace': st.toString(),
+          'cid': cid,
+        },
+        throwable: e,
+      )));
+
+      return null;
+    }
+  }
+
   static void _isolateEntry(List<dynamic> arguments) {
     // Use runZonedGuarded to catch all unhandled exceptions in isolate
     runZonedGuarded(() {
@@ -1108,7 +1278,7 @@ class NftTokensServiceImpl extends NftTokensService {
       var currentOffset = offset ?? 0;
 
       while (total == null || numberOfToken < total) {
-        final tokens = await getTokensPageWithAllOwners(
+        final tokens = await getTokensPageWithAllOwnersAndProvenances(
             isolateIndexerService, addresses, currentOffset);
 
         if (tokens.isEmpty) {
@@ -1142,52 +1312,86 @@ class NftTokensServiceImpl extends NftTokensService {
 
   // Fetch a single tokens page (by offset) and progressively increase ownersLimit
   // until owners lists are fully retrieved (heuristic) or a safety cap is reached.
-  static Future<List<AssetToken>> getTokensPageWithAllOwners(
+  static Future<List<AssetToken>> getTokensPageWithAllOwnersAndProvenances(
     NftIndexerService indexerService,
     List<String> addresses,
     int offset,
   ) async {
-    var ownersOffset = 0;
     final request = QueryListTokensRequest(
       owners: addresses,
       offset: offset,
-      ownersOffset: ownersOffset,
+      ownersOffset: 0,
     );
     final tokens = await indexerService.getNftTokens(request);
     Map<String, AssetToken> tokenMap =
         Map.fromEntries(tokens.map((token) => MapEntry(token.cid, token)));
-    ownersOffset = request.ownersLimit;
 
-    List<AssetToken> lastTokens = tokens.toList();
+    List<AssetToken> tokensToLoad = tokens
+        .where((token) =>
+            (token.owners != null &&
+                token.owners!.items.length < token.owners!.total) ||
+            (token.provenanceEvents != null &&
+                token.provenanceEvents!.items.length <
+                    token.provenanceEvents!.total))
+        .toList();
 
-    // looop to fetch more owners
-    while (true) {
-      // list token with owners limit not reached
-      final tokensToFetch = lastTokens
-          .where((token) => (token.owners?.total ?? 0) > ownersOffset)
-          .toList();
-      if (tokensToFetch.isEmpty) break;
-      final request = QueryListTokensRequest(
-        offset: 0,
-        ownersOffset: ownersOffset,
-        tokenCids: tokensToFetch.map((token) => token.cid).toList(),
-      );
-      final tokens = await indexerService.getNftTokens(request);
-      tokens.forEach((token) {
-        // insert new owners into token map
-        final oldToken = tokenMap[token.cid];
-        final oldOwners = oldToken?.owners;
-        final oldItems = oldOwners?.items ?? [];
-        final newItems = token.owners?.items ?? [];
-        final newOwners = oldOwners?.copyWith(
-          items: [...oldItems, ...newItems],
-        );
-        tokenMap[token.cid] = oldToken?.copyWith(owners: newOwners) ?? token;
+    final token1155 = tokensToLoad
+        .where((token) => token.standard.contains('erc1155'))
+        .toList();
+
+    // load all owners and provenance events for each token in batches
+    for (final batch in tokensToLoad.toList().batch(10)) {
+      final futures = batch.map((token) async {
+        try {
+          return await _loadOwnersAndProvenanceForToken(indexerService, token);
+        } catch (e) {
+          NftCollection.logger.warning(
+            '[TokensService] _loadOwnersAndProvenanceForToken ${token.cid} error: $e',
+          );
+          unawaited(Sentry.captureException(e));
+          return null;
+        }
       });
-      lastTokens = tokens;
-      ownersOffset = ownersOffset + request.ownersLimit;
+      final results = await Future.wait(futures);
+      for (final result in results) {
+        if (result != null) {
+          tokenMap[result.cid] = result;
+        }
+      }
     }
+
     return tokenMap.values.toList();
+  }
+
+  static Future<AssetToken> _loadOwnersAndProvenanceForToken(
+    NftIndexerService indexerService,
+    AssetToken token,
+  ) async {
+    final result = await getAllOwnerAndProvenanceOfToken(
+      cid: token.cid,
+      indexerService: indexerService,
+      startOwnerOffset: token.owners?.items.length ?? 0,
+      startProvenanceOffset: token.provenanceEvents?.items.length ?? 0,
+    );
+    final owners = result?.owners;
+    final provenanceEvents = result?.provenanceEvents;
+    final newOwners = PaginatedOwners(
+      items: [...(token.owners?.items ?? []), ...(owners?.items ?? [])],
+      total: owners?.total ?? 0,
+      offset: owners?.offset,
+    );
+    final newProvenanceEventsItems = <ProvenanceEvent>[
+      ...(token.provenanceEvents?.items ?? []),
+      ...(provenanceEvents?.items ?? [])
+    ].toSet().toList()
+      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    final newProvenanceEvents = PaginatedProvenanceEvents(
+      items: newProvenanceEventsItems,
+      total: provenanceEvents?.total ?? 0,
+      offset: provenanceEvents?.offset,
+    );
+    return token.copyWith(
+        owners: newOwners, provenanceEvents: newProvenanceEvents);
   }
 
   static Future<void> _reindexAddressesInIndexer(

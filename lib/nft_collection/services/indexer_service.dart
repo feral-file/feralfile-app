@@ -216,6 +216,73 @@ class NftIndexerService implements NftIndexerServiceBase {
       Map<String, dynamic>.from(tokenJson as Map),
     );
   }
+
+  /// Get owners and provenance events for a token by CID
+  /// This method only returns owners and provenance events, not the full token
+  ///
+  /// [cid] - Token CID
+  /// [ownersLimit] - Maximum number of owners to return (default: 255)
+  /// [ownersOffset] - Offset for owners pagination (default: 0)
+  /// [provenanceEventsLimit] - Maximum number of provenance events to return (default: 255)
+  /// [provenanceEventsOffset] - Offset for provenance events pagination (default: 0)
+  ///
+  /// Returns TokenOwnersAndProvenance with owners and provenance_events including total and offset
+  Future<TokenOwnersAndProvenance?> getOwnerAndProvenanceOfToken({
+    required String cid,
+    int ownersLimit = 255,
+    int ownersOffset = 0,
+    int provenanceEventsLimit = 255,
+    int provenanceEventsOffset = 0,
+    Order provenanceEventsOrder = Order.desc,
+  }) async {
+    final result = await _client.query(
+      doc: getTokenWithOwnersAndProvenanceQuery,
+      vars: {
+        'cid': cid,
+        'owners_limit': ownersLimit,
+        'owners_offset': ownersOffset,
+        'provenance_events_limit': provenanceEventsLimit,
+        'provenance_events_offset': provenanceEventsOffset,
+        'provenance_events_order': provenanceEventsOrder.toJson(),
+      },
+    );
+
+    if (result == null) {
+      return null;
+    }
+
+    final tokenJson = result['token'];
+    if (tokenJson == null) {
+      return null;
+    }
+
+    final ownersJson = tokenJson['owners'];
+    final provenanceEventsJson = tokenJson['provenance_events'];
+
+    return TokenOwnersAndProvenance(
+      owners: ownersJson != null
+          ? PaginatedOwners.fromJson(
+              Map<String, dynamic>.from(ownersJson as Map),
+            )
+          : null,
+      provenanceEvents: provenanceEventsJson != null
+          ? PaginatedProvenanceEvents.fromJson(
+              Map<String, dynamic>.from(provenanceEventsJson as Map),
+            )
+          : null,
+    );
+  }
+}
+
+/// Response containing only owners and provenance events for a token
+class TokenOwnersAndProvenance {
+  TokenOwnersAndProvenance({
+    this.owners,
+    this.provenanceEvents,
+  });
+
+  final PaginatedOwners? owners;
+  final PaginatedProvenanceEvents? provenanceEvents;
 }
 
 /// Result from triggering indexing operation

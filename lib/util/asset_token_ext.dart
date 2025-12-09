@@ -356,7 +356,11 @@ extension AssetTokenExtension on AssetToken {
           .sort((a, b) => b.timestamp.compareTo(a.timestamp));
       newProvenanceEvents =
           (provenanceEvents?.copyWith(items: newProvenanceEventsItems)) ??
-              PaginatedProvenanceEvents(items: newProvenanceEventsItems);
+              PaginatedProvenanceEvents(
+                items: newProvenanceEventsItems,
+                total: newProvenanceEventsItems.length,
+                offset: null,
+              );
     }
 
     return copyWith(

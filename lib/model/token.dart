@@ -451,9 +451,13 @@ class ProvenanceEvent {
 class PaginatedProvenanceEvents {
   PaginatedProvenanceEvents({
     required this.items,
+    required this.total,
+    required this.offset,
   });
 
   final List<ProvenanceEvent> items;
+  final int total;
+  final int? offset;
 
   factory PaginatedProvenanceEvents.fromJson(Map<String, dynamic> json) =>
       PaginatedProvenanceEvents(
@@ -461,17 +465,25 @@ class PaginatedProvenanceEvents {
             .map((e) =>
                 ProvenanceEvent.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList(),
+        total: int.tryParse(json['total'].toString()) ?? 0,
+        offset: int.tryParse(json['offset'].toString()),
       );
 
   Map<String, dynamic> toJson() => {
         'items': items.map((e) => e.toJson()).toList(),
+        'total': total,
+        'offset': offset,
       };
 
   PaginatedProvenanceEvents copyWith({
     List<ProvenanceEvent>? items,
+    int? total,
+    int? offset,
   }) {
     return PaginatedProvenanceEvents(
       items: items ?? this.items,
+      total: total ?? this.total,
+      offset: offset ?? this.offset,
     );
   }
 }
