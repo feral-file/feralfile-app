@@ -59,7 +59,7 @@ class IntroducePage extends StatelessWidget {
                 children: [
                   Text(
                     'Next',
-                    style: theme.textTheme.small.copyWith(
+                    style: theme.textTheme.body.copyWith(
                       color: PrimitivesTokens.colorsBlack,
                     ),
                   ),

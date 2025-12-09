@@ -46,14 +46,14 @@ class OnboardingSetupFf1Page extends StatelessWidget {
               children: [
                 Text(
                   'Add FF1 to your screens',
-                  style: theme.textTheme.ppMori700White18,
+                  style: theme.textTheme.h3,
                 ),
                 const SizedBox(height: 20),
                 Text(
                   'When you’re ready to see these playlists on a wall, plug FF1 into '
                   'any HDMI display and pair it with the app. Press Play and your '
                   'screen becomes a surface for digital and computational art.',
-                  style: theme.textTheme.ppMori400White12,
+                  style: theme.textTheme.small,
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
@@ -79,7 +79,12 @@ class OnboardingSetupFf1Page extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 7),
-                Text('Setup FF1', style: theme.textTheme.ppMori400Black14),
+                Text(
+                  'Setup FF1',
+                  style: theme.textTheme.body.copyWith(
+                    color: PrimitivesTokens.colorsBlack,
+                  ),
+                ),
               ],
             ),
             onPrimaryPressed: () => onSetupFf1(context),
@@ -87,7 +92,9 @@ class OnboardingSetupFf1Page extends StatelessWidget {
               children: [
                 Text(
                   'Finish',
-                  style: theme.textTheme.ppMori400White14,
+                  style: theme.textTheme.body.copyWith(
+                    color: PrimitivesTokens.colorsLightBlue,
+                  ),
                 ),
               ],
             ),

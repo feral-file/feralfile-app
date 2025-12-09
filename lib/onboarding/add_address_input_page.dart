@@ -92,7 +92,7 @@ class _OnboardingAddAddressInputPageState
                           child: TextField(
                             controller: _controller,
                             enabled: !isLoading,
-                            style: theme.textTheme.ppMori400White14,
+                            style: theme.textTheme.body,
                             cursorColor: isLoading
                                 ? AppColor.feralFileMediumGrey
                                 : AppColor.white,
@@ -148,8 +148,8 @@ class _OnboardingAddAddressInputPageState
                       builder: (context) {
                         if (state.error != null) {
                           return Text(
-                            'We couldn\'t validate this address. Check it and try again.',
-                            style: theme.textTheme.ppMori400White12.copyWith(
+                            "We couldn't validate this address. Check it and try again.",
+                            style: theme.textTheme.small.copyWith(
                               color: AppColor.red,
                             ),
                           );

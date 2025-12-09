@@ -97,7 +97,7 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
                   const SizedBox(width: 7),
                   Text(
                     'Add Address',
-                    style: theme.textTheme.small.copyWith(
+                    style: theme.textTheme.body.copyWith(
                       color: PrimitivesTokens.colorsBlack,
                     ),
                   ),
@@ -114,7 +114,7 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
                     children: [
                       Text(
                         buttonText,
-                        style: theme.textTheme.small.copyWith(
+                        style: theme.textTheme.body.copyWith(
                           color: PrimitivesTokens.colorsLightBlue,
                         ),
                       ),
