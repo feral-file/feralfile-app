@@ -184,7 +184,15 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
   @override
   Widget build(BuildContext context) => GestureDetector(
         onTap: () => widget.onTap?.call(),
-        child: _buildImageWidget(),
+        child: LayoutBuilder(builder: (context, constraints) {
+          return ClipRect(
+            child: SizedBox(
+              width: constraints.maxWidth,
+              height: constraints.maxHeight,
+              child: _buildImageWidget(),
+            ),
+          );
+        }),
       );
 }
 

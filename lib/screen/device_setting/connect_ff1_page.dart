@@ -1,9 +1,5 @@
 import 'dart:async';
 
-import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/error/bluetooth_response_error.dart';
@@ -21,6 +17,9 @@ import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/loading.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 enum _ConnectFF1Status {
   connecting,
@@ -232,7 +231,7 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
       closeButton: 'continue'.tr(),
       autoDismissAfter: 5,
       onClose: () {
-        Navigator.pop(context);
+        injector<NavigationService>().goBack();
       },
     );
     if (mounted) {
