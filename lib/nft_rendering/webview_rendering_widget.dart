@@ -217,6 +217,16 @@ class _WebviewNFTRenderingWidgetState
       );
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.detached) {
+      // App is being terminated - clear WebView controller reference
+      // to prevent crash when Flutter engine destroys PlatformViewsController
+      _webViewController = null;
+    }
+  }
+
+  @override
   void dispose() {
     _textController.dispose();
     _webViewController = null;

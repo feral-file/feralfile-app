@@ -58,7 +58,6 @@ import 'package:autonomy_flutter/service/feralfile_service.dart';
 import 'package:autonomy_flutter/service/meilisearch_service.dart';
 import 'package:autonomy_flutter/service/mobile_controller_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
-import 'package:autonomy_flutter/service/network_issue_manager.dart';
 import 'package:autonomy_flutter/service/network_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/secure_storage_server.dart';
@@ -101,9 +100,6 @@ Future<void> setupInjector() async {
 
   // Setup NFT collection dependencies
   // setupNftCollectionDependencies();
-
-  injector.registerLazySingleton<NetworkIssueManager>(NetworkIssueManager.new);
-
   final dioOptions = BaseOptions(
     followRedirects: true,
     connectTimeout: const Duration(seconds: 3),
@@ -229,7 +225,6 @@ Future<void> setupInjector() async {
 
   injector.registerLazySingleton<EthereumService>(
     () => EthereumServiceImpl(
-      injector(),
       injector(),
     ),
   );

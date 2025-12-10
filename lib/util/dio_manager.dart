@@ -244,7 +244,6 @@ class DioManager {
     );
 
     dio.interceptors.add(LoggingInterceptor());
-    dio.interceptors.add(ConnectingExceptionInterceptor());
 
     dio.options = dioOptions;
     dio.addSentry(failedRequestStatusCodes: [SentryStatusCode.range(500, 599)]);

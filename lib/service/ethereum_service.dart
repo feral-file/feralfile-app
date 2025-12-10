@@ -7,7 +7,6 @@
 
 import 'dart:async';
 
-import 'package:autonomy_flutter/service/network_issue_manager.dart';
 import 'package:flutter/services.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
@@ -24,11 +23,9 @@ abstract class EthereumService {
 class EthereumServiceImpl extends EthereumService {
   EthereumServiceImpl(
     this._web3Client,
-    this._networkIssueManager,
   );
 
   final Web3Client _web3Client;
-  final NetworkIssueManager _networkIssueManager;
 
   @override
   Future<String> getFeralFileTokenMetadata(

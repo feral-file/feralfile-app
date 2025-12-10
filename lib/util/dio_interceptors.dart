@@ -13,10 +13,8 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/gateway/customer_support_api.dart';
 import 'package:autonomy_flutter/model/ff_account.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
-import 'package:autonomy_flutter/service/network_issue_manager.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
 import 'package:autonomy_flutter/util/exception.dart';
-import 'package:autonomy_flutter/util/exception_ext.dart';
 import 'package:autonomy_flutter/util/int_ext.dart';
 import 'package:autonomy_flutter/util/isolated_util.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -274,27 +272,6 @@ class HmacAuthInterceptor extends Interceptor {
       options.headers['X-Api-Timestamp'] = timestamp;
     }
     handler.next(options);
-  }
-}
-
-class ConnectingExceptionInterceptor extends Interceptor {
-  @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
-    if (err.isNetworkIssue) {
-      Sentry.captureException(
-        '[ConnectingExceptionInterceptor] Network issue detected: ${err.message}',
-        stackTrace: StackTrace.current,
-      );
-      log.warning('ConnectingExceptionInterceptor timeout');
-      unawaited(injector<NetworkIssueManager>().showNetworkIssueWarning());
-      return;
-    }
-    if (err.type == DioExceptionType.receiveTimeout) {
-      log.warning('ConnectingExceptionInterceptor receiveTimeout');
-      unawaited(injector<NetworkIssueManager>().showReceiveTimeoutWarning());
-      return;
-    }
-    handler.next(err);
   }
 }
 
