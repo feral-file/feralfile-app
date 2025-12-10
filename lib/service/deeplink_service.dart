@@ -25,11 +25,15 @@ Completer<void> startHandleDeeplinkCompleter = Completer<void>();
 abstract class DeeplinkService {
   Future<void> setup();
 
-  void handleDeeplink(String? link,
-      {Duration delay,
-      Function? onFinished,
-      bool isFromOnboarding = false,
-      bool isFromAppLink = false});
+  void handleDeeplink(
+    String? link, {
+    Duration delay,
+    Function? onFinished,
+    bool isFromOnboarding = false,
+    bool isFromAppLink = false,
+  });
+
+  bool get isHandlingDeepLink;
 }
 
 class DeeplinkServiceImpl extends DeeplinkService {
@@ -40,6 +44,9 @@ class DeeplinkServiceImpl extends DeeplinkService {
   final NavigationService _navigationService;
 
   final Map<String, bool> _deepLinkHandlingMap = {};
+
+  @override
+  bool get isHandlingDeepLink => _deepLinkHandlingMap.isNotEmpty;
 
   @override
   Future<void> setup() async {
@@ -109,22 +116,21 @@ class DeeplinkServiceImpl extends DeeplinkService {
       }
 
       log.info('[DeeplinkService] handlerType $handlerType');
-      switch (handlerType) {
-        case DeepLinkHandlerType.bluetoothConnect:
-          await _handleBluetoothConnectDeeplink(
-            link,
-            onFinish: onFinishDeeplink,
-            isFromOnboarding: isFromOnboarding,
-            isFromAppLink: isFromAppLink,
-          );
-        case DeepLinkHandlerType.unknown:
-          unawaited(_navigationService.showUnknownLink());
-      }
-      if (handlerType != DeepLinkHandlerType.bluetoothConnect) {
+      try {
+        switch (handlerType) {
+          case DeepLinkHandlerType.bluetoothConnect:
+            await _handleBluetoothConnectDeeplink(
+              link,
+              onFinish: onFinishDeeplink,
+              isFromOnboarding: isFromOnboarding,
+              isFromAppLink: isFromAppLink,
+            );
+          case DeepLinkHandlerType.unknown:
+            unawaited(_navigationService.showUnknownLink());
+        }
+      } finally {
         await onFinishDeeplink.call();
       }
-      // this function is called in onFinishDeeplink, so we don't need to call it here
-      // _deepLinkHandlingMap.remove(link);
     });
   }
 

@@ -89,6 +89,10 @@ class _OnboardingPageState extends State<OnboardingPage>
       }
 
       _timer?.cancel();
+      if (deepLinkService.isHandlingDeepLink) {
+        log.info('Skip navigate home, deeplink is handling');
+        return;
+      }
       await _goToHomePage(context);
     } catch (error) {
       log.info('Failed to fetch runtime cache: $error');
