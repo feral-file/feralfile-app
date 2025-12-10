@@ -389,10 +389,10 @@ class Constants {
   ];
 
   static String appStoreUrl =
-      'https://apps.apple.com/us/app/feral-file/id1544022728';
+      'https://apps.apple.com/us/app/feral-file-controller/id6755812386';
 
   static String playStoreUrl =
-      'https://play.google.com/store/apps/details?id=com.bitmark.autonomy_client';
+      'https://play.google.com/store/apps/details?id=com.feralfile.app';
 }
 
 Map<String, String> specifiedSeriesTitle = {
