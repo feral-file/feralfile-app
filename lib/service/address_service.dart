@@ -11,6 +11,8 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/exception.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -74,6 +76,7 @@ class AddressService {
         addresses: [newAddress.address],
       ));
     }
+    await _onAddressUpdate();
     log.info('Inserted address: ${newAddress.address}');
     return newAddress;
   }
@@ -84,6 +87,7 @@ class AddressService {
 
   Future<void> deleteAddress(WalletAddress address) async {
     await _appDataManager.addressStorageService.deleteAddress(address);
+    await _onAddressUpdate();
     log.info('Deleted address: ${address.address}');
   }
 
@@ -97,11 +101,18 @@ class AddressService {
             .setAddressIsHidden(e, isHidden),
       ),
     );
+    _onAddressUpdate();
   }
 
   Future<WalletAddress> nameAddress(WalletAddress address, String name) async {
     final newAddress = address.copyWith(name: name);
     await _appDataManager.addressStorageService.updateAddresses([newAddress]);
+    await _onAddressUpdate();
     return newAddress;
+  }
+
+  FutureOr<void> _onAddressUpdate() async {
+    injector<PlaylistsBloc>(instanceName: PlaylistsBlocInstance.my.instanceName)
+        .add(RefreshPlaylistsEvent());
   }
 }
