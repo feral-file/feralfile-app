@@ -158,13 +158,24 @@ class DeeplinkServiceImpl extends DeeplinkService {
         ),
       );
     } else {
-      await injector<NavigationService>().navigateTo(
-        AppRouter.startSetupFF1Page,
-        arguments: BluetoothDevicePortalPagePayload(
-          deeplink: link,
-          isFromAppLink: isFromAppLink,
-        ),
-      );
+      // Use pushReplacement when opening from app link (cold start)
+      // to avoid route stack conflicts with OnboardingPage
+      if (isFromAppLink) {
+        await injector<NavigationService>().popAndPushNamed(
+          AppRouter.startSetupFF1Page,
+          arguments: BluetoothDevicePortalPagePayload(
+            deeplink: link,
+            isFromAppLink: true,
+          ),
+        );
+      } else {
+        await injector<NavigationService>().navigateTo(
+          AppRouter.startSetupFF1Page,
+          arguments: BluetoothDevicePortalPagePayload(
+            deeplink: link,
+          ),
+        );
+      }
     }
   }
 }

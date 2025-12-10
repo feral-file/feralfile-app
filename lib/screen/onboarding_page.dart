@@ -89,6 +89,14 @@ class _OnboardingPageState extends State<OnboardingPage>
       }
 
       _timer?.cancel();
+
+      // Give deeplink handler time to start navigation after completer is completed
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+
+      if (!mounted) {
+        return;
+      }
+
       if (deepLinkService.isHandlingDeepLink) {
         log.info('Skip navigate home, deeplink is handling');
         return;
