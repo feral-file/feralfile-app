@@ -178,8 +178,7 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
 
       _recordDuration(success: true);
 
-      injector<NavigationService>()
-          .popUntil(AppRouter.startSetupFF1Page);
+      injector<NavigationService>().popUntil(AppRouter.startSetupFF1Page);
 
       unawaited(
         injector<NavigationService>().popAndPushNamed(
@@ -289,10 +288,11 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (_status != _ConnectFF1Status.error) ...[
-                      Image.asset(
-                        'assets/images/ff_logo.png',
+                      GifView.asset(
+                        'assets/images/loading.gif',
                         width: 139,
                         height: 92.67,
+                        frameRate: 12,
                       ),
                       const SizedBox(height: 85),
                     ] else ...[

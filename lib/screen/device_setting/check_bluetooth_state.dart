@@ -31,6 +31,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:gif_view/gif_view.dart';
 
 class HandleBluetoothDeviceScanDeeplinkScreenPayload {
   HandleBluetoothDeviceScanDeeplinkScreenPayload({
@@ -180,10 +181,11 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Image.asset(
-          'assets/images/ff_logo.png',
+        GifView.asset(
+          'assets/images/loading.gif',
           width: 139,
           height: 92.67,
+          frameRate: 12,
         ),
         const SizedBox(height: 85),
         Align(
@@ -445,8 +447,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
           await injector<CanvasClientServiceV2>()
               .showPairingQRCode(ffDevice, false);
 
-          injector<NavigationService>()
-              .popUntil(AppRouter.startSetupFF1Page);
+          injector<NavigationService>().popUntil(AppRouter.startSetupFF1Page);
           unawaited(injector<NavigationService>().popAndPushNamed(
             AppRouter.bluetoothConnectedDeviceConfig,
             arguments: BluetoothConnectedDeviceConfigPayload(
@@ -454,8 +455,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
             ),
           ));
         } else if (error != null) {
-          injector<NavigationService>()
-            ..popUntil(AppRouter.startSetupFF1Page);
+          injector<NavigationService>()..popUntil(AppRouter.startSetupFF1Page);
           injector<NavigationService>().goBack();
         }
       },
