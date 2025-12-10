@@ -18,6 +18,8 @@ class PrimaryButton extends StatelessWidget {
   final EdgeInsetsGeometry? elevatedPadding;
   final double borderRadius;
   final Color? borderColor;
+  final TextStyle? textStyle;
+  final Widget? rightIcon;
 
   const PrimaryButton({
     super.key,
@@ -34,6 +36,8 @@ class PrimaryButton extends StatelessWidget {
     this.elevatedPadding,
     this.borderRadius = 32,
     this.borderColor,
+    this.textStyle,
+    this.rightIcon,
   });
 
   @override
@@ -79,9 +83,14 @@ class PrimaryButton extends StatelessWidget {
                   const SizedBox(),
                 Text(
                   text ?? '',
-                  style: theme.textTheme.ppMori400Black14
-                      .copyWith(color: textColor),
+                  style: textStyle ??
+                      theme.textTheme.ppMori400Black14
+                          .copyWith(color: textColor),
                 ),
+                if (rightIcon != null) ...[
+                  const SizedBox(width: 7),
+                  rightIcon!,
+                ],
               ],
             ),
           ),
