@@ -6,6 +6,7 @@
 //
 
 import 'package:autonomy_flutter/design/build/primitives.dart';
+import 'package:autonomy_flutter/onboarding/add_address_page.dart';
 import 'package:autonomy_flutter/onboarding/debug_overlay.dart';
 import 'package:autonomy_flutter/onboarding/onboarding_shell.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
@@ -96,7 +97,9 @@ class IntroducePage extends StatelessWidget {
   void onNext(BuildContext context) {
     Navigator.of(context).pushNamed(
       AppRouter.onboardingAddAddressPage,
-      arguments: payload.deeplink,
+      arguments: OnboardingAddAddressPagePayload(
+        deeplink: payload.deeplink,
+      ),
     );
   }
 }

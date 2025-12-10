@@ -7,6 +7,7 @@
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
+import 'package:autonomy_flutter/onboarding/add_address_page.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/check_bluetooth_state.dart';
 import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
@@ -95,7 +96,9 @@ class _StartSetupFf1PageState extends State<StartSetupFf1Page> {
                       !injector<ConfigurationService>().isDoneOnboarding()) {
                     await injector<NavigationService>().navigateTo(
                       AppRouter.onboardingIntroducePage,
-                      arguments: widget.payload.deeplink,
+                      arguments: OnboardingAddAddressPagePayload(
+                        deeplink: widget.payload.deeplink,
+                      ),
                     );
                   } else {
                     await injector<NavigationService>().navigateTo(

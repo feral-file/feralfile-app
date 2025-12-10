@@ -11,6 +11,7 @@ import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/database/app_data_manager.dart';
+import 'package:autonomy_flutter/onboarding/introduce_page.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/bluetooth_service.dart';
 import 'package:autonomy_flutter/service/canvas_notification_manager.dart';
@@ -171,8 +172,12 @@ class _OnboardingPageState extends State<OnboardingPage>
       );
       return;
     }
-    await Navigator.of(context)
-        .pushReplacementNamed(AppRouter.onboardingIntroducePage);
+    await Navigator.of(context).pushReplacementNamed(
+      AppRouter.onboardingIntroducePage,
+      arguments: IntroducePagePayload(
+        deeplink: null,
+      ),
+    );
   }
 
   Future<void> _fetchRuntimeCache() async {
