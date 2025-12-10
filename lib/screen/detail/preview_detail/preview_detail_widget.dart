@@ -96,6 +96,9 @@ class ArtworkPreviewWidgetState extends State<ArtworkPreviewWidget>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    routeObserver.unsubscribe(this);
+    bloc.close();
     super.dispose();
   }
 

@@ -307,6 +307,11 @@ class QRScanViewState extends State<QRScanView>
 
     switch (state) {
       case AppLifecycleState.detached:
+        // App is being terminated - stop camera and cancel subscription
+        unawaited(_subscription?.cancel());
+        _subscription = null;
+        unawaited(_controller.stop());
+        return;
       case AppLifecycleState.hidden:
       case AppLifecycleState.paused:
         return;
@@ -323,9 +328,10 @@ class QRScanViewState extends State<QRScanView>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     routeObserver.unsubscribe(this);
     _timer?.cancel();
-
+    _subscription?.cancel();
     _controller.dispose();
     super.dispose();
   }
