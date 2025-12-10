@@ -1018,6 +1018,7 @@ class UIHelper {
     BuildContext context, {
     required List<OptionItem> options,
     RouteSettings? routeSettings,
+    Widget? bottomWidget,
   }) async {
     final theme = Theme.of(context);
     await showCupertinoModalPopup<void>(
@@ -1030,18 +1031,18 @@ class UIHelper {
             constraints: BoxConstraints(
               maxWidth: screenWidth * 0.62,
             ),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(5),
-                color: PrimitivesTokens.colorsDarkGrey,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ListView.separated(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5),
+                    color: PrimitivesTokens.colorsDarkGrey,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: ListView.separated(
                       shrinkWrap: true,
                       padding: EdgeInsets.zero,
                       physics: const NeverScrollableScrollPhysics(),
@@ -1097,9 +1098,22 @@ class UIHelper {
                         height: 24,
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
+                if (bottomWidget != null) ...[
+                  const SizedBox(height: 10),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5),
+                      color: PrimitivesTokens.colorsDarkGrey,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: bottomWidget,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         );

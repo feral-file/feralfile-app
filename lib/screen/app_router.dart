@@ -165,7 +165,10 @@ class AppRouter {
       case onboardingAddAddressInputPage:
         return CupertinoPageRoute(
           settings: settings,
-          builder: (context) => const OnboardingAddAddressInputPage(),
+          builder: (context) => OnboardingAddAddressInputPage(
+            payload:
+                settings.arguments! as OnboardingAddAddressInputPagePayload,
+          ),
         );
 
       case onboardingSetupFf1Page:

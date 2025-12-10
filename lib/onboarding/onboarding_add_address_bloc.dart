@@ -20,9 +20,10 @@ import 'package:autonomy_flutter/util/exception.dart';
 abstract class OnboardingAddAddressEvent {}
 
 class OnboardingAddConnectionEvent extends OnboardingAddAddressEvent {
-  OnboardingAddConnectionEvent(this.address);
+  OnboardingAddConnectionEvent(this.address, this.isFromOnboarding);
 
   final String address;
+  final bool isFromOnboarding;
 }
 
 class OnboardingAddAddressState {
@@ -111,7 +112,7 @@ class OnboardingAddAddressBloc
       );
       final connection = await _addressService.insertAddress(
         walletAddress,
-        refreshPlaylist: false,
+        refreshPlaylist: !event.isFromOnboarding,
       );
       emit(OnboardingAddAddressSuccessState(connection));
     } on AddAddressException catch (e) {

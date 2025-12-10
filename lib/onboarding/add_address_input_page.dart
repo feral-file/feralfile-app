@@ -23,8 +23,25 @@ import 'package:flutter_svg/svg.dart';
 ///
 /// This follows the interaction pattern of [ViewExistingAddress] but
 /// uses the new onboarding shell visual language.
+
+class OnboardingAddAddressInputPagePayload {
+  OnboardingAddAddressInputPagePayload({
+    this.isFromOnboarding = true,
+  });
+
+  final bool isFromOnboarding;
+}
+
 class OnboardingAddAddressInputPage extends StatefulWidget {
-  const OnboardingAddAddressInputPage({super.key});
+  const OnboardingAddAddressInputPage({
+    super.key,
+    required this.payload,
+  });
+
+  /// Whether this page is part of onboarding flow.
+  /// When false, the back title will be different.
+
+  final OnboardingAddAddressInputPagePayload payload;
 
   @override
   State<OnboardingAddAddressInputPage> createState() =>
@@ -59,8 +76,8 @@ class _OnboardingAddAddressInputPageState
 
     return Scaffold(
       backgroundColor: AppColor.auGreyBackground,
-      appBar: const CustomAppBar(
-        backTitle: 'Onboarding',
+      appBar: CustomAppBar(
+        backTitle: widget.payload.isFromOnboarding ? 'Onboarding' : 'Index',
       ),
       body: BlocConsumer<OnboardingAddAddressBloc, OnboardingAddAddressState>(
           bloc: _bloc,
@@ -106,7 +123,11 @@ class _OnboardingAddAddressInputPageState
                                 ? null
                                 : (text) {
                                     _bloc.add(
-                                        OnboardingAddConnectionEvent(text));
+                                      OnboardingAddConnectionEvent(
+                                        text,
+                                        widget.payload.isFromOnboarding,
+                                      ),
+                                    );
                                   },
                           ),
                         ),
@@ -134,7 +155,10 @@ class _OnboardingAddAddressInputPageState
                               );
                               if (text != null && text is String) {
                                 _controller.text = text;
-                                _bloc.add(OnboardingAddConnectionEvent(text));
+                                _bloc.add(OnboardingAddConnectionEvent(
+                                  text,
+                                  widget.payload.isFromOnboarding,
+                                ));
                               }
                             },
                           ),

@@ -10,6 +10,7 @@ import 'dart:async';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
+import 'package:autonomy_flutter/onboarding/add_address_input_page.dart';
 import 'package:autonomy_flutter/onboarding/onboarding_shell.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_bloc.dart';
@@ -163,8 +164,10 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
   }
 
   Future<void> onAddAddress(BuildContext context) async {
-    final result = await Navigator.of(context)
-        .pushNamed(AppRouter.onboardingAddAddressInputPage);
+    final result = await Navigator.of(context).pushNamed(
+      AppRouter.onboardingAddAddressInputPage,
+      arguments: OnboardingAddAddressInputPagePayload(),
+    );
     if (result != null && result is WalletAddress) {
       _accountsBloc.add(FetchAllAddressesEvent());
     }

@@ -1,4 +1,6 @@
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/build/primitives.dart';
+import 'package:autonomy_flutter/onboarding/add_address_input_page.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/bluetooth_connected_device_config.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/channels_page.dart';
@@ -8,12 +10,14 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/no_pairing_device_dialog.dart';
 import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
+import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -160,6 +164,43 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
     ];
   }
 
+  Widget _addAddressButton() {
+    return CustomPrimaryButton(
+      onTap: () async {
+        final address = await injector<NavigationService>().navigateTo(
+          AppRouter.onboardingAddAddressInputPage,
+          arguments: OnboardingAddAddressInputPagePayload(
+            isFromOnboarding: false,
+          ),
+        );
+
+        if (address != null) {
+          injector<NavigationService>().goBack();
+        }
+      },
+      borderColor: AppColor.feralFileLightBlue,
+      color: Colors.transparent,
+      child: Row(
+        children: [
+          SvgPicture.asset(
+            'assets/images/Add_blue.svg',
+            colorFilter: const ColorFilter.mode(
+              PrimitivesTokens.colorsLightBlue,
+              BlendMode.srcIn,
+            ),
+          ),
+          const SizedBox(width: 7),
+          Text(
+            'Add Address',
+            style: Theme.of(context).textTheme.body.copyWith(
+                  color: PrimitivesTokens.colorsLightBlue,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -168,13 +209,14 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
         controller: _scrollController,
         floatHeaderSlivers: true,
         headerSliverBuilder: (context, innerBoxIsScrolled) {
-          final height = 43.5;
+          const height = 43.5;
           final hamburgerButton = GestureDetector(
             onTap: () {
               // Handle back button tap
               UIHelper.showCenterMenu(
                 context,
                 options: _defaultOptions,
+                bottomWidget: _addAddressButton(),
               );
             },
             child: Container(

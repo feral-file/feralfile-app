@@ -71,10 +71,14 @@ class AddressService {
     }
     final newAddress = address.copyWith(address: checkSumAddress);
     await _appDataManager.addressStorageService.insertAddresses([newAddress]);
+    injector<PlaylistsBloc>(instanceName: PlaylistsBlocInstance.my.instanceName)
+        .add(RefreshPlaylistsEvent());
     if (refreshPlaylist) {
-      injector<UserAllOwnCollectionBloc>().add(ReindexAddresses(
-        addresses: [newAddress.address],
-      ));
+      injector<UserAllOwnCollectionBloc>().add(
+        ReindexAddresses(
+          addresses: [newAddress.address],
+        ),
+      );
     }
     await _onAddressUpdate();
     log.info('Inserted address: ${newAddress.address}');
