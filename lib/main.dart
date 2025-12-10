@@ -268,13 +268,15 @@ class AutonomyAppScaffold extends StatefulWidget {
   State<AutonomyAppScaffold> createState() => _AutonomyAppScaffoldState();
 }
 
-class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold> {
+class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
+    with WidgetsBindingObserver {
   late final ValueNotifier<bool> _shouldShowOverlay;
   StreamSubscription<bool>? _keyboardVisibilitySubscription;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     shouldShowNowDisplaying.addListener(_updateAnimationBasedOnDisplayState);
     nowDisplayingVisibility.addListener(_updateAnimationBasedOnDisplayState);
@@ -291,6 +293,16 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold> {
     isNowDisplayingBarExpanded.addListener(_updateOverlayVisibility);
     nowDisplayingShowing.addListener(_updateOverlayVisibility);
     isNowDisplayingBarShowingQuickSetting.addListener(_updateOverlayVisibility);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.detached) {
+      // App is being terminated - cancel all active download tasks
+      // to prevent crash when download completion handler runs after app terminate
+      unawaited(AuFileService().cancelAllDownloads());
+    }
   }
 
   void _updateAnimationBasedOnDisplayState() {
@@ -330,6 +342,7 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     shouldShowNowDisplaying.removeListener(_updateAnimationBasedOnDisplayState);
     nowDisplayingVisibility.removeListener(_updateAnimationBasedOnDisplayState);
     CustomRouteObserver.bottomSheetVisibility

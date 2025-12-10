@@ -14,6 +14,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sentry/sentry.dart';
 
@@ -121,66 +122,127 @@ class AuFileService extends FileService {
     DownloadTaskStatus status,
     int progress,
   ) async {
-    final info = _taskId2Info[id];
-    if (info != null) {
-      if (status == DownloadTaskStatus.complete) {
-        final localFile = File(_saveDir + info.localFile);
-        final fileSize = await localFile.length();
-        if (fileSize <= 0) {
-          log.info('File is empty ${info.url}');
-          info.task.completeError(Exception('File is empty ${info.url}'));
-        } else if (info.url.startsWith(Environment.cloudFlareImageUrlPrefix)) {
-          info.task.complete(
-            AuFileServiceResponse(
-              filePath: _saveDir + info.localFile,
-              fileExt: info.fileExt,
-            ),
-          );
-        } else {
-          try {
-            final originalFile = _saveDir + info.localFile;
-            final isFileExists = await File(originalFile).exists();
-            if (isFileExists) {
-              await File(originalFile).delete();
-              info.task.complete(
-                AuFileServiceResponse(
-                  filePath: originalFile,
-                  fileExt: info.fileExt,
+    try {
+      final info = _taskId2Info[id];
+      if (info != null) {
+        if (status == DownloadTaskStatus.complete) {
+          // Validate file path before accessing
+          if (info.localFile.isEmpty || _saveDir.isEmpty) {
+            log.severe(
+              '[AuFileService] Invalid file path: saveDir=$_saveDir, localFile=${info.localFile}',
+            );
+            unawaited(
+              Sentry.captureMessage(
+                'Invalid file path in download callback: ${info.url}',
+              ),
+            );
+            info.task.completeError(
+              Exception('Invalid file path for ${info.url}'),
+            );
+            _taskId2Info.remove(id);
+            return;
+          }
+
+          final filePath = _saveDir + info.localFile;
+          final localFile = File(filePath);
+
+          // Check if file exists before accessing
+          if (!await localFile.exists()) {
+            log.severe('[AuFileService] File does not exist: $filePath');
+            unawaited(
+              Sentry.captureMessage(
+                'Downloaded file does not exist: ${info.url}',
+              ),
+            );
+            info.task.completeError(
+              Exception('Downloaded file does not exist: ${info.url}'),
+            );
+            _taskId2Info.remove(id);
+            return;
+          }
+
+          final fileSize = await localFile.length();
+          if (fileSize <= 0) {
+            log.info('File is empty ${info.url}');
+            info.task.completeError(Exception('File is empty ${info.url}'));
+          } else if (info.url
+              .startsWith(Environment.cloudFlareImageUrlPrefix)) {
+            info.task.complete(
+              AuFileServiceResponse(
+                filePath: filePath,
+                fileExt: info.fileExt,
+              ),
+            );
+          } else {
+            try {
+              final originalFile = filePath;
+              final compressedFile =
+                  '${_saveDir}resized_${info.localFile}.jpeg';
+              await FlutterImageCompress.compressAndGetFile(
+                originalFile,
+                compressedFile,
+                quality: 90,
+              );
+              final isFileExists = await File(compressedFile).exists();
+              if (isFileExists) {
+                await File(originalFile).delete();
+                info.task.complete(
+                  AuFileServiceResponse(
+                    filePath: compressedFile,
+                    fileExt: 'jpeg',
+                  ),
+                );
+              } else {
+                info.task.complete(
+                  AuFileServiceResponse(
+                    filePath: originalFile,
+                    fileExt: info.fileExt,
+                  ),
+                );
+              }
+            } catch (e) {
+              log.info('Compress image failed ${info.url} Error: $e');
+              unawaited(
+                Sentry.captureException(
+                  'Compress image failed ${info.url} Error',
                 ),
               );
-            } else {
               info.task.complete(
                 AuFileServiceResponse(
-                  filePath: originalFile,
+                  filePath: filePath,
                   fileExt: info.fileExt,
                 ),
               );
             }
-          } catch (e) {
-            log.info('Compress image failed ${info.url} Error: $e');
-            unawaited(
-              Sentry.captureException(
-                'Compress image failed ${info.url} Error',
-              ),
-            );
-            info.task.complete(
-              AuFileServiceResponse(
-                filePath: _saveDir + info.localFile,
-                fileExt: info.fileExt,
-              ),
-            );
           }
+          _taskId2Info.remove(id);
+        } else if (status == DownloadTaskStatus.failed) {
+          log.info(
+              '[AuFileService] Download failed: ${info.url} ${info.taskId}');
+          unawaited(Sentry.captureMessage('Download failed ${info.url}'));
+          info.task.completeError(Exception('Download failed ${info.url}'));
+          _taskId2Info.remove(id);
+        } else if (status == DownloadTaskStatus.canceled) {
+          log.info('[AuFileService] Download canceled: ${info.url}');
+          unawaited(Sentry.captureMessage('Download canceled ${info.url}'));
+          info.task.completeError(Exception('Download canceled ${info.url}'));
+          _taskId2Info.remove(id);
         }
-        _taskId2Info.remove(id);
-      } else if (status == DownloadTaskStatus.failed) {
-        log.info('[AuFileService] Download failed: ${info.url} ${info.taskId}');
-        unawaited(Sentry.captureMessage('Download failed ${info.url}'));
-        info.task.completeError(Exception('Download failed ${info.url}'));
-        _taskId2Info.remove(id);
-      } else if (status == DownloadTaskStatus.canceled) {
-        log.info('[AuFileService] Download canceled: ${info.url}');
-        unawaited(Sentry.captureMessage('Download canceled ${info.url}'));
-        info.task.completeError(Exception('Download canceled ${info.url}'));
+      }
+    } catch (e, stackTrace) {
+      log.severe('[AuFileService] Error in download callback: $e');
+      unawaited(
+        Sentry.captureException(
+          'Error in download callback: $e',
+          stackTrace: stackTrace,
+        ),
+      );
+      // Try to complete error for the task if it exists
+      final info = _taskId2Info[id];
+      if (info != null && !info.task.isCompleted) {
+        info.task.completeError(
+          Exception('Error processing download: $e'),
+        );
         _taskId2Info.remove(id);
       }
     }
@@ -209,6 +271,19 @@ class AuFileService extends FileService {
       }
 
       final fileName = '${md5.convert(utf8.encode(url))}.${fileInfo.extension}';
+
+      // Validate file path before enqueueing download
+      if (fileName.isEmpty || _saveDir.isEmpty) {
+        unawaited(
+          Sentry.captureMessage(
+            '[AuFileService] Invalid file path: saveDir=$_saveDir, fileName=$fileName',
+          ),
+        );
+        return Future.error(
+          Exception('Invalid file path for $url'),
+        );
+      }
+
       final taskId = await FlutterDownloader.enqueue(
         url: fallbackUrl ?? url,
         headers: headers ?? {},
@@ -230,5 +305,39 @@ class AuFileService extends FileService {
       _taskId2Info[taskId] = info;
     }
     return info.task.future;
+  }
+
+  /// Cancel all active download tasks
+  /// This should be called when app is terminating to prevent crashes
+  Future<void> cancelAllDownloads() async {
+    try {
+      log.info('[AuFileService] Canceling all active downloads');
+
+      // Cancel all tasks in FlutterDownloader
+      await FlutterDownloader.cancelAll();
+
+      // Complete all pending tasks with error
+      for (final entry in _taskId2Info.entries) {
+        final info = entry.value;
+        if (!info.task.isCompleted) {
+          info.task.completeError(
+            Exception('Download canceled: app terminating'),
+          );
+        }
+      }
+
+      // Clear all task info
+      _taskId2Info.clear();
+
+      log.info('[AuFileService] All downloads canceled');
+    } catch (e, stackTrace) {
+      log.severe('[AuFileService] Error canceling downloads: $e');
+      unawaited(
+        Sentry.captureException(
+          'Error canceling downloads: $e',
+          stackTrace: stackTrace,
+        ),
+      );
+    }
   }
 }
