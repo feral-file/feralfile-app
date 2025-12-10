@@ -88,7 +88,7 @@ class NoPairingDeviceDialog extends StatelessWidget {
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          'Shipping in November, 2025',
+                          'Now in stock and shipping',
                           style: theme.textTheme.small.copyWith(
                             color: PrimitivesTokens.colorsInactive,
                           ),
