@@ -107,9 +107,6 @@ class OnboardingSetupFf1Page extends StatelessWidget {
 
   void onSetupFf1(BuildContext context) {
     startHandleDeeplinkCompleter.safeComplete(true);
-    injector<NavigationService>().replaceAllAndPushNamed(
-      AppRouter.homePage,
-    );
     injector<ConfigurationService>().setDoneOnboarding(true);
     injector<NavigationService>().navigateTo(
       AppRouter.startSetupFF1Page,

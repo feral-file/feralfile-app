@@ -16,6 +16,7 @@ import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_state.dart';
 import 'package:autonomy_flutter/screen/device_setting/check_bluetooth_state.dart';
+import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
@@ -175,7 +176,7 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
 
   void onNext(BuildContext context) {
     if (widget.payload.deeplink != null) {
-      // Skip OnboardingSetupFf1Page and go directly to Bluetooth setup
+      injector<ConfigurationService>().setDoneOnboarding(true);
       injector<NavigationService>().navigateTo(
         AppRouter.handleBluetoothDeviceScanDeeplinkScreen,
         arguments: HandleBluetoothDeviceScanDeeplinkScreenPayload(

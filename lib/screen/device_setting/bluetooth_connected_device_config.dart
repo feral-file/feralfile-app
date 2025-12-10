@@ -293,7 +293,9 @@ class BluetoothConnectedDeviceConfigState
             right: 12,
             child: PrimaryAsyncButton(
               onTap: () async {
-                injector<NavigationService>().popUntilHome();
+                await injector<NavigationService>().replaceAllAndPushNamed(
+                  AppRouter.homePage,
+                );
               },
               text: 'finish'.tr(),
               color: PrimitivesTokens.colorsLightBlue,
