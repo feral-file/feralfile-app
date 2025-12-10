@@ -214,21 +214,13 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                         );
                         return;
                       } else if (e is DeviceUpdatingError) {
+                        injector<NavigationService>().popUntilHome();
                         unawaited(
-                          UIHelper.showInfoDialog(
-                            context,
-                            e.title,
-                            e.message,
-                            closeButton: 'Go Back',
-                            onClose: () {
-                              injector<NavigationService>().goBack();
-                            },
-                          ).then(
-                            (_) {
-                              widget.payload.onSubmitted?.call(null, e);
-                            },
+                          injector<NavigationService>().navigateTo(
+                            AppRouter.ff1Updating,
                           ),
                         );
+                        return;
                       } else {
                         unawaited(UIHelper.showInfoDialog(
                           context,
