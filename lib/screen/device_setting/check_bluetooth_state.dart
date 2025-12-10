@@ -360,7 +360,6 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
 
       if (context.mounted) {
         setState(() {
-          _isScanning = false;
           _resultDevice = resultDevice;
         });
       }
@@ -380,6 +379,9 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
           );
         }
 
+        setState(() {
+          _isScanning = false;
+        });
         unawaited(
           injector<NavigationService>().pushReplacementNamed(
             AppRouter.connectFF1,
