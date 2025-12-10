@@ -179,7 +179,7 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
       _recordDuration(success: true);
 
       injector<NavigationService>()
-          .popUntil(AppRouter.bluetoothDevicePortalPage);
+          .popUntil(AppRouter.startSetupFF1Page);
 
       unawaited(
         injector<NavigationService>().popAndPushNamed(
@@ -210,7 +210,7 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
     } finally {
       if (res == null) {
         injector<NavigationService>().popUntil(
-          AppRouter.bluetoothDevicePortalPage,
+          AppRouter.startSetupFF1Page,
         );
         injector<NavigationService>().goBack(result: res);
       } else {

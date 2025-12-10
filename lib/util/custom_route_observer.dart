@@ -20,7 +20,7 @@ final listRouteShouldNotShowNowDisplaying = [
   AppRouter.nowDisplayingPage,
   AppRouter.onboardingPage,
   AppRouter.bluetoothConnectedDeviceConfig,
-  AppRouter.bluetoothDevicePortalPage,
+  AppRouter.startSetupFF1Page,
   AppRouter.handleBluetoothDeviceScanDeeplinkScreen,
   AppRouter.sendWifiCredentialPage,
   AppRouter.scanWifiNetworkPage,

@@ -26,7 +26,10 @@ abstract class DeeplinkService {
   Future<void> setup();
 
   void handleDeeplink(String? link,
-      {Duration delay, Function? onFinished, bool isFromOnboarding = false});
+      {Duration delay,
+      Function? onFinished,
+      bool isFromOnboarding = false,
+      bool isFromAppLink = false});
 }
 
 class DeeplinkServiceImpl extends DeeplinkService {
@@ -150,9 +153,10 @@ class DeeplinkServiceImpl extends DeeplinkService {
       );
     } else {
       await injector<NavigationService>().navigateTo(
-        AppRouter.bluetoothDevicePortalPage,
+        AppRouter.startSetupFF1Page,
         arguments: BluetoothDevicePortalPagePayload(
           deeplink: link,
+          isFromAppLink: isFromAppLink,
         ),
       );
     }

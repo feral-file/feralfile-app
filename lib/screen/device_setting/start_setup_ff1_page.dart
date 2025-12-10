@@ -10,9 +10,9 @@ import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/check_bluetooth_state.dart';
 import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
+import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
-import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:flutter/material.dart';
@@ -26,9 +26,11 @@ import 'package:flutter_svg/flutter_svg.dart';
 class BluetoothDevicePortalPagePayload {
   BluetoothDevicePortalPagePayload({
     required this.deeplink,
+    this.isFromAppLink = false,
   });
 
   final String? deeplink;
+  final bool isFromAppLink;
 }
 
 class StartSetupFf1Page extends StatefulWidget {
@@ -88,17 +90,26 @@ class _StartSetupFf1PageState extends State<StartSetupFf1Page> {
                       return;
                     }
                   }
-                  await injector<NavigationService>().navigateTo(
-                    AppRouter.handleBluetoothDeviceScanDeeplinkScreen,
-                    arguments: HandleBluetoothDeviceScanDeeplinkScreenPayload(
-                      deeplink: deeplink,
-                      onFinish: () async {
-                        await injector<NavigationService>().navigateTo(
-                          AppRouter.scanWifiNetworkPage,
-                        );
-                      },
-                    ),
-                  );
+
+                  if (widget.payload.isFromAppLink &&
+                      !injector<ConfigurationService>().isDoneOnboarding()) {
+                    await injector<NavigationService>().navigateTo(
+                      AppRouter.onboardingIntroducePage,
+                      arguments: widget.payload.deeplink,
+                    );
+                  } else {
+                    await injector<NavigationService>().navigateTo(
+                      AppRouter.handleBluetoothDeviceScanDeeplinkScreen,
+                      arguments: HandleBluetoothDeviceScanDeeplinkScreenPayload(
+                        deeplink: deeplink,
+                        onFinish: () async {
+                          await injector<NavigationService>().navigateTo(
+                            AppRouter.scanWifiNetworkPage,
+                          );
+                        },
+                      ),
+                    );
+                  }
                 },
               ),
             ),

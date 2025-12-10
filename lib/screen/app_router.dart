@@ -107,7 +107,7 @@ class AppRouter {
   static const viewExistingAddressPage = 'view_existing_address_page';
   static const accessMethodPage = 'access_method_page';
   static const collectionPage = 'collection_page';
-  static const bluetoothDevicePortalPage = 'bluetooth_device_portal_page';
+  static const startSetupFF1Page = 'start_setup_FF1_page';
   static const scanWifiNetworkPage = 'scan_wifi_network_page';
   static const sendWifiCredentialPage = 'send_wifi_credential_page';
   static const nowDisplayingPage = 'now_displaying_page';
@@ -145,15 +145,18 @@ class AppRouter {
       case onboardingIntroducePage:
         return CupertinoPageRoute(
           settings: settings,
-          builder: (context) => IntroducePage(),
+          builder: (context) => IntroducePage(
+            payload: settings.arguments! as IntroducePagePayload,
+          ),
         );
-
       case onboardingAddAddressPage:
         return CupertinoPageRoute(
           settings: settings,
           builder: (context) => DebugOverlay(
             imagePath: 'assets/images/screenshots/onboarding_2.2.png',
-            child: const OnboardingAddAddressPage(),
+            child: OnboardingAddAddressPage(
+              payload: settings.arguments! as OnboardingAddAddressPagePayload,
+            ),
           ),
         );
 
@@ -402,7 +405,7 @@ class AppRouter {
           },
         );
 
-      case bluetoothDevicePortalPage:
+      case startSetupFF1Page:
         final payload = settings.arguments! as BluetoothDevicePortalPagePayload;
         return CupertinoPageRoute(
           settings: settings,

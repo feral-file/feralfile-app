@@ -446,7 +446,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
               .showPairingQRCode(ffDevice, false);
 
           injector<NavigationService>()
-              .popUntil(AppRouter.bluetoothDevicePortalPage);
+              .popUntil(AppRouter.startSetupFF1Page);
           unawaited(injector<NavigationService>().popAndPushNamed(
             AppRouter.bluetoothConnectedDeviceConfig,
             arguments: BluetoothConnectedDeviceConfigPayload(
@@ -455,7 +455,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
           ));
         } else if (error != null) {
           injector<NavigationService>()
-            ..popUntil(AppRouter.bluetoothDevicePortalPage);
+            ..popUntil(AppRouter.startSetupFF1Page);
           injector<NavigationService>().goBack();
         }
       },

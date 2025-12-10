@@ -19,10 +19,22 @@ import 'package:flutter_svg/svg.dart';
 ///
 /// This widget is implemented using [OnboardingShell] to match the Figma screen:
 /// FF1 Art Computer → Onboarding B 4.
+
+class IntroducePagePayload {
+  IntroducePagePayload({
+    required this.deeplink,
+  });
+
+  final String? deeplink;
+}
+
 class IntroducePage extends StatelessWidget {
   const IntroducePage({
+    required this.payload,
     super.key,
   });
+
+  final IntroducePagePayload payload;
 
   /// Callback triggered when the user taps the "Next" button.
 
@@ -82,6 +94,9 @@ class IntroducePage extends StatelessWidget {
   }
 
   void onNext(BuildContext context) {
-    Navigator.of(context).pushNamed(AppRouter.onboardingAddAddressPage);
+    Navigator.of(context).pushNamed(
+      AppRouter.onboardingAddAddressPage,
+      arguments: payload.deeplink,
+    );
   }
 }

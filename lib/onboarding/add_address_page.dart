@@ -14,6 +14,8 @@ import 'package:autonomy_flutter/onboarding/onboarding_shell.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_state.dart';
+import 'package:autonomy_flutter/screen/device_setting/check_bluetooth_state.dart';
+import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
@@ -26,10 +28,19 @@ import 'package:flutter_svg/svg.dart';
 /// "See the art you already own" (Add Address)
 ///
 /// Matches Figma: FF1 Art Computer → Onboarding B 8.
-class OnboardingAddAddressPage extends StatefulWidget {
-  const OnboardingAddAddressPage({
-    super.key,
+
+class OnboardingAddAddressPagePayload {
+  OnboardingAddAddressPagePayload({
+    required this.deeplink,
   });
+
+  final String? deeplink;
+}
+
+class OnboardingAddAddressPage extends StatefulWidget {
+  const OnboardingAddAddressPage({required this.payload, super.key});
+
+  final OnboardingAddAddressPagePayload payload;
 
   @override
   State<OnboardingAddAddressPage> createState() =>
@@ -160,7 +171,22 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
   }
 
   void onNext(BuildContext context) {
-    Navigator.of(context).pushNamed(AppRouter.onboardingSetupFf1Page);
+    if (widget.payload.deeplink != null) {
+      // Skip OnboardingSetupFf1Page and go directly to Bluetooth setup
+      injector<NavigationService>().navigateTo(
+        AppRouter.handleBluetoothDeviceScanDeeplinkScreen,
+        arguments: HandleBluetoothDeviceScanDeeplinkScreenPayload(
+          deeplink: widget.payload.deeplink!,
+          onFinish: () async {
+            await injector<NavigationService>().navigateTo(
+              AppRouter.scanWifiNetworkPage,
+            );
+          },
+        ),
+      );
+    } else {
+      Navigator.of(context).pushNamed(AppRouter.onboardingSetupFf1Page);
+    }
   }
 }
 

@@ -112,7 +112,7 @@ class OnboardingSetupFf1Page extends StatelessWidget {
     );
     injector<ConfigurationService>().setDoneOnboarding(true);
     injector<NavigationService>().navigateTo(
-      AppRouter.bluetoothDevicePortalPage,
+      AppRouter.startSetupFF1Page,
       arguments: BluetoothDevicePortalPagePayload(deeplink: null),
     );
   }
