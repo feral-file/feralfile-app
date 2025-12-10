@@ -15,11 +15,11 @@ import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
-import 'package:autonomy_flutter/view/loading.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:gif_view/gif_view.dart';
 
 enum _ConnectFF1Status {
   connecting,
@@ -152,10 +152,12 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
       if (!mounted) {
         return;
       }
-      await _showSuccessAndPop(onContinue: () async {
-        injector<NavigationService>().goBack();
-        await widget.payload.onConnectedSuccess?.call();
-      });
+      await _showSuccessAndPop(
+        onContinue: () async {
+          injector<NavigationService>().goBack();
+          await widget.payload.onConnectedSuccess?.call();
+        },
+      );
       return;
     }
 
@@ -224,16 +226,8 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
     setState(() {
       _status = _ConnectFF1Status.success;
     });
-    await UIHelper.showInfoDialog(
-      context,
-      'connected_to_ff1_title'.tr(),
-      'connected_to_ff1_body'.tr(),
-      closeButton: 'continue'.tr(),
-      autoDismissAfter: 5,
-      onClose: () {
-        injector<NavigationService>().goBack();
-      },
-    );
+
+    await Future<void>.delayed(Duration.zero);
     if (mounted) {
       if (onContinue != null) {
         onContinue();
@@ -285,51 +279,50 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
       backgroundColor: AppColor.auGreyBackground,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 44),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      child: SizedBox.shrink(),
-                      flex: 1,
-                    ),
-                    Expanded(
-                      flex: 2,
+                    if (_status != _ConnectFF1Status.error) ...[
+                      Image.asset(
+                        'assets/images/ff_logo.png',
+                        width: 139,
+                        height: 92.67,
+                      ),
+                      const SizedBox(height: 85),
+                    ] else ...[
+                      const Icon(
+                        Icons.error,
+                        size: 48,
+                        color: AppColor.feralFileLightBlue,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    Align(
+                      alignment: _status != _ConnectFF1Status.error
+                          ? Alignment.centerLeft
+                          : Alignment.center,
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: _status != _ConnectFF1Status.error
+                            ? CrossAxisAlignment.start
+                            : CrossAxisAlignment.center,
                         children: [
-                          if (_status != _ConnectFF1Status.error) ...[
-                            Center(
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
-                                child: LoadingWidget(
-                                  backgroundColor: Colors.transparent,
-                                  width: 108,
-                                  height: 108,
-                                  showText: false,
-                                ),
-                              ),
-                            ),
-                          ],
                           Text(
                             _titleText.tr(),
-                            style: theme.textTheme.ppMori700White24,
+                            style: theme.textTheme.h3,
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 20),
                           Text(
                             _bodyText.tr(),
-                            style: theme.textTheme.ppMori400White14,
+                            style: theme.textTheme.small,
                           ),
                         ],
                       ),
-                    ),
-                    Expanded(
-                      child: SizedBox.shrink(),
-                      flex: 1,
                     ),
                   ],
                 ),

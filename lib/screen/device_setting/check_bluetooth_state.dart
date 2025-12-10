@@ -31,7 +31,6 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:gif_view/gif_view.dart';
 
 class HandleBluetoothDeviceScanDeeplinkScreenPayload {
   HandleBluetoothDeviceScanDeeplinkScreenPayload({
@@ -179,27 +178,30 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
   Widget scanning(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        GifView.asset(
-          'assets/images/loading.gif',
+        Image.asset(
+          'assets/images/ff_logo.png',
           width: 139,
           height: 92.67,
-          frameRate: 12,
         ),
         const SizedBox(height: 85),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Connecting via Bluetooth...',
-              style: Theme.of(context).textTheme.h3,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Keep your phone near FF1 and remain on this screen',
-              style: Theme.of(context).textTheme.small,
-            ),
-          ],
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Connecting via Bluetooth...',
+                style: Theme.of(context).textTheme.h3,
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Keep your phone near FF1 and remain on this screen',
+                style: Theme.of(context).textTheme.small,
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -208,6 +210,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
   Widget portalIsSet(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Image.asset(
           'assets/images/ff_logo.png',
@@ -215,39 +218,42 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
           height: 92.67,
         ),
         const SizedBox(height: 85),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'The FF1 is All Set',
-              style: Theme.of(context).textTheme.h3,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Your FF1 is already set up and connected. You can head to settings to make changes or check the status.',
-              style: Theme.of(context).textTheme.small,
-            ),
-            const SizedBox(height: 20),
-            PrimaryButton(
-              onTap: () async {
-                unawaited(
-                  injector<NavigationService>().navigateTo(
-                    AppRouter.bluetoothConnectedDeviceConfig,
-                    arguments: BluetoothConnectedDeviceConfigPayload(
-                      isFromOnboarding: true,
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'The FF1 is All Set',
+                style: Theme.of(context).textTheme.h3,
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Your FF1 is already set up and connected. You can head to settings to make changes or check the status.',
+                style: Theme.of(context).textTheme.small,
+              ),
+              const SizedBox(height: 20),
+              PrimaryButton(
+                onTap: () async {
+                  unawaited(
+                    injector<NavigationService>().navigateTo(
+                      AppRouter.bluetoothConnectedDeviceConfig,
+                      arguments: BluetoothConnectedDeviceConfigPayload(
+                        isFromOnboarding: true,
+                      ),
                     ),
-                  ),
-                );
+                  );
 
-                try {
-                  await widget.payload.onFinish?.call();
-                } catch (e) {
-                  log.info('Failed to call onFinish: $e');
-                }
-              },
-              text: 'Go to Settings',
-            ),
-          ],
+                  try {
+                    await widget.payload.onFinish?.call();
+                  } catch (e) {
+                    log.info('Failed to call onFinish: $e');
+                  }
+                },
+                text: 'Go to Settings',
+              ),
+            ],
+          ),
         ),
       ],
     );
