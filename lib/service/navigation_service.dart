@@ -82,6 +82,18 @@ class NavigationService {
         ?.popAndPushNamed(routeName, arguments: arguments);
   }
 
+  Future<dynamic>? pushReplacementNamed(String routeName,
+      {Object? arguments}) {
+    log.info('NavigationService.pushReplacementNamed: $routeName');
+    if (navigatorKey.currentState?.mounted != true ||
+        navigatorKey.currentContext == null) {
+      return null;
+    }
+
+    return navigatorKey.currentState
+        ?.pushReplacementNamed(routeName, arguments: arguments);
+  }
+
   // create a function to replace all current route and push a new route
   Future<dynamic>? replaceAllAndPushNamed(String routeName,
       {Object? arguments}) {

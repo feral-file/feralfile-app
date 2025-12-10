@@ -365,9 +365,6 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
         });
       }
       if (resultDevice != null) {
-        if (context.mounted) {
-          Navigator.of(context).pop();
-        }
         unawaited(injector<ConfigurationService>().setBetaTester(true));
         injector<SubscriptionBloc>().add(GetSubscriptionEvent());
 
@@ -383,17 +380,8 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
           );
         }
 
-        // await injector<NavigationService>().navigateTo(
-        //   AppRouter.bluetoothDevicePortalPage,
-        //   arguments: BluetoothDevicePortalPagePayload(
-        //     device: resultDevice,
-        //     canSkipNetworkSetup: isConnectedToInternet,
-        //     branchName: branchName,
-        //   ),
-        // );
-
         unawaited(
-          injector<NavigationService>().navigateTo(
+          injector<NavigationService>().pushReplacementNamed(
             AppRouter.connectFF1,
             arguments: ConnectFF1PagePayload(
               device: resultDevice,
