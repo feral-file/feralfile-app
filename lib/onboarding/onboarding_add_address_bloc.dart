@@ -5,13 +5,12 @@
 //  that can be found in the LICENSE file.
 //
 
-import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/domain_address_service.dart';
 import 'package:autonomy_flutter/util/exception.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Onboarding-specific bloc for adding a view-only address.
 ///

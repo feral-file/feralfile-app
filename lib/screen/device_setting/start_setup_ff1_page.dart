@@ -72,6 +72,9 @@ class _StartSetupFf1PageState extends State<StartSetupFf1Page> {
               left: 0,
               right: 0,
               child: _StartButton(
+                text: widget.payload.isFromAppLink
+                    ? 'Continue'
+                    : 'Start FF1 Setup',
                 onPressed: () async {
                   String deeplink;
                   if (widget.payload.deeplink != null) {
@@ -168,9 +171,13 @@ class _BodyCopy extends StatelessWidget {
 }
 
 class _StartButton extends StatelessWidget {
-  const _StartButton({required this.onPressed});
+  const _StartButton({
+    required this.onPressed,
+    required this.text,
+  });
 
   final VoidCallback onPressed;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
@@ -182,7 +189,7 @@ class _StartButton extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'Start FF1 Setup',
+            text,
             style: Theme.of(context).textTheme.body.copyWith(
                   color: PrimitivesTokens.colorsBlack,
                 ),
