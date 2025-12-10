@@ -93,6 +93,17 @@ class AuFileService extends FileService {
   late String _saveDir;
 
   Future<dynamic> setup() async {
+    // Cancel any pending downloads from previous session
+    // to prevent crashes when download completion handlers run during app launch
+    try {
+      await FlutterDownloader.cancelAll();
+      log.info(
+          '[AuFileService] Canceled pending downloads from previous session');
+    } catch (e) {
+      log.info('[AuFileService] Error canceling previous downloads: $e');
+      // Continue setup even if cancel fails
+    }
+
     final tempDir = (await getTemporaryDirectory()).path;
     _saveDir = '$tempDir/$_cacheKey/';
     await Directory(_saveDir).create(recursive: true);
@@ -123,6 +134,28 @@ class AuFileService extends FileService {
     int progress,
   ) async {
     try {
+      // Check if service is ready before processing callback
+      // This prevents crashes when download completes during app launch
+      if (_saveDir.isEmpty) {
+        log.severe(
+          '[AuFileService] Service not ready, ignoring download callback for task: $id',
+        );
+        unawaited(
+          Sentry.captureMessage(
+            'Download callback received before service ready: taskId=$id',
+          ),
+        );
+        // If task info exists, complete with error
+        final info = _taskId2Info[id];
+        if (info != null && !info.task.isCompleted) {
+          info.task.completeError(
+            Exception('Service not ready when download completed'),
+          );
+          _taskId2Info.remove(id);
+        }
+        return;
+      }
+
       final info = _taskId2Info[id];
       if (info != null) {
         if (status == DownloadTaskStatus.complete) {
