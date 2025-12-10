@@ -34,6 +34,8 @@ abstract class DeeplinkService {
   });
 
   bool get isHandlingDeepLink;
+
+  String? get initialAppLink;
 }
 
 class DeeplinkServiceImpl extends DeeplinkService {
@@ -44,9 +46,13 @@ class DeeplinkServiceImpl extends DeeplinkService {
   final NavigationService _navigationService;
 
   final Map<String, bool> _deepLinkHandlingMap = {};
+  String? _initialAppLink;
 
   @override
   bool get isHandlingDeepLink => _deepLinkHandlingMap.isNotEmpty;
+
+  @override
+  String? get initialAppLink => _initialAppLink;
 
   @override
   Future<void> setup() async {
@@ -57,7 +63,8 @@ class DeeplinkServiceImpl extends DeeplinkService {
       final initialLink = await appLink.getInitialLinkString();
       log.info('[DeeplinkService] initialLink: $initialLink');
       if (initialLink != null) {
-        handleDeeplink(initialLink, isFromAppLink: true);
+        _initialAppLink = initialLink;
+        log.info('[DeeplinkService] stored initial link for later handling');
       }
 
       appLink.uriLinkStream.listen((link) {
@@ -158,10 +165,10 @@ class DeeplinkServiceImpl extends DeeplinkService {
         ),
       );
     } else {
-      // Use pushReplacement when opening from app link (cold start)
-      // to avoid route stack conflicts with OnboardingPage
-      if (isFromAppLink) {
-        await injector<NavigationService>().popAndPushNamed(
+      // If this is the initial app link (cold start from QR), replace all routes
+      // to avoid having OnboardingPage in the stack
+      if (isFromAppLink && link == _initialAppLink) {
+        await injector<NavigationService>().replaceAllAndPushNamed(
           AppRouter.startSetupFF1Page,
           arguments: BluetoothDevicePortalPagePayload(
             deeplink: link,
@@ -173,6 +180,7 @@ class DeeplinkServiceImpl extends DeeplinkService {
           AppRouter.startSetupFF1Page,
           arguments: BluetoothDevicePortalPagePayload(
             deeplink: link,
+            isFromAppLink: isFromAppLink,
           ),
         );
       }

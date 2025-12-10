@@ -89,18 +89,6 @@ class _OnboardingPageState extends State<OnboardingPage>
       }
 
       _timer?.cancel();
-
-      // Give deeplink handler time to start navigation after completer is completed
-      await Future<void>.delayed(const Duration(milliseconds: 200));
-
-      if (!mounted) {
-        return;
-      }
-
-      if (deepLinkService.isHandlingDeepLink) {
-        log.info('Skip navigate home, deeplink is handling');
-        return;
-      }
       await _goToHomePage(context);
     } catch (error) {
       log.info('Failed to fetch runtime cache: $error');
@@ -176,6 +164,18 @@ class _OnboardingPageState extends State<OnboardingPage>
 
   Future<void> _goToHomePage(BuildContext context) async {
     log.info('[_goToHomePage]');
+
+    // Check if app was opened from deeplink
+    final initialAppLink = deepLinkService.initialAppLink;
+    if (initialAppLink != null) {
+      log.info('[_goToHomePage] Handle initial app link: $initialAppLink');
+      deepLinkService.handleDeeplink(
+        initialAppLink,
+        isFromAppLink: true,
+      );
+      return;
+    }
+
     final isDoneOnboarding =
         injector<ConfigurationService>().isDoneOnboarding();
     if (isDoneOnboarding) {
