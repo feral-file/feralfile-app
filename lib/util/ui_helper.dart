@@ -916,7 +916,6 @@ class UIHelper {
       exitButton: 'view_today_daily'.tr(),
       exitButtonOnTap: () {
         Navigator.pop(context);
-        injector<ConfigurationService>().setDidShowLiveWithArt(true);
       },
     );
   }

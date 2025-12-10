@@ -28,10 +28,6 @@ abstract class ConfigurationService {
 
   Future<void> addAnonymousIssueId(List<String> issueIds);
 
-  Future<void> setDidShowLiveWithArt(bool value);
-
-  bool didShowLiveWithArt();
-
   Future<void> setLastPullAnnouncementTime(int lastPullTime);
 
   int getLastPullAnnouncementTime();
@@ -141,7 +137,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
   static const String keyDailyLikedCount = 'daily_liked_count';
   static const String keyDeviceId = 'device_id';
   static const String keyAnonymousIssueIds = 'anonymous_issue_ids';
-  static const String keyDidShowLiveWithArt = 'did_show_live_with_art';
   static const String keyLastPullAnnouncementTime =
       'last_pull_announcement_time';
   static const String KEY_HAS_MERCHANDISE_SUPPORT_INDEX_ID =
@@ -361,14 +356,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
   @override
   Future<void> setLastPullAnnouncementTime(int lastPullTime) =>
       _preferences.setInt(keyLastPullAnnouncementTime, lastPullTime);
-
-  @override
-  bool didShowLiveWithArt() =>
-      _preferences.getBool(keyDidShowLiveWithArt) ?? false;
-
-  @override
-  Future<void> setDidShowLiveWithArt(bool value) async =>
-      _preferences.setBool(keyDidShowLiveWithArt, value);
 
   @override
   String? getAnnouncementContentIdByIssueId(String issueId) {

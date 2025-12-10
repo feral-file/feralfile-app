@@ -14,7 +14,6 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/check_bluetooth_state.dart';
 import 'package:autonomy_flutter/screen/device_setting/start_setup_ff1_page.dart';
-import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -48,12 +47,12 @@ class DeeplinkServiceImpl extends DeeplinkService {
       final initialLink = await appLink.getInitialLinkString();
       log.info('[DeeplinkService] initialLink: $initialLink');
       if (initialLink != null) {
-        handleDeeplink(initialLink);
+        handleDeeplink(initialLink, isFromAppLink: true);
       }
 
       appLink.uriLinkStream.listen((link) {
         log.info('[DeeplinkService] uriLinkStream: $link');
-        handleDeeplink(link.toString());
+        handleDeeplink(link.toString(), isFromAppLink: true);
       });
     } on PlatformException {
       //Ignore
@@ -66,6 +65,7 @@ class DeeplinkServiceImpl extends DeeplinkService {
     Duration delay = Duration.zero,
     Function? onFinished,
     bool isFromOnboarding = false,
+    bool isFromAppLink = false,
   }) {
     // return for case when FeralFile pass empty deeplink to return Autonomy
     if (rawLink == 'autonomy://') {
@@ -112,6 +112,7 @@ class DeeplinkServiceImpl extends DeeplinkService {
             link,
             onFinish: onFinishDeeplink,
             isFromOnboarding: isFromOnboarding,
+            isFromAppLink: isFromAppLink,
           );
         case DeepLinkHandlerType.unknown:
           unawaited(_navigationService.showUnknownLink());
@@ -128,6 +129,7 @@ class DeeplinkServiceImpl extends DeeplinkService {
     String link, {
     Function? onFinish,
     bool isFromOnboarding = false,
+    bool isFromAppLink = false,
   }) async {
     final prefix = Constants.bluetoothConnectDeepLinks
         .firstWhereOrNull((prefix) => link.startsWith(prefix));
@@ -137,11 +139,6 @@ class DeeplinkServiceImpl extends DeeplinkService {
       );
       return;
     }
-    unawaited(
-      injector<ConfigurationService>().setDidShowLiveWithArt(true).then((_) {
-        log.info('setDidShowLiveWithArt to true');
-      }),
-    );
 
     if (isFromOnboarding) {
       await injector<NavigationService>().navigateTo(
