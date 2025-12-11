@@ -75,7 +75,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:page_transition/page_transition.dart';
 
-bool shouldShowOverlay = kDebugMode && Platform.isIOS;
+bool shouldShowOverlay = false;
 
 class AppRouter {
   static const previewPrimerPage = 'preview_primer_page';

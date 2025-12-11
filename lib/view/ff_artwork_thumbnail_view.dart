@@ -175,8 +175,16 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
       fit: widget.fit,
       placeholder: (context, url) =>
           widget.placeholder ?? const GalleryThumbnailPlaceholder(),
-      errorWidget: (context, url, error) =>
-          widget.errorWidget ?? const GalleryThumbnailErrorWidget(),
+      errorWidget: (context, url, error) {
+        // For PathNotFoundException, show placeholder instead of error
+        // This happens during concurrent cache operations and usually resolves on retry
+        final errorString = error.toString();
+        if (errorString.contains('PathNotFoundException') ||
+            errorString.contains('Cannot open file')) {
+          return widget.placeholder ?? const GalleryThumbnailPlaceholder();
+        }
+        return widget.errorWidget ?? const GalleryThumbnailErrorWidget();
+      },
       cacheScale: widget.cacheScale,
     );
   }

@@ -87,6 +87,7 @@ class AuFileService extends FileService {
   static final AuFileService _instance = AuFileService._();
 
   final Map<String, Info> _taskId2Info = {};
+  final Map<String, Completer<FileServiceResponse>> _urlToTask = {};
 
   final ReceivePort _port = ReceivePort();
   late String _saveDir;
@@ -151,6 +152,7 @@ class AuFileService extends FileService {
             Exception('Service not ready when download completed'),
           );
           _taskId2Info.remove(id);
+          _urlToTask.remove(info.url);
         }
         return;
       }
@@ -172,6 +174,7 @@ class AuFileService extends FileService {
               Exception('Invalid file path for ${info.url}'),
             );
             _taskId2Info.remove(id);
+            _urlToTask.remove(info.url);
             return;
           }
 
@@ -190,6 +193,7 @@ class AuFileService extends FileService {
               Exception('Downloaded file does not exist: ${info.url}'),
             );
             _taskId2Info.remove(id);
+            _urlToTask.remove(info.url);
             return;
           }
 
@@ -206,52 +210,31 @@ class AuFileService extends FileService {
               ),
             );
           } else {
-            try {
-              final originalFile = filePath;
-              final isFileExists = await File(originalFile).exists();
-              if (isFileExists) {
-                await File(originalFile).delete();
-                info.task.complete(
-                  AuFileServiceResponse(
-                    filePath: originalFile,
-                    fileExt: 'jpeg',
-                  ),
-                );
-              } else {
-                info.task.complete(
-                  AuFileServiceResponse(
-                    filePath: originalFile,
-                    fileExt: info.fileExt,
-                  ),
-                );
-              }
-            } catch (e) {
-              log.info('Compress image failed ${info.url} Error: $e');
-              unawaited(
-                Sentry.captureException(
-                  'Compress image failed ${info.url} Error',
-                ),
-              );
-              info.task.complete(
-                AuFileServiceResponse(
-                  filePath: filePath,
-                  fileExt: info.fileExt,
-                ),
-              );
-            }
+            // For non-CloudFlare images, complete with the downloaded file
+            // Note: Previous logic deleted the file which caused PathNotFoundException
+            // when concurrent requests tried to access the same cached file
+            info.task.complete(
+              AuFileServiceResponse(
+                filePath: filePath,
+                fileExt: info.fileExt,
+              ),
+            );
           }
           _taskId2Info.remove(id);
+          _urlToTask.remove(info.url);
         } else if (status == DownloadTaskStatus.failed) {
           log.info(
               '[AuFileService] Download failed: ${info.url} ${info.taskId}');
           unawaited(Sentry.captureMessage('Download failed ${info.url}'));
           info.task.completeError(Exception('Download failed ${info.url}'));
           _taskId2Info.remove(id);
+          _urlToTask.remove(info.url);
         } else if (status == DownloadTaskStatus.canceled) {
           log.info('[AuFileService] Download canceled: ${info.url}');
           unawaited(Sentry.captureMessage('Download canceled ${info.url}'));
           info.task.completeError(Exception('Download canceled ${info.url}'));
           _taskId2Info.remove(id);
+          _urlToTask.remove(info.url);
         }
       }
     } catch (e, stackTrace) {
@@ -269,6 +252,7 @@ class AuFileService extends FileService {
           Exception('Error processing download: $e'),
         );
         _taskId2Info.remove(id);
+        _urlToTask.remove(info.url);
       }
     }
   }
@@ -278,6 +262,13 @@ class AuFileService extends FileService {
     String url, {
     Map<String, String>? headers,
   }) async {
+    // Check if there's already a pending request for this URL
+    final existingTask = _urlToTask[url];
+    if (existingTask != null && !existingTask.isCompleted) {
+      log.info('[AuFileService] Reusing existing download task for $url');
+      return existingTask.future;
+    }
+
     var info =
         _taskId2Info.values.firstWhereOrNull((element) => element.url == url);
     if (info == null) {
@@ -328,6 +319,7 @@ class AuFileService extends FileService {
       }
       info = Info(url, fileInfo.extension, taskId, fileName, Completer());
       _taskId2Info[taskId] = info;
+      _urlToTask[url] = info.task;
     }
     return info.task.future;
   }
@@ -353,6 +345,7 @@ class AuFileService extends FileService {
 
       // Clear all task info
       _taskId2Info.clear();
+      _urlToTask.clear();
 
       log.info('[AuFileService] All downloads canceled');
     } catch (e, stackTrace) {

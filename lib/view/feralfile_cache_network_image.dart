@@ -148,8 +148,14 @@ class FFCacheNetworkImage extends CachedNetworkImage {
     Object error,
     StackTrace? stackTrace,
   ) {
-    log.info(
-        'FFCacheNetworkImageError: url: $imageUrl, error: $error, stackTrace: $stackTrace');
+    // Only log non-PathNotFoundException errors to reduce noise
+    // PathNotFoundException can happen during concurrent cache operations and is handled gracefully
+    final errorString = error.toString();
+    if (!errorString.contains('PathNotFoundException') &&
+        !errorString.contains('Cannot open file')) {
+      log.info(
+          'FFCacheNetworkImageError: url: $imageUrl, error: $error, stackTrace: $stackTrace');
+    }
     return errorWidget!(context, imageUrl, error);
   }
 }
