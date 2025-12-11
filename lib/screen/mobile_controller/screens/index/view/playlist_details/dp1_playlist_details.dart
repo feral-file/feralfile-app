@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
@@ -10,6 +11,7 @@ import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
+import 'package:autonomy_flutter/util/metric_helper.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/cast_button.dart';
 import 'package:autonomy_flutter/view/dp1_playlist_grid_view.dart';
@@ -40,8 +42,14 @@ class DP1PlaylistDetailsScreen extends StatefulWidget {
       _DP1PlaylistDetailsScreenState();
 }
 
-class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen> {
+class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
+    with AfterLayoutMixin {
   CanvasDeviceBloc get _canvasDeviceBloc => injector<CanvasDeviceBloc>();
+
+  @override
+  void afterFirstLayout(BuildContext context) {
+    MetricHelper.trackViewPlaylist(playlist: widget.payload.playlist);
+  }
 
   @override
   Widget build(BuildContext context) {

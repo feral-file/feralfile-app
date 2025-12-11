@@ -24,7 +24,6 @@ import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/shared.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/util/notification_util.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 class ForgetExistBloc extends AuBloc<ForgetExistEvent, ForgetExistState> {
@@ -38,9 +37,6 @@ class ForgetExistBloc extends AuBloc<ForgetExistEvent, ForgetExistState> {
 
     on<ConfirmForgetExistEvent>((event, emit) async {
       emit(ForgetExistState(state.isChecked, true));
-
-      unawaited(deregisterPushNotification());
-
       // remove all local data
       _indexerDatabase.clearAll();
       await _configurationService.removeAll();

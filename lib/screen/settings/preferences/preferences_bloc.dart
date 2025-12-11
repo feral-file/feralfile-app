@@ -14,7 +14,6 @@ import 'package:autonomy_flutter/screen/settings/preferences/preferences_state.d
 import 'package:autonomy_flutter/service/local_auth_service.dart';
 import 'package:autonomy_flutter/util/biometrics_util.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/util/notification_util.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -76,13 +75,6 @@ class PreferencesBloc extends AuBloc<PreferenceEvent, PreferenceState> {
 
       if (event.newState.isNotificationEnabled != state.isNotificationEnabled) {
         try {
-          if (event.newState.isNotificationEnabled) {
-            event.newState.isNotificationEnabled =
-                await registerPushNotifications(askPermission: true);
-          } else {
-            unawaited(deregisterPushNotification());
-          }
-
           await appSettingsStorageService
               .setNotificationEnabled(event.newState.isNotificationEnabled);
         } catch (error) {

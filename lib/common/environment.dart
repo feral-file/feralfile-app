@@ -257,4 +257,12 @@ class Environment {
 
   static String get indexerAPIKey =>
       _readKey('INDEXER_API_KEY', '', isSecret: true);
+
+  static String get openPanelClientId =>
+      _readKey('OPENPANEL_CLIENT_ID', '', isSecret: true);
+
+  static String get openPanelClientSecret =>
+      _readKey('OPENPANEL_CLIENT_SECRET', '', isSecret: true);
+
+  static String get openPanelApiUrl => _readKey('OPENPANEL_API_URL', '');
 }
