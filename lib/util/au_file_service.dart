@@ -14,7 +14,6 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sentry/sentry.dart';
 
@@ -209,19 +208,12 @@ class AuFileService extends FileService {
           } else {
             try {
               final originalFile = filePath;
-              final compressedFile =
-                  '${_saveDir}resized_${info.localFile}.jpeg';
-              await FlutterImageCompress.compressAndGetFile(
-                originalFile,
-                compressedFile,
-                quality: 90,
-              );
-              final isFileExists = await File(compressedFile).exists();
+              final isFileExists = await File(originalFile).exists();
               if (isFileExists) {
                 await File(originalFile).delete();
                 info.task.complete(
                   AuFileServiceResponse(
-                    filePath: compressedFile,
+                    filePath: originalFile,
                     fileExt: 'jpeg',
                   ),
                 );
