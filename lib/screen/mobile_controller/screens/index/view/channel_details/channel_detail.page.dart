@@ -79,7 +79,7 @@ class _ChannelDetailPageState extends State<ChannelDetailPage>
 
     return Scaffold(
       backgroundColor: AppColor.auGreyBackground,
-      appBar: CustomAppBar(
+      appBar: MainAppBar(
         backTitle: widget.payload.backTitle,
       ),
       body: SafeArea(

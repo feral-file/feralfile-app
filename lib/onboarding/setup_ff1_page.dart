@@ -35,8 +35,8 @@ class OnboardingSetupFf1Page extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: PrimitivesTokens.colorsDarkGrey,
-      appBar: const CustomAppBar(
-        backTitle: 'Back',
+      appBar: const SetupAppBar(
+        withDivider: false,
       ),
       body: Column(
         children: [

@@ -76,8 +76,8 @@ class _OnboardingAddAddressInputPageState
 
     return Scaffold(
       backgroundColor: AppColor.auGreyBackground,
-      appBar: CustomAppBar(
-        backTitle: widget.payload.isFromOnboarding ? 'Onboarding' : 'Index',
+      appBar: const SetupAppBar(
+        withDivider: false,
       ),
       body: BlocConsumer<OnboardingAddAddressBloc, OnboardingAddAddressState>(
           bloc: _bloc,

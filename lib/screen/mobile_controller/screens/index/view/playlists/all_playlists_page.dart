@@ -110,7 +110,7 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
 
     return Scaffold(
       backgroundColor: AppColor.auGreyBackground,
-      appBar: const CustomAppBar(
+      appBar: const MainAppBar(
         backTitle: 'Index',
       ),
       body: SafeArea(

@@ -72,8 +72,8 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
 
     return Scaffold(
       backgroundColor: PrimitivesTokens.colorsDarkGrey,
-      appBar: const CustomAppBar(
-        backTitle: 'Back',
+      appBar: const SetupAppBar(
+        withDivider: false,
       ),
       body: BlocProvider.value(
         value: _accountsBloc,

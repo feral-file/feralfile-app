@@ -8,9 +8,9 @@ import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/wifi_helper.dart';
-import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
+import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -131,13 +131,8 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: getBackAppBar(
-        context,
-        onBack: () {
-          Navigator.of(context).pop();
-        },
+      appBar: SetupAppBar(
         title: 'select_network'.tr(),
-        isWhite: false,
       ),
       backgroundColor: AppColor.auGreyBackground,
       body: SafeArea(

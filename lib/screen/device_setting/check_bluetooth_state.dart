@@ -25,8 +25,8 @@ import 'package:autonomy_flutter/util/bluetooth_device_ext.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
+import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -108,7 +108,9 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: getDarkEmptyAppBar(),
+      appBar: const SetupAppBar(
+        withDivider: false,
+      ),
       backgroundColor: PrimitivesTokens.colorsDarkGrey,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 44),

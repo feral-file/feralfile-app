@@ -64,7 +64,7 @@ class _CustomFeedServersPageState extends State<CustomFeedServersPage>
       create: (_) => _bloc,
       child: Scaffold(
         backgroundColor: AppColor.auGreyBackground,
-        appBar: const CustomAppBar(backTitle: 'Index'),
+        appBar: const MainAppBar(backTitle: 'Index'),
         body: BlocBuilder<CustomFeedServersBloc, CustomFeedServersState>(
           builder: (context, state) {
             if (state.isLoading) {

@@ -3,7 +3,7 @@ import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
-import 'package:autonomy_flutter/view/back_appbar.dart';
+import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:flutter/material.dart';
 
 class FF1Updating extends StatelessWidget {
@@ -23,14 +23,12 @@ class FF1Updating extends StatelessWidget {
         }
       },
       child: Scaffold(
-        appBar: getBackAppBar(
-          context,
+        appBar: SetupAppBar(
           onBack: () {
             injector<NavigationService>().replaceAllAndPushNamed(
               AppRouter.homePage,
             );
           },
-          isWhite: false,
           withDivider: false,
         ),
         backgroundColor: PrimitivesTokens.colorsDarkGrey,

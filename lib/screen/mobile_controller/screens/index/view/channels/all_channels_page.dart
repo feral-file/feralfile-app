@@ -89,7 +89,7 @@ class _AllChannelsPageState extends State<AllChannelsPage> with RouteAware {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColor.auGreyBackground,
-      appBar: const CustomAppBar(
+      appBar: const MainAppBar(
         backTitle: 'Index',
       ),
       body: SafeArea(

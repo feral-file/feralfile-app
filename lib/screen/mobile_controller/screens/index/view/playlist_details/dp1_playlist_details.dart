@@ -50,7 +50,7 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen> {
       bloc: _canvasDeviceBloc,
       builder: (context, state) {
         return Scaffold(
-          appBar: CustomAppBar(
+          appBar: MainAppBar(
             backTitle: widget.payload.backTitle ?? 'Playlists',
             actions: [
               FFCastButton(

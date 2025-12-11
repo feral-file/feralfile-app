@@ -105,7 +105,7 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
+      appBar: MainAppBar(
         centeredTitle: 'now_displaying'.tr(),
         backgroundColor: PrimitivesTokens.colorsBlack,
         actions: [

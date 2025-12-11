@@ -48,8 +48,8 @@ class _StartSetupFf1PageState extends State<StartSetupFf1Page> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: PrimitivesTokens.colorsDarkGrey,
-      appBar: const CustomAppBar(
-        backTitle: 'Setup FF1',
+      appBar: const SetupAppBar(
+        title: 'Setup FF1',
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 44),

@@ -246,7 +246,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                   frontLayerElevation: _isFullScreen ? 0 : 1,
                   appBar: _isFullScreen
                       ? null
-                      : CustomAppBar(
+                      : MainAppBar(
                           backTitle: widget.payload.backTitle ?? '',
                           actions: [
                             FFCastButton(

@@ -91,7 +91,7 @@ class _AddLocalFeedServerPageState extends State<AddLocalFeedServerPage> {
         },
         child: Scaffold(
           backgroundColor: AppColor.auGreyBackground,
-          appBar: const CustomAppBar(
+          appBar: const MainAppBar(
             backTitle: 'Index',
           ),
           body: BlocBuilder<AddLocalFeedServerBloc, AddLocalFeedServerState>(
