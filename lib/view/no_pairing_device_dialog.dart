@@ -63,7 +63,7 @@ class NoPairingDeviceDialog extends StatelessWidget {
                               horizontal: 11,
                             ),
                             padding: EdgeInsets.zero,
-                            text: r'Preorder your FF1, $450 ',
+                            text: r'Get your FF1, $450',
                             textStyle: theme.textTheme.small.copyWith(
                               color: PrimitivesTokens.colorsBlack,
                             ),
