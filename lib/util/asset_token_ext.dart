@@ -158,7 +158,19 @@ extension AssetTokenExtension on AssetToken {
     }
 
     if (thumbnailUrl?.isNotEmpty ?? false) {
-      return thumbnailUrl;
+      if (size != null) {
+        // if url in format https://imagedelivery.net/5BJzhBHeVhlhbn58hvcXAQ/../xl, then replace the /xl with size
+        if (thumbnailUrl?.startsWith(
+                'https://imagedelivery.net/5BJzhBHeVhlhbn58hvcXAQ/') ??
+            false) {
+          final urlParts = thumbnailUrl?.split('/');
+          if (urlParts != null && urlParts.length > 2) {
+            urlParts[urlParts.length - 1] = size;
+            thumbnailUrl = urlParts.join('/');
+          }
+        }
+      }
+        return thumbnailUrl;
     }
 
     return null;
