@@ -94,6 +94,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
   double? _appBarBottomDy;
   bool _isFullScreen = false;
   ShakeDetector? _detector;
+  bool _previousBottomSheetVisibility = false;
 
   final FocusNode _selectTextFocusNode = FocusNode();
 
@@ -761,6 +762,9 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
     if (_isInfoExpand) {
       _infoShrink();
     }
+    // Save previous bottomSheetVisibility state
+    _previousBottomSheetVisibility = CustomRouteObserver.bottomSheetVisibility.value;
+    CustomRouteObserver.bottomSheetVisibility.value = true;
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     await enableLandscapeMode();
     unawaited(WakelockPlus.enable());
@@ -777,6 +781,8 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
     );
     unawaited(WakelockPlus.disable());
     await disableLandscapeMode();
+    // Restore bottomSheetVisibility to its previous state
+    CustomRouteObserver.bottomSheetVisibility.value = _previousBottomSheetVisibility;
     setState(() {
       shouldShowNowDisplaying.value = true;
       _isFullScreen = false;
