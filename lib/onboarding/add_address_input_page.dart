@@ -50,7 +50,8 @@ class OnboardingAddAddressInputPage extends StatefulWidget {
 
 class _OnboardingAddAddressInputPageState
     extends State<OnboardingAddAddressInputPage> {
-  final _controller = TextEditingController();
+  final _nameController = TextEditingController();
+  final _addressController = TextEditingController();
 
   late final OnboardingAddAddressBloc _bloc;
 
@@ -65,7 +66,8 @@ class _OnboardingAddAddressInputPageState
 
   @override
   void dispose() {
-    _controller.dispose();
+    _nameController.dispose();
+    _addressController.dispose();
     _bloc.close();
     super.dispose();
   }
@@ -98,7 +100,35 @@ class _OnboardingAddAddressInputPageState
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 21),
+                      horizontal: 20,
+                      vertical: 21,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColor.primaryBlack,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: TextField(
+                      controller: _nameController,
+                      enabled: !isLoading,
+                      style: theme.textTheme.body,
+                      cursorColor: isLoading
+                          ? AppColor.feralFileMediumGrey
+                          : AppColor.white,
+                      decoration: InputDecoration(
+                        isCollapsed: true,
+                        border: InputBorder.none,
+                        hintText: 'Alias (optional)',
+                        hintStyle: theme.textTheme.ppMori400White14,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 21,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColor.primaryBlack,
                       borderRadius: BorderRadius.circular(5),
@@ -107,7 +137,7 @@ class _OnboardingAddAddressInputPageState
                       children: [
                         Expanded(
                           child: TextField(
-                            controller: _controller,
+                            controller: _addressController,
                             enabled: !isLoading,
                             style: theme.textTheme.body,
                             cursorColor: isLoading
@@ -124,8 +154,13 @@ class _OnboardingAddAddressInputPageState
                                 : (text) {
                                     _bloc.add(
                                       OnboardingAddConnectionEvent(
-                                        text,
-                                        widget.payload.isFromOnboarding,
+                                        address: text,
+                                        name:
+                                            _nameController.text.trim().isEmpty
+                                                ? null
+                                                : _nameController.text.trim(),
+                                        isFromOnboarding:
+                                            widget.payload.isFromOnboarding,
                                       ),
                                     );
                                   },
@@ -154,10 +189,14 @@ class _OnboardingAddAddressInputPageState
                                 ),
                               );
                               if (text != null && text is String) {
-                                _controller.text = text;
+                                _addressController.text = text;
                                 _bloc.add(OnboardingAddConnectionEvent(
-                                  text,
-                                  widget.payload.isFromOnboarding,
+                                  address: text,
+                                  name: _nameController.text.trim().isEmpty
+                                      ? null
+                                      : _nameController.text.trim(),
+                                  isFromOnboarding:
+                                      widget.payload.isFromOnboarding,
                                 ));
                               }
                             },

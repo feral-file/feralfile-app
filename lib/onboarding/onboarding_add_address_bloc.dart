@@ -19,9 +19,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 abstract class OnboardingAddAddressEvent {}
 
 class OnboardingAddConnectionEvent extends OnboardingAddAddressEvent {
-  OnboardingAddConnectionEvent(this.address, this.isFromOnboarding);
+  OnboardingAddConnectionEvent({
+    required this.address,
+    this.name,
+    required this.isFromOnboarding,
+  });
 
   final String address;
+  final String? name;
   final bool isFromOnboarding;
 }
 
@@ -106,7 +111,7 @@ class OnboardingAddAddressBloc
       domain = addressInfo.domain;
       final walletAddress = WalletAddress(
         address: address,
-        name: domain ?? text,
+        name: event.name ?? domain ?? text,
         createdAt: DateTime.now(),
       );
       final connection = await _addressService.insertAddress(
