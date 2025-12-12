@@ -76,7 +76,7 @@ class MetricServiceImpl implements MetricService {
       clientSecret: Environment.openPanelClientSecret,
       baseUrl: Environment.openPanelApiUrl,
     );
-
+    _isInitialized = true;
     // identify user
     final userId = await injector<AuthService>().getOrGenerateUserId();
     await identifyUser(
@@ -86,7 +86,6 @@ class MetricServiceImpl implements MetricService {
         actorId: userId,
       ),
     );
-    _isInitialized = true;
   }
 
   @override
