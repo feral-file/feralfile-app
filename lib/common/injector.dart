@@ -42,6 +42,7 @@ import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/announcement/announcement_service.dart';
 import 'package:autonomy_flutter/service/announcement/announcement_store.dart';
 import 'package:autonomy_flutter/service/audio_service.dart';
+import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/bluetooth_service.dart';
 import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
@@ -56,6 +57,7 @@ import 'package:autonomy_flutter/service/ethereum_service.dart';
 import 'package:autonomy_flutter/service/feed_registry_service.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
 import 'package:autonomy_flutter/service/meilisearch_service.dart';
+import 'package:autonomy_flutter/service/metric_service.dart';
 import 'package:autonomy_flutter/service/mobile_controller_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/network_service.dart';
@@ -413,5 +415,13 @@ Future<void> setupInjector() async {
 
   injector.registerLazySingleton<SecureStorageServer>(
     SecureStorageServerImpl.new,
+  );
+
+  injector.registerLazySingleton<MetricService>(
+    () => MetricServiceImpl(),
+  );
+
+  injector.registerLazySingleton<AuthService>(
+    () => AuthServiceImpl(),
   );
 }

@@ -263,7 +263,11 @@ extension StringUrlExtension on String {
     if (uri == null) {
       return this;
     }
-    return uri.origin;
+    try {
+      return uri.origin;
+    } catch (e) {
+      return '';
+    }
   }
 }
 

@@ -10,9 +10,11 @@ import 'dart:async';
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/database/app_data_manager.dart';
+import 'package:autonomy_flutter/model/metric/dp1_playlist_metric.dart';
+import 'package:autonomy_flutter/model/metric/identify_user_payload.dart';
 import 'package:autonomy_flutter/onboarding/introduce_page.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/bluetooth_service.dart';
 import 'package:autonomy_flutter/service/canvas_notification_manager.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
@@ -20,11 +22,11 @@ import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/device_info_service.dart';
 import 'package:autonomy_flutter/service/dls_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
+import 'package:autonomy_flutter/service/metric_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/util/notification_util.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
@@ -123,41 +125,30 @@ class _OnboardingPageState extends State<OnboardingPage>
     Environment.checkAllKeys();
     await DeviceInfo.instance.init();
     await injector<DeviceInfoService>().init();
+    await injector<AuthService>().initialize();
+
     await injector<FFBluetoothService>().init();
     await injector<DLSService>().init();
     await injector<FeralFileFeedManager>().init();
     await injector<FeralFileDP1FeedService>().init();
 
-    // Count open app times
-    final countOpenApp = injector<ConfigurationService>().countOpenApp() ?? 0;
-    await injector<ConfigurationService>().setCountOpenApp(countOpenApp + 1);
+    await injector<MetricService>().initialize();
+
+    final userId = await injector<AuthService>().getOrGenerateUserId();
+    await injector<MetricService>().identifyUser(
+      profileId: userId,
+      payload: IdentifyUserPayload(
+        actorType: ActorType.ffController,
+        actorId: userId,
+      ),
+    );
 
     // Set version info for user agent
     final packageInfo = await PackageInfo.fromPlatform();
     await injector<ConfigurationService>().setVersionInfo(packageInfo.version);
 
-    if (injector<AppDataManager>()
-        .appSettingsStorageService
-        .isNotificationEnabled) {
-      unawaited(_registerPushNotifications());
-    }
-
     await disableLandscapeMode();
     didRunSetup = true;
-  }
-
-  Future<void> _registerPushNotifications() async {
-    try {
-      await registerPushNotifications();
-    } catch (e, s) {
-      log.info('registerPushNotifications error: $e');
-      unawaited(
-        Sentry.captureException(
-          'registerPushNotifications error: $e',
-          stackTrace: s,
-        ),
-      );
-    }
   }
 
   @override
