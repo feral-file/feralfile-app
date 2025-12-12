@@ -185,7 +185,7 @@ enum MetricEvent {
   String get name {
     switch (this) {
       case MetricEvent.view_playlist:
-        return 'View Playlist';
+        return 'playlist_view';
     }
   }
 }

@@ -10,6 +10,8 @@ import 'dart:async';
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/model/metric/dp1_playlist_metric.dart';
+import 'package:autonomy_flutter/model/metric/identify_user_payload.dart';
 import 'package:autonomy_flutter/onboarding/introduce_page.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
@@ -135,6 +137,10 @@ class _OnboardingPageState extends State<OnboardingPage>
     final userId = await injector<AuthService>().getOrGenerateUserId();
     await injector<MetricService>().identifyUser(
       profileId: userId,
+      payload: IdentifyUserPayload(
+        actorType: ActorType.ffController,
+        actorId: userId,
+      ),
     );
 
     // Set version info for user agent

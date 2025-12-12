@@ -23,8 +23,10 @@ class ViewPLaylistMetricPayload {
   final String envOsVersion;
   final String envBuildType;
   final PlaylistScope playlistScope;
+  final String playlistId;
   final String playlistKey;
   final String? playlistUrl;
+  final String playlistDp1Version;
   final String playlistFeedHost;
 
   ViewPLaylistMetricPayload({
@@ -36,8 +38,10 @@ class ViewPLaylistMetricPayload {
     required this.envOsVersion,
     required this.envBuildType,
     required this.playlistScope,
+    required this.playlistId,
     required this.playlistKey,
     this.playlistUrl,
+    required this.playlistDp1Version,
     required this.playlistFeedHost,
   });
 
@@ -50,8 +54,10 @@ class ViewPLaylistMetricPayload {
         'env_os_version': envOsVersion,
         'env_build_type': envBuildType,
         'playlist_scope': playlistScope.value,
+        'playlist_id': playlistId,
         'playlist_key': playlistKey,
         if (playlistUrl != null) 'playlist_url': playlistUrl,
+        'playlist_dp1_version': playlistDp1Version,
         'playlist_feed_host': playlistFeedHost,
       };
 }

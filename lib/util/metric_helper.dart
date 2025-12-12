@@ -19,30 +19,36 @@ class MetricHelper {
     // package info
     final packageInfo = await PackageInfo.fromPlatform();
 
+    final buildType = packageInfo.packageName.contains('inhouse')
+        ? 'development'
+        : 'production';
+
     // device info
     final deviceInfoService = injector<DeviceInfoService>();
     final deviceOSVersion = deviceInfoService.deviceOSVersion;
 
     // build type
-    final playlistKey = playlist.playlist.id;
     final playlistUrl = playlist.fullUrl;
     final playlistScope = playlist.type == PlaylistReferenceType.channel
         ? PlaylistScope.feed
         : PlaylistScope.generated;
     final playlistFeedHost = playlist.url.origin;
 
+    final playlistKey = '${playlist.playlist.title}|${playlist.playlist.id}';
+
     final payload = ViewPLaylistMetricPayload(
-      actorType: ActorType.user,
-      actorId: userId,
+      profileId: userId,
+      playlistId: playlist.playlist.id,
       envApp: 'ff-controller',
       envAppVersion: packageInfo.version,
       envPlatform: Platform.isIOS ? 'ios' : 'android',
       envOs: deviceInfoService.deviceOSName,
       envOsVersion: deviceOSVersion,
-      envBuildType: 'prod',
+      envBuildType: buildType,
       playlistScope: playlistScope,
       playlistKey: playlistKey,
       playlistUrl: playlistUrl,
+      playlistDp1Version: playlist.playlist.dpVersion,
       playlistFeedHost: playlistFeedHost,
     );
 
