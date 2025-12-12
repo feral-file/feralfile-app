@@ -8,7 +8,11 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/environment.dart';
+import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/model/metric/dp1_playlist_metric.dart';
+import 'package:autonomy_flutter/model/metric/identify_user_payload.dart';
 import 'package:autonomy_flutter/sdk/openpanel_sdk.dart';
+import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:dio/dio.dart';
 import 'package:sentry/sentry.dart';
@@ -43,10 +47,7 @@ abstract class MetricService {
   /// the user experience.
   Future<void> identifyUser({
     required String profileId,
-    String? firstName,
-    String? lastName,
-    String? email,
-    Map<String, dynamic>? properties,
+    required IdentifyUserPayload payload,
   });
 
   /// Update user agent for device information tracking.
@@ -61,14 +62,31 @@ class MetricServiceImpl implements MetricService {
 
   late OpenPanelSdk _openPanelSdk;
 
+  bool _isInitialized = false;
+
   /// Initialize user agent from device info if available.
   @override
   Future<void> initialize() async {
+    if (_isInitialized) {
+      return;
+    }
+
     _openPanelSdk = OpenPanelSdk(
       clientId: Environment.openPanelClientId,
       clientSecret: Environment.openPanelClientSecret,
       baseUrl: Environment.openPanelApiUrl,
     );
+
+    // identify user
+    final userId = await injector<AuthService>().getOrGenerateUserId();
+    await identifyUser(
+      profileId: userId,
+      payload: IdentifyUserPayload(
+        actorType: ActorType.ffController,
+        actorId: userId,
+      ),
+    );
+    _isInitialized = true;
   }
 
   @override
@@ -76,6 +94,16 @@ class MetricServiceImpl implements MetricService {
     required MetricEvent event,
     Map<String, dynamic>? properties,
   }) async {
+    if (!_isInitialized) {
+      Sentry.captureEvent(SentryEvent(
+        message: SentryMessage(
+          'MetricService not initialized',
+        ),
+        level: SentryLevel.warning,
+      ));
+      return;
+    }
+
     try {
       await _openPanelSdk.track(
         name: event.name,
@@ -108,18 +136,21 @@ class MetricServiceImpl implements MetricService {
   @override
   Future<void> identifyUser({
     required String profileId,
-    String? firstName,
-    String? lastName,
-    String? email,
-    Map<String, dynamic>? properties,
+    required IdentifyUserPayload payload,
   }) async {
     try {
+      if (!_isInitialized) {
+        Sentry.captureEvent(SentryEvent(
+          message: SentryMessage(
+            'MetricService not initialized',
+          ),
+          level: SentryLevel.warning,
+        ));
+        return;
+      }
       await _openPanelSdk.identify(
         profileId: profileId,
-        firstName: firstName,
-        lastName: lastName,
-        email: email,
-        properties: properties,
+        properties: payload.toJson(),
       );
       log.fine('[MetricService] Identified user: $profileId');
     } on DioException catch (e) {
@@ -135,6 +166,15 @@ class MetricServiceImpl implements MetricService {
 
   @override
   void setUserAgent(String? userAgent) {
+    if (!_isInitialized) {
+      Sentry.captureEvent(SentryEvent(
+        message: SentryMessage(
+          'MetricService not initialized',
+        ),
+        level: SentryLevel.warning,
+      ));
+      return;
+    }
     _openPanelSdk.setUserAgent(userAgent);
   }
 }

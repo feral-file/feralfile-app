@@ -15,8 +15,7 @@
     }
    */
 class ViewPLaylistMetricPayload {
-  final ActorType actorType;
-  final String actorId;
+  final String profileId;
   final String envApp;
   final String envAppVersion;
   final String envPlatform;
@@ -29,8 +28,7 @@ class ViewPLaylistMetricPayload {
   final String playlistFeedHost;
 
   ViewPLaylistMetricPayload({
-    required this.actorType,
-    required this.actorId,
+    required this.profileId,
     required this.envApp,
     required this.envAppVersion,
     required this.envPlatform,
@@ -44,8 +42,7 @@ class ViewPLaylistMetricPayload {
   });
 
   Map<String, dynamic> toJson() => {
-        'actor_type': actorType.value,
-        'actor_id': actorId,
+        'profile_id': profileId,
         'env_app': envApp,
         'env_app_version': envAppVersion,
         'env_platform': envPlatform,
@@ -60,15 +57,15 @@ class ViewPLaylistMetricPayload {
 }
 
 enum ActorType {
-  user,
-  device;
+  ff1,
+  ffController;
 
   String get value {
     switch (this) {
-      case ActorType.user:
-        return 'user';
-      case ActorType.device:
-        return 'device';
+      case ActorType.ff1:
+        return 'ff1';
+      case ActorType.ffController:
+        return 'ff-controller';
     }
   }
 }
