@@ -31,7 +31,7 @@ class MetricHelper {
     final playlistUrl = playlist.fullUrl;
     final playlistScope = playlist.type == PlaylistReferenceType.channel
         ? PlaylistScope.feed
-        : PlaylistScope.generated;
+        : PlaylistScope.local;
     final playlistFeedHost = playlist.url.origin;
 
     final playlistKey = '${playlist.playlist.title}|${playlist.playlist.id}';
