@@ -41,12 +41,15 @@ class OpenPanelSdk {
     );
   }
 
+  String? get profileId => _profileId;
+
   final String _clientId;
   final String _clientSecret;
   final String _baseUrl;
   final String? _clientIp;
   final String? _userAgent;
   late final Dio _dio;
+  String? _profileId;
 
   /// Track an event with optional properties.
   ///
@@ -65,6 +68,7 @@ class OpenPanelSdk {
           'type': 'track',
           'payload': {
             'name': name,
+            if (profileId != null) 'profileId': profileId,
             if (properties != null) 'properties': properties,
           },
         },
@@ -102,6 +106,7 @@ class OpenPanelSdk {
           },
         },
       );
+      _profileId = profileId;
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -115,7 +120,6 @@ class OpenPanelSdk {
   ///
   /// Throws [DioException] if the request fails.
   Future<void> increment({
-    required String profileId,
     required String property,
     int value = 1,
   }) async {
@@ -125,7 +129,7 @@ class OpenPanelSdk {
         data: {
           'type': 'increment',
           'payload': {
-            'profileId': profileId,
+            if (profileId != null) 'profileId': profileId,
             'property': property,
             'value': value,
           },
@@ -144,7 +148,6 @@ class OpenPanelSdk {
   ///
   /// Throws [DioException] if the request fails.
   Future<void> decrement({
-    required String profileId,
     required String property,
     int value = 1,
   }) async {
@@ -154,7 +157,7 @@ class OpenPanelSdk {
         data: {
           'type': 'decrement',
           'payload': {
-            'profileId': profileId,
+            if (profileId != null) 'profileId': profileId,
             'property': property,
             'value': value,
           },
