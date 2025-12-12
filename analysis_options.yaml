@@ -1,8 +1,16 @@
 analyzer:
   errors:
     avoid_positional_boolean_parameters: ignore
+  plugins:
+    - custom_lint
 include: package:very_good_analysis/analysis_options.6.0.0.yaml
 linter:
   rules:
     public_member_api_docs: false
     avoid_dynamic_calls: false
+
+# Custom lint rules for typography and spacing
+# Note: Full custom lint implementation to be completed
+# For now, rely on code review to enforce AppTypography and LayoutConstants usage
+custom_lint:
+  rules: []

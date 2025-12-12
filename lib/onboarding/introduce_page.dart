@@ -5,12 +5,13 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/onboarding/add_address_page.dart';
 import 'package:autonomy_flutter/onboarding/debug_overlay.dart';
 import 'package:autonomy_flutter/onboarding/onboarding_shell.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -41,8 +42,6 @@ class IntroducePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return DebugOverlay(
       imagePath: 'assets/images/screenshots/onboarding_introduce_page.png',
       child: Scaffold(
@@ -57,14 +56,14 @@ class IntroducePage extends StatelessWidget {
                 children: [
                   Text(
                     'Explore digital art playlists',
-                    style: theme.textTheme.h3,
+                    style: AppTypography.h2(context).white,
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: LayoutConstants.space5),
                   Text(
                     'Browse curated playlists and channels from Feral File and '
                     'invited collaborators—right on your phone. You don’t need '
                     'any hardware to start exploring.',
-                    style: theme.textTheme.small,
+                    style: AppTypography.body(context).white,
                   ),
                 ],
               ),
@@ -72,11 +71,9 @@ class IntroducePage extends StatelessWidget {
                 children: [
                   Text(
                     'Next',
-                    style: theme.textTheme.body.copyWith(
-                      color: PrimitivesTokens.colorsBlack,
-                    ),
+                    style: AppTypography.body(context).black,
                   ),
-                  const SizedBox(width: 7),
+                  SizedBox(width: LayoutConstants.space2),
                   SvgPicture.asset(
                     'assets/images/Left.svg',
                     colorFilter: const ColorFilter.mode(

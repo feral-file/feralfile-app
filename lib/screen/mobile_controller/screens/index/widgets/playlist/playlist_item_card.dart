@@ -1,4 +1,5 @@
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
@@ -107,16 +108,15 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
                       children: [
                         Text(
                           displayArtist,
-                          style: Theme.of(context).textTheme.ppMori700White12,
+                          style: AppTypography.captionBold(context).white,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
                           title,
                           // italic
-                          style: Theme.of(context)
-                              .textTheme
-                              .ppMori700White12
+                          style: AppTypography.captionBold(context)
+                              .white
                               .copyWith(fontStyle: FontStyle.italic),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

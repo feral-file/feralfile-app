@@ -1,5 +1,6 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
@@ -79,12 +80,12 @@ class PlaylistsPageState extends State<PlaylistsPage>
       physics: const NeverScrollableScrollPhysics(),
       slivers: [
         SliverToBoxAdapter(child: _buildMyPlaylists()),
-        const SliverToBoxAdapter(
-          child: SizedBox(height: 50),
+        SliverToBoxAdapter(
+          child: SizedBox(height: LayoutConstants.space12),
         ),
         SliverToBoxAdapter(child: _buildCuratedPlaylists()),
-        const SliverToBoxAdapter(
-          child: SizedBox(height: 50),
+        SliverToBoxAdapter(
+          child: SizedBox(height: LayoutConstants.space12),
         ),
         // _buildGlobalPlaylists(),
       ],

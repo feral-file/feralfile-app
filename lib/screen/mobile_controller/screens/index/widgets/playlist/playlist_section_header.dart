@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/components/PlaylistSectionHeader.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:flutter/material.dart';
@@ -20,8 +21,6 @@ class PlaylistSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: PlaylistSectionHeaderTokens.paddingHorizontal,
@@ -50,7 +49,7 @@ class PlaylistSectionHeader extends StatelessWidget {
               ),
               Text(
                 sectionName,
-                style: theme.textTheme.ppMori400Grey12,
+                style: AppTypography.caption(context).grey,
               ),
             ],
           ),
@@ -84,7 +83,7 @@ class PlaylistSectionHeader extends StatelessWidget {
                       padding: const EdgeInsets.only(right: 1),
                       child: Text(
                         'All',
-                        style: theme.textTheme.ppMori400Grey12,
+                        style: AppTypography.caption(context).grey,
                       ),
                     ),
                   ],

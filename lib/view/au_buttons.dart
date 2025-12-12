@@ -5,6 +5,8 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/design/app_typography.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +30,7 @@ class AuSecondaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SizedBox(
         width: double.infinity,
-        height: 43,
+        height: LayoutConstants.buttonHeightDefault,
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: backgroundColor ?? Colors.transparent,
@@ -42,10 +44,7 @@ class AuSecondaryButton extends StatelessWidget {
           onPressed: onPressed,
           child: Text(
             text,
-            style: Theme.of(context)
-                .textTheme
-                .ppMori400White14
-                .copyWith(color: textColor),
+            style: AppTypography.body(context).white.copyWith(color: textColor),
           ),
         ),
       );
@@ -61,7 +60,7 @@ class AuCustomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SizedBox(
         width: double.infinity,
-        height: 43,
+        height: LayoutConstants.buttonHeightDefault,
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColor.white,

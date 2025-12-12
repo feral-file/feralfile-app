@@ -6,7 +6,9 @@
 //
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/onboarding/introduce_page.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/check_bluetooth_state.dart';
@@ -61,7 +63,7 @@ class _StartSetupFf1PageState extends State<StartSetupFf1Page> {
                 const SizedBox(height: 64.48),
                 _HeroIllustration(),
                 const SizedBox(height: 64.48),
-                _BodyCopy(theme: Theme.of(context)),
+                const _BodyCopy(),
                 const Spacer(),
                 const SizedBox(height: 32),
                 const SizedBox(height: 16),
@@ -142,9 +144,7 @@ class _HeroIllustration extends StatelessWidget {
 }
 
 class _BodyCopy extends StatelessWidget {
-  const _BodyCopy({required this.theme});
-
-  final ThemeData theme;
+  const _BodyCopy();
 
   @override
   Widget build(BuildContext context) {
@@ -153,7 +153,7 @@ class _BodyCopy extends StatelessWidget {
       children: [
         Text(
           'Welcome to FF1',
-          style: theme.textTheme.h3,
+          style: AppTypography.h2(context).white,
         ),
         const SizedBox(height: 20),
         Text(
@@ -163,7 +163,7 @@ class _BodyCopy extends StatelessWidget {
           'and part of your everyday life. As an early adopter, your '
           'experience will help us understand how FF1 fits into real spaces '
           'and routines—and where we should take it next.',
-          style: theme.textTheme.small,
+          style: AppTypography.body(context).white,
         ),
       ],
     );
@@ -190,9 +190,7 @@ class _StartButton extends StatelessWidget {
         children: [
           Text(
             text,
-            style: Theme.of(context).textTheme.body.copyWith(
-                  color: PrimitivesTokens.colorsBlack,
-                ),
+            style: AppTypography.body(context).black,
           ),
         ],
       ),
