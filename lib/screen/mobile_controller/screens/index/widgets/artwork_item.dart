@@ -45,12 +45,14 @@ class DP1ItemThumbnail extends StatelessWidget {
       return const GalleryNoThumbnailWidget();
     }
 
-    return FFArtworkThumbnailView(
+    return LayoutBuilder(builder: (context, constraints) {
+      return FFArtworkThumbnailView(
       url: thumbnailUri,
       fit: BoxFit.contain,
-      cacheWidth: ArtworkItemTokens.imageWidth.toInt(),
-      cacheHeight: ArtworkItemTokens.imageHeight.toInt(),
+      cacheWidth: constraints.maxWidth.toInt(),
+      cacheHeight: constraints.maxHeight.toInt(),
       onTap: onTap,
     );
+    });
   }
 }

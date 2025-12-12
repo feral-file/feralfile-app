@@ -36,8 +36,10 @@ class DioManager {
           log.info('[DioManager] App to foreground: adapters reset');
         } else if (event == FGBGType.background) {
           markAppBackground();
-          resetHttpAdapters();
-          log.info('[DioManager] App to background');
+          // Don't reset adapters when going to background to avoid creating
+          // too many background tasks on iOS. SafeDio will block new requests
+          // and existing connections will complete naturally.
+          log.info('[DioManager] App to background - blocking new requests');
         }
       });
     } catch (_) {

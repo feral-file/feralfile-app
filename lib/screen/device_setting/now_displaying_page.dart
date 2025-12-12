@@ -317,7 +317,6 @@ class _DP1NowDisplayingState extends State<DP1NowDisplaying> {
   Widget _tokenPreview(
       BuildContext context, DP1NowDisplayingItem nowDisplayingItem) {
     final thumbnail = nowDisplayingItem.thumbnail;
-    final screenWidth = MediaQuery.of(context).size.width;
     return ColoredBox(
       color: AppColor.auGreyBackground,
       child: Column(
@@ -325,8 +324,14 @@ class _DP1NowDisplayingState extends State<DP1NowDisplaying> {
           Container(
             padding: const EdgeInsets.all(16),
             child: (thumbnail != null)
-                ? FFArtworkThumbnailView(
-                    url: thumbnail.uri,
+                ? LayoutBuilder(
+                    builder: (context, constraints) {
+                      return FFArtworkThumbnailView(
+                        url: thumbnail.uri,
+                        cacheWidth: constraints.maxWidth.toInt(),
+                        cacheHeight: constraints.maxHeight.toInt(),
+                      );
+                    },
                   )
                 : const GalleryNoThumbnailWidget(),
           ),

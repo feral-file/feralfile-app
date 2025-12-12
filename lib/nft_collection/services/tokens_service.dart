@@ -77,6 +77,12 @@ abstract class NftTokensService {
   });
 
   Future<void> purgeCachedGallery();
+
+  /// Pause all polling timers when app goes to background
+  void pausePollingTimers();
+
+  /// Resume all polling timers when app comes to foreground
+  void resumePollingTimers();
 }
 
 final _isolateScopeInjector = GetIt.asNewInstance();
@@ -125,6 +131,8 @@ class NftTokensServiceImpl extends NftTokensService {
   // Track running reindex operations by token CIDs key (deduplication)
   final Map<String, Completer<void>> _reindexCidsAndPullCompleters = {};
   final Map<String, Timer> _reindexCidsAndPullTimers = {};
+  // Flag to pause polling when app is in background
+  bool _isPollingPaused = false;
 
   Future<void> get isolateReady => _isolateReady.future;
 
@@ -232,6 +240,20 @@ class NftTokensServiceImpl extends NftTokensService {
     await _configurationService.setDidSyncAddress(false);
     _database.clearAll();
     await injector<ConfigurationService>().clearAddressLastFetchTokenTime();
+  }
+
+  @override
+  void pausePollingTimers() {
+    _isPollingPaused = true;
+    NftCollection.logger
+        .info('[TokensService] Pausing polling timers (app in background)');
+  }
+
+  @override
+  void resumePollingTimers() {
+    _isPollingPaused = false;
+    NftCollection.logger
+        .info('[TokensService] Resuming polling timers (app in foreground)');
   }
 
   @override
@@ -417,6 +439,11 @@ class NftTokensServiceImpl extends NftTokensService {
           const Duration(seconds: 15),
           (timer) async {
             try {
+              // Skip polling if paused (app is in background)
+              if (_isPollingPaused) {
+                return;
+              }
+
               // Check timeout
               if (DateTime.now().difference(startedAt) > timeout) {
                 timer.cancel();
@@ -537,6 +564,11 @@ class NftTokensServiceImpl extends NftTokensService {
         const Duration(seconds: 15),
         (timer) async {
           try {
+            // Skip polling if paused (app is in background)
+            if (_isPollingPaused) {
+              return;
+            }
+
             // Check timeout
             if (DateTime.now().difference(startedAt) > timeout) {
               timer.cancel();

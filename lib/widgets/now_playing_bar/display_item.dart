@@ -138,10 +138,12 @@ class DisplayItem extends StatelessWidget {
     if (thumbnail == null) {
       return const GalleryNoThumbnailWidget();
     }
-    return FFArtworkThumbnailView(
-      url: thumbnail.uri,
-      cacheWidth: DisplayItemTokens.thumbImageWidth.toInt(),
-      cacheHeight: DisplayItemTokens.thumbImageHeight,
-    );
+    return LayoutBuilder(builder: (context, constraints) {
+      return FFArtworkThumbnailView(
+        url: thumbnail.uri,
+        cacheWidth: constraints.maxWidth.toInt(),
+        cacheHeight: constraints.maxHeight.toInt(),
+      );
+    });
   }
 }
