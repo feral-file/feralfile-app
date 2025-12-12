@@ -4,7 +4,6 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/model/token.dart';
-import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_bloc.dart';
@@ -22,7 +21,6 @@ import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:autonomy_flutter/view/ff_artwork_thumbnail_view.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
-import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -328,8 +326,8 @@ class _DP1NowDisplayingState extends State<DP1NowDisplaying> {
                     builder: (context, constraints) {
                       return FFArtworkThumbnailView(
                         url: thumbnail.uri,
-                        cacheWidth: constraints.maxWidth.toInt(),
-                        cacheHeight: constraints.maxHeight.toInt(),
+                        // cacheWidth: constraints.maxWidth.toInt(),
+                        // cacheHeight: constraints.maxHeight.toInt(),
                       );
                     },
                   )
