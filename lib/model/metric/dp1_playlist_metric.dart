@@ -78,14 +78,14 @@ enum ActorType {
 
 enum PlaylistScope {
   feed,
-  generated;
+  local;
 
   String get value {
     switch (this) {
       case PlaylistScope.feed:
         return 'feed';
-      case PlaylistScope.generated:
-        return 'generated';
+      case PlaylistScope.local:
+        return 'local';
     }
   }
 }
