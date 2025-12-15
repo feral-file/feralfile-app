@@ -10,9 +10,9 @@ import Foundation
 struct Constant {
     static var appname: String {
         if isInhouse() {
-            return "Feral File (Dev)"
+            return "Feral File (Dev)(Legacy)"
         } else {
-            return "Feral File"
+            return "Feral File (Legacy)"
         }
     }
 
@@ -23,7 +23,7 @@ struct Constant {
             return "Z5CE7A3A7N.com.bitmark.autonomywallet.keychain"
         }
     }
-    
+
     static let deviceIDKey: String = "device_id_key"
 
     static let secureMainBundleIdentifiers: Set<String> = [
@@ -35,7 +35,7 @@ struct Constant {
         let bundleIdentifier = Bundle.main.bundleIdentifier ?? "Unknown"
         return bundleIdentifier.contains("inhouse")
     }
-    
+
 
     struct KeychainKey {
         static func personaPrefix(at uuid: UUID) -> String {
