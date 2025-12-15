@@ -170,7 +170,7 @@ class AutonomyApp extends StatelessWidget {
               SentryNavigatorObserver(),
               HeroController(),
             ],
-            initialRoute: AppRouter.onboardingPage,
+            initialRoute: AppRouter.sunsetPage,
             onGenerateRoute: AppRouter.onGenerateRoute,
             builder: (context, child) => SafeArea(
               top: false,
