@@ -1,4 +1,5 @@
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
@@ -157,8 +158,8 @@ class PlaylistsPageState extends State<PlaylistsPage>
       sectionName: playlistType.name,
       sectionIcon: SvgPicture.asset(
         playlistType.icon,
-        width: 12,
-        height: 12,
+        width: LayoutConstants.iconSizeDefault,
+        height: LayoutConstants.iconSizeDefault,
         colorFilter: const ColorFilter.mode(
           PrimitivesTokens.colorsGrey,
           BlendMode.srcIn,
@@ -266,7 +267,7 @@ class PlaylistsPageState extends State<PlaylistsPage>
               const SizedBox(width: 12),
               Text(
                 'Delete',
-                style: Theme.of(context).textTheme.ppMori400White12,
+                style: AppTypography.bodySmall(context).white,
               ),
             ],
           ),

@@ -3,7 +3,17 @@ import 'dart:collection';
 import 'dart:math';
 
 import 'package:after_layout/after_layout.dart';
+import 'package:collection/collection.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_rendering/nft_rendering_widget.dart';
 import 'package:autonomy_flutter/screen/detail/royalty/royalty_bloc.dart';
@@ -20,14 +30,6 @@ import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/ff_artwork_thumbnail_view.dart';
 import 'package:autonomy_flutter/view/loading.dart';
-import 'package:collection/collection.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:shimmer/shimmer.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 // String getEditionSubTitle(AssetToken token) {
 //   if (token.editionName != null && token.editionName != '') {
@@ -349,7 +351,6 @@ class BrokenTokenWidget extends StatefulWidget {
 
 class _BrokenTokenWidgetState extends State<BrokenTokenWidget>
     with AfterLayoutMixin<BrokenTokenWidget> {
-
   @override
   void afterFirstLayout(BuildContext context) {}
 
@@ -386,8 +387,7 @@ class _BrokenTokenWidgetState extends State<BrokenTokenWidget>
                   },
                   child: Text(
                     'reload'.tr(),
-                    style: theme.textTheme.ppMori400Black12
-                        .copyWith(color: AppColor.feralFileHighlight),
+                    style: AppTypography.bodySmall(context).highlight,
                   ),
                 ),
               ],
@@ -565,7 +565,7 @@ class _SectionExpandedWidgetState extends State<SectionExpandedWidget> {
                         Text(
                           widget.header ?? '',
                           style: widget.headerStyle ??
-                              theme.textTheme.ppMori400White14,
+                              AppTypography.body(context).white,
                         ),
                         const Spacer(),
                         if (_isExpanded)
@@ -724,7 +724,7 @@ class CustomMetaDataItem extends StatelessWidget {
           flex: 2,
           child: Text(
             title,
-            style: titleStyle ?? theme.textTheme.ppMori400Grey14,
+            style: titleStyle ?? AppTypography.body(context).grey,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
@@ -779,7 +779,7 @@ class MetaDataItem extends StatelessWidget {
           flex: 2,
           child: Text(
             title,
-            style: titleStyle ?? theme.textTheme.ppMori400Grey12,
+            style: titleStyle ?? AppTypography.bodySmall(context).grey,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
@@ -793,8 +793,8 @@ class MetaDataItem extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               maxLines: 3,
               style: onValueTap != null
-                  ? linkStyle ?? theme.textTheme.ppMori400FFYellow12
-                  : valueStyle ?? theme.textTheme.ppMori400White12,
+                  ? linkStyle ?? AppTypography.bodySmall(context).highlight
+                  : valueStyle ?? AppTypography.bodySmall(context).white,
             ),
           ),
         ),
@@ -844,7 +844,7 @@ class ProvenanceItem extends StatelessWidget {
             onTap: onNameTap,
             child: Text(
               title,
-              style: theme.textTheme.ppMori400White12,
+              style: AppTypography.bodySmall(context).white,
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
             ),
@@ -856,7 +856,7 @@ class ProvenanceItem extends StatelessWidget {
             value,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
-            style: theme.textTheme.ppMori400White12,
+            style: AppTypography.bodySmall(context).white,
           ),
         ),
         Expanded(
@@ -877,7 +877,7 @@ class ProvenanceItem extends StatelessWidget {
                   child: Text(
                     'view'.tr(),
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.ppMori400FFYellow12,
+                    style: AppTypography.bodySmall(context).highlight,
                   ),
                 ),
               ),
@@ -1063,11 +1063,9 @@ class ArtworkDetailsHeader extends StatelessWidget {
           },
           child: Text(
             title,
-            style: theme.textTheme.ppMori400White14.copyWith(
-              color: color ?? AppColor.white,
-              fontWeight: FontWeight.w700,
-              fontStyle: FontStyle.italic,
-            ),
+            style: AppTypography.body(context).white.bold.italic.copyWith(
+                  color: color,
+                ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -1107,7 +1105,7 @@ class _DrawerItemState extends State<DrawerItem> {
     final theme = Theme.of(context);
     final item = widget.item;
     final color = widget.color;
-    final defaultTextStyle = theme.textTheme.ppMori400Black12;
+    final defaultTextStyle = AppTypography.bodySmall(context).black;
     final customTextStyle = defaultTextStyle.copyWith(color: color);
     final defaultProcessingTextStyle =
         defaultTextStyle.copyWith(color: AppColor.disabledColor);

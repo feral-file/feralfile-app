@@ -5,6 +5,7 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
@@ -134,13 +135,13 @@ class AuTextField extends StatelessWidget {
           hintText: placeholder,
           hintMaxLines: hintMaxLines,
           hintStyle: ResponsiveLayout.isMobile
-              ? theme.textTheme.ppMori400Black14
+              ? AppTypography.body(context).black
                   .copyWith(color: AppColor.auQuickSilver)
               : theme.textTheme.ppMori400Black16
                   .copyWith(color: AppColor.auQuickSilver, fontSize: 20),
         ),
         keyboardType: keyboardType,
-        style: theme.textTheme.ppMori400Black14.copyWith(
+        style: AppTypography.body(context).black.copyWith(
             color: isError
                 ? AppColor.red
                 : isDark

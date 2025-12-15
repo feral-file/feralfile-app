@@ -8,7 +8,6 @@
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:flutter/material.dart';
 
 class AuSecondaryButton extends StatelessWidget {
@@ -44,7 +43,7 @@ class AuSecondaryButton extends StatelessWidget {
           onPressed: onPressed,
           child: Text(
             text,
-            style: AppTypography.body(context).white.copyWith(color: textColor),
+            style: AppTypography.body(context).copyWith(color: textColor),
           ),
         ),
       );

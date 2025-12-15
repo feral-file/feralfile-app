@@ -18,6 +18,7 @@ import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -109,7 +110,7 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                       children: [
                         Text(
                           widget.payload.wifiAccessPoint.ssid,
-                          style: theme.textTheme.ppMori400White12,
+                          style: AppTypography.body(context).white,
                         ),
                         const SizedBox(
                           height: 16,
@@ -117,7 +118,7 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                         PasswordTextField(
                           controller: passwordController,
                           focusNode: _passwordFocusNode,
-                          style: Theme.of(context).textTheme.ppMori400White12,
+                          style: AppTypography.bodySmall(context).white,
                           hintText: 'password'.tr(),
                           defaultObscure: false,
                           isEnabled: !_isProcessing,

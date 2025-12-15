@@ -35,7 +35,7 @@
 //     if (predefinedCollection.name == predefinedCollection.id) {
 //       title = title.maskOnly(5);
 //     }
-//     final titleStyle = theme.textTheme.ppMori400White14;
+//     final titleStyle = AppTypography.body(context).white;
 //     return GestureDetector(
 //       onTap: () async {
 //         await Navigator.pushNamed(
@@ -67,7 +67,7 @@
 //                 ),
 //               ),
 //               Text('${predefinedCollection.total}',
-//                   style: theme.textTheme.ppMori400Grey14),
+//                   style: AppTypography.body(context).grey),
 //             ],
 //           ),
 //         ),

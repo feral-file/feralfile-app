@@ -1,5 +1,6 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
@@ -554,7 +555,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
   }
 
   Widget _help(BuildContext context) {
-    final textStyle = Theme.of(context).textTheme.ppMori400White12;
+    final textStyle = AppTypography.bodySmall(context).white;
     return GestureDetector(
       onTap: () {
         tooltipController.showTooltip();

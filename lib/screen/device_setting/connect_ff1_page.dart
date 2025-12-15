@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/error/bluetooth_response_error.dart';
 import 'package:autonomy_flutter/model/pair.dart';
@@ -321,7 +322,7 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
                           const SizedBox(height: 20),
                           Text(
                             _bodyText.tr(),
-                            style: theme.textTheme.small,
+                            style: AppTypography.body(context).white,
                           ),
                         ],
                       ),

@@ -6,6 +6,7 @@
 //
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/onboarding/onboarding_shell.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
@@ -50,10 +51,10 @@ class OnboardingSetupFf1Page extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'When you’re ready to see these playlists on a wall, plug FF1 into '
+                  'When you\'re ready to see these playlists on a wall, plug FF1 into '
                   'any HDMI display and pair it with the app. Press Play and your '
                   'screen becomes a surface for digital and computational art.',
-                  style: theme.textTheme.small,
+                  style: AppTypography.body(context).white,
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
@@ -61,10 +62,7 @@ class OnboardingSetupFf1Page extends StatelessWidget {
                   behavior: HitTestBehavior.opaque,
                   child: Text(
                     'Learn more about the FF1 Art Computer',
-                    style: theme.textTheme.small.copyWith(
-                      color: PrimitivesTokens.colorsGrey,
-                      decoration: TextDecoration.underline,
-                    ),
+                    style: AppTypography.body(context).grey.underline,
                   ),
                 ),
               ],

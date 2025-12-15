@@ -7,6 +7,7 @@
 
 import 'dart:async';
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
@@ -66,7 +67,7 @@ Widget accountItem(
                 child: SelectionArea(
                   child: Text(
                     address.address,
-                    style: theme.textTheme.ppMori400Black14,
+                    style: AppTypography.body(context).black,
                     key: const Key('fullAccount_address'),
                   ),
                 ),

@@ -7,6 +7,7 @@
 
 import 'dart:async';
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
@@ -75,7 +76,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
                         bottomWidget: Text(
                           'clear_cache'.tr(),
                           style: ResponsiveLayout.isMobile
-                              ? theme.textTheme.ppMori400Black14
+                              ? AppTypography.body(context).black
                               : theme.textTheme.ppMori400Black16,
                         ),
                         onTap: _showRebuildGalleryDialog,
@@ -94,7 +95,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
                         bottomWidget: Text(
                           'erase_all'.tr(),
                           style: ResponsiveLayout.isMobile
-                              ? theme.textTheme.ppMori400Black14
+                              ? AppTypography.body(context).black
                               : theme.textTheme.ppMori400Black16,
                         ),
                         onTap: _showForgetIExistDialog,

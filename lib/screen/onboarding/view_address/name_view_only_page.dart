@@ -7,11 +7,11 @@
 
 import 'dart:async';
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/view/au_text_field.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
@@ -87,7 +87,7 @@ class _NameViewOnlyAddressPageState extends State<NameViewOnlyAddressPage> {
                       addTitleSpace(),
                       Text(
                         'aa_you_can_add'.tr(),
-                        style: theme.textTheme.ppMori400Black14,
+                        style: AppTypography.body(context).black,
                       ),
                       const SizedBox(height: 15),
                       AuTextField(

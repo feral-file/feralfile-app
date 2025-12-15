@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:after_layout/after_layout.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_rendering/feralfile_webview.dart';
@@ -160,7 +161,7 @@ class _PreviewPrimerPageState extends State<PreviewPrimerPage>
                                     'by'.tr(args: [artistName]),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
-                                    style: theme.textTheme.ppMori400White14,
+                                    style: AppTypography.body(context).white,
                                   ),
                                 ),
                               ],

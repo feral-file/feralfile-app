@@ -5,6 +5,7 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/app_theme.dart';
 import 'package:autonomy_flutter/theme/extensions/color_extension.dart';
@@ -111,7 +112,7 @@ MarkdownStyleSheet markDownStyle(BuildContext context, Color textColor) {
 
 MarkdownStyleSheet markDownRightStyle(BuildContext context) {
   final theme = Theme.of(context);
-  final bodyText2 = theme.textTheme.ppMori400White12;
+  final bodyText2 = AppTypography.bodySmall(context).white;
   return MarkdownStyleSheet(
     a: bodyText2.copyWith(
       color: AppColor.feralFileHighlight,
@@ -176,8 +177,8 @@ MarkdownStyleSheet markDownRightStyle(BuildContext context) {
 
 MarkdownStyleSheet markDownPostcardRightStyle(BuildContext context) {
   final theme = Theme.of(context);
-  final baseStyle = theme.textTheme.ppMori400Black12;
-  final bodyText2 = theme.textTheme.ppMori400Black14;
+  final baseStyle = AppTypography.bodySmall(context).black;
+  final bodyText2 = AppTypography.body(context).black;
   return MarkdownStyleSheet(
     a: baseStyle.copyWith(
       color: Colors.transparent,
@@ -249,7 +250,7 @@ MarkdownStyleSheet markDownPostcardRightStyle(BuildContext context) {
 
 MarkdownStyleSheet markDownAnnouncementStyle(BuildContext context) {
   final theme = Theme.of(context);
-  final bodyText2 = theme.textTheme.ppMori400White12;
+  final bodyText2 = AppTypography.bodySmall(context).white;
   return MarkdownStyleSheet(
     a: const TextStyle(
       fontFamily: AppTheme.ppMori,
@@ -257,7 +258,7 @@ MarkdownStyleSheet markDownAnnouncementStyle(BuildContext context) {
       fontWeight: FontWeight.w400,
       fontSize: 14,
     ),
-    p: theme.textTheme.ppMori400Black14,
+    p: AppTypography.body(context).black,
     pPadding: EdgeInsets.zero,
     code: bodyText2.copyWith(backgroundColor: Colors.transparent),
     h1: theme.textTheme.ppMori700Black14,
@@ -390,7 +391,7 @@ MarkdownStyleSheet markDownChangeLogStyle(BuildContext context) {
   const textColor = AppColor.primaryBlack;
   final theme = Theme.of(context);
   final textStyleBody = theme.textTheme.ppMori400Black16;
-  final textStyleGrey = theme.textTheme.ppMori400Grey12;
+  final textStyleGrey = AppTypography.bodySmall(context).grey;
   return MarkdownStyleSheet(
     a: const TextStyle(
       fontFamily: AppTheme.ppMori,
@@ -458,7 +459,7 @@ MarkdownStyleSheet markDownChangeLogStyle(BuildContext context) {
 
 MarkdownStyleSheet markDownStyleTipCard(BuildContext context) {
   final theme = Theme.of(context);
-  final bodyText2 = theme.textTheme.ppMori400Black14.copyWith(height: 1.7);
+  final bodyText2 = AppTypography.body(context).black.copyWith(height: 1.7);
   return MarkdownStyleSheet(
     a: const TextStyle(
       fontFamily: AppTheme.ppMori,

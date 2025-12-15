@@ -8,6 +8,7 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/onboarding/add_address_input_page.dart';
@@ -92,7 +93,7 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
                     'Add your Ethereum and Tezos addresses to pull in the works you '
                     'collect. Use the app as a clear lens on your digital collection, '
                     'even before you connect a device.',
-                    style: theme.textTheme.small,
+                    style: AppTypography.body(context).white,
                   ),
                   const SizedBox(height: 20),
                   _AddressList(theme: theme, onDelete: onDelete),
@@ -239,8 +240,6 @@ class _AddressRow extends StatelessWidget {
   final void Function(WalletAddress) onDelete;
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Container(
       padding: EdgeInsets.zero,
       decoration: const BoxDecoration(
@@ -257,9 +256,7 @@ class _AddressRow extends StatelessWidget {
               padding: const EdgeInsets.only(top: 11, bottom: 12),
               child: Text(
                 address.name,
-                style: theme.textTheme.small.copyWith(
-                  color: PrimitivesTokens.colorsGrey,
-                ),
+                style: AppTypography.body(context).grey,
                 overflow: TextOverflow.ellipsis,
               ),
             ),

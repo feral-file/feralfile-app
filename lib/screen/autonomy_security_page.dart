@@ -7,7 +7,7 @@
 
 import 'dart:io';
 
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
@@ -27,8 +27,6 @@ class AutonomySecurityPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: getCloseAppBar(
         context,
@@ -42,7 +40,7 @@ class AutonomySecurityPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               addTitleSpace(),
-              Text(securityContent, style: theme.textTheme.ppMori400Black14),
+              Text(securityContent, style: AppTypography.body(context).black),
             ],
           ),
         ),

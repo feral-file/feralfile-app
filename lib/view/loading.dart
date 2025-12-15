@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
@@ -50,8 +51,8 @@ class LoadingWidget extends StatelessWidget {
               Text(
                 text ?? 'loading'.tr(),
                 style: ResponsiveLayout.isMobile
-                    ? theme.textTheme.ppMori400White12
-                    : theme.textTheme.ppMori400White14,
+                    ? AppTypography.bodySmall(context).white
+                    : AppTypography.body(context).white,
               )
             ]
           ],

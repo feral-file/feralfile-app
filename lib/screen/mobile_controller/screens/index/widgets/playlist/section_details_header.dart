@@ -1,4 +1,6 @@
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:flutter/material.dart';
 
 /// Playlist Details Header - Displays playlist info with icon, title badge, and description
@@ -43,14 +45,14 @@ class SectionDetailsHeader extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         SizedBox(
-                          width: 12,
-                          height: 12,
+                          width: LayoutConstants.iconSizeDefault,
+                          height: LayoutConstants.iconSizeDefault,
                           child: icon,
                         ),
                         const SizedBox(width: 12),
                         Text(
                           title,
-                          style: theme.textTheme.ppMori400White12,
+                          style: AppTypography.h4(context).white,
                         ),
                       ],
                     ),
@@ -60,7 +62,7 @@ class SectionDetailsHeader extends StatelessWidget {
                     description,
                     maxLines: 4,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.ppMori400Grey12,
+                    style: AppTypography.bodySmall(context).grey,
                   ),
                 ],
               ),

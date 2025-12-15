@@ -6,6 +6,7 @@
 //
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/onboarding/onboarding_add_address_bloc.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
@@ -117,7 +118,7 @@ class _OnboardingAddAddressInputPageState
                               isCollapsed: true,
                               border: InputBorder.none,
                               hintText: 'Address or ENS / Tezos domain',
-                              hintStyle: theme.textTheme.ppMori400White14,
+                              hintStyle: AppTypography.body(context).white,
                             ),
                             onSubmitted: state.isSubmitting
                                 ? null
@@ -173,9 +174,7 @@ class _OnboardingAddAddressInputPageState
                         if (state.error != null) {
                           return Text(
                             "We couldn't validate this address. Check it and try again.",
-                            style: theme.textTheme.small.copyWith(
-                              color: AppColor.red,
-                            ),
+                            style: AppTypography.body(context).red,
                           );
                         }
                         return const SizedBox.shrink();

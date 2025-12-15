@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -75,7 +76,7 @@ class DailyProgressBar extends StatelessWidget {
         const SizedBox(width: 32),
         Text(
           _nextDailyDurationText(remainingDuration),
-          style: Theme.of(context).textTheme.ppMori400Grey12,
+          style: AppTypography.bodySmall(context).grey,
         ),
       ],
     );

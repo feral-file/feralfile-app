@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_svg/flutter_svg.dart';
@@ -71,13 +71,13 @@ class _CustomChatInputWidgetState extends State<CustomChatInputWidget> {
               // enabled: !widget.isProcessing, // Remove this line to enable input
               decoration: InputDecoration(
                 hintText: 'Ask me to display art',
-                hintStyle: theme.textTheme.ppMori400White12.copyWith(
+                hintStyle: AppTypography.body(context).white.copyWith(
                     color: AppColor.auQuickSilver), // Keep hint color normal
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
               ),
-              style: theme.textTheme.ppMori400White12,
+              style: AppTypography.body(context).white,
               cursorColor: theme.colorScheme.secondary,
               keyboardType: TextInputType.text,
               textInputAction: TextInputAction.send,

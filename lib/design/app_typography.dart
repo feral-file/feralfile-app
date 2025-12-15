@@ -22,6 +22,7 @@ class AppTypography {
   static final double _h1Size = TypographyTokens.h1FontSize.toDouble();
   static final double _h2Size = TypographyTokens.h2FontSize.toDouble();
   static final double _h3Size = TypographyTokens.h3FontSize.toDouble();
+  static final double _h4Size = TypographyTokens.h4FontSize.toDouble();
   static final double _bodySize = TypographyTokens.bodyFontSize.toDouble();
   static final double _bodySmallSize =
       TypographyTokens.bodySmallFontSize.toDouble();
@@ -70,6 +71,18 @@ class AppTypography {
     return TextStyle(
       fontFamily: ppMori,
       fontSize: _h3Size * scale,
+      fontWeight: FontWeight.w700,
+      height: 1.25,
+      letterSpacing: 0,
+    );
+  }
+
+  /// H4 (16px) - Card titles, component headers
+  static TextStyle h4(BuildContext context) {
+    final scale = _textScaleFactor(context);
+    return TextStyle(
+      fontFamily: ppMori,
+      fontSize: _h4Size * scale,
       fontWeight: FontWeight.w700,
       height: 1.25,
       letterSpacing: 0,
@@ -181,6 +194,21 @@ extension TypographyColors on TextStyle {
   TextStyle get black => copyWith(color: const Color(0xFF000000));
   TextStyle get white => copyWith(color: const Color(0xFFFFFFFF));
   TextStyle get grey => copyWith(color: const Color(0xFFA0A0A0));
+  TextStyle get inactive => copyWith(color: const Color(0xFF999999));
   TextStyle get highlight => copyWith(color: const Color(0xFFECFF0C));
+  TextStyle get red => copyWith(color: const Color(0xFFA1200A));
 }
 
+extension TypographyFontStyle on TextStyle {
+  TextStyle get italic => copyWith(fontStyle: FontStyle.italic);
+}
+
+extension TypographyFontWeight on TextStyle {
+  TextStyle get bold => copyWith(fontWeight: FontWeight.w700);
+  TextStyle get regular => copyWith(fontWeight: FontWeight.w400);
+}
+
+//decorations
+extension TypographyDecorations on TextStyle {
+  TextStyle get underline => copyWith(decoration: TextDecoration.underline);
+}

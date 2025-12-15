@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/components/PlaylistListItem.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:flutter/material.dart';
@@ -37,13 +38,13 @@ class PlaylistTitle extends StatelessWidget {
                 children: [
                   Text(
                     primaryText,
-                    style: theme.textTheme.small,
+                    style: AppTypography.body(context).bold.white,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     secondaryText,
-                    style: theme.textTheme.ppMori400Grey12,
+                    style: AppTypography.bodySmall(context).italic.grey,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

@@ -7,6 +7,7 @@
 
 import 'dart:async';
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/main.dart';
@@ -201,10 +202,9 @@ class _SettingsPageState extends State<SettingsPage>
             GestureDetector(
               child: Text(
                 'eula'.tr(),
-                style: theme.textTheme.ppMori400Grey12.copyWith(
-                  decoration: TextDecoration.underline,
-                  decorationColor: AppColor.disabledColor,
-                ),
+                style: AppTypography.bodySmall(context).grey.underline.copyWith(
+                      decorationColor: AppColor.disabledColor,
+                    ),
               ),
               onTap: () async => Navigator.of(context).pushNamed(
                 AppRouter.githubDocPage,
@@ -218,15 +218,14 @@ class _SettingsPageState extends State<SettingsPage>
             ),
             Text(
               " ${'_and'.tr()} ",
-              style: theme.textTheme.ppMori400Grey12,
+              style: AppTypography.bodySmall(context).grey,
             ),
             GestureDetector(
               child: Text(
                 'privacy_policy'.tr(),
-                style: theme.textTheme.ppMori400Grey12.copyWith(
-                  decoration: TextDecoration.underline,
-                  decorationColor: AppColor.disabledColor,
-                ),
+                style: AppTypography.bodySmall(context).grey.underline.copyWith(
+                      decorationColor: AppColor.disabledColor,
+                    ),
               ),
               onTap: () async => Navigator.of(context).pushNamed(
                 AppRouter.githubDocPage,
@@ -257,7 +256,7 @@ class _SettingsPageState extends State<SettingsPage>
                   },
                 ),
                 key: const Key('version'),
-                style: theme.textTheme.ppMori400Grey14,
+                style: AppTypography.body(context).grey,
               ),
             ),
           ),
@@ -294,7 +293,7 @@ class _SettingsPageState extends State<SettingsPage>
               child: isLatestVersion
                   ? Text(
                       'up_to_date'.tr(),
-                      style: theme.textTheme.ppMori400Grey12,
+                      style: AppTypography.bodySmall(context).grey,
                     )
                   : Text(
                       'update_to_the_latest_version'.tr(),

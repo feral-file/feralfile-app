@@ -22,6 +22,6 @@ class PlaylistListItemTokens {
   static const textGap = 4.0;
 
   // Typography - Uses predefined text styles from theme
-  // Primary text: theme.textTheme.ppMori400White12
-  // Secondary text: theme.textTheme.ppMori400Grey12
+  // Primary text: AppTypography.small(context).white
+  // Secondary text: AppTypography.bodySmall(context).grey
 }

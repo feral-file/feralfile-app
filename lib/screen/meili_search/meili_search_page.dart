@@ -22,6 +22,7 @@ import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/dp1_playlist_grid_view.dart';
 import 'package:autonomy_flutter/view/loading.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -110,7 +111,7 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
 
   Widget _searchEmptyView(BuildContext context) {
     final theme = Theme.of(context);
-    final textStyle = theme.textTheme.ppMori400White12;
+    final textStyle = AppTypography.body(context).white;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Column(

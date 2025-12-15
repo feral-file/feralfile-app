@@ -2,7 +2,17 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:after_layout/after_layout.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_fgbg/flutter_fgbg.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sentry/sentry.dart';
+
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
@@ -36,14 +46,6 @@ import 'package:autonomy_flutter/view/loading.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/view/tappable_forward_row.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_fgbg/flutter_fgbg.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:sentry/sentry.dart';
 
 enum ScreenOrientation {
   landscape,
@@ -723,7 +725,7 @@ class BluetoothConnectedDeviceConfigState
         Expanded(
           child: Text(
             title,
-            style: theme.textTheme.ppMori400Grey14,
+            style: AppTypography.body(context).grey,
           ),
         ),
         const SizedBox(width: 8),
@@ -762,7 +764,7 @@ class BluetoothConnectedDeviceConfigState
                 Expanded(
                   child: Text(
                     'Device Information',
-                    style: theme.textTheme.ppMori400White14,
+                    style: AppTypography.body(context).white,
                   ),
                 ),
               ],
@@ -803,7 +805,7 @@ class BluetoothConnectedDeviceConfigState
                             isBLEDeviceConnected
                                 ? 'Connected'
                                 : 'Device not connected',
-                            style: theme.textTheme.ppMori400White14,
+                            style: AppTypography.body(context).white,
                           ),
                         ),
                       ],
@@ -822,11 +824,11 @@ class BluetoothConnectedDeviceConfigState
                         Expanded(
                           child: Text(
                             deviceId,
-                            style: theme.textTheme.ppMori400White14.copyWith(
-                              color: isBLEDeviceConnected
-                                  ? AppColor.white
-                                  : AppColor.disabledColor,
-                            ),
+                            style: AppTypography.body(context).white.copyWith(
+                                  color: isBLEDeviceConnected
+                                      ? AppColor.white
+                                      : AppColor.disabledColor,
+                                ),
                           ),
                         ),
                         _copyButton(
@@ -843,11 +845,11 @@ class BluetoothConnectedDeviceConfigState
                     title: 'Software Version',
                     child: RichText(
                       text: TextSpan(
-                        style: theme.textTheme.ppMori400White14.copyWith(
-                          color: isBLEDeviceConnected
-                              ? AppColor.white
-                              : AppColor.disabledColor,
-                        ),
+                        style: AppTypography.body(context).white.copyWith(
+                              color: isBLEDeviceConnected
+                                  ? AppColor.white
+                                  : AppColor.disabledColor,
+                            ),
                         children: [
                           TextSpan(
                             text: (installedVersion ?? '-') + branchName,
@@ -868,11 +870,11 @@ class BluetoothConnectedDeviceConfigState
                       title: 'Device Wifi Network',
                       child: Text(
                         connectedWifi ?? '-',
-                        style: theme.textTheme.ppMori400White14.copyWith(
-                          color: isBLEDeviceConnected
-                              ? AppColor.white
-                              : AppColor.disabledColor,
-                        ),
+                        style: AppTypography.body(context).white.copyWith(
+                              color: isBLEDeviceConnected
+                                  ? AppColor.white
+                                  : AppColor.disabledColor,
+                            ),
                       ),
                     ),
                     divider,
@@ -892,11 +894,11 @@ class BluetoothConnectedDeviceConfigState
                             resolution == null
                                 ? '--'
                                 : '${resolution.width.toInt()} x ${resolution.height.toInt()}',
-                            style: theme.textTheme.ppMori400White14.copyWith(
-                              color: isBLEDeviceConnected
-                                  ? AppColor.white
-                                  : AppColor.disabledColor,
-                            ),
+                            style: AppTypography.body(context).white.copyWith(
+                                  color: isBLEDeviceConnected
+                                      ? AppColor.white
+                                      : AppColor.disabledColor,
+                                ),
                           );
                         },
                       ),
@@ -912,11 +914,11 @@ class BluetoothConnectedDeviceConfigState
                         _latestMetrics?.screen?.refreshRate == null
                             ? '--'
                             : '${_latestMetrics!.screen!.refreshRate} Hz',
-                        style: theme.textTheme.ppMori400White14.copyWith(
-                          color: isBLEDeviceConnected
-                              ? AppColor.white
-                              : AppColor.disabledColor,
-                        ),
+                        style: AppTypography.body(context).white.copyWith(
+                              color: isBLEDeviceConnected
+                                  ? AppColor.white
+                                  : AppColor.disabledColor,
+                            ),
                       ),
                     ),
                     divider,
@@ -1085,7 +1087,7 @@ class BluetoothConnectedDeviceConfigState
       children: [
         Text(
           'Performance Monitoring',
-          style: theme.textTheme.ppMori400White14,
+          style: AppTypography.body(context).white,
         ),
         const SizedBox(height: 16),
 
@@ -1151,7 +1153,7 @@ class BluetoothConnectedDeviceConfigState
                     getTitlesWidget: (value, meta) {
                       return Text(
                         '${value.toInt()}%',
-                        style: theme.textTheme.ppMori400White12,
+                        style: AppTypography.bodySmall(context).white,
                       );
                     },
                   ),
@@ -1255,7 +1257,7 @@ class BluetoothConnectedDeviceConfigState
       children: [
         Text(
           'Temperature Monitoring',
-          style: theme.textTheme.ppMori400White14,
+          style: AppTypography.body(context).white,
         ),
         const SizedBox(height: 16),
 
@@ -1336,7 +1338,7 @@ class BluetoothConnectedDeviceConfigState
                     getTitlesWidget: (value, meta) {
                       return Text(
                         '${value.toInt()}$tempUnit',
-                        style: theme.textTheme.ppMori400White12,
+                        style: AppTypography.bodySmall(context).white,
                       );
                     },
                   ),
@@ -1896,7 +1898,7 @@ class BluetoothConnectedDeviceConfigState
             'Log sent',
             Text(
               'Your log has been sent to support. Thank you for your help!',
-              style: theme.textTheme.ppMori400White14,
+              style: AppTypography.body(context).white,
             ));
       } else {
         UIHelper.showDialog(
@@ -1904,7 +1906,7 @@ class BluetoothConnectedDeviceConfigState
             'Failed to send log',
             Text(
               'The FF1 failed to send log to support.',
-              style: theme.textTheme.ppMori400White14,
+              style: AppTypography.body(context).white,
             ));
       }
     } catch (e) {
@@ -1919,7 +1921,7 @@ class BluetoothConnectedDeviceConfigState
           'Failed to send log',
           Text(
             'Failed to send log to support. Please try again.',
-            style: theme.textTheme.ppMori400White14,
+            style: AppTypography.body(context).white,
           ));
     }
   }

@@ -2,6 +2,7 @@ import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channel_details/channel_detail.page.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:flutter/material.dart';
 
 class ChannelHeader extends StatelessWidget {
@@ -43,7 +44,7 @@ class ChannelHeader extends StatelessWidget {
                 children: [
                   Text(
                     channelReference.channel.title,
-                    style: theme.textTheme.ppMori400White12,
+                    style: AppTypography.body(context).white,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -54,7 +55,7 @@ class ChannelHeader extends StatelessWidget {
                     overflow: maxLines != null
                         ? TextOverflow.ellipsis
                         : TextOverflow.visible,
-                    style: theme.textTheme.ppMori400Grey12,
+                    style: AppTypography.bodySmall(context).grey,
                   ),
                 ],
               ),

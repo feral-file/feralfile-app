@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/device/base_device.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
@@ -84,9 +85,7 @@ class StreamDrawerItem extends StatelessWidget {
                               child: Text(
                                 textAlign: TextAlign.center,
                                 item.title ?? '',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .ppMori400Black14,
+                                style: AppTypography.body(context).black,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -261,7 +260,7 @@ class _PlaylistControlState extends State<PlaylistControl> {
         children: [
           Text(
             'autoplay_duration'.tr(),
-            style: Theme.of(context).textTheme.ppMori400White12,
+            style: AppTypography.bodySmall(context).white,
           ),
           const SizedBox(height: 4),
           Container(
@@ -521,8 +520,8 @@ class _ArtworkDurationControlState extends State<ArtworkDurationControl> {
     int? maxValue,
   }) {
     final textStyle = isAnyFieldFocused && !focusNode.hasFocus
-        ? Theme.of(context).textTheme.ppMori400Grey12
-        : Theme.of(context).textTheme.ppMori400White12;
+        ? AppTypography.bodySmall(context).grey
+        : AppTypography.bodySmall(context).white;
 
     return IntrinsicWidth(
       child: TextField(

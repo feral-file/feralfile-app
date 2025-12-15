@@ -1,6 +1,6 @@
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/components/Header.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/widgets/buttons/back_button.dart';
 import 'package:flutter/material.dart';
@@ -158,8 +158,6 @@ class SetupAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return AppBar(
       systemOverlayStyle: SystemUiOverlayStyle(
         statusBarColor: statusBarColor ?? backgroundColor,
@@ -186,7 +184,7 @@ class SetupAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: Text(
         title,
         overflow: TextOverflow.ellipsis,
-        style: titleStyle ?? theme.textTheme.small,
+        style: titleStyle ?? AppTypography.body(context).white,
         textAlign: TextAlign.center,
       ),
       actions: [

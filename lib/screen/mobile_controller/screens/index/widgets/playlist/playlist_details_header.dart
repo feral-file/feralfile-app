@@ -8,6 +8,7 @@ import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -68,7 +69,7 @@ class PlaylistDetailsHeader extends StatelessWidget {
                         // Playlist info
                         Text(
                           playlist.title,
-                          style: theme.textTheme.ppMori400White12,
+                          style: AppTypography.body(context).white,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -87,7 +88,7 @@ class PlaylistDetailsHeader extends StatelessWidget {
                             },
                             child: Text(
                               channelReference!.channel.title,
-                              style: theme.textTheme.ppMori400Grey12,
+                              style: AppTypography.bodySmall(context).grey,
                             ),
                           ),
                       ],

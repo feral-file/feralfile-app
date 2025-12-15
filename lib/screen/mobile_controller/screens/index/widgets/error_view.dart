@@ -1,5 +1,6 @@
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:flutter/material.dart';
 
 class ErrorView extends StatelessWidget {
@@ -23,7 +24,7 @@ class ErrorView extends StatelessWidget {
           children: [
             Text(
               error,
-              style: theme.textTheme.ppMori400Grey12,
+              style: AppTypography.bodySmall(context).grey,
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[
@@ -32,7 +33,7 @@ class ErrorView extends StatelessWidget {
                 onPressed: onRetry,
                 child: Text(
                   'Retry',
-                  style: theme.textTheme.ppMori400White12,
+                  style: AppTypography.body(context).white,
                 ),
               ),
             ],

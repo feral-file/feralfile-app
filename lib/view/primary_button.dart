@@ -1,6 +1,6 @@
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/color_extension.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/debouce_util.dart';
 import 'package:flutter/material.dart';
 
@@ -84,7 +84,7 @@ class PrimaryButton extends StatelessWidget {
                 Text(
                   text ?? '',
                   style: textStyle ??
-                      theme.textTheme.ppMori400Black14
+                      AppTypography.body(context).black
                           .copyWith(color: textColor),
                 ),
                 if (rightIcon != null) ...[
@@ -161,7 +161,7 @@ class OutlineButton extends StatelessWidget {
                   const SizedBox(),
                 Text(
                   text ?? '',
-                  style: theme.textTheme.ppMori400White14.copyWith(
+                  style: AppTypography.body(context).white.copyWith(
                       color: textColor ??
                           (!enabled ? AppColor.disabledColor : null)),
                 ),
@@ -444,10 +444,7 @@ class _TextAsyncButtonState extends State<TextAsyncButton> {
             ),
             child: Text(
               _isProcessing ? widget.processingText ?? '' : widget.text ?? '',
-              style: Theme.of(context)
-                  .textTheme
-                  .ppMori400Black14
-                  .copyWith(color: widget.color),
+              style: AppTypography.body(context).copyWith(color: widget.color),
             ),
           ),
         ],

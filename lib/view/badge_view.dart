@@ -5,8 +5,8 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:flutter/material.dart';
 
 class BadgeView extends StatelessWidget {
@@ -28,9 +28,9 @@ class BadgeView extends StatelessWidget {
         child: Text(
           number > 9 ? '9+' : '$number',
           textAlign: TextAlign.center,
-          style: theme.textTheme.ppMori400White14.copyWith(
-            color: AppColor.auQuickSilver,
-          ),
+          style: AppTypography.body(context).white.copyWith(
+                color: AppColor.auQuickSilver,
+              ),
         ));
   }
 }

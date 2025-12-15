@@ -5,6 +5,7 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/settings/forget_exist/forget_exist_bloc.dart';
 import 'package:autonomy_flutter/screen/settings/forget_exist/forget_exist_state.dart';
@@ -130,8 +131,9 @@ class ForgetExistView extends StatelessWidget {
                                         ),
                                         Text(
                                           'o ',
-                                          style: theme.primaryTextTheme
-                                              .ppMori400White12,
+                                          style:
+                                              AppTypography.bodySmall(context)
+                                                  .white,
                                         ),
                                         const SizedBox(
                                           width: 8,
@@ -154,8 +156,9 @@ class ForgetExistView extends StatelessWidget {
                                         ),
                                         Text(
                                           'o ',
-                                          style: theme.primaryTextTheme
-                                              .ppMori400White12,
+                                          style:
+                                              AppTypography.bodySmall(context)
+                                                  .white,
                                         ),
                                         const SizedBox(
                                           width: 8,
@@ -215,7 +218,7 @@ class ForgetExistView extends StatelessWidget {
                           child: Text(
                         'i_understand'.tr(),
                         //"I understand that this action cannot be undone.",
-                        style: theme.primaryTextTheme.ppMori400White12,
+                        style: AppTypography.bodySmall(context).white,
                       )),
                     ],
                   ),

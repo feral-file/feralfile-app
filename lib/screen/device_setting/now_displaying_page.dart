@@ -1,10 +1,17 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/model/token.dart';
-import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_bloc.dart';
@@ -23,12 +30,6 @@ import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:autonomy_flutter/view/ff_artwork_thumbnail_view.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class NowDisplayingPage extends StatefulWidget {
   const NowDisplayingPage({super.key});
@@ -150,16 +151,16 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
         final device = (nowDisplayingStatus! as DeviceDisconnected).device;
         return Text(
           '${device.name} disconnected',
-          style: theme.textTheme.ppMori400White14,
+          style: AppTypography.body(context).white,
         );
       case ConnectionLost:
         final device = (nowDisplayingStatus! as ConnectionLost).device;
         return Text(
           '${device.name} connection lost',
-          style: theme.textTheme.ppMori400White14,
+          style: AppTypography.body(context).white,
         );
       default:
-        return Text('Unknown state', style: theme.textTheme.ppMori400White14);
+        return Text('Unknown state', style: AppTypography.body(context).white);
     }
   }
 
@@ -269,7 +270,7 @@ class _DP1NowDisplayingState extends State<DP1NowDisplaying> {
               child: HtmlWidget(
                 customStylesBuilder: auHtmlStyle,
                 assetToken.displayDescription,
-                textStyle: theme.textTheme.ppMori400White12,
+                textStyle: AppTypography.bodySmall(context).white,
                 onTapUrl: (url) async {
                   await launchUrl(
                     Uri.parse(url),

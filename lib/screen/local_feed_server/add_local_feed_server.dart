@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/screen/local_feed_server/bloc/add_local_feed_server_bloc.dart';
 import 'package:autonomy_flutter/screen/local_feed_server/bloc/add_local_feed_server_event.dart';
 import 'package:autonomy_flutter/screen/local_feed_server/bloc/add_local_feed_server_state.dart';
@@ -106,15 +107,15 @@ class _AddLocalFeedServerPageState extends State<AddLocalFeedServerPage> {
                       children: [
                         Text(
                           'Server URL',
-                          style: theme.textTheme.ppMori400White14,
+                          style: AppTypography.body(context).white,
                         ),
                         const SizedBox(height: 8),
                         TextField(
                           controller: _urlController,
-                          style: theme.textTheme.ppMori400White14,
+                          style: AppTypography.body(context).white,
                           decoration: InputDecoration(
                             hintText: 'https://your-dp1-server.com',
-                            hintStyle: theme.textTheme.ppMori400Grey12,
+                            hintStyle: AppTypography.bodySmall(context).grey,
                             filled: true,
                             fillColor: AppColor.primaryBlack,
                             border: OutlineInputBorder(
@@ -144,9 +145,11 @@ class _AddLocalFeedServerPageState extends State<AddLocalFeedServerPage> {
                             padding: const EdgeInsets.all(12),
                             child: Text(
                               state.error!.message,
-                              style: theme.textTheme.ppMori400Grey12.copyWith(
-                                color: AppColor.red,
-                              ),
+                              style: AppTypography.bodySmall(context)
+                                  .grey
+                                  .copyWith(
+                                    color: AppColor.red,
+                                  ),
                             ),
                           ),
                         ],
@@ -209,7 +212,7 @@ class _AddLocalFeedServerPageState extends State<AddLocalFeedServerPage> {
                             const SizedBox(height: 16),
                             Text(
                               'Enter a DP1 server URL to preview playlists',
-                              style: theme.textTheme.ppMori400Grey14,
+                              style: AppTypography.body(context).grey,
                               textAlign: TextAlign.center,
                             ),
                           ],
@@ -223,14 +226,14 @@ class _AddLocalFeedServerPageState extends State<AddLocalFeedServerPage> {
                     const SizedBox(height: 16),
                     Text(
                       'Error loading playlists',
-                      style: theme.textTheme.ppMori400Grey14,
+                      style: AppTypography.body(context).grey,
                       textAlign: TextAlign.center,
                     ),
                   ] else if (state.playlists.isEmpty) ...[
                     const SizedBox(height: 16),
                     Text(
                       'No playlists found',
-                      style: theme.textTheme.ppMori400Grey14,
+                      style: AppTypography.body(context).grey,
                       textAlign: TextAlign.center,
                     ),
                   ],

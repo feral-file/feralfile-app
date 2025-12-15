@@ -8,7 +8,7 @@ class PlaylistSectionTokens {
   PlaylistSectionTokens._();
 
   // Container layout
-  static const gap = 10.0;
+  static const gap = 20.0;
 
   // Header
   static const headerPaddingHorizontal = 12.0;

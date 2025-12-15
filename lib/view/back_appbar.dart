@@ -5,6 +5,7 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/style.dart';
@@ -271,7 +272,7 @@ AppBar getDoneAppBar(
         child: Center(
           child: Text(
             tr('cancel'),
-            style: theme.textTheme.ppMori400Black14,
+            style: AppTypography.body(context).black,
           ),
         ),
       ),
@@ -301,7 +302,7 @@ AppBar getDoneAppBar(
     centerTitle: true,
     title: Text(
       title,
-      style: theme.textTheme.ppMori400Black14,
+      style: AppTypography.body(context).black,
     ),
     bottom: bottom,
   );
@@ -335,7 +336,7 @@ AppBar getCustomDoneAppBar(
         child: Center(
           child: Text(
             tr('cancel'),
-            style: theme.textTheme.ppMori400Black14.copyWith(color: textColor),
+            style: AppTypography.body(context).copyWith(color: textColor),
           ),
         ),
       ),

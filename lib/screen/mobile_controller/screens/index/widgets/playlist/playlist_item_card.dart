@@ -5,7 +5,6 @@ import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/dp1_now_displaying_item_ext.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
@@ -92,38 +91,37 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
               ),
               const SizedBox(height: 10),
               BlocBuilder<IdentityBloc, IdentityState>(
-                  bloc: identityBloc,
-                  builder: (context, identityState) {
-                    final artist = widget.nowDisplayingItem.artists.isNotEmpty
-                        ? widget.nowDisplayingItem.artists.first
-                        : null;
-                    final artistName = (artist?.name ?? '')
-                        .toIdentityOrMask(identityState.identityMap);
-                    final displayArtist = (artistName?.isNotEmpty ?? false)
-                        ? artistName!
-                        : 'Unknown Artist';
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          displayArtist,
-                          style: AppTypography.captionBold(context).white,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          title,
-                          // italic
-                          style: AppTypography.captionBold(context)
-                              .white
-                              .copyWith(fontStyle: FontStyle.italic),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    );
-                  }),
+                bloc: identityBloc,
+                builder: (context, identityState) {
+                  final artist = widget.nowDisplayingItem.artists.isNotEmpty
+                      ? widget.nowDisplayingItem.artists.first
+                      : null;
+                  final artistName = (artist?.name ?? '')
+                      .toIdentityOrMask(identityState.identityMap);
+                  final displayArtist = (artistName?.isNotEmpty ?? false)
+                      ? artistName!
+                      : 'Unknown Artist';
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        displayArtist,
+                        style: AppTypography.body(context).white,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        title,
+                        // italic
+                        style: AppTypography.bodyBold(context).white.italic,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  );
+                },
+              ),
             ],
           ),
         ),

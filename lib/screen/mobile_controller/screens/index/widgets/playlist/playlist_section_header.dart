@@ -1,6 +1,6 @@
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/components/PlaylistSectionHeader.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -37,8 +37,8 @@ class PlaylistSectionHeader extends StatelessWidget {
               sectionIcon ??
                   SvgPicture.asset(
                     'assets/images/icon_account.svg',
-                    width: PlaylistSectionHeaderTokens.sectionIconWidth,
-                    height: PlaylistSectionHeaderTokens.sectionIconHeight,
+                    width: LayoutConstants.iconSizeDefault,
+                    height: LayoutConstants.iconSizeDefault,
                     colorFilter: const ColorFilter.mode(
                       Color(0xFFFFFFFF),
                       BlendMode.srcIn,
@@ -49,7 +49,7 @@ class PlaylistSectionHeader extends StatelessWidget {
               ),
               Text(
                 sectionName,
-                style: AppTypography.caption(context).grey,
+                style: AppTypography.h4(context).white,
               ),
             ],
           ),
@@ -83,7 +83,7 @@ class PlaylistSectionHeader extends StatelessWidget {
                       padding: const EdgeInsets.only(right: 1),
                       child: Text(
                         'All',
-                        style: AppTypography.caption(context).grey,
+                        style: AppTypography.body(context).grey,
                       ),
                     ),
                   ],

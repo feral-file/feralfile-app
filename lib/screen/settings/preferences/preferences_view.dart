@@ -7,6 +7,7 @@
 
 import 'dart:async';
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
 import 'package:autonomy_flutter/screen/settings/preferences/preferences_bloc.dart';
@@ -42,7 +43,7 @@ class PreferenceView extends StatelessWidget {
                 children: [
                   Text(
                     'contribute_anonymize'.tr(),
-                    style: theme.textTheme.ppMori400Black14,
+                    style: AppTypography.body(context).black,
                   ),
                   const SizedBox(height: 10),
                   GestureDetector(
@@ -50,12 +51,14 @@ class PreferenceView extends StatelessWidget {
                         'learn_anonymize'.tr(),
                         textAlign: TextAlign.left,
                         style: ResponsiveLayout.isMobile
-                            ? theme.textTheme.ppMori400Black14.copyWith(
-                                decoration: TextDecoration.underline,
-                                decorationStyle: TextDecorationStyle.solid,
-                                decorationColor: Colors.black,
-                                decorationThickness: 1.1,
-                              )
+                            ? AppTypography.body(context)
+                                .black
+                                .underline
+                                .copyWith(
+                                  decorationStyle: TextDecorationStyle.solid,
+                                  decorationColor: Colors.black,
+                                  decorationThickness: 1.1,
+                                )
                             : theme.textTheme.linkStyle16,
                       ),
                       onTap: () => unawaited(Navigator.of(context).pushNamed(
@@ -91,7 +94,7 @@ class PreferenceView extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 7),
                     child: Text(
                       'beta_features_description'.tr(),
-                      style: theme.textTheme.ppMori400Black14,
+                      style: AppTypography.body(context).black,
                     ),
                   ),
                   isEnabled: state.isBetaFeaturesEnabled,
@@ -117,7 +120,7 @@ class PreferenceView extends StatelessWidget {
                         padding: const EdgeInsets.only(top: 7),
                         child: Text(
                           'show_explore_bar_description'.tr(),
-                          style: theme.textTheme.ppMori400Black14,
+                          style: AppTypography.body(context).black,
                         ),
                       ),
                       isEnabled: state.isExploreBarEnabled,

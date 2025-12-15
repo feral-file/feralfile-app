@@ -11,7 +11,9 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/model/ff_account.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
@@ -72,6 +74,8 @@ class UIHelper {
   static const String artDisplaySettingModal = 'artDisplaySettingModal';
   static const String artistArtworkDisplaySettingModal =
       'artistArtworkDisplaySettingModal';
+
+  static BuildContext get context => injector<NavigationService>().context;
 
   static Future<T?> showDialog<T>(
     BuildContext context,
@@ -680,7 +684,7 @@ class UIHelper {
               text: TextSpan(
                 children: [
                   TextSpan(
-                    style: theme.textTheme.ppMori400White14,
+                    style: AppTypography.body(context).white,
                     text: '${'art_no_appear'.tr()} ',
                   ),
                   TextSpan(
@@ -688,7 +692,7 @@ class UIHelper {
                     text: 'hidden_artwork'.tr(),
                   ),
                   TextSpan(
-                    style: theme.textTheme.ppMori400White14,
+                    style: AppTypography.body(context).white,
                     text: ' ${'section_setting'.tr()}',
                   ),
                 ],
@@ -741,7 +745,7 @@ class UIHelper {
                       ],
                       Text(
                         address,
-                        style: theme.textTheme.ppMori400White14,
+                        style: AppTypography.body(context).white,
                       ),
                     ],
                   ),
@@ -865,7 +869,7 @@ class UIHelper {
 
   static Future<dynamic> showLiveWithArtIntro(BuildContext context) async {
     final theme = Theme.of(context);
-    final infoStyle = theme.textTheme.ppMori400White14;
+    final infoStyle = AppTypography.body(context).white;
     return await showCenterSheet(
       context,
       content: Column(
@@ -1053,7 +1057,8 @@ class UIHelper {
                           children: [
                             if (option.icon != null)
                               SizedBox(
-                                width: 22,
+                                width: LayoutConstants.iconSizeMedium,
+                                height: LayoutConstants.iconSizeMedium,
                                 child: IconTheme(
                                   data: const IconThemeData(
                                     color: AppColor.white,
@@ -1068,8 +1073,7 @@ class UIHelper {
                             Text(
                               option.title ?? '',
                               style: option.titleStyle ??
-                                  theme.textTheme.ppMori400White14.copyWith(
-                                      decoration: TextDecoration.none),
+                                  AppTypography.body(context).white,
                             ),
                           ],
                         );
@@ -1431,8 +1435,7 @@ class UIHelper {
     required ScrollController scrollController,
     List<CustomSlidableAction> slidableActions = const [],
   }) {
-    final header =
-        Text(title, style: Theme.of(context).textTheme.ppMori400White12);
+    final header = Text(title, style: AppTypography.bodySmall(context).white);
     return ExpandableSliverStickyHeader(
         header: header,
         initiallyExpanded: isExpanded,
