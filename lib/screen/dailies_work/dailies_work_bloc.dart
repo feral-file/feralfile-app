@@ -1,11 +1,8 @@
 import 'dart:async';
 
-import 'package:autonomy_flutter/model/dailies.dart';
 import 'package:autonomy_flutter/model/ff_alumni.dart';
 import 'package:autonomy_flutter/model/ff_exhibition.dart';
-import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
-import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/screen/dailies_work/dailies_work_state.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
@@ -18,9 +15,8 @@ class GetDailyAssetTokenEvent extends DailyWorkEvent {}
 
 class DailyWorkBloc extends Bloc<DailyWorkEvent, DailiesWorkState> {
   final FeralFileService _feralfileService;
-  final IndexerService _indexerService;
 
-  DailyWorkBloc(this._feralfileService, this._indexerService)
+  DailyWorkBloc(this._feralfileService)
       : super(DailiesWorkState(
             assetTokens: [],
             currentDailyToken: null,
@@ -31,11 +27,6 @@ class DailyWorkBloc extends Bloc<DailyWorkEvent, DailiesWorkState> {
       final assetTokens = <AssetToken>[];
       AlumniAccount? currentArtist;
       Exhibition? currentExhibition;
-      if (dailiesToken != null) {
-        final tokens = await _indexerService
-            .getNftTokens(QueryListTokensRequest(ids: [dailiesToken.indexId]));
-        assetTokens.addAll(tokens);
-      }
       if (assetTokens.isEmpty) {
         return;
       }

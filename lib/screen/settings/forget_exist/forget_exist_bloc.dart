@@ -55,7 +55,6 @@ class ForgetExistBloc extends AuBloc<ForgetExistEvent, ForgetExistState> {
       unawaited(injector<CloudManager>().deleteAll());
       injector<CloudManager>().clearCache();
       await injector<CustomerSupportService>().clear();
-      await injector<IdentityBloc>().clear();
       await injector<AnnouncementStore>().clear();
       injector<CanvasDeviceBloc>().clear();
       await BluetoothDeviceManager().resetDevice();

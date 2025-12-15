@@ -46,8 +46,6 @@ import 'package:autonomy_flutter/screen/feralfile_series/feralfile_series_page.d
 import 'package:autonomy_flutter/screen/github_doc.dart';
 import 'package:autonomy_flutter/screen/home/home_bloc.dart';
 import 'package:autonomy_flutter/screen/home/home_navigation_page.dart';
-import 'package:autonomy_flutter/screen/indexer_collection/indexer_collection_bloc.dart';
-import 'package:autonomy_flutter/screen/indexer_collection/indexer_collection_page.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/name_view_only_page.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address_bloc.dart';
@@ -116,7 +114,6 @@ class AppRouter {
   static const exhibitionDetailPage = 'exhibition_detail_page';
   static const ffArtworkPreviewPage = 'ff_artwork_preview_page';
   static const feralFileSeriesPage = 'feral_file_series_page';
-  static const indexerCollectionPage = 'indexer_collection_page';
   static const viewExistingAddressPage = 'view_existing_address_page';
   static const selectAddressesPage = 'select_addresses_page';
   static const addressAliasPage = 'address_alias_page';
@@ -301,8 +298,6 @@ class AppRouter {
                   injector(),
                   injector(),
                   injector(),
-                  injector(),
-                  injector(),
                 ),
               ),
             ],
@@ -413,21 +408,6 @@ class AppRouter {
             ],
             child: FeralFileSeriesPage(
               payload: settings.arguments! as FeralFileSeriesPagePayload,
-            ),
-          ),
-        );
-
-      case indexerCollectionPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => MultiBlocProvider(
-            providers: [
-              BlocProvider(
-                create: (_) => IndexerCollectionBloc(injector()),
-              ),
-            ],
-            child: IndexerCollectionPage(
-              payload: settings.arguments! as IndexerCollectionPagePayload,
             ),
           ),
         );
@@ -598,8 +578,6 @@ class AppRouter {
             providers: [
               BlocProvider(
                 create: (_) => ArtworkDetailBloc(
-                  injector(),
-                  injector(),
                   injector(),
                   injector(),
                   injector(),

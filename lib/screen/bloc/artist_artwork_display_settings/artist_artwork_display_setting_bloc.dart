@@ -3,11 +3,8 @@ import 'dart:async';
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
-import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
-import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
-import 'package:autonomy_flutter/service/feralfile_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -198,18 +195,10 @@ class ArtistArtworkDisplaySettingBloc extends AuBloc<
             artistDisplaySetting: null,
           ),
         );
-        final request = QueryListTokensRequest(
-          ids: [state.tokenId],
-        );
-        final assetToken =
-            await injector<IndexerService>().getNftTokens(request);
-        final setting =
-            assetToken.firstOrNull?.attributes?.artistDisplaySetting ??
-                ArtistDisplaySetting();
 
         emit(
           state.copyWith(
-            artistDisplaySetting: setting,
+            artistDisplaySetting: ArtistDisplaySetting(),
           ),
         );
       }
@@ -285,13 +274,6 @@ class ArtistArtworkDisplaySettingBloc extends AuBloc<
       }
 
       final listAssetIds = <String>[];
-
-      final seriesId = event.seriesId;
-      if (seriesId != null && seriesId.isNotEmpty) {
-        final listAssetIdsFromSeries = await injector<FeralFileService>()
-            .getIndexerAssetIdsFromSeries(seriesId);
-        listAssetIds.addAll(listAssetIdsFromSeries);
-      }
 
       try {
         await injector<AuthService>()

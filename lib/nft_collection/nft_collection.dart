@@ -19,7 +19,6 @@ class NftCollection {
   static late AddressService addressService;
 
   static Future<void> initNftCollection({
-    required String indexerUrl,
     String databaseFileName = 'nft_collection_v2.db',
     Logger? logger,
     Logger? apiLogger,
@@ -35,7 +34,6 @@ class NftCollection {
     prefs = NftCollectionPrefs(await SharedPreferences.getInstance());
     addressService = AddressService(database);
 
-    tokenService =
-        TokensServiceImpl(indexerUrl, database, prefs, addressService, dio);
+    tokenService = TokensServiceImpl(database, prefs, addressService, dio);
   }
 }

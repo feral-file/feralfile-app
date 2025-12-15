@@ -88,9 +88,6 @@ class Environment {
     }
   }
 
-  static String get indexerURL =>
-      appTestnetConfig ? indexerTestnetURL : indexerMainnetURL;
-
   static String get web3RpcURL =>
       appTestnetConfig ? web3RpcTestnetURL : web3RpcMainnetURL;
 
@@ -111,12 +108,6 @@ class Environment {
   static String get tvNotificationUrl => _readKey('TV_NOTIFICATION_URL', '');
 
   static String get tokenWebviewPrefix => _readKey('TOKEN_WEBVIEW_PREFIX', '');
-
-  static String get indexerMainnetURL =>
-      _readKey('INDEXER_MAINNET_API_URL', '');
-
-  static String get indexerTestnetURL =>
-      _readKey('INDEXER_TESTNET_API_URL', '');
 
   static int get web3MainnetChainId =>
       int.tryParse(_readKey('WEB3_MAINNET_CHAIN_ID', '1')) ?? 1;

@@ -14,7 +14,6 @@ import 'package:autonomy_flutter/model/play_list_model.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:autonomy_flutter/nft_collection/models/provenance.dart';
 import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
-import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_bloc.dart';
@@ -623,26 +622,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                       );
                     },
                   ),
-                );
-              },
-            ),
-          if (!widget.payload.shouldUseLocalCache)
-            OptionItem(
-              title: 'refresh_metadata'.tr(),
-              icon: SvgPicture.asset(
-                'assets/images/refresh_metadata_white.svg',
-                width: 20,
-                height: 20,
-              ),
-              onTap: () async {
-                await injector<TokensService>().fetchManualTokens([asset.id]);
-                if (!context.mounted) {
-                  return;
-                }
-                Navigator.of(context).pop();
-                await Navigator.of(context).pushReplacementNamed(
-                  AppRouter.artworkDetailsPage,
-                  arguments: widget.payload.copyWith(),
                 );
               },
             ),

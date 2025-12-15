@@ -16,13 +16,6 @@ class GetIdentityEvent extends IdentityEvent {
   GetIdentityEvent(this.addresses);
 }
 
-/// Fetch for identities and do not emit events
-class FetchIdentityEvent extends IdentityEvent {
-  final Iterable<String> addresses;
-
-  FetchIdentityEvent(this.addresses);
-}
-
 /// Remove all identities from app data
 class RemoveAllEvent extends IdentityEvent {
   RemoveAllEvent();

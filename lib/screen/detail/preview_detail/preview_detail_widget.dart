@@ -59,8 +59,7 @@ class ArtworkPreviewWidget extends StatefulWidget {
 
 class ArtworkPreviewWidgetState extends State<ArtworkPreviewWidget>
     with WidgetsBindingObserver, RouteAware {
-  final bloc =
-      ArtworkPreviewDetailBloc(injector(), injector(), injector(), injector());
+  final bloc = ArtworkPreviewDetailBloc(injector(), injector(), injector());
   GlobalKey<NFTRenderingWidgetState>? _artworkKey;
   Widget? _currentRenderingWidget;
 

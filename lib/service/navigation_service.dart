@@ -15,7 +15,6 @@ import 'package:autonomy_flutter/model/jwt.dart';
 import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/model/play_list_model.dart';
 import 'package:autonomy_flutter/nft_collection/database/nft_collection_database.dart';
-import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/screen/alumni_details/alumni_details_page.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/customer_support/support_thread_page.dart';
@@ -384,10 +383,6 @@ class NavigationService {
     FeralfileHomeTab? exploreTab;
 
     switch (pair.first) {
-      case AppRouter.featuredPage:
-        route = AppRouter.homePageNoTransition;
-        homeNavigationTab = HomeNavigatorTab.explore;
-        exploreTab = FeralfileHomeTab.featured;
       case AppRouter.artworksPage:
         route = AppRouter.homePageNoTransition;
         homeNavigationTab = HomeNavigatorTab.explore;
@@ -848,15 +843,12 @@ class NavigationService {
         Navigator.pop(navigatorKey.currentContext!);
       }
 
-      final tokenConfiguration = tokenId != null
-          ? await injector<IndexerService>().getTokenConfiguration(tokenId)
-          : null;
-
+      // Indexer support removed - tokenConfiguration is now null
       unawaited(
         UIHelper.showRawDialog(
           navigatorKey.currentContext!,
           NowDisplaySettingView(
-            tokenConfiguration: tokenConfiguration,
+            tokenConfiguration: null,
             artistName: artistName,
             tokenId: tokenId,
           ),

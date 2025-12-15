@@ -11,10 +11,7 @@ import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/gateway/feralfile_api.dart';
 import 'package:autonomy_flutter/gateway/remote_config_api.dart';
 import 'package:autonomy_flutter/gateway/source_exhibition_api.dart';
-import 'package:autonomy_flutter/nft_collection/data/api/indexer_api.dart';
-import 'package:autonomy_flutter/nft_collection/graphql/clients/indexer_client.dart';
 import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
-import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
@@ -69,12 +66,6 @@ Future<void> setupInjector() async {
   );
   final dio = baseDio(dioOptions);
 
-  await NftCollection.initNftCollection(
-    indexerUrl: Environment.indexerURL,
-    logger: log,
-    apiLogger: apiLog,
-    dio: dio,
-  );
   injector
       .registerLazySingleton<TokensService>(() => NftCollection.tokenService);
   injector.registerLazySingleton(() => NftCollection.prefs);
@@ -116,14 +107,6 @@ Future<void> setupInjector() async {
       baseUrl: Environment.feralFileAPIURL,
     ),
   );
-  injector.registerLazySingleton<IndexerApi>(
-    () => IndexerApi(dio, baseUrl: Environment.indexerURL),
-  );
-
-  final indexerClient = IndexerClient(Environment.indexerURL);
-  injector.registerLazySingleton<IndexerService>(
-    () => IndexerService(indexerClient),
-  );
 
   injector.registerLazySingleton<EthereumService>(
     () => EthereumServiceImpl(
@@ -139,9 +122,7 @@ Future<void> setupInjector() async {
     ),
   );
 
-  final identityStore = IndexerIdentityStore();
-  await identityStore.init('');
   injector.registerLazySingleton<IdentityBloc>(
-    () => IdentityBloc(identityStore, injector()),
+    IdentityBloc.new,
   );
 }
