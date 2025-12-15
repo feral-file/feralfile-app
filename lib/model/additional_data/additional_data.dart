@@ -4,7 +4,6 @@ import 'package:autonomy_flutter/model/additional_data/announcement_data.dart';
 import 'package:autonomy_flutter/model/additional_data/call_to_action.dart';
 import 'package:autonomy_flutter/model/additional_data/chat_notification_data.dart';
 import 'package:autonomy_flutter/model/additional_data/cs_view_thread.dart';
-import 'package:autonomy_flutter/model/additional_data/daily_notification_data.dart';
 import 'package:autonomy_flutter/model/additional_data/jg_crystalline_work_generated.dart';
 import 'package:autonomy_flutter/model/additional_data/navigate_additional_data.dart';
 import 'package:autonomy_flutter/model/additional_data/view_collection.dart'
@@ -57,17 +56,6 @@ class AdditionalData {
             announcementContentId: notificationContentId,
             cta: cta,
             title: title,
-          );
-        case NotificationType.dailyArtworkReminders:
-          final dailyCTATarget = json['cta'] == null
-              ? null
-              : DailyCTATarget.fromString(
-                  json['cta']['navigation_route'] as String);
-          return DailyNotificationData(
-            notificationType: notificationType,
-            announcementContentId: notificationContentId,
-            cta: cta,
-            dailyCTATarget: dailyCTATarget,
           );
         case NotificationType.announcement:
           final listCustomCta = json['custom_data'] != null &&

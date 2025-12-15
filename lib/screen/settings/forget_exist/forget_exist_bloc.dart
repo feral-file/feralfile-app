@@ -20,7 +20,6 @@ import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/canvas_notification_manager.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
-import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/shared.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -41,11 +40,8 @@ class ForgetExistBloc extends AuBloc<ForgetExistEvent, ForgetExistState> {
     on<ConfirmForgetExistEvent>((event, emit) async {
       emit(ForgetExistState(state.isChecked, true));
 
-      // TODO: remove userId
-      // unawaited(_addressService.clearPrimaryAddress());
       unawaited(deregisterPushNotification());
 
-      await injector<MetricClientService>().reset();
       try {
         await _iapApi.deleteUserData();
       } catch (e) {

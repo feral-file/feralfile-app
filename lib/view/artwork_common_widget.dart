@@ -1,11 +1,13 @@
 import 'dart:async';
-import 'dart:collection';
 import 'dart:math';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/ff_artwork.dart';
 import 'package:autonomy_flutter/model/ff_exhibition.dart';
+// import 'package:flutter_vibrate/flutter_vibrate.dart';
+import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
+import 'package:autonomy_flutter/nft_collection/models/provenance.dart';
 import 'package:autonomy_flutter/nft_rendering/nft_rendering_widget.dart';
 import 'package:autonomy_flutter/nft_rendering/svg_image.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
@@ -13,7 +15,6 @@ import 'package:autonomy_flutter/screen/detail/royalty/royalty_bloc.dart';
 import 'package:autonomy_flutter/screen/exhibition_details/exhibition_detail_page.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
-import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/network_issue_manager.dart';
 import 'package:autonomy_flutter/util/address_utils.dart';
@@ -39,9 +40,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-// import 'package:flutter_vibrate/flutter_vibrate.dart';
-import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
-import 'package:autonomy_flutter/nft_collection/models/provenance.dart';
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
@@ -435,8 +433,6 @@ class BrokenTokenWidget extends StatefulWidget {
 
 class _BrokenTokenWidgetState extends State<BrokenTokenWidget>
     with AfterLayoutMixin<BrokenTokenWidget> {
-  final metricClient = injector.get<MetricClientService>();
-
   @override
   void afterFirstLayout(BuildContext context) {}
 
@@ -1232,7 +1228,6 @@ class ProvenanceItem extends StatelessWidget {
 Widget artworkDetailsProvenanceSectionNotEmpty(
   BuildContext context,
   List<Provenance> provenances,
-  HashSet<String> youAddresses,
   Map<String, String> identityMap,
 ) =>
     Column(
@@ -1247,12 +1242,10 @@ Widget artworkDetailsProvenanceSectionNotEmpty(
               ...provenances.map((el) {
                 final identity = identityMap[el.owner];
                 final identityTitle = el.owner.toIdentityOrMask(identityMap);
-                final youTitle =
-                    youAddresses.contains(el.owner) ? '_you'.tr() : '';
                 return Column(
                   children: [
                     ProvenanceItem(
-                      title: (identityTitle ?? '') + youTitle,
+                      title: identityTitle ?? '',
                       value: localTimeString(el.timestamp),
                       // subTitle: el.blockchain.toUpperCase(),
                       tapLink: el.txURL,

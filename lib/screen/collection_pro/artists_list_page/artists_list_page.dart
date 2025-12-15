@@ -7,6 +7,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:autonomy_flutter/nft_collection/models/predefined_collection_model.dart';
 import 'package:autonomy_flutter/screen/predefined_collection/predefined_collection_screen.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/style.dart';
@@ -17,12 +18,10 @@ import 'package:autonomy_flutter/view/predefined_collection/predefined_collectio
 import 'package:easy_localization/easy_localization.dart';
 import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:autonomy_flutter/nft_collection/models/predefined_collection_model.dart';
 
 class ArtistsListPage extends StatefulWidget {
-  final ArtistsListPagePayload payload;
-
   const ArtistsListPage({required this.payload, super.key});
+  final ArtistsListPagePayload payload;
 
   @override
   State<ArtistsListPage> createState() => _ArtistsListPageState();
@@ -90,58 +89,57 @@ class _ArtistsListPageState extends State<ArtistsListPage> {
         child: Column(
           children: [
             ValueListenableBuilder<String?>(
-                valueListenable: _selectedCharacter,
-                builder: (context, value, child) => PagingBar(
-                      onTap: (a) async {
-                        final index = _items.indexWhere((element) =>
-                            element.name.firstSearchCharacter == a);
-                        if (index == -1) {
-                          final nearestIndex = _items.lastIndexWhere(
-                              (element) =>
-                                  element.name.firstSearchCharacter
-                                      .compareSearchKey(a) <
-                                  0);
-                          if (nearestIndex == -1) {
-                            await _scrollTo(0);
-                          } else {
-                            await _scrollTo(nearestIndex * _itemHeight);
-                          }
-                        } else {
-                          await _scrollTo(index * _itemHeight);
-                        }
-                        Future.delayed(const Duration(milliseconds: _scrollLag),
-                            () {
-                          _selectedCharacter.value = a;
-                        });
-                      },
-                      onDragEnd: () {
-                        Future.delayed(
-                            const Duration(
-                                milliseconds: _scrollDuration + _scrollLag),
-                            () {
-                          _isDragging = false;
-                        });
-                      },
-                      onDragging: () {
-                        _isDragging = true;
-                      },
-                      selectedCharacter: value,
-                    )),
+              valueListenable: _selectedCharacter,
+              builder: (context, value, child) => PagingBar(
+                onTap: (a) async {
+                  final index = _items.indexWhere(
+                      (element) => element.name.firstSearchCharacter == a);
+                  if (index == -1) {
+                    final nearestIndex = _items.lastIndexWhere((element) =>
+                        element.name.firstSearchCharacter.compareSearchKey(a) <
+                        0);
+                    if (nearestIndex == -1) {
+                      await _scrollTo(0);
+                    } else {
+                      await _scrollTo(nearestIndex * _itemHeight);
+                    }
+                  } else {
+                    await _scrollTo(index * _itemHeight);
+                  }
+                  Future.delayed(const Duration(milliseconds: _scrollLag), () {
+                    _selectedCharacter.value = a;
+                  });
+                },
+                onDragEnd: () {
+                  Future.delayed(
+                      const Duration(
+                        milliseconds: _scrollDuration + _scrollLag,
+                      ), () {
+                    _isDragging = false;
+                  });
+                },
+                onDragging: () {
+                  _isDragging = true;
+                },
+                selectedCharacter: value,
+              ),
+            ),
             Expanded(
-                child: ListView.separated(
-              controller: _scrollController,
-              itemCount: _items.length,
-              itemBuilder: (context, index) {
-                final predefinedCollection = _items[index];
-                return PredefinedCollectionItem(
-                  predefinedCollection: predefinedCollection,
-                  type: PredefinedCollectionType.artist,
-                  searchStr: '',
-                );
-              },
-              separatorBuilder: (BuildContext context, int index) =>
-                  addOnlyDivider(color: AppColor.auGreyBackground),
-            )),
+              child: ListView.separated(
+                controller: _scrollController,
+                itemCount: _items.length,
+                itemBuilder: (context, index) {
+                  final predefinedCollection = _items[index];
+                  return PredefinedCollectionItem(
+                    predefinedCollection: predefinedCollection,
+                    type: PredefinedCollectionType.artist,
+                    searchStr: '',
+                  );
+                },
+                separatorBuilder: (BuildContext context, int index) =>
+                    addOnlyDivider(color: AppColor.auGreyBackground),
+              ),
+            ),
           ],
         ),
       );
@@ -155,7 +153,6 @@ class _ArtistsListPageState extends State<ArtistsListPage> {
 }
 
 class ArtistsListPagePayload {
-  final List<PredefinedCollectionModel> listPredefinedCollectionByArtist;
-
   ArtistsListPagePayload(this.listPredefinedCollectionByArtist);
+  final List<PredefinedCollectionModel> listPredefinedCollectionByArtist;
 }

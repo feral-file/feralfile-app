@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:gif_view/gif_view.dart';
@@ -30,7 +31,7 @@ class LoadingWidget extends StatelessWidget {
               invertColors: invertColors,
             ),
             const SizedBox(height: 12),
-            Text('loading', style: theme.textTheme.ppMori400White12)
+            Text('loading'.tr(), style: theme.textTheme.ppMori400White12)
           ],
         ),
       ),

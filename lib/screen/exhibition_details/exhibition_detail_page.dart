@@ -1,21 +1,13 @@
 import 'dart:async';
 
 import 'package:after_layout/after_layout.dart';
-import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/ff_exhibition.dart';
-import 'package:autonomy_flutter/model/pair.dart';
-import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/exhibition_details/exhibition_detail_bloc.dart';
 import 'package:autonomy_flutter/screen/exhibition_details/exhibition_detail_state.dart';
-import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/util/exhibition_ext.dart';
 import 'package:autonomy_flutter/util/feral_file_helper.dart';
-import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/util/metric_helper.dart';
 import 'package:autonomy_flutter/util/series_ext.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
-import 'package:autonomy_flutter/view/cast_button.dart';
 import 'package:autonomy_flutter/view/custom_note.dart';
 import 'package:autonomy_flutter/view/exhibition_detail_last_page.dart';
 import 'package:autonomy_flutter/view/exhibition_detail_preview.dart';
@@ -42,8 +34,6 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
     with AfterLayoutMixin {
   late final ExhibitionDetailBloc _exBloc;
 
-  final _canvasDeviceBloc = injector<CanvasDeviceBloc>();
-
   late final PageController _controller;
   int _currentIndex = 0;
   int _carouselIndex = 0;
@@ -59,20 +49,13 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
 
   @override
   Widget build(BuildContext context) =>
-      BlocConsumer<ExhibitionDetailBloc, ExhibitionDetailState>(
-          builder: (context, state) => Scaffold(
-                appBar: _getAppBar(context, state.exhibition),
-                backgroundColor: AppColor.primaryBlack,
-                body: _body(context, state),
-              ),
-          listener: (context, state) {},
-          listenWhen: (previous, current) {
-            if (previous.exhibition == null && current.exhibition != null) {
-              _stream(current.exhibition!);
-              _sendMetricViewExhibition();
-            }
-            return true;
-          });
+      BlocBuilder<ExhibitionDetailBloc, ExhibitionDetailState>(
+        builder: (context, state) => Scaffold(
+          appBar: _getAppBar(context, state.exhibition),
+          backgroundColor: AppColor.primaryBlack,
+          body: _body(context, state),
+        ),
+      );
 
   Widget _body(BuildContext context, ExhibitionDetailState state) {
     final exhibition = state.exhibition;
@@ -95,10 +78,6 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
               setState(() {
                 _currentIndex = index;
               });
-              if (index < itemCount - 1) {
-                _stream(exhibition);
-                _sendMetricViewExhibition();
-              }
             },
             scrollDirection: Axis.vertical,
             itemCount: itemCount,
@@ -152,40 +131,6 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
         ),
       ),
     );
-  }
-
-  void _sendMetricViewExhibition() {
-    final exhibition = _exBloc.state.exhibition;
-    if (exhibition == null) {
-      return;
-    }
-
-    final request = _getCastExhibitionRequest(exhibition);
-    final data = {
-      MetricParameter.exhibitionId: request.exhibitionId,
-      MetricParameter.section: request.catalog.metricName,
-      if (request.catalog == ExhibitionCatalog.artwork)
-        MetricParameter.tokenId: request.catalogId,
-    };
-    unawaited(injector<MetricClientService>()
-        .addEvent(MetricEventName.exhibitionView, data: data));
-  }
-
-  Future<void> _stream(Exhibition exhibition) async {
-    log.info('onPageChanged: $_currentIndex');
-    final displayKey = exhibition.displayKey;
-    final lastSelectedDevice =
-        _canvasDeviceBloc.state.lastSelectedActiveDeviceForKey(displayKey);
-    if (lastSelectedDevice != null) {
-      final request = _getCastExhibitionRequest(exhibition);
-      log.info('onPageChanged: request: $request');
-      final completer = Completer<void>();
-      _canvasDeviceBloc.add(
-        CanvasDeviceCastExhibitionEvent(lastSelectedDevice, request,
-            onDone: completer.complete),
-      );
-      await completer.future;
-    }
   }
 
   Widget _getPreviewPage(Exhibition exhibition) => Column(
@@ -274,7 +219,6 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
               initialPage: _carouselIndex,
               onPageChanged: (index, reason) {
                 _carouselIndex = index;
-                _stream(exhibition);
               },
             ),
           ),
@@ -285,70 +229,7 @@ class _ExhibitionDetailPageState extends State<ExhibitionDetailPage>
       getFFAppBar(
         buildContext,
         onBack: () => Navigator.pop(buildContext),
-        action: exhibition != null
-            ? FFCastButton(
-                displayKey: exhibition.id,
-                onDeviceSelected: (device) async {
-                  final request = _getCastExhibitionRequest(exhibition);
-                  final completer = Completer<void>();
-                  _canvasDeviceBloc.add(
-                    CanvasDeviceCastExhibitionEvent(device, request,
-                        onDone: completer.complete),
-                  );
-                  await completer.future;
-                },
-              )
-            : null,
       );
-
-  Pair<ExhibitionCatalog, String?> _getCurrentCatalogInfo(
-      Exhibition exhibition) {
-    ExhibitionCatalog? catalog;
-    String? catalogId;
-    final shouldShowNotePage = exhibition.shouldShowCuratorNotePage;
-    final exhibitionInfoCount = shouldShowNotePage ? 3 : 2;
-    switch (_currentIndex) {
-      case 0:
-        catalog = ExhibitionCatalog.home;
-      case 1:
-        if (shouldShowNotePage) {
-          final foreword = exhibition.foreWord;
-          if (_carouselIndex < foreword.length) {
-            catalog = ExhibitionCatalog.curatorNote;
-          } else if (_carouselIndex == foreword.length) {
-            catalog = ExhibitionCatalog.curatorNote;
-          } else {
-            catalog = ExhibitionCatalog.resource;
-            catalogId = exhibition
-                .allResources[_carouselIndex - (foreword.length + 1)].id;
-          }
-        } else {
-          catalog = ExhibitionCatalog.artwork;
-          final seriesIndex = 0; //_currentIndex - (exhibitionInfoCount - 1);
-          catalogId =
-              exhibition.displayableSeries.sorted[seriesIndex].artwork?.id;
-        }
-      default:
-        catalog = ExhibitionCatalog.artwork;
-        final seriesIndex = _currentIndex - (exhibitionInfoCount - 1);
-        catalogId =
-            exhibition.displayableSeries.sorted[seriesIndex].artwork?.id;
-    }
-    return Pair(catalog, catalogId);
-  }
-
-  CastExhibitionRequest _getCastExhibitionRequest(Exhibition exhibition) {
-    final exhibitionId = exhibition.id;
-    final catalogInfo = _getCurrentCatalogInfo(exhibition);
-    final catalog = catalogInfo.first;
-    final catalogId = catalogInfo.second;
-    CastExhibitionRequest request = CastExhibitionRequest(
-      exhibitionId: exhibitionId,
-      catalog: catalog,
-      catalogId: catalogId,
-    );
-    return request;
-  }
 
   @override
   FutureOr<void> afterFirstLayout(BuildContext context) {}

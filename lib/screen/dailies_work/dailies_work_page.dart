@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
-import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/dailies.dart';
 import 'package:autonomy_flutter/model/ff_alumni.dart';
 import 'package:autonomy_flutter/model/ff_artwork.dart';
@@ -12,7 +11,6 @@ import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/dailies_work/dailies_work_bloc.dart';
 import 'package:autonomy_flutter/screen/dailies_work/dailies_work_state.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
-import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/preview_detail/preview_detail_widget.dart';
 import 'package:autonomy_flutter/screen/exhibition_details/exhibition_detail_page.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
@@ -34,7 +32,6 @@ import 'package:autonomy_flutter/view/exhibition_item.dart';
 import 'package:autonomy_flutter/view/important_note_view.dart';
 import 'package:autonomy_flutter/view/keep_alive_widget.dart';
 import 'package:autonomy_flutter/view/loading.dart';
-import 'package:autonomy_flutter/view/now_displaying_view.dart';
 import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:feralfile_app_theme/feral_file_app_theme.dart';
@@ -44,7 +41,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
-import 'package:multi_value_listenable_builder/multi_value_listenable_builder.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DailyWorkPage extends StatefulWidget {
@@ -296,21 +292,6 @@ class DailyWorkPageState extends State<DailyWorkPage>
               textAlign: TextAlign.left,
             ),
           ),
-          FFCastButton(
-            key: _displayButtonKey,
-            displayKey: CastDailyWorkRequest.displayKey,
-            onDeviceSelected: (device) {
-              context.read<CanvasDeviceBloc>().add(
-                    CanvasDeviceCastDailyWorkEvent(
-                      device,
-                      CastDailyWorkRequest(),
-                    ),
-                  );
-            },
-            onTap: _setUserLiked,
-            text: 'display'.tr(),
-            shouldCheckSubscription: false,
-          ),
         ],
       );
 
@@ -468,21 +449,6 @@ class DailyWorkPageState extends State<DailyWorkPage>
                 );
               },
             ),
-          ),
-          MultiValueListenableBuilder(
-            valueListenables: [
-              shouldShowNowDisplayingOnDisconnect,
-              nowDisplayingVisibility,
-            ],
-            builder: (context, values, _) {
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeInOut,
-                height: values.every((value) => value as bool)
-                    ? 100 + kNowDisplayingHeight - 16
-                    : 100,
-              );
-            },
           ),
         ],
       );

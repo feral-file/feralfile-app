@@ -1,19 +1,16 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/ff_artwork.dart';
 import 'package:autonomy_flutter/model/ff_list_response.dart';
 import 'package:autonomy_flutter/model/ff_series.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/feralfile_artwork_preview/feralfile_artwork_preview_page.dart';
 import 'package:autonomy_flutter/screen/feralfile_series/feralfile_series_bloc.dart';
 import 'package:autonomy_flutter/screen/feralfile_series/feralfile_series_state.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
 import 'package:autonomy_flutter/util/exhibition_ext.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/util/series_ext.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/ff_artwork_thumbnail_view.dart';
@@ -35,7 +32,6 @@ class FeralFileSeriesPage extends StatefulWidget {
 
 class _FeralFileSeriesPageState extends State<FeralFileSeriesPage> {
   late final FeralFileSeriesBloc _feralFileSeriesBloc;
-  final _canvasDeviceBloc = injector.get<CanvasDeviceBloc>();
   static const _padding = 14.0;
   static const _axisSpacing = 5.0;
 
@@ -53,31 +49,6 @@ class _FeralFileSeriesPageState extends State<FeralFileSeriesPage> {
     // _pagingController.addPageRequestListener((pageKey) async {
     //   await _fetchPage(context, pageKey);
     // });
-  }
-
-  Future<void> _fetchPage(BuildContext context, int pageKey) async {
-    try {
-      final newItems = await injector<FeralFileService>().getSeriesArtworks(
-          widget.payload.seriesId, widget.payload.exhibitionId,
-          offset: pageKey,
-          // ignore: avoid_redundant_argument_values
-          limit: _pageSize);
-      final isLastPage = !(newItems.paging?.shouldLoadMore ?? false);
-      if (isLastPage) {
-        // _pagingController.appendLastPage(newItems.result);
-        // return newItems.result;
-      } else {
-        final nextPageKey = pageKey + _pageSize;
-        if (context.mounted) {
-          // make sure the page is not disposed
-          // _pagingController.appendPage(newItems.result, nextPageKey);
-          // return newItems.result;
-        }
-      }
-    } catch (error) {
-      log.info('Error fetching series page: $error');
-      unawaited(Sentry.captureException(error));
-    }
   }
 
   Future<void> _fetchNextPage() async {
@@ -184,27 +155,6 @@ class _FeralFileSeriesPageState extends State<FeralFileSeriesPage> {
                 cacheWidth: cacheWidth,
                 cacheHeight: cacheHeight,
                 onTap: () async {
-                  final displayKey = series.displayKey;
-                  final lastSelectedCanvasDevice = _canvasDeviceBloc.state
-                      .lastSelectedActiveDeviceForKey(displayKey);
-
-                  if (lastSelectedCanvasDevice != null) {
-                    final castRequest = CastExhibitionRequest(
-                        exhibitionId: series.exhibitionID,
-                        catalog: ExhibitionCatalog.artwork,
-                        catalogId: artwork.id);
-                    final completer = Completer<void>();
-                    _canvasDeviceBloc.add(
-                      CanvasDeviceCastExhibitionEvent(
-                        lastSelectedCanvasDevice,
-                        castRequest,
-                        onDone: () {
-                          completer.complete();
-                        },
-                      ),
-                    );
-                    await completer.future;
-                  }
                   await Navigator.of(context).pushNamed(
                     AppRouter.ffArtworkPreviewPage,
                     arguments: FeralFileArtworkPreviewPagePayload(
@@ -226,11 +176,10 @@ class _FeralFileSeriesPageState extends State<FeralFileSeriesPage> {
 }
 
 class FeralFileSeriesPagePayload {
-  final String seriesId;
-  final String exhibitionId;
-
   const FeralFileSeriesPagePayload({
     required this.seriesId,
     required this.exhibitionId,
   });
+  final String seriesId;
+  final String exhibitionId;
 }

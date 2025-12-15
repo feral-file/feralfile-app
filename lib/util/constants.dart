@@ -406,6 +406,8 @@ class Constants {
   static const navigationPrefixes = [
     'feralfile://navigation/',
   ];
+
+  static const johnGerrardLatestRevealIndex = 9047;
 }
 
 Map<String, String> specifiedSeriesTitle = {

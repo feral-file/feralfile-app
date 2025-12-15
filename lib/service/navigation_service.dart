@@ -9,8 +9,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/model/device/base_device.dart';
-import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/ff_artwork.dart';
 import 'package:autonomy_flutter/model/ff_exhibition.dart';
 import 'package:autonomy_flutter/model/jwt.dart';
@@ -22,7 +20,6 @@ import 'package:autonomy_flutter/screen/alumni_details/alumni_details_page.dart'
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/customer_support/support_thread_page.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
-import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/feralfile_home.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
 import 'package:autonomy_flutter/screen/playlists/view_playlist/view_playlist.dart';
@@ -40,14 +37,11 @@ import 'package:autonomy_flutter/view/artist_display_setting.dart';
 import 'package:autonomy_flutter/view/how_to_install_daily_widget_build.dart';
 import 'package:autonomy_flutter/view/now_display_setting.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
-import 'package:autonomy_flutter/view/stream_device_view.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-// import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:open_settings_plus/open_settings_plus.dart';
 import 'package:sentry/sentry.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -299,14 +293,6 @@ class NavigationService {
     }
   }
 
-  Future<void> gotoExhibitionDetailsPage(String exhibitionID) async {
-    popUntilHome();
-    await Future.delayed(const Duration(seconds: 1), () async {
-      await (homePageKey.currentState ?? homePageNoTransactionKey.currentState)
-          ?.openExhibition(exhibitionID);
-    });
-  }
-
   Future<void> popToCollection() async {
     popUntilHome();
     await injector<NavigationService>().openCollection();
@@ -398,9 +384,6 @@ class NavigationService {
     FeralfileHomeTab? exploreTab;
 
     switch (pair.first) {
-      case AppRouter.dailyWorkPage:
-        route = AppRouter.homePageNoTransition;
-        homeNavigationTab = HomeNavigatorTab.daily;
       case AppRouter.featuredPage:
         route = AppRouter.homePageNoTransition;
         homeNavigationTab = HomeNavigatorTab.explore;
@@ -421,9 +404,6 @@ class NavigationService {
         route = AppRouter.homePageNoTransition;
         homeNavigationTab = HomeNavigatorTab.explore;
         exploreTab = FeralfileHomeTab.curators;
-      case AppRouter.organizePage:
-        route = AppRouter.homePageNoTransition;
-        homeNavigationTab = HomeNavigatorTab.collection;
       default:
         route = pair.first;
         unawaited(navigateTo(route, arguments: pair.second));
@@ -544,24 +524,6 @@ class NavigationService {
       backgroundColor: backgroundColor,
       autoDismissAfter: autoDismissAfter,
       // feedback: feedback,
-    );
-  }
-
-  Future<void> showStreamAction(
-    String displayKey,
-    FutureOr<void> Function(BaseDevice device)? onDeviceSelected,
-  ) async {
-    await injector<NavigationService>().showFlexibleDialog(
-      BlocProvider.value(
-        value: injector<CanvasDeviceBloc>(),
-        child: StreamDeviceView(
-          displayKey: displayKey,
-          onDeviceSelected: (canvasDevice) {
-            onDeviceSelected?.call(canvasDevice);
-          },
-        ),
-      ),
-      isDismissible: true,
     );
   }
 

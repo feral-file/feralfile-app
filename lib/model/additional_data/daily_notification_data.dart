@@ -56,7 +56,6 @@ enum DailyCTATarget {
 }
 
 class DailyNotificationData extends AdditionalData {
-  final _navigationService = injector<NavigationService>();
   final _feralFileService = injector<FeralFileService>();
   final _dailyWorkBloc = injector<DailyWorkBloc>();
   final DailyCTATarget? dailyCTATarget;
@@ -94,7 +93,7 @@ class DailyNotificationData extends AdditionalData {
 
     switch (dailyCTATarget!) {
       case DailyCTATarget.dailyPage:
-        await _navigationService.navigatePath(AppRouter.dailyWorkPage);
+        return;
       case DailyCTATarget.viewDailySeries:
         final artwork = dailyToken!.artwork;
         if (artwork == null) {
@@ -141,10 +140,7 @@ class DailyNotificationData extends AdditionalData {
         }
         await injector<NavigationService>().openFeralFileArtistPage(artistID);
       case DailyCTATarget.displayDailyOnTV:
-        await _navigationService.navigatePath(AppRouter.dailyWorkPage);
-        await Future.delayed(const Duration(milliseconds: 300), () {
-          dailyWorkKey.currentState?.openDisplayDialog();
-        });
+        return;
     }
   }
 
@@ -158,7 +154,7 @@ class DailyNotificationData extends AdditionalData {
     DailyToken? dailyToken = _dailyWorkBloc.state.currentDailyToken;
     if (dailyToken == null) {
       log.warning('DailyNotificationData: dailyToken is null, retrying');
-      await Future.delayed(const Duration(milliseconds: 1000));
+      await Future<void>.delayed(const Duration(milliseconds: 1000));
       dailyToken = _dailyWorkBloc.state.currentDailyToken;
     }
     if (dailyToken == null) {

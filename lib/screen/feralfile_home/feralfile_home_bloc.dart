@@ -8,8 +8,6 @@ class FeralFileHomeFetchDataEvent extends FeralFileHomeEvent {}
 
 class FeralfileHomeBloc
     extends AuBloc<FeralFileHomeEvent, FeralfileHomeBlocState> {
-  final FeralFileService _feralFileService;
-
   FeralfileHomeBloc(this._feralFileService) : super(FeralfileHomeBlocState()) {
     on<FeralFileHomeFetchDataEvent>((event, emit) async {
       final statistics = await _feralFileService.getExploreStatistics();
@@ -21,4 +19,5 @@ class FeralfileHomeBloc
       ));
     });
   }
+  final FeralFileService _feralFileService;
 }

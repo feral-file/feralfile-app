@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/ff_artwork.dart';
@@ -41,16 +40,12 @@ class NowDisplayingManager {
     _onDisconnectTimer?.cancel();
     if (status is DeviceDisconnected) {
       _onDisconnectTimer = Timer(const Duration(seconds: 5), () {
-        shouldShowNowDisplayingOnDisconnect.value = false;
       });
     } else if (status is ConnectionLost) {
       _onDisconnectTimer = Timer(const Duration(seconds: 10), () {
-        shouldShowNowDisplayingOnDisconnect.value = false;
       });
     } else if (status is NowDisplayingSuccess) {
-      shouldShowNowDisplayingOnDisconnect.value = true;
     }
-    nowDisplayingVisibility.value = true;
     injector<NavigationService>().hideDeviceSettings();
   }
 

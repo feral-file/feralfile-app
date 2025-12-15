@@ -2,29 +2,21 @@ import 'dart:async';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
-import 'package:autonomy_flutter/model/device/base_device.dart';
 import 'package:autonomy_flutter/model/ff_artwork.dart';
 import 'package:autonomy_flutter/nft_rendering/nft_loading_widget.dart';
 import 'package:autonomy_flutter/nft_rendering/webview_controller_ext.dart';
-import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/feralfile_artwork_details/feralfile_artwork_details_bloc.dart';
-import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
-import 'package:autonomy_flutter/screen/detail/preview/keyboard_control_page.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
-import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/util/exhibition_ext.dart';
 import 'package:autonomy_flutter/util/feralfile_alumni_ext.dart';
-import 'package:autonomy_flutter/util/metric_helper.dart';
 import 'package:autonomy_flutter/util/series_ext.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:autonomy_flutter/view/artwork_title_view.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
-import 'package:autonomy_flutter/view/cast_button.dart';
 import 'package:autonomy_flutter/view/feralfile_artwork_preview_widget.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/view/webview_controller_text_field.dart';
@@ -36,7 +28,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
-import 'package:sentry/sentry.dart';
 import 'package:shake/shake.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -57,7 +48,6 @@ class _FeralFileArtworkPreviewPageState
     with
         AfterLayoutMixin<FeralFileArtworkPreviewPage>,
         SingleTickerProviderStateMixin {
-  final _canvasDeviceBloc = injector.get<CanvasDeviceBloc>();
   double? _appBarBottomDy;
   static const _infoShrinkPosition = 0.001;
   static const _infoExpandPosition = 0.99;
@@ -89,18 +79,6 @@ class _FeralFileArtworkPreviewPageState
     _feralfileArtworkDetailsBloc.add(
       FeralfileArtworkDetailsLoadEvent(widget.payload.artworkId),
     );
-  }
-
-  void _sendMetricViewExhibition(Artwork artwork) {
-    final exhibitionId = artwork.series?.exhibitionID;
-    final data = {
-      MetricParameter.exhibitionId: exhibitionId,
-      MetricParameter.section: ExhibitionCatalog.artwork.metricName,
-      MetricParameter.tokenId: artwork.id,
-    };
-
-    injector<MetricClientService>()
-        .addEvent(MetricEventName.exhibitionView, data: data);
   }
 
   @override
@@ -135,46 +113,30 @@ class _FeralFileArtworkPreviewPageState
 
   @override
   Widget build(BuildContext context) =>
-      BlocBuilder<CanvasDeviceBloc, CanvasDeviceState>(
-          bloc: _canvasDeviceBloc,
-          builder: (context, canvasState) {
-            final theme = Theme.of(context);
-            return BlocBuilder<FeralfileArtworkDetailsBloc,
-                FeralfileArtworkDetailsState>(
-              bloc: _feralfileArtworkDetailsBloc,
-              buildWhen: (previous, current) {
-                // Only rebuild when the artwork is loaded or an error occurs
-                if (current is FeralfileArtworkDetailsLoadedState) {
-                  final artwork = current.artwork;
-                  _sendMetricViewExhibition(artwork!);
-                }
-                return true;
-              },
-              builder: (context, artworkDetailState) {
-                if (artworkDetailState is FeralfileArtworkDetailsErrorState) {
-                  return Center(
-                    child: Text(artworkDetailState.error,
-                        style: theme.textTheme.ppMori400White14),
-                  );
-                }
-                if (artworkDetailState is FeralfileArtworkDetailsLoadedState) {
-                  final artwork = artworkDetailState.artwork!;
-                  return _buildBackdrop(
-                    context,
-                    artwork,
-                    canvasState,
-                  );
-                }
-                if (artworkDetailState is FeralfileArtworkDetailsLoadingState) {
-                  return const Center(child: LoadingWidget());
-                }
-                return const Center(child: LoadingWidget());
-              },
+      BlocBuilder<FeralfileArtworkDetailsBloc, FeralfileArtworkDetailsState>(
+        bloc: _feralfileArtworkDetailsBloc,
+        builder: (context, artworkDetailState) {
+          if (artworkDetailState is FeralfileArtworkDetailsErrorState) {
+            return Center(
+              child: Text(artworkDetailState.error,
+                  style: Theme.of(context).textTheme.ppMori400White14),
             );
-          });
+          }
+          if (artworkDetailState is FeralfileArtworkDetailsLoadedState) {
+            final artwork = artworkDetailState.artwork!;
+            return _buildBackdrop(
+              context,
+              artwork,
+            );
+          }
+          if (artworkDetailState is FeralfileArtworkDetailsLoadingState) {
+            return const Center(child: LoadingWidget());
+          }
+          return const Center(child: LoadingWidget());
+        },
+      );
 
-  Widget _buildBackdrop(
-      BuildContext context, Artwork artwork, CanvasDeviceState canvasState) {
+  Widget _buildBackdrop(BuildContext context, Artwork artwork) {
     return BackdropScaffold(
       appBar: _isFullScreen
           ? null
@@ -185,13 +147,10 @@ class _FeralFileArtworkPreviewPageState
                     height: toolbarHeight,
                   ),
                 )
-              : getFFAppBar(context,
+              : getFFAppBar(
+                  context,
                   onBack: () => Navigator.pop(context),
-                  action: FFCastButton(
-                    displayKey: artwork.series?.exhibitionID ?? '',
-                    onDeviceSelected: (BaseDevice device) =>
-                        _onDeviceSelected(device, artwork),
-                  )),
+                ),
       backgroundColor: AppColor.primaryBlack,
       frontLayerElevation: _isFullScreen ? 0 : 1,
       frontLayerBackgroundColor:
@@ -245,7 +204,7 @@ class _FeralFileArtworkPreviewPageState
                 },
                 child: Container(
                   color: Colors.transparent,
-                  child: _infoHeader(context, artwork, canvasState),
+                  child: _infoHeader(context, artwork),
                 ),
               ),
             ),
@@ -260,32 +219,6 @@ class _FeralFileArtworkPreviewPageState
           isScrollable: artwork.isScrollablePreviewURL,
         ),
       );
-
-  Future<void> _onDeviceSelected(BaseDevice device, Artwork artwork) async {
-    final exhibitionId = artwork.series?.exhibitionID;
-    if (exhibitionId == null) {
-      await Sentry.captureMessage('Exhibition ID is null for artwork '
-          '${artwork.id}');
-    } else {
-      final artworkId = artwork.id;
-      final request = CastExhibitionRequest(
-        exhibitionId: exhibitionId,
-        catalog: ExhibitionCatalog.artwork,
-        catalogId: artworkId,
-      );
-      final completer = Completer<void>();
-      _canvasDeviceBloc.add(
-        CanvasDeviceCastExhibitionEvent(
-          device,
-          request,
-          onDone: () {
-            completer.complete();
-          },
-        ),
-      );
-      await completer.future;
-    }
-  }
 
   dynamic _onLoaded({WebViewController? webViewController, int? time}) {
     _webViewController = webViewController;
@@ -339,8 +272,10 @@ class _FeralFileArtworkPreviewPageState
             )),
       );
 
-  Widget _infoHeader(BuildContext context, Artwork artwork,
-          CanvasDeviceState canvasState) =>
+  Widget _infoHeader(
+    BuildContext context,
+    Artwork artwork,
+  ) =>
       Padding(
         padding: const EdgeInsets.fromLTRB(15, 15, 5, 20),
         child: Column(
@@ -359,8 +294,8 @@ class _FeralFileArtworkPreviewPageState
                 Semantics(
                   label: 'artworkDotIcon',
                   child: IconButton(
-                    onPressed: () async => _showArtworkOptionsDialog(
-                        context, artwork, canvasState),
+                    onPressed: () async =>
+                        _showArtworkOptionsDialog(context, artwork),
                     icon: SvgPicture.asset(
                       'assets/images/more_circle.svg',
                       width: 22,
@@ -379,21 +314,13 @@ class _FeralFileArtworkPreviewPageState
         ),
       );
 
-  Future<void> _showArtworkOptionsDialog(BuildContext context, Artwork artwork,
-      CanvasDeviceState canvasDeviceState) async {
-    final castingDevice = canvasDeviceState
-        .lastSelectedActiveDeviceForKey(artwork.series?.exhibitionID ?? '');
-    final status =
-        canvasDeviceState.canvasDeviceStatus[castingDevice?.deviceId];
-    final isCastingThisArtwork =
-        castingDevice != null && status?.catalogId == artwork.id;
+  Future<void> _showArtworkOptionsDialog(
+    BuildContext context,
+    Artwork artwork,
+  ) async {
     if (!context.mounted) {
       return;
     }
-    final artistAddresses = artwork.series?.artistAlumni?.addressesList;
-    final isUserArtist = artistAddresses == null
-        ? false
-        : injector<AuthService>().isLinkArtist(artistAddresses);
     _focusNode.unfocus();
     unawaited(UIHelper.showDrawerAction(
       context,
@@ -405,39 +332,6 @@ class _FeralFileArtworkPreviewPageState
               Navigator.of(context).pop();
               _setFullScreen();
             }),
-        if (isUserArtist)
-          OptionItem(
-            title: 'Artist Display Settings',
-            icon: const Icon(
-              AuIcon.settings,
-              color: AppColor.white,
-            ),
-            onTap: () {
-              injector<NavigationService>().openArtistDisplaySetting(
-                artwork: artwork,
-              );
-            },
-          ),
-        if (isCastingThisArtwork)
-          OptionItem(
-            title: 'interact'.tr(),
-            icon: SvgPicture.asset('assets/images/keyboard_icon.svg'),
-            onTap: () {
-              Navigator.of(context).pop();
-              if (isCastingThisArtwork) {
-                unawaited(Navigator.of(context).pushNamed(
-                  AppRouter.keyboardControlPage,
-                  arguments: KeyboardControlPagePayload(
-                    artwork.name,
-                    '',
-                    [castingDevice],
-                  ),
-                ));
-              } else {
-                FocusScope.of(context).requestFocus(_focusNode);
-              }
-            },
-          ),
         OptionItem.emptyOptionItem,
       ],
     ));

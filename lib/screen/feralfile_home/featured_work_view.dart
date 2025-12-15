@@ -8,14 +8,11 @@ import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
-import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/util/playlist_ext.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:autonomy_flutter/view/loading.dart';
-import 'package:autonomy_flutter/view/stream_common_widget.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -41,7 +38,6 @@ class FeaturedWorkView extends StatefulWidget {
 class FeaturedWorkViewState extends State<FeaturedWorkView> {
   List<AssetToken>? _featureTokens;
   final Map<String, Size> _imageSize = {};
-  late CanvasDeviceBloc _canvasDeviceBloc;
   late ScrollController _scrollController;
   late Paging _paging;
   bool _isLoading = false;
@@ -51,7 +47,6 @@ class FeaturedWorkViewState extends State<FeaturedWorkView> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    _canvasDeviceBloc = injector<CanvasDeviceBloc>();
     _paging = Paging(offset: 0, limit: 5, total: widget.tokenIDs.length);
     log.info('paging initState: ${_paging.offset}');
     unawaited(_fetchFeaturedTokens(context, _paging));
@@ -126,7 +121,6 @@ class FeaturedWorkViewState extends State<FeaturedWorkView> {
                   height: MediaQuery.of(context).padding.top,
                 ),
               ),
-              // const SliverToBoxAdapter(child: NowDisplaying()),
               const SliverToBoxAdapter(
                 child: SizedBox(
                   height: 32,
@@ -134,53 +128,6 @@ class FeaturedWorkViewState extends State<FeaturedWorkView> {
               ),
               SliverToBoxAdapter(
                 child: widget.header ?? const SizedBox(),
-              ),
-              SliverToBoxAdapter(
-                child: BlocBuilder<CanvasDeviceBloc, CanvasDeviceState>(
-                  bloc: _canvasDeviceBloc,
-                  builder: (context, canvasDeviceState) {
-                    final displayKey = widget.tokenIDs.displayKey;
-                    final device = canvasDeviceState
-                        .lastSelectedActiveDeviceForKey(displayKey ?? '');
-                    final isPlaylistCasting = device == null
-                        ? false
-                        : canvasDeviceState.isDeviceAlive(device);
-                    if (isPlaylistCasting && _shouldShowControllerBar) {
-                      return Padding(
-                        padding: const EdgeInsets.all(15),
-                        child: PlaylistControl(
-                          displayKey: displayKey!,
-                        ),
-                      );
-                    } else {
-                      return const SizedBox();
-                    }
-                  },
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: BlocBuilder<CanvasDeviceBloc, CanvasDeviceState>(
-                  bloc: injector<CanvasDeviceBloc>(),
-                  builder: (context, canvasDeviceState) {
-                    if (widget.tokenIDs.isEmpty) {
-                      return const SizedBox();
-                    }
-                    final displayKey = widget.tokenIDs.displayKey;
-                    final isPlaylistCasting = displayKey != null &&
-                        canvasDeviceState
-                                .lastSelectedActiveDeviceForKey(displayKey) !=
-                            null;
-                    return Visibility(
-                      visible: isPlaylistCasting && !_shouldShowControllerBar,
-                      child: Padding(
-                        padding: const EdgeInsets.all(15),
-                        child: PlaylistControl(
-                          displayKey: displayKey!,
-                        ),
-                      ),
-                    );
-                  },
-                ),
               ),
               if (_featureTokens == null) ...[
                 SliverToBoxAdapter(
@@ -256,7 +203,6 @@ class FeaturedWorkViewState extends State<FeaturedWorkView> {
                                       token,
                                       artistName,
                                       false,
-                                      context.read<CanvasDeviceBloc>().state,
                                     ),
                                   ],
                                 ),
@@ -440,7 +386,6 @@ class FeaturedWorkViewState extends State<FeaturedWorkView> {
     AssetToken asset,
     String? artistName,
     bool isViewOnly,
-    CanvasDeviceState canvasState,
   ) {
     var subTitle = '';
     if (artistName != null && artistName.isNotEmpty) {
