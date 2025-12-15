@@ -23,5 +23,5 @@ class PlaylistListItemTokens {
 
   // Typography - Uses predefined text styles from theme
   // Primary text: AppTypography.small(context).white
-  // Secondary text: AppTypography.bodySmall(context).grey
+  // Secondary text: AppTypography.body(context).grey
 }

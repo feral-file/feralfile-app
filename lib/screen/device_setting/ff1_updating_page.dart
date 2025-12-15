@@ -1,4 +1,5 @@
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
@@ -59,7 +60,7 @@ class FF1Updating extends StatelessWidget {
                           const SizedBox(height: 20),
                           Text(
                             '''This update typically takes 5–10 min and FF1 may restart.\n\nKeep it powered and connected. Setup will continue when ready.''',
-                            style: Theme.of(context).textTheme.small,
+                            style: AppTypography.body(context).white,
                           ),
                         ],
                       ),

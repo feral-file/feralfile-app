@@ -50,7 +50,7 @@ class ImportantNoteView extends StatelessWidget {
         children: [
           SelectableText(
             title ?? 'important'.tr(),
-            style: titleStyle ?? theme.textTheme.ppMori700Black14,
+            style: titleStyle ?? AppTypography.body(context).bold.black,
           ),
           const SizedBox(height: 15),
           HtmlWidget(

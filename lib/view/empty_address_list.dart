@@ -14,7 +14,7 @@ class EmptyAddressList extends StatelessWidget {
         children: [
           Text(
             'no_addresses_found'.tr(),
-            style: Theme.of(context).textTheme.ppMori700Black16,
+            style: AppTypography.body(context).bold.black,
           ),
           const SizedBox(height: 8),
           Text(

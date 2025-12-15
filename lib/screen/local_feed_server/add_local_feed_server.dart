@@ -115,7 +115,7 @@ class _AddLocalFeedServerPageState extends State<AddLocalFeedServerPage> {
                           style: AppTypography.body(context).white,
                           decoration: InputDecoration(
                             hintText: 'https://your-dp1-server.com',
-                            hintStyle: AppTypography.bodySmall(context).grey,
+                            hintStyle: AppTypography.body(context).grey,
                             filled: true,
                             fillColor: AppColor.primaryBlack,
                             border: OutlineInputBorder(
@@ -145,7 +145,7 @@ class _AddLocalFeedServerPageState extends State<AddLocalFeedServerPage> {
                             padding: const EdgeInsets.all(12),
                             child: Text(
                               state.error!.message,
-                              style: AppTypography.bodySmall(context)
+                              style: AppTypography.body(context)
                                   .grey
                                   .copyWith(
                                     color: AppColor.red,

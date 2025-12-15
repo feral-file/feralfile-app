@@ -8,6 +8,7 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_bloc.dart';
@@ -257,7 +258,7 @@ class _AccountsViewState extends State<AccountsView> {
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.zero,
                 ),
-                style: theme.textTheme.ppMori700Black16,
+                style: AppTypography.body(context).bold.black,
                 controller: _nameController,
                 onSubmitted: (String value) async {
                   if (value.isEmpty) {
@@ -291,7 +292,7 @@ class _AccountsViewState extends State<AccountsView> {
           children: [
             Text(
               'address_empty'.tr(),
-              style: Theme.of(context).textTheme.ppMori400Black14,
+              style: AppTypography.body(context).black,
             ),
             const SizedBox(height: 36),
             PrimaryButton(

@@ -24,7 +24,7 @@ class ErrorView extends StatelessWidget {
           children: [
             Text(
               error,
-              style: AppTypography.bodySmall(context).grey,
+              style: AppTypography.body(context).grey,
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[

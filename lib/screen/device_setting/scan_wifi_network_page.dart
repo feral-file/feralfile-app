@@ -138,8 +138,7 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
       backgroundColor: AppColor.auGreyBackground,
       body: SafeArea(
         child: Padding(
-          padding:
-              ResponsiveLayout.pageEdgeInsets.copyWith(left: 44, right: 44),
+          padding: ResponsiveLayout.pageEdgeInsets,
           child: KeyboardVisibilityBuilder(
             builder: (context, isKeyboardVisible) {
               return CustomScrollView(
@@ -153,7 +152,7 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
                     SliverToBoxAdapter(
                       child: Text(
                         'Getting WiFi networks from your FF1. Please wait a moment...',
-                        style: AppTypography.bodySmall(context).white,
+                        style: AppTypography.body(context).white,
                       ),
                     ),
                     const SliverToBoxAdapter(child: SizedBox(height: 24)),
@@ -166,26 +165,24 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
                             if (widget.payload.device.isConnected) ...[
                               Text(
                                 'Cannot get available networks from your FF1',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .ppMori700White12,
+                                style:
+                                    AppTypography.caption(context).bold.white,
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 'There might be an issue with the WiFi module on your FF1. Please try restarting your FF1 and scan again.',
-                                style: AppTypography.bodySmall(context).white,
+                                style: AppTypography.body(context).white,
                               ),
                             ] else ...[
                               Text(
                                 'Unable to Connect to FF1',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .ppMori700White12,
+                                style:
+                                    AppTypography.caption(context).bold.white,
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 'Connection to the FF1 could not be established',
-                                style: AppTypography.bodySmall(context).white,
+                                style: AppTypography.body(context).white,
                               ),
                             ],
                           ],
@@ -198,13 +195,12 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
                           children: [
                             Text(
                               'No wifi networks found by FF1',
-                              style:
-                                  Theme.of(context).textTheme.ppMori700White12,
+                              style: AppTypography.caption(context).bold.white,
                             ),
                             const SizedBox(height: 16),
                             Text(
                               'There might be an issue with the WiFi module on your FF1. Please try restarting your FF1 and scan again.',
-                              style: AppTypography.bodySmall(context).white,
+                              style: AppTypography.body(context).white,
                             ),
                           ],
                         ),
@@ -256,7 +252,7 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
         Text(
           '''To avoid overloading the BLE connection, only the strongest nearby Wi-Fi networks are shown. '''
           '''If your network isn't listed, try moving the device closer to your Wi-Fi router, or connect manually.''',
-          style: AppTypography.bodySmall(context).white,
+          style: AppTypography.body(context).white,
         ),
         const SizedBox(
           height: 80,
@@ -276,7 +272,7 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
         const SizedBox(height: 24),
         Text(
           'Or enter your Wi-Fi name (SSID) below to connect manually.',
-          style: AppTypography.bodySmall(context).white,
+          style: AppTypography.body(context).white,
         ),
         const SizedBox(height: 16),
         TextField(
@@ -284,7 +280,7 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
           decoration: InputDecoration(
             // border radius 10
             hintText: 'Enter wifi network',
-            hintStyle: AppTypography.bodySmall(context).white,
+            hintStyle: AppTypography.body(context).white,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide.none,
@@ -298,7 +294,7 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
               horizontal: 16,
             ),
           ),
-          style: AppTypography.bodySmall(context).white,
+          style: AppTypography.body(context).white,
           onChanged: (value) {
             if (mounted) {
               setState(() {

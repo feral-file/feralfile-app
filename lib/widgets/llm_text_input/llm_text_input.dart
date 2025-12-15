@@ -1,4 +1,5 @@
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/components/LLMTextInput.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
@@ -84,14 +85,14 @@ class _LLMTextInputState extends State<LLMTextInput> {
                       controller: _textController,
                       focusNode: _focusNode,
                       enabled: widget.enabled,
-                      style: Theme.of(context).textTheme.small,
+                      style: AppTypography.body(context).white,
                       minLines: 1,
                       maxLines: 3,
                       keyboardAppearance: Theme.of(context).brightness,
                       decoration: InputDecoration(
                         border: InputBorder.none,
                         hintText: widget.placeholder,
-                        hintStyle: Theme.of(context).textTheme.small,
+                        hintStyle: AppTypography.body(context).white,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
                       ),
@@ -118,7 +119,7 @@ class _LLMTextInputState extends State<LLMTextInput> {
                         width: double.infinity,
                         child: Text(
                           widget.placeholder,
-                          style: Theme.of(context).textTheme.small,
+                          style: AppTypography.body(context).white,
                         ),
                       ),
                     ),

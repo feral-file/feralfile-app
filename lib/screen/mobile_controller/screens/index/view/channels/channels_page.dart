@@ -147,8 +147,8 @@ class ChannelsPageState extends State<ChannelsPage>
             sectionName: channelType.name,
             sectionIcon: SvgPicture.asset(
               channelType.icon,
-              width: 12,
-              height: 12,
+              width: LayoutConstants.iconSizeDefault,
+              height: LayoutConstants.iconSizeDefault,
               colorFilter: const ColorFilter.mode(
                 PrimitivesTokens.colorsGrey,
                 BlendMode.srcIn,

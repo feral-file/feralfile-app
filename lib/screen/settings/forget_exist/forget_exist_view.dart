@@ -40,7 +40,7 @@ class ForgetExistView extends StatelessWidget {
                   children: [
                     Text(
                       'This will permanently:',
-                      style: theme.textTheme.ppMori700White14,
+                      style: AppTypography.body(context).bold.white,
                     )
                   ],
                 ),
@@ -72,8 +72,7 @@ class ForgetExistView extends StatelessWidget {
                                   maxLines: 3,
                                   textScaler: MediaQuery.textScalerOf(context),
                                   text: TextSpan(
-                                    style:
-                                        theme.primaryTextTheme.ppMori400White14,
+                                    style: AppTypography.body(context).white,
                                     children: <TextSpan>[
                                       TextSpan(
                                         text:
@@ -97,9 +96,8 @@ class ForgetExistView extends StatelessWidget {
                               ),
                               Expanded(
                                 child: Text(
-                                  'Unpair this device from any FF1 you’ve connected.',
-                                  style:
-                                      theme.primaryTextTheme.ppMori400White14,
+                                  'Unpair this device from any FF1 you\'ve connected.',
+                                  style: AppTypography.body(context).white,
                                 ),
                               ),
                             ],
@@ -119,8 +117,7 @@ class ForgetExistView extends StatelessWidget {
                                   children: [
                                     Text(
                                       'Delete your playlists from Feral File and stop sharing them:',
-                                      style: theme
-                                          .primaryTextTheme.ppMori400White14,
+                                      style: AppTypography.body(context).white,
                                     ),
                                     Row(
                                       crossAxisAlignment:
@@ -132,17 +129,16 @@ class ForgetExistView extends StatelessWidget {
                                         Text(
                                           'o ',
                                           style:
-                                              AppTypography.bodySmall(context)
-                                                  .white,
+                                              AppTypography.body(context).white,
                                         ),
                                         const SizedBox(
                                           width: 8,
                                         ),
                                         Expanded(
                                           child: Text(
-                                            'Others may briefly see cached copies; they won’t update and will disappear after refresh.',
-                                            style: theme
-                                                .textTheme.ppMori400White14,
+                                            'Others may briefly see cached copies; they won\'t update and will disappear after refresh.',
+                                            style: AppTypography.body(context)
+                                                .white,
                                           ),
                                         )
                                       ],
@@ -157,8 +153,7 @@ class ForgetExistView extends StatelessWidget {
                                         Text(
                                           'o ',
                                           style:
-                                              AppTypography.bodySmall(context)
-                                                  .white,
+                                              AppTypography.body(context).white,
                                         ),
                                         const SizedBox(
                                           width: 8,
@@ -166,8 +161,8 @@ class ForgetExistView extends StatelessWidget {
                                         Expanded(
                                           child: Text(
                                             'If someone republished one of your playlists under their own feed, that copy will continue under their control (not yours).',
-                                            style: theme
-                                                .textTheme.ppMori400White14,
+                                            style: AppTypography.body(context)
+                                                .white,
                                           ),
                                         )
                                       ],
@@ -186,8 +181,8 @@ class ForgetExistView extends StatelessWidget {
                   height: 16,
                 ),
                 Text(
-                  'Once you continue, we can’t recover this data.',
-                  style: theme.textTheme.ppMori700White14,
+                  'Once you continue, we can\'t recover this data.',
+                  style: AppTypography.body(context).bold.white,
                 ),
                 const SizedBox(height: 36),
                 GestureDetector(
@@ -218,7 +213,7 @@ class ForgetExistView extends StatelessWidget {
                           child: Text(
                         'i_understand'.tr(),
                         //"I understand that this action cannot be undone.",
-                        style: AppTypography.bodySmall(context).white,
+                        style: AppTypography.body(context).white,
                       )),
                     ],
                   ),

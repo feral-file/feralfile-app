@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/components/NowPlayingBar.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:flutter/material.dart';
@@ -25,7 +26,7 @@ class NowPlayingStatusBar extends StatelessWidget {
       ),
       child: Text(
         status,
-        style: Theme.of(context).textTheme.small,
+        style: AppTypography.body(context).white,
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
         textAlign: TextAlign.start,

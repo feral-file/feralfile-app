@@ -47,7 +47,7 @@ class TagBuilder extends MarkdownElementBuilder {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(parts[1],
-                      style: Theme.of(context).textTheme.ppMori400Grey14),
+                      style: AppTypography.body(context).grey),
                   Container(
                     decoration: BoxDecoration(
                         border: Border.all(
@@ -58,7 +58,7 @@ class TagBuilder extends MarkdownElementBuilder {
                     padding:
                         const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                     child: Text(parts[0],
-                        style: AppTypography.bodySmall(context).grey),
+                        style: AppTypography.body(context).grey),
                   )
                 ],
               )

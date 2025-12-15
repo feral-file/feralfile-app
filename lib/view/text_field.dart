@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:flutter/material.dart';
 
@@ -50,7 +51,7 @@ class _TextFieldWidgetState extends State<TextFieldWidget> {
           visible: widget.labelText?.isNotEmpty ?? false,
           child: Text(
             widget.labelText ?? '',
-            style: theme.textTheme.ppMori700White12,
+            style: AppTypography.caption(context).bold.white,
           ),
         ),
         TextFormField(

@@ -114,4 +114,13 @@ class TypographyTokens {
   static const titleLineHeight = 22.4;
   static const titleParagraphIndent = 0;
   static const titleParagraphSpacing = 8;
+
+  // very small, size 8, using for thumbnail text
+  static const verySmallFontFamily = "PP Mori";
+  static const verySmallFontSize = 8;
+  static const verySmallFontWeight = "Regular";
+  static const verySmallLetterSpacing = 0;
+  static const verySmallLineHeight = 12.8;
+  static const verySmallParagraphIndent = 0;
+  static const verySmallParagraphSpacing = 8;
 }

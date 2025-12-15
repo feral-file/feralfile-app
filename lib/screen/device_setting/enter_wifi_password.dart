@@ -118,7 +118,7 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                         PasswordTextField(
                           controller: passwordController,
                           focusNode: _passwordFocusNode,
-                          style: AppTypography.bodySmall(context).white,
+                          style: AppTypography.body(context).white,
                           hintText: 'password'.tr(),
                           defaultObscure: false,
                           isEnabled: !_isProcessing,

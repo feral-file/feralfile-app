@@ -73,7 +73,7 @@ class _ColorPickerViewState extends State<ColorPickerView> {
               children: [
                 Expanded(
                   child: Text('Background Color',
-                      style: Theme.of(context).textTheme.ppMori400White14),
+                      style: AppTypography.body(context).white),
                 ),
                 const SizedBox(width: 8.0),
                 GestureDetector(
@@ -282,7 +282,7 @@ class _FFColorPickerState extends State<FFColorPicker> {
       children: [
         Expanded(
           child: Text('Recent Colors',
-              style: AppTypography.bodySmall(context).white),
+              style: AppTypography.body(context).white),
         ),
         const SizedBox(width: 8.0),
         ...colors.map((color) {

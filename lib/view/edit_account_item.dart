@@ -34,7 +34,7 @@ class EditAccountItem extends StatelessWidget {
                 children: [
                   Text(
                     name,
-                    style: Theme.of(context).textTheme.ppMori700Black16,
+                    style: AppTypography.body(context).bold.black,
                   ),
                   const SizedBox(height: 4),
                   Text(

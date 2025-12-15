@@ -52,7 +52,7 @@ class LoadingWidget extends StatelessWidget {
                 text ?? 'loading'.tr(),
                 style: ResponsiveLayout.isMobile
                     ? AppTypography.bodySmall(context).white
-                    : AppTypography.body(context).white,
+                    : AppTypography.bodySmall(context).white,
               )
             ]
           ],

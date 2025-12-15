@@ -43,7 +43,7 @@ MarkdownStyleSheet markDownBlackStyle(BuildContext context) =>
 
 MarkdownStyleSheet markDownStyle(BuildContext context, Color textColor) {
   final theme = Theme.of(context);
-  final bodyText2 = theme.textTheme.ppMori400Black16.copyWith(color: textColor);
+  final bodyText2 = AppTypography.body(context).black.copyWith(color: textColor);
   return MarkdownStyleSheet(
     a: TextStyle(
       fontFamily: AppTheme.ppMori,
@@ -58,17 +58,17 @@ MarkdownStyleSheet markDownStyle(BuildContext context, Color textColor) {
     p: bodyText2,
     pPadding: const EdgeInsets.only(bottom: 15),
     code: bodyText2.copyWith(backgroundColor: Colors.transparent),
-    h1: theme.textTheme.ppMori700Black16.copyWith(color: textColor),
+    h1: AppTypography.body(context).bold.copyWith(color: textColor),
     h1Padding: const EdgeInsets.only(bottom: 40),
-    h2: theme.textTheme.ppMori700Black16.copyWith(color: textColor),
+    h2: AppTypography.body(context).bold.copyWith(color: textColor),
     h2Padding: EdgeInsets.zero,
-    h3: theme.textTheme.ppMori700Black16.copyWith(color: textColor),
+    h3: AppTypography.body(context).bold.copyWith(color: textColor),
     h3Padding: EdgeInsets.zero,
-    h4: theme.textTheme.ppMori700Black16.copyWith(color: textColor),
+    h4: AppTypography.body(context).bold.copyWith(color: textColor),
     h4Padding: EdgeInsets.zero,
-    h5: theme.textTheme.ppMori700Black16.copyWith(color: textColor),
+    h5: AppTypography.body(context).bold.copyWith(color: textColor),
     h5Padding: EdgeInsets.zero,
-    h6: theme.textTheme.ppMori700Black16.copyWith(color: textColor),
+    h6: AppTypography.body(context).bold.copyWith(color: textColor),
     h6Padding: EdgeInsets.zero,
     em: TextStyle(fontStyle: FontStyle.italic, color: textColor),
     strong: TextStyle(fontWeight: FontWeight.bold, color: textColor),
@@ -112,7 +112,7 @@ MarkdownStyleSheet markDownStyle(BuildContext context, Color textColor) {
 
 MarkdownStyleSheet markDownRightStyle(BuildContext context) {
   final theme = Theme.of(context);
-  final bodyText2 = AppTypography.bodySmall(context).white;
+  final bodyText2 = AppTypography.body(context).white;
   return MarkdownStyleSheet(
     a: bodyText2.copyWith(
       color: AppColor.feralFileHighlight,
@@ -120,17 +120,17 @@ MarkdownStyleSheet markDownRightStyle(BuildContext context) {
     p: bodyText2,
     pPadding: EdgeInsets.zero,
     code: bodyText2.copyWith(backgroundColor: Colors.transparent),
-    h1: theme.textTheme.ppMori400White16,
+    h1: AppTypography.body(context).white,
     h1Padding: EdgeInsets.zero,
-    h2: theme.textTheme.ppMori400White16,
+    h2: AppTypography.body(context).white,
     h2Padding: EdgeInsets.zero,
-    h3: theme.textTheme.ppMori400White16,
+    h3: AppTypography.body(context).white,
     h3Padding: EdgeInsets.zero,
-    h4: theme.textTheme.ppMori400White16,
+    h4: AppTypography.body(context).white,
     h4Padding: EdgeInsets.zero,
-    h5: theme.textTheme.ppMori400White16,
+    h5: AppTypography.body(context).white,
     h5Padding: EdgeInsets.zero,
-    h6: theme.textTheme.ppMori400White16,
+    h6: AppTypography.body(context).white,
     h6Padding: EdgeInsets.zero,
     em: const TextStyle(fontStyle: FontStyle.normal, color: Colors.white),
     strong: bodyText2,
@@ -177,7 +177,7 @@ MarkdownStyleSheet markDownRightStyle(BuildContext context) {
 
 MarkdownStyleSheet markDownPostcardRightStyle(BuildContext context) {
   final theme = Theme.of(context);
-  final baseStyle = AppTypography.bodySmall(context).black;
+  final baseStyle = AppTypography.body(context).black;
   final bodyText2 = AppTypography.body(context).black;
   return MarkdownStyleSheet(
     a: baseStyle.copyWith(
@@ -250,7 +250,7 @@ MarkdownStyleSheet markDownPostcardRightStyle(BuildContext context) {
 
 MarkdownStyleSheet markDownAnnouncementStyle(BuildContext context) {
   final theme = Theme.of(context);
-  final bodyText2 = AppTypography.bodySmall(context).white;
+  final bodyText2 = AppTypography.body(context).white;
   return MarkdownStyleSheet(
     a: const TextStyle(
       fontFamily: AppTheme.ppMori,
@@ -261,20 +261,20 @@ MarkdownStyleSheet markDownAnnouncementStyle(BuildContext context) {
     p: AppTypography.body(context).black,
     pPadding: EdgeInsets.zero,
     code: bodyText2.copyWith(backgroundColor: Colors.transparent),
-    h1: theme.textTheme.ppMori700Black14,
+    h1: AppTypography.body(context).bold.black,
     h1Padding: EdgeInsets.zero,
-    h2: theme.textTheme.ppMori700Black14,
+    h2: AppTypography.body(context).bold.black,
     h2Padding: EdgeInsets.zero,
-    h3: theme.textTheme.ppMori700Black14,
+    h3: AppTypography.body(context).bold.black,
     h3Padding: EdgeInsets.zero,
-    h4: theme.textTheme.ppMori700Black14,
+    h4: AppTypography.body(context).bold.black,
     h4Padding: EdgeInsets.zero,
-    h5: theme.textTheme.ppMori700Black14,
+    h5: AppTypography.body(context).bold.black,
     h5Padding: EdgeInsets.zero,
-    h6: theme.textTheme.ppMori700White14,
+    h6: AppTypography.body(context).bold.white,
     h6Padding: EdgeInsets.zero,
     em: const TextStyle(fontStyle: FontStyle.normal, color: Colors.black),
-    strong: theme.textTheme.ppMori700Black14,
+    strong: AppTypography.body(context).bold.black,
     del: const TextStyle(
       decoration: TextDecoration.lineThrough,
       color: Colors.black,
@@ -321,7 +321,7 @@ MarkdownStyleSheet markDownDetailPageStyle(
   Color textColor,
 ) {
   final theme = Theme.of(context);
-  final bodyText2 = theme.textTheme.ppMori400Black16.copyWith(color: textColor);
+  final bodyText2 = AppTypography.body(context).black.copyWith(color: textColor);
   return MarkdownStyleSheet(
     a: TextStyle(
       fontFamily: AppTheme.ppMori,
@@ -336,17 +336,17 @@ MarkdownStyleSheet markDownDetailPageStyle(
     p: bodyText2,
     pPadding: EdgeInsets.zero,
     code: bodyText2.copyWith(backgroundColor: Colors.transparent),
-    h1: theme.textTheme.ppMori700Black16,
+    h1: AppTypography.body(context).bold.black,
     h1Padding: EdgeInsets.zero,
-    h2: theme.textTheme.ppMori700Black16,
+    h2: AppTypography.body(context).bold.black,
     h2Padding: EdgeInsets.zero,
-    h3: theme.textTheme.ppMori700Black16,
+    h3: AppTypography.body(context).bold.black,
     h3Padding: EdgeInsets.zero,
-    h4: theme.textTheme.ppMori700Black16,
+    h4: AppTypography.body(context).bold.black,
     h4Padding: EdgeInsets.zero,
-    h5: theme.textTheme.ppMori700Black16,
+    h5: AppTypography.body(context).bold.black,
     h5Padding: EdgeInsets.zero,
-    h6: theme.textTheme.ppMori700Black16,
+    h6: AppTypography.body(context).bold.black,
     h6Padding: EdgeInsets.zero,
     em: TextStyle(fontStyle: FontStyle.italic, color: textColor),
     strong: TextStyle(fontWeight: FontWeight.bold, color: textColor),
@@ -390,8 +390,8 @@ MarkdownStyleSheet markDownDetailPageStyle(
 MarkdownStyleSheet markDownChangeLogStyle(BuildContext context) {
   const textColor = AppColor.primaryBlack;
   final theme = Theme.of(context);
-  final textStyleBody = theme.textTheme.ppMori400Black16;
-  final textStyleGrey = AppTypography.bodySmall(context).grey;
+  final textStyleBody = AppTypography.body(context).black;
+  final textStyleGrey = AppTypography.body(context).grey;
   return MarkdownStyleSheet(
     a: const TextStyle(
       fontFamily: AppTheme.ppMori,
@@ -406,17 +406,17 @@ MarkdownStyleSheet markDownChangeLogStyle(BuildContext context) {
     p: textStyleBody,
     pPadding: const EdgeInsets.only(bottom: 16),
     code: textStyleBody.copyWith(backgroundColor: Colors.transparent),
-    h1: theme.textTheme.ppMori700Black36.copyWith(fontSize: 24),
+    h1: AppTypography.h2(context).black,
     h1Padding: const EdgeInsets.only(bottom: 24),
-    h2: theme.textTheme.ppMori700Black36.copyWith(fontSize: 20),
+    h2: AppTypography.h3(context).black,
     h2Padding: const EdgeInsets.symmetric(vertical: 15),
-    h3: theme.textTheme.ppMori700Black36.copyWith(fontSize: 20),
+    h3: AppTypography.h3(context).black,
     h3Padding: const EdgeInsets.symmetric(vertical: 15),
-    h4: theme.textTheme.ppMori700Black36.copyWith(fontSize: 20),
+    h4: AppTypography.h3(context).black,
     h4Padding: EdgeInsets.zero,
-    h5: theme.textTheme.ppMori700Black36.copyWith(fontSize: 20),
+    h5: AppTypography.h3(context).black,
     h5Padding: EdgeInsets.zero,
-    h6: theme.textTheme.ppMori700Black36.copyWith(fontSize: 20),
+    h6: AppTypography.h3(context).black,
     h6Padding: EdgeInsets.zero,
     em: textStyleGrey,
     strong: const TextStyle(fontWeight: FontWeight.bold, color: textColor),
@@ -474,17 +474,17 @@ MarkdownStyleSheet markDownStyleTipCard(BuildContext context) {
     p: bodyText2,
     pPadding: const EdgeInsets.only(bottom: 15),
     code: bodyText2.copyWith(backgroundColor: Colors.transparent),
-    h1: theme.textTheme.ppMori700Black16,
+    h1: AppTypography.body(context).bold.black,
     h1Padding: const EdgeInsets.only(bottom: 40),
-    h2: theme.textTheme.ppMori700Black16,
+    h2: AppTypography.body(context).bold.black,
     h2Padding: EdgeInsets.zero,
-    h3: theme.textTheme.ppMori700Black16,
+    h3: AppTypography.body(context).bold.black,
     h3Padding: EdgeInsets.zero,
-    h4: theme.textTheme.ppMori700Black16,
+    h4: AppTypography.body(context).bold.black,
     h4Padding: EdgeInsets.zero,
-    h5: theme.textTheme.ppMori700Black16,
+    h5: AppTypography.body(context).bold.black,
     h5Padding: EdgeInsets.zero,
-    h6: theme.textTheme.ppMori700Black16,
+    h6: AppTypography.body(context).bold.black,
     h6Padding: EdgeInsets.zero,
     em: const TextStyle(
       fontStyle: FontStyle.italic,

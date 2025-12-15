@@ -537,7 +537,7 @@ class NavigationService {
         children: [
           Text(
             'Your FF1 is already set up and connected. You can head to settings to make changes or check the status.',
-            style: Theme.of(context).textTheme.ppMori400White14,
+            style: AppTypography.body(context).white,
           ),
           const SizedBox(height: 16),
           PrimaryButton(
@@ -570,7 +570,7 @@ class NavigationService {
             children: [
               RichText(
                 text: TextSpan(
-                  style: Theme.of(context).textTheme.ppMori400White14,
+                  style: AppTypography.body(context).white,
                   children: [
                     const TextSpan(
                       text: 'App Version',
@@ -623,7 +623,7 @@ class NavigationService {
             children: [
               RichText(
                 text: TextSpan(
-                  style: Theme.of(context).textTheme.ppMori400White14,
+                  style: AppTypography.body(context).white,
                   children: [
                     const TextSpan(
                       text: 'Your ',

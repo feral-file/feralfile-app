@@ -161,7 +161,7 @@ class UIHelper {
                           Expanded(
                             child: Text(
                               title,
-                              style: theme.primaryTextTheme.ppMori700White24,
+                              style: AppTypography.h2(context).white,
                             ),
                           ),
                           if (withCloseIcon)
@@ -266,7 +266,7 @@ class UIHelper {
                           children: [
                             Text(
                               title ?? '',
-                              style: theme.textTheme.ppMori700White14,
+                              style: AppTypography.body(context).bold.white,
                             ),
                             IconButton(
                               onPressed: () => Navigator.pop(context),
@@ -314,7 +314,7 @@ class UIHelper {
           if (description.isNotEmpty) ...[
             Text(
               description,
-              style: theme.primaryTextTheme.ppMori400White14,
+              style: AppTypography.body(context).white,
             ),
           ],
           const SizedBox(height: 40),
@@ -450,7 +450,7 @@ class UIHelper {
             if (description.isNotEmpty) ...[
               Text(
                 description,
-                style: theme.primaryTextTheme.ppMori400White14,
+                style: AppTypography.body(context).white,
               ),
             ],
             descriptionWidget ?? const SizedBox.shrink(),
@@ -509,7 +509,7 @@ class UIHelper {
             if (description.isNotEmpty) ...[
               Text(
                 description,
-                style: theme.primaryTextTheme.ppMori400White14,
+                style: AppTypography.body(context).white,
               ),
             ],
             descriptionWidget ?? const SizedBox.shrink(),
@@ -621,7 +621,7 @@ class UIHelper {
             if (description.isNotEmpty) ...[
               Text(
                 description,
-                style: theme.primaryTextTheme.ppMori400White14,
+                style: AppTypography.body(context).white,
               ),
             ],
             const SizedBox(height: 40),
@@ -688,7 +688,7 @@ class UIHelper {
                     text: '${'art_no_appear'.tr()} ',
                   ),
                   TextSpan(
-                    style: theme.textTheme.ppMori700White14,
+                    style: AppTypography.body(context).bold.white,
                     text: 'hidden_artwork'.tr(),
                   ),
                   TextSpan(
@@ -701,7 +701,7 @@ class UIHelper {
           else
             Text(
               'art_visible'.tr(),
-              style: theme.primaryTextTheme.ppMori400White14,
+              style: AppTypography.body(context).white,
             ),
           const SizedBox(height: 40),
           PrimaryButton(
@@ -738,7 +738,7 @@ class UIHelper {
                       if (name.isNotEmpty) ...[
                         Text(
                           name,
-                          style: theme.textTheme.ppMori700White14,
+                          style: AppTypography.body(context).bold.white,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 16),
@@ -772,22 +772,6 @@ class UIHelper {
             ),
             const SizedBox(height: 15),
           ],
-        ),
-      ),
-    );
-  }
-
-  static Future<void> showLoadingScreen(
-    BuildContext context, {
-    String text = '',
-  }) async {
-    final theme = Theme.of(context);
-    await Navigator.push(
-      context,
-      CupertinoPageRoute(
-        builder: (context) => loadingScreen(
-          theme,
-          text,
         ),
       ),
     );
@@ -864,63 +848,6 @@ class UIHelper {
           ),
         ),
       ),
-    );
-  }
-
-  static Future<dynamic> showLiveWithArtIntro(BuildContext context) async {
-    final theme = Theme.of(context);
-    final infoStyle = AppTypography.body(context).white;
-    return await showCenterSheet(
-      context,
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text(
-              'live_with_art'.tr(),
-              style: theme.textTheme.ppMori700White18,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            constraints: const BoxConstraints(maxHeight: 200),
-            child: Swiper(
-              itemCount: 2,
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Text('live_with_art_first'.tr(), style: infoStyle),
-                  );
-                } else {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Text('live_with_art_second'.tr(), style: infoStyle),
-                  );
-                }
-              },
-              loop: false,
-              pagination: const SwiperPagination(
-                alignment: Alignment.bottomCenter,
-                builder: DotSwiperPaginationBuilder(
-                  color: AppColor.secondaryDimGrey,
-                  activeColor: AppColor.white,
-                  size: 6,
-                  activeSize: 6,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-      backgroundColor: AppColor.auGreyBackground,
-      horizontalPadding: 30,
-      exitButton: 'view_today_daily'.tr(),
-      exitButtonOnTap: () {
-        Navigator.pop(context);
-      },
     );
   }
 
@@ -1169,7 +1096,7 @@ class UIHelper {
                 children: [
                   Text(
                     title ?? '',
-                    style: theme.textTheme.ppMori700White14,
+                    style: AppTypography.body(context).bold.white,
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
@@ -1237,7 +1164,7 @@ class UIHelper {
         children: [
           Text(
             'invalid_uri_desc'.tr(),
-            style: Theme.of(context).textTheme.ppMori400White14,
+            style: AppTypography.body(context).white,
           ),
           const SizedBox(height: 40),
           OutlineButton(
@@ -1315,7 +1242,7 @@ class UIHelper {
           child: Text(
             'shake_exit'.tr(),
             textAlign: TextAlign.center,
-            style: theme.textTheme.ppMori600Black12,
+            style: AppTypography.bodySmall(context).white.bold,
           ),
         ),
         backgroundColor: Colors.transparent,
@@ -1426,25 +1353,6 @@ class UIHelper {
     );
   }
 
-  static ExpandableSliverStickyHeader assetTokenExpandableSliverStickyHeader(
-    BuildContext context, {
-    required List<DP1NowDisplayingItem> nowDisplayingItems,
-    required String title,
-    bool isExpanded = false,
-    void Function(bool)? onExpandedChanged,
-    required ScrollController scrollController,
-    List<CustomSlidableAction> slidableActions = const [],
-  }) {
-    final header = Text(title, style: AppTypography.bodySmall(context).white);
-    return ExpandableSliverStickyHeader(
-        header: header,
-        initiallyExpanded: isExpanded,
-        sliver: UIHelper.dp1ItemSliverGrid(context, nowDisplayingItems, title),
-        onExpandedChanged: onExpandedChanged,
-        scrollController: scrollController,
-        slidableActions: slidableActions);
-  }
-
   static ExpandableSliverStickyHeader
       customFeedServerExpandableSliverStickyHeader(
     BuildContext context, {
@@ -1455,8 +1363,7 @@ class UIHelper {
     required ScrollController scrollController,
     List<CustomSlidableAction> slidableActions = const [],
   }) {
-    final header =
-        Text(title, style: Theme.of(context).textTheme.ppMori700White12);
+    final header = Text(title, style: AppTypography.body(context).bold.white);
     return ExpandableSliverStickyHeader(
       header: header,
       initiallyExpanded: isExpanded,
@@ -1562,13 +1469,13 @@ class UIHelper {
                 children: [
                   Text(
                     'Delete Address'.tr(),
-                    style: theme.primaryTextTheme.ppMori700White24,
+                    style: AppTypography.h2(context).white,
                   ),
                   const SizedBox(height: 40),
                   RichText(
                     textScaler: MediaQuery.textScalerOf(context),
                     text: TextSpan(
-                      style: theme.primaryTextTheme.ppMori400White14,
+                      style: AppTypography.body(context).white,
                       children: <TextSpan>[
                         TextSpan(
                           text: 'sure_delete_account'.tr(),
@@ -1649,13 +1556,13 @@ class UIHelper {
                 children: [
                   Text(
                     'Delete Feed Server'.tr(),
-                    style: theme.primaryTextTheme.ppMori700White24,
+                    style: AppTypography.h2(context).white,
                   ),
                   const SizedBox(height: 40),
                   RichText(
                     textScaler: MediaQuery.textScalerOf(context),
                     text: TextSpan(
-                      style: theme.primaryTextTheme.ppMori400White14,
+                      style: AppTypography.body(context).white,
                       children: <TextSpan>[
                         TextSpan(
                           text:
@@ -1694,27 +1601,6 @@ class UIHelper {
     );
   }
 }
-
-Widget loadingScreen(ThemeData theme, String text) => Scaffold(
-      backgroundColor: AppColor.white,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/images/loading.gif',
-              width: 52,
-              height: 52,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              text,
-              style: theme.textTheme.ppMori400Black14,
-            ),
-          ],
-        ),
-      ),
-    );
 
 String getDateTimeRepresentation(DateTime dateTime) =>
     Jiffy.parseFromDateTime(dateTime).fromNow();

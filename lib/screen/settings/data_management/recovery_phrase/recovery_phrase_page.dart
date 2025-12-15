@@ -120,7 +120,7 @@ class _RecoveryPhrasePageState extends State<RecoveryPhrasePage> {
                                 TextSpan(
                                   text: 'passphrase'.tr(),
                                   style:
-                                      theme.textTheme.ppMori400FFQuickSilver14,
+                                      AppTypography.body(context).grey,
                                 ),
                                 const TextSpan(text: '  '),
                                 TextSpan(
@@ -198,7 +198,7 @@ class _RecoveryPhrasePageState extends State<RecoveryPhrasePage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('important_update'.tr(),
-                style: Theme.of(context).textTheme.ppMori700Black16),
+                style: AppTypography.body(context).bold.black),
             const SizedBox(height: 20),
             RichText(
               text: TextSpan(
@@ -317,7 +317,7 @@ class _RecoveryPhrasePageState extends State<RecoveryPhrasePage> {
         ),
         const SizedBox(height: 12),
         Text('remember_if_you_lose_your_SRP'.tr(),
-            style: theme.textTheme.ppMori700Black14),
+            style: AppTypography.body(context).bold.black),
         const SizedBox(height: 12),
         if (_isBackUpAvailable == true) ...[
           RichText(
@@ -347,7 +347,7 @@ class _RecoveryPhrasePageState extends State<RecoveryPhrasePage> {
                 ),
                 TextSpan(
                   text: 'turned_off'.tr().toLowerCase(),
-                  style: theme.textTheme.ppMori700Black14,
+                  style: AppTypography.body(context).bold.black,
                 ),
                 TextSpan(
                   text: ' ${'unable_backup'.tr()}',
@@ -375,7 +375,7 @@ class _RecoveryPhrasePageState extends State<RecoveryPhrasePage> {
             Platform.isAndroid
                 ? 'recommend_google_cloud'.tr()
                 : 'recommend_icloud_key'.tr(),
-            style: theme.textTheme.ppMori700Black14),
+            style: AppTypography.body(context).bold.black),
       ],
     );
   }

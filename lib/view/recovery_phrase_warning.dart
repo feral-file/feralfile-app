@@ -46,7 +46,7 @@ class RecoveryPhraseWarning extends StatelessWidget {
                   children: [
                     Text(
                       'important_update'.tr(),
-                      style: Theme.of(context).textTheme.ppMori700Black16,
+                      style: AppTypography.body(context).bold.black,
                     ),
                     const SizedBox(height: 20),
                     RichText(

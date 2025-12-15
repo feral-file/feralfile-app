@@ -55,7 +55,7 @@ class ChannelHeader extends StatelessWidget {
                     overflow: maxLines != null
                         ? TextOverflow.ellipsis
                         : TextOverflow.visible,
-                    style: AppTypography.bodySmall(context).grey,
+                    style: AppTypography.body(context).grey,
                   ),
                 ],
               ),

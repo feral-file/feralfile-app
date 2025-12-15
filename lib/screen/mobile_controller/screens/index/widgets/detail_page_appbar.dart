@@ -80,7 +80,7 @@ class DetailPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                 Flexible(
                   child: Text(
                     title,
-                    style: AppTypography.bodySmall(context).grey,
+                    style: AppTypography.body(context).grey,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),

@@ -421,7 +421,9 @@ class QRScanViewState extends State<QRScanView>
               child: Center(
                 child: Text(
                   'invalid_qr_code'.tr(),
-                  style: theme.textTheme.ppMori700Black14
+                  style: AppTypography.body(context)
+                      .bold
+                      .black
                       .copyWith(color: Colors.red),
                 ),
               ),
@@ -549,7 +551,7 @@ class QRScanViewState extends State<QRScanView>
                       children: [
                         Text(
                           instruction.name,
-                          style: theme.textTheme.ppMori700White14,
+                          style: AppTypography.body(context).bold.white,
                         ),
                         Text(
                           instruction.detail,

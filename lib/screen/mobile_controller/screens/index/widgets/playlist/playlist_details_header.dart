@@ -88,7 +88,7 @@ class PlaylistDetailsHeader extends StatelessWidget {
                             },
                             child: Text(
                               channelReference!.channel.title,
-                              style: AppTypography.bodySmall(context).grey,
+                              style: AppTypography.body(context).grey,
                             ),
                           ),
                       ],

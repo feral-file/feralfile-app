@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:flutter/material.dart';
@@ -80,7 +81,7 @@ class SelectItemState extends State<SelectDeviceConfigView> {
           return widget.itemCustomBuilder!(item, isSelected);
         }
         final activeTitleStyle =
-            item.titleStyle ?? Theme.of(context).textTheme.ppMori400White14;
+            item.titleStyle ?? AppTypography.body(context).white;
         final deactiveTitleStyle =
             item.titleStyleOnUnselected ?? activeTitleStyle;
         final titleStyle = isSelected ? activeTitleStyle : deactiveTitleStyle;

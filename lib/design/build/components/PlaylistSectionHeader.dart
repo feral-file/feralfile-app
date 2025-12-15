@@ -13,7 +13,7 @@ class PlaylistSectionHeaderTokens {
   static const gap = 10.0;
 
   // Left section (section name)
-  static const sectionGap = 12.0;
+  static const sectionGap = 20.0;
 
   // Icons
   static const sectionIconWidth = 12.0;

@@ -28,6 +28,8 @@ class AppTypography {
       TypographyTokens.bodySmallFontSize.toDouble();
   static final double _captionSize =
       TypographyTokens.captionFontSize.toDouble();
+  static final double _verySmallSize =
+      TypographyTokens.verySmallFontSize.toDouble();
 
   /// Display (40px) - Hero text, empty states, key marketing moments
   static TextStyle display(BuildContext context) {
@@ -182,6 +184,18 @@ class AppTypography {
     return TextStyle(
       fontFamily: ibmPlexMono,
       fontSize: _bodySmallSize * scale,
+      fontWeight: FontWeight.w400,
+      height: 1.4,
+      letterSpacing: 0,
+    );
+  }
+
+  /// Very Small (8px) - Thumbnail text
+  static TextStyle verySmall(BuildContext context) {
+    final scale = _textScaleFactor(context);
+    return TextStyle(
+      fontFamily: ppMori,
+      fontSize: _verySmallSize * scale,
       fontWeight: FontWeight.w400,
       height: 1.4,
       letterSpacing: 0,

@@ -232,7 +232,7 @@ class _AiChatViewWidgetState extends State<AiChatViewWidget> {
         emptyState: Center(
           child: Text(
             'How can I help you display art?',
-            style: theme.textTheme.ppMori700White14,
+            style: AppTypography.body(context).bold.white,
           ),
         ),
       ),

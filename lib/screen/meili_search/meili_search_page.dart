@@ -164,7 +164,7 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
           const SizedBox(height: 16),
           Text(
             'We couldn\'t complete your search',
-            style: Theme.of(context).textTheme.ppMori400White14,
+            style: AppTypography.body(context).white,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),

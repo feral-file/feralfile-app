@@ -267,7 +267,7 @@ class PlaylistsPageState extends State<PlaylistsPage>
               const SizedBox(width: 12),
               Text(
                 'Delete',
-                style: AppTypography.bodySmall(context).white,
+                style: AppTypography.body(context).white,
               ),
             ],
           ),

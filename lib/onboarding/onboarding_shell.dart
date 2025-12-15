@@ -5,6 +5,7 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
@@ -72,9 +73,9 @@ class OnboardingShell extends StatelessWidget {
             const SizedBox(height: 20),
             Text(
               hintText!,
-              style: Theme.of(context).textTheme.small.copyWith(
-                    color: PrimitivesTokens.colorsGrey,
-                  ),
+              style: AppTypography.body(context).copyWith(
+                color: PrimitivesTokens.colorsGrey,
+              ),
             ),
           ],
         ],

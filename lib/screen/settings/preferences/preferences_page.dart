@@ -8,6 +8,7 @@
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_state.dart';
 import 'package:autonomy_flutter/screen/settings/preferences/preferences_view.dart';
+import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -39,7 +40,10 @@ class _PreferencePageState extends State<PreferencePage> {
         onBack: () {
           Navigator.of(context).pop();
         },
+        backgroundColor: AppColor.auGreyBackground,
+        isWhite: false,
       ),
+      backgroundColor: AppColor.auGreyBackground,
       body: SafeArea(
         child: Column(
           children: [

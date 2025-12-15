@@ -40,7 +40,7 @@ Widget accountItem(
                     Expanded(
                       child: Text(
                         address.name,
-                        style: theme.textTheme.ppMori700Black16,
+                        style: AppTypography.body(context).bold.black,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),

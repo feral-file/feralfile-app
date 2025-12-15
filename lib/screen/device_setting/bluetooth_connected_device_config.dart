@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:after_layout/after_layout.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -31,7 +32,6 @@ import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_ext.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
@@ -140,12 +140,6 @@ class BluetoothConnectedDeviceConfigState
   StreamSubscription<FGBGType>? _fgbgSubscription;
 
   bool _isShowingQRCode = false;
-
-  double _minPerformanceValue = 0;
-  double _maxPerformanceValue = 100;
-
-  double _minTemperatureValue = 0;
-  double _maxTemperatureValue = 100;
 
   @override
   void initState() {
@@ -279,7 +273,7 @@ class BluetoothConnectedDeviceConfigState
                 ),
               ],
       ),
-      backgroundColor: AppColor.primaryBlack,
+      backgroundColor: AppColor.auGreyBackground,
       body: SafeArea(child: _body(context)),
     );
   }
@@ -356,7 +350,7 @@ class BluetoothConnectedDeviceConfigState
               ),
               const SliverToBoxAdapter(
                 child: Divider(
-                  color: AppColor.auGreyBackground,
+                  color: AppColor.primaryBlack,
                   thickness: 1,
                   height: 40,
                 ),
@@ -374,25 +368,12 @@ class BluetoothConnectedDeviceConfigState
               ),
               const SliverToBoxAdapter(
                 child: Divider(
-                  color: AppColor.auGreyBackground,
+                  color: AppColor.primaryBlack,
                   thickness: 1,
                   height: 1,
                 ),
               ),
               if (!isFromOnboarding) ...[
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: ResponsiveLayout.pageHorizontalEdgeInsets,
-                    child: _wifiConfig(context),
-                  ),
-                ),
-                const SliverToBoxAdapter(
-                  child: Divider(
-                    color: AppColor.auGreyBackground,
-                    thickness: 1,
-                    height: 1,
-                  ),
-                ),
                 const SliverToBoxAdapter(
                   child: SizedBox(
                     height: 20,
@@ -408,7 +389,7 @@ class BluetoothConnectedDeviceConfigState
                 // Add performance monitoring section
                 const SliverToBoxAdapter(
                   child: Divider(
-                    color: AppColor.auGreyBackground,
+                    color: AppColor.primaryBlack,
                     thickness: 1,
                     height: 40,
                   ),
@@ -424,7 +405,7 @@ class BluetoothConnectedDeviceConfigState
                   // Temperature monitoring section
                   const SliverToBoxAdapter(
                     child: Divider(
-                      color: AppColor.auGreyBackground,
+                      color: AppColor.primaryBlack,
                       thickness: 1,
                       height: 40,
                     ),
@@ -439,29 +420,18 @@ class BluetoothConnectedDeviceConfigState
                   ),
                   const SliverToBoxAdapter(
                     child: Divider(
-                      color: AppColor.auGreyBackground,
+                      color: AppColor.primaryBlack,
                       thickness: 1,
                       height: 40,
                     ),
                   ),
                 ],
                 SliverToBoxAdapter(
-                  child: Padding(
-                    padding: ResponsiveLayout.pageHorizontalEdgeInsets,
-                    child: SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.7,
-                      child: _WebViewScrollWrapper(
-                        child: _docsWebviewWidget(context),
-                      ),
-                    ),
+                  child: SizedBox(
+                    height: LayoutConstants.space12,
                   ),
                 ),
               ],
-              const SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 80,
-                ),
-              ),
             ],
           ),
         );
@@ -472,7 +442,7 @@ class BluetoothConnectedDeviceConfigState
   Widget _displayOrientationPreview(ScreenOrientation? screenOrientation) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColor.auGreyBackground,
+        color: AppColor.primaryBlack,
         borderRadius: BorderRadius.circular(10),
       ),
       height: 200,
@@ -490,7 +460,10 @@ class BluetoothConnectedDeviceConfigState
     }
     switch (screenOrientation) {
       case ScreenOrientation.landscape:
-        return SvgPicture.asset('assets/images/landscape.svg', width: 150);
+        return SvgPicture.asset(
+          'assets/images/landscape.svg',
+          width: 150,
+        );
       case ScreenOrientation.landscapeReverse:
         return RotatedBox(
           quarterTurns: 2,
@@ -530,7 +503,7 @@ class BluetoothConnectedDeviceConfigState
           children: [
             Text(
               'display_orientation'.tr(),
-              style: Theme.of(context).textTheme.ppMori400White14,
+              style: AppTypography.body(context).white,
             ),
             const SizedBox(height: 16),
             _displayOrientationPreview(
@@ -580,7 +553,7 @@ class BluetoothConnectedDeviceConfigState
           children: [
             Text(
               'canvas'.tr(),
-              style: Theme.of(context).textTheme.ppMori400White14,
+              style: AppTypography.body(context).white,
             ),
             const SizedBox(height: 30),
             SelectDeviceConfigView(
@@ -628,59 +601,6 @@ class BluetoothConnectedDeviceConfigState
                   },
                 ),
               ],
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _wifiConfig(BuildContext context) {
-    return BlocBuilder<CanvasDeviceBloc, CanvasDeviceState>(
-      bloc: injector<CanvasDeviceBloc>(),
-      // buildWhen: (previous, current) {
-      //   return previous.isDeviceAlive(selectedDevice!) !=
-      //       current.isDeviceAlive(selectedDevice!);
-      // },
-      builder: (context, state) {
-        final isEnabled =
-            state.isDeviceAlive(selectedDevice!) && deviceStatus != null;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TappableForwardRow(
-              leftWidget: Row(
-                children: [
-                  Text(
-                    'configure_wifi'.tr(),
-                    style:
-                        Theme.of(context).textTheme.ppMori400White14.copyWith(
-                              color: isEnabled
-                                  ? AppColor.white
-                                  : AppColor.disabledColor,
-                            ),
-                  ),
-                ],
-              ),
-              forwardIcon: SvgPicture.asset(
-                'assets/images/iconForward.svg',
-                colorFilter: ColorFilter.mode(
-                  isEnabled ? AppColor.white : AppColor.disabledColor,
-                  BlendMode.srcIn,
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              onTap: isEnabled
-                  ? () {
-                      injector<NavigationService>().navigateTo(
-                        AppRouter.scanWifiNetworkPage,
-                        arguments: ScanWifiNetworkPagePayload(
-                          selectedDevice!,
-                          onWifiSelected,
-                        ),
-                      );
-                    }
-                  : null,
             ),
           ],
         );
@@ -745,7 +665,7 @@ class BluetoothConnectedDeviceConfigState
 
     final divider = addDivider(
       height: 16,
-      color: AppColor.primaryBlack,
+      color: AppColor.auGreyBackground,
     );
 
     return BlocConsumer<CanvasDeviceBloc, CanvasDeviceState>(
@@ -775,7 +695,7 @@ class BluetoothConnectedDeviceConfigState
             Container(
               padding: const EdgeInsets.all(15),
               decoration: BoxDecoration(
-                color: AppColor.auGreyBackground,
+                color: AppColor.primaryBlack,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Column(
@@ -921,28 +841,26 @@ class BluetoothConnectedDeviceConfigState
                             ),
                       ),
                     ),
-                    divider,
-                  ],
-                  if (isBLEDeviceConnected) ...[
-                    const SizedBox(height: 16),
-                    PrimaryAsyncButton(
-                      text: _isShowingQRCode
-                          ? 'Hide QR Code'
-                          : 'Show Pairing QR Code',
-                      color: AppColor.white,
-                      onTap: () async {
-                        final device = selectedDevice!;
-                        await injector<CanvasClientServiceV2>()
-                            .showPairingQRCode(device, !_isShowingQRCode);
-                        setState(() {
-                          _isShowingQRCode = !_isShowingQRCode;
-                        });
-                      },
-                    ),
                   ],
                 ],
               ),
             ),
+            if (isBLEDeviceConnected) ...[
+              const SizedBox(height: 16),
+              PrimaryAsyncButton(
+                text:
+                    _isShowingQRCode ? 'Hide QR Code' : 'Show Pairing QR Code',
+                color: AppColor.white,
+                onTap: () async {
+                  final device = selectedDevice!;
+                  await injector<CanvasClientServiceV2>()
+                      .showPairingQRCode(device, !_isShowingQRCode);
+                  setState(() {
+                    _isShowingQRCode = !_isShowingQRCode;
+                  });
+                },
+              ),
+            ],
             const SizedBox(height: 30),
           ],
         );
@@ -1002,19 +920,24 @@ class BluetoothConnectedDeviceConfigState
       // Add new performance data points
       final timestamp = metrics.timestamp.toDouble();
       if (metrics.cpu?.cpuUsage != null) {
-        _cpuPoints.add(FlSpot(timestamp, metrics.cpu!.cpuUsage!));
+        final clampedValue = metrics.cpu!.cpuUsage!.clamp(0.0, 100.0);
+        _cpuPoints.add(FlSpot(timestamp, clampedValue));
       }
       if (metrics.memory?.memoryUsage != null) {
-        _memoryPoints.add(FlSpot(timestamp, metrics.memory!.memoryUsage!));
+        final clampedValue = metrics.memory!.memoryUsage!.clamp(0.0, 100.0);
+        _memoryPoints.add(FlSpot(timestamp, clampedValue));
       }
       if (metrics.gpu?.gpuUsage != null) {
-        _gpuPoints.add(FlSpot(timestamp, metrics.gpu!.gpuUsage!));
+        final clampedValue = metrics.gpu!.gpuUsage!.clamp(0.0, 100.0);
+        _gpuPoints.add(FlSpot(timestamp, clampedValue));
       }
       if (metrics.cpu?.currentTemperature != null) {
-        _cpuTempPoints.add(FlSpot(timestamp, metrics.cpu!.currentTemperature!));
+        final clampedValue = metrics.cpu!.currentTemperature!.clamp(0.0, 100.0);
+        _cpuTempPoints.add(FlSpot(timestamp, clampedValue));
       }
       if (metrics.gpu?.currentTemperature != null) {
-        _gpuTempPoints.add(FlSpot(timestamp, metrics.gpu!.currentTemperature!));
+        final clampedValue = metrics.gpu!.currentTemperature!.clamp(0.0, 100.0);
+        _gpuTempPoints.add(FlSpot(timestamp, clampedValue));
       }
 
       if (metrics.screen?.fps != null) {
@@ -1037,35 +960,6 @@ class BluetoothConnectedDeviceConfigState
       _cpuTempPoints.sort((a, b) => a.x.compareTo(b.x));
       _gpuTempPoints.sort((a, b) => a.x.compareTo(b.x));
       _fpsPoints.sort((a, b) => a.x.compareTo(b.x));
-
-      final maxPerformanceValue = [
-        ..._cpuPoints.map((e) => e.y),
-        ..._memoryPoints.map((e) => e.y),
-        ..._gpuPoints.map((e) => e.y),
-      ].reduce((a, b) => a > b ? a : b);
-      final minPerformanceValue = [
-        ..._cpuPoints.map((e) => e.y),
-        ..._memoryPoints.map((e) => e.y),
-        ..._gpuPoints.map((e) => e.y),
-      ].reduce((a, b) => a < b ? a : b);
-
-      // _maxTemperatureValue = max of all temperature points
-      final maxTemperatureValue = [
-        ..._cpuTempPoints.map((e) => e.y),
-        ..._gpuTempPoints.map((e) => e.y),
-      ].reduce((a, b) => a > b ? a : b);
-
-      final minTemperatureValue = [
-        ..._cpuTempPoints.map((e) => e.y),
-        ..._gpuTempPoints.map((e) => e.y),
-      ].reduce((a, b) => a < b ? a : b);
-
-      setState(() {
-        _maxPerformanceValue = maxPerformanceValue;
-        _minPerformanceValue = minPerformanceValue;
-        _maxTemperatureValue = maxTemperatureValue;
-        _minTemperatureValue = minTemperatureValue;
-      });
     });
   }
 
@@ -1095,7 +989,7 @@ class BluetoothConnectedDeviceConfigState
         Container(
           padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
-            color: AppColor.auGreyBackground,
+            color: AppColor.primaryBlack,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -1120,16 +1014,15 @@ class BluetoothConnectedDeviceConfigState
           padding: const EdgeInsets.all(16),
           child: LineChart(
             LineChartData(
-              minY: _cpuPoints.isEmpty ? 0 : max(_minPerformanceValue - 10, 0),
-              maxY: _cpuPoints.isEmpty
-                  ? 100
-                  : min(_maxPerformanceValue + 10, 100),
-              // Percentage values 0-100
-              minX: _cpuPoints.isEmpty ? 0 : _cpuPoints.first.x,
-              maxX: _cpuPoints.isEmpty ? 100 : _cpuPoints.last.x,
+              minY: -20.0,
+              maxY: 120.0,
+              // Fixed range with buffer to prevent line clipping at edges
+              minX: (_cpuPoints.isEmpty ? 0.0 : _cpuPoints.first.x) - 20.0,
+              maxX: (_cpuPoints.isEmpty ? 0.0 : _cpuPoints.last.x) + 20.0,
               clipData: const FlClipData.all(),
               gridData: FlGridData(
                 drawVerticalLine: false,
+                horizontalInterval: 25,
                 getDrawingHorizontalLine: (value) {
                   return const FlLine(
                     color: AppColor.feralFileMediumGrey,
@@ -1151,9 +1044,17 @@ class BluetoothConnectedDeviceConfigState
                     reservedSize: 40,
                     interval: 25,
                     getTitlesWidget: (value, meta) {
+                      // Hide min and max labels
+                      if (value == meta.min || value == meta.max) {
+                        return const SizedBox.shrink();
+                      }
+                      // Only show labels for values in the valid range (0-100)
+                      if (value < 0 || value > 100) {
+                        return const SizedBox.shrink();
+                      }
                       return Text(
                         '${value.toInt()}%',
-                        style: AppTypography.bodySmall(context).white,
+                        style: AppTypography.body(context).white,
                       );
                     },
                   ),
@@ -1265,7 +1166,7 @@ class BluetoothConnectedDeviceConfigState
         Container(
           padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
-            color: AppColor.auGreyBackground,
+            color: AppColor.primaryBlack,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -1299,15 +1200,17 @@ class BluetoothConnectedDeviceConfigState
           padding: const EdgeInsets.all(16),
           child: LineChart(
             LineChartData(
-              minY: _cpuTempPoints.isEmpty ? 0 : _minTemperatureValue - 10,
-              // 30°C = 86°F
-              maxY: _cpuTempPoints.isEmpty ? 100 : _maxTemperatureValue + 10,
-              // 100°C = 212°F
-              minX: _cpuTempPoints.isEmpty ? 0 : _cpuTempPoints.first.x,
-              maxX: _cpuTempPoints.isEmpty ? 100 : _cpuTempPoints.last.x,
+              minY: -20.0,
+              maxY: 120.0,
+              // Fixed range with buffer to prevent line clipping at edges
+              minX: (_cpuTempPoints.isEmpty ? 0.0 : _cpuTempPoints.first.x) -
+                  20.0,
+              maxX:
+                  (_cpuTempPoints.isEmpty ? 0.0 : _cpuTempPoints.last.x) + 20.0,
               clipData: const FlClipData.all(),
               gridData: FlGridData(
                 drawVerticalLine: false,
+                horizontalInterval: 25,
                 getDrawingHorizontalLine: (value) {
                   return const FlLine(
                     color: AppColor.feralFileMediumGrey,
@@ -1336,9 +1239,17 @@ class BluetoothConnectedDeviceConfigState
                     reservedSize: 40,
                     interval: 20, // ~20°C = 36°F interval
                     getTitlesWidget: (value, meta) {
+                      // Hide min and max labels
+                      if (value == meta.min || value == meta.max) {
+                        return const SizedBox.shrink();
+                      }
+                      // Only show labels for reasonable temperature values (0-100°C)
+                      if (value < 0 || value > 100) {
+                        return const SizedBox.shrink();
+                      }
                       return Text(
                         '${value.toInt()}$tempUnit',
-                        style: AppTypography.bodySmall(context).white,
+                        style: AppTypography.body(context).white,
                       );
                     },
                   ),
@@ -1413,12 +1324,12 @@ class BluetoothConnectedDeviceConfigState
       children: [
         Text(
           label,
-          style: Theme.of(context).textTheme.ppMori400Grey14,
+          style: AppTypography.body(context).grey,
         ),
         const SizedBox(height: 4),
         Text(
           '${value?.toStringAsFixed(1) ?? '--'} $unit',
-          style: Theme.of(context).textTheme.ppMori400White14.copyWith(
+          style: AppTypography.body(context).white.copyWith(
                 color: color,
                 fontWeight: FontWeight.bold,
               ),
@@ -1457,6 +1368,8 @@ class BluetoothConnectedDeviceConfigState
       color: color,
       barWidth: 3,
       isCurved: true,
+      preventCurveOverShooting: true,
+      preventCurveOvershootingThreshold: 0,
       belowBarData: BarAreaData(
         show: true,
         color: color.withAlpha(40),
@@ -1552,17 +1465,6 @@ class BluetoothConnectedDeviceConfigState
     );
   }
 
-  Widget _docsWebviewWidget(BuildContext context) {
-    final url = injector<RemoteConfigService>().getConfig<String>(
-        ConfigGroup.documentation,
-        ConfigKey.docsUrl,
-        'https://docs.feralfile.com/ff1?from=app');
-    final uri = Uri.parse(url);
-    return FeralFileWebview(
-      uri: uri,
-    );
-  }
-
   void _showOption(BuildContext context, CanvasDeviceState state) {
     final isDeviceAlive = selectedDevice.isAlive;
     final isQEMU = selectedDevice.isQEMU;
@@ -1602,11 +1504,21 @@ class BluetoothConnectedDeviceConfigState
       if (!isQEMU)
         OptionItem(
           title: 'Factory Reset',
-          icon: Icon(Icons.restart_alt),
+          icon: Icon(Icons.factory),
           onTap: () {
             _onFactoryResetSelected();
           },
         ),
+      OptionItem(
+        title: 'FF1 Guide',
+        icon: Icon(Icons.book),
+        onTap: _onViewDocumentationSelected,
+      ),
+      OptionItem(
+        title: 'Configure Wi-Fi',
+        icon: Icon(Icons.wifi),
+        onTap: _onConfigureWiFiSelected,
+      ),
       OptionItem.emptyOptionItem,
     ];
     unawaited(UIHelper.showDrawerAction(context,
@@ -1621,12 +1533,12 @@ class BluetoothConnectedDeviceConfigState
         children: [
           Text(
             'Factory Reset',
-            style: Theme.of(context).textTheme.ppMori700White16,
+            style: AppTypography.body(context).bold.white,
           ),
           const SizedBox(height: 16),
           Text(
             'Are you sure you want to reset the device to factory settings? This will erase all data and cannot be undone.',
-            style: Theme.of(context).textTheme.ppMori400White14,
+            style: AppTypography.body(context).white,
           ),
           const SizedBox(height: 36),
           Row(
@@ -1749,12 +1661,12 @@ class BluetoothConnectedDeviceConfigState
         children: [
           Text(
             'Power Off',
-            style: Theme.of(context).textTheme.ppMori700White16,
+            style: AppTypography.body(context).bold.white,
           ),
           const SizedBox(height: 16),
           Text(
             'Are you sure you want to power off the device?',
-            style: Theme.of(context).textTheme.ppMori400White14,
+            style: AppTypography.body(context).white,
           ),
           const SizedBox(height: 36),
           Row(
@@ -1800,12 +1712,12 @@ class BluetoothConnectedDeviceConfigState
         children: [
           Text(
             'Restart',
-            style: Theme.of(context).textTheme.ppMori700White16,
+            style: AppTypography.body(context).bold.white,
           ),
           const SizedBox(height: 16),
           Text(
             'Are you sure you want to restart the device?',
-            style: Theme.of(context).textTheme.ppMori400White14,
+            style: AppTypography.body(context).white,
           ),
           const SizedBox(height: 36),
           Row(
@@ -1924,6 +1836,20 @@ class BluetoothConnectedDeviceConfigState
             style: AppTypography.body(context).white,
           ));
     }
+  }
+
+  void _onViewDocumentationSelected() {
+    final url = injector<RemoteConfigService>().getConfig<String>(
+        ConfigGroup.documentation,
+        ConfigKey.docsUrl,
+        'https://docs.feralfile.com/ff1?from=app');
+    final uri = Uri.parse(url);
+    injector<NavigationService>().openUrl(uri);
+  }
+
+  void _onConfigureWiFiSelected() {
+    injector<NavigationService>().navigateTo(AppRouter.scanWifiNetworkPage,
+        arguments: ScanWifiNetworkPagePayload(selectedDevice, onWifiSelected));
   }
 }
 

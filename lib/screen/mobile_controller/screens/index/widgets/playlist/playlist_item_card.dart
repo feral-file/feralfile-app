@@ -107,14 +107,14 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
                     children: [
                       Text(
                         displayArtist,
-                        style: AppTypography.body(context).white,
+                        style: AppTypography.body(context).white.italic,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         title,
                         // italic
-                        style: AppTypography.bodyBold(context).white.italic,
+                        style: AppTypography.bodyBold(context).white,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),

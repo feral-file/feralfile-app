@@ -62,7 +62,7 @@ class SectionDetailsHeader extends StatelessWidget {
                     description,
                     maxLines: 4,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.bodySmall(context).grey,
+                    style: AppTypography.body(context).grey,
                   ),
                 ],
               ),

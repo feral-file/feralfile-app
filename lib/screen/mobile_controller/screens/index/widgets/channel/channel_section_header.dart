@@ -39,8 +39,8 @@ class ChannelSectionHeader extends StatelessWidget {
               sectionIcon ??
                   SvgPicture.asset(
                     'assets/images/icon_account.svg',
-                    width: LayoutConstants.iconSizeMedium,
-                    height: LayoutConstants.iconSizeMedium,
+                    width: LayoutConstants.iconSizeDefault,
+                    height: LayoutConstants.iconSizeDefault,
                     colorFilter: const ColorFilter.mode(
                       Color(0xFFFFFFFF),
                       BlendMode.srcIn,

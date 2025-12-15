@@ -22,6 +22,10 @@ class LayoutConstants {
       PrimitivesTokens.spacingSpace10.toDouble(); // 40px
   static final double space12 =
       PrimitivesTokens.spacingSpace12.toDouble(); // 48px
+  static final double space16 =
+      PrimitivesTokens.spacingSpace16.toDouble(); // 64px
+  static final double space20 =
+      PrimitivesTokens.spacingSpace20.toDouble(); // 80px
 
   // Page padding
   static final double pageHorizontalDefault =
@@ -43,4 +47,3 @@ class LayoutConstants {
   static final double iconSizeLarge =
       PrimitivesTokens.iconSizesLarge.toDouble(); // 24px
 }
-

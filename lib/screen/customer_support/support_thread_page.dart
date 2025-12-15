@@ -434,7 +434,7 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
           children: [
             Text(
               'ask_attach_crash'.tr(),
-              style: theme.primaryTextTheme.ppMori400White14,
+              style: AppTypography.body(context).white,
             ),
             const SizedBox(height: 40),
             PrimaryButton(
@@ -582,13 +582,15 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
             children: [
               Text(
                 debugLog.first.split('_').last,
-                style: theme.primaryTextTheme.ppMori400White14
+                style: AppTypography.body(context)
+                    .white
                     .copyWith(color: AppColor.feralFileHighlight),
               ),
               const SizedBox(width: 5),
               Text(
                 '(${fileSizeInMB.toStringAsFixed(2)} MB)',
-                style: theme.primaryTextTheme.ppMori400White14
+                style: AppTypography.body(context)
+                    .white
                     .copyWith(color: AppColor.auQuickSilver),
               ),
               const Spacer(),
@@ -707,12 +709,12 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
                       },
                       child: Text(
                         'retry'.tr(),
-                        style: AppTypography.bodySmall(context).black.underline,
+                        style: AppTypography.body(context).black.underline,
                       ),
                     ),
                     Text(
                       '・',
-                      style: AppTypography.bodySmall(context).black,
+                      style: AppTypography.body(context).black,
                     ),
                     GestureDetector(
                       onTap: () async {
@@ -730,13 +732,13 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
                       },
                       child: Text(
                         'delete'.tr(),
-                        style: AppTypography.bodySmall(context).black.underline,
+                        style: AppTypography.body(context).black.underline,
                       ),
                     ),
                     const SizedBox(width: 6),
                     Text(
                       'failed_to_send'.tr(),
-                      style: AppTypography.bodySmall(context)
+                      style: AppTypography.body(context)
                           .black
                           .copyWith(color: orangeRust),
                     ),
@@ -774,8 +776,8 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
                 'issue_resolved_'.tr(),
                 textAlign: TextAlign.start,
                 style: ResponsiveLayout.isMobile
-                    ? theme.textTheme.ppMori700Black14
-                    : theme.textTheme.ppMori700Black16,
+                    ? AppTypography.body(context).bold.black
+                    : AppTypography.body(context).bold.black,
               ),
               const SizedBox(height: 10),
               Text(
@@ -783,7 +785,7 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
                 textAlign: TextAlign.start,
                 style: ResponsiveLayout.isMobile
                     ? AppTypography.body(context).black
-                    : theme.textTheme.ppMori400Black16,
+                    : AppTypography.body(context).black,
               ),
               const SizedBox(height: 20),
               TextButton(
@@ -827,8 +829,8 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
                 message.metadata?['content'] as String,
                 textAlign: TextAlign.start,
                 style: ResponsiveLayout.isMobile
-                    ? theme.textTheme.ppMori700Black14
-                    : theme.textTheme.ppMori700Black16,
+                    ? AppTypography.body(context).bold.black
+                    : AppTypography.body(context).bold.black,
               ),
             ],
           ),

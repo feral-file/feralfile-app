@@ -1,4 +1,5 @@
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/components/DisplayItem.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
@@ -98,7 +99,7 @@ class DisplayItem extends StatelessWidget {
                               artistTitle ?? 'Unknown Artist',
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
-                              style: Theme.of(context).textTheme.small,
+                              style: AppTypography.body(context).white,
                             );
                           },
                         ),
@@ -112,13 +113,11 @@ class DisplayItem extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
                             style: isInExpandedView
-                                ? Theme.of(context).textTheme.small.copyWith(
-                                      fontWeight: FontWeightUtil.fromString(
-                                        PrimitivesTokens.fontWeightsBold,
-                                      ),
-                                      fontStyle: FontStyle.italic,
-                                    )
-                                : Theme.of(context).textTheme.small,
+                                ? AppTypography.body(context)
+                                    .white
+                                    .bold
+                                    .italic
+                                : AppTypography.body(context).white,
                           ),
                         ),
                       ],

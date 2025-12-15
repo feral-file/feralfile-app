@@ -36,7 +36,7 @@ class PrimitivesTokens {
   static const fontWeightsBold = "Bold";
   static const fontWeightsRegular = "Regular";
   // icon sizes
-  static const iconSizesDefault = 16;
+  static const iconSizesDefault = 22;
   static const iconSizesLarge = 24;
   static const iconSizesMedium = 20;
   static const iconSizesSmall = 12;
@@ -53,6 +53,8 @@ class PrimitivesTokens {
   static const spacingSpace1 = 4;
   static const spacingSpace10 = 40;
   static const spacingSpace12 = 48;
+  static const spacingSpace16 = 64;
+  static const spacingSpace20 = 80;
   static const spacingSpace2 = 8;
   static const spacingSpace3 = 12;
   static const spacingSpace4 = 16;

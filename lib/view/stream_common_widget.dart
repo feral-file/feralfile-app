@@ -260,7 +260,7 @@ class _PlaylistControlState extends State<PlaylistControl> {
         children: [
           Text(
             'autoplay_duration'.tr(),
-            style: AppTypography.bodySmall(context).white,
+            style: AppTypography.body(context).white,
           ),
           const SizedBox(height: 4),
           Container(
@@ -520,8 +520,8 @@ class _ArtworkDurationControlState extends State<ArtworkDurationControl> {
     int? maxValue,
   }) {
     final textStyle = isAnyFieldFocused && !focusNode.hasFocus
-        ? AppTypography.bodySmall(context).grey
-        : AppTypography.bodySmall(context).white;
+        ? AppTypography.body(context).grey
+        : AppTypography.body(context).white;
 
     return IntrinsicWidth(
       child: TextField(

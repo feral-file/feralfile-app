@@ -54,7 +54,7 @@ class HeaderWidget extends StatelessWidget {
         title,
         style: isSelected
             ? AppTypography.body(context).white
-            : AppTypography.bodySmall(context).grey,
+            : AppTypography.body(context).grey,
       ),
     );
   }

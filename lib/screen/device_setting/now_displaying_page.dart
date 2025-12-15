@@ -270,7 +270,7 @@ class _DP1NowDisplayingState extends State<DP1NowDisplaying> {
               child: HtmlWidget(
                 customStylesBuilder: auHtmlStyle,
                 assetToken.displayDescription,
-                textStyle: AppTypography.bodySmall(context).white,
+                textStyle: AppTypography.body(context).white,
                 onTapUrl: (url) async {
                   await launchUrl(
                     Uri.parse(url),

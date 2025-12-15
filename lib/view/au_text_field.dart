@@ -86,16 +86,16 @@ class AuTextField extends StatelessWidget {
                           Text(
                             title,
                             style: ResponsiveLayout.isMobile
-                                ? theme.textTheme.ppMori700Black12
-                                : theme.textTheme.ppMori700Black14,
+                                ? AppTypography.caption(context).bold.black
+                                : AppTypography.body(context).bold.black,
                           ),
                         ],
                         if (subTitleView != null)
                           Text(
                             ' | ',
                             style: ResponsiveLayout.isMobile
-                                ? theme.textTheme.ppMori700Black12
-                                : theme.textTheme.ppMori700Black14,
+                                ? AppTypography.caption(context).bold.black
+                                : AppTypography.body(context).bold.black,
                           )
                         else
                           const SizedBox(),
@@ -137,7 +137,7 @@ class AuTextField extends StatelessWidget {
           hintStyle: ResponsiveLayout.isMobile
               ? AppTypography.body(context).black
                   .copyWith(color: AppColor.auQuickSilver)
-              : theme.textTheme.ppMori400Black16
+              : AppTypography.body(context).black
                   .copyWith(color: AppColor.auQuickSilver, fontSize: 20),
         ),
         keyboardType: keyboardType,

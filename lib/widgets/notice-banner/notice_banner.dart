@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/components/NoticeBanner.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:flutter/material.dart';
@@ -36,7 +37,7 @@ class NoticeBanner extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
                   message,
-                  style: Theme.of(context).textTheme.small,
+                  style: AppTypography.body(context).white,
                 ),
               ),
             ),

@@ -175,7 +175,7 @@ class _SupportListPageState extends State<SupportListPage>
               children: [
                 Text(
                   issue.getListTitle(),
-                  style: theme.textTheme.ppMori400Black16,
+                  style: AppTypography.body(context).black,
                 ),
                 if (issue.unread > 0) ...[
                   _unreadChatThreadWidget(),
@@ -217,7 +217,7 @@ class _SupportListPageState extends State<SupportListPage>
                   ),
                   child: Text(
                     'resolved'.tr(),
-                    style: AppTypography.bodySmall(context).grey,
+                    style: AppTypography.body(context).grey,
                   ),
                 ),
                 const SizedBox(
@@ -259,7 +259,7 @@ class _SupportListPageState extends State<SupportListPage>
                 children: [
                   Text(
                     announcement.getListTitle(),
-                    style: theme.textTheme.ppMori400Black16,
+                    style: AppTypography.body(context).black,
                   ),
                   if (announcement is AnnouncementLocal &&
                       !announcement.read) ...[

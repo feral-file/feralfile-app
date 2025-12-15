@@ -110,7 +110,7 @@ class _PreviewPrimerPageState extends State<PreviewPrimerPage>
           child: Text(
             'shake_exit'.tr(),
             textAlign: TextAlign.center,
-            style: theme.textTheme.ppMori600Black12,
+            style: AppTypography.bodySmall(context).black.bold,
           ),
         ),
         backgroundColor: Colors.transparent,
@@ -140,7 +140,7 @@ class _PreviewPrimerPageState extends State<PreviewPrimerPage>
                     children: [
                       Text(
                         token.displayTitle ?? '',
-                        style: theme.textTheme.ppMori400White16,
+                        style: AppTypography.body(context).white,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),

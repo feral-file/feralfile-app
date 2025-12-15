@@ -243,7 +243,7 @@ class _TopBannerNotificationState extends State<_TopBannerNotification> {
               if (widget.receivedTime != null)
                 Text(
                   _timeString,
-                  style: AppTypography.bodySmall(context).grey.copyWith(
+                  style: AppTypography.body(context).grey.copyWith(
                         color: AppColor.secondarySpanishGrey,
                       ),
                 ),
@@ -251,7 +251,7 @@ class _TopBannerNotificationState extends State<_TopBannerNotification> {
               GestureDetector(
                 child: Text(
                   'dismiss'.tr(),
-                  style: AppTypography.bodySmall(context)
+                  style: AppTypography.body(context)
                       .copyWith(color: AppColor.secondarySpanishGrey)
                       .underline,
                 ),
@@ -291,7 +291,7 @@ class _PopUpOverlayNotification extends StatelessWidget {
             if (additionalData.title != null)
               Text(
                 additionalData.title!,
-                style: theme.textTheme.ppMori700White18,
+                style: AppTypography.h3(context).white,
               ),
             const SizedBox(height: 20),
             Flexible(

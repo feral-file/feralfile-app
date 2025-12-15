@@ -1,5 +1,6 @@
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/components/PlaylistListItem.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:flutter/material.dart';
 
@@ -36,15 +37,18 @@ class PlaylistTitle extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
-                    primaryText,
-                    style: AppTypography.body(context).bold.white,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Expanded(
+                    child: Text(
+                      primaryText,
+                      style: AppTypography.body(context).white,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
+                  SizedBox(width: LayoutConstants.space2),
                   Text(
                     secondaryText,
-                    style: AppTypography.bodySmall(context).italic.grey,
+                    style: AppTypography.body(context).italic.grey,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

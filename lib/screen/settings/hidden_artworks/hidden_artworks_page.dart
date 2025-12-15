@@ -71,7 +71,7 @@ class _HiddenArtworksPageState extends State<HiddenArtworksPage> {
           addTitleSpace(),
           Text(
             'no_hidden_artwork'.tr(),
-            style: theme.textTheme.ppMori400Black16,
+            style: AppTypography.body(context).black,
             textAlign: TextAlign.start,
           ),
           const SizedBox(
