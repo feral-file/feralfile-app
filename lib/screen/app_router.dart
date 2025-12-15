@@ -31,7 +31,6 @@ import 'package:autonomy_flutter/screen/detail/preview/touchpad_page.dart';
 import 'package:autonomy_flutter/screen/detail/preview_primer.dart';
 import 'package:autonomy_flutter/screen/detail/royalty/royalty_bloc.dart';
 import 'package:autonomy_flutter/screen/device_setting/bluetooth_connected_device_config.dart';
-import 'package:autonomy_flutter/screen/device_setting/check_bluetooth_state.dart';
 import 'package:autonomy_flutter/screen/device_setting/enter_wifi_password.dart';
 import 'package:autonomy_flutter/screen/device_setting/now_displaying_page.dart';
 import 'package:autonomy_flutter/screen/device_setting/scan_wifi_network_page.dart';
@@ -143,8 +142,6 @@ class AppRouter {
   static const nowDisplayingPage = 'now_displaying_page';
   static const bluetoothConnectedDeviceConfig =
       'bluetooth_connected_device_config';
-  static const handleBluetoothDeviceScanDeeplinkScreen =
-      'handle_bluetooth_device_scan_deeplink_screen';
   static const widgetBookScreen = 'widget_book_screen';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
@@ -623,15 +620,6 @@ class AppRouter {
           settings: settings,
           builder: (context) => BluetoothConnectedDeviceConfig(
             payload: payload,
-          ),
-        );
-
-      case handleBluetoothDeviceScanDeeplinkScreen:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => HandleBluetoothDeviceScanDeeplinkScreen(
-            payload: settings.arguments!
-                as HandleBluetoothDeviceScanDeeplinkScreenPayload,
           ),
         );
 

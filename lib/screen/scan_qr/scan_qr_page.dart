@@ -565,9 +565,7 @@ class QRScanViewState extends State<QRScanView>
 
       switch (widget.scannerItem) {
         case ScannerItem.CANVAS:
-        // dont need to do anything here,
-        // it has been processed in the branch deeplink
-        /// handled with deeplink
+        // dont need to do anything here
 
         case ScannerItem.ETH_ADDRESS:
         case ScannerItem.XTZ_ADDRESS:

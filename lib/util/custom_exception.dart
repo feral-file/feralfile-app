@@ -15,6 +15,4 @@ class AbortedException implements Exception {}
 
 class LinkingFailedException implements Exception {}
 
-class InvalidDeeplink implements Exception {}
-
 class FailedFetchBackupVersion implements Exception {}

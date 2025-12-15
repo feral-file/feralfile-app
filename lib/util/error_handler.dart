@@ -102,14 +102,6 @@ ErrorEvent translateError(Object exception) {
     // } else if (exception is CameraException) {
     //   return ErrorEvent(null, 'enable_camera'.tr(), 'qr_scan_require'.tr(),
     //       ErrorItemState.camera);
-  } else if (exception is PlatformException) {
-    switch (exception.code) {
-      case 'invalidDeeplink':
-        return ErrorEvent(
-            exception, '😵', 'link_not_valid'.tr(), ErrorItemState.close);
-      default:
-        break;
-    }
   } else if (exception is LinkingFailedException) {
     return ErrorEvent(exception, '🤔', 'problem_connect_wallet'.tr(),
         ErrorItemState.getReport);
@@ -288,10 +280,6 @@ Future<bool> showErrorDialogFromException(Object exception,
     if (exception is AbortedException) {
       unawaited(UIHelper.showInfoDialog(
           context, 'aborted'.tr(), 'action_aborted'.tr(),
-          isDismissible: true, autoDismissAfter: 3));
-      return true;
-    } else if (exception is InvalidDeeplink) {
-      unawaited(UIHelper.showInfoDialog(context, '😵', 'link_not_valid'.tr(),
           isDismissible: true, autoDismissAfter: 3));
       return true;
     }
