@@ -60,13 +60,11 @@ class TokensServiceImpl extends TokensService {
     Dio? dio,
   ]) {
     dio ??= Dio()..interceptors.add(LoggingInterceptor());
-    _indexer = IndexerApi(dio, baseUrl: _indexerUrl);
     final indexerClient = IndexerClient(_indexerUrl);
-    _indexerService = IndexerService(indexerClient, _indexer);
+    _indexerService = IndexerService(indexerClient);
   }
 
   final String _indexerUrl;
-  late IndexerApi _indexer;
   late IndexerService _indexerService;
   final NftCollectionDatabase _database;
   final NftCollectionPrefs _configurationService;
@@ -304,8 +302,7 @@ class TokensServiceImpl extends TokensService {
     _isolateScopeInjector
       ..registerLazySingleton(() => indexerClient)
       ..registerLazySingleton(
-        () =>
-            IndexerService(indexerClient, _isolateScopeInjector<IndexerApi>()),
+        () => IndexerService(indexerClient),
       )
       ..registerLazySingleton(() => TZKTApi(dio));
   }

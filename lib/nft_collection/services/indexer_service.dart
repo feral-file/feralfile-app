@@ -1,4 +1,3 @@
-import 'package:autonomy_flutter/nft_collection/data/api/indexer_api.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/clients/indexer_client.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_collection.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_token_configurations.dart';
@@ -12,10 +11,9 @@ import 'package:autonomy_flutter/nft_collection/models/user_collection.dart';
 import 'package:autonomy_flutter/screen/bloc/artist_artwork_display_settings/artist_artwork_display_setting_bloc.dart';
 
 class IndexerService {
-  IndexerService(this._client, this._indexerApi);
+  IndexerService(this._client);
 
   final IndexerClient _client;
-  final IndexerApi _indexerApi;
 
   Future<List<AssetToken>> getNftTokens(QueryListTokensRequest request) async {
     final vars = request.toJson();
@@ -45,10 +43,6 @@ class IndexerService {
       Map<String, dynamic>.from(result as Map),
     );
     return data.identity;
-  }
-
-  Future<List<UserCollection>> getUserCollections(String address) async {
-    return _indexerApi.getCollection(address, 100);
   }
 
   Future<List<UserCollection>> getCollectionsByAddresses(
