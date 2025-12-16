@@ -108,10 +108,6 @@ abstract class ConfigurationService {
   Future<void> setLastUpdateChangeAnchor({
     required List<AddressAnchor> addressAnchors,
   });
-
-  bool isNotificationEnabled();
-
-  Future<void> setNotificationEnabled(bool value);
 }
 
 class ConfigurationServiceImpl implements ConfigurationService {
@@ -558,14 +554,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
         KEY_LAST_UPDATE_CHANGE_ANCHOR,
         addressAnchors.map((e) => jsonEncode(e.toJson())).toList(),
       );
-
-  @override
-  bool isNotificationEnabled() =>
-      _preferences.getBool(KEY_NOTIFICATION_ENABLED) ?? false;
-
-  @override
-  Future<void> setNotificationEnabled(bool value) =>
-      _preferences.setBool(KEY_NOTIFICATION_ENABLED, value);
 }
 
 enum ConflictAction {

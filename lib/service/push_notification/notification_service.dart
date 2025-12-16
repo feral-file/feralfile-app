@@ -9,6 +9,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -112,9 +113,7 @@ class NotificationServiceImpl implements NotificationService {
 
     // Request permission if needed
     if (askPermission) {
-      final permission = Platform.isAndroid
-          ? true
-          : await OneSignal.Notifications.requestPermission(true);
+      final permission = await OneSignal.Notifications.requestPermission(true);
 
       if (!permission) {
         log.warning('NotificationService: permission denied');
@@ -134,8 +133,7 @@ class NotificationServiceImpl implements NotificationService {
       log.info('NotificationService: logged in with user ID: $userId');
 
       // Opt in if notifications are enabled in settings
-      if (_configurationService.isNotificationEnabled() &&
-          OneSignal.Notifications.permission) {
+      if (OneSignal.Notifications.permission) {
         await OneSignal.User.pushSubscription.optIn();
         log.info('NotificationService: opted in automatically');
       }
