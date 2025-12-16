@@ -374,28 +374,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
 
   String _getDisplayKey(AssetToken asset) => asset.displayKey;
 
-  Widget _artworkInfoIcon() => Semantics(
-        label: 'artworkInfoIcon',
-        child: IconButton(
-          onPressed: () {
-            _isInfoExpand ? _infoShrink() : _infoExpand();
-          },
-          constraints: const BoxConstraints(
-            maxWidth: 44,
-            maxHeight: 44,
-            minWidth: 44,
-            minHeight: 44,
-          ),
-          icon: SvgPicture.asset(
-            !_isInfoExpand
-                ? 'assets/images/info_white.svg'
-                : 'assets/images/info_white_active.svg',
-            width: 22,
-            height: 22,
-          ),
-        ),
-      );
-
   dynamic _onLoaded({WebViewController? webViewController, int? time}) {
     _webViewController = webViewController;
   }
