@@ -59,6 +59,7 @@ class HomePageHelper {
   Timer? _collectionRefreshTimer;
   StreamSubscription<FGBGType>? _fgbgSubscription;
   bool _isBackground = false;
+  bool _hasAddedNotificationListener = false;
 
   final _announcementService = injector<AnnouncementService>();
   final _remoteConfig = injector<RemoteConfigService>();
@@ -125,20 +126,24 @@ class HomePageHelper {
 
     _triggerShowAnnouncement();
 
-    OneSignal.Notifications.addClickListener((openedResult) async {
-      log.info('Tapped push notification: '
-          '${openedResult.notification.additionalData}');
-      final additionalData =
-          AdditionalData.fromJson(openedResult.notification.additionalData!);
-      await _announcementService.fetchAnnouncements();
-      if (!context.mounted) {
-        return;
-      }
-      unawaited(
-        NotificationHandler.instance
-            .handlePushNotificationClicked(context, additionalData),
-      );
-    });
+    // Only add notification listener once to prevent duplicate calls
+    if (!_hasAddedNotificationListener) {
+      _hasAddedNotificationListener = true;
+      OneSignal.Notifications.addClickListener((openedResult) async {
+        log.info('Tapped push notification: '
+            '${openedResult.notification.additionalData}');
+        final additionalData =
+            AdditionalData.fromJson(openedResult.notification.additionalData!);
+        await _announcementService.fetchAnnouncements();
+        if (!context.mounted) {
+          return;
+        }
+        unawaited(
+          NotificationHandler.instance
+              .handlePushNotificationClicked(context, additionalData),
+        );
+      });
+    }
     _fgbgSubscription =
         FGBGEvents.instance.stream.listen(_handleForeBackground);
   }
