@@ -9,9 +9,9 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:after_layout/after_layout.dart';
-import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/database/app_data_manager.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/model/play_list_model.dart';
 import 'package:autonomy_flutter/model/token.dart';
@@ -31,8 +31,8 @@ import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ex
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_intent.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
+import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/custom_route_observer.dart';
@@ -77,7 +77,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
         RouteAware,
         SingleTickerProviderStateMixin,
         WidgetsBindingObserver {
-  ScrollController? _scrollController;
   ValueNotifier<double> downloadProgress = ValueNotifier(0);
 
   HashSet<String> _accountNumberHash = HashSet.identity();
@@ -143,7 +142,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
 
   @override
   void dispose() {
-    _scrollController?.dispose();
     _animationController.dispose();
     _focusNode.dispose();
     _textController.dispose();
@@ -183,24 +181,11 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
   }
 
   void _infoExpand() {
-    _scrollController?.jumpTo(0);
-    if (_scrollController == null) {
-      _initScrollController();
-    }
     setState(() {
       _isInfoExpand = true;
       CustomRouteObserver.bottomSheetVisibility.value = true;
     });
     _animationController.animateTo(_infoExpandPosition);
-  }
-
-  void _initScrollController() {
-    _scrollController = ScrollController();
-    _scrollController!.addListener(() {
-      if (_scrollController!.position.pixels < -20 && _isInfoExpand) {
-        _infoShrink();
-      }
-    });
   }
 
   @override
@@ -438,26 +423,42 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                   onSubTitleTap: null,
                 ),
               ),
-              IconButton(
-                padding: EdgeInsets.zero,
-                onPressed: () async => _showArtworkOptionsDialog(
-                  context,
-                  asset,
-                  canvasState,
+              if (_isInfoExpand)
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: _infoShrink,
+                  constraints: const BoxConstraints(
+                    maxWidth: 44,
+                    maxHeight: 44,
+                    minWidth: 44,
+                    minHeight: 44,
+                  ),
+                  icon: const Icon(
+                    AuIcon.close,
+                    size: 18,
+                    color: AppColor.white,
+                  ),
+                )
+              else
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: () async => _showArtworkOptionsDialog(
+                    context,
+                    asset,
+                    canvasState,
+                  ),
+                  constraints: const BoxConstraints(
+                    maxWidth: 44,
+                    maxHeight: 44,
+                    minWidth: 44,
+                    minHeight: 44,
+                  ),
+                  icon: SvgPicture.asset(
+                    'assets/images/more_circle.svg',
+                    width: 22,
+                    height: 22,
+                  ),
                 ),
-                constraints: const BoxConstraints(
-                  maxWidth: 44,
-                  maxHeight: 44,
-                  minWidth: 44,
-                  minHeight: 44,
-                ),
-                icon: SvgPicture.asset(
-                  'assets/images/more_circle.svg',
-                  width: 22,
-                  height: 22,
-                ),
-              ),
-              _artworkInfoIcon(),
             ],
           ),
         ),
@@ -492,7 +493,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
           ),
         ),
         SingleChildScrollView(
-          controller: _scrollController,
           physics: const BouncingScrollPhysics(),
           child: SizedBox(
             width: double.infinity,
@@ -638,7 +638,11 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
         options: [
           OptionItem(
             title: 'full_screen'.tr(),
-            icon: SvgPicture.asset('assets/images/fullscreen_icon.svg'),
+            icon: SvgPicture.asset(
+              'assets/images/fullscreen_icon.svg',
+              width: 20,
+              height: 20,
+            ),
             onTap: () {
               Navigator.of(context).pop();
               _setFullScreen();
@@ -647,7 +651,11 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
           if (isCasting)
             OptionItem(
               title: 'interact'.tr(),
-              icon: SvgPicture.asset('assets/images/keyboard_icon.svg'),
+              icon: SvgPicture.asset(
+                'assets/images/keyboard_icon.svg',
+                width: 20,
+                height: 20,
+              ),
               onTap: () {
                 Navigator.of(context).pop();
                 final castingDevice = canvasDeviceState
@@ -675,8 +683,8 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
               title: 'view_on_'.tr(args: [asset.secondaryMarketName]),
               icon: SvgPicture.asset(
                 'assets/images/external_link_white.svg',
-                width: 18,
-                height: 18,
+                width: 20,
+                height: 20,
               ),
               onTap: () async {
                 final browser = FeralFileBrowser();
@@ -750,6 +758,18 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                   useIndexer: widget.payload.useIndexer,
                 ),
               );
+            },
+          ),
+          OptionItem(
+            title: 'View artwork info',
+            icon: SvgPicture.asset(
+              'assets/images/info_white.svg',
+              width: 20,
+              height: 20,
+            ),
+            onTap: () {
+              Navigator.of(context).pop();
+              _infoExpand();
             },
           ),
           OptionItem.emptyOptionItem,
