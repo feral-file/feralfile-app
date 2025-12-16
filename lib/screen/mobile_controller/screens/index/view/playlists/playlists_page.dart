@@ -137,7 +137,7 @@ class PlaylistsPageState extends State<PlaylistsPage>
             padding: ResponsiveLayout.pageHorizontalEdgeInsets,
             child: NoticeBanner(
               message: '''
-      Type or paste an address into the command bar to load''',
+Type or paste an address into the command bar to load''',
               onTap: () {
                 injector<NavigationService>().popToRouteOrPush(
                   AppRouter.voiceCommandPage,
