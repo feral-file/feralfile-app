@@ -121,6 +121,13 @@ class BluetoothDeviceManager {
   }
 
   // Casting device info
+  final ValueNotifier<FFBluetoothDevice?> _castingBluetoothDeviceNotifier =
+      ValueNotifier(null);
+
+  ValueNotifier<FFBluetoothDevice?> get castingBluetoothDeviceNotifier {
+    return _castingBluetoothDeviceNotifier;
+  }
+
   FFBluetoothDevice? _castingBluetoothDevice;
 
   set castingBluetoothDevice(FFBluetoothDevice? device) {
@@ -131,6 +138,7 @@ class BluetoothDeviceManager {
         .appSettingsStorageService
         .setSelectedDeviceId(device?.deviceId);
     _castingBluetoothDevice = device;
+    _castingBluetoothDeviceNotifier.value = device;
     NowDisplayingManager().updateDisplayingNow();
   }
 
