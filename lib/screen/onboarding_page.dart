@@ -23,6 +23,7 @@ import 'package:autonomy_flutter/service/device_info_service.dart';
 import 'package:autonomy_flutter/service/dls_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/metric_service.dart';
+import 'package:autonomy_flutter/service/push_notification/notification_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
@@ -165,14 +166,19 @@ class _OnboardingPageState extends State<OnboardingPage>
       unawaited(
         Navigator.of(context).pushReplacementNamed(AppRouter.homePage),
       );
-      return;
+    } else {
+      await Navigator.of(context).pushReplacementNamed(
+        AppRouter.onboardingIntroducePage,
+        arguments: IntroducePagePayload(
+          deeplink: null,
+        ),
+      );
     }
-    await Navigator.of(context).pushReplacementNamed(
-      AppRouter.onboardingIntroducePage,
-      arguments: IntroducePagePayload(
-        deeplink: null,
-      ),
-    );
+
+    // at this point, the user has completed the onboarding
+    // so we can registerPushNotifications
+    await injector<NotificationService>().registerPushNotifications();
+    startHandleDeeplinkCompleter.complete();
   }
 
   Future<void> _fetchRuntimeCache() async {
