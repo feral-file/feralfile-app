@@ -41,7 +41,7 @@ target 'Runner' do
   end
 end
 
-target 'Feral File Notification' do
+target 'Runner Notification' do
   pod 'OneSignalXCFramework', '>= 5.0.0', '< 6.0'
 end
 
