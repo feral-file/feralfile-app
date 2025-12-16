@@ -16,7 +16,6 @@ class PlaylistSection extends StatelessWidget {
     this.onPlaylistItemTap,
     this.scrollController,
     this.hasMore = true,
-    this.emptyView,
     this.playlistHeaderBuilder,
     super.key,
   });
@@ -27,7 +26,6 @@ class PlaylistSection extends StatelessWidget {
   final VoidCallback? onViewAllTap;
   final void Function(DP1NowDisplayingItem)? onPlaylistItemTap;
   final ScrollController? scrollController;
-  final Widget? emptyView;
   final bool hasMore;
   final Widget? Function(PlaylistData playlistData)? playlistHeaderBuilder;
 
@@ -54,10 +52,6 @@ class PlaylistSection extends StatelessWidget {
           return const SizedBox(
             height: PlaylistSectionTokens.gap,
           );
-        }
-
-        if (playlists.isEmpty) {
-          return emptyView ?? SizedBox.shrink();
         }
 
         // List items
