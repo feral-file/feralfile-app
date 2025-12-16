@@ -42,6 +42,9 @@ target 'Runner' do
 end
 
 target 'Runner Notification' do
+  use_frameworks! :linkage => :static
+  use_modular_headers!
+  
   pod 'OneSignalXCFramework', '>= 5.0.0', '< 6.0'
 end
 
