@@ -8,7 +8,16 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart'; // import 'package:flutter_vibrate/flutter_vibrate.dart';
+import 'package:open_settings_plus/open_settings_plus.dart';
+import 'package:sentry/sentry.dart';
+import 'package:url_launcher/url_launcher_string.dart';
+
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
@@ -27,13 +36,6 @@ import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/now_displaying/now_display_setting.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart'; // import 'package:flutter_vibrate/flutter_vibrate.dart';
-import 'package:open_settings_plus/open_settings_plus.dart';
-import 'package:sentry/sentry.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 class NavigationService {
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -82,8 +84,7 @@ class NavigationService {
         ?.popAndPushNamed(routeName, arguments: arguments);
   }
 
-  Future<dynamic>? pushReplacementNamed(String routeName,
-      {Object? arguments}) {
+  Future<dynamic>? pushReplacementNamed(String routeName, {Object? arguments}) {
     log.info('NavigationService.pushReplacementNamed: $routeName');
     if (navigatorKey.currentState?.mounted != true ||
         navigatorKey.currentContext == null) {
@@ -221,12 +222,12 @@ class NavigationService {
           children: [
             SelectableText(
               'it_seem_loading_issue'.tr(),
-              style: theme.textTheme.ppMori400White14,
+              style: AppTypography.body(context).white,
             ),
             const SizedBox(height: 24),
             RichText(
               text: TextSpan(
-                style: theme.textTheme.ppMori400White14,
+                style: AppTypography.body(context).white,
                 children: <TextSpan>[
                   TextSpan(
                     text: '${'if_issue_persist'.tr()} ',
@@ -536,7 +537,7 @@ class NavigationService {
         children: [
           Text(
             'Your FF1 is already set up and connected. You can head to settings to make changes or check the status.',
-            style: Theme.of(context).textTheme.ppMori400White14,
+            style: AppTypography.body(context).white,
           ),
           const SizedBox(height: 16),
           PrimaryButton(
@@ -569,7 +570,7 @@ class NavigationService {
             children: [
               RichText(
                 text: TextSpan(
-                  style: Theme.of(context).textTheme.ppMori400White14,
+                  style: AppTypography.body(context).white,
                   children: [
                     const TextSpan(
                       text: 'App Version',
@@ -622,7 +623,7 @@ class NavigationService {
             children: [
               RichText(
                 text: TextSpan(
-                  style: Theme.of(context).textTheme.ppMori400White14,
+                  style: AppTypography.body(context).white,
                   children: [
                     const TextSpan(
                       text: 'Your ',

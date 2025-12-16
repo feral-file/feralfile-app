@@ -11,11 +11,11 @@
       },
       "iconWidth": {
         "$type": "dimension",
-        "$value": "14.67px"
+        "$value": "16px"
       },
       "iconHeight": {
         "$type": "dimension",
-        "$value": "12px"
+        "$value": "16px"
       }
     }
   }

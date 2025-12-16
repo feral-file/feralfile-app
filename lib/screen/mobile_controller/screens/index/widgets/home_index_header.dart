@@ -1,5 +1,6 @@
 import 'package:autonomy_flutter/design/build/components/HomeIndexHeader.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:flutter/material.dart';
 
 /// Home Index Header - Navigation tabs with hamburger menu
@@ -38,8 +39,8 @@ class HomeIndexHeader extends StatelessWidget {
                   child: Text(
                     tab.label,
                     style: isSelected
-                        ? theme.textTheme.ppMori400White12
-                        : theme.textTheme.ppMori400Grey12,
+                        ? AppTypography.body(context).white
+                        : AppTypography.body(context).grey,
                   ),
                 ),
               );

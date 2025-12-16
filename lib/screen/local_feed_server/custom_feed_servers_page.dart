@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
@@ -128,9 +129,10 @@ class _CustomFeedServersPageState extends State<CustomFeedServersPage>
                                                 const SizedBox(width: 12),
                                                 Text(
                                                   'Delete',
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .ppMori400White12,
+                                                  style:
+                                                      AppTypography.bodySmall(
+                                                              context)
+                                                          .white,
                                                 ),
                                               ],
                                             ),
@@ -179,7 +181,7 @@ class _CustomFeedServersPageState extends State<CustomFeedServersPage>
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text('No custom feed servers yet',
-            style: theme.textTheme.ppMori400Grey14),
+            style: AppTypography.body(context).grey),
         const SizedBox(height: 16),
         Padding(
           padding: ResponsiveLayout.pageHorizontalEdgeInsets,

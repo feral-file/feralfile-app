@@ -5,6 +5,7 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:flutter/material.dart';
@@ -46,7 +47,7 @@ class TagBuilder extends MarkdownElementBuilder {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(parts[1],
-                      style: Theme.of(context).textTheme.ppMori400Grey14),
+                      style: AppTypography.body(context).grey),
                   Container(
                     decoration: BoxDecoration(
                         border: Border.all(
@@ -57,7 +58,7 @@ class TagBuilder extends MarkdownElementBuilder {
                     padding:
                         const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                     child: Text(parts[0],
-                        style: Theme.of(context).textTheme.ppMori400Grey12),
+                        style: AppTypography.body(context).grey),
                   )
                 ],
               )

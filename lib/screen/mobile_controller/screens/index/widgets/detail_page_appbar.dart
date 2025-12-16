@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:flutter/material.dart';
@@ -79,7 +80,7 @@ class DetailPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                 Flexible(
                   child: Text(
                     title,
-                    style: theme.textTheme.ppMori400Grey12,
+                    style: AppTypography.body(context).grey,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),

@@ -1,5 +1,6 @@
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:flutter/material.dart';
 
 const List<String> pageTitles = [
@@ -52,8 +53,8 @@ class HeaderWidget extends StatelessWidget {
       child: Text(
         title,
         style: isSelected
-            ? theme.textTheme.ppMori400White12
-            : theme.textTheme.ppMori400Grey12,
+            ? AppTypography.body(context).white
+            : AppTypography.body(context).grey,
       ),
     );
   }

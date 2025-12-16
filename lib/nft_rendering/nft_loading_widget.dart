@@ -1,5 +1,5 @@
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:gif_view/gif_view.dart';
 
@@ -43,7 +43,7 @@ class LoadingWidget extends StatelessWidget {
                 invertColors: invertColors,
               ),
               const SizedBox(height: 12),
-              Text('loading', style: theme.textTheme.ppMori400White12)
+              Text('loading', style: AppTypography.body(context).white)
             ],
           ),
         ),

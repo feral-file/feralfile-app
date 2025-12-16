@@ -24,6 +24,7 @@ import 'package:autonomy_flutter/util/datetime_ext.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -174,7 +175,7 @@ class _SupportListPageState extends State<SupportListPage>
               children: [
                 Text(
                   issue.getListTitle(),
-                  style: theme.textTheme.ppMori400Black16,
+                  style: AppTypography.body(context).black,
                 ),
                 if (issue.unread > 0) ...[
                   _unreadChatThreadWidget(),
@@ -187,7 +188,8 @@ class _SupportListPageState extends State<SupportListPage>
                   getVerboseDateTimeRepresentation(
                       issue.lastMessage?.timestamp.toLocal() ??
                           issue.timestamp.toLocal()),
-                  style: theme.textTheme.ppMori400Black14
+                  style: AppTypography.body(context)
+                      .black
                       .copyWith(color: AppColor.auQuickSilver),
                 ),
                 const SizedBox(width: 14),
@@ -215,7 +217,7 @@ class _SupportListPageState extends State<SupportListPage>
                   ),
                   child: Text(
                     'resolved'.tr(),
-                    style: theme.textTheme.ppMori400FFQuickSilver12,
+                    style: AppTypography.body(context).grey,
                   ),
                 ),
                 const SizedBox(
@@ -227,7 +229,7 @@ class _SupportListPageState extends State<SupportListPage>
                   getPreviewMessage(issue),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.ppMori400Black14,
+                  style: AppTypography.body(context).black,
                 ),
               ),
             ],
@@ -257,7 +259,7 @@ class _SupportListPageState extends State<SupportListPage>
                 children: [
                   Text(
                     announcement.getListTitle(),
-                    style: theme.textTheme.ppMori400Black16,
+                    style: AppTypography.body(context).black,
                   ),
                   if (announcement is AnnouncementLocal &&
                       !announcement.read) ...[
@@ -271,7 +273,8 @@ class _SupportListPageState extends State<SupportListPage>
               children: [
                 Text(
                   getVerboseDateTimeRepresentation(announcement.startedAt),
-                  style: theme.textTheme.ppMori400Black14
+                  style: AppTypography.body(context)
+                      .black
                       .copyWith(color: AppColor.auQuickSilver),
                 ),
                 const SizedBox(width: 14),
@@ -289,7 +292,7 @@ class _SupportListPageState extends State<SupportListPage>
                 : 'announcement'.tr(),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.ppMori400Black14,
+            style: AppTypography.body(context).black,
           ),
         ),
         if (hasDivider)

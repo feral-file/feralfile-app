@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/channel_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
@@ -45,12 +46,12 @@ class RecoveryPhraseWarning extends StatelessWidget {
                   children: [
                     Text(
                       'important_update'.tr(),
-                      style: Theme.of(context).textTheme.ppMori700Black16,
+                      style: AppTypography.body(context).bold.black,
                     ),
                     const SizedBox(height: 20),
                     RichText(
                       text: TextSpan(
-                        style: Theme.of(context).textTheme.ppMori400Black14,
+                        style: AppTypography.body(context).black,
                         children: [
                           TextSpan(
                             text: '${'get_recovery_phrase_desc'.tr()} ',

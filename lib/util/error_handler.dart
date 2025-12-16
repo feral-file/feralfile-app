@@ -8,6 +8,7 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/customer_support/support_thread_page.dart';
 import 'package:autonomy_flutter/screen/report/sentry_report.dart';
@@ -190,12 +191,12 @@ Future showErrorDialog(BuildContext context, String title, String description,
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(title, style: theme.primaryTextTheme.ppMori700White24),
+                  Text(title, style: AppTypography.h2(context).white),
                   if (description.isNotEmpty) ...[
                     const SizedBox(height: 40),
                     Text(
                       description,
-                      style: theme.primaryTextTheme.ppMori400White14,
+                      style: AppTypography.body(context).white,
                     ),
                     const SizedBox(height: 40),
                     PrimaryAsyncButton(

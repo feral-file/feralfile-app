@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:flutter/material.dart';
 
@@ -33,19 +34,19 @@ class EditAccountItem extends StatelessWidget {
                 children: [
                   Text(
                     name,
-                    style: Theme.of(context).textTheme.ppMori700Black16,
+                    style: AppTypography.body(context).bold.black,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     address,
-                    style: Theme.of(context).textTheme.ppMori400Black14,
+                    style: AppTypography.body(context).black,
                   ),
                 ],
               ),
             ),
             Text(
               cryptoType,
-              style: Theme.of(context).textTheme.ppMori400Black14,
+              style: AppTypography.body(context).black,
             ),
             if (onEdit != null)
               IconButton(

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address_bloc.dart';
@@ -8,7 +9,6 @@ import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/domain_address_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/style.dart';
@@ -86,7 +86,7 @@ class _ViewExistingAddressState extends State<ViewExistingAddress> {
                       addTitleSpace(),
                       Text(
                         'enter_a_wallet_address'.tr(),
-                        style: theme.textTheme.ppMori400Black14,
+                        style: AppTypography.body(context).black,
                       ),
                       const SizedBox(height: 10),
                       AuTextField(

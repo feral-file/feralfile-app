@@ -7,6 +7,21 @@ alwaysApply: true
 ## Purpose
 Ensure high-quality Flutter code that follows industry standards, maintains consistency, and passes all lint checks.
 
+## 🚨 ABSOLUTE REQUIREMENTS - NO EXCEPTIONS 🚨
+
+### MUST USE:
+- ✅ `AppTypography` for **ALL** text styles - every single `Text` widget
+- ✅ `LayoutConstants` for **ALL** spacing, padding, margins, dimensions
+
+### MUST NOT USE:
+- ❌ Hard-coded font sizes (e.g., `fontSize: 16`)
+- ❌ Hard-coded spacing values (e.g., `padding: 8`, `SizedBox(height: 12)`)
+- ❌ Hard-coded dimensions (e.g., `width: 44`, `size: 24`)
+- ❌ `TextStyle()` with numeric font size
+- ❌ Any numeric literal for UI sizing
+
+**Violations of these rules will result in immediate code rejection.**
+
 ## Code Quality & Linting
 
 ### Always run flutter lint before committing
@@ -208,10 +223,148 @@ Future<void> loadData() async {
 
 ## Design System Integration
 
+### ⚠️ CRITICAL RULE - READ THIS FIRST ⚠️
+
+**ALL text styles MUST use `AppTypography`**  
+**ALL spacing/sizing MUST use `LayoutConstants`**  
+**NO hard-coded numbers allowed - ZERO EXCEPTIONS**
+
+Any code with hard-coded font sizes, spacing, or dimensions will be **immediately rejected**.
+
+### Typography and Layout Constants (MANDATORY)
+**ALWAYS use `AppTypography` for text styles and `LayoutConstants` for sizing, padding, and spacing.**
+
+⚠️ **ABSOLUTE REQUIREMENT - NO EXCEPTIONS:**
+- ❌ **NEVER, EVER use hard-coded font sizes** (e.g., `fontSize: 16`)
+- ❌ **NEVER, EVER use hard-coded spacing/padding values** (e.g., `padding: 16`, `height: 44`)
+- ❌ **NEVER, EVER use TextStyle() directly** without AppTypography
+- ❌ **NEVER, EVER use numeric literals** for spacing, dimensions, or sizes
+- ✅ **ONLY use `AppTypography` methods for ALL text**
+- ✅ **ONLY use `LayoutConstants` for ALL spacing, padding, and sizing**
+
+**This is not optional. Code reviews will reject any hard-coded values.**
+
+#### AppTypography - Text Styles
+- Use `AppTypography` methods with BuildContext for all text
+- Use extension methods for colors (`.black`, `.white`, `.grey`, etc.)
+- **NO exceptions - even for one-off cases, use AppTypography**
+
+```dart
+// ✅ CORRECT: Using AppTypography
+Text(
+  'Playlist Title',
+  style: AppTypography.h2(context).black,
+)
+
+Text(
+  'Description text',
+  style: AppTypography.body(context).grey,
+)
+
+// ❌ FORBIDDEN: Hard-coded styles - WILL BE REJECTED
+Text(
+  'Playlist Title',
+  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+)
+
+// ❌ FORBIDDEN: Direct font size - WILL BE REJECTED
+Text(
+  'Description',
+  style: TextStyle(fontSize: 16, color: Colors.grey),
+)
+
+// ❌ FORBIDDEN: Any numeric font size - WILL BE REJECTED
+Text(
+  'Title',
+  style: Theme.of(context).textTheme.bodyText1?.copyWith(fontSize: 18),
+)
+```
+
+#### LayoutConstants - Spacing and Sizing
+- Use `LayoutConstants` for **ALL** spacing values - **NO numeric literals allowed**
+- Use the 4px grid system: `space1` (4px), `space2` (8px), `space3` (12px), `space4` (16px), etc.
+- Use predefined constants for touch targets and icon sizes
+- **If a spacing value isn't in LayoutConstants, add it - DON'T hard-code it**
+
+```dart
+// ✅ CORRECT: Using LayoutConstants
+Padding(
+  padding: EdgeInsets.all(LayoutConstants.space4),
+  child: Column(
+    children: [
+      Icon(
+        Icons.playlist,
+        size: LayoutConstants.iconSizeLarge,
+      ),
+      SizedBox(height: LayoutConstants.space3),
+      Text('Playlist', style: AppTypography.h3(context)),
+    ],
+  ),
+)
+
+// ✅ CORRECT: Touch target compliance
+Container(
+  height: LayoutConstants.minTouchTarget,
+  width: LayoutConstants.minTouchTarget,
+  child: IconButton(icon: Icon(Icons.more)),
+)
+
+// ❌ FORBIDDEN: Hard-coded spacing - WILL BE REJECTED
+Padding(
+  padding: EdgeInsets.all(16), // ❌ NO! Use LayoutConstants.space4
+  child: Column(
+    children: [
+      Icon(Icons.playlist, size: 24), // ❌ NO! Use LayoutConstants.iconSizeLarge
+      SizedBox(height: 12), // ❌ NO! Use LayoutConstants.space3
+      Text('Playlist'), // ❌ NO! Use AppTypography
+    ],
+  ),
+)
+
+// ❌ FORBIDDEN: Hard-coded dimensions - WILL BE REJECTED
+Container(
+  height: 44, // ❌ NO! Use LayoutConstants.minTouchTarget
+  width: 44,  // ❌ NO! Use LayoutConstants.minTouchTarget
+  child: IconButton(icon: Icon(Icons.more)),
+)
+
+// ❌ FORBIDDEN: Any numeric literals for spacing - WILL BE REJECTED
+Column(
+  children: [
+    SizedBox(height: 8),  // ❌ NO! Use LayoutConstants.space2
+    Container(padding: EdgeInsets.symmetric(horizontal: 20)), // ❌ NO!
+  ],
+)
+```
+
+#### When to Use What
+- **Headings**: Use `AppTypography.h1` through `AppTypography.h4` based on hierarchy
+- **Body text**: Use `AppTypography.body` (default) or `AppTypography.bodySmall` (sparingly)
+- **Metadata**: Use `AppTypography.caption` for low-priority information
+- **Technical text**: Use `AppTypography.mono` for addresses, code
+- **Small gaps**: `LayoutConstants.space1` or `space2` (4-8px)
+- **Default spacing**: `LayoutConstants.space4` (16px)
+- **Section spacing**: `LayoutConstants.space6` or `space8` (24-32px)
+- **Icons**: Use `iconSizeSmall`, `iconSizeDefault`, `iconSizeMedium`, `iconSizeLarge`
+
+#### 🚫 Absolutely Forbidden - Will Result in Code Rejection
+```dart
+// ❌ NEVER DO THIS - ANY OF THESE WILL BE REJECTED:
+fontSize: 16
+padding: EdgeInsets.all(20)
+height: 44
+SizedBox(width: 12)
+Icon(Icons.x, size: 24)
+TextStyle(fontSize: 14)
+Container(margin: EdgeInsets.symmetric(vertical: 8))
+```
+
+**Remember: If you're typing a number for size/spacing/font, you're doing it wrong.**
+
 ### Design Tokens
 - Use design tokens from `/lib/design/build/` for consistent styling
-- Reference typography tokens for text styles
-- Use component tokens for consistent spacing and colors
+- Reference typography tokens for text styles via `AppTypography`
+- Use spacing tokens via `LayoutConstants`
 - Avoid hard-coded values when tokens are available
 
 ### Responsive Design
@@ -267,6 +420,9 @@ style(artwork-widget): fix lint issues and formatting
 ## Best Practice Checklist
 
 ### Code Review Checklist:
+- [ ] **CRITICAL: Zero hard-coded font sizes - ALL text uses `AppTypography`**
+- [ ] **CRITICAL: Zero hard-coded spacing/dimensions - ALL use `LayoutConstants`**
+- [ ] **CRITICAL: No numeric literals for sizes, spacing, padding, or dimensions**
 - [ ] Follows BLoC pattern where appropriate
 - [ ] Proper error handling and logging
 - [ ] Uses design tokens consistently
@@ -275,7 +431,7 @@ style(artwork-widget): fix lint issues and formatting
 - [ ] Memory leaks prevented
 - [ ] Proper state management
 - [ ] Clean, readable code structure
-- [ ] Touch targets meet 44x44 minimum size requirement
+- [ ] Touch targets use `LayoutConstants.minTouchTarget` (not hard-coded 44)
 - [ ] Accessibility features work properly
 
 ### Performance Checklist:

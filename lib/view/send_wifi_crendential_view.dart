@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:flutter/foundation.dart';
@@ -37,25 +38,25 @@ class _SendWifiCredentialViewState extends State<SendWifiCredentialView> {
         Text(
           'Please enter the Wi-Fi credentials '
           'that you want the Feral File device to connect to.',
-          style: Theme.of(context).textTheme.ppMori400White14,
+          style: AppTypography.body(context).white,
         ),
         const SizedBox(height: 30),
         TextField(
           controller: ssidController,
-          style: Theme.of(context).textTheme.ppMori400White14,
+          style: AppTypography.body(context).white,
           decoration: InputDecoration(
             labelText: 'Wi-Fi Name (SSID)',
-            labelStyle: Theme.of(context).textTheme.ppMori400Grey14,
+            labelStyle: AppTypography.body(context).grey,
             border: const OutlineInputBorder(),
           ),
         ),
         const SizedBox(height: 24),
         TextField(
           controller: passwordController,
-          style: Theme.of(context).textTheme.ppMori400White14,
+          style: AppTypography.body(context).white,
           decoration: InputDecoration(
             labelText: 'Wi-Fi Password',
-            labelStyle: Theme.of(context).textTheme.ppMori400Grey14,
+            labelStyle: AppTypography.body(context).grey,
             border: const OutlineInputBorder(),
           ),
           obscureText: true,

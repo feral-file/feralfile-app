@@ -35,6 +35,7 @@ import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:bubble/bubble.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
@@ -433,7 +434,7 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
           children: [
             Text(
               'ask_attach_crash'.tr(),
-              style: theme.primaryTextTheme.ppMori400White14,
+              style: AppTypography.body(context).white,
             ),
             const SizedBox(height: 40),
             PrimaryButton(
@@ -581,13 +582,15 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
             children: [
               Text(
                 debugLog.first.split('_').last,
-                style: theme.primaryTextTheme.ppMori400White14
+                style: AppTypography.body(context)
+                    .white
                     .copyWith(color: AppColor.feralFileHighlight),
               ),
               const SizedBox(width: 5),
               Text(
                 '(${fileSizeInMB.toStringAsFixed(2)} MB)',
-                style: theme.primaryTextTheme.ppMori400White14
+                style: AppTypography.body(context)
+                    .white
                     .copyWith(color: AppColor.auQuickSilver),
               ),
               const Spacer(),
@@ -706,15 +709,12 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
                       },
                       child: Text(
                         'retry'.tr(),
-                        style: theme.textTheme.ppMori400Black12.copyWith(
-                          decoration: TextDecoration.underline,
-                          decorationColor: AppColor.primaryBlack,
-                        ),
+                        style: AppTypography.body(context).black.underline,
                       ),
                     ),
                     Text(
                       '・',
-                      style: theme.textTheme.ppMori400Black12,
+                      style: AppTypography.body(context).black,
                     ),
                     GestureDetector(
                       onTap: () async {
@@ -732,16 +732,14 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
                       },
                       child: Text(
                         'delete'.tr(),
-                        style: theme.textTheme.ppMori400Black12.copyWith(
-                          decoration: TextDecoration.underline,
-                          decorationColor: AppColor.primaryBlack,
-                        ),
+                        style: AppTypography.body(context).black.underline,
                       ),
                     ),
                     const SizedBox(width: 6),
                     Text(
                       'failed_to_send'.tr(),
-                      style: theme.textTheme.ppMori400Black12
+                      style: AppTypography.body(context)
+                          .black
                           .copyWith(color: orangeRust),
                     ),
                   ],
@@ -778,16 +776,16 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
                 'issue_resolved_'.tr(),
                 textAlign: TextAlign.start,
                 style: ResponsiveLayout.isMobile
-                    ? theme.textTheme.ppMori700Black14
-                    : theme.textTheme.ppMori700Black16,
+                    ? AppTypography.body(context).bold.black
+                    : AppTypography.body(context).bold.black,
               ),
               const SizedBox(height: 10),
               Text(
                 'our_team_thank'.tr(),
                 textAlign: TextAlign.start,
                 style: ResponsiveLayout.isMobile
-                    ? theme.textTheme.ppMori400Black14
-                    : theme.textTheme.ppMori400Black16,
+                    ? AppTypography.body(context).black
+                    : AppTypography.body(context).black,
               ),
               const SizedBox(height: 20),
               TextButton(
@@ -831,8 +829,8 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
                 message.metadata?['content'] as String,
                 textAlign: TextAlign.start,
                 style: ResponsiveLayout.isMobile
-                    ? theme.textTheme.ppMori700Black14
-                    : theme.textTheme.ppMori700Black16,
+                    ? AppTypography.body(context).bold.black
+                    : AppTypography.body(context).bold.black,
               ),
             ],
           ),
@@ -1249,7 +1247,7 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
       inputPadding: inputPadding,
       backgroundColor: Colors.transparent,
       inputBackgroundColor: theme.colorScheme.primary,
-      inputTextStyle: theme.textTheme.ppMori400White14,
+      inputTextStyle: AppTypography.body(context).white,
       inputTextColor: theme.colorScheme.secondary,
       attachmentButtonIcon: Semantics(
         label: 'Attach file',
@@ -1268,7 +1266,8 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
         _sendIcon,
       ),
       inputTextCursorColor: theme.colorScheme.secondary,
-      emptyChatPlaceholderTextStyle: theme.textTheme.ppMori400White14
+      emptyChatPlaceholderTextStyle: AppTypography.body(context)
+          .white
           .copyWith(color: AppColor.auQuickSilver),
       dateDividerMargin: const EdgeInsets.symmetric(vertical: 12),
       dateDividerTextStyle: ResponsiveLayout.isMobile

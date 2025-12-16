@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:flutter/material.dart';
 
@@ -35,19 +36,19 @@ class AddressCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       name,
-                      style: Theme.of(context).textTheme.ppMori700Black16,
+                      style: AppTypography.body(context).bold.black,
                     ),
                   ),
                   Text(
                     cryptoType,
-                    style: Theme.of(context).textTheme.ppMori400Black14,
+                    style: AppTypography.body(context).black,
                   ),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
                 address,
-                style: Theme.of(context).textTheme.ppMori400Black14,
+                style: AppTypography.body(context).black,
               ),
               if (onEdit != null || onDelete != null)
                 Row(

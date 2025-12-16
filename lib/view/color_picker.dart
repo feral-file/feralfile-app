@@ -3,6 +3,7 @@ import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -72,7 +73,7 @@ class _ColorPickerViewState extends State<ColorPickerView> {
               children: [
                 Expanded(
                   child: Text('Background Color',
-                      style: Theme.of(context).textTheme.ppMori400White14),
+                      style: AppTypography.body(context).white),
                 ),
                 const SizedBox(width: 8.0),
                 GestureDetector(
@@ -239,7 +240,7 @@ class _FFColorPickerState extends State<FFColorPicker> {
                 child: Text(
                   'RGB',
                   textAlign: TextAlign.center,
-                  style: theme.textTheme.ppMori400Black12,
+                  style: AppTypography.body(context).black,
                 ),
               ),
             ),
@@ -263,7 +264,7 @@ class _FFColorPickerState extends State<FFColorPicker> {
                 ),
                 showCursor: true,
                 cursorColor: AppColor.primaryBlack,
-                style: theme.textTheme.ppMori400Black12,
+                style: AppTypography.body(context).black,
                 textAlign: TextAlign.center,
                 keyboardType: TextInputType.number,
                 onChanged: (value) {},
@@ -281,7 +282,7 @@ class _FFColorPickerState extends State<FFColorPicker> {
       children: [
         Expanded(
           child: Text('Recent Colors',
-              style: Theme.of(context).textTheme.ppMori400White12),
+              style: AppTypography.body(context).white),
         ),
         const SizedBox(width: 8.0),
         ...colors.map((color) {

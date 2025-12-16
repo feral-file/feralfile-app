@@ -4,6 +4,7 @@ import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/view/custom_chat_input_widget.dart'; // Add this import
 import 'package:autonomy_flutter/view/responsive.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -231,7 +232,7 @@ class _AiChatViewWidgetState extends State<AiChatViewWidget> {
         emptyState: Center(
           child: Text(
             'How can I help you display art?',
-            style: theme.textTheme.ppMori700White14,
+            style: AppTypography.body(context).bold.white,
           ),
         ),
       ),
@@ -285,16 +286,18 @@ class _AiChatViewWidgetState extends State<AiChatViewWidget> {
       sendButtonIcon: SvgPicture.asset(
         _sendIcon,
       ),
-      emptyChatPlaceholderTextStyle: theme.textTheme.ppMori400White12
+      emptyChatPlaceholderTextStyle: AppTypography.body(context)
+          .white
           .copyWith(color: AppColor.auQuickSilver),
       statusIconPadding: EdgeInsets.zero,
       dateDividerMargin: const EdgeInsets.symmetric(vertical: 0),
       dateDividerTextStyle:
           theme.textTheme.dateDividerTextStyle.copyWith(color: Colors.amber),
       primaryColor: Colors.transparent,
-      sentMessageBodyTextStyle: theme.textTheme.ppMori400White12,
+      sentMessageBodyTextStyle: AppTypography.body(context).white,
       secondaryColor: AppColor.chatSecondaryColor,
-      receivedMessageBodyTextStyle: theme.textTheme.ppMori400White12
+      receivedMessageBodyTextStyle: AppTypography.body(context)
+          .white
           .copyWith(color: AppColor.feralFileLightBlue),
       receivedMessageDocumentIconColor: Colors.transparent,
       sentMessageDocumentIconColor: Colors.transparent,

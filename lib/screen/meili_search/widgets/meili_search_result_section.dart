@@ -5,6 +5,7 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +23,7 @@ class MeiliSearchResultSection<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     return SectionExpandedWidget(
       header: title,
-      headerStyle: Theme.of(context).textTheme.ppMori700White16,
+      headerStyle: AppTypography.body(context).bold.white,
       isExpandedDefault: true,
       withDivider: false,
       headerPadding: const EdgeInsets.only(

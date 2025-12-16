@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
@@ -39,16 +40,12 @@ class NoPairingDeviceDialog extends StatelessWidget {
                       children: [
                         Text(
                           'Meet FF1',
-                          style: theme.textTheme.small.copyWith(
-                            color: PrimitivesTokens.colorsBlack,
-                          ),
+                          style: AppTypography.body(context).black,
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'The art computer by Feral File.\nMade to play digital art on any screen.',
-                          style: theme.textTheme.small.copyWith(
-                            color: PrimitivesTokens.colorsBlack,
-                          ),
+                          style: AppTypography.body(context).black,
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -64,9 +61,7 @@ class NoPairingDeviceDialog extends StatelessWidget {
                             ),
                             padding: EdgeInsets.zero,
                             text: r'Get your FF1, $450',
-                            textStyle: theme.textTheme.small.copyWith(
-                              color: PrimitivesTokens.colorsBlack,
-                            ),
+                            textStyle: AppTypography.body(context).black,
                             rightIcon: SvgPicture.asset(
                               'assets/images/arrow_right.svg',
                               width: 12.23,
@@ -89,9 +84,7 @@ class NoPairingDeviceDialog extends StatelessWidget {
                         const SizedBox(height: 10),
                         Text(
                           'Now in stock and shipping',
-                          style: theme.textTheme.small.copyWith(
-                            color: PrimitivesTokens.colorsInactive,
-                          ),
+                          style: AppTypography.body(context).inactive,
                         ),
                       ],
                     ),
@@ -103,9 +96,7 @@ class NoPairingDeviceDialog extends StatelessWidget {
                       children: [
                         Text(
                           'A computer with one purpose.',
-                          style: theme.textTheme.small.copyWith(
-                            color: PrimitivesTokens.colorsGrey,
-                          ),
+                          style: AppTypography.body(context).grey,
                         ),
                         const SizedBox(height: 20),
                         Text(

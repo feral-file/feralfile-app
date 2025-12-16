@@ -9,6 +9,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
 import 'package:autonomy_flutter/service/channel_service.dart';
@@ -119,12 +120,13 @@ class _RecoveryPhrasePageState extends State<RecoveryPhrasePage> {
                                 TextSpan(
                                   text: 'passphrase'.tr(),
                                   style:
-                                      theme.textTheme.ppMori400FFQuickSilver14,
+                                      AppTypography.body(context).grey,
                                 ),
                                 const TextSpan(text: '  '),
                                 TextSpan(
                                     text: passphrase,
-                                    style: theme.textTheme.ppMori400Black14
+                                    style: AppTypography.body(context)
+                                        .black
                                         .copyWith(
                                             color: _isShow
                                                 ? AppColor.primaryBlack
@@ -196,11 +198,11 @@ class _RecoveryPhrasePageState extends State<RecoveryPhrasePage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('important_update'.tr(),
-                style: Theme.of(context).textTheme.ppMori700Black16),
+                style: AppTypography.body(context).bold.black),
             const SizedBox(height: 20),
             RichText(
               text: TextSpan(
-                style: Theme.of(context).textTheme.ppMori400Black14,
+                style: AppTypography.body(context).black,
                 children: [
                   TextSpan(
                     text: '${'get_recovery_phrase_desc'.tr()} ',
@@ -253,11 +255,11 @@ class _RecoveryPhrasePageState extends State<RecoveryPhrasePage> {
             width: 32,
             alignment: Alignment.centerRight,
             child: Text(isNull ? '' : formatter.format(index + 1),
-                style: theme.textTheme.ppMori400Grey14),
+                style: AppTypography.body(context).grey),
           ),
           const SizedBox(width: 16),
           Text(word,
-              style: theme.textTheme.ppMori400Black14.copyWith(
+              style: AppTypography.body(context).black.copyWith(
                   color: _isShow ? AppColor.primaryBlack : AppColor.white)),
         ],
       ),
@@ -266,9 +268,8 @@ class _RecoveryPhrasePageState extends State<RecoveryPhrasePage> {
 
   Widget _getBackUpState(BuildContext context) {
     final theme = Theme.of(context);
-    final commonStyle = theme.textTheme.ppMori400Black14;
-    final customLinkStyle = commonStyle.copyWith(
-      decoration: TextDecoration.underline,
+    final commonStyle = AppTypography.body(context).black;
+    final customLinkStyle = commonStyle.underline.copyWith(
       decorationColor: AppColor.primaryBlack,
     );
     final iCloudKeychain = TextSpan(
@@ -316,13 +317,13 @@ class _RecoveryPhrasePageState extends State<RecoveryPhrasePage> {
         ),
         const SizedBox(height: 12),
         Text('remember_if_you_lose_your_SRP'.tr(),
-            style: theme.textTheme.ppMori700Black14),
+            style: AppTypography.body(context).bold.black),
         const SizedBox(height: 12),
         if (_isBackUpAvailable == true) ...[
           RichText(
             textScaler: MediaQuery.textScalerOf(context),
             text: TextSpan(
-              style: theme.textTheme.ppMori400Black14,
+              style: AppTypography.body(context).black,
               children: <TextSpan>[
                 TextSpan(
                   text: '${'yrp_we’ve_safely'.tr()} ',
@@ -338,7 +339,7 @@ class _RecoveryPhrasePageState extends State<RecoveryPhrasePage> {
           RichText(
             textScaler: MediaQuery.textScalerOf(context),
             text: TextSpan(
-              style: theme.textTheme.ppMori400Black14,
+              style: AppTypography.body(context).black,
               children: [
                 if (Platform.isIOS) iCloudKeychain else androidBlockStore,
                 TextSpan(
@@ -346,11 +347,11 @@ class _RecoveryPhrasePageState extends State<RecoveryPhrasePage> {
                 ),
                 TextSpan(
                   text: 'turned_off'.tr().toLowerCase(),
-                  style: theme.textTheme.ppMori700Black14,
+                  style: AppTypography.body(context).bold.black,
                 ),
                 TextSpan(
                   text: ' ${'unable_backup'.tr()}',
-                  style: theme.textTheme.ppMori400Black14,
+                  style: AppTypography.body(context).black,
                 ),
               ],
             ),
@@ -374,7 +375,7 @@ class _RecoveryPhrasePageState extends State<RecoveryPhrasePage> {
             Platform.isAndroid
                 ? 'recommend_google_cloud'.tr()
                 : 'recommend_icloud_key'.tr(),
-            style: theme.textTheme.ppMori700Black14),
+            style: AppTypography.body(context).bold.black),
       ],
     );
   }

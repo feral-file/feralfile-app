@@ -1,5 +1,6 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
@@ -482,7 +483,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
       padding: const EdgeInsets.all(12),
       child: Text(
         message,
-        style: Theme.of(context).textTheme.small,
+        style: AppTypography.body(context).white,
         maxLines: 3,
         overflow: TextOverflow.ellipsis,
       ),
@@ -494,7 +495,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
       children: [
         Text(
           AudioExceptionType.permissionDenied.message,
-          style: Theme.of(context).textTheme.small,
+          style: AppTypography.body(context).white,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 20),
@@ -528,7 +529,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
               children: [
                 Text(
                   processingMessage,
-                  style: Theme.of(context).textTheme.small,
+                  style: AppTypography.body(context).white,
                 ),
                 _AnimatedDots(),
               ],
@@ -545,16 +546,16 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
       padding: const EdgeInsets.all(12),
       child: Text(
         errorMessage,
-        style: Theme.of(context).textTheme.small.copyWith(
-              color: PrimitivesTokens.colorsLightRed,
-            ),
+        style: AppTypography.body(context).copyWith(
+          color: PrimitivesTokens.colorsLightRed,
+        ),
         textAlign: TextAlign.left,
       ),
     );
   }
 
   Widget _help(BuildContext context) {
-    final textStyle = Theme.of(context).textTheme.ppMori400White12;
+    final textStyle = AppTypography.body(context).white;
     return GestureDetector(
       onTap: () {
         tooltipController.showTooltip();
@@ -684,7 +685,7 @@ class _AnimatedDotsState extends State<_AnimatedDots>
         }
         return Text(
           buffer.toString(),
-          style: Theme.of(context).textTheme.small,
+          style: AppTypography.body(context).white,
         );
       },
     );

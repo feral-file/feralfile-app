@@ -1,7 +1,7 @@
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/components/NowPlayingBar.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/text_style_ext.dart';
 import 'package:flutter/material.dart';
@@ -46,7 +46,6 @@ class _DeviceSubNavState extends State<DeviceSubNav> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final pairedDevices = BluetoothDeviceManager.pairedDevices;
 
     if (pairedDevices.isEmpty) {
@@ -69,14 +68,14 @@ class _DeviceSubNavState extends State<DeviceSubNav> {
                 GestureDetector(
                   child: Text(
                     pairedDevices[index].name,
-                    style: theme.textTheme.small.copyWith(
+                    style: (selectedDevice?.deviceId ==
+                                pairedDevices[index].deviceId
+                            ? AppTypography.body(context).white
+                            : AppTypography.body(context).grey)
+                        .copyWith(
                       fontWeight: FontWeightUtil.fromString(
                         PrimitivesTokens.fontWeightsBold,
                       ),
-                      color: selectedDevice?.deviceId ==
-                              pairedDevices[index].deviceId
-                          ? NowPlayingBarTokens.bottomDeviceNavActiveColor
-                          : NowPlayingBarTokens.bottomDeviceNavInactiveColor,
                     ),
                   ),
                   onTap: () async {

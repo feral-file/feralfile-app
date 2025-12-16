@@ -1,10 +1,10 @@
 import 'dart:async';
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/device/base_device.dart';
 import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -58,7 +58,7 @@ class _TouchPadState extends State<TouchPad> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
               child: Text(
                 'touchpad'.tr(),
-                style: theme.textTheme.ppMori400White14
+                style: AppTypography.body(context).white
                     .copyWith(color: AppColor.auGrey),
               ),
             ),

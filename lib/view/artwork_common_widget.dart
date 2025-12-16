@@ -3,7 +3,17 @@ import 'dart:collection';
 import 'dart:math';
 
 import 'package:after_layout/after_layout.dart';
+import 'package:collection/collection.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_rendering/nft_rendering_widget.dart';
 import 'package:autonomy_flutter/screen/detail/royalty/royalty_bloc.dart';
@@ -20,14 +30,6 @@ import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/ff_artwork_thumbnail_view.dart';
 import 'package:autonomy_flutter/view/loading.dart';
-import 'package:collection/collection.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:shimmer/shimmer.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 // String getEditionSubTitle(AssetToken token) {
 //   if (token.editionName != null && token.editionName != '') {
@@ -43,37 +45,6 @@ import 'package:url_launcher/url_launcher.dart';
 //         )
 //       : '${tr('edition')} ${token.edition}';
 // }
-
-class MintTokenWidget extends StatelessWidget {
-  const MintTokenWidget({super.key, this.thumbnail, this.tokenId});
-
-  final String? thumbnail;
-  final String? tokenId;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Semantics(
-      label: 'gallery_artwork_${tokenId}_minting',
-      child: Container(
-        color: theme.auLightGrey,
-        padding: const EdgeInsets.all(10),
-        child: Stack(
-          children: [
-            Center(child: SvgPicture.asset('assets/images/mint_icon.svg')),
-            Align(
-              alignment: AlignmentDirectional.bottomStart,
-              child: Text(
-                'minting_token'.tr(),
-                style: theme.textTheme.ppMori700QuickSilver8,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 final Map<String, Future<bool>> _cachingStates = {};
 
@@ -146,7 +117,7 @@ class GalleryUnSupportThumbnailWidget extends StatelessWidget {
             alignment: AlignmentDirectional.bottomStart,
             child: Text(
               'unsupported_token'.tr(),
-              style: theme.textTheme.ppMori700QuickSilver8,
+              style: AppTypography.verySmall(context).bold.grey,
             ),
           ),
         ],
@@ -175,8 +146,8 @@ class GalleryThumbnailErrorWidget extends StatelessWidget {
           Align(
             alignment: AlignmentDirectional.bottomStart,
             child: Text(
-              'IPFS_error'.tr(),
-              style: theme.textTheme.ppMori700QuickSilver8,
+              'Error'.tr(),
+              style: AppTypography.verySmall(context).bold.grey,
             ),
           ),
         ],
@@ -235,7 +206,7 @@ class GalleryNoThumbnailWidget extends StatelessWidget {
                       fit: BoxFit.scaleDown,
                       child: Text(
                         'no_thumbnail'.tr(),
-                        style: theme.textTheme.ppMori700QuickSilver8,
+                        style: AppTypography.verySmall(context).bold.grey,
                       ),
                     ),
                   ),
@@ -335,67 +306,6 @@ class RetryCubit extends Cubit<int> {
 
   void refresh() {
     emit(state + 1);
-  }
-}
-
-class BrokenTokenWidget extends StatefulWidget {
-  const BrokenTokenWidget({required this.token, super.key});
-
-  final AssetToken token;
-
-  @override
-  State<StatefulWidget> createState() => _BrokenTokenWidgetState();
-}
-
-class _BrokenTokenWidgetState extends State<BrokenTokenWidget>
-    with AfterLayoutMixin<BrokenTokenWidget> {
-
-  @override
-  void afterFirstLayout(BuildContext context) {}
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final size = MediaQuery.of(context).size;
-    return Container(
-      width: size.width,
-      height: size.width,
-      padding: const EdgeInsets.all(10),
-      color: AppColor.auGreyBackground,
-      child: Stack(
-        children: [
-          Center(
-            child: SvgPicture.asset(
-              'assets/images/ipfs_error_icon.svg',
-              width: 40,
-            ),
-          ),
-          Align(
-            alignment: AlignmentDirectional.bottomStart,
-            child: Row(
-              children: [
-                Text(
-                  'unable_to_load_artwork_preview_from_ipfs'.tr(),
-                  style: theme.textTheme.ppMori700QuickSilver8
-                      .copyWith(fontSize: 12),
-                ),
-                const Spacer(),
-                GestureDetector(
-                  onTap: () {
-                    context.read<RetryCubit>().refresh();
-                  },
-                  child: Text(
-                    'reload'.tr(),
-                    style: theme.textTheme.ppMori400Black12
-                        .copyWith(color: AppColor.feralFileHighlight),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -565,7 +475,7 @@ class _SectionExpandedWidgetState extends State<SectionExpandedWidget> {
                         Text(
                           widget.header ?? '',
                           style: widget.headerStyle ??
-                              theme.textTheme.ppMori400White14,
+                              AppTypography.body(context).white,
                         ),
                         const Spacer(),
                         if (_isExpanded)
@@ -724,7 +634,7 @@ class CustomMetaDataItem extends StatelessWidget {
           flex: 2,
           child: Text(
             title,
-            style: titleStyle ?? theme.textTheme.ppMori400Grey14,
+            style: titleStyle ?? AppTypography.body(context).grey,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
@@ -779,7 +689,7 @@ class MetaDataItem extends StatelessWidget {
           flex: 2,
           child: Text(
             title,
-            style: titleStyle ?? theme.textTheme.ppMori400Grey12,
+            style: titleStyle ?? AppTypography.body(context).grey,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
@@ -793,8 +703,8 @@ class MetaDataItem extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               maxLines: 3,
               style: onValueTap != null
-                  ? linkStyle ?? theme.textTheme.ppMori400FFYellow12
-                  : valueStyle ?? theme.textTheme.ppMori400White12,
+                  ? linkStyle ?? AppTypography.body(context).highlight
+                  : valueStyle ?? AppTypography.body(context).white,
             ),
           ),
         ),
@@ -844,7 +754,7 @@ class ProvenanceItem extends StatelessWidget {
             onTap: onNameTap,
             child: Text(
               title,
-              style: theme.textTheme.ppMori400White12,
+              style: AppTypography.body(context).white,
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
             ),
@@ -856,7 +766,7 @@ class ProvenanceItem extends StatelessWidget {
             value,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
-            style: theme.textTheme.ppMori400White12,
+            style: AppTypography.body(context).white,
           ),
         ),
         Expanded(
@@ -877,7 +787,7 @@ class ProvenanceItem extends StatelessWidget {
                   child: Text(
                     'view'.tr(),
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.ppMori400FFYellow12,
+                    style: AppTypography.body(context).highlight,
                   ),
                 ),
               ),
@@ -1049,10 +959,9 @@ class ArtworkDetailsHeader extends StatelessWidget {
             },
             child: Text(
               subTitle,
-              style: theme.textTheme.ppMori700White14.copyWith(
-                color: color ?? AppColor.white,
-                fontWeight: FontWeight.w400,
-              ),
+              style: AppTypography.body(context).white.italic.copyWith(
+                    color: color,
+                  ),
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
@@ -1063,11 +972,9 @@ class ArtworkDetailsHeader extends StatelessWidget {
           },
           child: Text(
             title,
-            style: theme.textTheme.ppMori400White14.copyWith(
-              color: color ?? AppColor.white,
-              fontWeight: FontWeight.w700,
-              fontStyle: FontStyle.italic,
-            ),
+            style: AppTypography.body(context).white.bold.copyWith(
+                  color: color,
+                ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -1107,7 +1014,7 @@ class _DrawerItemState extends State<DrawerItem> {
     final theme = Theme.of(context);
     final item = widget.item;
     final color = widget.color;
-    final defaultTextStyle = theme.textTheme.ppMori400Black12;
+    final defaultTextStyle = AppTypography.body(context).black;
     final customTextStyle = defaultTextStyle.copyWith(color: color);
     final defaultProcessingTextStyle =
         defaultTextStyle.copyWith(color: AppColor.disabledColor);

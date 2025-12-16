@@ -1,3 +1,4 @@
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/view/text_field.dart';
@@ -72,8 +73,8 @@ class _FFTextNameState extends State<FFTextName> {
       hintText: tr('untitled'),
       controller: _playlistNameC,
       cursorColor: AppColor.white,
-      style: theme.textTheme.ppMori700White14,
-      hintStyle: theme.textTheme.ppMori700Black14
+      style: AppTypography.body(context).bold.white,
+      hintStyle: AppTypography.body(context).bold.black
           .copyWith(color: AppColor.disabledColor),
       textAlign: TextAlign.center,
       border: InputBorder.none,

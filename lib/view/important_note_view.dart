@@ -5,6 +5,7 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/style.dart';
@@ -49,12 +50,12 @@ class ImportantNoteView extends StatelessWidget {
         children: [
           SelectableText(
             title ?? 'important'.tr(),
-            style: titleStyle ?? theme.textTheme.ppMori700Black14,
+            style: titleStyle ?? AppTypography.body(context).bold.black,
           ),
           const SizedBox(height: 15),
           HtmlWidget(
             note,
-            textStyle: noteStyle ?? theme.textTheme.ppMori400White14,
+            textStyle: noteStyle ?? AppTypography.body(context).white,
             customStylesBuilder: auHtmlStyle,
             onTapUrl: (url) async {
               await launchUrl(Uri.parse(url),

@@ -8,7 +8,16 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:permission_handler/permission_handler.dart';
+
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/deeplink_service.dart';
@@ -21,13 +30,6 @@ import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/header.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/splitted_banner.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 // ignore_for_file: constant_identifier_names
 
@@ -419,7 +421,9 @@ class QRScanViewState extends State<QRScanView>
               child: Center(
                 child: Text(
                   'invalid_qr_code'.tr(),
-                  style: theme.textTheme.ppMori700Black14
+                  style: AppTypography.body(context)
+                      .bold
+                      .black
                       .copyWith(color: Colors.red),
                 ),
               ),
@@ -475,13 +479,13 @@ class QRScanViewState extends State<QRScanView>
             const SizedBox(width: 20),
             Text(
               'allow_camera_permission'.tr(),
-              style: theme.textTheme.ppMori400White14,
+              style: AppTypography.body(context).white,
             )
           ],
         ),
         bodyWidget: Text(
           'allow_camera_permission_desc'.tr(),
-          style: theme.textTheme.ppMori400White14,
+          style: AppTypography.body(context).white,
         ));
   }
 
@@ -515,14 +519,14 @@ class QRScanViewState extends State<QRScanView>
               children: [
                 TextSpan(
                   text: ' ',
-                  style: theme.textTheme.ppMori400Grey14,
+                  style: AppTypography.body(context).grey,
                 ),
                 TextSpan(
                   text: 'in_order_to'.tr(),
-                  style: theme.textTheme.ppMori400Grey14,
+                  style: AppTypography.body(context).grey,
                 ),
               ],
-              style: theme.textTheme.ppMori400White14,
+              style: AppTypography.body(context).white,
             ),
           ),
         ),
@@ -547,11 +551,11 @@ class QRScanViewState extends State<QRScanView>
                       children: [
                         Text(
                           instruction.name,
-                          style: theme.textTheme.ppMori700White14,
+                          style: AppTypography.body(context).bold.white,
                         ),
                         Text(
                           instruction.detail,
-                          style: theme.textTheme.ppMori400Grey14,
+                          style: AppTypography.body(context).grey,
                         )
                       ],
                     ),

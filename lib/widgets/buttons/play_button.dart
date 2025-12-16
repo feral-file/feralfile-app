@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/components/PlayButton.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
@@ -40,9 +41,9 @@ class PlayButton extends StatelessWidget {
           children: [
             Text(
               text,
-              style: Theme.of(context).textTheme.small.copyWith(
-                    color: PlayButtonTokens.color,
-                  ),
+              style: AppTypography.body(context).copyWith(
+                color: PlayButtonTokens.color,
+              ),
             ),
             SizedBox(width: PlayButtonTokens.gap.toDouble()),
             Stack(

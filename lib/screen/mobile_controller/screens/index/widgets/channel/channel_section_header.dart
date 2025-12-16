@@ -1,3 +1,5 @@
+import 'package:autonomy_flutter/design/app_typography.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -37,19 +39,19 @@ class ChannelSectionHeader extends StatelessWidget {
               sectionIcon ??
                   SvgPicture.asset(
                     'assets/images/icon_account.svg',
-                    width: 12,
-                    height: 12,
+                    width: LayoutConstants.iconSizeDefault,
+                    height: LayoutConstants.iconSizeDefault,
                     colorFilter: const ColorFilter.mode(
                       Color(0xFFFFFFFF),
                       BlendMode.srcIn,
                     ),
                   ),
-              const SizedBox(
-                width: 12,
+              SizedBox(
+                width: LayoutConstants.space4,
               ),
               Text(
                 sectionName,
-                style: theme.textTheme.ppMori400Grey12,
+                style: AppTypography.h3(context).white,
               ),
             ],
           ),
@@ -58,9 +60,9 @@ class ChannelSectionHeader extends StatelessWidget {
             GestureDetector(
               onTap: onViewAllTap,
               child: Container(
-                constraints: const BoxConstraints(
-                  minWidth: 9.78,
-                  minHeight: 8,
+                constraints: BoxConstraints(
+                  minWidth: LayoutConstants.iconSizeSmall,
+                  minHeight: LayoutConstants.iconSizeSmall,
                 ),
                 color: Colors.transparent,
                 child: Row(
@@ -69,8 +71,8 @@ class ChannelSectionHeader extends StatelessWidget {
                   children: [
                     SvgPicture.asset(
                       'assets/images/icon_arrow_left.svg',
-                      width: 9.78,
-                      height: 8,
+                      width: LayoutConstants.iconSizeSmall,
+                      height: LayoutConstants.iconSizeSmall,
                       colorFilter: const ColorFilter.mode(
                         Color(0xFFA0A0A0),
                         BlendMode.srcIn,
@@ -83,7 +85,7 @@ class ChannelSectionHeader extends StatelessWidget {
                       padding: const EdgeInsets.only(right: 1),
                       child: Text(
                         'All',
-                        style: theme.textTheme.ppMori400Grey12,
+                        style: AppTypography.body(context).grey,
                       ),
                     ),
                   ],

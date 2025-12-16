@@ -7,6 +7,7 @@
 
 import 'dart:async';
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/token.dart';
@@ -70,7 +71,7 @@ class _HiddenArtworksPageState extends State<HiddenArtworksPage> {
           addTitleSpace(),
           Text(
             'no_hidden_artwork'.tr(),
-            style: theme.textTheme.ppMori400Black16,
+            style: AppTypography.body(context).black,
             textAlign: TextAlign.start,
           ),
           const SizedBox(
@@ -82,7 +83,7 @@ class _HiddenArtworksPageState extends State<HiddenArtworksPage> {
               children: [
                 TextSpan(
                   text: 'to_hide_an_artowrk'.tr(),
-                  style: theme.textTheme.ppMori400Black14,
+                  style: AppTypography.body(context).black,
                 ),
                 WidgetSpan(
                   child: Padding(
@@ -101,7 +102,7 @@ class _HiddenArtworksPageState extends State<HiddenArtworksPage> {
                 ),
                 TextSpan(
                   text: 'and_select'.tr(),
-                  style: theme.textTheme.ppMori400Black14,
+                  style: AppTypography.body(context).black,
                 ),
               ],
             ),

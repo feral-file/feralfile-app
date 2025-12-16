@@ -5,6 +5,7 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/style.dart';
@@ -49,7 +50,7 @@ AppBar getBackAppBar(
       title,
       overflow: TextOverflow.ellipsis,
       style: titleStyle ??
-          theme.textTheme.ppMori400Black16.copyWith(color: primaryColor),
+          AppTypography.body(context).black.copyWith(color: primaryColor),
       textAlign: TextAlign.center,
     ),
     actions: [
@@ -123,7 +124,7 @@ AppBar getTitleEditAppBar(BuildContext context,
             autocorrect: false,
             focusNode: focusNode,
             controller: controller,
-            style: theme.textTheme.ppMori700Black16,
+            style: AppTypography.body(context).bold.black,
             onSubmitted: onSubmit,
             decoration: null,
           ),
@@ -184,7 +185,7 @@ AppBar getCloseAppBar(
       title,
       overflow: TextOverflow.ellipsis,
       style: titleStyle ??
-          theme.textTheme.ppMori400Black16.copyWith(color: primaryColor),
+          AppTypography.body(context).black.copyWith(color: primaryColor),
       textAlign: TextAlign.center,
     ),
     actions: [
@@ -230,13 +231,13 @@ AppBar getLightEmptyAppBar([Color? statusBarColor]) => AppBar(
 
 SystemUiOverlayStyle _systemUiOverlayDarkStyle(Color? statusBarColor) =>
     SystemUiOverlayStyle(
-      statusBarColor: statusBarColor ?? AppColor.primaryBlack,
+      statusBarColor: statusBarColor ?? AppColor.auGreyBackground,
       statusBarIconBrightness: Brightness.light,
       statusBarBrightness: Brightness.dark,
     );
 
 SystemUiOverlayStyle get systemUiOverlayDarkStyle =>
-    _systemUiOverlayDarkStyle(AppColor.primaryBlack);
+    _systemUiOverlayDarkStyle(AppColor.auGreyBackground);
 
 SystemUiOverlayStyle systemUiOverlayLightStyle(Color? statusBarColor) =>
     SystemUiOverlayStyle(
@@ -271,7 +272,7 @@ AppBar getDoneAppBar(
         child: Center(
           child: Text(
             tr('cancel'),
-            style: theme.textTheme.ppMori400Black14,
+            style: AppTypography.body(context).black,
           ),
         ),
       ),
@@ -287,8 +288,10 @@ AppBar getDoneAppBar(
               child: Text(
                 tr('done'),
                 style: (onDone != null)
-                    ? theme.textTheme.ppMori700Black14
-                    : theme.textTheme.ppMori700Black14
+                    ? AppTypography.body(context).bold.black
+                    : AppTypography.body(context)
+                        .bold
+                        .black
                         .copyWith(color: AppColor.disabledColor),
               ),
             ),
@@ -301,7 +304,7 @@ AppBar getDoneAppBar(
     centerTitle: true,
     title: Text(
       title,
-      style: theme.textTheme.ppMori400Black14,
+      style: AppTypography.body(context).black,
     ),
     bottom: bottom,
   );
@@ -335,7 +338,7 @@ AppBar getCustomDoneAppBar(
         child: Center(
           child: Text(
             tr('cancel'),
-            style: theme.textTheme.ppMori400Black14.copyWith(color: textColor),
+            style: AppTypography.body(context).copyWith(color: textColor),
           ),
         ),
       ),
@@ -348,7 +351,7 @@ AppBar getCustomDoneAppBar(
           child: Center(
             child: Text(
               tr('done'),
-              style: theme.textTheme.ppMori700Black14.copyWith(
+              style: AppTypography.body(context).bold.black.copyWith(
                   color: (onDone != null) ? textColor : AppColor.disabledColor),
             ),
           ),
@@ -398,7 +401,7 @@ AppBar getCustomBackAppBar(
       leadingWidth: 70 + adjustLeftTitleWith,
       titleSpacing: 0,
       toolbarHeight: 66,
-      backgroundColor: AppColor.primaryBlack,
+      backgroundColor: AppColor.auGreyBackground,
       automaticallyImplyLeading: false,
       centerTitle: true,
       title: title,

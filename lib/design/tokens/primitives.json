@@ -64,13 +64,17 @@
         }
       },
       "fontSizes": {
+        "display": {
+          "$type": "dimension",
+          "$value": "40px"
+        },
         "h1": {
           "$type": "dimension",
-          "$value": "36px"
+          "$value": "28px"
         },
         "h2": {
           "$type": "dimension",
-          "$value": "24px"
+          "$value": "22px"
         },
         "h3": {
           "$type": "dimension",
@@ -82,7 +86,15 @@
         },
         "body": {
           "$type": "dimension",
+          "$value": "11px"
+        },
+        "bodySmall": {
+          "$type": "dimension",
           "$value": "14px"
+        },
+        "caption": {
+          "$type": "dimension",
+          "$value": "20px"
         },
         "small": {
           "$type": "dimension",
@@ -112,9 +124,71 @@
         }
       },
       "spacing": {
+        "space1": {
+          "$type": "dimension",
+          "$value": "4px"
+        },
+        "space2": {
+          "$type": "dimension",
+          "$value": "8px"
+        },
+        "space3": {
+          "$type": "dimension",
+          "$value": "12px"
+        },
+        "space4": {
+          "$type": "dimension",
+          "$value": "16px"
+        },
+        "space5": {
+          "$type": "dimension",
+          "$value": "20px"
+        },
+        "space6": {
+          "$type": "dimension",
+          "$value": "24px"
+        },
+        "space8": {
+          "$type": "dimension",
+          "$value": "32px"
+        },
+        "space10": {
+          "$type": "dimension",
+          "$value": "40px"
+        },
+        "space12": {
+          "$type": "dimension",
+          "$value": "48px"
+        },
         "mainPaddingHorizontal": {
           "$type": "dimension",
           "$value": "12px"
+        },
+        "pageHorizontalDefault": {
+          "$type": "dimension",
+          "$value": "16px"
+        },
+        "minTouchTarget": {
+          "$type": "dimension",
+          "$value": "44px"
+        }
+      },
+      "iconSizes": {
+        "small": {
+          "$type": "dimension",
+          "$value": "12px"
+        },
+        "default": {
+          "$type": "dimension",
+          "$value": "16px"
+        },
+        "medium": {
+          "$type": "dimension",
+          "$value": "20px"
+        },
+        "large": {
+          "$type": "dimension",
+          "$value": "24px"
         }
       }
     }

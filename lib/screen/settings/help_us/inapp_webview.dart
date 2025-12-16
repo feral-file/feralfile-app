@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/customer_support/support_thread_page.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
@@ -248,7 +249,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
       title: Text(
         title,
         overflow: TextOverflow.ellipsis,
-        style: theme.textTheme.ppMori400Black16,
+        style: AppTypography.body(context).black,
         textAlign: TextAlign.center,
       ),
       actions: [

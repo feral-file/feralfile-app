@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/pair.dart';
@@ -202,7 +203,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
               const SizedBox(height: 20),
               Text(
                 'Keep your phone near FF1 and remain on this screen',
-                style: Theme.of(context).textTheme.small,
+                style: AppTypography.body(context).white,
               ),
             ],
           ),
@@ -234,7 +235,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
               const SizedBox(height: 20),
               Text(
                 'Your FF1 is already set up and connected. You can head to settings to make changes or check the status.',
-                style: Theme.of(context).textTheme.small,
+                style: AppTypography.body(context).white,
               ),
               const SizedBox(height: 20),
               PrimaryButton(

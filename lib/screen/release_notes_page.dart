@@ -6,6 +6,7 @@
 //
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/model/release_note.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
@@ -122,9 +123,7 @@ class _ReleaseNoteItem extends StatelessWidget {
                 children: [
                   Text(
                     releaseNote.date,
-                    style: theme.textTheme.small.copyWith(
-                      color: PrimitivesTokens.colorsBlack,
-                    ),
+                    style: AppTypography.body(context).black,
                   ),
                   const SizedBox(height: 12),
                   if (releaseNote.ffOSTitle != null)

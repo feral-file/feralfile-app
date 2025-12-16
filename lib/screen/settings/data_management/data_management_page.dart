@@ -7,6 +7,7 @@
 
 import 'dart:async';
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
@@ -17,6 +18,7 @@ import 'package:autonomy_flutter/screen/settings/forget_exist/forget_exist_bloc.
 import 'package:autonomy_flutter/screen/settings/forget_exist/forget_exist_view.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
+import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
@@ -48,13 +50,10 @@ class _DataManagementPageState extends State<DataManagementPage> {
     final theme = Theme.of(context);
     final padding = ResponsiveLayout.pageEdgeInsets.copyWith(top: 0, bottom: 0);
     return Scaffold(
-      appBar: getBackAppBar(
-        context,
-        title: 'data_management'.tr(),
-        onBack: () {
-          Navigator.of(context).pop();
-        },
-      ),
+      appBar: getBackAppBar(context, title: 'data_management'.tr(), onBack: () {
+        Navigator.of(context).pop();
+      }, backgroundColor: AppColor.auGreyBackground, isWhite: false),
+      backgroundColor: AppColor.auGreyBackground,
       body: SafeArea(
         child: Column(
           children: [
@@ -68,34 +67,26 @@ class _DataManagementPageState extends State<DataManagementPage> {
                       child: TappableForwardRowWithContent(
                         leftWidget: Text(
                           'rebuild_metadata'.tr(),
-                          style: ResponsiveLayout.isMobile
-                              ? theme.textTheme.ppMori400Black16
-                              : theme.textTheme.ppMori400Black16,
+                          style: AppTypography.body(context).white,
                         ),
                         bottomWidget: Text(
                           'clear_cache'.tr(),
-                          style: ResponsiveLayout.isMobile
-                              ? theme.textTheme.ppMori400Black14
-                              : theme.textTheme.ppMori400Black16,
+                          style: AppTypography.body(context).grey,
                         ),
                         onTap: _showRebuildGalleryDialog,
                       ),
                     ),
-                    addDivider(height: 16),
+                    addDivider(height: 16, color: AppColor.primaryBlack),
                     Padding(
                       padding: padding,
                       child: TappableForwardRowWithContent(
                         leftWidget: Text(
                           'forget_exist'.tr(),
-                          style: ResponsiveLayout.isMobile
-                              ? theme.textTheme.ppMori400Black16
-                              : theme.textTheme.ppMori400Black16,
+                          style: AppTypography.body(context).white,
                         ),
                         bottomWidget: Text(
                           'erase_all'.tr(),
-                          style: ResponsiveLayout.isMobile
-                              ? theme.textTheme.ppMori400Black14
-                              : theme.textTheme.ppMori400Black16,
+                          style: AppTypography.body(context).grey,
                         ),
                         onTap: _showForgetIExistDialog,
                       ),

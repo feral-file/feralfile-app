@@ -7,6 +7,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/cha
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/works/works_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/home_index_header.dart';
+import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
@@ -19,6 +20,7 @@ import 'package:autonomy_flutter/view/no_pairing_device_dialog.dart';
 import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -88,6 +90,21 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
 
   List<OptionItem> get _defaultOptions {
     return [
+      // scan option for debug only
+      if (kDebugMode)
+        OptionItem(
+          title: 'Scan',
+          icon: const Icon(
+            AuIcon.scan,
+          ),
+          onTap: () {
+            injector<NavigationService>().navigateTo(AppRouter.scanQRPage,
+                arguments: ScanQRPagePayload(
+                  scannerItem: ScannerItem.GLOBAL,
+                ));
+            isNowDisplayingBarExpanded.value = false;
+          },
+        ),
       // FF1 Setting
       OptionItem(
         title: 'FF1',

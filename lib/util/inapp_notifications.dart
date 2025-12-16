@@ -7,6 +7,7 @@
 
 import 'dart:async';
 
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/additional_data/additional_data.dart';
 import 'package:autonomy_flutter/model/additional_data/call_to_action.dart';
@@ -79,7 +80,7 @@ class _SimpleNotificationToast extends StatelessWidget {
                     child: RichText(
                       text: TextSpan(
                         text: notification,
-                        style: theme.textTheme.ppMori400White14,
+                        style: AppTypography.body(context).white,
                         children: addOnTextSpan,
                       ),
                       overflow: TextOverflow.visible,
@@ -211,13 +212,14 @@ class _TopBannerNotificationState extends State<_TopBannerNotification> {
           RichText(
             text: TextSpan(
               text: widget.notification,
-              style: theme.textTheme.ppMori400White14,
+              style: AppTypography.body(context).white,
               children: [
                 if (widget.additionalData.cta != null) ...[
                   TextSpan(
                     text:
                         ' ${widget.additionalData.cta!.text ?? 'Tap to view'}',
-                    style: theme.textTheme.ppMori400FFYellow14
+                    style: AppTypography.body(context)
+                        .highlight
                         .copyWith(color: AppColor.feralFileLightBlue),
                     recognizer: TapGestureRecognizer()
                       ..onTap = () async {
@@ -241,19 +243,17 @@ class _TopBannerNotificationState extends State<_TopBannerNotification> {
               if (widget.receivedTime != null)
                 Text(
                   _timeString,
-                  style: theme.textTheme.ppMori400Grey12.copyWith(
-                    color: AppColor.secondarySpanishGrey,
-                  ),
+                  style: AppTypography.body(context).grey.copyWith(
+                        color: AppColor.secondarySpanishGrey,
+                      ),
                 ),
               const SizedBox(),
               GestureDetector(
                 child: Text(
                   'dismiss'.tr(),
-                  style: theme.textTheme.ppMori400Grey12.copyWith(
-                    color: AppColor.secondarySpanishGrey,
-                    decoration: TextDecoration.underline,
-                    decorationColor: AppColor.secondarySpanishGrey,
-                  ),
+                  style: AppTypography.body(context)
+                      .copyWith(color: AppColor.secondarySpanishGrey)
+                      .underline,
                 ),
                 onTap: () => {hideOverlay(widget.key!)},
               )
@@ -291,7 +291,7 @@ class _PopUpOverlayNotification extends StatelessWidget {
             if (additionalData.title != null)
               Text(
                 additionalData.title!,
-                style: theme.textTheme.ppMori700White18,
+                style: AppTypography.h3(context).white,
               ),
             const SizedBox(height: 20),
             Flexible(
@@ -341,11 +341,13 @@ class _PopUpOverlayNotification extends StatelessWidget {
                     (cta) => GestureDetector(
                       child: Text(
                         cta.text ?? '',
-                        style: theme.textTheme.ppMori400White14.copyWith(
-                          color: AppColor.auGrey,
-                          decoration: TextDecoration.underline,
-                          decorationColor: AppColor.secondarySpanishGrey,
-                        ),
+                        style: AppTypography.body(context)
+                            .white
+                            .underline
+                            .copyWith(
+                              color: AppColor.auGrey,
+                              decorationColor: AppColor.secondarySpanishGrey,
+                            ),
                       ),
                       onTap: () async {
                         Navigator.of(context).pop();

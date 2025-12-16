@@ -9,6 +9,7 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:after_layout/after_layout.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/main.dart';
@@ -526,7 +527,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                       padding: ResponsiveLayout.getPadding,
                       child: Text(
                         editionSubTitle,
-                        style: theme.textTheme.ppMori400Grey14,
+                        style: AppTypography.body(context).grey,
                       ),
                     ),
                   ),
@@ -543,7 +544,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                           child: HtmlWidget(
                             customStylesBuilder: auHtmlStyle,
                             assetToken.displayDescription,
-                            textStyle: theme.textTheme.ppMori400White12,
+                            textStyle: AppTypography.body(context).white,
                             onTapUrl: (url) async {
                               await launchUrl(
                                 Uri.parse(url),
@@ -763,7 +764,8 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
       _infoShrink();
     }
     // Save previous bottomSheetVisibility state
-    _previousBottomSheetVisibility = CustomRouteObserver.bottomSheetVisibility.value;
+    _previousBottomSheetVisibility =
+        CustomRouteObserver.bottomSheetVisibility.value;
     CustomRouteObserver.bottomSheetVisibility.value = true;
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     await enableLandscapeMode();
@@ -782,7 +784,8 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
     unawaited(WakelockPlus.disable());
     await disableLandscapeMode();
     // Restore bottomSheetVisibility to its previous state
-    CustomRouteObserver.bottomSheetVisibility.value = _previousBottomSheetVisibility;
+    CustomRouteObserver.bottomSheetVisibility.value =
+        _previousBottomSheetVisibility;
     setState(() {
       shouldShowNowDisplaying.value = true;
       _isFullScreen = false;

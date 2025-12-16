@@ -23,7 +23,7 @@ class CustomBackButton extends StatelessWidget {
           children: [
             SvgPicture.asset(
               'assets/images/arrow-left.svg',
-              width: BackButtonTokens.iconWidth,
+              width: BackButtonTokens.iconWidth.toDouble(),
               height: BackButtonTokens.iconHeight.toDouble(),
               colorFilter: const ColorFilter.mode(
                 BackButtonTokens.color,
