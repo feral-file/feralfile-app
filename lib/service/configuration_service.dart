@@ -18,10 +18,7 @@ import 'package:uuid/uuid.dart';
 //ignore_for_file: constant_identifier_names
 
 abstract class ConfigurationService {
-  int getDailyLikedCount();
-
-  Future<void> setDailyLikedCount(int count);
-
+  // user settings
   Future<String> getDeviceId();
 
   List<String> getAnonymousIssueIds();
@@ -35,10 +32,6 @@ abstract class ConfigurationService {
   Future<void> setAnnouncementLastPullTime(int lastPullTime);
 
   int? getAnnouncementLastPullTime();
-
-  Future<void> setOldUser();
-
-  bool getIsOldUser();
 
   Future<void> setDoneOnboarding(bool value);
 
@@ -58,19 +51,7 @@ abstract class ConfigurationService {
 
   Future<void> setLastRemindReviewDate(String? value);
 
-  int? countOpenApp();
-
-  Future<void> setCountOpenApp(int? value);
-
   // ----- App Setting -----
-
-  bool showTokenDebugInfo();
-
-  Future<void> setShowTokenDebugInfo(bool show);
-
-  Future<void> setDoneOnboardingTime(DateTime time);
-
-  // Reload
   Future<void> reload();
 
   Future<void> removeAll();
@@ -88,10 +69,6 @@ abstract class ConfigurationService {
   String? getIssueIdByAnnouncementContentId(String announcementContentId);
 
   String? getAnnouncementContentIdByIssueId(String issueId);
-
-  bool isBetaTester();
-
-  Future<void> setBetaTester(bool value);
 
   String? getPilotVersion();
 
@@ -131,6 +108,10 @@ abstract class ConfigurationService {
   Future<void> setLastUpdateChangeAnchor({
     required List<AddressAnchor> addressAnchors,
   });
+
+  bool isNotificationEnabled();
+
+  Future<void> setNotificationEnabled(bool value);
 }
 
 class ConfigurationServiceImpl implements ConfigurationService {
@@ -224,6 +205,8 @@ class ConfigurationServiceImpl implements ConfigurationService {
   static const String POSTCARD_MINT = 'postcard_mint';
 
   static const String KEY_RECORDED_MESSAGES = 'recorded_messages';
+
+  static const String KEY_NOTIFICATION_ENABLED = 'notification_enabled';
 
   final SharedPreferences _preferences;
 
@@ -575,6 +558,14 @@ class ConfigurationServiceImpl implements ConfigurationService {
         KEY_LAST_UPDATE_CHANGE_ANCHOR,
         addressAnchors.map((e) => jsonEncode(e.toJson())).toList(),
       );
+
+  @override
+  bool isNotificationEnabled() =>
+      _preferences.getBool(KEY_NOTIFICATION_ENABLED) ?? false;
+
+  @override
+  Future<void> setNotificationEnabled(bool value) =>
+      _preferences.setBool(KEY_NOTIFICATION_ENABLED, value);
 }
 
 enum ConflictAction {

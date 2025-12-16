@@ -367,7 +367,6 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
         });
       }
       if (resultDevice != null) {
-        unawaited(injector<ConfigurationService>().setBetaTester(true));
         injector<SubscriptionBloc>().add(GetSubscriptionEvent());
 
         if (topicId != null && topicId.isNotEmpty) {

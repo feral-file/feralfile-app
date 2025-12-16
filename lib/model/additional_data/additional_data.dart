@@ -5,8 +5,8 @@ import 'package:autonomy_flutter/model/additional_data/call_to_action.dart';
 import 'package:autonomy_flutter/model/additional_data/chat_notification_data.dart';
 import 'package:autonomy_flutter/model/additional_data/cs_view_thread.dart';
 import 'package:autonomy_flutter/model/additional_data/navigate_additional_data.dart';
+import 'package:autonomy_flutter/service/push_notification/notification_type.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/util/notification_type.dart';
 import 'package:flutter/cupertino.dart';
 
 class AdditionalData {

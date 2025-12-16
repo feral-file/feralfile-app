@@ -1926,10 +1926,19 @@ packages:
     dependency: "direct main"
     description:
       name: onesignal_flutter
-      sha256: b5bb43bf496ddb5e3975ba54c6477cc2d1fcd18fb3698f195d2e0bfd376ddafd
+      sha256: "511a0e2388dd49f59ea83d3f1d8211aaa900fd6e606c850dc0a97b1238711831"
       url: "https://pub.dev"
     source: hosted
-    version: "5.3.4"
+    version: "5.2.7"
+  open_settings:
+    dependency: "direct main"
+    description:
+      name: open_settings
+      sha256: ceb716dc476352aecb939805b6fa6a593168a5ed1abfe3caa022b6b1715e94ae
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.2"
+>>>>>>> parent of f2d790081 (Remove notification enable by default, oneSignal optIN only if user turn on notification (#2367))
   open_settings_plus:
     dependency: "direct main"
     description:
