@@ -58,6 +58,7 @@ class HomePageHelper {
 
   Timer? _collectionRefreshTimer;
   StreamSubscription<FGBGType>? _fgbgSubscription;
+  bool _isBackground = false;
 
   final _announcementService = injector<AnnouncementService>();
   final _remoteConfig = injector<RemoteConfigService>();
@@ -93,6 +94,10 @@ class HomePageHelper {
     _collectionRefreshTimer?.cancel();
     _collectionRefreshTimer =
         Timer.periodic(const Duration(seconds: 60), (_) async {
+      // Skip refresh if app is in background
+      if (_isBackground) {
+        return;
+      }
       try {
         final owners = injector<AddressService>().getAllAddresses();
         // filter out addresses that have not been indexed
@@ -260,10 +265,18 @@ class HomePageHelper {
   Future<void> _handleForeBackground(FGBGType event) async {
     switch (event) {
       case FGBGType.foreground:
+        _isBackground = false;
         unawaited(_handleForeground());
         memoryValues.isForeground = true;
       case FGBGType.background:
+        _isBackground = true;
         memoryValues.isForeground = false;
+        // Pause polling timers in tokens service when going to background
+        try {
+          injector<NftTokensService>().pausePollingTimers();
+        } catch (e) {
+          log.info('Error pausing polling timers: $e');
+        }
     }
   }
 
@@ -274,6 +287,13 @@ class HomePageHelper {
     await _remoteConfig.loadConfigs(forceRefresh: true);
     unawaited(NowDisplayingManager().updateDisplayingNow());
     unawaited(injector<FeralFileFeedManager>().reloadAllCache());
+
+    // Resume polling timers in tokens service when coming to foreground
+    try {
+      injector<NftTokensService>().resumePollingTimers();
+    } catch (e) {
+      log.info('Error resuming polling timers: $e');
+    }
 
     _triggerShowAnnouncement();
     // refresh stale/missing addresses when app resume

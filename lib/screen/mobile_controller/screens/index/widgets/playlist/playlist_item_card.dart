@@ -134,11 +134,15 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
     if (url == null || url.isEmpty) {
       return const GalleryNoThumbnailWidget();
     }
-    return FFArtworkThumbnailView(
-      url: url,
-      // Use BoxFit.contain so the artwork scales up as much as possible
-      // within the available box (full width or full height) without cropping.
-      fit: BoxFit.contain,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return FFArtworkThumbnailView(
+          url: url,
+          fit: BoxFit.contain,
+          cacheWidth: constraints.maxWidth.toInt(),
+          cacheHeight: constraints.maxHeight.toInt(),
+        );
+      },
     );
   }
 }

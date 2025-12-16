@@ -44,7 +44,9 @@ class AUImageCacheManage extends CacheManager with ImageCacheManager {
             _cacheKey,
             fileService: AuFileService(),
             stalePeriod: const Duration(days: 30),
-            maxNrOfCacheObjects: 10000,
+            // Reduced from 10000 to 500 to prevent memory pressure
+            // This limits the number of cached objects to prevent OOM crashes
+            maxNrOfCacheObjects: 1000,
           ),
         );
   static final AUImageCacheManage _instance = AUImageCacheManage._();
@@ -222,6 +224,11 @@ class AuFileService extends FileService {
           }
           _taskId2Info.remove(id);
           _urlToTask.remove(info.url);
+
+          // Periodically cleanup old tasks to prevent memory accumulation
+          if (_taskId2Info.length % 10 == 0) {
+            cleanupOldTasks();
+          }
         } else if (status == DownloadTaskStatus.failed) {
           log.info(
               '[AuFileService] Download failed: ${info.url} ${info.taskId}');
@@ -356,6 +363,65 @@ class AuFileService extends FileService {
           stackTrace: stackTrace,
         ),
       );
+    }
+  }
+
+  /// Dispose resources to prevent memory leaks
+  /// Should be called when service is no longer needed
+  void dispose() {
+    try {
+      // Close ReceivePort to prevent memory leak
+      _port.close();
+      IsolateNameServer.removePortNameMapping('downloader_send_port');
+
+      // Clear all task info
+      _taskId2Info.clear();
+      _urlToTask.clear();
+
+      log.info('[AuFileService] Disposed');
+    } catch (e) {
+      log.severe('[AuFileService] Error disposing: $e');
+    }
+  }
+
+  /// Cleanup old completed tasks to prevent memory accumulation
+  /// Should be called periodically
+  void cleanupOldTasks() {
+    try {
+      // Remove old completed tasks
+      _taskId2Info.removeWhere((key, info) {
+        if (info.task.isCompleted) {
+          // For completed tasks, we can't track age easily
+          // So we just remove them if they're completed
+          _urlToTask.remove(info.url);
+          return true;
+        }
+        return false;
+      });
+
+      // Limit total number of tasks to prevent unbounded growth
+      const maxTasks = 100;
+      if (_taskId2Info.length > maxTasks) {
+        // Remove oldest entries (FIFO)
+        final keysToRemove = _taskId2Info.keys
+            .take(
+              _taskId2Info.length - maxTasks,
+            )
+            .toList();
+        for (final key in keysToRemove) {
+          final info = _taskId2Info.remove(key);
+          if (info != null) {
+            _urlToTask.remove(info.url);
+            if (!info.task.isCompleted) {
+              info.task.completeError(
+                Exception('Task removed due to limit'),
+              );
+            }
+          }
+        }
+      }
+    } catch (e) {
+      log.severe('[AuFileService] Error cleaning up old tasks: $e');
     }
   }
 }

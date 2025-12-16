@@ -16,6 +16,7 @@ import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:collection/collection.dart';
 
 class FeedServerInfo {
@@ -428,6 +429,14 @@ class PlaylistReference {
           .getFeedServiceByUrl(url)
           ?.isExternalFeedService ??
       false;
+
+  String? get fullUrl {
+    final origin = url.origin;
+    if (origin.isEmpty) {
+      return null;
+    }
+    return '${origin}/api/v1/playlists/${playlist.id}';
+  }
 }
 
 class AddressPlaylistReference extends PlaylistReference {

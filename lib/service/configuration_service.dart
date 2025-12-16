@@ -123,12 +123,14 @@ abstract class ConfigurationService {
 
   Future<void> setLastUpdateChangeAt(DateTime time);
 
-  List<AddressAnchor> getLastUpdateChangeAnchor(
-      {required List<String> addresses,
-      AddressAnchor Function(String address)? defaultAnchorBuilder});
+  List<AddressAnchor> getLastUpdateChangeAnchor({
+    required List<String> addresses,
+    AddressAnchor Function(String address)? defaultAnchorBuilder,
+  });
 
-  Future<void> setLastUpdateChangeAnchor(
-      {required List<AddressAnchor> addressAnchors});
+  Future<void> setLastUpdateChangeAnchor({
+    required List<AddressAnchor> addressAnchors,
+  });
 }
 
 class ConfigurationServiceImpl implements ConfigurationService {
@@ -527,7 +529,9 @@ class ConfigurationServiceImpl implements ConfigurationService {
 
   @override
   Future<void> setLastTimeRefreshFeeds(DateTime time) => _preferences.setString(
-      KEY_LAST_TIME_REFRESH_FEEDS, time.toIso8601String());
+        KEY_LAST_TIME_REFRESH_FEEDS,
+        time.toIso8601String(),
+      );
 
   @override
   DateTime? getLastUpdateChangeAt() {
@@ -543,27 +547,34 @@ class ConfigurationServiceImpl implements ConfigurationService {
       _preferences.setString(KEY_LAST_UPDATE_CHANGE_AT, time.toIso8601String());
 
   @override
-  List<AddressAnchor> getLastUpdateChangeAnchor(
-      {required List<String> addresses,
-      AddressAnchor Function(String address)? defaultAnchorBuilder}) {
+  List<AddressAnchor> getLastUpdateChangeAnchor({
+    required List<String> addresses,
+    AddressAnchor Function(String address)? defaultAnchorBuilder,
+  }) {
     final anchorRaw = _preferences.getStringList(KEY_LAST_UPDATE_CHANGE_ANCHOR);
     final anchors = anchorRaw
-        ?.map((e) =>
-            AddressAnchor.fromJson(jsonDecode(e) as Map<String, dynamic>))
+        ?.map(
+          (e) => AddressAnchor.fromJson(jsonDecode(e) as Map<String, dynamic>),
+        )
         .toList();
     return addresses
-        .map((address) =>
-            anchors?.firstWhereOrNull((e) => e.address == address) ??
-            defaultAnchorBuilder?.call(address))
+        .map(
+          (address) =>
+              anchors?.firstWhereOrNull((e) => e.address == address) ??
+              defaultAnchorBuilder?.call(address),
+        )
         .nonNulls
         .toList();
   }
 
   @override
-  Future<void> setLastUpdateChangeAnchor(
-          {required List<AddressAnchor> addressAnchors}) =>
-      _preferences.setStringList(KEY_LAST_UPDATE_CHANGE_ANCHOR,
-          addressAnchors.map((e) => jsonEncode(e.toJson())).toList());
+  Future<void> setLastUpdateChangeAnchor({
+    required List<AddressAnchor> addressAnchors,
+  }) =>
+      _preferences.setStringList(
+        KEY_LAST_UPDATE_CHANGE_ANCHOR,
+        addressAnchors.map((e) => jsonEncode(e.toJson())).toList(),
+      );
 }
 
 enum ConflictAction {

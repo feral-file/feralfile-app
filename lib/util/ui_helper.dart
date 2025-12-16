@@ -1279,22 +1279,20 @@ class UIHelper {
 
   static SliverGrid dp1ItemSliverGrid(BuildContext context,
       List<DP1NowDisplayingItem> nowDisplayingItems, String title) {
-    return SliverGrid(
+    return SliverGrid.builder(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         childAspectRatio: 188 / 307,
         crossAxisSpacing: 17,
       ),
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final item = nowDisplayingItems[index];
-          return PlaylistItemCard(
-            nowDisplayingItem: item,
-            playlistTitle: title,
-          );
-        },
-        childCount: nowDisplayingItems.length,
-      ),
+      itemBuilder: (context, index) {
+        final item = nowDisplayingItems[index];
+        return PlaylistItemCard(
+          nowDisplayingItem: item,
+          playlistTitle: title,
+        );
+      },
+      itemCount: nowDisplayingItems.length,
     );
   }
 
