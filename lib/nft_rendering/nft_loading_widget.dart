@@ -33,8 +33,10 @@ class LoadingWidget extends StatelessWidget {
             const SizedBox(height: 12),
             DefaultTextStyle(
               style: theme.textTheme.ppMori400White12,
-              child: Text('loading'.tr()),
-            )
+              child: Text(
+                'loading'.tr(),
+              ),
+            ),
           ],
         ),
       ),

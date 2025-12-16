@@ -848,7 +848,6 @@ class NavigationService {
         UIHelper.showRawDialog(
           navigatorKey.currentContext!,
           NowDisplaySettingView(
-            tokenConfiguration: null,
             artistName: artistName,
             tokenId: tokenId,
           ),

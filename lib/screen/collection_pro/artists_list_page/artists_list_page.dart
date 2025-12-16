@@ -93,11 +93,15 @@ class _ArtistsListPageState extends State<ArtistsListPage> {
               builder: (context, value, child) => PagingBar(
                 onTap: (a) async {
                   final index = _items.indexWhere(
-                      (element) => element.name.firstSearchCharacter == a);
+                    (element) => element.name.firstSearchCharacter == a,
+                  );
                   if (index == -1) {
-                    final nearestIndex = _items.lastIndexWhere((element) =>
-                        element.name.firstSearchCharacter.compareSearchKey(a) <
-                        0);
+                    final nearestIndex = _items.lastIndexWhere(
+                      (element) =>
+                          element.name.firstSearchCharacter
+                              .compareSearchKey(a) <
+                          0,
+                    );
                     if (nearestIndex == -1) {
                       await _scrollTo(0);
                     } else {

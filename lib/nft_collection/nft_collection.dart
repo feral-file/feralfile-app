@@ -1,9 +1,9 @@
-import 'package:dio/dio.dart';
-import 'package:logging/logging.dart';
 import 'package:autonomy_flutter/nft_collection/database/nft_collection_database.dart';
 import 'package:autonomy_flutter/nft_collection/services/address_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/configuration_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
+import 'package:dio/dio.dart';
+import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 export 'package:autonomy_flutter/nft_collection/widgets/nft_collection_bloc.dart';

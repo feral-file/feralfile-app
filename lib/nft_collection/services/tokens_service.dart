@@ -272,8 +272,7 @@ class TokensServiceImpl extends TokensService {
   static void _setupInjector() {
     final dio = Dio();
     dio.interceptors.add(LoggingInterceptor());
-    _isolateScopeInjector
-        .registerLazySingleton(() => TZKTApi(dio));
+    _isolateScopeInjector.registerLazySingleton(() => TZKTApi(dio));
   }
 
   Future<void> _handleMessageInMain(dynamic message) async {

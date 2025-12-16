@@ -118,8 +118,10 @@ class _FeralFileArtworkPreviewPageState
         builder: (context, artworkDetailState) {
           if (artworkDetailState is FeralfileArtworkDetailsErrorState) {
             return Center(
-              child: Text(artworkDetailState.error,
-                  style: Theme.of(context).textTheme.ppMori400White14),
+              child: Text(
+                artworkDetailState.error,
+                style: Theme.of(context).textTheme.ppMori400White14,
+              ),
             );
           }
           if (artworkDetailState is FeralfileArtworkDetailsLoadedState) {

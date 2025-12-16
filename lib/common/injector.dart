@@ -11,8 +11,6 @@ import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/gateway/feralfile_api.dart';
 import 'package:autonomy_flutter/gateway/remote_config_api.dart';
 import 'package:autonomy_flutter/gateway/source_exhibition_api.dart';
-import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
-import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/ethereum_service.dart';
@@ -65,19 +63,6 @@ Future<void> setupInjector() async {
     receiveTimeout: const Duration(seconds: 3),
   );
   final dio = baseDio(dioOptions);
-
-  injector
-      .registerLazySingleton<TokensService>(() => NftCollection.tokenService);
-  injector.registerLazySingleton(() => NftCollection.prefs);
-  injector.registerLazySingleton(() => NftCollection.database);
-  injector.registerLazySingleton(() => NftCollection.addressService);
-  injector.registerLazySingleton(() => NftCollection.database.assetDao);
-  injector.registerLazySingleton(() => NftCollection.database.tokenDao);
-  injector.registerLazySingleton(() => NftCollection.database.assetTokenDao);
-  injector.registerLazySingleton(() => NftCollection.database.provenanceDao);
-  injector.registerLazySingleton(
-    () => NftCollection.database.predefinedCollectionDao,
-  );
 
   injector.registerLazySingleton<NetworkService>(NetworkService.new);
   // Services

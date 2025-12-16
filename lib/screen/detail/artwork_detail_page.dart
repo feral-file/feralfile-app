@@ -301,7 +301,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                             _infoShrink();
                           }
                         },
-                        child: Container(
+                        child: ColoredBox(
                           color: Colors.transparent,
                           child: _infoHeader(
                             context,
