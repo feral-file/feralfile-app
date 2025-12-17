@@ -60,11 +60,13 @@ class HomePageHelper {
   StreamSubscription<FGBGType>? _fgbgSubscription;
   bool _isBackground = false;
   bool _hasAddedNotificationListener = false;
+  bool _isHomePageInitialized = false;
 
   final _announcementService = injector<AnnouncementService>();
   final _remoteConfig = injector<RemoteConfigService>();
 
   void onHomePageInit(BuildContext context, ObservingState state) {
+    _isHomePageInitialized = true;
     unawaited(injector<CustomerSupportService>().getChatThreads());
 
     // check for version compatibility
@@ -130,18 +132,56 @@ class HomePageHelper {
     if (!_hasAddedNotificationListener) {
       _hasAddedNotificationListener = true;
       OneSignal.Notifications.addClickListener((openedResult) async {
-        log.info('Tapped push notification: '
-            '${openedResult.notification.additionalData}');
-        final additionalData =
-            AdditionalData.fromJson(openedResult.notification.additionalData!);
-        await _announcementService.fetchAnnouncements();
-        if (!context.mounted) {
-          return;
+        try {
+          log.info('Tapped push notification: '
+              '${openedResult.notification.additionalData}');
+
+          // Guard: Only handle notifications when app is properly initialized
+          if (!_isHomePageInitialized) {
+            log.warning('HomePage not initialized, deferring notification');
+            return;
+          }
+
+          // Guard: Don't process notifications in background
+          if (_isBackground) {
+            log.warning('App in background, skipping notification handler');
+            return;
+          }
+
+          // Guard: Check if notification has additional data
+          final rawData = openedResult.notification.additionalData;
+          if (rawData == null || rawData.isEmpty) {
+            log.warning('Notification has no additional data, skipping');
+            return;
+          }
+
+          // Guard: Ensure context is still valid before any async operations
+          if (!context.mounted) {
+            log.warning('Context not mounted when notification clicked');
+            return;
+          }
+
+          final additionalData = AdditionalData.fromJson(rawData);
+          await _announcementService.fetchAnnouncements();
+
+          // Guard: Re-check context after async operation
+          if (!context.mounted) {
+            log.warning('Context unmounted after fetching announcements');
+            return;
+          }
+
+          await NotificationHandler.instance
+              .handlePushNotificationClicked(context, additionalData);
+        } catch (e, stackTrace) {
+          log.severe('Error handling notification click: $e', e, stackTrace);
+          unawaited(Sentry.captureException(
+            e,
+            stackTrace: stackTrace,
+            hint: Hint.withMap({
+              'notification_data': openedResult.notification.additionalData,
+            }),
+          ));
         }
-        unawaited(
-          NotificationHandler.instance
-              .handlePushNotificationClicked(context, additionalData),
-        );
       });
     }
     _fgbgSubscription =
@@ -149,6 +189,7 @@ class HomePageHelper {
   }
 
   void onHomePageDispose() {
+    _isHomePageInitialized = false;
     _collectionRefreshTimer?.cancel();
     _fgbgSubscription?.cancel();
   }
