@@ -140,8 +140,21 @@ Future<void> runFeralFileApp() async {
     log.info('Error in AuFileService setup: $e');
   }
 
-  OneSignal.initialize(Environment.onesignalAppID);
-  OneSignal.Debug.setLogLevel(OSLogLevel.error);
+  // Initialize OneSignal after dependency injection is ready
+  // with delayed permission prompt to avoid early crashes
+  try {
+    OneSignal.initialize(Environment.onesignalAppID);
+    OneSignal.Debug.setLogLevel(OSLogLevel.error);
+
+    // Disable automatic permission prompts - we'll handle this manually later
+    OneSignal.Notifications.requestPermission(false);
+
+    log.info('OneSignal initialized successfully');
+  } catch (e) {
+    log.severe('Error initializing OneSignal: $e', e);
+    unawaited(Sentry.captureException(e));
+  }
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: AppColor.white,
