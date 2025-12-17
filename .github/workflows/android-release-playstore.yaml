@@ -73,5 +73,5 @@ jobs:
           releaseFiles: build/app/outputs/bundle/productionRelease/app-production-release.aab
           track: internal
           mappingFile: build/app/outputs/mapping/productionRelease/mapping.txt
-          debugSymbols: build/app/intermediates/merged_native_libs/productionRelease/out/lib
+          debugSymbols: build/app/intermediates/merged_native_libs/productionRelease/mergeProductionReleaseNativeLibs/out/lib
           whatsNewDirectory: ./whatsnew
