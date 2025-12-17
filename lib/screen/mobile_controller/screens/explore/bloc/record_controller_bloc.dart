@@ -337,8 +337,9 @@ class RecordBloc extends AuBloc<RecordEvent, RecordState> {
   ) async {
     log.info('Complete action received');
     if (state is RecordProcessingState) {
-      final transcription = (state as RecordProcessingState).transcription!;
-      final intent = state.lastIntent!;
+      final transcription =
+          (state as RecordProcessingState).transcription ?? '';
+      final intent = state.lastIntent ?? AiIntent(action: AiAction.unknown);
       final dp1call = state.lastDP1Call;
       final successState = RecordSuccessState(
         lastIntent: intent,

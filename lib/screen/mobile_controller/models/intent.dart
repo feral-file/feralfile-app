@@ -2,7 +2,9 @@ enum AiAction {
   now,
   schedulePlay,
   openScreen,
-  addAddress;
+  addAddress,
+  notRelevant,
+  unknown;
 
   String get value {
     switch (this) {
@@ -14,6 +16,10 @@ enum AiAction {
         return 'open_screen';
       case AiAction.addAddress:
         return 'add_address';
+      case AiAction.notRelevant:
+        return 'not_relevant';
+      case AiAction.unknown:
+        return 'unknown';
     }
   }
 
@@ -27,8 +33,10 @@ enum AiAction {
         return AiAction.openScreen;
       case 'add_address':
         return AiAction.addAddress;
+      case 'not_relevant':
+        return AiAction.notRelevant;
       default:
-        throw ArgumentError('Unknown action type: $value');
+        return AiAction.unknown;
     }
   }
 }
@@ -163,6 +171,8 @@ class AiIntent {
       prefix = 'Building playlist';
     } else if (action == AiAction.schedulePlay) {
       prefix = 'Building playlist for scheduled play';
+    } else if (action == AiAction.notRelevant) {
+      return 'This request is outside playlist control';
     }
 
     if (entities != null && entities!.isNotEmpty) {
