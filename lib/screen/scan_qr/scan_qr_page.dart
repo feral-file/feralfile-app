@@ -287,7 +287,7 @@ class QRScanViewState extends State<QRScanView>
       });
       // Restart camera when permission is newly granted
       _timer?.cancel();
-      _timer = Timer(Duration.zero, () async {
+      _timer = Timer(const Duration(milliseconds: 300), () async {
         await _controller.stop();
         await _startCamera();
       });
@@ -411,7 +411,7 @@ class QRScanViewState extends State<QRScanView>
         // to ensure controller is ready
         if (mounted) {
           _timer?.cancel();
-          _timer = Timer(Duration.zero, () async {
+          _timer = Timer(const Duration(milliseconds: 300), () async {
             if (mounted) {
               await _controller.stop();
               await _startCamera();
