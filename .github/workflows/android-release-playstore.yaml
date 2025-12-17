@@ -5,9 +5,6 @@ on:
       version:
         description: Build version (eg 0.30.0)
         required: true
-      build-number:
-        description: Build number
-        required: true
       message:
         description: Change logs
         required: false
@@ -26,13 +23,47 @@ jobs:
           flutter-version: "3.27.2"
           channel: stable
 
-      - name: Set env
+      # Install jq for JSON processing (required by the version bump script)
+      - name: Install dependencies
         run: |
+          if ! command -v jq &> /dev/null; then
+            echo "Installing jq..."
+            sudo apt-get update
+            sudo apt-get install -y jq
+          fi
+
+      # Get current version from Play Store
+      - name: Get current build number from Play Store
+        id: current_version
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
+        run: |
+          chmod +x ./scripts/get_playstore_version.sh
+          ./scripts/get_playstore_version.sh
+
+      # Bump the version number and set environment variables
+      - name: Calculate new build number and set environment
+        id: new_version
+        run: |
+          CURRENT_BUILD=${{ steps.current_version.outputs.current_build_number }}
+          NEW_BUILD=$((CURRENT_BUILD + 1))
+          
+          # Export for later steps
+          echo "new_build_number=$NEW_BUILD" >> $GITHUB_OUTPUT
+          
+          # Display version info
+          echo "========================================="
+          echo "Building version: ${{ github.event.inputs.version }}+${NEW_BUILD}"
+          echo "Previous build number: ${CURRENT_BUILD}"
+          echo "New build number: ${NEW_BUILD}"
+          echo "========================================="
+          
+          # Set environment variables
           echo "FLUTTER_VERSION_NAME=${{ github.event.inputs.version }}" >> $GITHUB_ENV
-          echo "FLUTTER_VERSION_CODE=${{ github.event.inputs.build-number }}" >> $GITHUB_ENV
+          echo "FLUTTER_VERSION_CODE=${NEW_BUILD}" >> $GITHUB_ENV
           echo "SIGNATURE_HASH=${{ secrets.SIGNATURE_HASH }}" >> $GITHUB_ENV
           echo "SIGNATURE_HASH_INHOUSE=${{ secrets.SIGNATURE_HASH_INHOUSE }}" >> $GITHUB_ENV
-          echo NAME_SUFFIX=main-${{ github.event.inputs.build-number }} >> $GITHUB_ENV
+          echo "NAME_SUFFIX=main-${NEW_BUILD}" >> $GITHUB_ENV
 
       - uses: webfactory/ssh-agent@v0.5.4
         with:
@@ -64,13 +95,14 @@ jobs:
           mkdir whatsnew
           echo "${{ github.event.inputs.message }}" > ./whatsnew/whatsnew-en-US
 
-      # Upload APK to Google Play Internal Testing track
-      - name: Upload APK to Google Play
+      # Upload AAB to Google Play Internal Testing track
+      - name: Upload AAB to Google Play
         uses: r0adkll/upload-google-play@v1.1.3
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
-          packageName: com.bitmark.autonomy_client
+          packageName: com.feralfile.app
           releaseFiles: build/app/outputs/bundle/productionRelease/app-production-release.aab
           track: internal
           mappingFile: build/app/outputs/mapping/productionRelease/mapping.txt
+          debugSymbols: build/app/intermediates/merged_native_libs/productionRelease/out/lib
           whatsNewDirectory: ./whatsnew
