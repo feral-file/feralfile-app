@@ -12,6 +12,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/announcement/announcement.dart';
 import 'package:autonomy_flutter/model/customer_support.dart' as app;
 import 'package:autonomy_flutter/model/customer_support.dart';
@@ -344,70 +345,93 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
       log_util.log.severe('Failed to get Flutter log: $e');
     }
 
-    // // Add account settings audit log
-    // try {
-    //   final accountSettingsAudit = await _generateAccountSettingsAudit();
-    //   final auditBytes = utf8.encode(accountSettingsAudit);
-    //   final auditFilename =
-    //       'account_settings_audit_${auditBytes.length}_${DateTime.now().microsecondsSinceEpoch}.json';
-    //   _debugLogs.add(Pair(auditFilename, auditBytes));
-    // } catch (e) {
-    //   log_util.log.severe('Failed to get account settings audit: $e');
-    // }
+    // Add account settings audit log
+    try {
+      final accountSettingsAudit = await _generateAccountSettingsAudit();
+      final auditBytes = utf8.encode(accountSettingsAudit);
+      final auditFilename =
+          'account_settings_audit_${auditBytes.length}_${DateTime.now().microsecondsSinceEpoch}.json';
+      _debugLogs.add(Pair(auditFilename, auditBytes));
+    } catch (e) {
+      log_util.log.severe('Failed to get account settings audit: $e');
+    }
 
     setState(() {
       _isFileAttached = _debugLogs.isNotEmpty;
     });
   }
 
-  // Future<String> _generateAccountSettingsAudit() async {
-  //   try {
-  //     final appDataManager = injector<AppDataManager>();
+  Future<String> _generateAccountSettingsAudit() async {
+    try {
+      final appDataManager = injector<AppDataManager>();
 
-  //     // Get app settings (merged device + user settings)
-  //     final appSettings = appDataManager.appSettingsStorageService.allInstance;
+      // Gather account settings with privacy protection
+      final auditData = <String, dynamic>{
+        'app_preferences': _gatherAppPreferences(appDataManager),
+        'addresses_import_history': _gatherAccountHistory(appDataManager),
+      };
 
-  //     // Get wallet addresses (imported/linked addresses)
-  //     final addresses = appDataManager.addressStorageService.getAllAddresses();
+      // Convert to JSON with pretty printing
+      const encoder = JsonEncoder.withIndent('  ');
+      return encoder.convert(auditData);
+    } catch (e) {
+      log_util.log.severe('Failed to generate account settings audit: $e');
+      return '{"error": "Failed to generate account settings audit: $e"}';
+    }
+  }
 
-  //     // Get configuration service settings
-  //     final auditData = <String, dynamic>{
-  //       'timestamp': DateTime.now().toIso8601String(),
-  //       'app_settings': appSettings,
-  //       'imported_addresses': addresses
-  //           .map((addr) => {
-  //                 'address': addr.address,
-  //                 'cryptoType': addr.cryptoType.toString(),
-  //                 'isHidden': addr.isHidden,
-  //                 'createdAt': addr.createdAt.toIso8601String(),
-  //                 'name': addr.name,
-  //               })
-  //           .toList(),
-  //       'configuration_preferences': {
-  //         'isAnalyticsEnabled':
-  //             appDataManager.appSettingsStorageService.isAnalyticsEnabled,
-  //         'isDevicePasscodeEnabled':
-  //             appDataManager.appSettingsStorageService.isDevicePasscodeEnabled,
-  //         'isNotificationEnabled':
-  //             appDataManager.appSettingsStorageService.isNotificationEnabled,
-  //         'isBetaFeaturesEnabled':
-  //             appDataManager.appSettingsStorageService.isBetaFeaturesEnabled,
-  //         'isExploreBarEnabled':
-  //             appDataManager.appSettingsStorageService.isExploreBarEnabled,
-  //         'hiddenTokenIDs':
-  //             appDataManager.appSettingsStorageService.hiddenTokenIDs,
-  //         'selectedDeviceId':
-  //             appDataManager.appSettingsStorageService.selectedDeviceId,
-  //       },
-  //     };
+  Map<String, dynamic> _gatherAppPreferences(AppDataManager appDataManager) {
+    try {
+      final settingsService = appDataManager.appSettingsStorageService;
 
-  //     // Convert to JSON with pretty printing
-  //     const encoder = JsonEncoder.withIndent('  ');
-  //     return encoder.convert(auditData);
-  //   } catch (e) {
-  //     return '{"error": "Failed to generate account settings audit: $e"}';
-  //   }
-  // }
+      return {
+        'analytics_enabled': settingsService.isAnalyticsEnabled,
+        'notification_enabled': settingsService.isNotificationEnabled,
+        'device_passcode_enabled': settingsService.isDevicePasscodeEnabled,
+        'beta_features_enabled': settingsService.isBetaFeaturesEnabled,
+        'explore_bar_enabled': settingsService.isExploreBarEnabled,
+        'hidden_token_count': settingsService.hiddenTokenIDs.length,
+        'selected_device_id': settingsService.selectedDeviceId ?? 'none',
+      };
+    } catch (e) {
+      log_util.log.warning('Failed to gather app preferences: $e');
+      return {'error': 'Unable to retrieve preferences'};
+    }
+  }
+
+  Map<String, dynamic> _gatherAccountHistory(AppDataManager appDataManager) {
+    try {
+      final addressService = appDataManager.addressStorageService;
+
+      // Get address-related info without exposing private keys
+      final addresses = addressService.getAllAddresses();
+
+      return {
+        'total_addresses': addresses.length,
+        'address_details': addresses
+            .map((addr) => {
+                  'type': addr.cryptoType.toString(),
+                  'created_at': addr.createdAt.toIso8601String(),
+                  'is_hidden': addr.isHidden,
+                  'name': addr.name,
+                  // Redact actual address for privacy
+                  'address_preview': _redactAddress(addr.address),
+                })
+            .toList(),
+      };
+    } catch (e) {
+      log_util.log.warning('Failed to gather account history: $e');
+      return {'error': 'Unable to retrieve account history'};
+    }
+  }
+
+  String _redactAddress(String address) {
+    // Show first 6 and last 4 characters only, redact the middle
+    if (address.length <= 10) {
+      return '***';
+    }
+    return '${address.substring(0, 6)}...${address.substring(address.length - 4)}';
+  }
 
   @override
   void dispose() {
@@ -424,7 +448,6 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
     BuildContext context, {
     required void Function(bool attachCrashLog) onConfirm,
   }) {
-    final theme = Theme.of(context);
     unawaited(
       UIHelper.showDialog(
         context,
@@ -570,7 +593,6 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
     if (_debugLogs.isEmpty) {
       return const SizedBox();
     }
-    final theme = Theme.of(context);
     return Column(
       children: _debugLogs.map((debugLog) {
         final fileSize = debugLog.second.length;
@@ -655,7 +677,6 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
     required types.Message message,
     required bool nextMessageInGroup,
   }) {
-    final theme = Theme.of(context);
     var color = _user.id != message.author.id
         ? AppColor.feralFileHighlight
         : AppColor.primaryBlack;
