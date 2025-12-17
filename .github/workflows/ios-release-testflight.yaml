@@ -114,9 +114,9 @@ jobs:
           JSON_FILE: ${{ secrets.JSON_FILE }}
           SENTRY_AUTH: ${{ secrets.SENTRY_AUTH }}
           APPCENTER_API_TOKEN: ${{ secrets.APPCENTER_API_TOKEN }}
-          TESTFLIGHT_KEY_ID: ${{ secrets.TESTFLIGHT_KEY_ID }}
-          TESTFLIGHT_ISSUER_ID: ${{ secrets.TESTFLIGHT_ISSUER_ID }}
-          TESTFLIGHT_API_TOKEN: ${{ secrets.TESTFLIGHT_API_TOKEN }}
+          TESTFLIGHT_KEY_ID: ${{ secrets.FF_TESTFLIGHT_KEY_ID }}
+          TESTFLIGHT_ISSUER_ID: ${{ secrets.FF_TESTFLIGHT_ISSUER_ID }}
+          TESTFLIGHT_API_TOKEN: ${{ secrets.FF_TESTFLIGHT_API_TOKEN }}
           APP_VERSION: ${{ github.event.inputs.version }}
           RELEASE_NOTES: ${{ github.event.inputs.message }}
 
