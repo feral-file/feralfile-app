@@ -665,6 +665,23 @@ class UIHelper {
     Navigator.pop(context, result);
   }
 
+  static Future<void> showOfflineDialog(
+    BuildContext context, {
+    required VoidCallback onRetry,
+  }) async {
+    await showInfoDialog(
+      context,
+      'No internet connection',
+      "We can't connect right now. Check your connection, then Retry.",
+      closeButton: 'Retry',
+      isDismissible: false,
+      onClose: () {
+        Navigator.of(context).pop();
+        onRetry();
+      },
+    );
+  }
+
   static Future<void> showHideArtworkResultDialog(
     BuildContext context,
     bool isHidden, {
