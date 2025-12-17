@@ -8,21 +8,12 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:permission_handler/permission_handler.dart';
-
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/style.dart';
@@ -30,6 +21,13 @@ import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/header.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/splitted_banner.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 // ignore_for_file: constant_identifier_names
 
@@ -80,7 +78,7 @@ class ScanQRPageState extends State<ScanQRPage>
   }
 
   Future<void> pauseCamera() async {
-    await Future.delayed(const Duration(milliseconds: 100));
+    await Future<void>.delayed(const Duration(milliseconds: 100));
     await _qrScanViewKey.currentState?.pauseCamera();
   }
 
@@ -255,10 +253,10 @@ class QRScanViewState extends State<QRScanView>
   bool isScanDataError = false;
   bool _isLoading = false;
   bool? _cameraPermission;
+  bool _isCameraInitialized = false;
   String? currentCode;
   Timer? _timer;
 
-  Barcode? _barcode;
   StreamSubscription<Object?>? _subscription;
 
   static const _qrSize = 260.0;
@@ -276,7 +274,30 @@ class QRScanViewState extends State<QRScanView>
 
     _subscription = _controller.barcodes.listen(_handleBarcode);
 
-    unawaited(_controller.start());
+    // Listen to controller state changes
+    _controller.addListener(_onControllerStateChanged);
+
+    unawaited(_startCamera());
+  }
+
+  void _onControllerStateChanged() {
+    if (_controller.value.hasCameraPermission && _cameraPermission != true) {
+      setState(() {
+        _cameraPermission = true;
+      });
+      // Restart camera when permission is newly granted
+      _timer?.cancel();
+      _timer = Timer(Duration.zero, () async {
+        await _controller.stop();
+        await _startCamera();
+      });
+    } else if (!_controller.value.hasCameraPermission &&
+        (_cameraPermission ?? true)) {
+      setState(() {
+        _cameraPermission = false;
+        _isCameraInitialized = false;
+      });
+    }
   }
 
   @override
@@ -296,17 +317,13 @@ class QRScanViewState extends State<QRScanView>
   @override
   void didPushNext() {
     super.didPushNext();
-    unawaited(Future.delayed(const Duration(milliseconds: 300)).then((_) {
+    unawaited(Future<void>.delayed(const Duration(milliseconds: 300)).then((_) {
       pauseCamera();
     }));
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!_controller.value.hasCameraPermission) {
-      return;
-    }
-
     switch (state) {
       case AppLifecycleState.detached:
         // App is being terminated - stop camera and cancel subscription
@@ -318,13 +335,20 @@ class QRScanViewState extends State<QRScanView>
       case AppLifecycleState.paused:
         return;
       case AppLifecycleState.resumed:
-        _subscription = _controller.barcodes.listen(_handleBarcode);
+        // Check permission again when app resumes (e.g., after granting permission)
+        unawaited(_checkPermission());
 
-        unawaited(_controller.start());
+        // Only start camera if we already have permission
+        if (_controller.value.hasCameraPermission) {
+          _subscription = _controller.barcodes.listen(_handleBarcode);
+          unawaited(_startCamera());
+        }
       case AppLifecycleState.inactive:
         unawaited(_subscription?.cancel());
         _subscription = null;
-        unawaited(_controller.stop());
+        if (_controller.value.hasCameraPermission) {
+          unawaited(_controller.stop());
+        }
     }
   }
 
@@ -332,39 +356,66 @@ class QRScanViewState extends State<QRScanView>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     routeObserver.unsubscribe(this);
+    _controller.removeListener(_onControllerStateChanged);
     _timer?.cancel();
     _subscription?.cancel();
     _controller.dispose();
     super.dispose();
   }
 
+  Future<void> _startCamera() async {
+    try {
+      await _controller.start();
+      if (mounted) {
+        setState(() {
+          _isCameraInitialized = true;
+        });
+      }
+    } catch (e) {
+      log.info('[Scanner] Failed to start camera: $e');
+    }
+  }
+
   Future<void> resumeCamera() async {
-    await _controller.start();
+    await _startCamera();
   }
 
   Future<void> pauseCamera() async {
     await _controller.stop();
   }
 
-  Future _checkPermission() async {
-    await Permission.camera.request();
+  Future<void> _checkPermission() async {
     final status = await Permission.camera.status;
 
-    if (status.isPermanentlyDenied || status.isDenied) {
-      if (_cameraPermission != false) {
+    // If permission not determined yet, request it
+    if (!status.isGranted && !status.isPermanentlyDenied) {
+      await Permission.camera.request();
+    }
+
+    final newStatus = await Permission.camera.status;
+
+    if (newStatus.isPermanentlyDenied || newStatus.isDenied) {
+      if (_cameraPermission ?? true) {
         setState(() {
           _cameraPermission = false;
+          _isCameraInitialized = false;
         });
       }
-    } else {
-      if (_cameraPermission != true) {
+    } else if (newStatus.isGranted) {
+      final wasPermissionJustGranted = _cameraPermission != true;
+      if (wasPermissionJustGranted) {
         setState(() {
           _cameraPermission = true;
         });
-        if (Platform.isAndroid) {
+        // If permission was just granted, restart camera after a short delay
+        // to ensure controller is ready
+        if (mounted) {
           _timer?.cancel();
-          _timer = Timer(const Duration(seconds: 1), () {
-            resumeCamera();
+          _timer = Timer(Duration.zero, () async {
+            if (mounted) {
+              await _controller.stop();
+              await _startCamera();
+            }
           });
         }
       }
@@ -386,7 +437,7 @@ class QRScanViewState extends State<QRScanView>
             child: Align(
                 alignment: Alignment.bottomCenter,
                 child: _instructionView(context)),
-          )
+          ),
         ],
         if (_isLoading) ...[
           Center(
@@ -401,8 +452,7 @@ class QRScanViewState extends State<QRScanView>
   }
 
   Widget _qrView(BuildContext context) {
-    final theme = Theme.of(context);
-    double cutOutBottomOffset =
+    var cutOutBottomOffset =
         MediaQuery.of(context).size.height / 2 - (_qrSize / 2 + _topPadding);
     if (cutOutBottomOffset < 0) {
       cutOutBottomOffset = 0;
@@ -412,23 +462,29 @@ class QRScanViewState extends State<QRScanView>
         MobileScanner(
           controller: _controller,
           key: qrKey,
-          errorBuilder: (context, error, stack) => Positioned(
-            left: (MediaQuery.of(context).size.width - _qrSize) / 2,
-            top: _topPadding,
-            child: SizedBox(
-              height: _qrSize,
-              width: _qrSize,
-              child: Center(
-                child: Text(
-                  'invalid_qr_code'.tr(),
-                  style: AppTypography.body(context)
-                      .bold
-                      .black
-                      .copyWith(color: Colors.red),
+          errorBuilder: (context, error, stack) {
+            if (!_isCameraInitialized || _cameraPermission == false) {
+              return const SizedBox.shrink();
+            }
+
+            return Positioned(
+              left: (MediaQuery.of(context).size.width - _qrSize) / 2,
+              top: _topPadding,
+              child: SizedBox(
+                height: _qrSize,
+                width: _qrSize,
+                child: Center(
+                  child: Text(
+                    'invalid_qr_code'.tr(),
+                    style: AppTypography.body(context)
+                        .bold
+                        .black
+                        .copyWith(color: Colors.red),
+                  ),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ],
     );
@@ -467,26 +523,26 @@ class QRScanViewState extends State<QRScanView>
       );
 
   Widget _instructionViewNoPermission(BuildContext context) {
-    final theme = Theme.of(context);
     return SplittedBanner(
-        headerWidget: Row(
-          children: [
-            SvgPicture.asset('assets/images/iconController.svg',
-                colorFilter: const ColorFilter.mode(
-                  AppColor.white,
-                  BlendMode.srcIn,
-                )),
-            const SizedBox(width: 20),
-            Text(
-              'allow_camera_permission'.tr(),
-              style: AppTypography.body(context).white,
-            )
-          ],
-        ),
-        bodyWidget: Text(
-          'allow_camera_permission_desc'.tr(),
-          style: AppTypography.body(context).white,
-        ));
+      headerWidget: Row(
+        children: [
+          SvgPicture.asset('assets/images/iconController.svg',
+              colorFilter: const ColorFilter.mode(
+                AppColor.white,
+                BlendMode.srcIn,
+              )),
+          const SizedBox(width: 20),
+          Text(
+            'allow_camera_permission'.tr(),
+            style: AppTypography.body(context).white,
+          )
+        ],
+      ),
+      bodyWidget: Text(
+        'allow_camera_permission_desc'.tr(),
+        style: AppTypography.body(context).white,
+      ),
+    );
   }
 
   Widget _instructionView(BuildContext context) {
@@ -504,7 +560,6 @@ class QRScanViewState extends State<QRScanView>
   }
 
   Widget _instructionHeader(BuildContext context) {
-    final theme = Theme.of(context);
     return Row(
       children: [
         SvgPicture.asset(
@@ -536,7 +591,6 @@ class QRScanViewState extends State<QRScanView>
 
   Widget _instructionBody(
       BuildContext context, List<ScannerInstruction> instructions) {
-    final theme = Theme.of(context);
     return Column(
       children: instructions
           .map(
@@ -581,7 +635,7 @@ class QRScanViewState extends State<QRScanView>
         return;
       }
       currentCode = scanData.barcodes.first.rawValue;
-      String code = scanData.barcodes.first.rawValue!;
+      final code = scanData.barcodes.first.rawValue!;
 
       if (DEEP_LINKS.any((prefix) => code.startsWith(prefix))) {
         setState(() {
@@ -630,7 +684,7 @@ class QRScanViewState extends State<QRScanView>
             if (_shouldPop) {
               Navigator.pop(context, code);
             }
-            await Future.delayed(const Duration(milliseconds: 300));
+            await Future<void>.delayed(const Duration(milliseconds: 300));
           case ScannerItem.GLOBAL:
             {
               _handleError(code);
