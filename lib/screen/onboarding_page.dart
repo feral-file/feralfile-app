@@ -24,12 +24,15 @@ import 'package:autonomy_flutter/service/device_info_service.dart';
 import 'package:autonomy_flutter/service/dls_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/metric_service.dart';
+import 'package:autonomy_flutter/service/navigation_service.dart';
+import 'package:autonomy_flutter/service/network_service.dart';
 import 'package:autonomy_flutter/service/push_notification/notification_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/style.dart';
+import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
@@ -52,18 +55,39 @@ class OnboardingPage extends StatefulWidget {
 class _OnboardingPageState extends State<OnboardingPage>
     with TickerProviderStateMixin, AfterLayoutMixin<OnboardingPage> {
   final deepLinkService = injector.get<DeeplinkService>();
+  final _networkService = injector.get<NetworkService>();
   Timer? _timer;
+  bool _isShowingOfflineDialog = false;
 
   @override
   void initState() {
     super.initState();
     log.info('OnboardingPage initState');
+
+    // Listen to network changes
+    _networkService.hasInternetNotifier.addListener(_onNetworkChanged);
   }
 
   @override
   void dispose() {
     super.dispose();
     _timer?.cancel();
+    _networkService.hasInternetNotifier.removeListener(_onNetworkChanged);
+  }
+
+  void _onNetworkChanged() {
+    final hasInternet = _networkService.hasInternetNotifier.value;
+    log.info('[OnboardingPage] Network changed - hasInternet: $hasInternet');
+
+    // Dismiss dialog and retry when network is restored
+    if (_isShowingOfflineDialog && hasInternet && mounted) {
+      log.info('[OnboardingPage] Network restored, dismissing dialog');
+      _isShowingOfflineDialog = false;
+      // Pop the dialog
+      injector<NavigationService>().goBack();
+      // Retry loading
+      unawaited(_runSetupAndFetchCaches());
+    }
   }
 
   @override
@@ -77,11 +101,40 @@ class _OnboardingPageState extends State<OnboardingPage>
   }
 
   Future<void> _runSetupAndFetchCaches() async {
+    // Check network connectivity first
+    final hasInternet = await _networkService.checkConnectivity();
+    log.info('[OnboardingPage] Starting setup - hasInternet: $hasInternet');
+
+    // Show offline dialog if no internet
+    if (!hasInternet) {
+      log.info(
+        '[OnboardingPage] No internet connection, showing offline dialog',
+      );
+      if (mounted) {
+        _isShowingOfflineDialog = true;
+        await UIHelper.showOfflineDialog(
+          context,
+          onRetry: () {
+            _isShowingOfflineDialog = false;
+            unawaited(_runSetupAndFetchCaches());
+          },
+        );
+        _isShowingOfflineDialog = false;
+      }
+      return;
+    }
+
     try {
-      await setup(context);
+      await setup();
     } catch (error) {
       log.info('Failed to setup: $error');
       unawaited(Sentry.captureException('Failed to setup: $error'));
+      if (mounted) {
+        await _showErrorDialog(
+          'Setup failed',
+          'Unable to initialize. Check connection and retry.',
+        );
+      }
       return;
     }
 
@@ -97,7 +150,10 @@ class _OnboardingPageState extends State<OnboardingPage>
         log.info('Skip navigate home, deeplink is handling');
         return;
       }
-      await _goToHomePage(context);
+      if (!mounted) {
+        return;
+      }
+      await _goToHomePage();
     } catch (error) {
       log.info('Failed to fetch runtime cache: $error');
       unawaited(
@@ -105,7 +161,52 @@ class _OnboardingPageState extends State<OnboardingPage>
           'Failed to fetch runtime cache: $error',
         ),
       );
+
+      if (!mounted) {
+        return;
+      }
+
+      // Check if error is due to network
+      final hasInternetNow = await _networkService.checkConnectivity();
+      if (!hasInternetNow) {
+        log.info(
+          '[OnboardingPage] No internet connection, showing offline dialog',
+        );
+        _isShowingOfflineDialog = true;
+        await UIHelper.showOfflineDialog(
+          context,
+          onRetry: () {
+            _isShowingOfflineDialog = false;
+            unawaited(_runSetupAndFetchCaches());
+          },
+        );
+        _isShowingOfflineDialog = false;
+      } else {
+        log.info('[OnboardingPage] General error, showing error dialog');
+        await _showErrorDialog(
+          'Unable to load',
+          "We couldn't load required data. Check connection, then retry.",
+        );
+      }
     }
+  }
+
+  Future<void> _showErrorDialog(String title, String message) async {
+    if (!mounted) {
+      return;
+    }
+
+    await UIHelper.showInfoDialog(
+      context,
+      title,
+      message,
+      closeButton: 'Retry',
+      isDismissible: false,
+      onClose: () {
+        Navigator.of(context).pop();
+        unawaited(_runSetupAndFetchCaches());
+      },
+    );
   }
 
   Future<void> loadRemoteConfigs() async {
@@ -117,7 +218,7 @@ class _OnboardingPageState extends State<OnboardingPage>
     }
   }
 
-  Future<void> setup(BuildContext context) async {
+  Future<void> setup() async {
     log.info('[OnboardingPage] setup start');
     if (didRunSetup) {
       log.info('Setup already run');
@@ -159,8 +260,11 @@ class _OnboardingPageState extends State<OnboardingPage>
     log.info('DefineViewRoutingEvent');
   }
 
-  Future<void> _goToHomePage(BuildContext context) async {
+  Future<void> _goToHomePage() async {
     log.info('[_goToHomePage]');
+    if (!mounted) {
+      return;
+    }
     final isDoneOnboarding =
         injector<ConfigurationService>().isDoneOnboarding();
     if (isDoneOnboarding) {
