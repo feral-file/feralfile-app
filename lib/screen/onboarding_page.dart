@@ -27,6 +27,7 @@ import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/network_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/util/completer_ext.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/style.dart';
@@ -152,7 +153,7 @@ class _OnboardingPageState extends State<OnboardingPage>
         return;
       }
       await _goToHomePage();
-    } catch (error) {
+    } catch (error, s) {
       log.info('Failed to fetch runtime cache: $error');
       unawaited(
         Sentry.captureException(
@@ -277,6 +278,16 @@ class _OnboardingPageState extends State<OnboardingPage>
         deeplink: null,
       ),
     );
+  }
+
+    // at this point, the user has completed the onboarding
+    // so we can registerPushNotifications
+    if (injector<AppDataManager>()
+        .appSettingsStorageService
+        .isNotificationEnabled) {
+      await injector<NotificationService>().registerPushNotifications();
+    }
+    startHandleDeeplinkCompleter.safeComplete(null);
   }
 
   Future<void> _fetchRuntimeCache() async {
