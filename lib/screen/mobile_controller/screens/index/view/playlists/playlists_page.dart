@@ -5,7 +5,6 @@ import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/view/record_controller.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
@@ -17,10 +16,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
-import 'package:autonomy_flutter/view/responsive.dart';
-import 'package:autonomy_flutter/widgets/notice-banner/notice_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -81,13 +77,7 @@ class PlaylistsPageState extends State<PlaylistsPage>
       physics: const NeverScrollableScrollPhysics(),
       slivers: [
         SliverToBoxAdapter(child: _buildMyPlaylists()),
-        SliverToBoxAdapter(
-          child: SizedBox(height: LayoutConstants.space12),
-        ),
         SliverToBoxAdapter(child: _buildCuratedPlaylists()),
-        SliverToBoxAdapter(
-          child: SizedBox(height: LayoutConstants.space12),
-        ),
         // _buildGlobalPlaylists(),
       ],
     );
@@ -108,17 +98,31 @@ class PlaylistsPageState extends State<PlaylistsPage>
   }
 
   Widget _buildContent(PlaylistsState state, PlaylistsBloc playlistsBloc) {
-    if (state.isLoading && state.playlists.isEmpty) {
-      return const LoadingView();
-    }
-    if (state.isError && state.playlists.isEmpty) {
-      return ErrorView(
-        error: 'Error loading playlists: ${state.error}',
-        onRetry: () => playlistsBloc.add(LoadPlaylistsEvent()),
-      );
+    if (state.playlistData.isEmpty && !state.isLoading) {
+      return const SizedBox.shrink();
     }
 
-    return _buildPlaylists(state, playlistsBloc.playlistType);
+    return Column(
+      children: [
+        Builder(
+          builder: (context) {
+            if (state.isLoading && state.playlists.isEmpty) {
+              return const LoadingView();
+            }
+
+            if (state.isError && state.playlists.isEmpty) {
+              return ErrorView(
+                error: 'Error loading playlists: ${state.error}',
+                onRetry: () => playlistsBloc.add(LoadPlaylistsEvent()),
+              );
+            }
+
+            return _buildPlaylists(state, playlistsBloc.playlistType);
+          },
+        ),
+        SizedBox(height: LayoutConstants.space12),
+      ],
+    );
   }
 
   Widget _buildPlaylists(PlaylistsState state, PlaylistType playlistType) {
@@ -127,30 +131,8 @@ class PlaylistsPageState extends State<PlaylistsPage>
 
     final hasMore = state.hasMore;
 
-    Widget? emptyView;
     Widget? Function(PlaylistData playlistData)? playlistHeaderBuilder;
     if (playlistType == PlaylistType.me) {
-      emptyView = Column(
-        children: [
-          SizedBox(height: 12),
-          Padding(
-            padding: ResponsiveLayout.pageHorizontalEdgeInsets,
-            child: NoticeBanner(
-              message: '''
-      Type or paste an address into the command bar to load''',
-              onTap: () {
-                injector<NavigationService>().popToRouteOrPush(
-                  AppRouter.voiceCommandPage,
-                  arguments: RecordControllerScreenPayload(
-                    isListening: false,
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      );
-
       playlistHeaderBuilder = _mePlaylistHeaderBuilder;
     }
 
@@ -165,7 +147,6 @@ class PlaylistsPageState extends State<PlaylistsPage>
           BlendMode.srcIn,
         ),
       ),
-      emptyView: emptyView,
       playlists: playlistDataList,
       hasMore: hasMore,
       onViewAllTap: () {

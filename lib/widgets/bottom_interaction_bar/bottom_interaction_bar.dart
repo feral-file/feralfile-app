@@ -15,6 +15,7 @@ import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
+import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/custom_route_observer.dart';
 import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
 import 'package:autonomy_flutter/view/now_displaying/now_displaying_bar.dart';
@@ -63,6 +64,10 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
         appSettingsStorageService.isExploreBarEnabled;
   }
 
+  bool _shouldShowNowDisplayingBar() {
+    return BluetoothDeviceManager().castingBluetoothDevice != null;
+  }
+
   void _updateHeights() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -104,6 +109,11 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
 
     // Listen to nowDisplayingShowing changes
     nowDisplayingShowing.addListener(_onShowingChanged);
+
+    // Listen to casting device changes
+    BluetoothDeviceManager()
+        .castingBluetoothDeviceNotifier
+        .addListener(_onCastingDeviceChanged);
   }
 
   void _onShowingChanged() {
@@ -124,9 +134,20 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
     }
   }
 
+  void _onCastingDeviceChanged() {
+    if (mounted) {
+      setState(() {
+        // Rebuild to update _shouldShowNowDisplayingBar()
+      });
+    }
+  }
+
   @override
   void dispose() {
     nowDisplayingShowing.removeListener(_onShowingChanged);
+    BluetoothDeviceManager()
+        .castingBluetoothDeviceNotifier
+        .removeListener(_onCastingDeviceChanged);
     _animationController.dispose();
     super.dispose();
   }
@@ -144,7 +165,7 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
 
         return ValueListenableBuilder(
           valueListenable: isNowDisplayingBarExpanded,
-          builder: (context, isExpanded, child) {
+          builder: (context, isNowDisplayingBarExpanded, child) {
             final paddingBottom = MediaQuery.of(context).padding.bottom;
             _updateHeights();
 
@@ -158,45 +179,57 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
                   ),
                 ),
                 // Gradient (only on home page)
-                ValueListenableBuilder(
-                  valueListenable: CustomRouteObserver.currentRoute,
-                  builder: (context, route, child) {
-                    if (route?.settings.name == AppRouter.homePage) {
-                      return Positioned(
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        child: IgnorePointer(
-                          child: FadeTransition(
-                            opacity: _animationController,
-                            child: Container(
-                              height: 195 + paddingBottom,
-                              decoration: const BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.transparent,
-                                    PrimitivesTokens.colorsDarkGrey,
-                                  ],
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  stops: [0.0, 0.37],
+                if ((_shouldShowExploreBar() ||
+                        _shouldShowNowDisplayingBar()) &&
+                    !isNowDisplayingBarExpanded)
+                  ValueListenableBuilder(
+                    valueListenable: CustomRouteObserver.currentRoute,
+                    builder: (context, route, child) {
+                      if (route?.settings.name == AppRouter.homePage) {
+                        return Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: IgnorePointer(
+                            child: FadeTransition(
+                              opacity: _animationController,
+                              child: Container(
+                                height: (_shouldShowExploreBar()
+                                        ? _llmInputHeight
+                                        : 0) +
+                                    (_shouldShowNowDisplayingBar()
+                                        ? _nowDisplayingBarHeight
+                                        : 0) +
+                                    paddingBottom +
+                                    100,
+                                decoration: const BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.transparent,
+                                      PrimitivesTokens.colorsDarkGrey,
+                                    ],
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    stops: [0.0, 0.37],
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
 
                 // LLMTextInput
-                if (_shouldShowExploreBar() && !isExpanded)
+                if (_shouldShowExploreBar() && !isNowDisplayingBarExpanded)
                   Positioned(
                     bottom: paddingBottom +
                         UIConstants.nowDisplayingBarBottomPadding +
-                        _nowDisplayingBarHeight,
+                        (_shouldShowNowDisplayingBar()
+                            ? _nowDisplayingBarHeight
+                            : 0),
                     left: 0,
                     right: 0,
                     child: _animateVisibility(
@@ -212,23 +245,24 @@ class _BottomInteractionBarState extends State<BottomInteractionBar>
                   ),
 
                 // NowDisplayingBar
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 200),
-                  bottom:
-                      paddingBottom + UIConstants.nowDisplayingBarBottomPadding,
-                  left: ResponsiveLayout.paddingHorizontal,
-                  right: ResponsiveLayout.paddingHorizontal,
-                  child: _animateVisibility(
-                    child: Container(
-                      key: _nowDisplayingBarKey,
-                      child: const NowDisplayingBar(),
-                    ),
-                    slideBegin: _calculateSlideBegin(
-                      paddingBottom,
-                      _actualNowDisplayingBarHeight,
+                if (_shouldShowNowDisplayingBar())
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 200),
+                    bottom: paddingBottom +
+                        UIConstants.nowDisplayingBarBottomPadding,
+                    left: ResponsiveLayout.paddingHorizontal,
+                    right: ResponsiveLayout.paddingHorizontal,
+                    child: _animateVisibility(
+                      child: Container(
+                        key: _nowDisplayingBarKey,
+                        child: const NowDisplayingBar(),
+                      ),
+                      slideBegin: _calculateSlideBegin(
+                        paddingBottom,
+                        _actualNowDisplayingBarHeight,
+                      ),
                     ),
                   ),
-                ),
               ],
             );
           },
