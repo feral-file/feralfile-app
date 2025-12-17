@@ -6,15 +6,14 @@
 //
 
 import 'dart:async';
-import 'dart:io';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
-import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:sentry/sentry.dart';
+
+import 'notification_util.dart';
 
 /// Service for managing push notification subscriptions and preferences
 abstract class NotificationService {
@@ -41,15 +40,16 @@ abstract class NotificationService {
 
 class NotificationServiceImpl implements NotificationService {
   final AuthService _authService;
-  final ConfigurationService _configurationService;
 
-  NotificationServiceImpl()
-      : _authService = injector<AuthService>(),
-        _configurationService = injector<ConfigurationService>();
+  NotificationServiceImpl() : _authService = injector<AuthService>();
 
   @override
   Future<bool> login(String userId) async {
     log.info('NotificationService: login with user ID: $userId');
+    if (!OneSignalBootstrap.canUseOneSignal) {
+      log.warning('NotificationService: OneSignal not ready, skip login');
+      return false;
+    }
     try {
       await OneSignal.login(userId);
       log.info('NotificationService: login successful');
@@ -68,6 +68,10 @@ class NotificationServiceImpl implements NotificationService {
   @override
   Future<bool> optIn() async {
     log.info('NotificationService: opt in');
+    if (!OneSignalBootstrap.canUseOneSignal) {
+      log.warning('NotificationService: OneSignal not ready, skip opt in');
+      return false;
+    }
     try {
       // Check if notification permission is granted
       if (!OneSignal.Notifications.permission) {
@@ -92,6 +96,10 @@ class NotificationServiceImpl implements NotificationService {
   @override
   Future<bool> optOut() async {
     log.info('NotificationService: opt out');
+    if (!OneSignalBootstrap.canUseOneSignal) {
+      log.warning('NotificationService: OneSignal not ready, skip opt out');
+      return false;
+    }
     try {
       await OneSignal.User.pushSubscription.optOut();
       log.info('NotificationService: opt out successful');
@@ -110,6 +118,10 @@ class NotificationServiceImpl implements NotificationService {
   @override
   Future<bool> registerPushNotifications({bool askPermission = false}) async {
     log.info('NotificationService: register push notifications');
+    if (!OneSignalBootstrap.canUseOneSignal) {
+      log.warning('NotificationService: OneSignal not ready, skip register');
+      return false;
+    }
 
     // Request permission if needed
     if (askPermission) {
@@ -153,6 +165,10 @@ class NotificationServiceImpl implements NotificationService {
   @override
   Future<void> unregisterPushNotification() async {
     log.info('NotificationService: unregister push notification');
+    if (!OneSignalBootstrap.canUseOneSignal) {
+      log.warning('NotificationService: OneSignal not ready, skip unregister');
+      return;
+    }
     try {
       await OneSignal.User.pushSubscription.optOut();
       await OneSignal.logout();

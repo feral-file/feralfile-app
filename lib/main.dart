@@ -20,6 +20,7 @@ import 'package:autonomy_flutter/model/identity.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
+import 'package:autonomy_flutter/service/push_notification/notification_util.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/app_theme.dart';
 import 'package:autonomy_flutter/util/au_file_service.dart';
@@ -40,7 +41,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:system_date_time_format/system_date_time_format.dart';
@@ -143,13 +143,7 @@ Future<void> runFeralFileApp() async {
   // Initialize OneSignal after dependency injection is ready
   // with delayed permission prompt to avoid early crashes
   try {
-    OneSignal.initialize(Environment.onesignalAppID);
-    OneSignal.Debug.setLogLevel(OSLogLevel.error);
-
-    // Disable automatic permission prompts - we'll handle this manually later
-    OneSignal.Notifications.requestPermission(false);
-
-    log.info('OneSignal initialized successfully');
+    await OneSignalBootstrap.initializeIfPossible();
   } catch (e) {
     log.severe('Error initializing OneSignal: $e', e);
     unawaited(Sentry.captureException(e));
