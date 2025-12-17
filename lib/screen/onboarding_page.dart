@@ -202,7 +202,7 @@ class _OnboardingPageState extends State<OnboardingPage>
       title,
       message,
       closeButton: 'Retry',
-      isDismissible: false,
+      isDismissible: true,
       onClose: () {
         Navigator.of(context).pop();
         unawaited(_runSetupAndFetchCaches());
