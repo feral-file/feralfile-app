@@ -19,7 +19,6 @@ import 'package:autonomy_flutter/screen/detail/artwork_detail_state.dart';
 import 'package:autonomy_flutter/screen/detail/preview/keyboard_control_page.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/dp1_now_displaying_item_ext.dart';
@@ -108,7 +107,7 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
     return Scaffold(
       appBar: MainAppBar(
         centeredTitle: 'now_displaying'.tr(),
-        backgroundColor: PrimitivesTokens.colorsBlack,
+        backgroundColor: PrimitivesTokens.colorsDarkGrey,
         actions: [
           IconButton(
             padding: EdgeInsets.zero,
@@ -127,13 +126,12 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
           ),
         ],
       ),
-      backgroundColor: AppColor.primaryBlack,
+      backgroundColor: PrimitivesTokens.colorsBlack,
       body: _body(context),
     );
   }
 
   Widget _body(BuildContext context) {
-    final theme = Theme.of(context);
     if (nowDisplayingStatus == null) {
       return const Center(
         child: CircularProgressIndicator(color: AppColor.white),
@@ -168,7 +166,6 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
     BuildContext context,
     NowDisplayingSuccess nowDisplayingStatus,
   ) {
-    Theme.of(context);
     return BlocConsumer<ArtworkDetailBloc, ArtworkDetailState>(
       listener: (context, state) {
         final provenanceIdentities = state.assetToken?.provenance
@@ -206,7 +203,7 @@ Widget infoHeader(
     subTitle = artistName;
   }
   return Padding(
-    padding: const EdgeInsets.fromLTRB(15, 15, 5, 20),
+    padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
     child: Row(
       children: [
         Expanded(
@@ -241,16 +238,17 @@ class _DP1NowDisplayingState extends State<DP1NowDisplaying> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final assetToken = widget.nowDisplayingItem.assetToken;
     final identityState = context.watch<IdentityBloc>().state;
     final artistName = assetToken?.getArtists.firstOrNull?.name
         .toIdentityOrMask(identityState.identityMap);
     return CustomScrollView(
       slivers: [
-        const SliverToBoxAdapter(
-          child: SizedBox(
-            height: 30,
+        SliverToBoxAdapter(
+          child: Container(
+            height: 12,
+            color: PrimitivesTokens.colorsDarkGrey,
+            child: const SizedBox(),
           ),
         ),
         SliverToBoxAdapter(
@@ -319,20 +317,16 @@ class _DP1NowDisplayingState extends State<DP1NowDisplaying> {
       BuildContext context, DP1NowDisplayingItem nowDisplayingItem) {
     final thumbnail = nowDisplayingItem.thumbnail;
     return ColoredBox(
-      color: AppColor.auGreyBackground,
+      color: PrimitivesTokens.colorsDarkGrey,
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
             child: (thumbnail != null)
-                ? LayoutBuilder(
-                    builder: (context, constraints) {
-                      return FFArtworkThumbnailView(
-                        url: thumbnail.uri,
-                        // cacheWidth: constraints.maxWidth.toInt(),
-                        // cacheHeight: constraints.maxHeight.toInt(),
-                      );
-                    },
+                ? AspectRatio(
+                    aspectRatio: 4/5,
+                    child: FFArtworkThumbnailView(
+                      url: thumbnail.uri,
+                    ),
                   )
                 : const GalleryNoThumbnailWidget(),
           ),
