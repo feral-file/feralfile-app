@@ -1,6 +1,16 @@
 part of 'user_all_own_collection_bloc.dart';
 
-abstract class UserAllOwnCollectionEvent {}
+/// Base event for UserAllOwnCollectionBloc.
+///
+/// Each event must provide a [streamKey] that uniquely identifies
+/// long-running operations (streams/completers) triggered by that event.
+/// This allows the bloc to track multiple concurrent operations of
+/// the same event type but different parameters (e.g. different addresses).
+abstract class UserAllOwnCollectionEvent {
+  /// Unique key used to track stream subscriptions and completers
+  /// for long-running operations started by this event.
+  String get streamKey;
+}
 
 class FetchTokensOfAddresses extends UserAllOwnCollectionEvent {
   FetchTokensOfAddresses({
@@ -15,12 +25,18 @@ class FetchTokensOfAddresses extends UserAllOwnCollectionEvent {
   final bool shouldUpdateAddressState;
   final void Function()? onDone;
   final void Function(Object error, StackTrace stackTrace)? onError;
+
+  @override
+  String get streamKey => 'FetchTokensOfAddresses:${addresses.join(',')}';
 }
 
 class UpdateDynamicQueryEvent extends UserAllOwnCollectionEvent {
   UpdateDynamicQueryEvent({required this.dynamicQuery});
 
   final DynamicQuery dynamicQuery;
+
+  @override
+  String get streamKey => 'UpdateDynamicQueryEvent:${dynamicQuery.toJson()}';
 }
 
 class ReloadAssetTokensFromIndexerDatabase extends UserAllOwnCollectionEvent {
@@ -28,9 +44,15 @@ class ReloadAssetTokensFromIndexerDatabase extends UserAllOwnCollectionEvent {
       {this.sortBy = IndexerDatabaseSortBy.updatedAt});
 
   final IndexerDatabaseSortBy sortBy;
+
+  @override
+  String get streamKey => 'ReloadAssetTokensFromIndexerDatabase';
 }
 
-class ClearDataEvent extends UserAllOwnCollectionEvent {}
+class ClearDataEvent extends UserAllOwnCollectionEvent {
+  @override
+  String get streamKey => 'ClearDataEvent';
+}
 
 class ReindexAddresses extends UserAllOwnCollectionEvent {
   ReindexAddresses({
@@ -38,6 +60,9 @@ class ReindexAddresses extends UserAllOwnCollectionEvent {
   });
 
   final List<String> addresses;
+
+  @override
+  String get streamKey => 'ReindexAddresses:${addresses.join(',')}';
 }
 
 class WorkflowStatusTick extends UserAllOwnCollectionEvent {
@@ -54,6 +79,9 @@ class WorkflowStatusTick extends UserAllOwnCollectionEvent {
   final String workflowId;
   final String runId;
   final WorkflowExecutionStatus status;
+
+  @override
+  String get streamKey => 'WorkflowStatusTick:$operationId';
 }
 
 class UpdateTokensOfAddresses extends UserAllOwnCollectionEvent {
@@ -62,4 +90,7 @@ class UpdateTokensOfAddresses extends UserAllOwnCollectionEvent {
   });
 
   final List<String> addresses;
+
+  @override
+  String get streamKey => 'UpdateTokensOfAddresses:${addresses.join(',')}';
 }
