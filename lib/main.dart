@@ -20,7 +20,6 @@ import 'package:autonomy_flutter/model/identity.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
-import 'package:autonomy_flutter/service/push_notification/notification_util.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/app_theme.dart';
 import 'package:autonomy_flutter/util/au_file_service.dart';
@@ -143,7 +142,7 @@ Future<void> runFeralFileApp() async {
   // Initialize OneSignal after dependency injection is ready
   // with delayed permission prompt to avoid early crashes
   try {
-    await OneSignalBootstrap.initializeIfPossible();
+    // await OneSignalBootstrap.initializeIfPossible();
   } catch (e) {
     log.severe('Error initializing OneSignal: $e', e);
     unawaited(Sentry.captureException(e));

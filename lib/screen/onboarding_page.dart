@@ -286,7 +286,7 @@ class _OnboardingPageState extends State<OnboardingPage>
     if (injector<AppDataManager>()
         .appSettingsStorageService
         .isNotificationEnabled) {
-      await injector<NotificationService>().registerPushNotifications();
+      // await injector<NotificationService>().registerPushNotifications();
     }
     startHandleDeeplinkCompleter.safeComplete(null);
   }

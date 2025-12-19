@@ -7,14 +7,12 @@
 
 import 'dart:async';
 
-import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
 import 'package:autonomy_flutter/screen/settings/preferences/preferences_bloc.dart';
 import 'package:autonomy_flutter/screen/settings/preferences/preferences_state.dart';
-import 'package:autonomy_flutter/service/push_notification/notification_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/view/au_toggle.dart';
@@ -88,10 +86,10 @@ class PreferenceView extends StatelessWidget {
               onChanged: (value) async {
                 bool success = false;
                 if (value) {
-                  success = await injector<NotificationService>()
-                      .registerPushNotifications(askPermission: true);
+                  // success = await injector<NotificationService>()
+                  //     .registerPushNotifications(askPermission: true);
                 } else {
-                  success = await injector<NotificationService>().optOut();
+                  // success = await injector<NotificationService>().optOut();
                 }
                 if (success) {
                   final newState = state.copyWith(isNotificationEnabled: value);
