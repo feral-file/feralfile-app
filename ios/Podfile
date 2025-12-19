@@ -1,6 +1,5 @@
-# Define a global minimum platform for all Pods.
-# Some dependencies (e.g. MLKit via mobile_scanner) require iOS 15.5+.
-platform :ios, '15.5'
+# Uncomment this line to define a global platform for your project
+# platform :ios, '16.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -46,9 +45,6 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
     target.build_configurations.each do |config|
-      # Keep the deployment target consistent across all Pods.
-      # This avoids older Pod defaults (e.g. iOS 9/10/11) that can break archive scripts.
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.5'
       
       # You can remove unused permissions here
       # for more information: https://github.com/Baseflow/flutter-permission-handler/blob/main/permission_handler_apple/ios/Classes/PermissionHandlerEnums.h

@@ -11,11 +11,6 @@ import flutter_downloader
     // Register plugins first
     GeneratedPluginRegistrant.register(with: self)
     FlutterDownloaderPlugin.setPluginRegistrantCallback(registerPlugins)
-    
-    // Set notification center delegate to handle notifications
-    if #available(iOS 10.0, *) {
-      UNUserNotificationCenter.current().delegate = self
-    }
       
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
