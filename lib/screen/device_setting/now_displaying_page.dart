@@ -106,7 +106,7 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: MainAppBar(
-        centeredTitle: 'now_displaying'.tr(),
+        centeredTitle: 'now_playing'.tr(),
         backgroundColor: PrimitivesTokens.colorsDarkGrey,
         actions: [
           IconButton(

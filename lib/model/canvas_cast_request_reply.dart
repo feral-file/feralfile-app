@@ -185,7 +185,7 @@ enum ReplyError {
     return switch (this) {
       ReplyError.overheating => '''
 $name temperature is too high. Playback paused to prevent damage.''',
-      ReplyError.unknown => '$name is connected but cannot get now displaying',
+      ReplyError.unknown => '$name is connected but cannot get now playing',
     };
   }
 }

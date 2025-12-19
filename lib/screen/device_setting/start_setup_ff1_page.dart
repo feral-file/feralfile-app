@@ -208,7 +208,7 @@ class _BodyCopy extends StatelessWidget {
           "Thanks for being here. You're among the first people to bring "
           'FF1 into your space and explore new ways to live with digital '
           'art.\n\n'
-          'FF1 is designed to make displaying digital art simple, reliable, '
+          'FF1 is designed to make playing digital art simple, reliable, '
           'and part of your everyday life. As an early adopter, your '
           'experience will help us understand how FF1 fits into real spaces '
           'and routines—and where we should take it next.\n\n'
