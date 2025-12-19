@@ -11,8 +11,6 @@
 		<string>applinks:link.feralfile.com</string>
 	</array>
 	<key>com.apple.security.application-groups</key>
-	<array>
-		<string>group.com.feralfile.app.notification</string>
-	</array>
+	<array/>
 </dict>
 </plist>
