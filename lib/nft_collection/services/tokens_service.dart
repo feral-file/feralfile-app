@@ -982,7 +982,7 @@ class NftTokensServiceImpl extends NftTokensService {
     }
 
     final result = message;
-    if (result is FetchTokensSuccess) {
+    if (result is FetchTokensData) {
       if (result.assets.isNotEmpty) {
         await insertAssetsWithProvenance(result.assets);
       }
@@ -998,29 +998,62 @@ class NftTokensServiceImpl extends NftTokensService {
           // Send data to stream
           worker.sink.add(result.assets);
           NftCollection.logger.info(
-            '[FETCH_ALL_TOKENS] Sent ${result.assets.length} tokens to stream for UUID: $uuid, done: ${result.done}',
+            '[FETCH_ALL_TOKENS][FetchTokensData] Sent ${result.assets.length} tokens to stream for UUID: $uuid',
           );
-
-          // Close stream after sending data when done
-          if (result.done) {
-            await worker.close();
-            _fetchTokensWorkers.remove(uuid);
-            NftCollection.logger.fine(
-              '[FETCH_ALL_TOKENS]'
-              ' ${result.addresses.join(',')} at ${DateTime.now()}',
-            );
-            NftCollection.logger.info(
-                '[FETCH_ALL_TOKENS][end] Stream closed for UUID: $uuid, addresses: ${result.addresses.join(',')}');
-          }
         } else if (worker != null && worker.isClosed) {
           // Stream was already closed, remove from map
           _fetchTokensWorkers.remove(uuid);
           NftCollection.logger.warning(
-            '[FETCH_ALL_TOKENS] Stream was already closed for UUID: $uuid, cannot send ${result.assets.length} tokens',
+            '[FETCH_ALL_TOKENS][FetchTokensData] Stream was already closed for UUID: $uuid, cannot send ${result.assets.length} tokens',
+          );
+          Sentry.captureEvent(SentryEvent(
+            message: SentryMessage(
+                'Stream was already closed for UUID: $uuid, cannot send ${result.assets.length} tokens'),
+            level: SentryLevel.error,
+          ));
+        } else if (worker == null) {
+          NftCollection.logger.warning(
+            '[FETCH_ALL_TOKENS][FetchTokensData] No worker found for UUID: $uuid, cannot send ${result.assets.length} tokens',
+          );
+          Sentry.captureEvent(SentryEvent(
+            message: SentryMessage(
+                'No worker found for UUID: $uuid, cannot send ${result.assets.length} tokens'),
+            level: SentryLevel.error,
+          ));
+        }
+      }
+
+      return;
+    }
+
+    if (result is FetchTokensSuccess) {
+      NftCollection.logger
+          .info('[${result.key}][FetchTokensSuccess] fetch tokens completed');
+
+      if (result.key == FETCH_ALL_TOKENS) {
+        // Use UUID to find the correct stream controller
+        final uuid = result.uuid;
+        final worker = _fetchTokensWorkers[uuid];
+
+        if (worker != null && !worker.isClosed) {
+          // Close stream when fetch is done
+          await worker.close();
+          _fetchTokensWorkers.remove(uuid);
+          NftCollection.logger.fine(
+            '[FETCH_ALL_TOKENS][FetchTokensSuccess]'
+            ' ${result.addresses.join(',')} at ${DateTime.now()}',
+          );
+          NftCollection.logger.info(
+              '[FETCH_ALL_TOKENS][FetchTokensSuccess][end] Stream closed for UUID: $uuid, addresses: ${result.addresses.join(',')}');
+        } else if (worker != null && worker.isClosed) {
+          // Stream was already closed, remove from map
+          _fetchTokensWorkers.remove(uuid);
+          NftCollection.logger.warning(
+            '[FETCH_ALL_TOKENS][FetchTokensSuccess] Stream was already closed for UUID: $uuid',
           );
         } else if (worker == null) {
           NftCollection.logger.warning(
-            '[FETCH_ALL_TOKENS] No worker found for UUID: $uuid, cannot send ${result.assets.length} tokens',
+            '[FETCH_ALL_TOKENS] No worker found for UUID: $uuid',
           );
         }
       }
@@ -1030,7 +1063,7 @@ class NftTokensServiceImpl extends NftTokensService {
 
     if (result is FetchTokenFailure) {
       NftCollection.logger.info(
-          '[FETCH_ALL_TOKENS] end in error ${result.exception} for addresses: ${result.addresses}');
+          '[FETCH_ALL_TOKENS][FetchTokenFailure] end in error ${result.exception} for addresses: ${result.addresses}');
       unawaited(Sentry.captureEvent(SentryEvent(
         message: SentryMessage('FetchTokenFailure: ${result.exception}'),
         level: SentryLevel.error,
@@ -1039,16 +1072,41 @@ class NftTokensServiceImpl extends NftTokensService {
         },
       )));
 
-      // Use UUID to find the correct stream controller
-      final uuid = result.uuid;
-      final worker = _fetchTokensWorkers[uuid];
+      if (result.key == FETCH_ALL_TOKENS) {
+        // Use UUID to find the correct stream controller
+        final uuid = result.uuid;
+        final worker = _fetchTokensWorkers[uuid];
 
-      if (worker != null && !worker.isClosed) {
-        await worker.close();
-        _fetchTokensWorkers.remove(uuid);
+        if (worker != null && !worker.isClosed) {
+          // Add error to stream and close it
+          worker.sink.addError(result.exception);
+          await worker.close();
+          _fetchTokensWorkers.remove(uuid);
+          NftCollection.logger.info(
+              '[FETCH_ALL_TOKENS][FetchTokenFailure][end] Stream closed with error for UUID: $uuid, addresses: ${result.addresses.join(',')}');
+        } else if (worker != null && worker.isClosed) {
+          // Stream was already closed, remove from map
+          _fetchTokensWorkers.remove(uuid);
+          NftCollection.logger.warning(
+            '[FETCH_ALL_TOKENS][FetchTokenFailure] Stream was already closed for UUID: $uuid',
+          );
+          Sentry.captureEvent(SentryEvent(
+            message: SentryMessage(
+                '[FETCH_ALL_TOKENS][FetchTokenFailure] Stream was already closed for UUID: $uuid'),
+            level: SentryLevel.error,
+          ));
+        } else if (worker == null) {
+          NftCollection.logger.warning(
+            '[FETCH_ALL_TOKENS][FetchTokenFailure] No worker found for UUID: $uuid',
+          );
+          Sentry.captureEvent(SentryEvent(
+            message: SentryMessage(
+                '[FETCH_ALL_TOKENS][FetchTokenFailure] No worker found for UUID: $uuid'),
+            level: SentryLevel.error,
+          ));
+        }
       }
-      _reindexAddressesCompleters[result.uuid]?.completeError(result.exception);
-      _reindexAddressesCompleters.remove(result.uuid);
+
       return;
     }
 
@@ -1321,12 +1379,11 @@ class NftTokensServiceImpl extends NftTokensService {
             : tokens.safeSublist(
                 0, (total - numberOfToken).clamp(0, tokens.length));
         _isolateSendPort?.send(
-          FetchTokensSuccess(
+          FetchTokensData(
             key,
             uuid,
             addresses,
             sentTokens,
-            false,
           ),
         );
 
@@ -1334,8 +1391,7 @@ class NftTokensServiceImpl extends NftTokensService {
         numberOfToken += sentTokens.length;
       }
 
-      _isolateSendPort
-          ?.send(FetchTokensSuccess(key, uuid, addresses, [], true));
+      _isolateSendPort?.send(FetchTokensSuccess(key, uuid, addresses));
     } catch (exception) {
       _isolateSendPort
           ?.send(FetchTokenFailure(key, uuid, addresses, exception));
@@ -1542,20 +1598,30 @@ class AddressAnchor {
 
 abstract class TokensServiceResult {}
 
-class FetchTokensSuccess extends TokensServiceResult {
-  FetchTokensSuccess(
+class FetchTokensData extends TokensServiceResult {
+  FetchTokensData(
     this.key,
     this.uuid,
     this.addresses,
     this.assets,
-    this.done,
   );
 
   final String key;
   final String uuid;
   final List<String> addresses;
   final List<AssetToken> assets;
-  bool done;
+}
+
+class FetchTokensSuccess extends TokensServiceResult {
+  FetchTokensSuccess(
+    this.key,
+    this.uuid,
+    this.addresses,
+  );
+
+  final String key;
+  final String uuid;
+  final List<String> addresses;
 }
 
 class FetchTokenFailure extends TokensServiceResult {

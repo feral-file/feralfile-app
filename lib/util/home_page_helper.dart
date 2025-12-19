@@ -109,11 +109,11 @@ class HomePageHelper {
       try {
         final owners = injector<AddressService>().getAllAddresses();
         // filter out addresses that have not been indexed
-        final lastIndexedTime = injector<UserDp1PlaylistService>()
-            .getAddressOldestLastIndexTime(addresses: owners);
+        final lastFetchTokenTime = injector<UserDp1PlaylistService>()
+            .getAddressOldestLastFetchTokenTime(addresses: owners);
         final addressesToRefresh =
-            owners.where((e) => lastIndexedTime[e] != null).toList();
-        log.info('Refreshing tokens for: $addressesToRefresh');
+            owners.where((e) => lastFetchTokenTime[e] != null).toList();
+        log.info('Refreshing tokens for: ${addressesToRefresh}');
         if (addressesToRefresh.isEmpty) {
           log.info('No addresses to refresh');
           return;
