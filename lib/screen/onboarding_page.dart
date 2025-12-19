@@ -278,15 +278,6 @@ class _OnboardingPageState extends State<OnboardingPage>
         deeplink: null,
       ),
     );
-  }
-
-    // at this point, the user has completed the onboarding
-    // so we can registerPushNotifications
-    if (injector<AppDataManager>()
-        .appSettingsStorageService
-        .isNotificationEnabled) {
-      await injector<NotificationService>().registerPushNotifications();
-    }
     startHandleDeeplinkCompleter.safeComplete(null);
   }
 
