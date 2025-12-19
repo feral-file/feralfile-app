@@ -16,7 +16,6 @@ import 'package:autonomy_flutter/util/biometrics_util.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class PreferencesBloc extends AuBloc<PreferenceEvent, PreferenceState> {
@@ -29,8 +28,7 @@ class PreferencesBloc extends AuBloc<PreferenceEvent, PreferenceState> {
 
       final passcodeEnabled = appSettingsStorageService.isDevicePasscodeEnabled;
       final notificationEnabled =
-          appSettingsStorageService.isNotificationEnabled &&
-              OneSignal.Notifications.permission;
+          appSettingsStorageService.isNotificationEnabled;
       final analyticsEnabled = appSettingsStorageService.isAnalyticsEnabled;
       final betaFeaturesEnabled =
           appSettingsStorageService.isBetaFeaturesEnabled;

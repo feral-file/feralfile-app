@@ -7,14 +7,12 @@
 
 import 'dart:async';
 
-import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
 import 'package:autonomy_flutter/screen/settings/preferences/preferences_bloc.dart';
 import 'package:autonomy_flutter/screen/settings/preferences/preferences_state.dart';
-import 'package:autonomy_flutter/service/push_notification/notification_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/view/au_toggle.dart';
@@ -22,7 +20,6 @@ import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 class PreferenceView extends StatelessWidget {
   const PreferenceView({super.key});
@@ -72,37 +69,6 @@ class PreferenceView extends StatelessWidget {
                 context
                     .read<PreferencesBloc>()
                     .add(PreferenceUpdateEvent(newState));
-              },
-            ),
-          ),
-          addDivider(height: 24, color: AppColor.primaryBlack),
-          // notification
-          Padding(
-            padding: padding,
-            child: _preferenceItemWithBuilder(
-              context,
-              'Notifications',
-              description: (context) => Text(
-                  'Enable notifications to receive updates from the app.',
-                  style: AppTypography.body(context).grey),
-              isEnabled: state.isNotificationEnabled,
-              onChanged: (value) async {
-                bool success = false;
-                if (value) {
-                  success = await injector<NotificationService>()
-                      .registerPushNotifications(askPermission: true);
-                } else {
-                  success = await injector<NotificationService>().optOut();
-                }
-                if (success) {
-                  final newState = state.copyWith(isNotificationEnabled: value);
-                  context
-                      .read<PreferencesBloc>()
-                      .add(PreferenceUpdateEvent(newState));
-                  context
-                      .read<PreferencesBloc>()
-                      .add(PreferenceUpdateEvent(newState));
-                }
               },
             ),
           ),

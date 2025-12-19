@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:autonomy_flutter/gateway/mobile_controller_api.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/intent.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/utils/json_stream.dart';
 import 'package:autonomy_flutter/util/file_ext.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -10,6 +12,26 @@ class MobileControllerService {
   MobileControllerService(this.api);
 
   final MobileControllerAPI api;
+
+  /// Gọi API và trả về intent, dp1_call
+  Future<(DP1Call dp1Call, AiIntent intent, String response)>
+      getDP1CallFromText({
+    required String command,
+    required List<String> deviceNames,
+  }) async {
+    final body = {
+      'command': command,
+      'device_names': deviceNames,
+    };
+    final result = await api.getDP1CallFromText(body);
+    final dp1call =
+        DP1Call.fromJson(Map<String, dynamic>.from(result['dp1_call'] as Map));
+    final intent =
+        AiIntent.fromJson(Map<String, dynamic>.from(result['intent'] as Map));
+    final response = result['response'] as String;
+    return (dp1call, intent, response);
+  }
+
   //getDP1CallFromVoice
   Future<Stream<Map<String, dynamic>>> getDP1CallFromVoice({
     required File file,
@@ -54,6 +76,51 @@ class MobileControllerService {
   }
 }
 
+extension on MobileControllerService {
+  Future<Stream<Map<String, dynamic>>> _simulateAddressOrDomainStream(
+    String command,
+  ) async {
+    final events = <Map<String, dynamic>>[];
+
+    Map<String, dynamic> event(
+      NLParserDataType type,
+      String content, [
+      Map<String, dynamic> data = const {},
+    ]) =>
+        {
+          'type': type.value,
+          'content': content,
+          'timestamp': DateTime.now().toIso8601String(),
+          'data': data,
+        };
+
+    events
+      ..add(
+        event(
+          NLParserDataType.intent,
+          'Parsed intent: ${AiAction.addAddress.value}',
+          {
+            'action': AiAction.addAddress.value,
+            'entities': [
+              {
+                'type': AiEntityType.address.value,
+                'name': command,
+                'probability': 1.0,
+              },
+            ],
+          },
+        ),
+      )
+      ..add(
+        event(
+          NLParserDataType.complete,
+          'Request completed successfully',
+        ),
+      );
+    return Stream.fromIterable(events);
+  }
+}
+
 enum NLParserAction {
   getCurrentPlaylist,
   Unknown;
@@ -63,6 +130,8 @@ enum NLParserAction {
       case NLParserAction.getCurrentPlaylist:
         return 'get_current_playlist';
       case NLParserAction.Unknown:
+        return 'Unknown';
+      default:
         return 'Unknown';
     }
   }

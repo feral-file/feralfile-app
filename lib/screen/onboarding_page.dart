@@ -10,7 +10,6 @@ import 'dart:async';
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/metric/dp1_playlist_metric.dart';
 import 'package:autonomy_flutter/model/metric/identify_user_payload.dart';
 import 'package:autonomy_flutter/onboarding/introduce_page.dart';
@@ -26,12 +25,8 @@ import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/metric_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/network_service.dart';
-import 'package:autonomy_flutter/service/push_notification/notification_service.dart';
-import 'package:autonomy_flutter/service/navigation_service.dart';
-import 'package:autonomy_flutter/service/network_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/util/completer_ext.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/style.dart';
@@ -157,7 +152,7 @@ class _OnboardingPageState extends State<OnboardingPage>
         return;
       }
       await _goToHomePage();
-    } catch (error, s) {
+    } catch (error) {
       log.info('Failed to fetch runtime cache: $error');
       unawaited(
         Sentry.captureException(
@@ -274,23 +269,14 @@ class _OnboardingPageState extends State<OnboardingPage>
       unawaited(
         Navigator.of(context).pushReplacementNamed(AppRouter.homePage),
       );
-    } else {
-      await Navigator.of(context).pushReplacementNamed(
-        AppRouter.onboardingIntroducePage,
-        arguments: IntroducePagePayload(
-          deeplink: null,
-        ),
-      );
+      return;
     }
-
-    // at this point, the user has completed the onboarding
-    // so we can registerPushNotifications
-    if (injector<AppDataManager>()
-        .appSettingsStorageService
-        .isNotificationEnabled) {
-      await injector<NotificationService>().registerPushNotifications();
-    }
-    startHandleDeeplinkCompleter.safeComplete(null);
+    await Navigator.of(context).pushReplacementNamed(
+      AppRouter.onboardingIntroducePage,
+      arguments: IntroducePagePayload(
+        deeplink: null,
+      ),
+    );
   }
 
   Future<void> _fetchRuntimeCache() async {

@@ -16,10 +16,6 @@ import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/network_service.dart';
-import 'package:autonomy_flutter/service/navigation_service.dart';
-import 'package:autonomy_flutter/service/network_service.dart';
-import 'package:autonomy_flutter/service/push_notification/notification_handler.dart';
-import 'package:autonomy_flutter/service/push_notification/notification_util.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
@@ -27,6 +23,7 @@ import 'package:autonomy_flutter/shared.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:autonomy_flutter/util/notifications/notification_handler.dart';
 import 'package:autonomy_flutter/util/now_displaying_manager.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:flutter/cupertino.dart';
@@ -65,8 +62,6 @@ class HomePageHelper {
   Timer? _collectionRefreshTimer;
   StreamSubscription<FGBGType>? _fgbgSubscription;
   bool _isBackground = false;
-  bool _hasAddedNotificationListener = false;
-  bool _isHomePageInitialized = false;
   bool _isShowingOfflineDialog = false;
 
   final _announcementService = injector<AnnouncementService>();
@@ -74,7 +69,6 @@ class HomePageHelper {
   final _networkService = injector<NetworkService>();
 
   void onHomePageInit(BuildContext context, ObservingState state) {
-    _isHomePageInitialized = true;
     // Listen to network changes
     _networkService.hasInternetNotifier.addListener(_onNetworkChanged);
 
@@ -143,72 +137,25 @@ class HomePageHelper {
 
     _triggerShowAnnouncement();
 
-    // Only add notification listener once to prevent duplicate calls
-    if (!_hasAddedNotificationListener) {
-      _hasAddedNotificationListener = true;
-      if (!OneSignalBootstrap.canUseOneSignal) {
-        log.warning('Skipping OneSignal click listener: OneSignal not ready');
-      } else {
-        OneSignal.Notifications.addClickListener((openedResult) async {
-          try {
-            log.info('Tapped push notification: '
-                '${openedResult.notification.additionalData}');
-
-            // Guard: Only handle notifications when app is properly initialized
-            if (!_isHomePageInitialized) {
-              log.warning('HomePage not initialized, deferring notification');
-              return;
-            }
-
-            // Guard: Don't process notifications in background
-            if (_isBackground) {
-              log.warning('App in background, skipping notification handler');
-              return;
-            }
-
-            // Guard: Check if notification has additional data
-            final rawData = openedResult.notification.additionalData;
-            if (rawData == null || rawData.isEmpty) {
-              log.warning('Notification has no additional data, skipping');
-              return;
-            }
-
-            // Guard: Ensure context is still valid before any async operations
-            if (!context.mounted) {
-              log.warning('Context not mounted when notification clicked');
-              return;
-            }
-
-            final additionalData = AdditionalData.fromJson(rawData);
-            await _announcementService.fetchAnnouncements();
-
-            // Guard: Re-check context after async operation
-            if (!context.mounted) {
-              log.warning('Context unmounted after fetching announcements');
-              return;
-            }
-
-            await NotificationHandler.instance
-                .handlePushNotificationClicked(context, additionalData);
-          } catch (e, stackTrace) {
-            log.severe('Error handling notification click: $e', e, stackTrace);
-            unawaited(Sentry.captureException(
-              e,
-              stackTrace: stackTrace,
-              hint: Hint.withMap({
-                'notification_data': openedResult.notification.additionalData,
-              }),
-            ));
-          }
-        });
+    OneSignal.Notifications.addClickListener((openedResult) async {
+      log.info('Tapped push notification: '
+          '${openedResult.notification.additionalData}');
+      final additionalData =
+          AdditionalData.fromJson(openedResult.notification.additionalData!);
+      await _announcementService.fetchAnnouncements();
+      if (!context.mounted) {
+        return;
       }
-    }
+      unawaited(
+        NotificationHandler.instance
+            .handlePushNotificationClicked(context, additionalData),
+      );
+    });
     _fgbgSubscription =
         FGBGEvents.instance.stream.listen(_handleForeBackground);
   }
 
   void onHomePageDispose() {
-    _isHomePageInitialized = false;
     _collectionRefreshTimer?.cancel();
     _fgbgSubscription?.cancel();
     _networkService.hasInternetNotifier.removeListener(_onNetworkChanged);

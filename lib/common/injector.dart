@@ -61,7 +61,6 @@ import 'package:autonomy_flutter/service/metric_service.dart';
 import 'package:autonomy_flutter/service/mobile_controller_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/network_service.dart';
-import 'package:autonomy_flutter/service/push_notification/notification_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/secure_storage_server.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
@@ -424,9 +423,5 @@ Future<void> setupInjector() async {
 
   injector.registerLazySingleton<AuthService>(
     () => AuthServiceImpl(),
-  );
-
-  injector.registerLazySingleton<NotificationService>(
-    () => NotificationServiceImpl(),
   );
 }

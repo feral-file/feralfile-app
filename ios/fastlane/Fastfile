@@ -211,7 +211,6 @@ platform :ios do
 				method: "app-store",
 				provisioningProfiles: {
 					"com.feralfile.app": "Feral File app - Production",
-					"com.feralfile.app.notifications": "Feral File app push notifications - Production",
 				},
 				iCloudContainerEnvironment: 'Production'
 			},
@@ -251,7 +250,6 @@ platform :ios do
 		)
 
 		install_provisioning_profile(path: "fastlane/provisioning_profiles/Feral_File_app__Production.mobileprovision")
-		install_provisioning_profile(path: "fastlane/provisioning_profiles/Feral_File_app_push_notifications__Production.mobileprovision")
 
 		build_testflight
 
