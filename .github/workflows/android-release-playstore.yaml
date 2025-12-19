@@ -64,13 +64,14 @@ jobs:
           mkdir whatsnew
           echo "${{ github.event.inputs.message }}" > ./whatsnew/whatsnew-en-US
 
-      # Upload APK to Google Play Internal Testing track
-      - name: Upload APK to Google Play
+      # Upload AAB to Google Play Internal Testing track
+      - name: Upload AAB to Google Play
         uses: r0adkll/upload-google-play@v1.1.3
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
-          packageName: com.bitmark.autonomy_client
+          packageName: com.feralfile.app
           releaseFiles: build/app/outputs/bundle/productionRelease/app-production-release.aab
           track: internal
           mappingFile: build/app/outputs/mapping/productionRelease/mapping.txt
+          debugSymbols: build/app/intermediates/merged_native_libs/productionRelease/mergeProductionReleaseNativeLibs/out/lib
           whatsNewDirectory: ./whatsnew

@@ -470,99 +470,106 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
             disableKeys: assetToken.disableKeys,
           ),
         ),
-        SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: SizedBox(
-            width: double.infinity,
-            child: Column(
-              children: [
-                Visibility(
-                  visible: checkWeb3ContractAddress
-                      .contains(assetToken.contractAddress),
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.only(left: 16, right: 16, bottom: 20),
-                    child: OutlineButton(
-                      color: Colors.transparent,
-                      text: 'web3_glossary'.tr(),
-                      onTap: () {
-                        unawaited(
-                          Navigator.pushNamed(
-                            context,
-                            AppRouter.previewPrimerPage,
-                            arguments: assetToken,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                Visibility(
-                  visible: editionSubTitle.isNotEmpty,
-                  child: Align(
-                    alignment: Alignment.centerLeft,
+        NotificationListener<UserScrollNotification>(
+          onNotification: (notification) {
+            // Consume scroll notifications to prevent them from bubbling up
+            // to the main app's NotificationListener
+            return true;
+          },
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: SizedBox(
+              width: double.infinity,
+              child: Column(
+                children: [
+                  Visibility(
+                    visible: checkWeb3ContractAddress
+                        .contains(assetToken.contractAddress),
                     child: Padding(
-                      padding: ResponsiveLayout.getPadding,
-                      child: Text(
-                        editionSubTitle,
-                        style: AppTypography.body(context).grey,
+                      padding: const EdgeInsets.only(
+                          left: 16, right: 16, bottom: 20),
+                      child: OutlineButton(
+                        color: Colors.transparent,
+                        text: 'web3_glossary'.tr(),
+                        onTap: () {
+                          unawaited(
+                            Navigator.pushNamed(
+                              context,
+                              AppRouter.previewPrimerPage,
+                              arguments: assetToken,
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ),
-                ),
-                Padding(
-                  padding: ResponsiveLayout.getPadding,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Semantics(
-                        label: 'Desc',
-                        child: SelectionArea(
-                          focusNode: _selectTextFocusNode,
-                          child: HtmlWidget(
-                            customStylesBuilder: auHtmlStyle,
-                            assetToken.displayDescription,
-                            textStyle: AppTypography.body(context).white,
-                            onTapUrl: (url) async {
-                              await launchUrl(
-                                Uri.parse(url),
-                                mode: LaunchMode.externalApplication,
-                              );
-                              return true;
-                            },
-                          ),
+                  Visibility(
+                    visible: editionSubTitle.isNotEmpty,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: ResponsiveLayout.getPadding,
+                        child: Text(
+                          editionSubTitle,
+                          style: AppTypography.body(context).grey,
                         ),
                       ),
-                      const SizedBox(height: 40),
-                      artworkDetailsMetadataSection(
-                          context, assetToken, artistName),
-                      if (ownerItems?.isNotEmpty ?? false) ...[
-                        tokenOwnership(
-                          context,
-                          assetToken,
-                          identityState.identityMap[
-                                  assetToken.owners?.items.first.ownerAddress ??
-                                      ''] ??
-                              '',
-                        ),
-                      ],
-                      if (state.assetToken?.provenance.isNotEmpty ?? false)
-                        _provenanceView(
-                            context, state.assetToken?.provenance ?? [])
-                      else
-                        const SizedBox(),
-                      artworkDetailsRightSection(context, assetToken),
-                      const SizedBox(height: 80),
-                    ],
+                    ),
                   ),
-                ),
-                SizedBox(
-                  height: (MediaQuery.of(context).size.height -
-                          (_appBarBottomDy ?? 80) -
-                          _infoHeaderHeight) *
-                      0.5,
-                ),
-              ],
+                  Padding(
+                    padding: ResponsiveLayout.getPadding,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Semantics(
+                          label: 'Desc',
+                          child: SelectionArea(
+                            focusNode: _selectTextFocusNode,
+                            child: HtmlWidget(
+                              customStylesBuilder: auHtmlStyle,
+                              assetToken.displayDescription,
+                              textStyle: AppTypography.body(context).white,
+                              onTapUrl: (url) async {
+                                await launchUrl(
+                                  Uri.parse(url),
+                                  mode: LaunchMode.externalApplication,
+                                );
+                                return true;
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                        artworkDetailsMetadataSection(
+                            context, assetToken, artistName),
+                        if (ownerItems?.isNotEmpty ?? false) ...[
+                          tokenOwnership(
+                            context,
+                            assetToken,
+                            identityState.identityMap[assetToken
+                                        .owners?.items.first.ownerAddress ??
+                                    ''] ??
+                                '',
+                          ),
+                        ],
+                        if (state.assetToken?.provenance.isNotEmpty ?? false)
+                          _provenanceView(
+                              context, state.assetToken?.provenance ?? [])
+                        else
+                          const SizedBox(),
+                        artworkDetailsRightSection(context, assetToken),
+                        const SizedBox(height: 80),
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    height: (MediaQuery.of(context).size.height -
+                            (_appBarBottomDy ?? 80) -
+                            _infoHeaderHeight) *
+                        0.5,
+                  ),
+                ],
+              ),
             ),
           ),
         ),

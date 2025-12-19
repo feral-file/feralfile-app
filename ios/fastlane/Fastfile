@@ -223,6 +223,8 @@ platform :ios do
 			app_version: ENV["APP_VERSION"],
 			build_number: next_build_number.to_s,
 			skip_submission: true,
+			skip_waiting_for_build_processing: true,
+			distribute_external: false,
 		)
   	end
 
