@@ -17,8 +17,6 @@ import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/network_service.dart';
-import 'package:autonomy_flutter/service/push_notification/notification_handler.dart';
-import 'package:autonomy_flutter/service/push_notification/notification_util.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
@@ -26,6 +24,7 @@ import 'package:autonomy_flutter/shared.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:autonomy_flutter/util/notifications/notification_handler.dart';
 import 'package:autonomy_flutter/util/now_displaying_manager.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:flutter/cupertino.dart';
@@ -64,8 +63,6 @@ class HomePageHelper {
   Timer? _collectionRefreshTimer;
   StreamSubscription<FGBGType>? _fgbgSubscription;
   bool _isBackground = false;
-  bool _hasAddedNotificationListener = false;
-  bool _isHomePageInitialized = false;
   bool _isShowingOfflineDialog = false;
 
   final _announcementService = injector<AnnouncementService>();
@@ -73,7 +70,6 @@ class HomePageHelper {
   final _networkService = injector<NetworkService>();
 
   void onHomePageInit(BuildContext context, ObservingState state) {
-    _isHomePageInitialized = true;
     // Listen to network changes
     _networkService.hasInternetNotifier.addListener(_onNetworkChanged);
 
@@ -207,7 +203,6 @@ class HomePageHelper {
   }
 
   void onHomePageDispose() {
-    _isHomePageInitialized = false;
     _collectionRefreshTimer?.cancel();
     _fgbgSubscription?.cancel();
     _networkService.hasInternetNotifier.removeListener(_onNetworkChanged);

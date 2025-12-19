@@ -5,6 +5,8 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'dart:async';
+
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
@@ -51,9 +53,10 @@ class OnboardingSetupFf1Page extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'When you\'re ready to see these playlists on a wall, plug FF1 into '
-                  'any HDMI display and pair it with the app. Press Play and your '
-                  'screen becomes a surface for digital and computational art.',
+                  "When you're ready to see these playlists on a wall, plug "
+                  'FF1 into any HDMI display and pair it with the app. Press '
+                  'Play and your screen becomes a surface for digital and '
+                  'computational art.',
                   style: AppTypography.body(context).white,
                 ),
                 const SizedBox(height: 16),
@@ -78,7 +81,7 @@ class OnboardingSetupFf1Page extends StatelessWidget {
                 ),
                 const SizedBox(width: 7),
                 Text(
-                  'Setup FF1',
+                  'Continue setup',
                   style: theme.textTheme.body.copyWith(
                     color: PrimitivesTokens.colorsBlack,
                   ),
@@ -105,18 +108,23 @@ class OnboardingSetupFf1Page extends StatelessWidget {
 
   void onSetupFf1(BuildContext context) {
     startHandleDeeplinkCompleter.safeComplete(true);
-    injector<ConfigurationService>().setDoneOnboarding(true);
-    injector<NavigationService>().navigateTo(
-      AppRouter.startSetupFF1Page,
-      arguments: BluetoothDevicePortalPagePayload(deeplink: null),
+    final configService = injector<ConfigurationService>();
+    final navigationService = injector<NavigationService>();
+    unawaited(configService.setDoneOnboarding(true));
+    unawaited(
+      navigationService.navigateTo(
+        AppRouter.startSetupFF1Page,
+        arguments: BluetoothDevicePortalPagePayload(deeplink: null),
+      ),
     );
   }
 
   void onFinish(BuildContext context) {
     startHandleDeeplinkCompleter.safeComplete(true);
-    injector<ConfigurationService>().setDoneOnboarding(true);
-
-    injector<NavigationService>().replaceAllAndPushNamed(AppRouter.homePage);
+    final configService = injector<ConfigurationService>();
+    final navigationService = injector<NavigationService>();
+    unawaited(configService.setDoneOnboarding(true));
+    unawaited(navigationService.replaceAllAndPushNamed(AppRouter.homePage));
   }
 
   void onLearnMore(BuildContext context) {

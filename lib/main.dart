@@ -40,6 +40,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:system_date_time_format/system_date_time_format.dart';

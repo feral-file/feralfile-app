@@ -25,5 +25,5 @@ class CannotGetNowDisplayingException extends NowDisplayingExceptionImpl {
 
   @override
   String toString() =>
-      '${device.name} is connected but cannot get now displaying';
+      '${device.name} is connected but cannot get now playing';
 }

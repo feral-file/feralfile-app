@@ -143,7 +143,7 @@ class _NowDisplayingBarState extends State<NowDisplayingBar>
   Widget _noDeviceView(BuildContext context) {
     return const NowPlayingStatusBar(
       status:
-          'Pair an FF1 to display your collection and curated art on any screen.',
+          'Pair an FF1 to play your collection and curated art on any screen.',
     );
   }
 }

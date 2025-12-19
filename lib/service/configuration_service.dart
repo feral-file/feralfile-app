@@ -18,7 +18,10 @@ import 'package:uuid/uuid.dart';
 //ignore_for_file: constant_identifier_names
 
 abstract class ConfigurationService {
-  // user settings
+  int getDailyLikedCount();
+
+  Future<void> setDailyLikedCount(int count);
+
   Future<String> getDeviceId();
 
   List<String> getAnonymousIssueIds();
@@ -32,6 +35,10 @@ abstract class ConfigurationService {
   Future<void> setAnnouncementLastPullTime(int lastPullTime);
 
   int? getAnnouncementLastPullTime();
+
+  Future<void> setOldUser();
+
+  bool getIsOldUser();
 
   Future<void> setDoneOnboarding(bool value);
 
@@ -51,7 +58,19 @@ abstract class ConfigurationService {
 
   Future<void> setLastRemindReviewDate(String? value);
 
+  int? countOpenApp();
+
+  Future<void> setCountOpenApp(int? value);
+
   // ----- App Setting -----
+
+  bool showTokenDebugInfo();
+
+  Future<void> setShowTokenDebugInfo(bool show);
+
+  Future<void> setDoneOnboardingTime(DateTime time);
+
+  // Reload
   Future<void> reload();
 
   Future<void> removeAll();
@@ -69,6 +88,10 @@ abstract class ConfigurationService {
   String? getIssueIdByAnnouncementContentId(String announcementContentId);
 
   String? getAnnouncementContentIdByIssueId(String issueId);
+
+  bool isBetaTester();
+
+  Future<void> setBetaTester(bool value);
 
   String? getPilotVersion();
 
@@ -201,8 +224,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
   static const String POSTCARD_MINT = 'postcard_mint';
 
   static const String KEY_RECORDED_MESSAGES = 'recorded_messages';
-
-  static const String KEY_NOTIFICATION_ENABLED = 'notification_enabled';
 
   final SharedPreferences _preferences;
 
