@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/additional_data/additional_data.dart';
@@ -142,7 +143,7 @@ class HomePageHelper {
     _triggerShowAnnouncement();
 
     // Only add notification listener once to prevent duplicate calls
-    if (!_hasAddedNotificationListener) {
+    if (!_hasAddedNotificationListener && Platform.isAndroid) {
       _hasAddedNotificationListener = true;
       if (!OneSignalBootstrap.canUseOneSignal) {
         log.warning('Skipping OneSignal click listener: OneSignal not ready');
