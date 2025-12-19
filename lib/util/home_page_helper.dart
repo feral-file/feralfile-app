@@ -14,6 +14,10 @@ import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/announcement/announcement_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
+import 'package:autonomy_flutter/service/navigation_service.dart';
+import 'package:autonomy_flutter/service/network_service.dart';
+import 'package:autonomy_flutter/service/push_notification/notification_handler.dart';
+import 'package:autonomy_flutter/service/push_notification/notification_util.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
@@ -21,8 +25,8 @@ import 'package:autonomy_flutter/shared.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/util/notifications/notification_handler.dart';
 import 'package:autonomy_flutter/util/now_displaying_manager.dart';
+import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -59,11 +63,19 @@ class HomePageHelper {
   Timer? _collectionRefreshTimer;
   StreamSubscription<FGBGType>? _fgbgSubscription;
   bool _isBackground = false;
+  bool _hasAddedNotificationListener = false;
+  bool _isHomePageInitialized = false;
+  bool _isShowingOfflineDialog = false;
 
   final _announcementService = injector<AnnouncementService>();
   final _remoteConfig = injector<RemoteConfigService>();
+  final _networkService = injector<NetworkService>();
 
   void onHomePageInit(BuildContext context, ObservingState state) {
+    _isHomePageInitialized = true;
+    // Listen to network changes
+    _networkService.hasInternetNotifier.addListener(_onNetworkChanged);
+
     unawaited(injector<CustomerSupportService>().getChatThreads());
 
     // check for version compatibility
@@ -105,7 +117,7 @@ class HomePageHelper {
             .getAddressOldestLastIndexTime(addresses: owners);
         final addressesToRefresh =
             owners.where((e) => lastIndexedTime[e] != null).toList();
-        log.info('Refreshing tokens for: ${addressesToRefresh}');
+        log.info('Refreshing tokens for: $addressesToRefresh');
         if (addressesToRefresh.isEmpty) {
           log.info('No addresses to refresh');
           return;
@@ -114,38 +126,122 @@ class HomePageHelper {
             .add(UpdateTokensOfAddresses(addresses: addressesToRefresh));
       } catch (e) {
         log.info('Error in refresh tokens : $e');
-        unawaited(Sentry.captureEvent(SentryEvent(
-          message: SentryMessage('Error in refresh tokens: $e'),
-          level: SentryLevel.error,
-          throwable: e,
-        )));
+        unawaited(
+          Sentry.captureEvent(
+            SentryEvent(
+              message: SentryMessage('Error in refresh tokens: $e'),
+              level: SentryLevel.error,
+              throwable: e,
+            ),
+          ),
+        );
         // Silently ignore refresh errors
       }
     });
 
     _triggerShowAnnouncement();
 
-    OneSignal.Notifications.addClickListener((openedResult) async {
-      log.info('Tapped push notification: '
-          '${openedResult.notification.additionalData}');
-      final additionalData =
-          AdditionalData.fromJson(openedResult.notification.additionalData!);
-      await _announcementService.fetchAnnouncements();
-      if (!context.mounted) {
-        return;
+    // Only add notification listener once to prevent duplicate calls
+    if (!_hasAddedNotificationListener) {
+      _hasAddedNotificationListener = true;
+      if (!OneSignalBootstrap.canUseOneSignal) {
+        log.warning('Skipping OneSignal click listener: OneSignal not ready');
+      } else {
+        OneSignal.Notifications.addClickListener((openedResult) async {
+          try {
+            log.info('Tapped push notification: '
+                '${openedResult.notification.additionalData}');
+
+            // Guard: Only handle notifications when app is properly initialized
+            if (!_isHomePageInitialized) {
+              log.warning('HomePage not initialized, deferring notification');
+              return;
+            }
+
+            // Guard: Don't process notifications in background
+            if (_isBackground) {
+              log.warning('App in background, skipping notification handler');
+              return;
+            }
+
+            // Guard: Check if notification has additional data
+            final rawData = openedResult.notification.additionalData;
+            if (rawData == null || rawData.isEmpty) {
+              log.warning('Notification has no additional data, skipping');
+              return;
+            }
+
+            // Guard: Ensure context is still valid before any async operations
+            if (!context.mounted) {
+              log.warning('Context not mounted when notification clicked');
+              return;
+            }
+
+            final additionalData = AdditionalData.fromJson(rawData);
+            await _announcementService.fetchAnnouncements();
+
+            // Guard: Re-check context after async operation
+            if (!context.mounted) {
+              log.warning('Context unmounted after fetching announcements');
+              return;
+            }
+
+            await NotificationHandler.instance
+                .handlePushNotificationClicked(context, additionalData);
+          } catch (e, stackTrace) {
+            log.severe('Error handling notification click: $e', e, stackTrace);
+            unawaited(Sentry.captureException(
+              e,
+              stackTrace: stackTrace,
+              hint: Hint.withMap({
+                'notification_data': openedResult.notification.additionalData,
+              }),
+            ));
+          }
+        });
       }
-      unawaited(
-        NotificationHandler.instance
-            .handlePushNotificationClicked(context, additionalData),
-      );
-    });
+    }
     _fgbgSubscription =
         FGBGEvents.instance.stream.listen(_handleForeBackground);
   }
 
   void onHomePageDispose() {
+    _isHomePageInitialized = false;
     _collectionRefreshTimer?.cancel();
     _fgbgSubscription?.cancel();
+    _networkService.hasInternetNotifier.removeListener(_onNetworkChanged);
+  }
+
+  void _onNetworkChanged() {
+    final hasInternet = _networkService.hasInternetNotifier.value;
+    log.info('[HomePageHelper] Network changed - hasInternet: $hasInternet');
+
+    if (!hasInternet && !_isShowingOfflineDialog) {
+      // Show offline dialog when connection is lost
+      log.info('[HomePageHelper] Connection lost, showing offline dialog');
+      _showOfflineDialog();
+    } else if (hasInternet && _isShowingOfflineDialog) {
+      // Dismiss dialog when connection is restored
+      log.info('[HomePageHelper] Connection restored, dismissing dialog');
+      _isShowingOfflineDialog = false;
+      UIHelper.hideInfoDialog(injector<NavigationService>().context);
+    }
+  }
+
+  Future<void> _showOfflineDialog() async {
+    if (_isShowingOfflineDialog) {
+      return;
+    }
+
+    _isShowingOfflineDialog = true;
+    await UIHelper.showOfflineDialog(
+      injector<NavigationService>().context,
+      onRetry: () {
+        _isShowingOfflineDialog = false;
+        // No specific retry action for home page, just dismiss
+      },
+    );
+    _isShowingOfflineDialog = false;
   }
 
   void _triggerShowAnnouncement() {
@@ -185,7 +281,7 @@ class HomePageHelper {
     );
 
     final now = DateTime.now().toUtc();
-    final Duration? threshold =
+    final threshold =
         cacheValidSeconds != null ? Duration(seconds: cacheValidSeconds) : null;
     final lastForceUpdateTime = DateTime.tryParse(lastForceUpdateIso)?.toUtc();
 
@@ -207,8 +303,12 @@ class HomePageHelper {
 
     if (addressesToRefresh.isNotEmpty) {
       log.info('Force fetching tokens for ${addressesToRefresh.toList()}');
-      injector<UserAllOwnCollectionBloc>().add(FetchTokensOfAddresses(
-          addresses: addressesToRefresh, shouldUpdateLastRefreshedTime: true));
+      injector<UserAllOwnCollectionBloc>().add(
+        FetchTokensOfAddresses(
+          addresses: addressesToRefresh,
+          shouldUpdateLastRefreshedTime: true,
+        ),
+      );
     }
   }
 
@@ -233,7 +333,8 @@ class HomePageHelper {
       NftCollection.logger.info('Already indexed addresses: $alreadyIndexed');
       if (alreadyIndexed.isNotEmpty) {
         unawaited(
-            injector<NftTokensService>().reindexAddresses(alreadyIndexed));
+          injector<NftTokensService>().reindexAddresses(alreadyIndexed),
+        );
       }
 
       log.info('Addresses to reindex: $addressesToReindex');
@@ -252,7 +353,9 @@ class HomePageHelper {
         }
 
         log.info(
-            '[_refreshAddressesNeedingReindex] Reindexing tokens for ${addressesToReindex.toList()}');
+          '[_refreshAddressesNeedingReindex] Reindexing tokens for '
+          '${addressesToReindex.toList()}',
+        );
 
         injector<UserAllOwnCollectionBloc>()
             .add(ReindexAddresses(addresses: addressesToReindex.toList()));

@@ -104,13 +104,10 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		7F843EE62D069DBE006E71F3 /* notification */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = notification;
-			sourceTree = "<group>";
-		};
 		7FEC118E2D00485900FA7563 /* model */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = model;
 			sourceTree = "<group>";
 		};
@@ -185,7 +182,6 @@
 			children = (
 				9740EEB11CF90186004384FC /* Flutter */,
 				97C146F01CF9000F007C117D /* Runner */,
-				7F843EE62D069DBE006E71F3 /* notification */,
 				97C146EF1CF9000F007C117D /* Products */,
 				331C8082294A63A400263BE5 /* RunnerTests */,
 				C747A6C9F5EE294CA45235B6 /* Pods */,
@@ -386,12 +382,8 @@
 			);
 			inputFileListPaths = (
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -436,12 +428,8 @@
 			);
 			inputFileListPaths = (
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -899,7 +887,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = Z5CE7A3A7N;
 				ENABLE_BITCODE = NO;
 				FLAVOR_APP_NAME = "[DEV] Feralfile App";
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
