@@ -42,7 +42,7 @@ class _MobileControllerHomePageState
     _curatedPlaylistsBloc.add(LoadPlaylistsEvent());
     _myPlaylistsBloc.add(LoadPlaylistsEvent());
 
-    HomePageHelper.instance.onHomePageInit(context, this);
+    // HomePageHelper.instance.onHomePageInit(context, this);
   }
 
   // dispose
