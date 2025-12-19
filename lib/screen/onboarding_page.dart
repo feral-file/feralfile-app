@@ -10,6 +10,7 @@ import 'dart:async';
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/metric/dp1_playlist_metric.dart';
 import 'package:autonomy_flutter/model/metric/identify_user_payload.dart';
 import 'package:autonomy_flutter/onboarding/introduce_page.dart';
@@ -278,7 +279,6 @@ class _OnboardingPageState extends State<OnboardingPage>
         deeplink: null,
       ),
     );
-  }
 
     // at this point, the user has completed the onboarding
     // so we can registerPushNotifications
