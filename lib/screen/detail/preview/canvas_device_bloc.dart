@@ -16,7 +16,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_intent.dart';
 import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
-import 'package:autonomy_flutter/util/device_status_ext.dart';
 import 'package:autonomy_flutter/util/int_ext.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/now_displaying_manager.dart';
@@ -138,68 +137,26 @@ class CanvasDeviceUpdateConnectionEvent extends CanvasDeviceEvent {
 class CanvasDeviceState {
   CanvasDeviceState({
     Map<String, CheckCastingStatusReply>? canvasDeviceStatus,
-    Map<String, BaseDevice>? lastSelectedActiveDeviceMap,
     Map<String, bool>? deviceAliveMap,
     Map<String, DeviceStatus>? deviceInfoMap,
   })  : canvasDeviceStatus = canvasDeviceStatus ?? {},
-        lastSelectedActiveDeviceMap = lastSelectedActiveDeviceMap ?? {},
         deviceAliveMap = deviceAliveMap ?? {},
         deviceInfoMap = deviceInfoMap ?? {};
 
   final Map<String, CheckCastingStatusReply> canvasDeviceStatus;
-  final Map<String, BaseDevice> lastSelectedActiveDeviceMap;
   final Map<String, bool> deviceAliveMap;
   final Map<String, DeviceStatus> deviceInfoMap;
 
   CanvasDeviceState copyWith({
     Map<String, CheckCastingStatusReply>? controllingDeviceStatus,
-    Map<String, BaseDevice>? lastActiveDevice,
     Map<String, bool>? deviceAliveMap,
     Map<String, DeviceStatus>? deviceInfoMap,
   }) =>
       CanvasDeviceState(
         canvasDeviceStatus: controllingDeviceStatus ?? canvasDeviceStatus,
-        lastSelectedActiveDeviceMap:
-            lastActiveDevice ?? lastSelectedActiveDeviceMap,
         deviceAliveMap: deviceAliveMap ?? this.deviceAliveMap,
         deviceInfoMap: deviceInfoMap ?? this.deviceInfoMap,
       );
-
-  CanvasDeviceState updateOnCast({
-    required BaseDevice device,
-    required String displayKey,
-  }) {
-    final newLastSelectedActiveDeviceMap = lastSelectedActiveDeviceMap.copy()
-      ..removeWhere((key, value) => value == device);
-    newLastSelectedActiveDeviceMap[displayKey] = device;
-    return copyWith(
-      lastActiveDevice: newLastSelectedActiveDeviceMap,
-    );
-  }
-
-  BaseDevice? lastSelectedActiveDeviceForKey(String key) {
-    final lastActiveDevice = lastSelectedActiveDeviceMap[key];
-    if (lastActiveDevice != null) {
-      if (isDeviceAlive(lastActiveDevice)) {
-        return lastActiveDevice;
-      } else {
-        lastSelectedActiveDeviceMap.remove(key);
-      }
-    }
-    final activeDevice = _activeDeviceForKey(key);
-    if (activeDevice != null) {
-      lastSelectedActiveDeviceMap[key] = activeDevice;
-    }
-    return activeDevice;
-  }
-
-  Duration? castingSpeed(String key) {
-    final lastActiveDevice = lastSelectedActiveDeviceForKey(key);
-    final lastActiveDeviceStatus =
-        canvasDeviceStatus[lastActiveDevice?.deviceId];
-    final durationInSec = lastActiveDeviceStatus?.items?.firstOrNull?.duration;
-    return Duration(seconds: durationInSec ?? 0);
-  }
 
   List<BaseDevice> get devices => BluetoothDeviceManager.pairedDevices;
 
@@ -230,15 +187,6 @@ class CanvasDeviceState {
     return devices.where(isDeviceAlive).toList();
   }
 
-  BaseDevice? _activeDeviceForKey(String key) {
-    final id = canvasDeviceStatus.entries
-        .firstWhereOrNull((element) => element.value.playingArtworkKey == key)
-        ?.key;
-    return devices.firstWhereOrNull(
-      (element) => element.deviceId == id && isDeviceAlive(element),
-    );
-  }
-
   DeviceDisplaySetting? deviceDisplaySettingOf(BaseDevice device) {
     final status = statusOf(device);
     return status?.deviceSettings;
@@ -256,13 +204,10 @@ class CanvasDeviceBloc extends AuBloc<CanvasDeviceEvent, CanvasDeviceState> {
       (event, emit) {
         final device = event.device;
         final status = event.status;
-        final key = status.playingArtworkKey;
         final newState = state.canvasDeviceStatus.copy()
           ..[device.deviceId] = status;
         emit(
-          state
-              .updateOnCast(device: device, displayKey: key)
-              .copyWith(controllingDeviceStatus: newState),
+          state.copyWith(controllingDeviceStatus: newState),
         );
         NowDisplayingManager().updateDisplayingNow();
       },
@@ -425,6 +370,5 @@ class CanvasDeviceBloc extends AuBloc<CanvasDeviceEvent, CanvasDeviceState> {
   void clear() {
     state.devices.clear();
     state.canvasDeviceStatus.clear();
-    state.lastSelectedActiveDeviceMap.clear();
   }
 }

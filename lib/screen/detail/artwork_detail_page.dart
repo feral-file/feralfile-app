@@ -10,10 +10,8 @@ import 'dart:collection';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/main.dart';
-import 'package:autonomy_flutter/model/play_list_model.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
@@ -29,6 +27,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_intent.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
@@ -36,6 +35,7 @@ import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/custom_route_observer.dart';
+import 'package:autonomy_flutter/util/device_status_ext.dart';
 import 'package:autonomy_flutter/util/feral_file_custom_tab.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/style.dart';
@@ -195,16 +195,17 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
       backgroundColor: AppColor.auGreyBackground,
       body: BlocConsumer<ArtworkDetailBloc, ArtworkDetailState>(
         listener: (context, state) {
-          final List<String> identitiesList = state.assetToken?.provenance
+          final identitiesList = state.assetToken?.provenance
                   .map((e) => e.toAddress ?? '')
                   .toSet()
                   .toList() ??
               [];
           final listArtists = state.assetToken?.getArtists;
-          identitiesList.addAll(listArtists?.map((e) => e.name) ?? []);
-
-          identitiesList.addAll(
-              state.assetToken?.owners?.items.map((e) => e.ownerAddress) ?? []);
+          identitiesList
+            ..addAll(listArtists?.map((e) => e.name) ?? [])
+            ..addAll(
+              state.assetToken?.owners?.items.map((e) => e.ownerAddress) ?? [],
+            );
 
           setState(() {
             currentToken = state.assetToken;
@@ -373,8 +374,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
     );
   }
 
-  String _getDisplayKey(AssetToken asset) => asset.displayKey;
-
   dynamic _onLoaded({WebViewController? webViewController, int? time}) {
     _webViewController = webViewController;
   }
@@ -452,14 +451,11 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
     ArtworkDetailState state,
     String? artistName,
   ) {
-    final theme = Theme.of(context);
     final assetToken = state.assetToken!;
     final allAddresses = injector<AddressService>().getAllAddresses();
     final ownerItems = assetToken.owners?.items.where((element) =>
         allAddresses.contains(element.ownerAddress) &&
         (int.tryParse(element.quantity) ?? 0) > 0);
-    // final editionSubTitle = getEditionSubTitle(assetToken);
-    final editionSubTitle = '';
     return Stack(
       children: [
         Visibility(
@@ -501,19 +497,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                             ),
                           );
                         },
-                      ),
-                    ),
-                  ),
-                  Visibility(
-                    visible: editionSubTitle.isNotEmpty,
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: ResponsiveLayout.getPadding,
-                        child: Text(
-                          editionSubTitle,
-                          style: AppTypography.body(context).grey,
-                        ),
                       ),
                     ),
                   ),
@@ -599,24 +582,36 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
         ),
       );
 
-  bool _isHidden(AssetToken token) => injector<AppDataManager>()
-      .appSettingsStorageService
-      .hiddenTokenIDs
-      .contains(token.cid);
+  bool isPlayingOnFF1(
+    AssetToken asset,
+    CanvasDeviceState canvasDeviceState,
+  ) {
+    final playingDevice = BluetoothDeviceManager().castingBluetoothDevice;
+    if (playingDevice == null) {
+      return false;
+    }
+
+    final playingItem = canvasDeviceState.statusOf(playingDevice)?.playingItem;
+
+    if (playingItem == null) {
+      return false;
+    }
+
+    return playingItem.id == asset.cid ||
+        playingItem.displayKey == asset.displayKey;
+  }
 
   Future<void> _showArtworkOptionsDialog(
     BuildContext context,
     AssetToken asset,
     CanvasDeviceState canvasDeviceState,
   ) async {
-    final connectedDevice = BluetoothDeviceManager().castingBluetoothDevice;
-    final isCasting = connectedDevice != null;
-    final hasLocalAddress = asset.hasLocalAddress();
     if (!context.mounted) {
       return;
     }
-    final isHidden = _isHidden(asset);
     _focusNode.unfocus();
+
+    final isPlaying = isPlayingOnFF1(asset, canvasDeviceState);
 
     unawaited(
       UIHelper.showDrawerAction(
@@ -634,7 +629,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
               _setFullScreen();
             },
           ),
-          if (isCasting)
+          if (isPlaying)
             OptionItem(
               title: 'interact'.tr(),
               icon: SvgPicture.asset(
@@ -644,18 +639,17 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
               ),
               onTap: () {
                 Navigator.of(context).pop();
-                final castingDevice = canvasDeviceState
-                    .lastSelectedActiveDeviceForKey(_getDisplayKey(asset));
                 final bluetoothConnectedDevice =
                     BluetoothDeviceManager().castingBluetoothDevice;
-                if (castingDevice != null || bluetoothConnectedDevice != null) {
+                if (bluetoothConnectedDevice != null &&
+                    isPlayingOnFF1(asset, canvasDeviceState)) {
                   unawaited(
                     Navigator.of(context).pushNamed(
                       AppRouter.keyboardControlPage,
                       arguments: KeyboardControlPagePayload(
-                        "",
+                        '',
                         asset.displayDescription,
-                        [bluetoothConnectedDevice ?? castingDevice!],
+                        [bluetoothConnectedDevice],
                       ),
                     ),
                   );
@@ -806,32 +800,24 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
 class ArtworkDetailPayload {
   ArtworkDetailPayload(
     this.identity, {
-    this.playlist,
     this.useIndexer = true,
-    this.shouldUseLocalCache = true,
     this.key,
     this.backTitle,
   });
 
   final Key? key;
   final ArtworkIdentity identity;
-  final PlayListModel? playlist;
   final bool useIndexer; // set true when navigate from discover/gallery page
   // if local token, it can be hidden and refresh metadata
-  final bool shouldUseLocalCache;
   final String? backTitle;
 
   ArtworkDetailPayload copyWith({
     ArtworkIdentity? identity,
-    PlayListModel? playlist,
     bool? useIndexer,
-    bool? shouldUseLocalCache,
   }) =>
       ArtworkDetailPayload(
         identity ?? this.identity,
-        playlist: playlist ?? this.playlist,
         useIndexer: useIndexer ?? this.useIndexer,
-        shouldUseLocalCache: shouldUseLocalCache ?? this.shouldUseLocalCache,
       );
 }
 

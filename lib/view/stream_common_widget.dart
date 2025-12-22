@@ -6,7 +6,6 @@ import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/device/base_device.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/range_input_formatter.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
@@ -270,8 +269,7 @@ class _PlaylistControlState extends State<PlaylistControl> {
               color: AppColor.primaryBlack,
             ),
             child: ArtworkDurationControl(
-              duration: state.castingSpeed(widget.displayKey) ??
-                  speedValues.values.first,
+              duration: speedValues.values.first,
               displayKey: widget.displayKey,
             ),
           ),

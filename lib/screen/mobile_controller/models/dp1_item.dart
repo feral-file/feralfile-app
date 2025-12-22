@@ -270,6 +270,8 @@ enum ArtworkDisplayLicense {
 
 extension DP1PlaylistItemExt on DP1Item {
   String? get cid => provenance?.cid;
+
+  String get displayKey => (cid ?? '').hashCode.toString();
 }
 
 /// Extension for removing duplicate items based on unique identifiers

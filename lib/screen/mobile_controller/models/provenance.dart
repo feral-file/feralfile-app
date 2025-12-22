@@ -249,7 +249,7 @@ extension DP1ContractExt on DP1Contract {
       return null;
     }
 
-    return "$prefix:$standard:$contractAddress:$tokenId";
+    return '$prefix:$standard:$contractAddress:$tokenId';
   }
 }
 
