@@ -595,8 +595,6 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
     }
     return Column(
       children: _debugLogs.map((debugLog) {
-        final fileSize = debugLog.second.length;
-        final fileSizeInMB = fileSize / (1024 * 1024);
         return Container(
           color: AppColor.auGreyBackground,
           padding: const EdgeInsets.fromLTRB(25, 5, 25, 5),
@@ -607,13 +605,6 @@ class _SupportThreadPageState extends State<SupportThreadPage> {
                 style: AppTypography.body(context)
                     .white
                     .copyWith(color: AppColor.feralFileHighlight),
-              ),
-              const SizedBox(width: 5),
-              Text(
-                '(${fileSizeInMB.toStringAsFixed(2)} MB)',
-                style: AppTypography.body(context)
-                    .white
-                    .copyWith(color: AppColor.auQuickSilver),
               ),
               const Spacer(),
               Semantics(
