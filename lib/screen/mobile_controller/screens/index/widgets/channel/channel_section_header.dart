@@ -51,7 +51,7 @@ class ChannelSectionHeader extends StatelessWidget {
               ),
               Text(
                 sectionName,
-                style: AppTypography.h3(context).white,
+                style: AppTypography.h4(context).white,
               ),
             ],
           ),
