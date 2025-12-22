@@ -5,8 +5,6 @@
 //  that can be found in the LICENSE file.
 //
 
-import 'dart:io';
-
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/release_note.dart';
@@ -22,8 +20,6 @@ import 'package:autonomy_flutter/screen/bloc/accounts/accounts_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/subscription/subscription_bloc.dart';
 import 'package:autonomy_flutter/screen/customer_support/support_customer_page.dart';
-import 'package:autonomy_flutter/screen/customer_support/support_list_page.dart';
-import 'package:autonomy_flutter/screen/customer_support/support_thread_page.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
@@ -315,19 +311,6 @@ class AppRouter {
           builder: (context) => const SupportCustomerPage(),
         );
 
-      case supportListPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => const SupportListPage(),
-        );
-
-      case supportThreadPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => SupportThreadPage(
-            payload: settings.arguments! as SupportThreadPayload,
-          ),
-        );
       case hiddenArtworksPage:
         return CupertinoPageRoute(
           settings: settings,
