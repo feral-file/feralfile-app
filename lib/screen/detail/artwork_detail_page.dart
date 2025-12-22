@@ -214,14 +214,10 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
               .add(GetIdentityEvent(identitiesList.toSet().toList()));
         },
         builder: (context, state) {
-          if (state.assetToken == null) {
-            return const LoadingWidget(
-              backgroundColor: AppColor.auGreyBackground,
-            );
-          }
+          final isLoading = state.assetToken == null;
           final identityState = context.watch<IdentityBloc>().state;
-          final assetToken = state.assetToken!;
-          final artistName = assetToken.getArtists.firstOrNull?.name
+          final assetToken = state.assetToken;
+          final artistName = assetToken?.getArtists.firstOrNull?.name
               .toIdentityOrMask(identityState.identityMap);
           return BlocBuilder<CanvasDeviceBloc, CanvasDeviceState>(
             bloc: _canvasDeviceBloc,
@@ -236,69 +232,74 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                       : MainAppBar(
                           backTitle: widget.payload.backTitle ?? '',
                           actions: [
-                            FFCastButton(
-                              // displayKey: _getDisplayKey(assetToken),
-                              onDeviceSelected: (device) async {
-                                final playlistItem =
-                                    DP1PlaylistItemExtension.fromAssetToken(
-                                  token: assetToken,
-                                );
-                                final dp1Playlist = DP1CallExtension.fromItems(
-                                  items: [playlistItem],
-                                );
-                                final completer = Completer<void>();
-                                _canvasDeviceBloc.add(
-                                  CanvasDeviceCastDP1PlaylistEvent(
-                                    intent: DP1Intent.displayNow(),
-                                    device: device,
-                                    playlist: dp1Playlist,
-                                    usingUrl: false,
-                                    onDoneCallback: () {
-                                      completer.complete();
-                                    },
-                                  ),
-                                );
-                                await completer.future;
-                              },
-                            ),
+                            if (!isLoading)
+                              FFCastButton(
+                                // displayKey: _getDisplayKey(assetToken),
+                                onDeviceSelected: (device) async {
+                                  final playlistItem =
+                                      DP1PlaylistItemExtension.fromAssetToken(
+                                    token: assetToken!,
+                                  );
+                                  final dp1Playlist =
+                                      DP1CallExtension.fromItems(
+                                    items: [playlistItem],
+                                  );
+                                  final completer = Completer<void>();
+                                  _canvasDeviceBloc.add(
+                                    CanvasDeviceCastDP1PlaylistEvent(
+                                      intent: DP1Intent.displayNow(),
+                                      device: device,
+                                      playlist: dp1Playlist,
+                                      usingUrl: false,
+                                      onDoneCallback: () {
+                                        completer.complete();
+                                      },
+                                    ),
+                                  );
+                                  await completer.future;
+                                },
+                              ),
                           ],
                         ),
-                  backLayer: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(
-                        height: UIConstants.detailPageHeaderPadding,
-                      ),
-                      Expanded(
-                        child: Center(
-                          child: ArtworkPreviewWidget(
-                            useIndexer: widget.payload.useIndexer,
-                            identity: widget.payload.identity,
-                            onLoaded: _onLoaded,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(
-                        height: UIConstants.detailPageHeaderPadding,
-                      ),
-                      if (!_isFullScreen)
-                        const Column(
+                  backLayer: !isLoading
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Padding(
-                              padding: EdgeInsets.symmetric(vertical: 8),
-                              child: ArtworkDetailsHeader(
-                                title: 'I',
-                                subTitle: 'I',
-                                color: Colors.transparent,
+                            const SizedBox(
+                              height: UIConstants.detailPageHeaderPadding,
+                            ),
+                            Expanded(
+                              child: Center(
+                                child: ArtworkPreviewWidget(
+                                  useIndexer: widget.payload.useIndexer,
+                                  identity: widget.payload.identity,
+                                  onLoaded: _onLoaded,
+                                ),
                               ),
                             ),
-                            BottomSpacing(),
+                            const SizedBox(
+                              height: UIConstants.detailPageHeaderPadding,
+                            ),
+                            if (!_isFullScreen)
+                              const Column(
+                                children: [
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 8),
+                                    child: ArtworkDetailsHeader(
+                                      title: 'I',
+                                      subTitle: 'I',
+                                      color: Colors.transparent,
+                                    ),
+                                  ),
+                                  BottomSpacing(),
+                                ],
+                              ),
                           ],
-                        ),
-                    ],
-                  ),
+                        )
+                      : LoadingWidget(
+                          backgroundColor: AppColor.auGreyBackground),
                   reverseAnimationCurve: Curves.ease,
-                  frontLayer: _isFullScreen
+                  frontLayer: _isFullScreen || isLoading
                       ? const SizedBox()
                       : _infoContent(
                           context,
@@ -316,7 +317,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                   backLayerScrim: Colors.transparent,
                   subHeaderAlwaysActive: false,
                   frontLayerShape: const BeveledRectangleBorder(),
-                  subHeader: _isFullScreen
+                  subHeader: _isFullScreen || isLoading
                       ? null
                       : DecoratedBox(
                           decoration: const BoxDecoration(
@@ -334,7 +335,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                             child: Container(
                               child: _infoHeader(
                                 context,
-                                assetToken,
+                                assetToken!,
                                 artistName,
                                 canvasState,
                               ),
