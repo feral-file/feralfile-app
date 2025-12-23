@@ -71,4 +71,6 @@ class PlaylistsState {
   bool get isLoadingMore => status == PlaylistsStateStatus.loadingMore;
   bool get isLoaded => status == PlaylistsStateStatus.loaded;
   bool get isError => status == PlaylistsStateStatus.error;
+
+  List<PlaylistData> get top5PlaylistData => playlistData.safeSublist(0, 5);
 }

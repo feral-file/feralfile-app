@@ -105,4 +105,20 @@ class ChannelData {
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is ChannelData &&
+        channelReference == other.channelReference &&
+        creator == other.creator &&
+        items == other.items &&
+        currentItemsPage == other.currentItemsPage &&
+        hasMoreItems == other.hasMoreItems &&
+        isLoadingMore == other.isLoadingMore;
+  }
+
+  @override
+  int get hashCode => Object.hash(channelReference, creator, items,
+      currentItemsPage, hasMoreItems, isLoadingMore);
 }

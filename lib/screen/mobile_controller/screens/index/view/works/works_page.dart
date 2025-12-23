@@ -20,15 +20,19 @@ class WorksPageState extends State<WorksPage>
     with AutomaticKeepAliveClientMixin {
   late final WorksBloc _worksBloc;
 
+  late final ScrollController _scrollController;
+
   @override
   void initState() {
     super.initState();
     _worksBloc = injector<WorksBloc>();
+    _scrollController = ScrollController();
     _worksBloc.add(const LoadWorksEvent());
   }
 
   @override
   void dispose() {
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -87,6 +91,7 @@ class WorksPageState extends State<WorksPage>
       child: CustomScrollView(
         physics: const NeverScrollableScrollPhysics(),
         shrinkWrap: true,
+        controller: _scrollController,
         slivers: [
           UIHelper.dp1ItemSliverGrid(context, nowDisplayingItems, 'Works'),
           if (hasMore || isLoadingMore)

@@ -74,6 +74,8 @@ class ChannelsState {
   bool get isLoadingMore => status == ChannelsStateStatus.loadingMore;
   bool get isLoaded => status == ChannelsStateStatus.loaded;
   bool get isError => status == ChannelsStateStatus.error;
+
+  List<ChannelData> get top5ChannelData => channelData.safeSublist(0, 5);
 }
 
 class LoadChannelPaginationResponse {

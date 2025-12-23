@@ -2,7 +2,6 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/main.dart';
-import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/all_channels_page.dart';
@@ -12,6 +11,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
+import 'package:autonomy_flutter/util/channel_data_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -97,21 +97,14 @@ class ChannelsPageState extends State<ChannelsPage>
   Widget _buildCuratedChannels() {
     return BlocBuilder<ChannelsBloc, ChannelsState>(
       bloc: _curatedChannelsBloc,
+      buildWhen: (previous, current) {
+        final previousTop5ChannelData = previous.top5ChannelData;
+        final currentTop5ChannelData = current.top5ChannelData;
+        final isEqualTo =
+            previousTop5ChannelData.isEqualTo(currentTop5ChannelData);
+        return !isEqualTo;
+      },
       builder: (context, state) => _buildContent(state, _curatedChannelsBloc),
-    );
-  }
-
-  Widget _buildMyChannels() {
-    return BlocBuilder<ChannelsBloc, ChannelsState>(
-      bloc: _myChannelsBloc,
-      builder: (context, state) => _buildContent(state, _myChannelsBloc),
-    );
-  }
-
-  Widget _buildGlobalChannels() {
-    return BlocBuilder<ChannelsBloc, ChannelsState>(
-      bloc: _globalChannelsBloc,
-      builder: (context, state) => _buildContent(state, _globalChannelsBloc),
     );
   }
 
@@ -136,8 +129,9 @@ class ChannelsPageState extends State<ChannelsPage>
   Widget _buildChannels(ChannelsState state, ChannelsBloc channelsBloc) {
     final channelType = channelsBloc.channelType;
     // only get the first 5 channels for section
-    final channelDataList = state.channelData.safeSublist(0, 5);
-    final hasMore = state.hasMore;
+    final channelDataList = state.top5ChannelData;
+    final hasMore = state.top5ChannelData.length < state.channelData.length ||
+        state.hasMore;
 
     return SliverList.builder(
       itemCount: 1,

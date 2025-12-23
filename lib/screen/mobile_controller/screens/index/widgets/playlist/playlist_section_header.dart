@@ -44,8 +44,8 @@ class PlaylistSectionHeader extends StatelessWidget {
                       BlendMode.srcIn,
                     ),
                   ),
-              const SizedBox(
-                width: PlaylistSectionHeaderTokens.sectionGap,
+              SizedBox(
+                width: LayoutConstants.space4,
               ),
               Text(
                 sectionName,
