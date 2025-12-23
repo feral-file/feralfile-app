@@ -33,7 +33,6 @@ import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/device_info_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
-import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_ext.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/constants.dart';
@@ -669,129 +668,54 @@ class NavigationService {
   }
 
   /// Show customer support flow:
-  /// 1. Ask what the member was trying to do (multi-select)
-  /// 2. Ask whether to attach a debug log
-  /// 3. Prepare an email draft with prefilled subject, body and optional logs
+  /// 1. Ask whether to attach a debug log
+  /// 2. Prepare an email draft with prefilled subject, body and optional logs
   Future<void> showCustomerSupport() async {
     if (!mounted) {
       return;
     }
 
-    final selectedReasons = <_SupportReason>{};
-
     unawaited(
       UIHelper.showDialog<void>(
         context,
         'Attach a debug log?',
-        StatefulBuilder(
-          builder: (context, setState) => Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Recommended. It helps us fix issues faster by including technical details like app events, device model, and recent errors. It does not include passwords or private keys. After the email opens, you can also attach screenshots or photos.',
-                style: AppTypography.body(context).white,
-              ),
-              SizedBox(height: LayoutConstants.space6),
-              Text(
-                'I was trying to:',
-                style: AppTypography.body(context).white,
-              ),
-              SizedBox(height: LayoutConstants.space3),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: _SupportReason.values.map((reason) {
-                  final isSelected = selectedReasons.contains(reason);
-                  return Column(
-                    children: [
-                      InkWell(
-                        onTap: () {
-                          setState(() {
-                            if (isSelected) {
-                              selectedReasons.remove(reason);
-                            } else {
-                              selectedReasons.add(reason);
-                            }
-                          });
-                        },
-                        child: Row(
-                          children: [
-                            Checkbox(
-                              value: isSelected,
-                              activeColor: AppColor.feralFileLightBlue,
-                              checkColor: AppColor.white,
-                              onChanged: (checked) {
-                                setState(() {
-                                  if (checked == true) {
-                                    selectedReasons.add(reason);
-                                  } else {
-                                    selectedReasons.remove(reason);
-                                  }
-                                });
-                              },
-                            ),
-                            Expanded(
-                              child: Text(
-                                reason.label,
-                                style: AppTypography.body(context).white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // if (reason != _SupportReason.values.last)
-                      //   SizedBox(height: LayoutConstants.space1),
-                    ],
-                  );
-                }).toList(),
-              ),
-              SizedBox(height: LayoutConstants.space6),
-              PrimaryButton(
-                text: 'Attach debug log',
-                enabled: selectedReasons.isNotEmpty,
-                onTap: () => _onConfirmAttachCrashLog(
-                  true,
-                  selectedReasons,
-                ),
-              ),
-              SizedBox(height: LayoutConstants.space3),
-              OutlineButton(
-                text: 'Send without log',
-                enabled: selectedReasons.isNotEmpty,
-                onTap: () => _onConfirmAttachCrashLog(
-                  false,
-                  selectedReasons,
-                ),
-              ),
-              SizedBox(height: LayoutConstants.space4),
-            ],
-          ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Recommended. It helps us fix issues faster by including technical details like app events, device model, and recent errors. It does not include passwords or private keys. After the email opens, you can also attach screenshots or photos.',
+              style: AppTypography.body(context).white,
+            ),
+            SizedBox(height: LayoutConstants.space6),
+            PrimaryButton(
+              text: 'Attach debug log',
+              onTap: () => _onConfirmAttachCrashLog(true),
+            ),
+            SizedBox(height: LayoutConstants.space3),
+            OutlineButton(
+              text: 'Send without log',
+              onTap: () => _onConfirmAttachCrashLog(false),
+            ),
+            SizedBox(height: LayoutConstants.space4),
+          ],
         ),
         isDismissible: true,
       ),
     );
   }
 
-  void _onConfirmAttachCrashLog(
-    bool attachCrashLog,
-    Set<_SupportReason> selectedReasons,
-  ) {
+  void _onConfirmAttachCrashLog(bool attachCrashLog) {
     try {
       UIHelper.hideInfoDialog(context);
     } catch (e) {
       log_util.log.warning('Failed to hide attach crash log dialog: $e');
     }
 
-    unawaited(
-      _sendSupportEmail(
-        attachLogs: attachCrashLog,
-        selectedReasons: selectedReasons,
-      ),
-    );
+    unawaited(_sendSupportEmail(attachLogs: attachCrashLog));
   }
 
   Future<void> _sendSupportEmail({
     required bool attachLogs,
-    required Set<_SupportReason> selectedReasons,
   }) async {
     try {
       if (!mounted) {
@@ -836,19 +760,7 @@ class NavigationService {
       final castingDeviceId = castingDevice?.deviceId;
       final ff1DeviceId = castingDevice?.getName ?? 'unknown (not connected)';
 
-      final selectedReasonLabels =
-          selectedReasons.isEmpty ? _SupportReason.values : selectedReasons;
-      final tryingToSectionBuffer = StringBuffer()..writeln('I was trying to:');
-      for (final reason in _SupportReason.values) {
-        final isSelected = selectedReasonLabels.contains(reason);
-        if (isSelected) {
-          tryingToSectionBuffer.writeln('- ${reason.label}');
-        }
-      }
-
-      final shortSummary = selectedReasonLabels.isNotEmpty
-          ? selectedReasonLabels.first.label
-          : 'Support request';
+      const shortSummary = 'Support request';
 
       final subject =
           'Support: $shortSummary — App $appVersion ($buildNumber) — Device $ff1DeviceId';
@@ -863,7 +775,13 @@ class NavigationService {
           'If you can, attach a screenshot or short screen recording to this email.',
         )
         ..writeln()
-        ..writeln(tryingToSectionBuffer.toString())
+        ..writeln('I was trying to: (pick one)')
+        ..writeln('- Setup FF1 Wi-Fi')
+        ..writeln('- Connect phone → FF1')
+        ..writeln('- Play an artwork')
+        ..writeln('- Play a playlist')
+        ..writeln('- Play My Collection')
+        ..writeln('- Other:')
         ..writeln()
         ..writeln('Auto details')
         ..writeln('- App: $appVersion ($buildNumber)')
@@ -875,7 +793,7 @@ class NavigationService {
           final isSelected = device.deviceId == castingDeviceId;
           final marker = isSelected ? '[selected]' : '-';
           buffer.writeln(
-            ' - ${device.deviceId} ($marker)',
+            '     - ${device.deviceId} $marker',
           );
         }
       } else {
@@ -1073,33 +991,5 @@ class NavigationService {
       return '***';
     }
     return '${address.substring(0, 6)}...${address.substring(address.length - 4)}';
-  }
-}
-
-enum _SupportReason {
-  setupWifi,
-  connectPhoneToFf1,
-  playArtwork,
-  playPlaylist,
-  playMyCollection,
-  other,
-}
-
-extension _SupportReasonLabel on _SupportReason {
-  String get label {
-    switch (this) {
-      case _SupportReason.setupWifi:
-        return 'Setup FF1 Wi-Fi';
-      case _SupportReason.connectPhoneToFf1:
-        return 'Connect phone → FF1';
-      case _SupportReason.playArtwork:
-        return 'Play an artwork';
-      case _SupportReason.playPlaylist:
-        return 'Play a playlist';
-      case _SupportReason.playMyCollection:
-        return 'Play My Collection';
-      case _SupportReason.other:
-        return 'Other';
-    }
   }
 }
