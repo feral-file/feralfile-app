@@ -236,8 +236,9 @@ class PlayToFF1Tooltip extends StatelessWidget {
             ),
             child: Stack(
               children: [
-                Padding(
+                Container(
                   padding: const EdgeInsets.all(20),
+                  width: 243,
                   child: Text(
                     'Tap the Play button to send the playlist to your FF1.',
                     style: Theme.of(context).textTheme.small.copyWith(
