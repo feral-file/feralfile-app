@@ -30,8 +30,10 @@ import 'package:autonomy_flutter/screen/github_doc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
+import 'package:autonomy_flutter/service/device_info_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
+import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_ext.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/constants.dart';
@@ -666,52 +668,131 @@ class NavigationService {
             const AllPlaylistsPagePayload(playlistType: PlaylistType.me));
   }
 
-  /// Show customer support flow: ask to attach crash log, then prepare and send email.
+  /// Show customer support flow:
+  /// 1. Ask what the member was trying to do (multi-select)
+  /// 2. Ask whether to attach a debug log
+  /// 3. Prepare an email draft with prefilled subject, body and optional logs
   Future<void> showCustomerSupport() async {
     if (!mounted) {
       return;
     }
 
+    final selectedReasons = <_SupportReason>{};
+
     unawaited(
       UIHelper.showDialog<void>(
         context,
-        'attach_crash_log'.tr(),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'ask_attach_crash'.tr(),
-              style: AppTypography.body(context).white,
-            ),
-            SizedBox(height: LayoutConstants.space10),
-            PrimaryButton(
-              text: 'attach_crash_logH'.tr(),
-              onTap: () => _onConfirmAttachCrashLog(true),
-            ),
-            SizedBox(height: LayoutConstants.space3),
-            OutlineButton(
-              text: 'conti_no_crash_log'.tr(),
-              onTap: () => _onConfirmAttachCrashLog(false),
-            ),
-            SizedBox(height: LayoutConstants.space10),
-          ],
+        'Attach a debug log?',
+        StatefulBuilder(
+          builder: (context, setState) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Recommended. It helps us fix issues faster by including technical details like app events, device model, and recent errors. It does not include passwords or private keys. After the email opens, you can also attach screenshots or photos.',
+                style: AppTypography.body(context).white,
+              ),
+              SizedBox(height: LayoutConstants.space6),
+              Text(
+                'I was trying to:',
+                style: AppTypography.body(context).white,
+              ),
+              SizedBox(height: LayoutConstants.space3),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: _SupportReason.values.map((reason) {
+                  final isSelected = selectedReasons.contains(reason);
+                  return Column(
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          setState(() {
+                            if (isSelected) {
+                              selectedReasons.remove(reason);
+                            } else {
+                              selectedReasons.add(reason);
+                            }
+                          });
+                        },
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: isSelected,
+                              activeColor: AppColor.feralFileLightBlue,
+                              checkColor: AppColor.white,
+                              onChanged: (checked) {
+                                setState(() {
+                                  if (checked == true) {
+                                    selectedReasons.add(reason);
+                                  } else {
+                                    selectedReasons.remove(reason);
+                                  }
+                                });
+                              },
+                            ),
+                            Expanded(
+                              child: Text(
+                                reason.label,
+                                style: AppTypography.body(context).white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // if (reason != _SupportReason.values.last)
+                      //   SizedBox(height: LayoutConstants.space1),
+                    ],
+                  );
+                }).toList(),
+              ),
+              SizedBox(height: LayoutConstants.space6),
+              PrimaryButton(
+                text: 'Attach debug log',
+                enabled: selectedReasons.isNotEmpty,
+                onTap: () => _onConfirmAttachCrashLog(
+                  true,
+                  selectedReasons,
+                ),
+              ),
+              SizedBox(height: LayoutConstants.space3),
+              OutlineButton(
+                text: 'Send without log',
+                enabled: selectedReasons.isNotEmpty,
+                onTap: () => _onConfirmAttachCrashLog(
+                  false,
+                  selectedReasons,
+                ),
+              ),
+              SizedBox(height: LayoutConstants.space4),
+            ],
+          ),
         ),
         isDismissible: true,
       ),
     );
   }
 
-  void _onConfirmAttachCrashLog(bool attachCrashLog) {
+  void _onConfirmAttachCrashLog(
+    bool attachCrashLog,
+    Set<_SupportReason> selectedReasons,
+  ) {
     try {
       UIHelper.hideInfoDialog(context);
     } catch (e) {
       log_util.log.warning('Failed to hide attach crash log dialog: $e');
     }
 
-    unawaited(_sendSupportEmail(attachLogs: attachCrashLog));
+    unawaited(
+      _sendSupportEmail(
+        attachLogs: attachCrashLog,
+        selectedReasons: selectedReasons,
+      ),
+    );
   }
 
-  Future<void> _sendSupportEmail({required bool attachLogs}) async {
+  Future<void> _sendSupportEmail({
+    required bool attachLogs,
+    required Set<_SupportReason> selectedReasons,
+  }) async {
     try {
       if (!mounted) {
         return;
@@ -719,8 +800,10 @@ class NavigationService {
 
       UIHelper.showDialog<void>(
         context,
-        'Preparing log files...',
-        const Center(child: CircularProgressIndicator()),
+        'Preparing log files',
+        const Center(
+          child: CircularProgressIndicator(),
+        ),
       );
 
       final logFiles = attachLogs ? await _collectLogFiles() : <File>[];
@@ -738,17 +821,73 @@ class NavigationService {
         );
       }
 
-      // Get app version for subject
+      // Get app and user info for subject/body
       final packageInfo = await PackageInfo.fromPlatform();
       final appVersion = packageInfo.version;
       final buildNumber = packageInfo.buildNumber;
       final userId = await injector<AuthService>().getOrGenerateUserId();
-      final subject = 'Support Request - $appVersion ($buildNumber)';
-      final baseText =
-          'Please describe your issue here.\n\nApp Version: $appVersion\nBuild Number: $buildNumber\nUser ID: $userId';
-      final emailBody = attachLogs
-          ? '$baseText\n\nLog files are attached.'
-          : '$baseText\n\nLogs are not attached.';
+      final deviceInfoService = injector<DeviceInfoService>();
+      final deviceName = deviceInfoService.deviceName;
+      final osName = deviceInfoService.deviceOSName;
+      final osVersion = deviceInfoService.deviceOSVersion;
+
+      final allDevices = BluetoothDeviceManager.pairedDevices;
+      final castingDevice = BluetoothDeviceManager().castingBluetoothDevice;
+      final castingDeviceId = castingDevice?.deviceId;
+      final ff1DeviceId = castingDevice?.getName ?? 'unknown (not connected)';
+
+      final selectedReasonLabels =
+          selectedReasons.isEmpty ? _SupportReason.values : selectedReasons;
+      final tryingToSectionBuffer = StringBuffer()..writeln('I was trying to:');
+      for (final reason in _SupportReason.values) {
+        final isSelected = selectedReasonLabels.contains(reason);
+        if (isSelected) {
+          tryingToSectionBuffer.writeln('- ${reason.label}');
+        }
+      }
+
+      final shortSummary = selectedReasonLabels.isNotEmpty
+          ? selectedReasonLabels.first.label
+          : 'Support request';
+
+      final subject =
+          'Support: $shortSummary — App $appVersion ($buildNumber) — Device $ff1DeviceId';
+
+      final yesNoLog = attachLogs ? 'yes' : 'no';
+
+      final buffer = StringBuffer()
+        ..writeln('What happened? (1 sentence)')
+        ..writeln('-')
+        ..writeln()
+        ..writeln(
+          'If you can, attach a screenshot or short screen recording to this email.',
+        )
+        ..writeln()
+        ..writeln(tryingToSectionBuffer.toString())
+        ..writeln()
+        ..writeln('Auto details')
+        ..writeln('- App: $appVersion ($buildNumber)')
+        ..writeln('- Phone: $deviceName • $osName $osVersion');
+
+      if (allDevices.isNotEmpty) {
+        buffer.writeln('- FF1 devices:');
+        for (final device in allDevices) {
+          final isSelected = device.deviceId == castingDeviceId;
+          final marker = isSelected ? '[selected]' : '-';
+          buffer.writeln(
+            ' - ${device.deviceId} ($marker)',
+          );
+        }
+      } else {
+        buffer.writeln('- FF1 devices: none (not paired)');
+      }
+
+      buffer
+        ..writeln('- User ID: $userId')
+        ..writeln('- Debug log attached: $yesNoLog')
+        ..writeln();
+
+      final emailBody = buffer.toString();
 
       final remoteConfigService = injector<RemoteConfigService>();
       final recipients = remoteConfigService.getConfig<List<String>>(
@@ -934,5 +1073,33 @@ class NavigationService {
       return '***';
     }
     return '${address.substring(0, 6)}...${address.substring(address.length - 4)}';
+  }
+}
+
+enum _SupportReason {
+  setupWifi,
+  connectPhoneToFf1,
+  playArtwork,
+  playPlaylist,
+  playMyCollection,
+  other,
+}
+
+extension _SupportReasonLabel on _SupportReason {
+  String get label {
+    switch (this) {
+      case _SupportReason.setupWifi:
+        return 'Setup FF1 Wi-Fi';
+      case _SupportReason.connectPhoneToFf1:
+        return 'Connect phone → FF1';
+      case _SupportReason.playArtwork:
+        return 'Play an artwork';
+      case _SupportReason.playPlaylist:
+        return 'Play a playlist';
+      case _SupportReason.playMyCollection:
+        return 'Play My Collection';
+      case _SupportReason.other:
+        return 'Other';
+    }
   }
 }
