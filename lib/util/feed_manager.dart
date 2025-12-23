@@ -437,6 +437,18 @@ class PlaylistReference {
     }
     return '${origin}/api/v1/playlists/${playlist.id}';
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is PlaylistReference &&
+        playlist == other.playlist &&
+        url == other.url &&
+        type == other.type;
+  }
+
+  @override
+  int get hashCode => Object.hash(playlist, url, type);
 }
 
 class AddressPlaylistReference extends PlaylistReference {
@@ -476,6 +488,17 @@ class ChannelReference {
         'channel': channel.toJson(),
         'url': url,
       };
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is ChannelReference &&
+        channel == other.channel &&
+        url == other.url;
+  }
+
+  @override
+  int get hashCode => Object.hash(channel, url);
 }
 
 class DP1PlaylistPlaylistReferenceResponse {

@@ -7,7 +7,7 @@ import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:flutter/material.dart';
 
 /// Playlist Section - Combines header with list of playlist rows
-class PlaylistSection extends StatelessWidget {
+class PlaylistSection extends StatefulWidget {
   const PlaylistSection({
     required this.sectionName,
     required this.playlists,
@@ -30,20 +30,36 @@ class PlaylistSection extends StatelessWidget {
   final Widget? Function(PlaylistData playlistData)? playlistHeaderBuilder;
 
   @override
+  State<PlaylistSection> createState() => _PlaylistSectionState();
+}
+
+class _PlaylistSectionState extends State<PlaylistSection> {
+  @override
+  void didUpdateWidget(PlaylistSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Only rebuild if playlists data actually changed
+    // This prevents unnecessary rebuilds when only status changes
+    if (oldWidget.playlists != widget.playlists ||
+        oldWidget.hasMore != widget.hasMore ||
+        oldWidget.sectionName != widget.sectionName) {}
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ListView.builder(
       shrinkWrap: true,
       padding: EdgeInsets.zero,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: 2 + (playlists.isNotEmpty ? playlists.length : 1),
+      itemCount:
+          2 + (widget.playlists.isNotEmpty ? widget.playlists.length : 1),
       itemBuilder: (context, index) {
         // Header
         if (index == 0) {
           return PlaylistSectionHeader(
-            sectionName: sectionName,
-            sectionIcon: sectionIcon,
-            onViewAllTap: hasMore ? onViewAllTap : null,
-            hasMore: hasMore,
+            sectionName: widget.sectionName,
+            sectionIcon: widget.sectionIcon,
+            onViewAllTap: widget.hasMore ? widget.onViewAllTap : null,
+            hasMore: widget.hasMore,
           );
         }
 
@@ -56,15 +72,15 @@ class PlaylistSection extends StatelessWidget {
 
         // List items
         final playlistIndex = index - 2;
-        final playlist = playlists[playlistIndex];
+        final playlist = widget.playlists[playlistIndex];
         return PlaylistRowItem(
           playlistReference: playlist.playlistReference,
           playlistCreator: playlist.creator,
-          onItemTap: onPlaylistItemTap,
-          scrollController: scrollController,
-          headerBuilder: playlistHeaderBuilder == null
+          onItemTap: widget.onPlaylistItemTap,
+          scrollController: widget.scrollController,
+          headerBuilder: widget.playlistHeaderBuilder == null
               ? null
-              : (_) => playlistHeaderBuilder?.call(playlist),
+              : (_) => widget.playlistHeaderBuilder?.call(playlist),
         );
       },
     );
@@ -91,6 +107,17 @@ class PlaylistData {
       creator: creator ?? this.creator,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is PlaylistData &&
+        playlistReference == other.playlistReference &&
+        creator == other.creator;
+  }
+
+  @override
+  int get hashCode => Object.hash(playlistReference, creator);
 }
 
 class AddressPlaylistData extends PlaylistData {

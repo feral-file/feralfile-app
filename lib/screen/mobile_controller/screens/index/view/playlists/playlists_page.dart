@@ -2,7 +2,6 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/design/layout_constants.dart';
-import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
@@ -16,6 +15,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/util/playlist_data_ext.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -86,6 +86,13 @@ class PlaylistsPageState extends State<PlaylistsPage>
   Widget _buildCuratedPlaylists() {
     return BlocBuilder<PlaylistsBloc, PlaylistsState>(
       bloc: _curatedPlaylistsBloc,
+      buildWhen: (previous, current) {
+        final previousTop5PlaylistData = previous.top5PlaylistData;
+        final currentTop5PlaylistData = current.top5PlaylistData;
+        final isEqualTo =
+            previousTop5PlaylistData.isEqualTo(currentTop5PlaylistData);
+        return !isEqualTo;
+      },
       builder: (context, state) => _buildContent(state, _curatedPlaylistsBloc),
     );
   }
@@ -93,6 +100,13 @@ class PlaylistsPageState extends State<PlaylistsPage>
   Widget _buildMyPlaylists() {
     return BlocBuilder<PlaylistsBloc, PlaylistsState>(
       bloc: _myPlaylistsBloc,
+      buildWhen: (previous, current) {
+        final previousTop5PlaylistData = previous.top5PlaylistData;
+        final currentTop5PlaylistData = current.top5PlaylistData;
+        final isEqualTo =
+            previousTop5PlaylistData.isEqualTo(currentTop5PlaylistData);
+        return !isEqualTo;
+      },
       builder: (context, state) => _buildContent(state, _myPlaylistsBloc),
     );
   }
@@ -127,9 +141,10 @@ class PlaylistsPageState extends State<PlaylistsPage>
 
   Widget _buildPlaylists(PlaylistsState state, PlaylistType playlistType) {
     // Group playlists by owner for sections
-    final playlistDataList = state.playlistData.safeSublist(0, 5);
+    final playlistDataList = state.top5PlaylistData;
 
-    final hasMore = state.playlistData.length > 5 || state.hasMore;
+    final hasMore = state.top5PlaylistData.length < state.playlistData.length ||
+        state.hasMore;
 
     Widget? Function(PlaylistData playlistData)? playlistHeaderBuilder;
     if (playlistType == PlaylistType.me) {

@@ -45,6 +45,9 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
   final TransformationController _transformationController =
       TransformationController();
   late ScrollController _scrollController;
+  late final PlaylistsPage _playlistsPage;
+  late final ChannelsPage _channelsPage;
+  late final WorksPage _worksPage;
 
   @override
   void initState() {
@@ -52,6 +55,9 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
     _selectedTab = HomeIndexTab.playlists;
     _scrollController = ScrollController();
     _scrollController.addListener(_onScrollChange);
+    _playlistsPage = PlaylistsPage(key: _playlistsPageKey);
+    _channelsPage = ChannelsPage(key: _channelsPageKey);
+    _worksPage = WorksPage(key: _worksPageKey);
   }
 
   @override
@@ -333,15 +339,15 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
       children: [
         Offstage(
           offstage: _selectedTab != HomeIndexTab.playlists,
-          child: PlaylistsPage(key: _playlistsPageKey),
+          child: _playlistsPage,
         ),
         Offstage(
           offstage: _selectedTab != HomeIndexTab.channels,
-          child: ChannelsPage(key: _channelsPageKey),
+          child: _channelsPage,
         ),
         Offstage(
           offstage: _selectedTab != HomeIndexTab.works,
-          child: WorksPage(key: _worksPageKey),
+          child: _worksPage,
         ),
       ],
     );
