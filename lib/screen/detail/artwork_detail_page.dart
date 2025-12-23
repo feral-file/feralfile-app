@@ -11,7 +11,6 @@ import 'dart:collection';
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
-import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';

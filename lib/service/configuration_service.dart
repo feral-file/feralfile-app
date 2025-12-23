@@ -115,6 +115,10 @@ abstract class ConfigurationService {
 
   Future<void> clearAddressLastFetchTokenTime();
 
+  bool hasSeenPlayToFf1Tooltip();
+
+  Future<void> setHasSeenPlayToFf1Tooltip(bool value);
+
   DateTime? getLastTimeRefreshFeeds();
 
   Future<void> setLastTimeRefreshFeeds(DateTime time);
@@ -225,6 +229,9 @@ class ConfigurationServiceImpl implements ConfigurationService {
 
   static const String KEY_RECORDED_MESSAGES = 'recorded_messages';
 
+  static const String KEY_HAS_SEEN_PLAY_TO_FF1_TOOLTIP =
+      'has_seen_play_to_ff1_tooltip';
+
   final SharedPreferences _preferences;
 
   @override
@@ -282,6 +289,15 @@ class ConfigurationServiceImpl implements ConfigurationService {
   @override
   Future<void> setShowTokenDebugInfo(bool show) async {
     await _preferences.setBool(KEY_SHOW_TOKEN_DEBUG_INFO, show);
+  }
+
+  @override
+  bool hasSeenPlayToFf1Tooltip() =>
+      _preferences.getBool(KEY_HAS_SEEN_PLAY_TO_FF1_TOOLTIP) ?? false;
+
+  @override
+  Future<void> setHasSeenPlayToFf1Tooltip(bool value) async {
+    await _preferences.setBool(KEY_HAS_SEEN_PLAY_TO_FF1_TOOLTIP, value);
   }
 
   @override
