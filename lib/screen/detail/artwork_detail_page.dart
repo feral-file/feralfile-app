@@ -11,6 +11,7 @@ import 'dart:collection';
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
@@ -786,25 +787,37 @@ class ArtworkBackLayer extends StatelessWidget {
             Expanded(
               child: Stack(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Center(
-                      child: isPlayingOnFF1
-                          ? ArtworkThumbnailView(assetToken: assetToken)
-                          : ArtworkPreviewWidget(
-                              useIndexer: useIndexer,
-                              identity: identity,
-                              onLoaded: onLoaded,
-                            ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Center(
+                  child: isPlayingOnFF1
+                      ? ArtworkThumbnailView(assetToken: assetToken)
+                      : ArtworkPreviewWidget(
+                          useIndexer: useIndexer,
+                          identity: identity,
+                          onLoaded: onLoaded,
+                        ),
+                ),
+              ),
+              if (isPlayingOnFF1)
+                Center(
+                  child: Container
+                  (
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(32),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: ArtworkPlayingControls(
+                      playingDevice:
+                          BluetoothDeviceManager().castingBluetoothDevice!,
                     ),
                   ),
-                  if (isPlayingOnFF1)
-                    Center(
-                      child: ArtworkPlayingControls(
-                        playingDevice:
-                            BluetoothDeviceManager().castingBluetoothDevice!,
-                      ),
-                    ),
+                ),
                 ],
               ),
             ),
