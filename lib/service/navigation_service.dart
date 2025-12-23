@@ -29,6 +29,7 @@ import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
+import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_ext.dart';
@@ -741,9 +742,10 @@ class NavigationService {
       final packageInfo = await PackageInfo.fromPlatform();
       final appVersion = packageInfo.version;
       final buildNumber = packageInfo.buildNumber;
+      final userId = await injector<AuthService>().getOrGenerateUserId();
       final subject = 'Support Request - $appVersion ($buildNumber)';
       final baseText =
-          'Please describe your issue here.\n\nApp Version: $appVersion\nBuild Number: $buildNumber';
+          'Please describe your issue here.\n\nApp Version: $appVersion\nBuild Number: $buildNumber\nUser ID: $userId';
       final emailBody = attachLogs
           ? '$baseText\n\nLog files are attached.'
           : '$baseText\n\nLogs are not attached.';
