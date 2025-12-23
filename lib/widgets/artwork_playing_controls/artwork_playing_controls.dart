@@ -105,6 +105,7 @@ class ArtworkPlayingControls extends StatelessWidget {
           textColor: PrimitivesTokens.colorsWhite,
           isAsync: true,
           onTap: () async {
+            if (isSelected) return;
             await injector<CanvasClientServiceV2>()
                 .updateArtFraming(playingDevice, type);
           },

@@ -1,6 +1,7 @@
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/debouce_util.dart';
+import 'package:autonomy_flutter/util/style.dart';
 import 'package:flutter/material.dart';
 
 class CoreButton extends StatefulWidget {
@@ -103,20 +104,14 @@ class _CoreButtonState extends State<CoreButton> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // if (_isProcessing) ...[
-              //   Container(
-              //     height: 12,
-              //     width: 12,
-              //     margin: const EdgeInsets.only(right: 8),
-              //     child: CircularProgressIndicator(
-              //       color: widget.indicatorColor ?? theme.colorScheme.primary,
-              //       backgroundColor: theme.colorScheme.surface,
-              //       strokeWidth: 2,
-              //     ),
-              //   ),
-              //   SizedBox(width: widget.gap),
-              // ],
-              if (widget.leftIcon != null) ...[
+              if (_isProcessing) ...[
+                loadingIndicator(
+                  valueColor: PrimitivesTokens.colorsGrey,
+                  size: 12,
+                ),
+                SizedBox(width: widget.gap),
+              ],
+              if (!_isProcessing && widget.leftIcon != null) ...[
                 widget.leftIcon!,
                 SizedBox(width: widget.gap),
               ],
@@ -124,10 +119,12 @@ class _CoreButtonState extends State<CoreButton> {
                 widget.text ?? '',
                 style: widget.textStyle ??
                     theme.textTheme.body.copyWith(
-                      color: widget.textColor ?? PrimitivesTokens.colorsBlack,
+                      color: _isProcessing
+                          ? PrimitivesTokens.colorsGrey
+                          : (widget.textColor ?? PrimitivesTokens.colorsBlack),
                     ),
               ),
-              if (widget.rightIcon != null) ...[
+              if (!_isProcessing && widget.rightIcon != null) ...[
                 SizedBox(width: widget.gap),
                 widget.rightIcon!,
               ],
