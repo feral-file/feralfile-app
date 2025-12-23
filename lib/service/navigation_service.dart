@@ -30,6 +30,7 @@ import 'package:autonomy_flutter/screen/github_doc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
+import 'package:autonomy_flutter/service/device_info_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_ext.dart';
@@ -666,7 +667,9 @@ class NavigationService {
             const AllPlaylistsPagePayload(playlistType: PlaylistType.me));
   }
 
-  /// Show customer support flow: ask to attach crash log, then prepare and send email.
+  /// Show customer support flow:
+  /// 1. Ask whether to attach a debug log
+  /// 2. Prepare an email draft with prefilled subject, body and optional logs
   Future<void> showCustomerSupport() async {
     if (!mounted) {
       return;
@@ -675,25 +678,25 @@ class NavigationService {
     unawaited(
       UIHelper.showDialog<void>(
         context,
-        'attach_crash_log'.tr(),
+        'Attach a debug log?',
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'ask_attach_crash'.tr(),
+              'Recommended. It helps us fix issues faster by including technical details like app events, device model, and recent errors. It does not include passwords or private keys. After the email opens, you can also attach screenshots or photos.',
               style: AppTypography.body(context).white,
             ),
-            SizedBox(height: LayoutConstants.space10),
+            SizedBox(height: LayoutConstants.space6),
             PrimaryButton(
-              text: 'attach_crash_logH'.tr(),
+              text: 'Attach debug log',
               onTap: () => _onConfirmAttachCrashLog(true),
             ),
             SizedBox(height: LayoutConstants.space3),
             OutlineButton(
-              text: 'conti_no_crash_log'.tr(),
+              text: 'Send without log',
               onTap: () => _onConfirmAttachCrashLog(false),
             ),
-            SizedBox(height: LayoutConstants.space10),
+            SizedBox(height: LayoutConstants.space4),
           ],
         ),
         isDismissible: true,
@@ -711,7 +714,9 @@ class NavigationService {
     unawaited(_sendSupportEmail(attachLogs: attachCrashLog));
   }
 
-  Future<void> _sendSupportEmail({required bool attachLogs}) async {
+  Future<void> _sendSupportEmail({
+    required bool attachLogs,
+  }) async {
     try {
       if (!mounted) {
         return;
@@ -719,8 +724,10 @@ class NavigationService {
 
       UIHelper.showDialog<void>(
         context,
-        'Preparing log files...',
-        const Center(child: CircularProgressIndicator()),
+        'Preparing log files',
+        const Center(
+          child: CircularProgressIndicator(),
+        ),
       );
 
       final logFiles = attachLogs ? await _collectLogFiles() : <File>[];
@@ -738,17 +745,67 @@ class NavigationService {
         );
       }
 
-      // Get app version for subject
+      // Get app and user info for subject/body
       final packageInfo = await PackageInfo.fromPlatform();
       final appVersion = packageInfo.version;
       final buildNumber = packageInfo.buildNumber;
       final userId = await injector<AuthService>().getOrGenerateUserId();
-      final subject = 'Support Request - $appVersion ($buildNumber)';
-      final baseText =
-          'Please describe your issue here.\n\nApp Version: $appVersion\nBuild Number: $buildNumber\nUser ID: $userId';
-      final emailBody = attachLogs
-          ? '$baseText\n\nLog files are attached.'
-          : '$baseText\n\nLogs are not attached.';
+      final deviceInfoService = injector<DeviceInfoService>();
+      final deviceName = deviceInfoService.deviceName;
+      final osName = deviceInfoService.deviceOSName;
+      final osVersion = deviceInfoService.deviceOSVersion;
+
+      final allDevices = BluetoothDeviceManager.pairedDevices;
+      final castingDevice = BluetoothDeviceManager().castingBluetoothDevice;
+      final castingDeviceId = castingDevice?.deviceId;
+      final ff1DeviceId = castingDevice?.getName ?? 'unknown (not connected)';
+
+      const shortSummary = 'Support request';
+
+      final subject =
+          'Support: $shortSummary — App $appVersion ($buildNumber) — Device $ff1DeviceId';
+
+      final yesNoLog = attachLogs ? 'yes' : 'no';
+
+      final buffer = StringBuffer()
+        ..writeln('What happened? (1 sentence)')
+        ..writeln('-')
+        ..writeln()
+        ..writeln(
+          'If you can, attach a screenshot or short screen recording to this email.',
+        )
+        ..writeln()
+        ..writeln('I was trying to: (pick one)')
+        ..writeln('- Setup FF1 Wi-Fi')
+        ..writeln('- Connect phone → FF1')
+        ..writeln('- Play an artwork')
+        ..writeln('- Play a playlist')
+        ..writeln('- Play My Collection')
+        ..writeln('- Other:')
+        ..writeln()
+        ..writeln('Auto details')
+        ..writeln('- App: $appVersion ($buildNumber)')
+        ..writeln('- Phone: $deviceName • $osName $osVersion');
+
+      if (allDevices.isNotEmpty) {
+        buffer.writeln('- FF1 devices:');
+        for (final device in allDevices) {
+          final isSelected = device.deviceId == castingDeviceId;
+          final marker = isSelected ? '[selected]' : '-';
+          buffer.writeln(
+            '     - ${device.deviceId} $marker',
+          );
+        }
+      } else {
+        buffer.writeln('- FF1 devices: none (not paired)');
+      }
+
+      buffer
+        ..writeln('- User ID: $userId')
+        ..writeln('- Debug log attached: $yesNoLog')
+        ..writeln();
+
+      final emailBody = buffer.toString();
 
       final remoteConfigService = injector<RemoteConfigService>();
       final recipients = remoteConfigService.getConfig<List<String>>(

@@ -436,7 +436,11 @@ class FeralFileDP1FeedService extends DP1FeedWithChannelExtensionServiceImpl {
 
   @override
   List<Channel> getAllCachedChannels() {
-    final channels = super.getAllCachedChannels();
+    final cachedChannels = super.getAllCachedChannels();
+    // filter out channels not in _remoteConfigChannelIds
+    final channels = cachedChannels
+        .where((channel) => _remoteConfigChannelIds.contains(channel.id))
+        .toList();
     // order by _remoteConfigChannelIds
     channels.sort((a, b) => _remoteConfigChannelIds
         .indexOf(a.id)
