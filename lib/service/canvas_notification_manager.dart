@@ -26,34 +26,30 @@ class CanvasNotificationManager {
   final Map<String, CanvasNotificationService> _services = {};
 
   // Map to hold subscriptions for each service's stream
-  final Map<String, StreamSubscription<NotificationRelayerMessage>>
-      _subscriptions = {};
+  final Map<String, StreamSubscription<RelayerMessage>> _subscriptions = {};
 
   // Map to hold retry timers
 
   // Map to hold current processing messages for each device, grouped by notification type
-  final Map<
-          String,
-          Map<RelayerNotificationType,
-              Pair<BaseDevice, NotificationRelayerMessage>>>
+  final Map<String,
+          Map<RelayerNotificationType, Pair<BaseDevice, RelayerMessage>>>
       _processingMessages = {};
 
   // Map to hold next messages for each device, grouped by notification type
-  final Map<
-      String,
-      Map<RelayerNotificationType,
-          Pair<BaseDevice, NotificationRelayerMessage>>> _nextMessages = {};
+  final Map<String,
+          Map<RelayerNotificationType, Pair<BaseDevice, RelayerMessage>>>
+      _nextMessages = {};
 
   // Flag to track if processing is in progress for each device and notification type
   final Map<String, Map<RelayerNotificationType, bool>> _isProcessing = {};
 
   // Stream controller for combined notifications
-  final _combinedNotificationController = StreamController<
-      Pair<BaseDevice, NotificationRelayerMessage>>.broadcast();
+  final _combinedNotificationController =
+      StreamController<Pair<BaseDevice, RelayerMessage>>.broadcast();
 
   // Combined notification stream
-  Stream<Pair<BaseDevice, NotificationRelayerMessage>>
-      get combinedNotificationStream => _combinedNotificationController.stream;
+  Stream<Pair<BaseDevice, RelayerMessage>> get combinedNotificationStream =>
+      _combinedNotificationController.stream;
 
   StreamSubscription<FGBGType>? _fgbgSubscription;
 
@@ -69,47 +65,18 @@ class CanvasNotificationManager {
         FGBGEvents.instance.stream.listen(_handleForeBackground);
 
     combinedNotificationStream.listen(
-      (Pair<BaseDevice, NotificationRelayerMessage> pair) {
+      (Pair<BaseDevice, RelayerMessage> pair) {
         final device = pair.first;
         final deviceId = device.deviceId;
         final notification = pair.second;
-        final notificationType = notification.notificationType;
 
         // Initialize maps for this device if not exists
         _processingMessages.putIfAbsent(deviceId, () => {});
         _nextMessages.putIfAbsent(deviceId, () => {});
         _isProcessing.putIfAbsent(deviceId, () => {});
 
-        // If there's a message being processed of the same type, check its timestamp
-        if (_isProcessing[deviceId]![notificationType] == true) {
-          final processingMessage =
-              _processingMessages[deviceId]![notificationType];
-          if (processingMessage != null &&
-              notification.timestamp
-                  .isBefore(processingMessage.second.timestamp)) {
-            log.info(
-                'Skipping older message for device $deviceId and type $notificationType: ${notification.timestamp} < ${processingMessage.second.timestamp}');
-            return;
-          }
-        }
-
-        // Check if we have a next message of the same type
-        final nextMessage = _nextMessages[deviceId]![notificationType];
-        if (nextMessage != null) {
-          // If new message is older than next message, skip it
-          if (notification.timestamp.isBefore(nextMessage.second.timestamp)) {
-            log.info(
-                'Skipping older message for device $deviceId and type $notificationType: ${notification.timestamp} < ${nextMessage.second.timestamp}');
-            return;
-          }
-        }
-
-        // Update next message for this type
-        _nextMessages[deviceId]![notificationType] = pair;
-
-        // Process next notification of this type if not already processing
-        if (_isProcessing[deviceId]![notificationType] != true) {
-          _processNextNotification(deviceId, notificationType);
+        if (notification is NotificationRelayerMessage) {
+          _handleNotification(device, notification);
         }
       },
       onError: (Object error) {
@@ -119,6 +86,50 @@ class CanvasNotificationManager {
         log.info('Combined notification stream done');
       },
     );
+  }
+
+  void _handleNotification(
+      BaseDevice device, NotificationRelayerMessage notification) {
+    {
+      final deviceId = device.deviceId;
+      final notificationType = notification.notificationType;
+
+      // If there's a message being processed of the same type, check its timestamp
+      if (_isProcessing[deviceId]?[notificationType] == true) {
+        final processingMessage =
+            _processingMessages[deviceId]![notificationType];
+        final processingNotification =
+            processingMessage?.second as NotificationRelayerMessage?;
+        if (processingNotification != null &&
+            notification.timestamp.isBefore(processingNotification.timestamp)) {
+          log.info(
+              'Skipping older message for device $deviceId and type $notificationType: ${notification.timestamp} < ${processingNotification.timestamp}');
+          return;
+        }
+      }
+
+      // Check if we have a next message of the same type
+      final nextMessage = _nextMessages[deviceId]![notificationType];
+      if (nextMessage != null) {
+        // If new message is older than next message, skip it
+        final nextNotification =
+            nextMessage.second as NotificationRelayerMessage?;
+        if (nextNotification != null &&
+            notification.timestamp.isBefore(nextNotification.timestamp)) {
+          log.info(
+              'Skipping older message for device $deviceId and type $notificationType: ${notification.timestamp} < ${nextNotification.timestamp}');
+          return;
+        }
+      }
+
+      // Update next message for this type
+      _nextMessages[deviceId]![notificationType] = Pair(device, notification);
+
+      // Process next notification of this type if not already processing
+      if (_isProcessing[deviceId]?[notificationType] != true) {
+        _processNextNotification(deviceId, notificationType);
+      }
+    }
   }
 
   void _handleForeBackground(FGBGType event) {
@@ -155,7 +166,7 @@ class CanvasNotificationManager {
       _subscriptions[device.deviceId] = newService.notificationStream.listen(
         (notification) {
           _combinedNotificationController.add(
-            Pair<BaseDevice, NotificationRelayerMessage>(
+            Pair<BaseDevice, RelayerMessage>(
               device,
               notification,
             ),
@@ -223,7 +234,7 @@ class CanvasNotificationManager {
   }
 
   // Get notification stream for a specific device
-  Stream<NotificationRelayerMessage>? getNotificationStream(String deviceId) {
+  Stream<RelayerMessage>? getNotificationStream(String deviceId) {
     return _services[deviceId]?.notificationStream;
   }
 
