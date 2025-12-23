@@ -129,7 +129,7 @@ class PlaylistsPageState extends State<PlaylistsPage>
     // Group playlists by owner for sections
     final playlistDataList = state.playlistData.safeSublist(0, 5);
 
-    final hasMore = state.hasMore;
+    final hasMore = state.playlistData.length > 5 || state.hasMore;
 
     Widget? Function(PlaylistData playlistData)? playlistHeaderBuilder;
     if (playlistType == PlaylistType.me) {

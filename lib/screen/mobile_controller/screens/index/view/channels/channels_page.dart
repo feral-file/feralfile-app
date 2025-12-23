@@ -137,7 +137,7 @@ class ChannelsPageState extends State<ChannelsPage>
     final channelType = channelsBloc.channelType;
     // only get the first 5 channels for section
     final channelDataList = state.channelData.safeSublist(0, 5);
-    final hasMore = state.hasMore;
+    final hasMore = state.channelData.length > 5 || state.hasMore;
 
     return SliverList.builder(
       itemCount: 1,
