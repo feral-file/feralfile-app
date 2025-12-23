@@ -570,15 +570,15 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
     final isPlaying = canvasDeviceState.isAssetPlayingOnFF1(asset);
 
     unawaited(
-      UIHelper.showDrawerAction(
+      UIHelper.showCenterMenu(
         context,
         options: [
           OptionItem(
             title: 'full_screen'.tr(),
             icon: SvgPicture.asset(
               'assets/images/fullscreen_icon.svg',
-              width: 20,
-              height: 20,
+              width: 18,
+              height: 18,
             ),
             onTap: () {
               Navigator.of(context).pop();
@@ -590,8 +590,8 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
               title: 'interact'.tr(),
               icon: SvgPicture.asset(
                 'assets/images/keyboard_icon.svg',
-                width: 20,
-                height: 20,
+                width: 22,
+                height: 14.68,
               ),
               onTap: () {
                 Navigator.of(context).pop();
@@ -627,6 +627,18 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                 await browser.openUrl(asset.secondaryMarketURL);
               },
             ),
+          OptionItem(
+            title: 'Artwork details',
+            icon: SvgPicture.asset(
+              'assets/images/info_white.svg',
+              width: 22,
+              height: 22,
+            ),
+            onTap: () {
+              Navigator.of(context).pop();
+              _infoExpand();
+            },
+          ),
           OptionItem(
             title: 'rebuild_metadata'.tr(),
             icon: SvgPicture.asset(
@@ -696,19 +708,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
               );
             },
           ),
-          OptionItem(
-            title: 'View artwork info',
-            icon: SvgPicture.asset(
-              'assets/images/info_white.svg',
-              width: 20,
-              height: 20,
-            ),
-            onTap: () {
-              Navigator.of(context).pop();
-              _infoExpand();
-            },
-          ),
-          OptionItem.emptyOptionItem,
         ],
       ),
     );
