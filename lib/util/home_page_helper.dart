@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/model/additional_data/additional_data.dart';
 import 'package:autonomy_flutter/model/token.dart' as v2;
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
@@ -11,7 +10,6 @@ import 'package:autonomy_flutter/screen/home/home_bloc.dart';
 import 'package:autonomy_flutter/screen/home/home_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
-import 'package:autonomy_flutter/service/announcement/announcement_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
@@ -23,14 +21,12 @@ import 'package:autonomy_flutter/shared.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/util/notifications/notification_handler.dart';
 import 'package:autonomy_flutter/util/now_displaying_manager.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:sentry/sentry.dart';
 
 class ObservingState<T extends StatefulWidget> extends State<T>
@@ -64,15 +60,12 @@ class HomePageHelper {
   bool _isBackground = false;
   bool _isShowingOfflineDialog = false;
 
-  final _announcementService = injector<AnnouncementService>();
   final _remoteConfig = injector<RemoteConfigService>();
   final _networkService = injector<NetworkService>();
 
   void onHomePageInit(BuildContext context, ObservingState state) {
     // Listen to network changes
     _networkService.hasInternetNotifier.addListener(_onNetworkChanged);
-
-    unawaited(injector<CustomerSupportService>().getChatThreads());
 
     // check for version compatibility
     unawaited(injector<VersionService>().checkForUpdate());
@@ -135,22 +128,6 @@ class HomePageHelper {
       }
     });
 
-    _triggerShowAnnouncement();
-
-    OneSignal.Notifications.addClickListener((openedResult) async {
-      log.info('Tapped push notification: '
-          '${openedResult.notification.additionalData}');
-      final additionalData =
-          AdditionalData.fromJson(openedResult.notification.additionalData!);
-      await _announcementService.fetchAnnouncements();
-      if (!context.mounted) {
-        return;
-      }
-      unawaited(
-        NotificationHandler.instance
-            .handlePushNotificationClicked(context, additionalData),
-      );
-    });
     _fgbgSubscription =
         FGBGEvents.instance.stream.listen(_handleForeBackground);
   }
@@ -191,18 +168,6 @@ class HomePageHelper {
       },
     );
     _isShowingOfflineDialog = false;
-  }
-
-  void _triggerShowAnnouncement() {
-    unawaited(
-      Future.delayed(const Duration(milliseconds: 2000), () {
-        _announcementService.fetchAnnouncements().then(
-          (_) async {
-            await _announcementService.showOldestAnnouncement();
-          },
-        );
-      }),
-    );
   }
 
   Future<void> _forceFetchTokensOfAddresses() async {
@@ -347,7 +312,6 @@ class HomePageHelper {
       log.info('Error resuming polling timers: $e');
     }
 
-    _triggerShowAnnouncement();
     // refresh stale/missing addresses when app resume
     unawaited(_refreshAddressesNeedingReindex());
   }

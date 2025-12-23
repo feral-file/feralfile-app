@@ -5,14 +5,11 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/error/bluetooth_response_error.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/screen/customer_support/support_thread_page.dart';
 import 'package:autonomy_flutter/screen/device_setting/bluetooth_exception.dart';
 import 'package:autonomy_flutter/screen/device_setting/scan_wifi_network_page.dart';
 import 'package:autonomy_flutter/service/bluetooth_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
-import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
@@ -86,7 +83,6 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
       appBar: SetupAppBar(
         title: 'select_network'.tr(),
@@ -197,11 +193,8 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                             e.message,
                             closeButton: 'Connect support',
                             onClose: () async {
-                              await injector<NavigationService>()
-                                  .navigateTo(AppRouter.supportThreadPage,
-                                      arguments: NewIssuePayload(
-                                        reportIssueType: ReportIssueType.Bug,
-                                      ));
+                              injector<NavigationService>()
+                                  .showCustomerSupport();
                               injector<NavigationService>().goBack();
                             },
                           ).then((_) {

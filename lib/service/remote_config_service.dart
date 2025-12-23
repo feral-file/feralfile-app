@@ -153,6 +153,10 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
     'tester': {
       'beta_tester': <String>[],
     },
+    ConfigGroup.support.getString: {
+      ConfigKey.supportEmailRecipients.getString: ['support@feralfile.com'],
+      ConfigKey.supportEmailCc.getString: [],
+    },
     ConfigGroup.dp1Playlist.getString: {
       ConfigKey.dp1PlaylistChannelUrls.getString: [
         "https://dp1-feed-operator-api-prod.autonomy-system.workers.dev/api/v1/channels/0fdd0465-217c-4734-9bfd-2d807b414482",
@@ -292,6 +296,7 @@ enum ConfigGroup {
   documentation,
   tokenMetadataRebuild,
   ff1Config,
+  support,
 }
 
 // ConfigGroup getString extension
@@ -336,6 +341,8 @@ extension ConfigGroupExtension on ConfigGroup {
         return 'token_metadata_rebuild';
       case ConfigGroup.ff1Config:
         return 'ff1_config';
+      case ConfigGroup.support:
+        return 'support';
     }
   }
 }
@@ -388,6 +395,8 @@ enum ConfigKey {
   cacheValidDuration,
   lastForceUpdateTime,
   ff1LearnMoreUrl,
+  supportEmailRecipients,
+  supportEmailCc,
 }
 
 // ConfigKey getString extension
@@ -488,6 +497,10 @@ extension ConfigKeyExtension on ConfigKey {
         return 'last_force_update_time';
       case ConfigKey.ff1LearnMoreUrl:
         return 'ff1_learn_more_url';
+      case ConfigKey.supportEmailRecipients:
+        return 'email_recipients';
+      case ConfigKey.supportEmailCc:
+        return 'email_cc';
     }
   }
 }

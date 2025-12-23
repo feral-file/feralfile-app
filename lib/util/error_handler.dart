@@ -10,7 +10,6 @@ import 'dart:async';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/screen/customer_support/support_thread_page.dart';
 import 'package:autonomy_flutter/screen/report/sentry_report.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/shared.dart';
@@ -324,11 +323,7 @@ Future<bool> showErrorDialogFromException(Object exception,
 
       navigationService.showErrorDialog(
         event,
-        defaultAction: () => Navigator.of(context).pushNamed(
-          AppRouter.supportThreadPage,
-          arguments: ExceptionErrorPayload(
-              sentryID: sentryID, metadata: sentryMetadata),
-        ),
+        defaultAction: () => navigationService.showCustomerSupport(),
       );
       return true;
     } else {

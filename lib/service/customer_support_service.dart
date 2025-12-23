@@ -15,7 +15,6 @@ import 'package:autonomy_flutter/gateway/customer_support_api.dart';
 import 'package:autonomy_flutter/model/announcement/announcement_local.dart';
 import 'package:autonomy_flutter/model/customer_support.dart';
 import 'package:autonomy_flutter/model/draft_customer_support.dart';
-import 'package:autonomy_flutter/service/announcement/announcement_service.dart';
 import 'package:autonomy_flutter/service/bluetooth_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/hive_store_service.dart';
@@ -54,8 +53,6 @@ abstract class CustomerSupportService {
   List<String>? get errorMessages;
 
   Future<IssueDetails> getDetails(String issueID);
-
-  Future<List<ChatThread>> getChatThreads();
 
   Future draftMessage(DraftCustomerSupport draft);
 
@@ -189,54 +186,6 @@ class CustomerSupportServiceImpl extends CustomerSupportService {
       }
     }
     return issues;
-  }
-
-  @override
-  // this function is used to get the list of issues, and announcements,
-  // if announcements already in the list of issues, it will be removed
-  Future<List<ChatThread>> getChatThreads() async {
-    final issues = await _getIssues();
-    // add announcement
-    final announcement = injector<AnnouncementService>().getLocalAnnouncements()
-      ..removeWhere((element) {
-        final type = element.notificationType ?? '';
-        if (!_supportChatNotificationTypes.contains(type)) {
-          return true;
-        }
-        final issueId = injector<AnnouncementService>()
-            .findIssueIdByAnnouncement(element.announcementContentId);
-        final issue =
-            issues.firstWhereOrNull((element) => element.issueID == issueId);
-        if (issue != null) {
-          final newIssue = issue.copyWith(
-            announcementContentId: element.announcementContentId,
-          );
-          final index = issues.indexOf(issue);
-          issues
-            ..removeAt(index)
-            ..insert(index, newIssue);
-        }
-        return issue != null;
-      });
-
-    final chatThreads = _mergeIssuesAndAnnouncements(issues, announcement);
-
-    numberOfIssuesInfo.value = [
-      chatThreads.length,
-      chatThreads.where((element) => element.isUnread()).length,
-    ];
-
-    return chatThreads;
-  }
-
-  List<ChatThread> _mergeIssuesAndAnnouncements(
-    List<Issue> issues,
-    List<AnnouncementLocal> announcements,
-  ) {
-    // merge issue and announcement then sort by sortTime
-    final chatThreads = <ChatThread>[...issues, ...announcements]
-      ..sort((a, b) => b.sortTime.compareTo(a.sortTime));
-    return chatThreads;
   }
 
   @override
@@ -401,13 +350,6 @@ class CustomerSupportServiceImpl extends CustomerSupportService {
             log.info('[CS-Service] send log from FF Device failed: $e');
             unawaited(
               Sentry.captureException('Send log from FF Device failed: $e'),
-            );
-          }
-
-          if (data.announcementContentId != null) {
-            injector<AnnouncementService>().linkAnnouncementToIssue(
-              data.announcementContentId!,
-              result.issueID,
             );
           }
           tempIssueIDMap[draftMsg.issueID] = result.issueID;

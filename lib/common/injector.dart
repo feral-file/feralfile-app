@@ -39,8 +39,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/pla
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/works/bloc/works_bloc.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
-import 'package:autonomy_flutter/service/announcement/announcement_service.dart';
-import 'package:autonomy_flutter/service/announcement/announcement_store.dart';
 import 'package:autonomy_flutter/service/audio_service.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/bluetooth_service.dart';
@@ -272,13 +270,6 @@ Future<void> setupInjector() async {
 
   injector.registerLazySingleton<BluetoothConnectBloc>(
     BluetoothConnectBloc.new,
-  );
-
-  injector.registerLazySingleton<AnnouncementStore>(AnnouncementStore.new);
-  await injector<AnnouncementStore>().init();
-
-  injector.registerLazySingleton<AnnouncementService>(
-    () => AnnouncementServiceImpl(injector(), injector()),
   );
 
   injector.registerLazySingleton<AppDataManager>(AppDataManager.new);

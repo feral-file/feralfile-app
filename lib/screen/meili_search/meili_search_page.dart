@@ -9,14 +9,11 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/screen/customer_support/support_thread_page.dart';
 import 'package:autonomy_flutter/screen/meili_search/meili_search_bloc.dart';
 import 'package:autonomy_flutter/screen/meili_search/widgets/meili_search_result_section.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
-import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/dp1_playlist_grid_view.dart';
@@ -137,12 +134,7 @@ class _MeiliSearchPageState extends State<MeiliSearchPage> {
           const SizedBox(height: 24),
           PrimaryButton(
             onTap: () {
-              injector<NavigationService>().navigateTo(
-                AppRouter.supportThreadPage,
-                arguments: NewIssuePayload(
-                  reportIssueType: ReportIssueType.Bug,
-                ),
-              );
+              injector<NavigationService>().showCustomerSupport();
             },
             text: 'Help',
           ),

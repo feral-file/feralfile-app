@@ -3,14 +3,11 @@ import 'dart:io';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
-import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/screen/customer_support/support_thread_page.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
+import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
-import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/http_certificate_check.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/style.dart';
@@ -59,13 +56,9 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
       });
     } else {
       if (mounted) {
-        unawaited(Navigator.of(context).popAndPushNamed(
-          AppRouter.supportThreadPage,
-          arguments: NewIssuePayload(
-            reportIssueType: ReportIssueType.Bug,
-            defaultMessage: 'irl_page_not_found'.tr(args: [url]),
-          ),
-        ));
+        injector<NavigationService>().goBack();
+
+        injector<NavigationService>().showCustomerSupport();
       }
     }
   }
