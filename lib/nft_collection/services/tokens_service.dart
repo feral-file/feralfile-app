@@ -97,6 +97,7 @@ class NftTokensServiceImpl extends NftTokensService {
     final indexerClient = IndexerClient(
       _indexerUrl,
       indexerAPIKey: _indexerAPIKey,
+      httpTimeout: const Duration(seconds: 30),
     );
     _indexerService = NftIndexerService(indexerClient);
   }
@@ -965,6 +966,7 @@ class NftTokensServiceImpl extends NftTokensService {
     final indexerClient = IndexerClient(
       indexerUrl,
       indexerAPIKey: indexerAPIKey,
+      httpTimeout: const Duration(seconds: 30),
     );
 
     _isolateScopeInjector

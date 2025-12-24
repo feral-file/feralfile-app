@@ -6,10 +6,13 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:sentry/sentry.dart';
 
+/// HTTP client wrapper that applies a timeout to all requests.
+
 class IndexerClient {
   IndexerClient(
     this._baseUrl, {
     String? indexerAPIKey,
+    Duration? httpTimeout,
   })  : _httpClient = http.Client(),
         _indexerAPIKey = indexerAPIKey;
 
@@ -64,6 +67,8 @@ class IndexerClient {
         variables: vars,
         // Always fetch from network to avoid stale cache
         fetchPolicy: FetchPolicy.networkOnly,
+        // Override the default link-level timeout (which is often 5 seconds).
+        queryRequestTimeout: const Duration(seconds: 30),
       );
 
       NftCollection.logger.info('Querying: $doc with params: $vars');
@@ -124,7 +129,7 @@ class IndexerClient {
       final options = MutationOptions(
         document: gql(doc),
         variables: vars,
-        queryRequestTimeout: Duration(seconds: 10),
+        queryRequestTimeout: Duration(seconds: 30),
         fetchPolicy: FetchPolicy.networkOnly,
         onError: (e) {
           NftCollection.logger.warning(

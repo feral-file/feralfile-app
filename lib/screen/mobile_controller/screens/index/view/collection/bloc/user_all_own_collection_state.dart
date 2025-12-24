@@ -13,17 +13,17 @@ enum AddressStateType {
   String get description {
     switch (this) {
       case AddressStateType.indexing:
-        return 'Indexing';
+        return 'Syncing...';
       case AddressStateType.indexingDone:
-        return 'Indexing complete';
+        return 'Synced';
       case AddressStateType.indexingIncomplete:
-        return 'Indexing incomplete';
+        return 'Some missing';
       case AddressStateType.fetchingArtworks:
-        return 'Getting artworks';
+        return 'Syncing...';
       case AddressStateType.fetchingArtworksFailed:
-        return 'Get artworks incomplete';
+        return 'Some missing';
       case AddressStateType.fetchingArtworksDone:
-        return '';
+        return 'Synced';
     }
   }
 }
