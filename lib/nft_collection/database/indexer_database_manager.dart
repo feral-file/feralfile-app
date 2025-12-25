@@ -14,6 +14,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/col
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/token_extension.dart';
+import 'package:collection/collection.dart';
 import 'package:sentry/sentry.dart';
 
 /// Simple manager wrapping ObjectBox operations for Indexer persistence.
@@ -33,31 +34,43 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
   }
 
   /// Insert or update a Token (v2) into ObjectBox as TokenObject.
-  @override
-  int insertToken(v2.AssetToken token) {
-    final tokenObject = TokenObject.fromToken(token);
-    final existing = tokenBox
-        .query(TokenObject_.uniqueId.equals(tokenObject.uniqueId))
-        .build()
-        .findFirst();
-    if (existing != null) {
-      tokenObject.id = existing.id;
-    }
-    try {
-      final tokenId = tokenBox.put(tokenObject);
-      return tokenId;
-    } catch (e) {
-      log.info('Error inserting token: $e');
-      Sentry.captureException('Error inserting token: $e');
-      rethrow;
-    }
-  }
+  // @override
+  // int insertToken(v2.AssetToken token) {
+  //   final tokenObject = TokenObject.fromToken(token);
+  //   final existing = tokenBox
+  //       .query(TokenObject_.uniqueId.equals(tokenObject.uniqueId))
+  //       .build()
+  //       .findFirst();
+  //   if (existing != null) {
+  //     tokenObject.id = existing.id;
+  //   }
+  //   try {
+  //     final tokenId = tokenBox.put(tokenObject);
+  //     return tokenId;
+  //   } catch (e) {
+  //     log.info('Error inserting token: $e');
+  //     Sentry.captureException('Error inserting token: $e');
+  //     rethrow;
+  //   }
+  // }
 
   @override
   void insertTokens(List<v2.AssetToken> tokens) {
-    for (final token in tokens) {
-      insertToken(token);
-    }
+    final tokenObjects = tokens.map((e) => TokenObject.fromToken(e)).toList();
+    final uniqueIds = tokenObjects.map((e) => e.uniqueId).toList();
+    final existingTokens =
+        tokenBox.query(TokenObject_.uniqueId.oneOf(uniqueIds)).build().find();
+    final tokenObjectsToInsert = tokenObjects.map((e) {
+      final existing =
+          existingTokens.firstWhereOrNull((f) => f.uniqueId == e.uniqueId);
+      if (existing != null) {
+        e.id = existing.id;
+      }
+      return e;
+    }).toList();
+
+    tokenBox.putMany(tokenObjectsToInsert);
+    log.info('[insertTokens] Inserted ${tokenObjectsToInsert.length} tokens');
   }
 
   /// Get all Tokens owned by a specific owner address.

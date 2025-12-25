@@ -4,7 +4,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/col
 enum IndexerDatabaseSortBy { updatedAt }
 
 abstract class IndexerDatabaseAbstract {
-  int insertToken(v2.AssetToken token);
+  // int insertToken(v2.AssetToken token);
 
   void insertTokens(List<v2.AssetToken> tokens);
 

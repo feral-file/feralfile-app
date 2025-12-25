@@ -654,9 +654,7 @@ class NftTokensServiceImpl extends NftTokensService {
   }
 
   Future<void> insertAssetsWithProvenance(List<AssetToken> assetTokens) async {
-    for (final assetToken in assetTokens) {
-      _database.insertToken(assetToken);
-    }
+    _database.insertTokens(assetTokens);
 
     final tokensLog = assetTokens.map((e) => 'cid: ${e.cid}').toList();
     NftCollection.logger.info(

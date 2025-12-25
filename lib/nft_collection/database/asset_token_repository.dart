@@ -21,6 +21,50 @@ abstract class AssetTokenWatcher {
   Stream<List<AssetToken>> watch();
 }
 
+/// Helper function to check if two lists of AssetToken are equal.
+/// Compares by CID and updatedAt to detect actual changes.
+bool _areTokenListsEqual(List<AssetToken> a, List<AssetToken> b) {
+  if (a.length != b.length) {
+    return false;
+  }
+
+  for (var i = 0; i < a.length; i++) {
+    final tokenA = a[i];
+    final tokenB = b[i];
+
+    if (tokenA.cid != tokenB.cid) {
+      return false;
+    }
+
+    // Compare updatedAt timestamps
+    final updatedAtA = tokenA.updatedAt?.microsecondsSinceEpoch;
+    final updatedAtB = tokenB.updatedAt?.microsecondsSinceEpoch;
+    if (updatedAtA != updatedAtB) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/// StreamTransformer to filter out duplicate token lists.
+/// Only emits when the token list actually changes.
+class _TokenListDistinctTransformer
+    extends StreamTransformerBase<List<AssetToken>, List<AssetToken>> {
+  @override
+  Stream<List<AssetToken>> bind(Stream<List<AssetToken>> stream) {
+    List<AssetToken>? lastTokens;
+    return stream.where((tokens) {
+      // Only emit if tokens actually changed
+      if (lastTokens == null || !_areTokenListsEqual(lastTokens!, tokens)) {
+        lastTokens = tokens;
+        return true;
+      }
+      return false;
+    });
+  }
+}
+
 /// Watcher for tokens by CIDs (used for static playlists).
 class AssetTokenCidsWatcher implements AssetTokenWatcher {
   AssetTokenCidsWatcher({required this.cids});
@@ -43,7 +87,8 @@ class AssetTokenCidsWatcher implements AssetTokenWatcher {
         (Query<TokenObject> q) {
           try {
             final results = q.find();
-            return results.map((TokenObject e) => e.toToken()).toList();
+            final tokens = results.map((TokenObject e) => e.toToken()).toList();
+            return tokens;
           } catch (e, s) {
             log.info(
               '[AssetTokenCidsWatcher] Error watching tokens by CIDs: $e',
@@ -55,7 +100,7 @@ class AssetTokenCidsWatcher implements AssetTokenWatcher {
             return <AssetToken>[];
           }
         },
-      );
+      ).transform(_TokenListDistinctTransformer());
     } catch (e, s) {
       log.info(
         '[AssetTokenCidsWatcher] Error creating watch query for CIDs: $e',
@@ -131,7 +176,7 @@ class AssetTokenAddressesWatcher implements AssetTokenWatcher {
             return <AssetToken>[];
           }
         },
-      );
+      ).transform(_TokenListDistinctTransformer());
     } catch (e, s) {
       log.info(
         '[AssetTokenAddressesWatcher] Error creating watch query for owners: $e',
