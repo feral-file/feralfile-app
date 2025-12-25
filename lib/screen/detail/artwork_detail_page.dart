@@ -10,10 +10,8 @@ import 'dart:collection';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/main.dart';
-import 'package:autonomy_flutter/model/play_list_model.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
@@ -34,6 +32,7 @@ import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
+import 'package:autonomy_flutter/util/canvas_playing_ext.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/custom_route_observer.dart';
 import 'package:autonomy_flutter/util/feral_file_custom_tab.dart';
@@ -42,11 +41,13 @@ import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:autonomy_flutter/view/cast_button.dart';
+import 'package:autonomy_flutter/view/ff_artwork_thumbnail_view.dart';
 import 'package:autonomy_flutter/view/loading.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/view/webview_controller_text_field.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
+import 'package:autonomy_flutter/widgets/artwork_playing_controls/artwork_playing_controls.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:backdrop/backdrop.dart';
 import 'package:collection/collection.dart';
@@ -195,16 +196,17 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
       backgroundColor: AppColor.auGreyBackground,
       body: BlocConsumer<ArtworkDetailBloc, ArtworkDetailState>(
         listener: (context, state) {
-          final List<String> identitiesList = state.assetToken?.provenance
+          final identitiesList = state.assetToken?.provenance
                   .map((e) => e.toAddress ?? '')
                   .toSet()
                   .toList() ??
               [];
           final listArtists = state.assetToken?.getArtists;
-          identitiesList.addAll(listArtists?.map((e) => e.name) ?? []);
-
-          identitiesList.addAll(
-              state.assetToken?.owners?.items.map((e) => e.ownerAddress) ?? []);
+          identitiesList
+            ..addAll(listArtists?.map((e) => e.name) ?? [])
+            ..addAll(
+              state.assetToken?.owners?.items.map((e) => e.ownerAddress) ?? [],
+            );
 
           setState(() {
             currentToken = state.assetToken;
@@ -262,39 +264,13 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                           ],
                         ),
                   backLayer: !isLoading
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(
-                              height: UIConstants.detailPageHeaderPadding,
-                            ),
-                            Expanded(
-                              child: Center(
-                                child: ArtworkPreviewWidget(
-                                  useIndexer: widget.payload.useIndexer,
-                                  identity: widget.payload.identity,
-                                  onLoaded: _onLoaded,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(
-                              height: UIConstants.detailPageHeaderPadding,
-                            ),
-                            if (!_isFullScreen)
-                              const Column(
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 8),
-                                    child: ArtworkDetailsHeader(
-                                      title: 'I',
-                                      subTitle: 'I',
-                                      color: Colors.transparent,
-                                    ),
-                                  ),
-                                  BottomSpacing(),
-                                ],
-                              ),
-                          ],
+                      ? ArtworkBackLayer(
+                          assetToken: assetToken!,
+                          canvasDeviceBloc: _canvasDeviceBloc,
+                          useIndexer: widget.payload.useIndexer,
+                          identity: widget.payload.identity,
+                          onLoaded: _onLoaded,
+                          isFullScreen: _isFullScreen,
                         )
                       : LoadingWidget(
                           backgroundColor: AppColor.auGreyBackground),
@@ -373,8 +349,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
     );
   }
 
-  String _getDisplayKey(AssetToken asset) => asset.displayKey;
-
   dynamic _onLoaded({WebViewController? webViewController, int? time}) {
     _webViewController = webViewController;
   }
@@ -452,14 +426,11 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
     ArtworkDetailState state,
     String? artistName,
   ) {
-    final theme = Theme.of(context);
     final assetToken = state.assetToken!;
     final allAddresses = injector<AddressService>().getAllAddresses();
     final ownerItems = assetToken.owners?.items.where((element) =>
         allAddresses.contains(element.ownerAddress) &&
         (int.tryParse(element.quantity) ?? 0) > 0);
-    // final editionSubTitle = getEditionSubTitle(assetToken);
-    final editionSubTitle = '';
     return Stack(
       children: [
         Visibility(
@@ -501,19 +472,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                             ),
                           );
                         },
-                      ),
-                    ),
-                  ),
-                  Visibility(
-                    visible: editionSubTitle.isNotEmpty,
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: ResponsiveLayout.getPadding,
-                        child: Text(
-                          editionSubTitle,
-                          style: AppTypography.body(context).grey,
-                        ),
                       ),
                     ),
                   ),
@@ -599,63 +557,55 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
         ),
       );
 
-  bool _isHidden(AssetToken token) => injector<AppDataManager>()
-      .appSettingsStorageService
-      .hiddenTokenIDs
-      .contains(token.cid);
-
   Future<void> _showArtworkOptionsDialog(
     BuildContext context,
     AssetToken asset,
     CanvasDeviceState canvasDeviceState,
   ) async {
-    final connectedDevice = BluetoothDeviceManager().castingBluetoothDevice;
-    final isCasting = connectedDevice != null;
-    final hasLocalAddress = asset.hasLocalAddress();
     if (!context.mounted) {
       return;
     }
-    final isHidden = _isHidden(asset);
     _focusNode.unfocus();
 
+    final isPlaying = canvasDeviceState.isAssetPlayingOnFF1(asset);
+
     unawaited(
-      UIHelper.showDrawerAction(
+      UIHelper.showCenterMenu(
         context,
         options: [
           OptionItem(
             title: 'full_screen'.tr(),
             icon: SvgPicture.asset(
               'assets/images/fullscreen_icon.svg',
-              width: 20,
-              height: 20,
+              width: 18,
+              height: 18,
             ),
             onTap: () {
               Navigator.of(context).pop();
               _setFullScreen();
             },
           ),
-          if (isCasting)
+          if (isPlaying)
             OptionItem(
               title: 'interact'.tr(),
               icon: SvgPicture.asset(
                 'assets/images/keyboard_icon.svg',
-                width: 20,
-                height: 20,
+                width: 22,
+                height: 14.68,
               ),
               onTap: () {
                 Navigator.of(context).pop();
-                final castingDevice = canvasDeviceState
-                    .lastSelectedActiveDeviceForKey(_getDisplayKey(asset));
                 final bluetoothConnectedDevice =
                     BluetoothDeviceManager().castingBluetoothDevice;
-                if (castingDevice != null || bluetoothConnectedDevice != null) {
+                if (bluetoothConnectedDevice != null &&
+                    canvasDeviceState.isAssetPlayingOnFF1(asset)) {
                   unawaited(
                     Navigator.of(context).pushNamed(
                       AppRouter.keyboardControlPage,
                       arguments: KeyboardControlPagePayload(
-                        "",
+                        '',
                         asset.displayDescription,
-                        [bluetoothConnectedDevice ?? castingDevice!],
+                        [bluetoothConnectedDevice],
                       ),
                     ),
                   );
@@ -677,6 +627,18 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                 await browser.openUrl(asset.secondaryMarketURL);
               },
             ),
+          OptionItem(
+            title: 'Artwork details',
+            icon: SvgPicture.asset(
+              'assets/images/info_white.svg',
+              width: 22,
+              height: 22,
+            ),
+            onTap: () {
+              Navigator.of(context).pop();
+              _infoExpand();
+            },
+          ),
           OptionItem(
             title: 'rebuild_metadata'.tr(),
             icon: SvgPicture.asset(
@@ -746,19 +708,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
               );
             },
           ),
-          OptionItem(
-            title: 'View artwork info',
-            icon: SvgPicture.asset(
-              'assets/images/info_white.svg',
-              width: 20,
-              height: 20,
-            ),
-            onTap: () {
-              Navigator.of(context).pop();
-              _infoExpand();
-            },
-          ),
-          OptionItem.emptyOptionItem,
         ],
       ),
     );
@@ -803,35 +752,138 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
   }
 }
 
+class ArtworkBackLayer extends StatelessWidget {
+  const ArtworkBackLayer({
+    required this.assetToken,
+    required this.canvasDeviceBloc,
+    required this.useIndexer,
+    required this.identity,
+    required this.onLoaded,
+    required this.isFullScreen,
+    super.key,
+  });
+
+  final AssetToken assetToken;
+  final CanvasDeviceBloc canvasDeviceBloc;
+  final bool useIndexer;
+  final ArtworkIdentity identity;
+  final dynamic Function({WebViewController? webViewController, int? time})
+      onLoaded;
+  final bool isFullScreen;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocSelector<CanvasDeviceBloc, CanvasDeviceState, bool>(
+      bloc: canvasDeviceBloc,
+      selector: (canvasState) => canvasState.isAssetPlayingOnFF1(assetToken),
+      builder: (context, isPlayingOnFF1) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(
+              height: UIConstants.detailPageHeaderPadding,
+            ),
+            Expanded(
+              child: Stack(
+                children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Center(
+                  child: isPlayingOnFF1
+                      ? ArtworkThumbnailView(assetToken: assetToken)
+                      : ArtworkPreviewWidget(
+                          useIndexer: useIndexer,
+                          identity: identity,
+                          onLoaded: onLoaded,
+                        ),
+                ),
+              ),
+              if (isPlayingOnFF1)
+                Center(
+                  child: Container
+                  (
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(32),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: ArtworkPlayingControls(
+                      playingDevice:
+                          BluetoothDeviceManager().castingBluetoothDevice!,
+                    ),
+                  ),
+                ),
+                ],
+              ),
+            ),
+            const SizedBox(
+              height: UIConstants.detailPageHeaderPadding,
+            ),
+            if (!isFullScreen)
+              const Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: ArtworkDetailsHeader(
+                      title: 'I',
+                      subTitle: 'I',
+                      color: Colors.transparent,
+                    ),
+                  ),
+                  BottomSpacing(),
+                ],
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class ArtworkThumbnailView extends StatelessWidget {
+  const ArtworkThumbnailView({required this.assetToken, super.key});
+
+  final AssetToken assetToken;
+
+  @override
+  Widget build(BuildContext context) {
+    final thumbnailUrl = assetToken.getGalleryThumbnailUrl();
+    return Opacity(
+      opacity: 0.5,
+      child: (thumbnailUrl != null && thumbnailUrl.isNotEmpty)
+          ? FFArtworkThumbnailView(
+              url: thumbnailUrl,
+            )
+          : const GalleryNoThumbnailWidget(),
+    );
+  }
+}
+
 class ArtworkDetailPayload {
   ArtworkDetailPayload(
     this.identity, {
-    this.playlist,
     this.useIndexer = true,
-    this.shouldUseLocalCache = true,
     this.key,
     this.backTitle,
   });
 
   final Key? key;
   final ArtworkIdentity identity;
-  final PlayListModel? playlist;
   final bool useIndexer; // set true when navigate from discover/gallery page
   // if local token, it can be hidden and refresh metadata
-  final bool shouldUseLocalCache;
   final String? backTitle;
 
   ArtworkDetailPayload copyWith({
     ArtworkIdentity? identity,
-    PlayListModel? playlist,
     bool? useIndexer,
-    bool? shouldUseLocalCache,
   }) =>
       ArtworkDetailPayload(
         identity ?? this.identity,
-        playlist: playlist ?? this.playlist,
         useIndexer: useIndexer ?? this.useIndexer,
-        shouldUseLocalCache: shouldUseLocalCache ?? this.shouldUseLocalCache,
       );
 }
 

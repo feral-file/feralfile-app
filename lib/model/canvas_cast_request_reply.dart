@@ -397,7 +397,6 @@ class CheckCastingStatusReply extends ReplyWithOK {
     this.index,
     bool? isPaused,
     this.connectedDevice,
-    this.displayKey,
     this.deviceSettings,
     super.error,
     this.items,
@@ -414,7 +413,6 @@ class CheckCastingStatusReply extends ReplyWithOK {
                 json['connectedDevice'] as Map<String, dynamic>,
               )
             : null,
-        displayKey: json['displayKey'] as String?,
         deviceSettings: json['deviceSettings'] != null
             ? DeviceDisplaySetting.fromJson(
                 json['deviceSettings'] as Map<String, dynamic>,
@@ -444,7 +442,6 @@ class CheckCastingStatusReply extends ReplyWithOK {
   int? index;
   bool isPaused;
   DeviceInfoV2? connectedDevice;
-  String? displayKey;
   DeviceDisplaySetting? deviceSettings;
   final List<DP1Item>? items;
   final CastCommand? castCommand;
@@ -455,7 +452,6 @@ class CheckCastingStatusReply extends ReplyWithOK {
         'index': index,
         'isPaused': isPaused,
         'connectedDevice': connectedDevice?.toJson(),
-        'displayKey': displayKey,
         'deviceSettings': deviceSettings?.toJson(),
         'castCommand': castCommand?.toString(),
         'error': super.error?.jsonString,
@@ -469,7 +465,6 @@ class CheckCastingStatusReply extends ReplyWithOK {
     DeviceInfoV2? connectedDevice,
     String? exhibitionId,
     String? catalogId,
-    String? displayKey,
     DeviceDisplaySetting? deviceSettings,
     List<DP1Item>? items,
     CastCommand? castCommand,
@@ -480,7 +475,6 @@ class CheckCastingStatusReply extends ReplyWithOK {
       index: index ?? this.index,
       isPaused: isPaused ?? this.isPaused,
       connectedDevice: connectedDevice ?? this.connectedDevice,
-      displayKey: displayKey ?? this.displayKey,
       deviceSettings: deviceSettings ?? this.deviceSettings,
       items: items ?? this.items,
       castCommand: castCommand ?? this.castCommand,

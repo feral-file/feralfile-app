@@ -49,7 +49,7 @@ class LoadingWidget extends StatelessWidget {
             if (showText) ...[
               const SizedBox(height: 12),
               Text(
-                text ?? 'loading'.tr(),
+                text ?? 'Loading'.tr(),
                 style: ResponsiveLayout.isMobile
                     ? AppTypography.bodySmall(context).white
                     : AppTypography.bodySmall(context).white,

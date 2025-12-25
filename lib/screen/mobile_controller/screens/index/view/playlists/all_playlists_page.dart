@@ -254,8 +254,8 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
         }
 
         return PlaylistTitle(
-          primaryText:
-              '${playlist.title} ${stateSuffix.isNotEmpty ? '($stateSuffix)' : ''}',
+          primaryText: '${playlist.title}',
+          primaryTextSuffix: stateSuffix.isNotEmpty ? '($stateSuffix)' : null,
           secondaryText: playlistData.creator,
         );
       },

@@ -37,6 +37,7 @@ import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/inapp_notifications.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
+import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:autonomy_flutter/view/au_button_clipper.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
@@ -997,50 +998,12 @@ class UIHelper {
                       itemCount: options.length,
                       itemBuilder: (BuildContext context, int index) {
                         final option = options[index];
-                        final child = Row(
-                          children: [
-                            if (option.icon != null)
-                              SizedBox(
-                                width: LayoutConstants.iconSizeMedium,
-                                height: LayoutConstants.iconSizeMedium,
-                                child: IconTheme(
-                                  data: const IconThemeData(
-                                    color: AppColor.white,
-                                  ),
-                                  child: option.icon!,
-                                ),
-                              ),
-                            if (option.icon != null)
-                              const SizedBox(
-                                width: 15,
-                              ),
-                            Text(
-                              option.title ?? '',
-                              style: option.titleStyle ??
-                                  AppTypography.body(context).white,
-                            ),
-                          ],
-                        );
 
                         if (option.builder != null) {
                           return option.builder!.call(context, option);
                         }
 
-                        return GestureDetector(
-                          onTap: () {
-                            option.onTap?.call();
-                          },
-                          child: Stack(
-                            children: [
-                              child,
-                              Positioned.fill(
-                                child: Container(
-                                  color: Colors.transparent,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
+                        return _CenterMenuItem(option: option);
                       },
                       separatorBuilder: (context, index) => const SizedBox(
                         height: 24,
@@ -1612,6 +1575,93 @@ class UIHelper {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _CenterMenuItem extends StatefulWidget {
+  const _CenterMenuItem({required this.option});
+
+  final OptionItem option;
+
+  @override
+  State<_CenterMenuItem> createState() => _CenterMenuItemState();
+}
+
+class _CenterMenuItemState extends State<_CenterMenuItem> {
+  bool _isProcessing = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final option = widget.option;
+    final baseTextStyle =
+        option.titleStyle ?? AppTypography.body(context).white;
+
+    final processingTextStyle = option.titleStyleOnPrecessing ??
+        baseTextStyle.copyWith(color: AppColor.disabledColor);
+    final disabledTextStyle = option.titleStyleOnDisable ??
+        baseTextStyle.copyWith(color: AppColor.disabledColor);
+
+    final textStyle = !option.isEnable
+        ? disabledTextStyle
+        : _isProcessing
+            ? processingTextStyle
+            : baseTextStyle;
+
+    final icon = !option.isEnable
+        ? option.iconOnDisable
+        : _isProcessing
+            ? (option.iconOnProcessing ??
+                loadingIndicator(
+                  valueColor: AppColor.disabledColor,
+                  size: LayoutConstants.iconSizeSmall,
+                ))
+            : option.icon;
+
+    return GestureDetector(
+      onTap: () async {
+        if (!option.isEnable || _isProcessing) {
+          return;
+        }
+
+        setState(() {
+          _isProcessing = true;
+        });
+
+        await option.onTap?.call();
+
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          _isProcessing = false;
+        });
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        children: [
+          if (icon != null)
+            SizedBox(
+              width: LayoutConstants.iconSizeMedium,
+              height: LayoutConstants.iconSizeMedium,
+              child: IconTheme(
+                data: const IconThemeData(
+                  color: AppColor.white,
+                ),
+                child: icon,
+              ),
+            ),
+          if (icon != null)
+            const SizedBox(
+              width: 15,
+            ),
+          Text(
+            option.title ?? '',
+            style: textStyle,
+          ),
+        ],
       ),
     );
   }

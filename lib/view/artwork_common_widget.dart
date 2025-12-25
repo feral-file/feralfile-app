@@ -280,7 +280,7 @@ class GalleryThumbnailPlaceholder extends StatelessWidget {
     // return const SizedBox();
 
     return Semantics(
-      label: loading ? 'loading' : '',
+      label: loading ? 'Loading' : '',
       child: AspectRatio(
         aspectRatio: 1,
         child: Shimmer.fromColors(

@@ -206,12 +206,15 @@ class PlaylistsPageState extends State<PlaylistsPage>
             }
           }
 
-          stateSuffix = targetState?.state.description ?? '';
+          stateSuffix =
+              (targetState?.state == AddressStateType.fetchingArtworksDone)
+                  ? ''
+                  : targetState?.state.description ?? '';
         }
 
         final child = PlaylistTitle(
-          primaryText: '${playlist.title}' +
-              (stateSuffix.isNotEmpty ? ' ($stateSuffix)' : ''),
+          primaryText: '${playlist.title}',
+          primaryTextSuffix: stateSuffix.isNotEmpty ? '($stateSuffix)' : null,
           secondaryText: playlistData.creator,
         );
 

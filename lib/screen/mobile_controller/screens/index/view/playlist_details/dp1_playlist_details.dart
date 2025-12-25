@@ -53,7 +53,6 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final playlistReference = widget.payload.playlist;
     return BlocBuilder<CanvasDeviceBloc, CanvasDeviceState>(
       bloc: _canvasDeviceBloc,
       builder: (context, state) {
@@ -62,7 +61,6 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
             backTitle: widget.payload.backTitle ?? 'Playlists',
             actions: [
               FFCastButton(
-                // displayKey: widget.payload.playlist.id,
                 onDeviceSelected: (device) {
                   final completer = Completer<void>();
                   _canvasDeviceBloc.add(

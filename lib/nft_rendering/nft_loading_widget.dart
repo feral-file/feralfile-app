@@ -43,7 +43,7 @@ class LoadingWidget extends StatelessWidget {
                 invertColors: invertColors,
               ),
               const SizedBox(height: 12),
-              Text('loading', style: AppTypography.body(context).white)
+              Text('Loading', style: AppTypography.body(context).white)
             ],
           ),
         ),

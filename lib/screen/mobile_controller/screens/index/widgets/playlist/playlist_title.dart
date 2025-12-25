@@ -1,7 +1,6 @@
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/components/PlaylistListItem.dart';
 import 'package:autonomy_flutter/design/layout_constants.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:flutter/material.dart';
 
 /// Playlist List Item - Displays playlist info with primary and secondary text
@@ -9,17 +8,18 @@ class PlaylistTitle extends StatelessWidget {
   const PlaylistTitle({
     required this.primaryText,
     required this.secondaryText,
+    this.primaryTextSuffix,
     this.onTap,
     super.key,
   });
 
   final String primaryText;
+  final String? primaryTextSuffix;
   final String secondaryText;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -38,11 +38,22 @@ class PlaylistTitle extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(
-                    child: Text(
-                      primaryText,
-                      style: AppTypography.body(context).white,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    child: Row(
+                      children: [
+                        Text(
+                          primaryText,
+                          style: AppTypography.body(context).white,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(width: LayoutConstants.space2),
+                        Text(
+                          primaryTextSuffix ?? '',
+                          style: AppTypography.bodySmall(context).grey.italic,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
                   SizedBox(width: LayoutConstants.space2),
