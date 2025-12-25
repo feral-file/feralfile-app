@@ -11,7 +11,6 @@ import 'package:autonomy_flutter/screen/home/home_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
-import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/network_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
