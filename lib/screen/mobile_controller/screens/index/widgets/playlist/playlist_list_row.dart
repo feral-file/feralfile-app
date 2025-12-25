@@ -8,7 +8,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_title.dart';
 import 'package:autonomy_flutter/util/debouce_util.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
-import 'package:autonomy_flutter/util/log.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -70,6 +69,7 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
     if (oldWidget.playlistReference.playlist.id !=
             widget.playlistReference.playlist.id ||
         currentItems.length != newItems.length) {
+      _playlistDetailsBloc.close();
       _playlistDetailsBloc = PlaylistDetailsBloc(
         playlist: widget.playlistReference.playlist,
       );

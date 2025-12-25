@@ -1,19 +1,15 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:autonomy_flutter/au_bloc.dart';
-import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/model/token.dart';
-import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
-import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
-import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
+import 'package:autonomy_flutter/nft_collection/database/asset_token_repository.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_event.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
+import 'package:autonomy_flutter/util/dp1_now_displaying_item_ext.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sentry/sentry.dart';
 
@@ -22,7 +18,8 @@ class PlaylistDetailsBloc
   PlaylistDetailsBloc({required DP1Call playlist})
       : _playlist = playlist,
         super(const PlaylistDetailsInitialState()) {
-    on<SetPlaylistDetailsEvent>(_onSetPlaylistDetails);
+    _setupDatabaseListener();
+    on<SetPlaylistEvent>(_onSetPlaylist);
     on<GetPlaylistDetailsEvent>(_onGetPlaylistDetails);
     on<LoadMorePlaylistDetailsEvent>(_onLoadMorePlaylistDetails);
   }
@@ -31,138 +28,104 @@ class PlaylistDetailsBloc
 
   static const int _pageSize = 10;
 
-  /// Build nowDisplayingItems for playlist with static items.
-  Future<List<DP1NowDisplayingItem>> _buildNowDisplayingItemsFromStaticItems({
-    required int offset,
-    required int size,
-  }) async {
-    final items = _playlist.items;
-    final pageItems = items.safeSublist(offset, offset + size);
-    if (pageItems.isEmpty) {
-      return [];
-    }
+  StreamSubscription<List<AssetToken>>? _databaseSubscription;
 
-    final pageCids =
-        pageItems.map((item) => item.cid).whereType<String>().toList();
-    final pageAssetTokens = <AssetToken>[];
+  /// Setup database listener to watch for changes.
+  void _setupDatabaseListener() {
+    // Cancel existing subscription if any
+    _databaseSubscription?.cancel();
+    _databaseSubscription = null;
 
     try {
-      final assetTokens =
-          await injector<NftTokensService>().getManualTokens(cids: pageCids);
+      final isStatic = _playlist.items.isNotEmpty;
+      AssetTokenWatcher watcher;
 
-      if (assetTokens.length != pageItems.length) {
-        final missingTokens = pageItems
-            .where((item) => !assetTokens.any((t) => t.cid == item.cid))
+      if (isStatic) {
+        // Watch tokens by CIDs for static playlists
+        final cids = _playlist.items
+            .map((item) => item.cid)
+            .whereType<String>()
             .toList();
-        unawaited(
-          Sentry.captureException(
-            Exception(
-              'Can not get all tokens. Missing tokens:  ${missingTokens.map((t) => t.cid).join(', ')}',
-            ),
-          ),
+        watcher = AssetTokenCidsWatcher(cids: cids);
+        log.info(
+          '[PlaylistDetailsBloc] Setting up database listener for static playlist ${_playlist.id} with ${cids.length} CIDs',
+        );
+      } else {
+        // Watch tokens by owner addresses for dynamic playlists
+        final owners = _playlist.firstDynamicQuery?.params.owners ?? [];
+        watcher = AssetTokenAddressesWatcher(owners: owners);
+        log.info(
+          '[PlaylistDetailsBloc] Setting up database listener for dynamic playlist ${_playlist.id} with owners: $owners',
         );
       }
 
-      pageAssetTokens.addAll(assetTokens);
-    } catch (e) {
-      log.info('Error getting tokens: $e');
-      unawaited(Sentry.captureException(e));
-    }
+      _databaseSubscription = watcher.watch().listen(
+        (tokens) async {
+          log.info(
+            '[PlaylistDetailsBloc] Database changed, checking playlist ${_playlist.id} with ${tokens.length} tokens',
+          );
 
-    // Build nowDisplayingItems list
-    final nowDisplayingItems = <DP1NowDisplayingItem>[];
-    for (var i = 0; i < pageItems.length; i++) {
-      final dp1Item = pageItems[i];
-      final assetToken =
-          pageAssetTokens.firstWhereOrNull((e) => e.cid == dp1Item.cid);
-      nowDisplayingItems.add(
-        DP1NowDisplayingItem(
-          dp1Item: dp1Item,
-          assetToken: assetToken,
-        ),
+          // Only trigger reload if the paginated items (0 to offset) have changed
+          final currentItems = state.nowDisplayingItems;
+          if (currentItems.isEmpty && tokens.isNotEmpty) {
+            // No items loaded yet, trigger initial load
+            add(GetPlaylistDetailsEvent());
+            return;
+          }
+
+          // Use the actual number of loaded items for comparison
+
+          final loadedCount = max(_pageSize, currentItems.length);
+
+          // Build nowDisplayingItems from updated tokens for current pagination
+          final updatedItems =
+              await DP1NowDisplayingItemListExt.buildFromPlaylist(
+                  playlist: _playlist,
+                  offset: 0,
+                  size: loadedCount,
+                  initialAssetTokens: tokens);
+
+          // Compare with current state`
+          final hasChanged = !currentItems.isEqual(updatedItems);
+
+          if (hasChanged) {
+            log.info(
+              '[PlaylistDetailsBloc] Paginated items (0 to $loadedCount) changed, reloading playlist ${_playlist.id}',
+            );
+            add(GetPlaylistDetailsEvent(size: loadedCount));
+          } else {
+            log.info(
+              '[PlaylistDetailsBloc] Paginated items (0 to $loadedCount) unchanged, skipping reload',
+            );
+          }
+        },
+        onError: (Object error, StackTrace stackTrace) {
+          log.info(
+            '[PlaylistDetailsBloc] Database listener error: $error',
+          );
+          unawaited(Sentry.captureException(
+            'Database listener error in PlaylistDetailsBloc: $error',
+            stackTrace: stackTrace,
+          ));
+        },
       );
+    } catch (e, s) {
+      log.info(
+        '[PlaylistDetailsBloc] Error setting up database listener: $e',
+      );
+      unawaited(Sentry.captureException(
+        'Error setting up database listener: $e',
+        stackTrace: s,
+      ));
     }
-
-    return nowDisplayingItems;
   }
 
-  /// Build nowDisplayingItems for playlist with dynamic query (owners-based).
-  Future<List<DP1NowDisplayingItem>> _buildNowDisplayingItemsFromDynamicQuery({
-    required int offset,
-    required int size,
-  }) async {
-    final dynamicQuery = _playlist.firstDynamicQuery;
-    if (dynamicQuery == null) {
-      log.info(
-          '[PlaylistDetailsBloc][_buildNowDisplayingItemsFromDynamicQuery] No dynamic query for playlist ${_playlist.id}');
-      return <DP1NowDisplayingItem>[];
-    }
-
-    final owners = dynamicQuery.params.owners;
-    if (owners.isEmpty) {
-      log.info(
-          '[PlaylistDetailsBloc][_buildNowDisplayingItemsFromDynamicQuery] Owners empty for playlist ${_playlist.id}');
-      return <DP1NowDisplayingItem>[];
-    }
-
-    log.info(
-        '[PlaylistDetailsBloc][_buildNowDisplayingItemsFromDynamicQuery] Fetching tokens for playlist ${_playlist.id} with owners: $owners, offset: $offset, size: $size');
-
-    // Fetch tokens from indexer via isolate for given owners
-    // final tokensStream = await injector<NftTokensService>()
-    //     .fetchTokensInIsolate(owners, offset, size);
-    // final allTokens = <AssetToken>[];
-
-    // await for (final batch in tokensStream) {
-    //   allTokens.addAll(batch);
-    // }
-
-    final allTokensOwners = await injector<IndexerDatabaseAbstract>()
-        .getTokensByOwner(ownerAddress: owners.first);
-
-    final allTokens = allTokensOwners.safeSublist(offset, offset + size);
-
-    if (allTokens.isEmpty) {
-      log.info(
-          '[PlaylistDetailsBloc][_buildNowDisplayingItemsFromDynamicQuery] No tokens found for owners: $owners');
-      return <DP1NowDisplayingItem>[];
-    }
-
-    final pageTokens = allTokens.safeSublist(0, size);
-    if (pageTokens.isEmpty) {
-      return <DP1NowDisplayingItem>[];
-    }
-
-    final pageItems = pageTokens
-        .map(
-          (token) => DP1PlaylistItemExtension.fromAssetToken(token: token),
-        )
-        .toList();
-
-    // Build nowDisplayingItems list using tokens directly
-    final nowDisplayingItems = <DP1NowDisplayingItem>[];
-    for (var i = 0; i < pageItems.length; i++) {
-      final dp1Item = pageItems[i];
-      final assetToken = pageTokens[i];
-      nowDisplayingItems.add(
-        DP1NowDisplayingItem(
-          dp1Item: dp1Item,
-          assetToken: assetToken,
-        ),
-      );
-    }
-
-    log.info(
-        '[PlaylistDetailsBloc][_buildNowDisplayingItemsFromDynamicQuery] Returning ${nowDisplayingItems.length} items for playlist ${_playlist.id}');
-
-    return nowDisplayingItems;
-  }
-
-  Future<void> _onSetPlaylistDetails(
-    SetPlaylistDetailsEvent event,
+  Future<void> _onSetPlaylist(
+    SetPlaylistEvent event,
     Emitter<PlaylistDetailsState> emit,
   ) async {
     _playlist = event.playlist;
+    _setupDatabaseListener();
     add(GetPlaylistDetailsEvent());
   }
 
@@ -184,16 +147,12 @@ class PlaylistDetailsBloc
       ),
     );
     try {
-      final isStatic = _playlist.items.isNotEmpty;
-      final nowDisplayingItems = isStatic
-          ? await _buildNowDisplayingItemsFromStaticItems(
-              offset: 0,
-              size: event.size,
-            )
-          : await _buildNowDisplayingItemsFromDynamicQuery(
-              offset: 0,
-              size: event.size,
-            );
+      final nowDisplayingItems =
+          await DP1NowDisplayingItemListExt.buildFromPlaylist(
+        playlist: _playlist,
+        offset: 0,
+        size: event.size,
+      );
 
       log.info(
           'PlaylistDetailsLoadedState loaded ${this._playlist.id} with ${nowDisplayingItems.length} items');
@@ -239,19 +198,14 @@ class PlaylistDetailsBloc
       ),
     );
     try {
-      final isStatic = _playlist.items.isNotEmpty;
       final start = state.offset;
 
-      final newNowDisplayingItems = await (isStatic
-              ? _buildNowDisplayingItemsFromStaticItems(
-                  offset: start,
-                  size: _pageSize,
-                )
-              : _buildNowDisplayingItemsFromDynamicQuery(
-                  offset: start,
-                  size: _pageSize,
-                ))
-          .timeout(const Duration(seconds: 30), onTimeout: () {
+      final newNowDisplayingItems =
+          await DP1NowDisplayingItemListExt.buildFromPlaylist(
+        playlist: _playlist,
+        offset: start,
+        size: _pageSize,
+      ).timeout(const Duration(seconds: 30), onTimeout: () {
         throw Exception('Timeout loading more playlist details');
       });
 
@@ -282,5 +236,13 @@ class PlaylistDetailsBloc
         ),
       );
     }
+  }
+
+  @override
+  Future<void> close() {
+    log.info('[PlaylistDetailsBloc] Closing, cancelling database subscription');
+    _databaseSubscription?.cancel();
+    _databaseSubscription = null;
+    return super.close();
   }
 }

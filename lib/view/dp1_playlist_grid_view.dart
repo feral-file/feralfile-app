@@ -53,8 +53,7 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
   void didUpdateWidget(covariant PlaylistAssetGridView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!oldWidget.playlist.isItemsEqual(widget.playlist)) {
-      _playlistDetailsBloc
-          .add(SetPlaylistDetailsEvent(playlist: widget.playlist));
+      _playlistDetailsBloc.add(SetPlaylistEvent(playlist: widget.playlist));
     } else {
       log.info('PlaylistAssetGridView: didUpdateWidget no need to update');
     }
@@ -62,6 +61,7 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
 
   @override
   void dispose() {
+    _playlistDetailsBloc.close();
     _scrollController.dispose();
     super.dispose();
   }
@@ -142,7 +142,6 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
       );
 
   Widget _emptyView(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: ResponsiveLayout.paddingHorizontal,
