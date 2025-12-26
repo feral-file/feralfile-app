@@ -16,6 +16,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.29.3'
           channel: stable
       - uses: webfactory/ssh-agent@v0.5.4
         with:
