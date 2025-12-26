@@ -59,7 +59,7 @@ def signature_hash = localProperties["signature.hash"] ?: environment["SIGNATURE
 def signature_hash_inhouse = localProperties["signature.hashInhouse"] ?: environment["SIGNATURE_HASH_INHOUSE"]
 
 android {
-    compileSdkVersion 35
+    compileSdkVersion 36
     flavorDimensions 'env'
 
     sourceSets {
