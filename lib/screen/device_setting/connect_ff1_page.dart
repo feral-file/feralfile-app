@@ -384,7 +384,9 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
                         size: LayoutConstants.iconSizeLarge * 2,
                         color: PrimitivesTokens.colorsLightBlue,
                       ),
-                      SizedBox(height: LayoutConstants.space4),
+                      SizedBox(
+                        height: LayoutConstants.space4,
+                      ),
                     ],
                     Align(
                       alignment: _status != _ConnectFF1Status.error
@@ -397,7 +399,7 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
                         children: [
                           Text(
                             _titleText.tr(),
-                            style: AppTypography.h2(context).red,
+                            style: AppTypography.h2(context).white,
                           ),
                           SizedBox(height: LayoutConstants.space5),
                           Text(

@@ -3,13 +3,15 @@ import 'dart:math' as math;
 
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
+import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/model/device/base_device.dart';
 import 'package:autonomy_flutter/screen/bloc/subscription/subscription_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/subscription/subscription_state.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/widgets/buttons/play_button.dart';
@@ -106,7 +108,19 @@ class FFCastButtonState extends State<FFCastButton>
     if (_overlayEntry != null || !mounted) {
       return;
     }
-    final overlay = Overlay.of(context, rootOverlay: true);
+    final topOverlayState = topOverlayKey.currentState;
+    if (topOverlayState == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _overlayEntry == null) {
+          _insertOverlay();
+        }
+      });
+      return;
+    }
+    _insertOverlayEntry(topOverlayState);
+  }
+
+  void _insertOverlayEntry(OverlayState overlay) {
     final renderBox =
         _buttonKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) {
@@ -237,13 +251,13 @@ class PlayToFF1Tooltip extends StatelessWidget {
             child: Stack(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: EdgeInsets.all(
+                    LayoutConstants.space5,
+                  ),
                   width: 243,
                   child: Text(
                     'Tap the Play button to send the playlist to your FF1.',
-                    style: Theme.of(context).textTheme.small.copyWith(
-                          color: PrimitivesTokens.colorsGrey,
-                        ),
+                    style: AppTypography.body(context).white,
                   ),
                 ),
                 Positioned(
@@ -272,8 +286,8 @@ class PlayToFF1Tooltip extends StatelessWidget {
             child: Transform.rotate(
               angle: math.pi / 4,
               child: Container(
-                width: 12,
-                height: 12,
+                width: LayoutConstants.iconSizeSmall,
+                height: LayoutConstants.iconSizeSmall,
                 color: PrimitivesTokens.colorsDarkGrey,
               ),
             ),
