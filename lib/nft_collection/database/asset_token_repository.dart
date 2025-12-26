@@ -9,6 +9,7 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/common/database.dart';
 import 'package:autonomy_flutter/model/token.dart';
+import 'package:autonomy_flutter/nft_collection/database/asset_token_watcher_extension.dart';
 import 'package:autonomy_flutter/nft_collection/models/objectbox_entities.dart';
 import 'package:autonomy_flutter/objectbox.g.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -83,7 +84,10 @@ class AssetTokenCidsWatcher implements AssetTokenWatcher {
           .query(TokenObject_.cid.oneOf(cids))
           .order(TokenObject_.updatedAtMicroseconds, flags: Order.descending);
 
-      return queryBuilder.watch(triggerImmediately: true).map(
+      return queryBuilder
+          .watch(triggerImmediately: true)
+          .watchWithBouncing(debounceDuration: Duration(milliseconds: 300))
+          .map(
         (Query<TokenObject> q) {
           try {
             final results = q.find();
@@ -147,7 +151,10 @@ class AssetTokenAddressesWatcher implements AssetTokenWatcher {
           .query(condition)
           .order(TokenObject_.updatedAtMicroseconds, flags: Order.descending);
 
-      return queryBuilder.watch(triggerImmediately: true).map(
+      return queryBuilder
+          .watch(triggerImmediately: true)
+          .watchWithBouncing(debounceDuration: Duration(milliseconds: 300))
+          .map(
         (Query<TokenObject> q) {
           try {
             final results = q.find();

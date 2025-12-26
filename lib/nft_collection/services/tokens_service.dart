@@ -36,6 +36,10 @@ abstract class NftTokensService {
     bool shouldCallIndexer = true,
   });
 
+  Future<List<AssetToken>> fetchManualTokens({
+    required List<String> cids,
+  });
+
   Future<Stream<List<AssetToken>>> fetchTokensInIsolate(
     List<String> addresses,
     int? offset,
@@ -751,6 +755,13 @@ class NftTokensServiceImpl extends NftTokensService {
 
       return [];
     }
+  }
+
+  @override
+  Future<List<AssetToken>> fetchManualTokens({
+    required List<String> cids,
+  }) async {
+    return _fetchManualTokensInBatches(cids);
   }
 
   /// Get owners and provenance events for a token by CID
