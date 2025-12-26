@@ -447,7 +447,7 @@ packages:
     source: hosted
     version: "1.0.8"
   custom_lint:
-    dependency: "direct dev"
+    dependency: transitive
     description:
       name: custom_lint
       sha256: "4500e88854e7581ee43586abeaf4443cb22375d6d289241a87b1aadf678d5545"
@@ -455,7 +455,7 @@ packages:
     source: hosted
     version: "0.6.10"
   custom_lint_builder:
-    dependency: "direct dev"
+    dependency: transitive
     description:
       name: custom_lint_builder
       sha256: "5a95eff100da256fbf086b329c17c8b49058c261cdf56d3a4157d3c31c511d78"
@@ -2277,10 +2277,10 @@ packages:
     dependency: "direct dev"
     description:
       name: retrofit_generator
-      sha256: "65d28d3a7b4db485f1c73fee8ee32f552ef23ee4ecb68ba491f39d80b73bdcbf"
+      sha256: "2bd4cb2db83d461c313b1081659a64e10f0eb835895ef21e73ddf29539003ed2"
       url: "https://pub.dev"
     source: hosted
-    version: "9.2.0"
+    version: "9.3.0"
   roundcheckbox:
     dependency: "direct main"
     description:
