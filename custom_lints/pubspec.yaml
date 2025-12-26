@@ -11,4 +11,3 @@ dependencies:
 
 dev_dependencies:
   custom_lint: ^0.6.0
-
