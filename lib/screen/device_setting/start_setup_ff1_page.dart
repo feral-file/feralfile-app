@@ -8,6 +8,7 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/onboarding/introduce_page.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/ble_setup_helper.dart';
@@ -95,15 +96,17 @@ class _StartSetupFf1PageState extends State<StartSetupFf1Page> {
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 44),
+          padding: EdgeInsets.symmetric(
+            horizontal: LayoutConstants.setupPageHorizontal,
+          ),
           child: Stack(
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 50),
+                  SizedBox(height: LayoutConstants.space12),
                   _HeroIllustration(),
-                  const SizedBox(height: 50),
+                  SizedBox(height: LayoutConstants.space12),
                   _BodyCopy(
                     deviceName: deviceName,
                   ),
@@ -111,7 +114,7 @@ class _StartSetupFf1PageState extends State<StartSetupFf1Page> {
                 ],
               ),
               Positioned(
-                bottom: 15,
+                bottom: LayoutConstants.space4,
                 left: 0,
                 right: 0,
                 child: _StartButton(
@@ -199,7 +202,7 @@ class _BodyCopy extends StatelessWidget {
           'Welcome to FF1',
           style: AppTypography.h2(context).white,
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: LayoutConstants.space5),
         Text(
           "Thanks for being here. You're among the first people to bring "
           'FF1 into your space and explore new ways to live with digital '

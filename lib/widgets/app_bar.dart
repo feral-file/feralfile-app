@@ -114,6 +114,7 @@ class SetupAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.surfaceTintColor,
     this.withDivider = true,
     this.isDarkMode = true,
+    this.hasBackButton = true,
   });
 
   final String title;
@@ -126,6 +127,7 @@ class SetupAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Color? surfaceTintColor;
   final bool withDivider;
   final bool isDarkMode;
+  final bool hasBackButton;
 
   Widget backButton(
     BuildContext context, {
@@ -168,17 +170,19 @@ class SetupAppBar extends StatelessWidget implements PreferredSizeWidget {
       centerTitle: true,
       scrolledUnderElevation: 0,
       toolbarHeight: 54,
-      leading: backButton(
-        context,
-        onBack: () {
-          if (onBack != null) {
-            onBack!();
-          } else {
-            Navigator.pop(context);
-          }
-        },
-        color: titleColor,
-      ),
+      leading: hasBackButton
+          ? backButton(
+              context,
+              onBack: () {
+                if (onBack != null) {
+                  onBack!();
+                } else {
+                  Navigator.pop(context);
+                }
+              },
+              color: titleColor,
+            )
+          : const SizedBox(),
       leadingWidth: 56,
       automaticallyImplyLeading: false,
       title: Text(

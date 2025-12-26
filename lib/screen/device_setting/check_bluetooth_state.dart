@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/model/device/ff1_device.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/pair.dart';
@@ -20,8 +21,6 @@ import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
-import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_ext.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/constants.dart';
@@ -153,18 +152,18 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(
+        Icon(
           Icons.error,
-          size: 48,
-          color: AppColor.feralFileLightBlue,
+          size: LayoutConstants.iconSizeLarge * 2,
+          color: PrimitivesTokens.colorsLightBlue,
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: LayoutConstants.space4),
         Text(
           'Bluetooth is required for setup. Please turn it on to continue.',
-          style: Theme.of(context).textTheme.h3,
+          style: AppTypography.h2(context),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: LayoutConstants.space5),
         PrimaryButton(
           text: 'Open Bluetooth Settings',
           onTap: () {
@@ -194,9 +193,9 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
             children: [
               Text(
                 'Connecting via Bluetooth...',
-                style: Theme.of(context).textTheme.h3,
+                style: AppTypography.h2(context),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: LayoutConstants.space5),
               Text(
                 'Keep your phone near FF1 and remain on this screen',
                 style: AppTypography.body(context).white,
@@ -226,14 +225,14 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
             children: [
               Text(
                 'The FF1 is All Set',
-                style: Theme.of(context).textTheme.h3,
+                style: AppTypography.h2(context),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: LayoutConstants.space5),
               Text(
                 'Your FF1 is already set up and connected. You can head to settings to make changes or check the status.',
                 style: AppTypography.body(context).white,
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: LayoutConstants.space5),
               PrimaryButton(
                 onTap: () async {
                   unawaited(
@@ -268,14 +267,14 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
           const Icon(
             Icons.error,
             size: 48,
-            color: AppColor.feralFileLightBlue,
+            color: PrimitivesTokens.colorsLightBlue,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: LayoutConstants.space4),
           Text(
             'FF1 not found',
-            style: Theme.of(context).textTheme.h3,
+            style: AppTypography.h2(context),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: LayoutConstants.space5),
           PrimaryButton(
             text: 'Try again',
             onTap: () {

@@ -48,6 +48,7 @@ class PrimitivesTokens {
 
   // spacing
   static const spacingMainPaddingHorizontal = 12;
+  static const spacingSetupPageHorizontal = 44;
   static const spacingMinTouchTarget = 44;
   static const spacingPageHorizontalDefault = 16;
   static const spacingSpace1 = 4;

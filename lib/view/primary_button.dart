@@ -84,7 +84,8 @@ class PrimaryButton extends StatelessWidget {
                 Text(
                   text ?? '',
                   style: textStyle ??
-                      AppTypography.body(context).black
+                      AppTypography.body(context)
+                          .black
                           .copyWith(color: textColor),
                 ),
                 if (rightIcon != null) ...[
@@ -184,18 +185,21 @@ class PrimaryAsyncButton extends StatefulWidget {
   final String? processingText;
   final Color? borderColor;
   final double borderRadius;
+  final EdgeInsetsGeometry padding;
 
-  const PrimaryAsyncButton(
-      {super.key,
-      this.onTap,
-      this.color,
-      this.textColor,
-      this.text,
-      this.width,
-      this.enabled = true,
-      this.borderColor,
-      this.borderRadius = 32,
-      this.processingText});
+  const PrimaryAsyncButton({
+    super.key,
+    this.onTap,
+    this.color,
+    this.textColor,
+    this.text,
+    this.width,
+    this.enabled = true,
+    this.borderColor,
+    this.borderRadius = 32,
+    this.processingText,
+    this.padding = const EdgeInsets.symmetric(vertical: 13),
+  });
 
   @override
   State<PrimaryAsyncButton> createState() => _PrimaryAsyncButtonState();
@@ -214,6 +218,7 @@ class _PrimaryAsyncButtonState extends State<PrimaryAsyncButton> {
 
   @override
   Widget build(BuildContext context) => PrimaryButton(
+        padding: widget.padding,
         onTap: () {
           withDebounce(
             key: randomKey,

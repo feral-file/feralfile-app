@@ -28,6 +28,8 @@ class LayoutConstants {
       PrimitivesTokens.spacingSpace20.toDouble(); // 80px
 
   // Page padding
+  static final double setupPageHorizontal =
+      PrimitivesTokens.spacingSetupPageHorizontal.toDouble(); // 44px
   static final double pageHorizontalDefault =
       PrimitivesTokens.spacingPageHorizontalDefault.toDouble(); // 16px
 

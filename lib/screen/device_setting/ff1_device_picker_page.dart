@@ -166,7 +166,7 @@ class _FF1DevicePickerPageState extends State<FF1DevicePickerPage> {
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: LayoutConstants.minTouchTarget,
+            horizontal: LayoutConstants.setupPageHorizontal,
           ),
           child: BlocConsumer<BluetoothConnectBloc, BluetoothConnectState>(
             bloc: bloc,
@@ -220,7 +220,7 @@ class _FF1DevicePickerPageState extends State<FF1DevicePickerPage> {
         SizedBox(height: LayoutConstants.space4),
         Text(
           'Bluetooth is required for setup. Please turn it on to continue.',
-          style: AppTypography.h3(context).white,
+          style: AppTypography.h2(context).white,
           textAlign: TextAlign.center,
         ),
         SizedBox(height: LayoutConstants.space5),
@@ -253,7 +253,7 @@ class _FF1DevicePickerPageState extends State<FF1DevicePickerPage> {
             children: [
               Text(
                 'Searching for nearby FF1 devices...',
-                style: AppTypography.h3(context).white,
+                style: AppTypography.h2(context).white,
               ),
               SizedBox(height: LayoutConstants.space5),
               Text(
@@ -279,7 +279,7 @@ class _FF1DevicePickerPageState extends State<FF1DevicePickerPage> {
         SizedBox(height: LayoutConstants.space4),
         Text(
           'Could not find FF1',
-          style: AppTypography.h3(context).white,
+          style: AppTypography.h2(context).white,
           textAlign: TextAlign.center,
         ),
         SizedBox(height: LayoutConstants.space4),
@@ -312,7 +312,7 @@ class _FF1DevicePickerPageState extends State<FF1DevicePickerPage> {
         SizedBox(height: LayoutConstants.space4),
         Text(
           'No FF1 devices found',
-          style: AppTypography.h3(context).white,
+          style: AppTypography.h2(context).white,
           textAlign: TextAlign.center,
         ),
         SizedBox(height: LayoutConstants.space4),

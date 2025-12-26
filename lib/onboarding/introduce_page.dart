@@ -12,7 +12,7 @@ import 'package:autonomy_flutter/onboarding/add_address_page.dart';
 import 'package:autonomy_flutter/onboarding/debug_overlay.dart';
 import 'package:autonomy_flutter/onboarding/onboarding_shell.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/view/back_appbar.dart';
+import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -46,46 +46,44 @@ class IntroducePage extends StatelessWidget {
       imagePath: 'assets/images/screenshots/onboarding_introduce_page.png',
       child: Scaffold(
         backgroundColor: PrimitivesTokens.colorsDarkGrey,
-        appBar: getDarkEmptyAppBar(PrimitivesTokens.colorsDarkGrey),
-        body: Column(
-          children: [
-            const SizedBox(height: 69),
-            OnboardingShell(
-              content: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Explore digital art playlists',
-                    style: AppTypography.h2(context).white,
-                  ),
-                  SizedBox(height: LayoutConstants.space5),
-                  Text(
-                    'Browse curated playlists and channels from Feral File and '
-                    'invited collaborators—right on your phone. You don’t need '
-                    'any hardware to start exploring.',
-                    style: AppTypography.body(context).white,
-                  ),
-                ],
+        appBar: const SetupAppBar(
+          withDivider: false,
+          hasBackButton: false,
+        ),
+        body: OnboardingShell(
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Explore digital art playlists',
+                style: AppTypography.h2(context).white,
               ),
-              primaryButton: Row(
-                children: [
-                  Text(
-                    'Next',
-                    style: AppTypography.body(context).black,
-                  ),
-                  SizedBox(width: LayoutConstants.space2),
-                  SvgPicture.asset(
-                    'assets/images/Left.svg',
-                    colorFilter: const ColorFilter.mode(
-                      PrimitivesTokens.colorsBlack,
-                      BlendMode.srcIn,
-                    ),
-                  ),
-                ],
+              SizedBox(height: LayoutConstants.space5),
+              Text(
+                'Browse curated playlists and channels from Feral File and '
+                'invited collaborators—right on your phone. You don’t need '
+                'any hardware to start exploring.',
+                style: AppTypography.body(context).white,
               ),
-              onPrimaryPressed: () => onNext(context),
-            ),
-          ],
+            ],
+          ),
+          primaryButton: Row(
+            children: [
+              Text(
+                'Next',
+                style: AppTypography.body(context).black,
+              ),
+              SizedBox(width: LayoutConstants.space2),
+              SvgPicture.asset(
+                'assets/images/Left.svg',
+                colorFilter: const ColorFilter.mode(
+                  PrimitivesTokens.colorsBlack,
+                  BlendMode.srcIn,
+                ),
+              ),
+            ],
+          ),
+          onPrimaryPressed: () => onNext(context),
         ),
       ),
     );

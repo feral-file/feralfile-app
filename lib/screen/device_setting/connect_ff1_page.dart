@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
+import 'package:autonomy_flutter/design/build/primitives.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/model/device/ff1_device.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/error/bluetooth_response_error.dart';
@@ -13,7 +15,6 @@ import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_ext.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -343,7 +344,6 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
       appBar: const SetupAppBar(
         withDivider: false,
@@ -351,7 +351,10 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
       backgroundColor: AppColor.auGreyBackground,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 44),
+          padding: EdgeInsets.symmetric(
+            vertical: LayoutConstants.space4,
+            horizontal: LayoutConstants.setupPageHorizontal,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -376,12 +379,12 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
                         ),
                       const SizedBox(height: 85),
                     ] else ...[
-                      const Icon(
+                      Icon(
                         Icons.error,
-                        size: 48,
-                        color: AppColor.feralFileLightBlue,
+                        size: LayoutConstants.iconSizeLarge * 2,
+                        color: PrimitivesTokens.colorsLightBlue,
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: LayoutConstants.space4),
                     ],
                     Align(
                       alignment: _status != _ConnectFF1Status.error
@@ -394,15 +397,15 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
                         children: [
                           Text(
                             _titleText.tr(),
-                            style: theme.textTheme.h3,
+                            style: AppTypography.h2(context).red,
                           ),
-                          const SizedBox(height: 20),
+                          SizedBox(height: LayoutConstants.space5),
                           Text(
                             _bodyText.tr(),
                             style: AppTypography.body(context).white,
                           ),
                           if (_status == _ConnectFF1Status.portalIsSet) ...[
-                            const SizedBox(height: 20),
+                            SizedBox(height: LayoutConstants.space5),
                             PrimaryButton(
                               onTap: () async {
                                 unawaited(
@@ -425,7 +428,7 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
                 ),
               ),
               if (_status == _ConnectFF1Status.error) ...[
-                const SizedBox(height: 24),
+                SizedBox(height: LayoutConstants.space6),
                 Row(
                   children: [
                     Expanded(
@@ -436,7 +439,7 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
                         textColor: AppColor.primaryBlack,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: LayoutConstants.space3),
                     Expanded(
                       child: PrimaryButton(
                         text: 'cancel'.tr(),

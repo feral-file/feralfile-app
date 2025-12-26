@@ -284,10 +284,11 @@ class BluetoothConnectedDeviceConfigState
         _deviceConfig(context),
         if (widget.payload.isFromOnboarding)
           Positioned(
-            bottom: 15,
-            left: 12,
-            right: 12,
+            bottom: LayoutConstants.space4,
+            left: LayoutConstants.space3,
+            right: LayoutConstants.space3,
             child: PrimaryAsyncButton(
+              padding: const EdgeInsets.only(top: 13, bottom: 10),
               onTap: () async {
                 await injector<NavigationService>().replaceAllAndPushNamed(
                   AppRouter.homePage,
