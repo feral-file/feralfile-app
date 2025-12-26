@@ -59,6 +59,17 @@ jobs:
             fi
             codespell -q 3 -w -I .codespellignore --skip "**/*.g.dart,*.svg" $file | reviewdog -efm="%f:%l: %m" -name=codespell -reporter=github-pr-review || true
           done
+      - name: Check for magic numbers (custom lint)
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔍 Checking for magic numbers in changed Dart files..."
+          for file in ${{ steps.changed-files.outputs.changed_files }}; do
+            if [[ $file == *.dart && $file != *.g.dart ]]; then
+              echo "Checking magic numbers in: $file"
+              dart run custom_lint "$file" 2>&1 | grep "no_magic_number" | reviewdog -efm="  %f:%l:%c • %m • %s • %p" -name=magic-numbers -reporter=github-pr-review -level=warning || true
+            fi
+          done
       - name: suggester / dart fixes
         uses: reviewdog/action-suggester@v1
         with:

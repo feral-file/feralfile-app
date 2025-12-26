@@ -10,7 +10,6 @@ linter:
     avoid_dynamic_calls: false
 
 # Custom lint rules for typography and spacing
-# Note: Full custom lint implementation to be completed
-# For now, rely on code review to enforce AppTypography and LayoutConstants usage
 custom_lint:
-  rules: []
+  rules:
+    - no_magic_number
