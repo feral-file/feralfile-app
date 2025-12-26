@@ -153,7 +153,7 @@ class _OnboardingPageState extends State<OnboardingPage>
         return;
       }
       await _goToHomePage();
-    } catch (error, s) {
+    } catch (error) {
       log.info('Failed to fetch runtime cache: $error');
       unawaited(
         Sentry.captureException(

@@ -12,7 +12,6 @@ import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/onboarding/onboarding_shell.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/screen/device_setting/start_setup_ff1_page.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
@@ -81,7 +80,7 @@ class OnboardingSetupFf1Page extends StatelessWidget {
                 ),
                 const SizedBox(width: 7),
                 Text(
-                  'Continue setup',
+                  'Setup FF1',
                   style: theme.textTheme.body.copyWith(
                     color: PrimitivesTokens.colorsBlack,
                   ),
@@ -113,8 +112,7 @@ class OnboardingSetupFf1Page extends StatelessWidget {
     unawaited(configService.setDoneOnboarding(true));
     unawaited(
       navigationService.navigateTo(
-        AppRouter.startSetupFF1Page,
-        arguments: BluetoothDevicePortalPagePayload(deeplink: null),
+        AppRouter.ff1DevicePickerPage,
       ),
     );
   }

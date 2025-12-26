@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
+import 'package:autonomy_flutter/model/device/ff1_device.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/pair.dart';
-import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/bluetooth_connect/bluetooth_connect_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/bluetooth_connect/bluetooth_connect_state.dart';
@@ -26,6 +26,7 @@ import 'package:autonomy_flutter/util/bluetooth_device_ext.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:collection/collection.dart';
@@ -85,7 +86,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
     injector<FFBluetoothService>().listenForAdapterState();
   }
 
-  List<String> getDataFromLink(String link) {
+  FF1DeviceInfo getFF1InfoFromLink(String link) {
     final prefix = Constants.bluetoothConnectDeepLinks.firstWhereOrNull(
           (prefix) => link.startsWith(prefix),
         ) ??
@@ -98,12 +99,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
     // This fixes a case on some Android camera apps (e.g., Google Pixel default camera)
     // where the scanned deeplink path includes encoded separators.
     final encodedPath = Uri.decodeFull(path);
-    final data = encodedPath.split('|');
-    // Dont remove empty elements, as they are used to indicate the absence of a value
-    // ..removeWhere(
-    //   (element) => element.isEmpty,
-    // );
-    return data;
+    return encodedPath.toFF1DeviceInfo;
   }
 
   @override
@@ -306,21 +302,19 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
     setState(() {
       _isScanning = true;
     });
-    final data = getDataFromLink(link);
-    final deviceName = data.firstOrNull;
+    final ff1DeviceInfo = getFF1InfoFromLink(link);
+    final deviceName = ff1DeviceInfo.name;
+    final topicId = ff1DeviceInfo.topicId;
+    final isConnectedToInternet = ff1DeviceInfo.isConnectedToInternet;
+    final branchName = ff1DeviceInfo.branchName;
+    final version = ff1DeviceInfo.version;
 
-    final topicId = data.atIndexOrNull(1);
-    final isConnectedToInternet = data.atIndexOrNull(2) == 'true';
-    final branchNameRaw = data.atIndexOrNull(3);
-
-    final branchName = branchNameRaw ?? DeviceReleaseBranch.release.name;
-    final version = data.atIndexOrNull(4);
-
-    final compatible = await injector<VersionService>()
-        .checkDeviceVersionCompatibility(
-            dBranch: branchName,
-            dVersion: version,
-            requiredDeviceUpdate: false);
+    final compatible =
+        await injector<VersionService>().checkDeviceVersionCompatibility(
+      dBranch: branchName,
+      dVersion: version,
+      requiredDeviceUpdate: false,
+    );
     if (compatible == VersionCompatibilityResult.needUpdateApp) {
       log.info(
         'FF1 version is not compatible with the app. Please update the app.',
@@ -330,18 +324,17 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
 
     BluetoothDevice? resultDevice;
 
-    if (topicId != null &&
-        topicId.isNotEmpty &&
-        isConnectedToInternet == true) {
+    if (topicId.isNotEmpty && isConnectedToInternet == true) {
       log.info(
         'FF1 is already setup and connected to internet. Skip scanning and wifi setup.',
       );
       final ffDevice = FFBluetoothDevice(
-          name: deviceName ?? 'FF1',
-          remoteID: '',
-          topicId: topicId,
-          deviceId: deviceName ?? 'FF1',
-          branchName: branchName);
+        name: deviceName,
+        remoteID: '',
+        topicId: topicId,
+        deviceId: deviceName,
+        branchName: branchName,
+      );
       // add device to canvas
       await BluetoothDeviceManager().addDevice(ffDevice);
 
@@ -357,8 +350,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
     } else {
       log.info('Starting scan for FF1: $deviceName');
       resultDevice = await injector<FFBluetoothService>().scanForName(
-        timeout: const Duration(seconds: 15),
-        name: deviceName ?? 'FF1',
+        name: deviceName,
       );
 
       if (context.mounted) {
@@ -370,7 +362,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
         unawaited(injector<ConfigurationService>().setBetaTester(true));
         injector<SubscriptionBloc>().add(GetSubscriptionEvent());
 
-        if (topicId != null && topicId.isNotEmpty) {
+        if (topicId.isNotEmpty) {
           // add device to canvas
           final device = resultDevice.toFFBluetoothDevice(
             topicId: topicId,
@@ -390,15 +382,17 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
             AppRouter.connectFF1,
             arguments: ConnectFF1PagePayload(
               device: resultDevice,
-              canSkipNetworkSetup: isConnectedToInternet,
-              branchName: branchName,
-              onConnectedSuccess: () async {
+              ff1Device: ff1DeviceInfo,
+              onConnectedSuccess: (_) async {
                 await injector<NavigationService>().navigateTo(
                   AppRouter.scanWifiNetworkPage,
                   arguments: ScanWifiNetworkPagePayload(
                     resultDevice!,
-                    (accessPoint) =>
-                        _onWifiSelected(accessPoint, resultDevice!, branchName),
+                    (accessPoint) => _onWifiSelected(
+                      accessPoint,
+                      resultDevice!,
+                      branchName,
+                    ),
                   ),
                 );
                 await resultDevice.disconnect();
@@ -448,7 +442,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
             ),
           ));
         } else if (error != null) {
-          injector<NavigationService>()..popUntil(AppRouter.startSetupFF1Page);
+          injector<NavigationService>().popUntil(AppRouter.startSetupFF1Page);
           injector<NavigationService>().goBack();
         }
       },

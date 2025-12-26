@@ -2,18 +2,22 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
+import 'package:autonomy_flutter/model/device/ff1_device.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/error/bluetooth_response_error.dart';
 import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/bluetooth_connected_device_config.dart';
 import 'package:autonomy_flutter/service/bluetooth_service.dart';
+import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
+import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_ext.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
@@ -27,21 +31,20 @@ enum _ConnectFF1Status {
   stillConnecting,
   error,
   success,
+  portalIsSet,
 }
 
 class ConnectFF1PagePayload {
   ConnectFF1PagePayload({
     required this.device,
-    required this.branchName,
-    this.canSkipNetworkSetup = true,
+    this.ff1Device,
     this.onConnectedSuccess,
     this.onConnectedFailed,
   });
 
   final BluetoothDevice device;
-  final bool canSkipNetworkSetup;
-  final String branchName;
-  final FutureOr<void> Function()? onConnectedSuccess;
+  final FF1DeviceInfo? ff1Device;
+  final FutureOr<void> Function(String branchName)? onConnectedSuccess;
   final FutureOr<void> Function()? onConnectedFailed;
 }
 
@@ -147,8 +150,50 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
   }
 
   Future<void> _handlePostConnect(BluetoothDevice device) async {
-    final canSkipNetworkSetup = widget.payload.canSkipNetworkSetup;
-    if (!canSkipNetworkSetup) {
+    var ff1Device = widget.payload.ff1Device;
+
+    // If device info is not provided, fetch it via get_info command
+    if (ff1Device == null) {
+      log.info(
+          '[ConnectFF1Page] Device info not provided, fetching via get_info');
+      try {
+        // Add delay to ensure connection is stable and characteristics are discovered
+        // Connection state handler already waits 1s, but add extra delay for getInfo
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+        final getInfoResponse =
+            await injector<FFBluetoothService>().getInfo(device);
+        ff1Device = getInfoResponse.deviceInfoString.toFF1DeviceInfo;
+
+        log.info(
+          '[ConnectFF1Page] Got device info: topicId=${ff1Device.topicId}, '
+          'isConnectedToInternet=${ff1Device.isConnectedToInternet}, '
+          'branchName=${ff1Device.branchName}, version=${ff1Device.version}',
+        );
+
+        // Check version compatibility
+        final compatible =
+            await injector<VersionService>().checkDeviceVersionCompatibility(
+          dBranch: ff1Device.branchName,
+          dVersion: ff1Device.version,
+          requiredDeviceUpdate: false,
+        );
+        if (compatible == VersionCompatibilityResult.needUpdateApp) {
+          log.info(
+            'FF1 version is not compatible with the app. Please update the app.',
+          );
+          return;
+        }
+      } catch (e) {
+        log.warning('[ConnectFF1Page] Failed to get device info: $e');
+        // TODO: Add Get Info Error state
+        return;
+      }
+    }
+
+    final topicId = ff1Device.topicId;
+    final branchName = ff1Device.branchName;
+
+    if (!ff1Device.isConnectedToInternet) {
       _recordDuration(success: true);
       if (!mounted) {
         return;
@@ -156,24 +201,49 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
       await _showSuccessAndPop(
         onContinue: () async {
           injector<NavigationService>().goBack();
-          await widget.payload.onConnectedSuccess?.call();
+          await widget.payload.onConnectedSuccess?.call(branchName);
         },
       );
       return;
     }
 
+    if (topicId.isNotEmpty) {
+      final ffBluetoothDevice = FFBluetoothDevice(
+        name: ff1Device.name,
+        remoteID: device.remoteId.str,
+        topicId: topicId,
+        deviceId: ff1Device.deviceId,
+        branchName: branchName,
+      );
+      // add device to canvas
+      await BluetoothDeviceManager().addDevice(ffBluetoothDevice);
+
+      // Hide QR code on device
+      unawaited(
+        injector<CanvasClientServiceV2>()
+            .showPairingQRCode(ffBluetoothDevice, false),
+      );
+
+      // Show Portal is Set
+      setState(() {
+        _status = _ConnectFF1Status.portalIsSet;
+      });
+      return;
+    }
+
     Pair<String, bool>? res;
     try {
-      final topicId = await injector<FFBluetoothService>().keepWifi(device);
+      final topicIdFromKeepWifi =
+          await injector<FFBluetoothService>().keepWifi(device);
       res = Pair<String, bool>(
-        topicId,
+        topicIdFromKeepWifi,
         true, // indicates that it from onboarding
       );
 
       final ffDevice = device.toFFBluetoothDevice(
         topicId: res.first,
         deviceId: device.advName,
-        branchName: widget.payload.branchName,
+        branchName: branchName,
       );
       await BluetoothDeviceManager().addDevice(ffDevice);
 
@@ -291,12 +361,19 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (_status != _ConnectFF1Status.error) ...[
-                      GifView.asset(
-                        'assets/images/loading.gif',
-                        width: 139,
-                        height: 92.67,
-                        frameRate: 12,
-                      ),
+                      if (_status == _ConnectFF1Status.portalIsSet)
+                        Image.asset(
+                          'assets/images/ff_logo.png',
+                          width: 139,
+                          height: 92.67,
+                        )
+                      else
+                        GifView.asset(
+                          'assets/images/loading.gif',
+                          width: 139,
+                          height: 92.67,
+                          frameRate: 12,
+                        ),
                       const SizedBox(height: 85),
                     ] else ...[
                       const Icon(
@@ -324,6 +401,23 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
                             _bodyText.tr(),
                             style: AppTypography.body(context).white,
                           ),
+                          if (_status == _ConnectFF1Status.portalIsSet) ...[
+                            const SizedBox(height: 20),
+                            PrimaryButton(
+                              onTap: () async {
+                                unawaited(
+                                  injector<NavigationService>().navigateTo(
+                                    AppRouter.bluetoothConnectedDeviceConfig,
+                                    arguments:
+                                        BluetoothConnectedDeviceConfigPayload(
+                                      isFromOnboarding: true,
+                                    ),
+                                  ),
+                                );
+                              },
+                              text: 'Go to Settings',
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -353,7 +447,7 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
                     ),
                   ],
                 ),
-              ] else ...[
+              ] else if (_status != _ConnectFF1Status.portalIsSet) ...[
                 PrimaryButton(
                   text: 'cancel'.tr(),
                   onTap: _onCancel,
@@ -378,6 +472,8 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
         return 'could_not_connect_to_ff1_title';
       case _ConnectFF1Status.success:
         return 'connected_to_ff1_title';
+      case _ConnectFF1Status.portalIsSet:
+        return 'portal_is_set_title';
     }
   }
 
@@ -391,6 +487,8 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
         return 'could_not_connect_to_ff1_body';
       case _ConnectFF1Status.success:
         return 'connected_to_ff1_body';
+      case _ConnectFF1Status.portalIsSet:
+        return 'portal_is_set_body';
     }
   }
 }

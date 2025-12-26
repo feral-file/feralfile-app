@@ -10,15 +10,17 @@ import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/onboarding/introduce_page.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/screen/device_setting/ble_setup_helper.dart';
 import 'package:autonomy_flutter/screen/device_setting/check_bluetooth_state.dart';
-import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
+import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 /// Start FF1 setup page:
@@ -28,12 +30,12 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 class BluetoothDevicePortalPagePayload {
   BluetoothDevicePortalPagePayload({
-    required this.deeplink,
-    this.isFromAppLink = false,
+    this.deeplink,
+    this.selectedDevice,
   });
 
   final String? deeplink;
-  final bool isFromAppLink;
+  final BluetoothDevice? selectedDevice;
 
   List<String> getDataFromLink(String link) {
     final prefix = Constants.bluetoothConnectDeepLinks.firstWhereOrNull(
@@ -59,6 +61,10 @@ class BluetoothDevicePortalPagePayload {
   }
 
   String? get deviceName {
+    if (selectedDevice != null) {
+      return selectedDevice!.advName;
+    }
+
     if (deeplink == null) {
       return null;
     }
@@ -80,8 +86,6 @@ class StartSetupFf1Page extends StatefulWidget {
 class _StartSetupFf1PageState extends State<StartSetupFf1Page> {
   @override
   Widget build(BuildContext context) {
-    final isReturningFromQR =
-        widget.payload.isFromAppLink || widget.payload.deeplink != null;
     final deviceName = widget.payload.deviceName;
 
     return Scaffold(
@@ -104,7 +108,6 @@ class _StartSetupFf1PageState extends State<StartSetupFf1Page> {
                       _HeroIllustration(),
                       const SizedBox(height: 50),
                       _BodyCopy(
-                        isReturningFromQR: isReturningFromQR,
                         deviceName: deviceName,
                       ),
                     ],
@@ -116,48 +119,16 @@ class _StartSetupFf1PageState extends State<StartSetupFf1Page> {
                 left: 0,
                 right: 0,
                 child: _StartButton(
-                  text: isReturningFromQR ? 'Continue' : 'Start FF1 Setup',
+                  text: 'Continue',
                   onPressed: () async {
-                    String deeplink;
+                    // If deeplink is provided (from QR scan), use QR-based flow
                     if (widget.payload.deeplink != null) {
-                      deeplink = widget.payload.deeplink!;
-                    } else {
-                      final result =
-                          await injector<NavigationService>().navigateTo(
-                        AppRouter.scanQRPage,
-                        arguments: const ScanQRPagePayload(
-                          scannerItem: ScannerItem.GLOBAL,
-                          isFromOnboarding: true,
-                        ),
-                      );
-                      if (result != null) {
-                        deeplink = result as String;
-                      } else {
-                        return;
-                      }
+                      await _handleQRBasedSetup(widget.payload.deeplink!);
                     }
 
-                    if (widget.payload.isFromAppLink &&
-                        !injector<ConfigurationService>().isDoneOnboarding()) {
-                      await injector<NavigationService>().navigateTo(
-                        AppRouter.onboardingIntroducePage,
-                        arguments: IntroducePagePayload(
-                          deeplink: widget.payload.deeplink,
-                        ),
-                      );
-                    } else {
-                      await injector<NavigationService>().navigateTo(
-                        AppRouter.handleBluetoothDeviceScanDeeplinkScreen,
-                        arguments:
-                            HandleBluetoothDeviceScanDeeplinkScreenPayload(
-                          deeplink: deeplink,
-                          onFinish: () async {
-                            await injector<NavigationService>().navigateTo(
-                              AppRouter.scanWifiNetworkPage,
-                            );
-                          },
-                        ),
-                      );
+                    // If device is already selected (from BLE picker), start setup
+                    else if (widget.payload.selectedDevice != null) {
+                      await _handleSelectedDeviceSetup();
                     }
                   },
                 ),
@@ -167,6 +138,37 @@ class _StartSetupFf1PageState extends State<StartSetupFf1Page> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleQRBasedSetup(String deeplink) async {
+    if (injector<ConfigurationService>().isDoneOnboarding()) {
+      await injector<NavigationService>().navigateTo(
+        AppRouter.handleBluetoothDeviceScanDeeplinkScreen,
+        arguments: HandleBluetoothDeviceScanDeeplinkScreenPayload(
+          deeplink: deeplink,
+          onFinish: () async {
+            await injector<NavigationService>().navigateTo(
+              AppRouter.scanWifiNetworkPage,
+            );
+          },
+        ),
+      );
+    } else {
+      await injector<NavigationService>().navigateTo(
+        AppRouter.onboardingIntroducePage,
+        arguments: IntroducePagePayload(
+          deeplink: deeplink,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleSelectedDeviceSetup() async {
+    final device = widget.payload.selectedDevice!;
+    log.info(
+      '[StartSetupFf1Page] Starting setup for selected device: ${device.advName}',
+    );
+    await BLESetupHelper.handleBLEDeviceSetup(device);
   }
 }
 
@@ -187,11 +189,9 @@ class _HeroIllustration extends StatelessWidget {
 
 class _BodyCopy extends StatelessWidget {
   const _BodyCopy({
-    required this.isReturningFromQR,
     this.deviceName,
   });
 
-  final bool isReturningFromQR;
   final String? deviceName;
 
   @override
@@ -211,11 +211,7 @@ class _BodyCopy extends StatelessWidget {
           'FF1 is designed to make playing digital art simple, reliable, '
           'and part of your everyday life. As an early adopter, your '
           'experience will help us understand how FF1 fits into real spaces '
-          'and routines—and where we should take it next.\n\n'
-          '${isReturningFromQR ? """
-You scanned the QR on ${deviceName ?? 'your FF1'}. Now """
-                  "continue here to complete pairing." : """
-After installing, scan the TV QR once more to complete pairing"""}',
+          'and routines—and where we should take it next.\n\n',
           style: AppTypography.body(context).white,
         ),
       ],

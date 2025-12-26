@@ -162,7 +162,6 @@ class DeeplinkServiceImpl extends DeeplinkService {
         AppRouter.startSetupFF1Page,
         arguments: BluetoothDevicePortalPagePayload(
           deeplink: link,
-          isFromAppLink: isFromAppLink,
         ),
       );
     }

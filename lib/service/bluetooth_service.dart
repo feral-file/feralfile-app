@@ -34,7 +34,8 @@ enum BluetoothCommand {
   keepWifi,
   factoryReset,
   sendLog,
-  setTimezone;
+  setTimezone,
+  getInfo;
 
   String get name {
     switch (this) {
@@ -50,6 +51,8 @@ enum BluetoothCommand {
         return 'send_log';
       case BluetoothCommand.setTimezone:
         return 'set_time';
+      case BluetoothCommand.getInfo:
+        return 'get_info';
     }
   }
 
@@ -141,6 +144,23 @@ enum BluetoothCommand {
     };
   }
 
+  NotificationCallback _getInfoCallback(
+    Completer<GetInfoResponse> completer,
+  ) {
+    return (data) {
+      if (data.errorCode != 0) {
+        log.warning('Error getting device info: ${data.errorCode}');
+        final error = FFBluetoothResponseError.fromErrorCode(data.errorCode);
+        completer.completeError(
+          error,
+        );
+      }
+
+      final deviceInfoString = data.data[0];
+      completer.complete(GetInfoResponse(deviceInfoString: deviceInfoString));
+    };
+  }
+
   Completer<BluetoothResponse> generateCompleter() {
     switch (this) {
       case BluetoothCommand.sendWifiCredentials:
@@ -155,6 +175,8 @@ enum BluetoothCommand {
         return Completer<SendLogResponse>();
       case BluetoothCommand.setTimezone:
         return Completer<SetTimezoneReply>();
+      case BluetoothCommand.getInfo:
+        return Completer<GetInfoResponse>();
     }
   }
 
@@ -185,6 +207,10 @@ enum BluetoothCommand {
       case BluetoothCommand.setTimezone:
         return _setTimezoneCallback(
           completer as Completer<SetTimezoneReply>,
+        );
+      case BluetoothCommand.getInfo:
+        return _getInfoCallback(
+          completer as Completer<GetInfoResponse>,
         );
     }
   }
@@ -477,6 +503,61 @@ class FFBluetoothService {
 
     final keepWifiResponse = res;
     return keepWifiResponse.topicId;
+  }
+
+  Future<GetInfoResponse> getInfo(
+    BluetoothDevice device, {
+    int maxRetries = 3,
+  }) async {
+    final request = GetInfoRequest();
+    var attempt = 0;
+
+    while (attempt < maxRetries) {
+      try {
+        log.info(
+          '[getInfo] Getting device info for ${device.remoteId.str} attempt ${attempt + 1}/$maxRetries',
+        );
+
+        final res = await sendCommand(
+          device: device,
+          command: BluetoothCommand.getInfo,
+          request: request.toJson(),
+        );
+
+        if (res is! GetInfoResponse) {
+          throw Exception('Invalid response type: ${res.runtimeType}');
+        }
+
+        log.info(
+          '[getInfo] Successfully got device info after ${attempt + 1} attempt(s)',
+        );
+        return res;
+      } catch (e) {
+        attempt++;
+        if (attempt >= maxRetries) {
+          log.warning(
+            '[getInfo] Failed to get device info after $maxRetries attempts: $e',
+          );
+          unawaited(
+            Sentry.captureException(
+              'Failed to get device info after $maxRetries attempts: $e',
+            ),
+          );
+          rethrow;
+        }
+
+        log.info(
+          '[getInfo] Retrying... attempt ${attempt + 1}/$maxRetries',
+        );
+        // Increase delay between retries to allow connection to stabilize
+        // First retry: 1s, subsequent retries: 1.5s
+        final delayMs = attempt == 1 ? 1000 : 1500;
+        await Future<void>.delayed(Duration(milliseconds: delayMs));
+      }
+    }
+
+    // Should never reach here, but for safety
+    throw Exception('Failed to get device info after $maxRetries attempts');
   }
 
   Future<String?> sendWifiCredentials({
@@ -1152,6 +1233,22 @@ class SetTimezoneReply extends BluetoothResponse {
 
   factory SetTimezoneReply.fromJson(Map<String, dynamic> _) =>
       SetTimezoneReply();
+}
+
+class GetInfoRequest extends BluetoothRequest {
+  const GetInfoRequest();
+
+  Map<String, dynamic> toJson() {
+    return {};
+  }
+}
+
+class GetInfoResponse extends BluetoothResponse {
+  const GetInfoResponse({
+    required this.deviceInfoString,
+  });
+
+  final String deviceInfoString;
 }
 
 extension FlutterBluePlusExceptionExt on FlutterBluePlusException {
