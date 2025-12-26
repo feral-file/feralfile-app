@@ -98,21 +98,17 @@ class _StartSetupFf1PageState extends State<StartSetupFf1Page> {
           padding: const EdgeInsets.symmetric(horizontal: 44),
           child: Stack(
             children: [
-              SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 120),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 50),
-                      _HeroIllustration(),
-                      const SizedBox(height: 50),
-                      _BodyCopy(
-                        deviceName: deviceName,
-                      ),
-                    ],
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 50),
+                  _HeroIllustration(),
+                  const SizedBox(height: 50),
+                  _BodyCopy(
+                    deviceName: deviceName,
                   ),
-                ),
+                  const Spacer(),
+                ],
               ),
               Positioned(
                 bottom: 15,

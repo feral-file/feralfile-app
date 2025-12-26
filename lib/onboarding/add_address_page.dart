@@ -86,7 +86,7 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
                 children: [
                   Text(
                     'See the art you already own',
-                    style: theme.textTheme.h3,
+                    style: AppTypography.h2(context).white,
                   ),
                   const SizedBox(height: 20),
                   Text(

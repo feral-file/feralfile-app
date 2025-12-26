@@ -25,7 +25,6 @@ class FF1DevicePickerPage extends StatefulWidget {
 }
 
 class _FF1DevicePickerPageState extends State<FF1DevicePickerPage> {
-  BluetoothDevice? _selectedDevice;
   final List<BluetoothDevice> _discoveredDevices = [];
   bool _isScanning = false;
   String? _errorMessage;
@@ -345,23 +344,19 @@ class _FF1DevicePickerPageState extends State<FF1DevicePickerPage> {
           'Select the FF1 you want to set up',
           style: AppTypography.body(context).white,
         ),
-        SizedBox(height: LayoutConstants.space4),
+        SizedBox(height: LayoutConstants.space5),
         Expanded(
           child: ListView.builder(
             itemCount: devices.length,
             itemBuilder: (context, index) {
               final device = devices[index];
-              final isSelected = _selectedDevice?.remoteId == device.remoteId;
 
               return Column(
                 children: [
                   _DeviceItem(
                     device: device,
-                    isSelected: isSelected,
                     onTap: () {
-                      setState(() {
-                        _selectedDevice = device;
-                      });
+                      _handleDeviceSelected(device);
                     },
                   ),
                   if (index != devices.length - 1)
@@ -372,24 +367,14 @@ class _FF1DevicePickerPageState extends State<FF1DevicePickerPage> {
           ),
         ),
         SizedBox(height: LayoutConstants.space4),
-        SizedBox(
-          width: double.infinity,
+        Center(
           child: TextButton(
             onPressed: _startScan,
             child: Text(
-              'Scan again',
-              style: AppTypography.body(context).white,
+              "Don't see your device? Scan again",
+              style: AppTypography.body(context).white.underline,
             ),
           ),
-        ),
-        SizedBox(height: LayoutConstants.space2),
-        PrimaryButton(
-          text: 'Continue',
-          onTap: _selectedDevice != null
-              ? () => _handleDeviceSelected(_selectedDevice!)
-              : null,
-          color: PrimitivesTokens.colorsLightBlue,
-          textColor: PrimitivesTokens.colorsBlack,
         ),
         SizedBox(height: LayoutConstants.space4),
       ],
@@ -400,12 +385,10 @@ class _FF1DevicePickerPageState extends State<FF1DevicePickerPage> {
 class _DeviceItem extends StatelessWidget {
   const _DeviceItem({
     required this.device,
-    required this.isSelected,
     required this.onTap,
   });
 
   final BluetoothDevice device;
-  final bool isSelected;
   final VoidCallback onTap;
 
   @override
@@ -417,23 +400,17 @@ class _DeviceItem extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(LayoutConstants.space3),
         decoration: BoxDecoration(
-          color: isSelected
-              ? PrimitivesTokens.colorsLightBlue.withOpacity(0.2)
-              : PrimitivesTokens.colorsDarkGrey,
+          color: PrimitivesTokens.colorsDarkGrey,
           border: Border.all(
-            color: isSelected
-                ? PrimitivesTokens.colorsLightBlue
-                : PrimitivesTokens.colorsGrey,
+            color: PrimitivesTokens.colorsGrey,
           ),
-          borderRadius: BorderRadius.circular(LayoutConstants.space2),
+          borderRadius: BorderRadius.circular(LayoutConstants.space3),
         ),
         child: Row(
           children: [
             Icon(
               Icons.bluetooth,
-              color: isSelected
-                  ? PrimitivesTokens.colorsLightBlue
-                  : PrimitivesTokens.colorsGrey,
+              color: PrimitivesTokens.colorsGrey,
               size: LayoutConstants.iconSizeMedium,
             ),
             SizedBox(width: LayoutConstants.space3),
@@ -448,12 +425,6 @@ class _DeviceItem extends StatelessWidget {
                 ],
               ),
             ),
-            if (isSelected)
-              Icon(
-                Icons.check_circle,
-                color: PrimitivesTokens.colorsLightBlue,
-                size: LayoutConstants.iconSizeMedium,
-              ),
           ],
         ),
       ),

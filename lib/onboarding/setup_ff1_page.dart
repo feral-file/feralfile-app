@@ -48,7 +48,7 @@ class OnboardingSetupFf1Page extends StatelessWidget {
               children: [
                 Text(
                   'Add FF1 to your screens',
-                  style: theme.textTheme.h3,
+                  style: AppTypography.h2(context).white,
                 ),
                 const SizedBox(height: 20),
                 Text(
