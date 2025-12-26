@@ -156,8 +156,12 @@ enum BluetoothCommand {
         );
       }
 
-      final deviceInfoString = data.data[0];
-      completer.complete(GetInfoResponse(deviceInfoString: deviceInfoString));
+      if (data.data.isEmpty) {
+        completer.complete(const GetInfoResponse(deviceInfoString: ''));
+      } else {
+        final deviceInfoString = data.data[0];
+        completer.complete(GetInfoResponse(deviceInfoString: deviceInfoString));
+      }
     };
   }
 

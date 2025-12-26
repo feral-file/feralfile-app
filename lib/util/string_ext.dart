@@ -296,7 +296,7 @@ extension FF1DeviceExtension on String {
   FF1DeviceInfo get toFF1DeviceInfo {
     final encodedPath = Uri.decodeFull(this);
     final data = encodedPath.split('|');
-    if (data.length == 1) {
+    if (data.length <= 1) {
       return FF1DeviceInfo(
         deviceId: '',
         topicId: data.firstOrNull ?? '',
