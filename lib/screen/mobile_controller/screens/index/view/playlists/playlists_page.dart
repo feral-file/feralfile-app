@@ -214,7 +214,7 @@ class PlaylistsPageState extends State<PlaylistsPage>
 
         final child = PlaylistTitle(
           primaryText: '${playlist.title}',
-          primaryTextSuffix: stateSuffix.isNotEmpty ? '($stateSuffix)' : null,
+          primaryTextSuffix: stateSuffix.isNotEmpty ? '$stateSuffix' : null,
           secondaryText: playlistData.creator,
         );
 
