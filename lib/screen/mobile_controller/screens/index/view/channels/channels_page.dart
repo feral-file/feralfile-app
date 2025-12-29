@@ -16,23 +16,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 
+class ChannelsPagePayload {
+  const ChannelsPagePayload({required this.scrollController});
+
+  final ScrollController? scrollController;
+}
+
 class ChannelsPage extends StatefulWidget {
-  const ChannelsPage({super.key});
+  const ChannelsPage({
+    super.key,
+    required this.payload,
+  });
+
+  final ChannelsPagePayload payload;
 
   @override
   State<ChannelsPage> createState() => ChannelsPageState();
 }
 
-class ChannelsPageState extends State<ChannelsPage>
-    with AutomaticKeepAliveClientMixin, RouteAware {
-  final ScrollController _scrollController = ScrollController();
+class ChannelsPageState extends State<ChannelsPage> with RouteAware {
   late final ChannelsBloc _curatedChannelsBloc;
   late final ChannelsBloc _myChannelsBloc;
   late final ChannelsBloc _globalChannelsBloc;
-
+  late final ScrollController _scrollController;
   @override
   void initState() {
     super.initState();
+    _scrollController = widget.payload.scrollController ?? ScrollController();
     _scrollController.addListener(_onScroll);
     _curatedChannelsBloc = injector<ChannelsBloc>(
       instanceName: ChannelsBlocInstance.curated.instanceName,
@@ -47,9 +57,11 @@ class ChannelsPageState extends State<ChannelsPage>
 
   @override
   void dispose() {
-    _scrollController
-      ..removeListener(_onScroll)
-      ..dispose();
+    _scrollController.removeListener(_onScroll);
+    if (widget.payload.scrollController == null) {
+      _scrollController.dispose();
+    }
+    // Don't dispose controller - parent manages it
     super.dispose();
   }
 
@@ -75,7 +87,6 @@ class ChannelsPageState extends State<ChannelsPage>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     return CustomScrollView(
       shrinkWrap: true,
       controller: _scrollController,
@@ -176,7 +187,4 @@ class ChannelsPageState extends State<ChannelsPage>
       ),
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

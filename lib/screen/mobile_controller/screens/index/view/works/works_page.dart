@@ -9,15 +9,25 @@ import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+class WorksPagePayload {
+  const WorksPagePayload({required this.scrollController});
+
+  final ScrollController? scrollController;
+}
+
 class WorksPage extends StatefulWidget {
-  const WorksPage({super.key});
+  const WorksPage({
+    super.key,
+    required this.payload,
+  });
+
+  final WorksPagePayload payload;
 
   @override
   State<WorksPage> createState() => WorksPageState();
 }
 
-class WorksPageState extends State<WorksPage>
-    with AutomaticKeepAliveClientMixin {
+class WorksPageState extends State<WorksPage> {
   late final WorksBloc _worksBloc;
 
   late final ScrollController _scrollController;
@@ -26,14 +36,23 @@ class WorksPageState extends State<WorksPage>
   void initState() {
     super.initState();
     _worksBloc = injector<WorksBloc>();
-    _scrollController = ScrollController();
+    _scrollController = widget.payload.scrollController ?? ScrollController();
+    _scrollController.addListener(_onScroll);
     _worksBloc.add(const LoadWorksEvent());
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    _scrollController.removeListener(_onScroll);
+    if (widget.payload.scrollController == null) {
+      _scrollController.dispose();
+    }
+    // Don't dispose controller - parent manages it
     super.dispose();
+  }
+
+  void _onScroll() {
+    _onScrollPositionChanged(_scrollController.position);
   }
 
   void _onScrollPositionChanged(ScrollPosition position) {
@@ -46,7 +65,6 @@ class WorksPageState extends State<WorksPage>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     return BlocBuilder<WorksBloc, WorksState>(
       bloc: _worksBloc,
       builder: (context, state) {
@@ -87,9 +105,11 @@ class WorksPageState extends State<WorksPage>
     final isLoadingMore = state.isLoadingMore;
 
     return _LoadMoreListener(
-      onScrollPositionChanged: _onScrollPositionChanged,
+      onScrollPositionChanged: (position) {
+        _onScrollPositionChanged(position);
+      },
       child: CustomScrollView(
-        physics: const NeverScrollableScrollPhysics(),
+        physics: const AlwaysScrollableScrollPhysics(),
         shrinkWrap: true,
         controller: _scrollController,
         slivers: [

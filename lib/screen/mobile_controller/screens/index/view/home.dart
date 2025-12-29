@@ -14,12 +14,12 @@ import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
+import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/no_pairing_device_dialog.dart';
 import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
-import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -27,11 +27,11 @@ import 'package:flutter_svg/svg.dart';
 /// Home Index Page - Main navigation with playlist sections
 ///
 
-final GlobalKey<PlaylistsPageState> _playlistsPageKey =
-    GlobalKey<PlaylistsPageState>();
-final GlobalKey<ChannelsPageState> _channelsPageKey =
-    GlobalKey<ChannelsPageState>();
-final GlobalKey<WorksPageState> _worksPageKey = GlobalKey<WorksPageState>();
+final PageStorageKey<String> _playlistsPageKey =
+    PageStorageKey<String>('playlists');
+final PageStorageKey<String> _channelsPageKey =
+    PageStorageKey<String>('channels');
+final PageStorageKey<String> _worksPageKey = PageStorageKey<String>('works');
 
 class HomeIndexPage extends StatefulWidget {
   const HomeIndexPage({super.key});
@@ -40,14 +40,17 @@ class HomeIndexPage extends StatefulWidget {
   State<HomeIndexPage> createState() => _HomeIndexPageState();
 }
 
-class _HomeIndexPageState extends State<HomeIndexPage> {
+class _HomeIndexPageState extends State<HomeIndexPage>
+    with TickerProviderStateMixin {
   late HomeIndexTab _selectedTab;
   final TransformationController _transformationController =
       TransformationController();
   late ScrollController _scrollController;
-  late final PlaylistsPage _playlistsPage;
-  late final ChannelsPage _channelsPage;
-  late final WorksPage _worksPage;
+  late final Widget _playlistsPage;
+  late final Widget _channelsPage;
+  late final Widget _worksPage;
+
+  late final TabController _tabController;
 
   @override
   void initState() {
@@ -55,15 +58,25 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
     _selectedTab = HomeIndexTab.playlists;
     _scrollController = ScrollController();
     _scrollController.addListener(_onScrollChange);
-    _playlistsPage = PlaylistsPage(key: _playlistsPageKey);
-    _channelsPage = ChannelsPage(key: _channelsPageKey);
-    _worksPage = WorksPage(key: _worksPageKey);
+    // _playlistsPage = PlaylistsPage(
+    //     key: _playlistsPageKey,
+    //     payload: PlaylistsPagePayload(scrollController: null));
+    // _channelsPage = ChannelsPage(
+    //     key: _channelsPageKey,
+    //     payload: ChannelsPagePayload(scrollController: null));
+    // _worksPage = WorksPage(
+    //     key: _worksPageKey, payload: WorksPagePayload(scrollController: null));
+    _tabController = TabController(length: 3, vsync: this);
+
+    _playlistsPage = PlaylistsPage(
+        key: _playlistsPageKey,
+        payload: PlaylistsPagePayload(scrollController: null));
+    _channelsPage = _tab(_channelsPageKey);
+    _worksPage = _tab(_worksPageKey);
   }
 
   @override
   void dispose() {
-    _scrollController.removeListener(_onScrollChange);
-    _scrollController.dispose();
     _transformationController.dispose();
     super.dispose();
   }
@@ -264,68 +277,98 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
             ),
           );
           return [
-            SliverAppBar(
-              pinned: false,
-              floating: true,
-              snap: true,
-              elevation: 0,
-              toolbarHeight: height,
-              expandedHeight: height,
-              flexibleSpace: FlexibleSpaceBar(
-                background: Container(
-                  color: AppColor.auGreyBackground,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      // if (!innerBoxIsScrolled)
-                      //   SizedBox(
-                      //     height: 106,
-                      //     child: Row(
-                      //       mainAxisAlignment: MainAxisAlignment.end,
-                      //       children: [
-                      //         hamburgerButton,
-                      //       ],
-                      //     ),
-                      //   ),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 15),
-                              child: HomeIndexHeader(
-                                selectedTab: _selectedTab,
-                                onTabChanged: (tab) {
-                                  setState(() {
-                                    _selectedTab = tab;
-                                  });
-                                },
+            SliverOverlapAbsorber(
+              handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+              sliver: SliverAppBar(
+                pinned: false,
+                floating: true,
+                snap: true,
+                elevation: 0,
+                toolbarHeight: height,
+                expandedHeight: height,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Container(
+                    color: AppColor.auGreyBackground,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        // if (!innerBoxIsScrolled)
+                        //   SizedBox(
+                        //     height: 106,
+                        //     child: Row(
+                        //       mainAxisAlignment: MainAxisAlignment.end,
+                        //       children: [
+                        //         hamburgerButton,
+                        //       ],
+                        //     ),
+                        //   ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 15),
+                                child: HomeIndexHeader(
+                                  selectedTab: _selectedTab,
+                                  onTabChanged: (tab) {
+                                    setState(() {
+                                      _selectedTab = tab;
+                                      _tabController.animateTo(tab.index,
+                                          duration:
+                                              const Duration(milliseconds: 150),
+                                          curve: Curves.easeInOut);
+                                    });
+                                  },
+                                ),
                               ),
                             ),
-                          ),
-                          SizedBox(
-                            width: 16,
-                          ),
-                          hamburgerButton,
-                        ],
-                      ),
-                    ],
+                            SizedBox(
+                              width: 16,
+                            ),
+                            hamburgerButton,
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
+            )
           ];
         },
-        body: SingleChildScrollView(
-          child: Column(
-            children: [
-              const SizedBox(height: 37),
-              _buildContent(),
-              const BottomSpacing()
-            ],
+        body: TabBarView(
+          controller: _tabController,
+          children: [
+            _playlistsPage,
+            _channelsPage,
+            _worksPage,
+          ],
+        ),
+        // body: Expanded(
+        //   child: Column(
+        //     children: [
+        //       const SizedBox(height: 37),
+        //       _buildContent(),
+        //       const BottomSpacing()
+        //     ],
+        //   ),
+        // ),
+      ),
+    );
+  }
+
+  Widget _tab(Key key) {
+    log.info("Rebuild tap");
+    return CustomScrollView(
+      key: key,
+      slivers: [
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (_, i) => ListTile(title: Text('Item $i')),
+            childCount: 40,
           ),
         ),
-      ),
+      ],
     );
   }
 

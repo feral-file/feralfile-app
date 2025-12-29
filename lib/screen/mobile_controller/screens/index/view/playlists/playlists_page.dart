@@ -22,27 +22,38 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/svg.dart';
 
-class PlaylistsPage extends StatefulWidget {
-  const PlaylistsPage({super.key});
+class PlaylistsPagePayload {
+  const PlaylistsPagePayload({required this.scrollController});
 
+  final ScrollController? scrollController;
+}
+
+class PlaylistsPage extends StatefulWidget {
+  const PlaylistsPage({
+    super.key,
+    required this.payload,
+  });
+  final PlaylistsPagePayload payload;
   @override
   State<PlaylistsPage> createState() => PlaylistsPageState();
 }
 
 class PlaylistsPageState extends State<PlaylistsPage>
     with AutomaticKeepAliveClientMixin {
-  final ScrollController _scrollController = ScrollController();
+  @override
+  bool get wantKeepAlive => true;
+
   late final PlaylistsBloc _curatedPlaylistsBloc;
   late final PlaylistsBloc _myPlaylistsBloc;
   late final UserAllOwnCollectionBloc _userAllOwnCollectionBloc;
 
-  @override
-  bool get wantKeepAlive => true;
+  // late final ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
+    // _scrollController = widget.payload.scrollController ?? ScrollController();
+    // _scrollController.addListener(_onScroll);
     _curatedPlaylistsBloc = injector<PlaylistsBloc>(
       instanceName: PlaylistsBlocInstance.curated.instanceName,
     );
@@ -54,30 +65,38 @@ class PlaylistsPageState extends State<PlaylistsPage>
 
   @override
   void dispose() {
-    _scrollController
-      ..removeListener(_onScroll)
-      ..dispose();
+    // _scrollController.removeListener(_onScroll);
+    // if (widget.payload.scrollController == null) {
+    //   _scrollController.dispose();
+    // }
+    // Don't dispose controller - parent manages it
     super.dispose();
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels + 100 >=
-        _scrollController.position.maxScrollExtent) {
-      _curatedPlaylistsBloc.add(LoadMorePlaylistsEvent());
-      _myPlaylistsBloc.add(LoadMorePlaylistsEvent());
-    }
+    // if (_scrollController.position.pixels + 100 >=
+    //     _scrollController.position.maxScrollExtent) {
+    //   _curatedPlaylistsBloc.add(LoadMorePlaylistsEvent());
+    //   _myPlaylistsBloc.add(LoadMorePlaylistsEvent());
+    // }
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     return CustomScrollView(
-      shrinkWrap: true,
-      controller: _scrollController,
-      physics: const NeverScrollableScrollPhysics(),
+      key: PageStorageKey<String>('playlists_${widget.key}'),
+      // shrinkWrap: true,
+      // controller: _scrollController,
+      // physics: const NeverScrollableScrollPhysics(),
       slivers: [
+        SliverOverlapInjector(
+          handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+        ),
+        SliverToBoxAdapter(child: SizedBox(height: LayoutConstants.space6)),
         SliverToBoxAdapter(child: _buildMyPlaylists()),
         SliverToBoxAdapter(child: _buildCuratedPlaylists()),
+        SliverToBoxAdapter(child: SizedBox(height: LayoutConstants.space12)),
         // _buildGlobalPlaylists(),
       ],
     );
@@ -192,7 +211,6 @@ class PlaylistsPageState extends State<PlaylistsPage>
     return BlocBuilder<UserAllOwnCollectionBloc, UserAllOwnCollectionState>(
       bloc: _userAllOwnCollectionBloc,
       builder: (context, collectionState) {
-        final theme = Theme.of(context);
         String stateSuffix = '';
 
         if (owners.isNotEmpty) {
