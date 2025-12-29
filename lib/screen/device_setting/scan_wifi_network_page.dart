@@ -1,13 +1,14 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/service/bluetooth_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/wifi_helper.dart';
+import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
@@ -121,6 +122,7 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
   @override
   void dispose() {
     _subscription?.cancel();
+    _ssidController.dispose();
     log.info(
       'ScanWifiNetworkPage: dispose called, disconnecting from device ${widget.payload.device.name}',
     );
@@ -143,9 +145,9 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
             builder: (context, isKeyboardVisible) {
               return CustomScrollView(
                 slivers: [
-                  const SliverToBoxAdapter(
+                  SliverToBoxAdapter(
                     child: SizedBox(
-                      height: 30,
+                      height: LayoutConstants.space6 + LayoutConstants.space2,
                     ),
                   ),
                   if (_isScanning) ...[
@@ -155,7 +157,9 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
                         style: AppTypography.body(context).white,
                       ),
                     ),
-                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                    SliverToBoxAdapter(
+                      child: SizedBox(height: LayoutConstants.space6),
+                    ),
                   ] else ...[
                     if (_accessPoints == null)
                       SliverToBoxAdapter(
@@ -168,7 +172,7 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
                                 style:
                                     AppTypography.caption(context).bold.white,
                               ),
-                              const SizedBox(height: 8),
+                              SizedBox(height: LayoutConstants.space2),
                               Text(
                                 'There might be an issue with the WiFi module on your FF1. Please try restarting your FF1 and scan again.',
                                 style: AppTypography.body(context).white,
@@ -179,7 +183,7 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
                                 style:
                                     AppTypography.caption(context).bold.white,
                               ),
-                              const SizedBox(height: 8),
+                              SizedBox(height: LayoutConstants.space2),
                               Text(
                                 'Connection to the FF1 could not be established',
                                 style: AppTypography.body(context).white,
@@ -197,7 +201,7 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
                               'No wifi networks found by FF1',
                               style: AppTypography.caption(context).bold.white,
                             ),
-                            const SizedBox(height: 16),
+                            SizedBox(height: LayoutConstants.space4),
                             Text(
                               'There might be an issue with the WiFi module on your FF1. Please try restarting your FF1 and scan again.',
                               style: AppTypography.body(context).white,
@@ -210,7 +214,7 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 20),
+                            SizedBox(height: LayoutConstants.space5),
                             PrimaryButton(
                               onTap: () async {
                                 await _startScan();
@@ -224,17 +228,10 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
                   ...[
                     if (_accessPoints?.isNotEmpty ?? false)
                       SliverToBoxAdapter(child: _listWifiView(context)),
-                    if ((!_isScanning ||
-                            (_accessPoints?.isNotEmpty ?? false)) &&
-                        widget.payload.device.isConnected) ...[
-                      SliverToBoxAdapter(
-                        child: _enterWifiManuallyView(context),
-                      ),
-                    ],
                   ],
-                  const SliverToBoxAdapter(
+                  SliverToBoxAdapter(
                     child: SizedBox(
-                      height: 40,
+                      height: LayoutConstants.space10,
                     ),
                   ),
                 ],
@@ -254,73 +251,99 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
           '''If your network isn't listed, try moving the device closer to your Wi-Fi router, or connect manually.''',
           style: AppTypography.body(context).white,
         ),
-        const SizedBox(
-          height: 80,
+        SizedBox(
+          height: LayoutConstants.space20,
         ),
         ..._accessPoints?.map(
               (e) => itemBuilder(context, e),
             ) ??
             [],
+        if (widget.payload.device.isConnected) ...[
+          _otherNetworkItem(context),
+        ],
       ],
     );
   }
 
-  Widget _enterWifiManuallyView(BuildContext context) {
+  Widget _otherNetworkItem(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 24),
-        Text(
-          'Or enter your Wi-Fi name (SSID) below to connect manually.',
-          style: AppTypography.body(context).white,
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _ssidController,
-          decoration: InputDecoration(
-            // border radius 10
-            hintText: 'Enter wifi network',
-            hintStyle: AppTypography.body(context).white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide.none,
-            ),
-            fillColor: AppColor.primaryBlack,
-            focusColor: AppColor.primaryBlack,
-            filled: true,
-            constraints: const BoxConstraints(minHeight: 60),
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 24,
-              horizontal: 16,
-            ),
+        SectionExpandedWidget(
+          header: 'Other network',
+          headerStyle: AppTypography.body(context).white,
+          withDivider: false,
+          isExpandedDefault: false,
+          padding: EdgeInsets.zero,
+          headerPadding: EdgeInsets.symmetric(
+            vertical: LayoutConstants.space5,
           ),
-          style: AppTypography.body(context).white,
-          onChanged: (value) {
-            if (mounted) {
-              setState(() {
-                _shouldEnableConnectButton = value.trim().isNotEmpty;
-              });
-            }
-          },
+          iconOnUnExpanded: SizedBox.shrink(),
+          iconOnExpanded: SizedBox.shrink(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Network name (SSID)',
+                style: AppTypography.body(context).white,
+              ),
+              SizedBox(height: LayoutConstants.space4),
+              TextField(
+                controller: _ssidController,
+                decoration: InputDecoration(
+                  hintText: 'Enter wifi network',
+                  hintStyle: AppTypography.body(context).white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(
+                      LayoutConstants.space2 + LayoutConstants.space1,
+                    ),
+                    borderSide: BorderSide.none,
+                  ),
+                  fillColor: AppColor.primaryBlack,
+                  focusColor: AppColor.primaryBlack,
+                  filled: true,
+                  constraints: BoxConstraints(
+                    minHeight:
+                        LayoutConstants.minTouchTarget + LayoutConstants.space4,
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: LayoutConstants.space6,
+                    horizontal: LayoutConstants.space4,
+                  ),
+                ),
+                style: AppTypography.body(context).white,
+                onChanged: (value) {
+                  if (mounted) {
+                    setState(() {
+                      _shouldEnableConnectButton = value.trim().isNotEmpty;
+                    });
+                  }
+                },
+              ),
+              SizedBox(height: LayoutConstants.space6),
+              PrimaryButton(
+                enabled: _shouldEnableConnectButton,
+                onTap: () async {
+                  final ssid = _ssidController.text.trim();
+                  if (ssid.isEmpty) {
+                    return;
+                  }
+                  await widget.payload.onNetworkSelected(WifiPoint(ssid));
+                },
+                text: 'Continue',
+              ),
+              SizedBox(height: LayoutConstants.space4),
+            ],
+          ),
         ),
-        const SizedBox(height: 16),
-        PrimaryButton(
-          enabled: _shouldEnableConnectButton,
-          onTap: () async {
-            final ssid = _ssidController.text.trim();
-            if (ssid.isEmpty) {
-              return;
-            }
-            await widget.payload.onNetworkSelected(WifiPoint(ssid));
-          },
-          text: 'Connect',
+        const Divider(
+          color: AppColor.primaryBlack,
         ),
       ],
     );
   }
 
   Widget itemBuilder(BuildContext context, WifiPoint wifiAccessPoint) {
-    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -333,7 +356,9 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
             child: ColoredBox(
               color: Colors.transparent,
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
+                padding: EdgeInsets.symmetric(
+                  vertical: LayoutConstants.space5,
+                ),
                 child: Text(
                   wifiAccessPoint.ssid,
                   style: AppTypography.body(context).white,

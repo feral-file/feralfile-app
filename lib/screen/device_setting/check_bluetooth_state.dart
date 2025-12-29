@@ -225,7 +225,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
             children: [
               Text(
                 'The FF1 is All Set',
-                style: AppTypography.h2(context),
+                style: AppTypography.h2(context).white,
               ),
               SizedBox(height: LayoutConstants.space5),
               Text(
