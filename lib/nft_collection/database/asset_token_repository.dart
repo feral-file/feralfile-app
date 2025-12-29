@@ -86,7 +86,7 @@ class AssetTokenCidsWatcher implements AssetTokenWatcher {
 
       return queryBuilder
           .watch(triggerImmediately: true)
-          .watchWithBouncing(debounceDuration: Duration(milliseconds: 300))
+          .withBouncing(debounceDuration: Duration(seconds: 3))
           .map(
         (Query<TokenObject> q) {
           try {
@@ -153,7 +153,7 @@ class AssetTokenAddressesWatcher implements AssetTokenWatcher {
 
       return queryBuilder
           .watch(triggerImmediately: true)
-          .watchWithBouncing(debounceDuration: Duration(milliseconds: 300))
+          .withBouncing(debounceDuration: Duration(seconds: 3))
           .map(
         (Query<TokenObject> q) {
           try {

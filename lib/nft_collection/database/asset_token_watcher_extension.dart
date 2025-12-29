@@ -7,7 +7,6 @@
 
 import 'dart:async';
 
-import 'package:autonomy_flutter/model/token.dart';
 import 'package:rxdart/rxdart.dart';
 
 /// Extension on Stream<List<AssetToken>> to add debouncing functionality.
@@ -25,12 +24,12 @@ extension AssetTokenWatcherExtension<T> on Stream<T> {
   /// Example:
   /// ```dart
   /// final watcher = AssetTokenCidsWatcher(cids: cids);
-  /// watcher.watch().watchWithBouncing(debounceDuration: Duration(milliseconds: 300))
+  /// watcher.watch().withBouncing(debounceDuration: Duration(milliseconds: 300))
   ///   .listen((tokens) {
   ///     // Handle updated tokens
   ///   });
   /// ```
-  Stream<T> watchWithBouncing({
+  Stream<T> withBouncing({
     Duration debounceDuration = const Duration(milliseconds: 300),
   }) {
     return this.debounceTime(debounceDuration);
