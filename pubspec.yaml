@@ -14,7 +14,7 @@ dependencies:
   intl: ^0.19.0
   after_layout: ^1.2.0
   bubble: ^1.2.1
-  cached_network_image: ^3.2.1
+  cached_network_image: ^3.4.1
   carousel_slider: ^5.0.0
   collection: ^1.15.0
   confetti: ^0.8.0
@@ -28,7 +28,7 @@ dependencies:
   easy_debounce: ^2.0.2+1
   fast_base58: ^0.2.1
   floor: ^1.2.0
-  flutter_cache_manager: ^3.3.0
+  flutter_cache_manager: ^3.4.1
   flutter_chat_types: ^3.3.1
   flutter_chat_ui: ^1.6.4
   flutter_dotenv: ^5.0.2

@@ -119,7 +119,7 @@ Future<void> setupInjector() async {
     ConfigurationServiceImpl(sharedPreferences),
   );
   injector.registerLazySingleton(http.Client.new);
-  injector.registerLazySingleton<CacheManager>(AUImageCacheManage.new);
+  injector.registerLazySingleton<CacheManager>(DefaultCacheManager.new);
 
   injector.registerLazySingleton<HiveDatabase>(
     HiveDatabase.new,
