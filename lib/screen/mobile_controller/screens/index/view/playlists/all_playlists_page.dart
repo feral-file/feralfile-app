@@ -196,7 +196,7 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
               playlistReference: playlistData.playlistReference,
               playlistCreator: playlistData.creator,
               headerBuilder: widget.payload.playlistType == PlaylistType.me
-                  ? (playlistReference) =>
+                  ? (playlistReference, state) =>
                       _mePlaylistHeaderBuilder(playlistData, playlistReference)
                   : null,
               onItemTap: (item) {

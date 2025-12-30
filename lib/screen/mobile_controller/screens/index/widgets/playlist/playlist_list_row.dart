@@ -1,6 +1,8 @@
+import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_event.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/dp1_playlist_details.dart';
@@ -26,7 +28,9 @@ class PlaylistRowItem extends StatefulWidget {
   final String? playlistCreator;
   final void Function(DP1NowDisplayingItem)? onItemTap;
   final ScrollController? scrollController;
-  final Widget? Function(PlaylistReference playlistReference)? headerBuilder;
+  final Widget? Function(
+          PlaylistReference playlistReference, PlaylistDetailsState state)?
+      headerBuilder;
 
   @override
   State<PlaylistRowItem> createState() => _PlaylistRowItemState();
@@ -39,13 +43,9 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
   @override
   void initState() {
     super.initState();
-    _playlistDetailsBloc = PlaylistDetailsBloc(
-      playlist: widget.playlistReference.playlist,
+    _playlistDetailsBloc = injector<PlaylistDetailsBlocManager>().getBloc(
+      widget.playlistReference.playlist,
     );
-    // Ensure BlocBuilder is mounted before dispatching event
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _playlistDetailsBloc.add(LoadMorePlaylistDetailsEvent());
-    });
 
     _carouselScrollController = widget.scrollController ?? ScrollController();
     _carouselScrollController.addListener(_onScrollListener);
@@ -57,7 +57,8 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
     if (widget.scrollController == null) {
       _carouselScrollController.dispose();
     }
-    _playlistDetailsBloc.close();
+    injector<PlaylistDetailsBlocManager>()
+        .releaseBlocByInstance(_playlistDetailsBloc);
     super.dispose();
   }
 
@@ -69,13 +70,12 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
     if (oldWidget.playlistReference.playlist.id !=
             widget.playlistReference.playlist.id ||
         currentItems.length != newItems.length) {
-      _playlistDetailsBloc.close();
-      _playlistDetailsBloc = PlaylistDetailsBloc(
-        playlist: widget.playlistReference.playlist,
-      );
-      // Ensure BlocBuilder is mounted before dispatching event
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _playlistDetailsBloc.add(LoadMorePlaylistDetailsEvent());
+      injector<PlaylistDetailsBlocManager>()
+          .releaseBlocByInstance(_playlistDetailsBloc);
+      setState(() {
+        _playlistDetailsBloc = injector<PlaylistDetailsBlocManager>().getBloc(
+          widget.playlistReference.playlist,
+        );
       });
     }
   }
@@ -102,48 +102,49 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
     final playlistTitle = playlist.title;
     final creator = widget.playlistCreator ?? '';
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).pushNamed(
-          AppRouter.dp1PlaylistDetailsPage,
-          arguments: DP1PlaylistDetailsScreenPayload(
-            playlist: widget.playlistReference,
-          ),
-        );
-      },
-      child: Container(
-        decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: Colors.black,
-              width: 1,
-            ),
-          ),
-        ),
-        padding: const EdgeInsets.only(bottom: 11),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            widget.headerBuilder?.call(widget.playlistReference) ??
-                PlaylistTitle(
-                  primaryText: playlistTitle,
-                  secondaryText: creator,
+    return BlocBuilder<PlaylistDetailsBloc, PlaylistDetailsState>(
+      key: ValueKey(_playlistDetailsBloc.hashCode),
+      bloc: _playlistDetailsBloc,
+      builder: (context, state) {
+        return GestureDetector(
+          onTap: () {
+            Navigator.of(context).pushNamed(
+              AppRouter.dp1PlaylistDetailsPage,
+              arguments: DP1PlaylistDetailsScreenPayload(
+                playlist: widget.playlistReference,
+              ),
+            );
+          },
+          child: Container(
+            decoration: const BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: Colors.black,
+                  width: 1,
                 ),
-            BlocBuilder<PlaylistDetailsBloc, PlaylistDetailsState>(
-              bloc: _playlistDetailsBloc,
-              builder: (context, state) {
-                return DP1Carousel(
+              ),
+            ),
+            padding: const EdgeInsets.only(bottom: 11),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                widget.headerBuilder?.call(widget.playlistReference, state) ??
+                    PlaylistTitle(
+                      primaryText: playlistTitle,
+                      secondaryText: creator,
+                    ),
+                DP1Carousel(
                   items: state.nowDisplayingItems,
                   onItemTap: widget.onItemTap,
                   scrollController: _carouselScrollController,
                   isLoadingMore: state is PlaylistDetailsLoadingMoreState,
-                );
-              },
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

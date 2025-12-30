@@ -5,6 +5,7 @@ import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
@@ -146,9 +147,11 @@ class PlaylistsPageState extends State<PlaylistsPage>
     final hasMore = state.top5PlaylistData.length < state.playlistData.length ||
         state.hasMore;
 
-    Widget? Function(PlaylistData playlistData)? playlistHeaderBuilder;
+    Widget? Function(PlaylistData playlistData,
+        PlaylistDetailsState playlistDetailsState)? playlistHeaderBuilder;
     if (playlistType == PlaylistType.me) {
-      playlistHeaderBuilder = _mePlaylistHeaderBuilder;
+      playlistHeaderBuilder = (playlistData, playlistDetailsState) =>
+          _mePlaylistHeaderBuilder(playlistData, playlistDetailsState);
     }
 
     return PlaylistSection(
@@ -184,7 +187,8 @@ class PlaylistsPageState extends State<PlaylistsPage>
     );
   }
 
-  Widget _mePlaylistHeaderBuilder(PlaylistData playlistData) {
+  Widget _mePlaylistHeaderBuilder(
+      PlaylistData playlistData, PlaylistDetailsState playlistDetailsState) {
     final playlistReference = playlistData.playlistReference;
     final playlist = playlistReference.playlist;
     final owners = playlist.firstDynamicQuery?.params.owners ?? <String>[];
@@ -192,7 +196,6 @@ class PlaylistsPageState extends State<PlaylistsPage>
     return BlocBuilder<UserAllOwnCollectionBloc, UserAllOwnCollectionState>(
       bloc: _userAllOwnCollectionBloc,
       builder: (context, collectionState) {
-        final theme = Theme.of(context);
         String stateSuffix = '';
 
         if (owners.isNotEmpty) {
@@ -216,6 +219,7 @@ class PlaylistsPageState extends State<PlaylistsPage>
           primaryText: '${playlist.title}',
           primaryTextSuffix: stateSuffix.isNotEmpty ? '$stateSuffix' : null,
           secondaryText: playlistData.creator,
+          total: playlistDetailsState.total,
         );
 
         final slidableActions = [

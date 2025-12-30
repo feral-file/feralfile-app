@@ -21,7 +21,7 @@ class FetchTokensOfAddresses extends UserAllOwnCollectionEvent {
     this.onError,
   }) {
     if (addresses.isEmpty) {
-      throw Exception('Addresses cannot be empty');
+      return;
     }
   }
   final List<String> addresses;

@@ -4,7 +4,12 @@ import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_intent.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc_manager.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_details_header.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
@@ -45,6 +50,36 @@ class DP1PlaylistDetailsScreen extends StatefulWidget {
 class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
     with AfterLayoutMixin {
   CanvasDeviceBloc get _canvasDeviceBloc => injector<CanvasDeviceBloc>();
+
+  late PlaylistDetailsBloc _playlistDetailsBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _playlistDetailsBloc = injector<PlaylistDetailsBlocManager>()
+        .getBloc(widget.payload.playlist.playlist);
+  }
+
+  @override
+  void dispose() {
+    injector<PlaylistDetailsBlocManager>()
+        .releaseBlocByInstance(_playlistDetailsBloc);
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant DP1PlaylistDetailsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.payload.playlist.playlist !=
+        widget.payload.playlist.playlist) {
+      injector<PlaylistDetailsBlocManager>()
+          .releaseBlocByInstance(_playlistDetailsBloc);
+      setState(() {
+        _playlistDetailsBloc = injector<PlaylistDetailsBlocManager>()
+            .getBloc(widget.payload.playlist.playlist);
+      });
+    }
+  }
 
   @override
   void afterFirstLayout(BuildContext context) {
@@ -98,27 +133,74 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
     final channelReference =
         channel != null ? ChannelReference(channel: channel, url: url) : null;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Expanded(
-          child: PlaylistAssetGridView(
-            header: Column(
-              children: [
-                const SizedBox(height: UIConstants.detailPageHeaderPadding),
-                if (playlist.title.isNotEmpty)
-                  PlaylistDetailsHeader(
-                    playlistReference: playlistReference,
-                    channelReference: channelReference,
-                    clickable: false,
-                    options: _getOptions(playlistReference),
-                  )
-              ],
+    final isDynamicPlaylist = playlist.isDynamic;
+
+    return BlocBuilder<PlaylistDetailsBloc, PlaylistDetailsState>(
+      key: ValueKey(_playlistDetailsBloc.hashCode),
+      bloc: _playlistDetailsBloc,
+      builder: (context, state) {
+        final total = state.total;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Expanded(
+              child: PlaylistAssetGridView(
+                header: Column(
+                  children: [
+                    const SizedBox(height: UIConstants.detailPageHeaderPadding),
+                    if (playlist.title.isNotEmpty)
+                      if (isDynamicPlaylist)
+                        _dynamicPlaylistHeader(
+                          playlistReference: playlistReference,
+                          channelReference: channelReference,
+                          state: state,
+                        )
+                      else
+                        PlaylistDetailsHeader(
+                          playlistReference: playlistReference,
+                          channelReference: channelReference,
+                          clickable: false,
+                          options: _getOptions(playlistReference),
+                        )
+                  ],
+                ),
+                playlist: playlist,
+              ),
             ),
-            playlist: playlist,
-          ),
-        ),
-      ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _dynamicPlaylistHeader(
+      {required PlaylistReference playlistReference,
+      required ChannelReference? channelReference,
+      required PlaylistDetailsState state}) {
+    final total = state.total;
+    return BlocBuilder<UserAllOwnCollectionBloc, UserAllOwnCollectionState>(
+      bloc: injector<UserAllOwnCollectionBloc>(),
+      builder: (context, collectionState) {
+        final owners =
+            playlistReference.playlist.firstDynamicQuery?.params.owners ??
+                <String>[];
+        final stateSuffix = owners.isNotEmpty
+            ? collectionState.addressStates
+                .firstWhere(
+                    (element) => element.address.address == owners.first)
+                .state
+                .description
+            : '';
+
+        return PlaylistDetailsHeader(
+          playlistReference: playlistReference,
+          titleSuffix: stateSuffix,
+          channelReference: channelReference,
+          clickable: false,
+          total: total,
+          options: _getOptions(playlistReference),
+        );
+      },
     );
   }
 
