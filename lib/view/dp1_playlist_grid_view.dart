@@ -1,8 +1,10 @@
+import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/nft_rendering/nft_loading_widget.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_event.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
@@ -43,8 +45,8 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
   @override
   void initState() {
     super.initState();
-    _playlistDetailsBloc = PlaylistDetailsBloc(playlist: widget.playlist);
-    _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
+    _playlistDetailsBloc =
+        injector<PlaylistDetailsBlocManager>().getBloc(widget.playlist);
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
   }
@@ -61,7 +63,8 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
 
   @override
   void dispose() {
-    _playlistDetailsBloc.close();
+    injector<PlaylistDetailsBlocManager>()
+        .releaseBlocByInstance(_playlistDetailsBloc);
     _scrollController.dispose();
     super.dispose();
   }

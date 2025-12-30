@@ -1,6 +1,8 @@
+import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_event.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/dp1_playlist_details.dart';
@@ -41,13 +43,9 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
   @override
   void initState() {
     super.initState();
-    _playlistDetailsBloc = PlaylistDetailsBloc(
-      playlist: widget.playlistReference.playlist,
+    _playlistDetailsBloc = injector<PlaylistDetailsBlocManager>().getBloc(
+      widget.playlistReference.playlist,
     );
-    // Ensure BlocBuilder is mounted before dispatching event
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
-    });
 
     _carouselScrollController = widget.scrollController ?? ScrollController();
     _carouselScrollController.addListener(_onScrollListener);
@@ -59,7 +57,8 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
     if (widget.scrollController == null) {
       _carouselScrollController.dispose();
     }
-    _playlistDetailsBloc.close();
+    injector<PlaylistDetailsBlocManager>()
+        .releaseBlocByInstance(_playlistDetailsBloc);
     super.dispose();
   }
 
@@ -71,14 +70,11 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
     if (oldWidget.playlistReference.playlist.id !=
             widget.playlistReference.playlist.id ||
         currentItems.length != newItems.length) {
-      _playlistDetailsBloc.close();
-      _playlistDetailsBloc = PlaylistDetailsBloc(
-        playlist: widget.playlistReference.playlist,
+      injector<PlaylistDetailsBlocManager>()
+          .releaseBlocByInstance(_playlistDetailsBloc);
+      _playlistDetailsBloc = injector<PlaylistDetailsBlocManager>().getBloc(
+        widget.playlistReference.playlist,
       );
-      // Ensure BlocBuilder is mounted before dispatching event
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
-      });
     }
   }
 

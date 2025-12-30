@@ -6,6 +6,7 @@ import 'package:autonomy_flutter/design/build/components/NowPlayingBar.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_event.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
@@ -80,7 +81,8 @@ class _DisplayItemListState extends State<DisplayItemList>
   @override
   void initState() {
     super.initState();
-    _playlistDetailsBloc = PlaylistDetailsBloc(playlist: widget.playlist);
+    _playlistDetailsBloc =
+        injector<PlaylistDetailsBlocManager>().getBloc(widget.playlist);
     _playlistDetailsBloc
         .add(GetPlaylistDetailsEvent(size: (widget.selectedIndex ?? 0) + 10));
 
@@ -99,8 +101,10 @@ class _DisplayItemListState extends State<DisplayItemList>
 
     // Todo: update function compare playlist
     if (oldWidget.playlist.items.length != widget.playlist.items.length) {
-      _playlistDetailsBloc.close();
-      _playlistDetailsBloc = PlaylistDetailsBloc(playlist: widget.playlist);
+      injector<PlaylistDetailsBlocManager>()
+          .releaseBlocByInstance(_playlistDetailsBloc);
+      _playlistDetailsBloc =
+          injector<PlaylistDetailsBlocManager>().getBloc(widget.playlist);
       _playlistDetailsBloc
           .add(GetPlaylistDetailsEvent(size: (widget.selectedIndex ?? 0) + 10));
       _scrollToSelectedIndex();
@@ -114,7 +118,8 @@ class _DisplayItemListState extends State<DisplayItemList>
   @override
   void dispose() {
     _scrollController.dispose();
-    _playlistDetailsBloc.close();
+    injector<PlaylistDetailsBlocManager>()
+        .releaseBlocByInstance(_playlistDetailsBloc);
     super.dispose();
   }
 
@@ -230,7 +235,6 @@ class _DisplayItemListState extends State<DisplayItemList>
       );
 
   Widget _emptyView(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: ResponsiveLayout.paddingHorizontal,
