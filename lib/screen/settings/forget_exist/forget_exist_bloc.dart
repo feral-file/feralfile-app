@@ -15,6 +15,7 @@ import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/settings/forget_exist/forget_exist_state.dart';
 import 'package:autonomy_flutter/service/canvas_notification_manager.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
@@ -42,6 +43,7 @@ class ForgetExistBloc extends AuBloc<ForgetExistEvent, ForgetExistState> {
       await injector<CacheManager>().emptyCache();
       await DefaultCacheManager().emptyCache();
       await injector<NftTokensService>().purgeCachedGallery();
+      memoryValues = MemoryValues();
 
       // delete dp1 data: playlists, channels;
       await injector<UserDp1PlaylistService>().clearData();
@@ -57,10 +59,7 @@ class ForgetExistBloc extends AuBloc<ForgetExistEvent, ForgetExistState> {
 
       await FileLogger.clear();
       await SentryBreadcrumbLogger.clear();
-
-      unawaited(injector<CacheManager>().emptyCache());
-      unawaited(DefaultCacheManager().emptyCache());
-      memoryValues = MemoryValues();
+      await injector<PlaylistDetailsBlocManager>().close();
 
       emit(ForgetExistState(state.isChecked, false));
     });
