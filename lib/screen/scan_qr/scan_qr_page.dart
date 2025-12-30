@@ -268,35 +268,60 @@ class QRScanViewState extends State<QRScanView>
   void initState() {
     super.initState();
     _shouldPop = true;
-    unawaited(_checkPermission());
 
     WidgetsBinding.instance.addObserver(this);
 
+    // Check permission first, then start camera only if permission is already granted
+    unawaited(_initializeCamera());
+  }
+
+  Future<void> _initializeCamera() async {
+    log.info('[Scanner][_initializeCamera] Initializing camera');
     _subscription = _controller.barcodes.listen(_handleBarcode);
 
     // Listen to controller state changes
     _controller.addListener(_onControllerStateChanged);
+    // Check current permission status
+    final status = await Permission.camera.status;
+    log.info('[Scanner][_initializeCamera] Permission status: $status');
 
-    unawaited(_startCamera());
+    _controller.start();
+
+    // Request permission if needed (controller will handle state changes via listener)
+    if (!status.isGranted && !status.isPermanentlyDenied) {
+      await Permission.camera.request();
+      log.info('[Scanner][_initializeCamera] Permission requested');
+    }
   }
 
   void _onControllerStateChanged() {
-    if (_controller.value.hasCameraPermission && _cameraPermission != true) {
-      setState(() {
-        _cameraPermission = true;
-      });
-      // Restart camera when permission is newly granted
-      _timer?.cancel();
-      _timer = Timer(const Duration(milliseconds: 300), () async {
-        await _controller.stop();
-        await _startCamera();
-      });
-    } else if (!_controller.value.hasCameraPermission &&
-        (_cameraPermission ?? true)) {
-      setState(() {
-        _cameraPermission = false;
-        _isCameraInitialized = false;
-      });
+    final isInitialized = _controller.value.isInitialized;
+    final isRunning = _controller.value.isRunning;
+
+    log.info(
+        '[Scanner] Controller state changed: isInitialized: $isInitialized, isRunning: $isRunning');
+    // Only handle permission state changes, ignore other controller state changes
+    final controllerHasPermission = _controller.value.hasCameraPermission;
+    final currentPermissionState = _cameraPermission;
+
+    // Skip if permission state already matches controller state
+    if (controllerHasPermission && currentPermissionState == true) {
+      return; // Already granted, no action needed
+    }
+    if (!controllerHasPermission && currentPermissionState == false) {
+      return; // Already denied, no action needed
+    }
+
+    log.info(
+        '[Scanner] Controller state changed: controllerHasPermission: $controllerHasPermission, currentPermissionState: $currentPermissionState');
+
+    // Handle permission state change
+    if (controllerHasPermission && currentPermissionState != true) {
+      // Permission was just granted
+      unawaited(_onPermissionGranted());
+    } else if (!controllerHasPermission && (currentPermissionState ?? true)) {
+      // Permission was denied
+      _onPermissionDenied();
     }
   }
 
@@ -333,22 +358,26 @@ class QRScanViewState extends State<QRScanView>
         return;
       case AppLifecycleState.hidden:
       case AppLifecycleState.paused:
+        _onAppInActive();
         return;
       case AppLifecycleState.resumed:
-        // Check permission again when app resumes (e.g., after granting permission)
-        unawaited(_checkPermission());
-
-        // Only start camera if we already have permission
-        if (_controller.value.hasCameraPermission) {
-          _subscription = _controller.barcodes.listen(_handleBarcode);
-          unawaited(_startCamera());
-        }
+        _onAppActive();
       case AppLifecycleState.inactive:
-        unawaited(_subscription?.cancel());
-        _subscription = null;
-        if (_controller.value.hasCameraPermission) {
-          unawaited(_controller.stop());
-        }
+        _onAppInActive();
+    }
+  }
+
+  Future<void> _onAppActive() async {
+    // Re-initialize permission state when app becomes active (e.g., after granting permission)
+    await _initializeCamera();
+  }
+
+  void _onAppInActive() {
+    // Stop camera and cancel subscription when app becomes inactive
+    unawaited(_subscription?.cancel());
+    _subscription = null;
+    if (_controller.value.hasCameraPermission) {
+      unawaited(_controller.stop());
     }
   }
 
@@ -363,8 +392,26 @@ class QRScanViewState extends State<QRScanView>
     super.dispose();
   }
 
-  Future<void> _startCamera() async {
+  Future<void> _startCamera({int retryCount = 0}) async {
     try {
+      // Verify controller has permission before starting (especially important on Android)
+      if (!_controller.value.hasCameraPermission) {
+        // Wait a bit for controller state to sync, then retry once
+        if (retryCount == 0 && mounted) {
+          await Future<void>.delayed(
+            Platform.isAndroid
+                ? const Duration(milliseconds: 500)
+                : const Duration(milliseconds: 200),
+          );
+          if (mounted && _controller.value.hasCameraPermission) {
+            return _startCamera(retryCount: 1);
+          }
+        }
+        log.info(
+            '[Scanner] Cannot start camera: permission not granted in controller');
+        return;
+      }
+
       await _controller.start();
       if (mounted) {
         setState(() {
@@ -373,6 +420,16 @@ class QRScanViewState extends State<QRScanView>
       }
     } catch (e) {
       log.info('[Scanner] Failed to start camera: $e');
+      // Retry once on Android if it's a permission-related error
+      if (retryCount == 0 &&
+          Platform.isAndroid &&
+          mounted &&
+          _cameraPermission == true) {
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+        if (mounted && _controller.value.hasCameraPermission) {
+          return _startCamera(retryCount: 1);
+        }
+      }
     }
   }
 
@@ -384,41 +441,45 @@ class QRScanViewState extends State<QRScanView>
     await _controller.stop();
   }
 
-  Future<void> _checkPermission() async {
-    final status = await Permission.camera.status;
+  Future<void> _onPermissionGranted() async {
+    setState(() {
+      _cameraPermission = true;
+    });
 
-    // If permission not determined yet, request it
-    if (!status.isGranted && !status.isPermanentlyDenied) {
-      await Permission.camera.request();
+    // On Android, wait longer for controller state to sync with permission status
+    final syncDelay = Platform.isAndroid
+        ? const Duration(milliseconds: 200)
+        : const Duration(milliseconds: 100);
+    final restartDelay = Platform.isAndroid
+        ? const Duration(milliseconds: 600)
+        : const Duration(milliseconds: 300);
+
+    // Wait for controller to recognize the permission (with retries)
+    int attempts = 0;
+    while (attempts < 3 && mounted) {
+      await Future<void>.delayed(syncDelay);
+      if (_controller.value.hasCameraPermission) {
+        break;
+      }
+      attempts++;
     }
 
-    final newStatus = await Permission.camera.status;
-
-    if (newStatus.isPermanentlyDenied || newStatus.isDenied) {
-      if (_cameraPermission ?? true) {
-        setState(() {
-          _cameraPermission = false;
-          _isCameraInitialized = false;
-        });
-      }
-    } else if (newStatus.isGranted) {
-      final wasPermissionJustGranted = _cameraPermission != true;
-      if (wasPermissionJustGranted) {
-        setState(() {
-          _cameraPermission = true;
-        });
-        // If permission was just granted, restart camera after a short delay
-        // to ensure controller is ready
+    if (mounted) {
+      _timer?.cancel();
+      _timer = Timer(restartDelay, () async {
         if (mounted) {
-          _timer?.cancel();
-          _timer = Timer(const Duration(milliseconds: 300), () async {
-            if (mounted) {
-              await _controller.stop();
-              await _startCamera();
-            }
-          });
+          await _startCamera();
         }
-      }
+      });
+    }
+  }
+
+  void _onPermissionDenied() {
+    if (_cameraPermission ?? true) {
+      setState(() {
+        _cameraPermission = false;
+        _isCameraInitialized = false;
+      });
     }
   }
 
@@ -463,6 +524,7 @@ class QRScanViewState extends State<QRScanView>
           controller: _controller,
           key: qrKey,
           errorBuilder: (context, error, stack) {
+            log.info('[Scanner] Error: $error, stack: $stack');
             if (!_isCameraInitialized || _cameraPermission == false) {
               return const SizedBox.shrink();
             }

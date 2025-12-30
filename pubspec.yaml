@@ -63,7 +63,7 @@ dependencies:
   qr_flutter: ^4.1.0
   protobuf: ^4.1.0
   fl_chart: ^0.71.0
-  mobile_scanner: 6.0.11
+  mobile_scanner:
   retrofit: null
   roundcheckbox: ^2.0.4+1
   sentry_dio: ^9.6.0
