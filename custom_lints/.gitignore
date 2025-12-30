@@ -1,0 +1,8 @@
+# Dart/Flutter
+.dart_tool/
+.packages
+pubspec.lock
+
+# Build outputs
+build/
+

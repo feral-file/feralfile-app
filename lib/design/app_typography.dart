@@ -211,6 +211,7 @@ extension TypographyColors on TextStyle {
   TextStyle get inactive => copyWith(color: const Color(0xFF999999));
   TextStyle get highlight => copyWith(color: const Color(0xFFECFF0C));
   TextStyle get red => copyWith(color: const Color(0xFFA1200A));
+  TextStyle get lightBlue => copyWith(color: const Color(0xFFB9E5FF));
 }
 
 extension TypographyFontStyle on TextStyle {

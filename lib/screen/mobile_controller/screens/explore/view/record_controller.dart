@@ -4,8 +4,6 @@ import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/screen/meili_search/meili_search_bloc.dart';
-import 'package:autonomy_flutter/screen/meili_search/meili_search_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/record_processing_status_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/intent.dart';
@@ -59,10 +57,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
   final ConfigurationService configurationService =
       injector<ConfigurationService>();
   late RecordBloc recordBloc;
-  late MeiliSearchBloc meiliSearchBloc;
   String? transcribedText;
-
-  bool shouldShowMeiliSearch = false;
 
   late HighlightController textEditingController;
 
@@ -71,7 +66,6 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
   @override
   void initState() {
     recordBloc = context.read<RecordBloc>();
-    meiliSearchBloc = context.read<MeiliSearchBloc>();
     textEditingController = HighlightController(text: widget.payload.text);
     super.initState();
     WidgetsBinding.instance.addObserver(this);
@@ -291,44 +285,41 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                   ],
                 ),
               ),
-              if (shouldShowMeiliSearch)
-                const Expanded(child: MeiliSearchPage())
-              else
-                Expanded(
-                  child: CustomScrollView(
-                    physics: NeverScrollableScrollPhysics(),
-                    slivers: [
-                      SliverToBoxAdapter(
-                        child: Center(
-                          child: GestureDetector(
-                            onTap: state is RecordProcessingState
-                                ? null
-                                : () {
-                                    context.read<RecordBloc>().add(
-                                          state is RecordRecordingState
-                                              ? StopRecordingEvent()
-                                              : StartRecordingEvent(),
-                                        );
-                                  },
-                            child: _recordButton(state),
-                          ),
+              Expanded(
+                child: CustomScrollView(
+                  physics: NeverScrollableScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Center(
+                        child: GestureDetector(
+                          onTap: state is RecordProcessingState
+                              ? null
+                              : () {
+                                  context.read<RecordBloc>().add(
+                                        state is RecordRecordingState
+                                            ? StopRecordingEvent()
+                                            : StartRecordingEvent(),
+                                      );
+                                },
+                          child: _recordButton(state),
                         ),
                       ),
-                      SliverToBoxAdapter(
-                        child: Container(
-                          height: 105.52,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                        ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: Container(
+                        height: 105.52,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
                       ),
-                      SliverToBoxAdapter(
-                        child: _recordTranscribedText(context, state),
-                      ),
-                      SliverToBoxAdapter(
-                        child: _recordStatus(context, state),
-                      ),
-                    ],
-                  ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: _recordTranscribedText(context, state),
+                    ),
+                    SliverToBoxAdapter(
+                      child: _recordStatus(context, state),
+                    ),
+                  ],
                 ),
+              ),
             ],
           ),
           Positioned(
@@ -347,18 +338,6 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                   onSend: (text) {
                     recordBloc.add(
                       SubmitTextEvent(text),
-                    );
-                    setState(() {
-                      shouldShowMeiliSearch = false;
-                    });
-                  },
-                  onChanged: (text) {
-                    final match = textEditingController.getMatchOrFull();
-                    setState(() {
-                      shouldShowMeiliSearch = text.isNotEmpty;
-                    });
-                    meiliSearchBloc.add(
-                      MeiliSearchQueryChanged(match),
                     );
                   },
                 ),

@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'dart:math';
 
 import 'package:after_layout/after_layout.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -466,10 +467,10 @@ class _SectionExpandedWidgetState extends State<SectionExpandedWidget> {
                   });
                 },
                 child: Container(
-                  padding: EdgeInsets.only(top: 16),
                   color: Colors.transparent,
                   child: Padding(
-                    padding: widget.headerPadding ?? EdgeInsets.zero,
+                    padding: widget.headerPadding ??
+                        EdgeInsets.only(top: LayoutConstants.space4),
                     child: Row(
                       children: [
                         Text(

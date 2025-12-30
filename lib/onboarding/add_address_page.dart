@@ -10,6 +10,7 @@ import 'dart:async';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/onboarding/add_address_input_page.dart';
 import 'package:autonomy_flutter/onboarding/onboarding_shell.dart';
@@ -19,7 +20,6 @@ import 'package:autonomy_flutter/screen/bloc/accounts/accounts_state.dart';
 import 'package:autonomy_flutter/screen/device_setting/check_bluetooth_state.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:flutter/cupertino.dart';
@@ -78,76 +78,68 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
       ),
       body: BlocProvider.value(
         value: _accountsBloc,
-        child: Column(
-          children: [
-            OnboardingShell(
-              content: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'See the art you already own',
-                    style: theme.textTheme.h3,
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Add your Ethereum and Tezos addresses to pull in the works you '
-                    'collect. Use the app as a clear lens on your digital collection, '
-                    'even before you connect a device.',
-                    style: AppTypography.body(context).white,
-                  ),
-                  const SizedBox(height: 20),
-                  _AddressList(theme: theme, onDelete: onDelete),
-                ],
+        child: OnboardingShell(
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'See the art you already own',
+                style: AppTypography.h2(context).white,
               ),
-              primaryButton: Row(
+              SizedBox(height: LayoutConstants.space5),
+              Text(
+                'Add your Ethereum and Tezos addresses to pull in the works you '
+                'collect. Use the app as a clear lens on your digital collection, '
+                'even before you connect a device.',
+                style: AppTypography.body(context).white,
+              ),
+              SizedBox(height: LayoutConstants.space5),
+              _AddressList(theme: theme, onDelete: onDelete),
+            ],
+          ),
+          primaryButton: Row(
+            children: [
+              SvgPicture.asset(
+                'assets/images/Add_blue.svg',
+                colorFilter: const ColorFilter.mode(
+                  PrimitivesTokens.colorsBlack,
+                  BlendMode.srcIn,
+                ),
+              ),
+              SizedBox(width: LayoutConstants.space2),
+              Text(
+                'Add Address',
+                style: AppTypography.body(context).black,
+              ),
+            ],
+          ),
+          onPrimaryPressed: () => onAddAddress(context),
+          secondaryButton: BlocBuilder<AccountsBloc, AccountsState>(
+            builder: (context, state) {
+              final addresses = state.addresses;
+              final isEmpty = addresses == null || addresses.isEmpty;
+              final buttonText = isEmpty ? 'Skip for now' : 'Next';
+
+              return Row(
                 children: [
+                  Text(
+                    buttonText,
+                    style: AppTypography.body(context).lightBlue,
+                  ),
+                  SizedBox(width: LayoutConstants.space2),
                   SvgPicture.asset(
-                    'assets/images/Add_blue.svg',
+                    'assets/images/Left.svg',
                     colorFilter: const ColorFilter.mode(
-                      PrimitivesTokens.colorsBlack,
+                      PrimitivesTokens.colorsLightBlue,
                       BlendMode.srcIn,
                     ),
                   ),
-                  const SizedBox(width: 7),
-                  Text(
-                    'Add Address',
-                    style: theme.textTheme.body.copyWith(
-                      color: PrimitivesTokens.colorsBlack,
-                    ),
-                  ),
                 ],
-              ),
-              onPrimaryPressed: () => onAddAddress(context),
-              secondaryButton: BlocBuilder<AccountsBloc, AccountsState>(
-                builder: (context, state) {
-                  final addresses = state.addresses;
-                  final isEmpty = addresses == null || addresses.isEmpty;
-                  final buttonText = isEmpty ? 'Skip for now' : 'Next';
-
-                  return Row(
-                    children: [
-                      Text(
-                        buttonText,
-                        style: theme.textTheme.body.copyWith(
-                          color: PrimitivesTokens.colorsLightBlue,
-                        ),
-                      ),
-                      const SizedBox(width: 7),
-                      SvgPicture.asset(
-                        'assets/images/Left.svg',
-                        colorFilter: const ColorFilter.mode(
-                          PrimitivesTokens.colorsLightBlue,
-                          BlendMode.srcIn,
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-              onSecondaryPressed: () => onNext(context),
-              hintText: 'You can always add addresses later.',
-            ),
-          ],
+              );
+            },
+          ),
+          onSecondaryPressed: () => onNext(context),
+          hintText: 'You can always add addresses later.',
         ),
       ),
     );
@@ -156,11 +148,17 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
   void onDelete(WalletAddress address) {
     UIHelper.showDeleteAccountConfirmation(address, (address) async {
       final completer = Completer<void>();
-      _accountsBloc.add(DeleteAddressEvent(address, onSuccess: () {
-        completer.complete();
-      }, onError: (error, stackTrace) {
-        completer.completeError(error);
-      }));
+      _accountsBloc.add(
+        DeleteAddressEvent(
+          address,
+          onSuccess: () {
+            completer.complete();
+          },
+          onError: (error, stackTrace) {
+            completer.completeError(error);
+          },
+        ),
+      );
       await completer.future;
     });
   }
@@ -253,7 +251,10 @@ class _AddressRow extends StatelessWidget {
         children: [
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(top: 11, bottom: 12),
+              padding: EdgeInsets.only(
+                top: LayoutConstants.space3 - 1,
+                bottom: LayoutConstants.space3,
+              ),
               child: Text(
                 address.name,
                 style: AppTypography.body(context).grey,
@@ -265,7 +266,11 @@ class _AddressRow extends StatelessWidget {
             onTap: () => onDelete(address),
             child: Container(
               color: Colors.transparent,
-              padding: const EdgeInsets.only(top: 11, bottom: 12, left: 12),
+              padding: EdgeInsets.only(
+                top: LayoutConstants.space3 - 1,
+                bottom: LayoutConstants.space3,
+                left: LayoutConstants.space3,
+              ),
               child: SvgPicture.asset('assets/images/minus.svg'),
             ),
           ),

@@ -107,7 +107,7 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
     return Scaffold(
       appBar: MainAppBar(
         centeredTitle: 'now_playing'.tr(),
-        backgroundColor: PrimitivesTokens.colorsDarkGrey,
+        backgroundColor: AppColor.auGreyBackground,
         actions: [
           IconButton(
             padding: EdgeInsets.zero,
@@ -126,7 +126,7 @@ class NowDisplayingPageState extends State<NowDisplayingPage> {
           ),
         ],
       ),
-      backgroundColor: PrimitivesTokens.colorsBlack,
+      backgroundColor: AppColor.auGreyBackground,
       body: _body(context),
     );
   }
@@ -323,7 +323,7 @@ class _DP1NowDisplayingState extends State<DP1NowDisplaying> {
           Container(
             child: (thumbnail != null)
                 ? AspectRatio(
-                    aspectRatio: 4/5,
+                    aspectRatio: 4 / 5,
                     child: FFArtworkThumbnailView(
                       url: thumbnail.uri,
                     ),

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/error/bluetooth_response_error.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
@@ -130,10 +131,11 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                 ],
               ),
               Positioned(
-                bottom: 15,
+                bottom: LayoutConstants.space4,
                 left: 0,
                 right: 0,
                 child: PrimaryAsyncButton(
+                  padding: const EdgeInsets.only(top: 13, bottom: 10),
                   enabled: _password.isNotEmpty,
                   onTap: () async {
                     final ssid = widget.payload.wifiAccessPoint.ssid;

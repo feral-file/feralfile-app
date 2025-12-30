@@ -7,8 +7,8 @@
 
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:flutter/material.dart';
 
@@ -55,22 +55,25 @@ class OnboardingShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 44),
+      padding: EdgeInsets.symmetric(
+        horizontal: LayoutConstants.setupPageHorizontal,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
+          const SizedBox(
             height: 206.94,
           ),
           Container(
-              constraints: const BoxConstraints(
-                minHeight: 245.06,
-              ),
-              child: content),
-          const SizedBox(height: 10),
+            constraints: const BoxConstraints(
+              minHeight: 245.06,
+            ),
+            child: content,
+          ),
+          SizedBox(height: LayoutConstants.space2),
           _buildButtonsRow(context),
           if (hintText != null) ...[
-            const SizedBox(height: 20),
+            SizedBox(height: LayoutConstants.space5),
             Text(
               hintText!,
               style: AppTypography.body(context).copyWith(
@@ -91,17 +94,20 @@ class OnboardingShell extends StatelessWidget {
         Expanded(
           child: (primaryButton != null && onPrimaryPressed != null)
               ? CustomPrimaryButton(
-                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  padding: EdgeInsets.symmetric(
+                    vertical: LayoutConstants.space3,
+                  ),
                   onTap: onPrimaryPressed,
                   child: primaryButton!,
                 )
               : const SizedBox.shrink(),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: LayoutConstants.space3),
         Expanded(
           child: (secondaryButton != null && onSecondaryPressed != null)
               ? CustomPrimaryButton(
-                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  padding:
+                      EdgeInsets.symmetric(vertical: LayoutConstants.space3),
                   onTap: onSecondaryPressed,
                   borderColor: AppColor.feralFileLightBlue,
                   color: Colors.transparent,

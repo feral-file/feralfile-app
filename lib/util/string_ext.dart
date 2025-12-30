@@ -6,6 +6,9 @@
 //
 
 import 'package:autonomy_flutter/common/environment.dart';
+import 'package:autonomy_flutter/model/device/ff1_device.dart';
+import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
+import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/nft_rendering/nft_rendering_widget.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:path/path.dart' as p;
@@ -286,5 +289,33 @@ extension FeedUrlExtension on String {
       return this;
     }
     return uri.pathSegments.last;
+  }
+}
+
+extension FF1DeviceExtension on String {
+  FF1DeviceInfo get toFF1DeviceInfo {
+    final encodedPath = Uri.decodeFull(this);
+    final data = encodedPath.split('|');
+    if (data.length <= 1) {
+      return FF1DeviceInfo(
+        deviceId: '',
+        topicId: data.firstOrNull ?? '',
+        isConnectedToInternet: false,
+        branchName: '',
+        version: '',
+      );
+    }
+
+    return FF1DeviceInfo(
+      deviceId: data.firstOrNull ?? 'FF1',
+      topicId: data.atIndexOrNull(1) ?? '',
+      isConnectedToInternet: data.atIndexOrNull(2) == 'true',
+      branchName: data.atIndexOrNull(3) ?? DeviceReleaseBranch.release.name,
+      version: data.atIndexOrNull(4) ?? '',
+    );
+  }
+
+  bool get isFF1DeviceNamePattern {
+    return isNotEmpty && toLowerCase().contains('ff1');
   }
 }

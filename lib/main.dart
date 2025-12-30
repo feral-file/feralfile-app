@@ -418,6 +418,10 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
               },
             ),
             const BottomInteractionBar(),
+            // Overlay layer for cast button tooltip
+            Overlay(
+              key: topOverlayKey,
+            ),
           ],
         ),
       ),
@@ -427,6 +431,10 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
 
 final CustomRouteObserver<ModalRoute<void>> routeObserver =
     CustomRouteObserver<ModalRoute<void>>();
+
+// Global key for the top overlay that's above BottomInteractionBar
+// This allows cast button tooltip to overlay the bottom bar
+final GlobalKey<OverlayState> topOverlayKey = GlobalKey<OverlayState>();
 
 @pragma('vm:entry-point')
 void downloadCallback(String id, int status, int progress) {

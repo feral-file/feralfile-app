@@ -113,7 +113,7 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
         ),
       // FF1 Setting
       OptionItem(
-        title: 'FF1',
+        title: 'FF1 Art Computer',
         icon: SvgPicture.asset(
           'assets/images/portal_setting.svg',
           colorFilter: const ColorFilter.mode(AppColor.white, BlendMode.srcIn),
@@ -135,8 +135,9 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
       // Personal Preferences & Data, Security Management
       OptionItem(
         title: 'Account',
-        icon: const Icon(
-          AuIcon.settings,
+        icon: SvgPicture.asset(
+          'assets/images/account_setting.svg',
+          colorFilter: const ColorFilter.mode(AppColor.white, BlendMode.srcIn),
         ),
         onTap: () {
           injector<NavigationService>().navigateTo(AppRouter.settingsPage);
@@ -383,7 +384,7 @@ class _CombinedHeaderDelegate extends SliverPersistentHeaderDelegate {
     return [
       // FF1 Setting
       OptionItem(
-        title: 'FF1',
+        title: 'FF1 Art Computer',
         icon: SvgPicture.asset(
           'assets/images/portal_setting.svg',
           colorFilter: const ColorFilter.mode(AppColor.white, BlendMode.srcIn),
@@ -404,8 +405,9 @@ class _CombinedHeaderDelegate extends SliverPersistentHeaderDelegate {
       // Personal Preferences & Data, Security Management
       OptionItem(
         title: 'Account',
-        icon: const Icon(
-          AuIcon.settings,
+        icon: SvgPicture.asset(
+          'assets/images/account_setting.svg',
+          colorFilter: const ColorFilter.mode(AppColor.white, BlendMode.srcIn),
         ),
         onTap: () {
           injector<NavigationService>().navigateTo(AppRouter.settingsPage);

@@ -36,6 +36,7 @@ final listRouteShouldNotShowNowDisplaying = [
   AppRouter.onboardingAddAddressPage,
   AppRouter.onboardingAddAddressInputPage,
   AppRouter.ff1Updating,
+  AppRouter.ff1DevicePickerPage,
 ];
 
 class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {

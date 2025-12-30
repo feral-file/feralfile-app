@@ -31,6 +31,7 @@ import 'package:autonomy_flutter/screen/device_setting/bluetooth_connected_devic
 import 'package:autonomy_flutter/screen/device_setting/check_bluetooth_state.dart';
 import 'package:autonomy_flutter/screen/device_setting/connect_ff1_page.dart';
 import 'package:autonomy_flutter/screen/device_setting/enter_wifi_password.dart';
+import 'package:autonomy_flutter/screen/device_setting/ff1_device_picker_page.dart';
 import 'package:autonomy_flutter/screen/device_setting/ff1_updating_page.dart';
 import 'package:autonomy_flutter/screen/device_setting/now_displaying_page.dart';
 import 'package:autonomy_flutter/screen/device_setting/scan_wifi_network_page.dart';
@@ -67,7 +68,6 @@ import 'package:autonomy_flutter/screen/wallet/wallet_page.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/view/transparent_router.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:page_transition/page_transition.dart';
 
@@ -120,6 +120,7 @@ class AppRouter {
   static const allPlaylistsPage = 'all_playlists_page';
   static const allChannelsPage = 'all_channels_page';
   static const connectFF1 = 'connect_ff1';
+  static const ff1DevicePickerPage = 'ff1_device_picker_page';
   static const ff1Updating = 'ff1_updating';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
@@ -554,6 +555,12 @@ class AppRouter {
         return CupertinoPageRoute(
           settings: settings,
           builder: (context) => ConnectFF1Page(payload: payload),
+        );
+
+      case ff1DevicePickerPage:
+        return CupertinoPageRoute(
+          settings: settings,
+          builder: (context) => const FF1DevicePickerPage(),
         );
 
       case ff1Updating:

@@ -1,0 +1,13 @@
+name: custom_lints
+description: Custom lint rules for FeralFile app to enforce design system usage
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  custom_lint_builder: ^0.6.0
+
+dev_dependencies:
+  custom_lint: ^0.6.0
