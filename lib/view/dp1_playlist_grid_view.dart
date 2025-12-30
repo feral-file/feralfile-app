@@ -55,7 +55,14 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
   void didUpdateWidget(covariant PlaylistAssetGridView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!oldWidget.playlist.isItemsEqual(widget.playlist)) {
-      _playlistDetailsBloc.add(SetPlaylistEvent(playlist: widget.playlist));
+      // Release old bloc and get new bloc for the new playlist
+      injector<PlaylistDetailsBlocManager>()
+          .releaseBlocByInstance(_playlistDetailsBloc);
+      // Force rebuild with new bloc
+      setState(() {
+        _playlistDetailsBloc =
+            injector<PlaylistDetailsBlocManager>().getBloc(widget.playlist);
+      });
     } else {
       log.info('PlaylistAssetGridView: didUpdateWidget no need to update');
     }
@@ -84,6 +91,7 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<PlaylistDetailsBloc, PlaylistDetailsState>(
+      key: ValueKey(_playlistDetailsBloc.hashCode),
       bloc: _playlistDetailsBloc,
       listener: (context, state) {
         if (state is! PlaylistDetailsLoadingMoreState) {

@@ -72,9 +72,11 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
         currentItems.length != newItems.length) {
       injector<PlaylistDetailsBlocManager>()
           .releaseBlocByInstance(_playlistDetailsBloc);
-      _playlistDetailsBloc = injector<PlaylistDetailsBlocManager>().getBloc(
-        widget.playlistReference.playlist,
-      );
+      setState(() {
+        _playlistDetailsBloc = injector<PlaylistDetailsBlocManager>().getBloc(
+          widget.playlistReference.playlist,
+        );
+      });
     }
   }
 
@@ -101,6 +103,7 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
     final creator = widget.playlistCreator ?? '';
 
     return BlocBuilder<PlaylistDetailsBloc, PlaylistDetailsState>(
+      key: ValueKey(_playlistDetailsBloc.hashCode),
       bloc: _playlistDetailsBloc,
       builder: (context, state) {
         return GestureDetector(
@@ -130,7 +133,6 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
                     PlaylistTitle(
                       primaryText: playlistTitle,
                       secondaryText: creator,
-                      total: state.total,
                     ),
                 DP1Carousel(
                   items: state.nowDisplayingItems,

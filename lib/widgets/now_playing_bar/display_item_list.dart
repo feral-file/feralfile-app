@@ -103,10 +103,12 @@ class _DisplayItemListState extends State<DisplayItemList>
     if (oldWidget.playlist.items.length != widget.playlist.items.length) {
       injector<PlaylistDetailsBlocManager>()
           .releaseBlocByInstance(_playlistDetailsBloc);
-      _playlistDetailsBloc =
-          injector<PlaylistDetailsBlocManager>().getBloc(widget.playlist);
-      _playlistDetailsBloc
-          .add(GetPlaylistDetailsEvent(size: (widget.selectedIndex ?? 0) + 10));
+      setState(() {
+        _playlistDetailsBloc =
+            injector<PlaylistDetailsBlocManager>().getBloc(widget.playlist);
+        _playlistDetailsBloc.add(
+            GetPlaylistDetailsEvent(size: (widget.selectedIndex ?? 0) + 10));
+      });
       _scrollToSelectedIndex();
     }
 
@@ -126,6 +128,7 @@ class _DisplayItemListState extends State<DisplayItemList>
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<PlaylistDetailsBloc, PlaylistDetailsState>(
+      key: ValueKey(_playlistDetailsBloc.hashCode),
       bloc: _playlistDetailsBloc,
       listenWhen: (previous, current) {
         if (current is PlaylistDetailsLoadedState &&

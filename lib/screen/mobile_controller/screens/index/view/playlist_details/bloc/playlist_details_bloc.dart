@@ -21,7 +21,6 @@ class PlaylistDetailsBloc
       : _playlist = playlist,
         super(const PlaylistDetailsInitialState()) {
     _setupDatabaseListener();
-    on<SetPlaylistEvent>(_onSetPlaylist);
     on<GetPlaylistDetailsEvent>(_onGetPlaylistDetails);
     on<LoadMorePlaylistDetailsEvent>(_onLoadMorePlaylistDetails);
   }
@@ -120,15 +119,6 @@ class PlaylistDetailsBloc
         stackTrace: s,
       ));
     }
-  }
-
-  Future<void> _onSetPlaylist(
-    SetPlaylistEvent event,
-    Emitter<PlaylistDetailsState> emit,
-  ) async {
-    _playlist = event.playlist;
-    _setupDatabaseListener();
-    add(GetPlaylistDetailsEvent());
   }
 
   Future<void> _onGetPlaylistDetails(

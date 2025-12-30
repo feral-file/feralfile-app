@@ -48,20 +48,20 @@ class PlaylistTitle extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        if (primaryTextSuffix != null &&
-                            primaryTextSuffix!.isNotEmpty) ...[
-                          SizedBox(width: LayoutConstants.space2),
+                        if (total != null) ...[
+                          SizedBox(width: LayoutConstants.space1),
                           Text(
-                            primaryTextSuffix!,
+                            '($total)',
                             style: AppTypography.bodySmall(context).grey.italic,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
-                        if (total != null) ...[
-                          SizedBox(width: LayoutConstants.space1),
+                        if (primaryTextSuffix != null &&
+                            primaryTextSuffix!.isNotEmpty) ...[
+                          SizedBox(width: LayoutConstants.space2),
                           Text(
-                            '($total)',
+                            primaryTextSuffix!,
                             style: AppTypography.bodySmall(context).grey.italic,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
