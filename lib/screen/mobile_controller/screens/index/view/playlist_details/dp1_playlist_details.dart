@@ -21,6 +21,7 @@ import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/cast_button.dart';
 import 'package:autonomy_flutter/view/dp1_playlist_grid_view.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -186,10 +187,11 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
                 <String>[];
         final stateSuffix = owners.isNotEmpty
             ? collectionState.addressStates
-                .firstWhere(
-                    (element) => element.address.address == owners.first)
-                .state
-                .description
+                    .firstWhereOrNull(
+                        (element) => element.address.address == owners.first)
+                    ?.state
+                    .description ??
+                ''
             : '';
 
         return PlaylistDetailsHeader(
