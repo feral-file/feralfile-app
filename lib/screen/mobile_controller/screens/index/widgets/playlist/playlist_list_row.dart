@@ -26,7 +26,9 @@ class PlaylistRowItem extends StatefulWidget {
   final String? playlistCreator;
   final void Function(DP1NowDisplayingItem)? onItemTap;
   final ScrollController? scrollController;
-  final Widget? Function(PlaylistReference playlistReference)? headerBuilder;
+  final Widget? Function(
+          PlaylistReference playlistReference, PlaylistDetailsState state)?
+      headerBuilder;
 
   @override
   State<PlaylistRowItem> createState() => _PlaylistRowItemState();
@@ -44,7 +46,7 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
     );
     // Ensure BlocBuilder is mounted before dispatching event
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _playlistDetailsBloc.add(LoadMorePlaylistDetailsEvent());
+      _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
     });
 
     _carouselScrollController = widget.scrollController ?? ScrollController();
@@ -75,7 +77,7 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
       );
       // Ensure BlocBuilder is mounted before dispatching event
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _playlistDetailsBloc.add(LoadMorePlaylistDetailsEvent());
+        _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
       });
     }
   }
@@ -102,48 +104,49 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
     final playlistTitle = playlist.title;
     final creator = widget.playlistCreator ?? '';
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).pushNamed(
-          AppRouter.dp1PlaylistDetailsPage,
-          arguments: DP1PlaylistDetailsScreenPayload(
-            playlist: widget.playlistReference,
-          ),
-        );
-      },
-      child: Container(
-        decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: Colors.black,
-              width: 1,
-            ),
-          ),
-        ),
-        padding: const EdgeInsets.only(bottom: 11),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            widget.headerBuilder?.call(widget.playlistReference) ??
-                PlaylistTitle(
-                  primaryText: playlistTitle,
-                  secondaryText: creator,
+    return BlocBuilder<PlaylistDetailsBloc, PlaylistDetailsState>(
+      bloc: _playlistDetailsBloc,
+      builder: (context, state) {
+        return GestureDetector(
+          onTap: () {
+            Navigator.of(context).pushNamed(
+              AppRouter.dp1PlaylistDetailsPage,
+              arguments: DP1PlaylistDetailsScreenPayload(
+                playlist: widget.playlistReference,
+              ),
+            );
+          },
+          child: Container(
+            decoration: const BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: Colors.black,
+                  width: 1,
                 ),
-            BlocBuilder<PlaylistDetailsBloc, PlaylistDetailsState>(
-              bloc: _playlistDetailsBloc,
-              builder: (context, state) {
-                return DP1Carousel(
+              ),
+            ),
+            padding: const EdgeInsets.only(bottom: 11),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                widget.headerBuilder?.call(widget.playlistReference, state) ??
+                    PlaylistTitle(
+                      primaryText: playlistTitle,
+                      secondaryText: creator,
+                      total: state.total,
+                    ),
+                DP1Carousel(
                   items: state.nowDisplayingItems,
                   onItemTap: widget.onItemTap,
                   scrollController: _carouselScrollController,
                   isLoadingMore: state is PlaylistDetailsLoadingMoreState,
-                );
-              },
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

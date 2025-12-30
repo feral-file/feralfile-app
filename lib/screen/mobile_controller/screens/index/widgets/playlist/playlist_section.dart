@@ -80,7 +80,8 @@ class _PlaylistSectionState extends State<PlaylistSection> {
           scrollController: widget.scrollController,
           headerBuilder: widget.playlistHeaderBuilder == null
               ? null
-              : (_) => widget.playlistHeaderBuilder?.call(playlist),
+              : (playlistReference, state) =>
+                  widget.playlistHeaderBuilder?.call(playlist),
         );
       },
     );

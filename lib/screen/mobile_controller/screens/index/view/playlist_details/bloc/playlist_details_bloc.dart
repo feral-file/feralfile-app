@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:autonomy_flutter/au_bloc.dart';
+import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/database/asset_token_repository.dart';
+import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_event.dart';
@@ -144,6 +146,7 @@ class PlaylistDetailsBloc
         nowDisplayingItems: state.nowDisplayingItems,
         hasMore: state.hasMore,
         offset: state.offset,
+        total: state.total,
       ),
     );
     try {
@@ -160,11 +163,33 @@ class PlaylistDetailsBloc
       final offset = nowDisplayingItems.length;
       final hasMore = nowDisplayingItems.isNotEmpty;
 
+      // Calculate total count
+      int? total;
+      final isStatic = _playlist.items.isNotEmpty;
+      if (isStatic) {
+        // For static playlists, total is the number of items
+        total = _playlist.items.length;
+      } else {
+        // For dynamic playlists, get total from database
+        final dynamicQuery = _playlist.firstDynamicQuery;
+        if (dynamicQuery != null) {
+          final owners = dynamicQuery.params.owners;
+          if (owners.isNotEmpty) {
+            final allTokens = injector<IndexerDatabaseAbstract>()
+                .getTokensByOwners(owners: owners);
+            total = allTokens.length;
+          } else {
+            total = 0;
+          }
+        }
+      }
+
       emit(
         PlaylistDetailsLoadedState(
           nowDisplayingItems: nowDisplayingItems,
           hasMore: hasMore,
           offset: offset,
+          total: total,
         ),
       );
     } catch (e) {
@@ -174,6 +199,7 @@ class PlaylistDetailsBloc
           nowDisplayingItems: state.nowDisplayingItems,
           hasMore: state.hasMore,
           offset: state.offset,
+          total: state.total,
         ),
       );
     }
@@ -195,6 +221,7 @@ class PlaylistDetailsBloc
         nowDisplayingItems: state.nowDisplayingItems,
         hasMore: state.hasMore,
         offset: state.offset,
+        total: state.total,
       ),
     );
     try {
@@ -224,6 +251,7 @@ class PlaylistDetailsBloc
           ],
           hasMore: hasMore,
           offset: end,
+          total: state.total,
         ),
       );
     } catch (e) {
@@ -233,6 +261,7 @@ class PlaylistDetailsBloc
           nowDisplayingItems: state.nowDisplayingItems,
           hasMore: state.hasMore,
           offset: state.offset,
+          total: state.total,
         ),
       );
     }

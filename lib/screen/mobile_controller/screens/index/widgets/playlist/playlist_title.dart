@@ -10,12 +10,14 @@ class PlaylistTitle extends StatelessWidget {
     required this.secondaryText,
     this.primaryTextSuffix,
     this.onTap,
+    this.total,
     super.key,
   });
 
   final String primaryText;
   final String? primaryTextSuffix;
   final String secondaryText;
+  final int? total;
   final VoidCallback? onTap;
 
   @override
@@ -46,13 +48,25 @@ class PlaylistTitle extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        SizedBox(width: LayoutConstants.space2),
-                        Text(
-                          primaryTextSuffix ?? '',
-                          style: AppTypography.bodySmall(context).grey.italic,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        if (primaryTextSuffix != null &&
+                            primaryTextSuffix!.isNotEmpty) ...[
+                          SizedBox(width: LayoutConstants.space2),
+                          Text(
+                            primaryTextSuffix!,
+                            style: AppTypography.bodySmall(context).grey.italic,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                        if (total != null) ...[
+                          SizedBox(width: LayoutConstants.space1),
+                          Text(
+                            '($total)',
+                            style: AppTypography.bodySmall(context).grey.italic,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ],
                     ),
                   ),

@@ -44,7 +44,7 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
   void initState() {
     super.initState();
     _playlistDetailsBloc = PlaylistDetailsBloc(playlist: widget.playlist);
-    _playlistDetailsBloc.add(LoadMorePlaylistDetailsEvent());
+    _playlistDetailsBloc.add(GetPlaylistDetailsEvent());
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
   }
