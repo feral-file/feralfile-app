@@ -6,6 +6,7 @@ class DeviceStatus {
     this.connectedWifi,
     this.installedVersion,
     this.latestVersion,
+    this.macAddress,
   });
 
   factory DeviceStatus.fromJson(Map<String, dynamic> json) {
@@ -15,6 +16,7 @@ class DeviceStatus {
           ScreenOrientation.fromString(json['screenRotation'] as String),
       installedVersion: json['installedVersion'] as String?,
       latestVersion: json['latestVersion'] as String?,
+      macAddress: json['macAddress'] as String?,
     );
   }
 
@@ -22,6 +24,7 @@ class DeviceStatus {
   final ScreenOrientation screenRotation;
   final String? installedVersion;
   final String? latestVersion;
+  final String? macAddress;
 
   Map<String, dynamic> toJson() {
     return {
@@ -29,6 +32,7 @@ class DeviceStatus {
       'screenRotation': screenRotation.name,
       'installedVersion': installedVersion,
       'latestVersion': latestVersion,
+      'macAddress': macAddress,
     };
   }
 
@@ -37,12 +41,14 @@ class DeviceStatus {
     String? connectedWifi,
     String? installedVersion,
     String? latestVersion,
+    String? macAddress,
   }) {
     return DeviceStatus(
       screenRotation: screenRotation ?? this.screenRotation,
       connectedWifi: connectedWifi ?? this.connectedWifi,
       installedVersion: installedVersion ?? this.installedVersion,
       latestVersion: latestVersion ?? this.latestVersion,
+      macAddress: macAddress ?? this.macAddress,
     );
   }
 }

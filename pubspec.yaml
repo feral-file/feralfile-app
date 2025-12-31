@@ -139,6 +139,7 @@ dependencies:
   flutter_sticky_header: ^0.7.0
   sliver_sticky_collapsable_panel: ^2.0.7
   super_tooltip: ^2.1.0
+  wake_on_lan: ^4.1.1+3
 
 dev_dependencies:
   retrofit_generator: ^9.3.0

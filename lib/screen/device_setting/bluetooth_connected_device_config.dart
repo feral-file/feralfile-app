@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/util/inapp_notifications.dart';
+import 'package:autonomy_flutter/util/wake_on_lan_helper.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -1494,6 +1495,18 @@ class BluetoothConnectedDeviceConfigState
             _onRebootSelected();
           },
         ),
+      // wake on lan
+      if (!isDeviceAlive && !isQEMU && deviceStatus?.macAddress != null)
+        OptionItem(
+          title: 'Wake Device',
+          icon: const Icon(
+            Icons.power,
+            size: 24,
+          ),
+          onTap: () {
+            _onWakeOnLanSelected();
+          },
+        ),
       if (!isQEMU)
         OptionItem(
           title: 'Send Log',
@@ -1745,6 +1758,103 @@ class BluetoothConnectedDeviceConfigState
                     final device = selectedDevice!;
                     await injector<CanvasClientServiceV2>().safeRestart(device);
                     injector<NavigationService>().goBack();
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onWakeOnLanSelected() {
+    final macAddress = deviceStatus?.macAddress;
+    if (macAddress == null) {
+      UIHelper.showInfoDialog(
+        context,
+        'Wake-on-LAN Not Available',
+        'MAC address is not configured for this device. Please ensure the device has been connected to Wi-Fi at least once.',
+      );
+      return;
+    }
+
+    UIHelper.showCenterDialog(
+      context,
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Wake Device',
+            style: AppTypography.body(context).bold.white,
+          ),
+          SizedBox(height: LayoutConstants.space4),
+          Text(
+            'Send a Wake-on-LAN packet to wake up the device from sleep mode?',
+            style: AppTypography.body(context).white,
+          ),
+          SizedBox(height: LayoutConstants.space8),
+          Row(
+            children: [
+              Expanded(
+                child: PrimaryAsyncButton(
+                  text: 'cancel'.tr(),
+                  textColor: AppColor.white,
+                  color: Colors.transparent,
+                  borderColor: AppColor.white,
+                  onTap: () {
+                    injector<NavigationService>().goBack();
+                  },
+                ),
+              ),
+              SizedBox(width: LayoutConstants.space4),
+              Expanded(
+                child: PrimaryAsyncButton(
+                  text: 'Wake Up',
+                  textColor: AppColor.white,
+                  borderColor: AppColor.white,
+                  color: Colors.transparent,
+                  onTap: () async {
+                    final device = selectedDevice;
+                    final deviceHostname =
+                        WakeOnLanHelper.formatHostname(device.deviceId);
+
+                    try {
+                      final success = await WakeOnLanHelper.wakeDevice(
+                        deviceHostname: deviceHostname,
+                        macAddress: macAddress,
+                      );
+
+                      injector<NavigationService>().goBack();
+
+                      if (success) {
+                        unawaited(
+                          UIHelper.showInfoDialog(
+                            context,
+                            'Wake-on-LAN Sent',
+                            'Magic packet sent successfully. The device should wake up shortly if it is on the same network.',
+                          ),
+                        );
+                      } else {
+                        unawaited(
+                          UIHelper.showInfoDialog(
+                            context,
+                            'Wake-on-LAN Failed',
+                            'Failed to send wake-on-LAN packet. Please check your network connection and try again.',
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      log.severe('[Wake-on-LAN] Error: $e');
+                      injector<NavigationService>().goBack();
+                      unawaited(
+                        UIHelper.showInfoDialog(
+                          context,
+                          'Error',
+                          'An error occurred while sending the wake-on-LAN packet: $e',
+                        ),
+                      );
+                    }
                   },
                 ),
               ),
