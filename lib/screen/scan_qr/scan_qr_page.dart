@@ -254,6 +254,7 @@ class QRScanViewState extends State<QRScanView>
   bool _isLoading = false;
   bool? _cameraPermission;
   bool _isCameraInitialized = false;
+  bool _isStartingCamera = false; // Prevent multiple simultaneous camera starts
   String? currentCode;
   Timer? _timer;
 
@@ -268,35 +269,32 @@ class QRScanViewState extends State<QRScanView>
   void initState() {
     super.initState();
     _shouldPop = true;
-    unawaited(_checkPermission());
 
     WidgetsBinding.instance.addObserver(this);
-
-    _subscription = _controller.barcodes.listen(_handleBarcode);
 
     // Listen to controller state changes
     _controller.addListener(_onControllerStateChanged);
 
-    unawaited(_startCamera());
+    // Check permission - if granted, camera will auto-start via listener
+    unawaited(_checkPermission());
   }
 
   void _onControllerStateChanged() {
-    if (_controller.value.hasCameraPermission && _cameraPermission != true) {
+    log.info(
+        '[Scanner] Controller state changed: hasPermission=${_controller.value.hasCameraPermission}, ourPermission=$_cameraPermission');
+    if (_controller.value.hasCameraPermission && (_cameraPermission != true)) {
+      // Permission was granted - sync state and start camera
       setState(() {
         _cameraPermission = true;
       });
-      // Restart camera when permission is newly granted
-      _timer?.cancel();
-      _timer = Timer(const Duration(milliseconds: 300), () async {
-        await _controller.stop();
-        await _startCamera();
-      });
+      unawaited(_ensureCameraStarted());
     } else if (!_controller.value.hasCameraPermission &&
         (_cameraPermission ?? true)) {
       setState(() {
         _cameraPermission = false;
         _isCameraInitialized = false;
       });
+      log.info('[Scanner] Camera permission denied');
     }
   }
 
@@ -335,14 +333,8 @@ class QRScanViewState extends State<QRScanView>
       case AppLifecycleState.paused:
         return;
       case AppLifecycleState.resumed:
-        // Check permission again when app resumes (e.g., after granting permission)
+        // Check permission again when app resumes - camera will auto-start if granted
         unawaited(_checkPermission());
-
-        // Only start camera if we already have permission
-        if (_controller.value.hasCameraPermission) {
-          _subscription = _controller.barcodes.listen(_handleBarcode);
-          unawaited(_startCamera());
-        }
       case AppLifecycleState.inactive:
         unawaited(_subscription?.cancel());
         _subscription = null;
@@ -363,21 +355,62 @@ class QRScanViewState extends State<QRScanView>
     super.dispose();
   }
 
-  Future<void> _startCamera() async {
-    try {
-      await _controller.start();
-      if (mounted) {
-        setState(() {
-          _isCameraInitialized = true;
-        });
+  /// Single entry point to start camera - automatically called when permission is granted.
+  /// This ensures subscription exists and camera is started if permission is granted.
+  Future<void> _ensureCameraStarted() async {
+    // Prevent multiple simultaneous calls
+    if (_isStartingCamera || _isCameraInitialized) {
+      log.info('[Scanner] Camera already starting or started, skipping');
+      return;
+    }
+
+    // Double check permission before starting
+    final status = await Permission.camera.status;
+    if (!status.isGranted) {
+      log.info('[Scanner] Cannot start camera: permission not granted');
+      return;
+    }
+
+    // Ensure subscription exists
+    if (_subscription == null) {
+      _subscription = _controller.barcodes.listen(_handleBarcode);
+      log.info('[Scanner] Barcode stream subscription created');
+    }
+
+    // Start camera if not already started
+    if (!_isCameraInitialized && !_isStartingCamera) {
+      _isStartingCamera = true;
+      try {
+        log.info('[Scanner] Starting camera...');
+        await _controller.start();
+        if (mounted) {
+          setState(() {
+            _isCameraInitialized = true;
+            _isStartingCamera = false;
+          });
+          log.info('[Scanner] Camera started successfully');
+        } else {
+          _isStartingCamera = false;
+        }
+      } catch (e) {
+        log.info('[Scanner] Failed to start camera: $e');
+        _isStartingCamera = false;
+        // Retry after a delay if camera start failed
+        if (mounted) {
+          _timer?.cancel();
+          _timer = Timer(const Duration(milliseconds: 300), () {
+            if (mounted && !_isCameraInitialized) {
+              log.info('[Scanner] Retrying camera start...');
+              unawaited(_ensureCameraStarted());
+            }
+          });
+        }
       }
-    } catch (e) {
-      log.info('[Scanner] Failed to start camera: $e');
     }
   }
 
   Future<void> resumeCamera() async {
-    await _startCamera();
+    await _ensureCameraStarted();
   }
 
   Future<void> pauseCamera() async {
@@ -407,17 +440,19 @@ class QRScanViewState extends State<QRScanView>
         setState(() {
           _cameraPermission = true;
         });
-        // If permission was just granted, restart camera after a short delay
-        // to ensure controller is ready
+        // If permission was just granted, start camera after a short delay
+        // to ensure controller is ready. Camera will auto-start via listener.
         if (mounted) {
           _timer?.cancel();
-          _timer = Timer(const Duration(milliseconds: 300), () async {
+          _timer = Timer(const Duration(milliseconds: 300), () {
             if (mounted) {
-              await _controller.stop();
-              await _startCamera();
+              unawaited(_ensureCameraStarted());
             }
           });
         }
+      } else if (_cameraPermission ?? false) {
+        // Permission already granted, ensure camera is started
+        unawaited(_ensureCameraStarted());
       }
     }
   }
@@ -463,10 +498,13 @@ class QRScanViewState extends State<QRScanView>
           controller: _controller,
           key: qrKey,
           errorBuilder: (context, error, stack) {
-            if (!_isCameraInitialized || _cameraPermission == false) {
+            if (!_isCameraInitialized ||
+                _cameraPermission == false ||
+                _isStartingCamera) {
               return const SizedBox.shrink();
             }
 
+            log.info('[Scanner] Showing camera error: $error');
             return Positioned(
               left: (MediaQuery.of(context).size.width - _qrSize) / 2,
               top: _topPadding,
@@ -624,18 +662,25 @@ class QRScanViewState extends State<QRScanView>
   }
 
   Future<void> _handleBarcode(BarcodeCapture scanData) async {
+    log.info(
+        '[Scanner] Barcode detected: ${scanData.barcodes.length} barcodes');
     if (mounted) {
       if (_isLoading) {
+        log.info('[Scanner] Already loading, ignoring barcode');
         return;
       }
       if (scanData.barcodes.isEmpty) {
+        log.info('[Scanner] Empty barcodes, ignoring');
         return;
       }
       if (scanData.barcodes.first.rawValue == currentCode && isScanDataError) {
+        log.info('[Scanner] Same code with error, ignoring');
         return;
       }
       currentCode = scanData.barcodes.first.rawValue;
       final code = scanData.barcodes.first.rawValue!;
+      log.info(
+          '[Scanner] Processing barcode: ${code.substring(0, code.length > 50 ? 50 : code.length)}...');
 
       if (DEEP_LINKS.any((prefix) => code.startsWith(prefix))) {
         setState(() {
