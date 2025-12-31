@@ -136,6 +136,9 @@ class BluetoothConnectedDeviceConfigState
 
   DeviceRealtimeMetrics? _latestMetrics;
 
+  // Store custom MAC address for Wake-on-LAN
+  String? _customMacAddress;
+
   StreamSubscription<DeviceRealtimeMetrics>? _metricsStreamSubscription;
 
   StreamSubscription<FGBGType>? _fgbgSubscription;
@@ -1495,8 +1498,8 @@ class BluetoothConnectedDeviceConfigState
             _onRebootSelected();
           },
         ),
-      // wake on lan
-      if (!isDeviceAlive && !isQEMU && deviceStatus?.macAddress != null)
+      // wake on lan - always show for non-QEMU devices
+      if (!isQEMU)
         OptionItem(
           title: 'Wake Device',
           icon: const Icon(
@@ -1769,20 +1772,15 @@ class BluetoothConnectedDeviceConfigState
   }
 
   void _onWakeOnLanSelected() {
-    final macAddress = deviceStatus?.macAddress;
-    if (macAddress == null) {
-      UIHelper.showInfoDialog(
-        context,
-        'Wake-on-LAN Not Available',
-        'MAC address is not configured for this device. Please ensure the device has been connected to Wi-Fi at least once.',
-      );
-      return;
-    }
+    // Get stored or default MAC address
+    final storedMacAddress = _customMacAddress ?? deviceStatus?.macAddress;
+    final macController = TextEditingController(text: storedMacAddress ?? '');
 
     UIHelper.showCenterDialog(
       context,
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             'Wake Device',
@@ -1790,8 +1788,32 @@ class BluetoothConnectedDeviceConfigState
           ),
           SizedBox(height: LayoutConstants.space4),
           Text(
-            'Send a Wake-on-LAN packet to wake up the device from sleep mode?',
+            'Enter the MAC address to send Wake-on-LAN packet',
             style: AppTypography.body(context).white,
+          ),
+          SizedBox(height: LayoutConstants.space4),
+          TextField(
+            controller: macController,
+            style: AppTypography.body(context).white,
+            decoration: InputDecoration(
+              hintText: 'AA:BB:CC:DD:EE:FF',
+              hintStyle: AppTypography.body(context).grey,
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColor.white),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColor.white, width: 2),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColor.red),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColor.red, width: 2),
+              ),
+              contentPadding: EdgeInsets.all(LayoutConstants.space3),
+            ),
+            keyboardType: TextInputType.text,
+            textCapitalization: TextCapitalization.characters,
           ),
           SizedBox(height: LayoutConstants.space8),
           Row(
@@ -1815,6 +1837,36 @@ class BluetoothConnectedDeviceConfigState
                   borderColor: AppColor.white,
                   color: Colors.transparent,
                   onTap: () async {
+                    final macAddress = macController.text.trim();
+
+                    // Validate MAC address
+                    if (macAddress.isEmpty) {
+                      unawaited(
+                        UIHelper.showInfoDialog(
+                          context,
+                          'Invalid MAC Address',
+                          'Please enter a MAC address',
+                        ),
+                      );
+                      return;
+                    }
+
+                    if (!WakeOnLanHelper.isValidMacAddress(macAddress)) {
+                      unawaited(
+                        UIHelper.showInfoDialog(
+                          context,
+                          'Invalid MAC Address',
+                          'Please enter a valid MAC address in format AA:BB:CC:DD:EE:FF',
+                        ),
+                      );
+                      return;
+                    }
+
+                    // Store the MAC address for future use
+                    setState(() {
+                      _customMacAddress = macAddress;
+                    });
+
                     final device = selectedDevice;
                     final deviceHostname =
                         WakeOnLanHelper.formatHostname(device.deviceId);
@@ -1832,7 +1884,7 @@ class BluetoothConnectedDeviceConfigState
                           UIHelper.showInfoDialog(
                             context,
                             'Wake-on-LAN Sent',
-                            'Magic packet sent successfully. The device should wake up shortly if it is on the same network.',
+                            'Magic packet sent to $macAddress. The device should wake up shortly if it is on the same network.',
                           ),
                         );
                       } else {
