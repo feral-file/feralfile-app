@@ -4,6 +4,8 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/explore_statistics_data.dart';
 import 'package:autonomy_flutter/model/ff_artwork.dart';
+import 'package:autonomy_flutter/screen/bloc/accounts/accounts_bloc.dart';
+import 'package:autonomy_flutter/screen/bloc/accounts/accounts_state.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/artwork_view.dart';
@@ -13,6 +15,7 @@ import 'package:autonomy_flutter/screen/feralfile_home/feralfile_home_state.dart
 import 'package:autonomy_flutter/screen/feralfile_home/filter_bar.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/list_alumni_view.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/list_exhibition_view.dart';
+import 'package:autonomy_flutter/screen/settings/connection/accounts_view.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/util/exhibition_ext.dart';
 import 'package:autonomy_flutter/util/playlist_ext.dart';
@@ -31,7 +34,8 @@ enum FeralfileHomeTab {
   featured,
   artworks,
   artists,
-  curators;
+  curators,
+  wallets;
 
   List<SortBy> getSortBy({bool isSearching = false}) {
     switch (this) {
@@ -120,6 +124,7 @@ class FeralfileHomePageState extends State<FeralfileHomePage>
   final _exhibitionViewKey = GlobalKey<ExploreExhibitionState>();
   final _artistViewKey = GlobalKey<ExploreArtistViewState>();
   final _curatorViewKey = GlobalKey<ExploreCuratorViewState>();
+  final _walletScrollController = ScrollController();
   final GlobalKey<_ItemExpandedWidgetState> _itemExpandedKey = GlobalKey();
 
   @override
@@ -174,6 +179,12 @@ class FeralfileHomePageState extends State<FeralfileHomePage>
         _artistViewKey.currentState?.scrollToTop();
       case FeralfileHomeTab.curators:
         _curatorViewKey.currentState?.scrollToTop();
+      case FeralfileHomeTab.wallets:
+        _walletScrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
     }
   }
 
@@ -257,6 +268,14 @@ class FeralfileHomePageState extends State<FeralfileHomePage>
           _selectTab(FeralfileHomeTab.curators);
         },
       ),
+      Item(
+        id: FeralfileHomeTab.wallets.index.toString(),
+        title: 'wallets'.tr(),
+        subtitle: '-',
+        onSelected: () {
+          _selectTab(FeralfileHomeTab.wallets);
+        },
+      ),
     ];
   }
 
@@ -278,6 +297,8 @@ class FeralfileHomePageState extends State<FeralfileHomePage>
         return _artistsWidget(context);
       case FeralfileHomeTab.curators:
         return _curatorsWidget(context);
+      case FeralfileHomeTab.wallets:
+        return _walletsWidget(context);
     }
   }
 
@@ -352,6 +373,21 @@ class FeralfileHomePageState extends State<FeralfileHomePage>
   Widget _curatorsWidget(BuildContext context) => ExploreCuratorView(
         key: _curatorViewKey,
         header: _getHeader(context),
+      );
+
+  Widget _walletsWidget(BuildContext context) => Column(
+        children: [
+          _getHeader(context),
+          Expanded(
+            child: BlocProvider(
+              create: (_) => injector<AccountsBloc>()..add(GetAccountsEvent()),
+              child: AccountsView(
+                isInSettingsPage: false,
+                scrollController: _walletScrollController,
+              ),
+            ),
+          ),
+        ],
       );
 
   @override

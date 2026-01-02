@@ -421,6 +421,10 @@ class NavigationService {
         route = AppRouter.homePageNoTransition;
         homeNavigationTab = HomeNavigatorTab.explore;
         exploreTab = FeralfileHomeTab.curators;
+      case AppRouter.walletsPage:
+        route = AppRouter.homePageNoTransition;
+        homeNavigationTab = HomeNavigatorTab.explore;
+        exploreTab = FeralfileHomeTab.wallets;
       case AppRouter.organizePage:
         route = AppRouter.homePageNoTransition;
         homeNavigationTab = HomeNavigatorTab.collection;
