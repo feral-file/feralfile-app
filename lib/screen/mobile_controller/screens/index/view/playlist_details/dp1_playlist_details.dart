@@ -185,14 +185,14 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
         final owners =
             playlistReference.playlist.firstDynamicQuery?.params.owners ??
                 <String>[];
-        final stateSuffix = owners.isNotEmpty
-            ? collectionState.addressStates
-                    .firstWhereOrNull(
-                        (element) => element.address.address == owners.first)
-                    ?.state
-                    .description ??
-                ''
-            : '';
+        final targetState = owners.isNotEmpty
+            ? collectionState.addressStates.firstWhereOrNull(
+                (element) => element.address.address == owners.first)
+            : null;
+        final stateSuffix =
+            (targetState == AddressStateType.fetchingArtworksDone)
+                ? ''
+                : targetState?.state.description ?? '';
 
         return PlaylistDetailsHeader(
           playlistReference: playlistReference,

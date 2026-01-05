@@ -206,7 +206,7 @@ extension DP1NowDisplayingItemListExt on List<DP1NowDisplayingItem> {
 
     final allTokensOwners = initialAssetTokens ??
         await injector<IndexerDatabaseAbstract>()
-            .getTokensByOwner(ownerAddress: owners.first);
+            .getTokensByOwners(owners: owners);
 
     final allTokens = allTokensOwners.safeSublist(offset, offset + size);
 

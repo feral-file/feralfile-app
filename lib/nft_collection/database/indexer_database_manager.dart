@@ -73,53 +73,6 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
     log.info('[insertTokens] Inserted ${tokenObjectsToInsert.length} tokens');
   }
 
-  /// Get all Tokens owned by a specific owner address.
-  @override
-  List<v2.AssetToken> getTokensByOwner({
-    required String ownerAddress,
-    IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt,
-  }) {
-    final sortByProperty = convertSortByToQueryProperty(sortBy);
-    final query = tokenBox
-        .query(
-          TokenObject_.currentOwner
-              .equals(ownerAddress)
-              .or(TokenObject_.ownersJson.contains(ownerAddress)),
-        )
-        .order(sortByProperty, flags: Order.descending)
-        .build();
-    try {
-      final results = query.find();
-      final res = results.map((e) => e.toToken()).toList();
-
-      // Sort by latest provenance event timestamp (desc). Items without provenance go last.
-      try {
-        res.sortByProvenance(filterAddresses: [ownerAddress]);
-      } catch (e) {
-        log.info('Error sorting tokens by owner: $e');
-        Sentry.captureEvent(SentryEvent(
-          message: SentryMessage('Error sorting tokens by owner: $e'),
-          level: SentryLevel.error,
-        ));
-      }
-      return res;
-    } catch (e) {
-      log.info('Error getting tokens by owner: $e');
-      Sentry.captureEvent(SentryEvent(
-        message:
-            SentryMessage('Error getting tokens by owner $ownerAddress: $e'),
-        level: SentryLevel.error,
-        extra: {
-          'ownerAddress': ownerAddress,
-          'sortBy': sortBy.toString(),
-        },
-      ));
-      return [];
-    } finally {
-      query.close();
-    }
-  }
-
   @override
   List<AddressAssetTokens> getGroupAssetTokensByOwnersGroupByAddress({
     required List<String> owners,
@@ -128,7 +81,7 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
     final groupByAddress = <AddressAssetTokens>[];
     log.info('[getGroupAssetTokensByOwnersGroupByAddress] Owners: $owners');
     for (final owner in owners) {
-      final assetTokens = getTokensByOwner(ownerAddress: owner, sortBy: sortBy);
+      final assetTokens = getTokensByOwners(owners: [owner]);
       if (assetTokens.isEmpty) {
         log.info(
           '[getGroupAssetTokensByOwnersGroupByAddress] No asset tokens for owner: $owner',
@@ -184,23 +137,38 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
   @override
   List<v2.AssetToken> getTokensByOwners({
     required List<String> owners,
-    IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt,
   }) {
-    final sortByProperty = convertSortByToQueryProperty(sortBy);
-    final query = tokenBox
-        .query(TokenObject_.currentOwner.oneOf(owners))
-        .order(sortByProperty, flags: Order.descending)
-        .build();
+    // Build query that checks both currentOwner and ownersJson for all owners
+    if (owners.isEmpty) {
+      return [];
+    }
+
+    // Build a combined condition that matches any of the owners by
+    // currentOwner or by being contained in ownersJson.
+    var condition = TokenObject_.currentOwner
+        .equals(owners.first)
+        .or(TokenObject_.ownersJson.contains(owners.first));
+
+    for (final owner in owners.skip(1)) {
+      condition = condition.or(
+        TokenObject_.currentOwner.equals(owner).or(
+              TokenObject_.ownersJson.contains(owner),
+            ),
+      );
+    }
+
+    final query = tokenBox.query(condition).build();
     try {
       final results = query.find();
       final res = results.map((e) => e.toToken()).toList();
 
+      // Always sort by provenance (latest event timestamp desc). Items without provenance go last.
       try {
         res.sortByProvenance(filterAddresses: owners);
       } catch (e) {
-        log.info('Error sorting tokens by owner: $e');
+        log.info('Error sorting tokens by provenance: $e');
         Sentry.captureEvent(SentryEvent(
-          message: SentryMessage('Error sorting tokens by owner: $e'),
+          message: SentryMessage('Error sorting tokens by provenance: $e'),
           level: SentryLevel.error,
           throwable: e,
         ));
@@ -213,7 +181,6 @@ class IndexerDataBaseObjectBox implements IndexerDatabaseAbstract {
         level: SentryLevel.error,
         extra: {
           'owners': owners,
-          'sortBy': sortBy.toString(),
         },
       ));
       return [];
