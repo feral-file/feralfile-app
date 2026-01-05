@@ -10,6 +10,9 @@ additional_codebases:
   name: FF Indexer Server (Go)
   languages: [go]
 
+- path: /Users/nguyenphuocsang/Bitmark/ffos-user
+  name: FFOS User
+
 ## Project Context
 
 This is a Flutter mobile app that communicates with a Go-based indexer server.
