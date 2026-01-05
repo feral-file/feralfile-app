@@ -691,7 +691,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                 );
                 // Fetch the latest token and persist to database
                 await injector<NftTokensService>()
-                    .getManualTokens(cids: [asset.cid]);
+                    .fetchManualTokens(cids: [asset.cid]);
               } catch (_) {
                 // Ignore errors and continue to reload UI
               }
@@ -786,37 +786,36 @@ class ArtworkBackLayer extends StatelessWidget {
             Expanded(
               child: Stack(
                 children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Center(
-                  child: isPlayingOnFF1
-                      ? ArtworkThumbnailView(assetToken: assetToken)
-                      : ArtworkPreviewWidget(
-                          useIndexer: useIndexer,
-                          identity: identity,
-                          onLoaded: onLoaded,
-                        ),
-                ),
-              ),
-              if (isPlayingOnFF1)
-                Center(
-                  child: Container
-                  (
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(32),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 1,
-                        ),
-                      ],
-                    ),
-                    child: ArtworkPlayingControls(
-                      playingDevice:
-                          BluetoothDeviceManager().castingBluetoothDevice!,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Center(
+                      child: isPlayingOnFF1
+                          ? ArtworkThumbnailView(assetToken: assetToken)
+                          : ArtworkPreviewWidget(
+                              useIndexer: useIndexer,
+                              identity: identity,
+                              onLoaded: onLoaded,
+                            ),
                     ),
                   ),
-                ),
+                  if (isPlayingOnFF1)
+                    Center(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(32),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: ArtworkPlayingControls(
+                          playingDevice:
+                              BluetoothDeviceManager().castingBluetoothDevice!,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),

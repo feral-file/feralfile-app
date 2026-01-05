@@ -68,4 +68,6 @@ extension DP1CallExtension on DP1Call {
   String get channelName => 'Feral File';
 
   String get url => '${Environment.dp1FeedUrl}/api/v1/playlists/$id';
+
+  bool get isDynamic => dynamicQueries.isNotEmpty;
 }

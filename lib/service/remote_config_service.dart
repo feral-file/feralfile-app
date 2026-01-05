@@ -209,8 +209,16 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
         log.fine('RemoteConfigService: loadConfigs: $_configs');
       } catch (e) {
         log.warning('RemoteConfigService: loadConfigs: $e');
+        Sentry.captureEvent(
+          SentryEvent(
+            message: SentryMessage(
+                'RemoteConfigService: failed to load configs: $e'),
+            level: SentryLevel.error,
+            throwable: e,
+          ),
+        );
       } finally {
-        _completer?.safeComplete(_configs!);
+        _completer?.safeComplete(_configs ?? _defaults);
         _completer = null;
       }
       return _configs!;
@@ -218,13 +226,17 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
       log.warning('RemoteConfigService: loadConfigs: $e');
       Sentry.captureEvent(
         SentryEvent(
-          message: SentryMessage('RemoteConfigService: loadConfigs: $e'),
+          message:
+              SentryMessage('RemoteConfigService: failed to load configs: $e'),
           level: SentryLevel.error,
           throwable: e,
         ),
       );
-      return _defaults;
+    } finally {
+      _completer?.safeComplete(_configs ?? _defaults);
+      _completer = null;
     }
+    return _defaults;
   }
 
   Map<String, dynamic> get configs {

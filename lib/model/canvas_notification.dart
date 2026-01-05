@@ -90,8 +90,8 @@ class NotificationRelayerMessage extends RelayerMessage {
     return {
       'type': type.value,
       'message': message,
-      'notificationType': notificationType.value,
-      'timestamp': timestamp,
+      'notification_type': notificationType.value,
+      'timestamp': timestamp.millisecondsSinceEpoch,
     };
   }
 }

@@ -96,11 +96,14 @@ class FeedManager {
             .isBefore(DateTime.now().subtract(updateFeedDuration)) ||
         lastFeedUpdateAt.isAfter(lastTimeRefreshFeeds);
     if (force || shouldUpdate) {
+      // we should remove the last time refresh feeds
+      await injector<ConfigurationService>()
+          .setLastTimeRefreshFeeds(DateTime(1970, 1, 1));
+      final timeStart = DateTime.now();
       for (final feedService in feedServices) {
         await feedService.reloadCache();
       }
-      await injector<ConfigurationService>()
-          .setLastTimeRefreshFeeds(DateTime.now());
+      await injector<ConfigurationService>().setLastTimeRefreshFeeds(timeStart);
       log.info(
           'Reload all cache, last time refresh feeds: $lastTimeRefreshFeeds, duration: $updateFeedDuration, force: $force');
       await Future.delayed(const Duration(milliseconds: 500));

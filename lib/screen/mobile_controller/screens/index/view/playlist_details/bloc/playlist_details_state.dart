@@ -5,24 +5,28 @@ abstract class PlaylistDetailsState {
     required this.nowDisplayingItems,
     required this.hasMore,
     required this.offset,
+    this.total,
   });
   final List<DP1NowDisplayingItem> nowDisplayingItems;
   final bool hasMore;
   final int offset;
+  final int? total;
 
   PlaylistDetailsState copyWith({
     List<DP1NowDisplayingItem>? nowDisplayingItems,
     bool? hasMore,
     int? offset,
+    int? total,
   }) {
     return PlaylistDetailsLoadedState(
       nowDisplayingItems: nowDisplayingItems ?? this.nowDisplayingItems,
       hasMore: hasMore ?? this.hasMore,
       offset: offset ?? this.offset,
+      total: total ?? this.total,
     );
   }
 
-  List<Object?> get props => [nowDisplayingItems, hasMore, offset];
+  List<Object?> get props => [nowDisplayingItems, hasMore, offset, total];
 }
 
 class PlaylistDetailsInitialState extends PlaylistDetailsState {
@@ -31,6 +35,7 @@ class PlaylistDetailsInitialState extends PlaylistDetailsState {
           nowDisplayingItems: const [],
           hasMore: true,
           offset: 0,
+          total: null,
         );
 }
 
@@ -39,6 +44,7 @@ class PlaylistDetailsLoadingState extends PlaylistDetailsState {
     required super.nowDisplayingItems,
     required super.hasMore,
     required super.offset,
+    super.total,
   });
 }
 
@@ -47,6 +53,7 @@ class PlaylistDetailsLoadedState extends PlaylistDetailsState {
     required super.nowDisplayingItems,
     required super.hasMore,
     required super.offset,
+    super.total,
   });
 }
 
@@ -55,6 +62,7 @@ class PlaylistDetailsLoadingMoreState extends PlaylistDetailsState {
     required super.nowDisplayingItems,
     required super.hasMore,
     required super.offset,
+    super.total,
   });
 }
 
@@ -64,6 +72,7 @@ class PlaylistDetailsErrorState extends PlaylistDetailsState {
     required super.nowDisplayingItems,
     required super.hasMore,
     required super.offset,
+    super.total,
   });
   final String error;
 

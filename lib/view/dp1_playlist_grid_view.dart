@@ -1,8 +1,10 @@
+import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/nft_rendering/nft_loading_widget.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_event.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
@@ -43,8 +45,8 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
   @override
   void initState() {
     super.initState();
-    _playlistDetailsBloc = PlaylistDetailsBloc(playlist: widget.playlist);
-    _playlistDetailsBloc.add(LoadMorePlaylistDetailsEvent());
+    _playlistDetailsBloc =
+        injector<PlaylistDetailsBlocManager>().getBloc(widget.playlist);
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
   }
@@ -53,8 +55,14 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
   void didUpdateWidget(covariant PlaylistAssetGridView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!oldWidget.playlist.isItemsEqual(widget.playlist)) {
-      _playlistDetailsBloc
-          .add(SetPlaylistDetailsEvent(playlist: widget.playlist));
+      // Release old bloc and get new bloc for the new playlist
+      injector<PlaylistDetailsBlocManager>()
+          .releaseBlocByInstance(_playlistDetailsBloc);
+      // Force rebuild with new bloc
+      setState(() {
+        _playlistDetailsBloc =
+            injector<PlaylistDetailsBlocManager>().getBloc(widget.playlist);
+      });
     } else {
       log.info('PlaylistAssetGridView: didUpdateWidget no need to update');
     }
@@ -62,6 +70,8 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
 
   @override
   void dispose() {
+    injector<PlaylistDetailsBlocManager>()
+        .releaseBlocByInstance(_playlistDetailsBloc);
     _scrollController.dispose();
     super.dispose();
   }
@@ -81,6 +91,7 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<PlaylistDetailsBloc, PlaylistDetailsState>(
+      key: ValueKey(_playlistDetailsBloc.hashCode),
       bloc: _playlistDetailsBloc,
       listener: (context, state) {
         if (state is! PlaylistDetailsLoadingMoreState) {
@@ -142,7 +153,6 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
       );
 
   Widget _emptyView(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: ResponsiveLayout.paddingHorizontal,

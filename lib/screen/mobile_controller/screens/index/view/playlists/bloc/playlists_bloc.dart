@@ -106,8 +106,7 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     required Emitter<PlaylistsState> emit,
     required String? cursor,
   }) async {
-    final allAddresses =
-        injector<AddressService>().getAllWalletAddresses();
+    final allAddresses = injector<AddressService>().getAllWalletAddresses();
     final addresses = allAddresses.toList();
 
     final start = int.tryParse(cursor ?? '0') ?? 0;
@@ -118,7 +117,9 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     final playlistDataList = <AddressPlaylistData>[];
     for (final address in topAddresses) {
       final playlist = DP1CallExtension.fromOwner(
-          owners: [address.address], title: '${address.name}');
+          owners: [address.address],
+          title: '${address.name}',
+          playlistId: address.address);
       final playlistRef = AddressPlaylistReference(
           playlist: playlist,
           url: '',

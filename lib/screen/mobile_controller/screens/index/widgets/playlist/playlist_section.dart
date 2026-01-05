@@ -1,6 +1,7 @@
 import 'package:autonomy_flutter/design/build/components/PlaylistSection.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_list_row.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section_header.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
@@ -27,7 +28,9 @@ class PlaylistSection extends StatefulWidget {
   final void Function(DP1NowDisplayingItem)? onPlaylistItemTap;
   final ScrollController? scrollController;
   final bool hasMore;
-  final Widget? Function(PlaylistData playlistData)? playlistHeaderBuilder;
+  final Widget? Function(
+          PlaylistData playlistData, PlaylistDetailsState playlistDetailsState)?
+      playlistHeaderBuilder;
 
   @override
   State<PlaylistSection> createState() => _PlaylistSectionState();
@@ -80,7 +83,8 @@ class _PlaylistSectionState extends State<PlaylistSection> {
           scrollController: widget.scrollController,
           headerBuilder: widget.playlistHeaderBuilder == null
               ? null
-              : (_) => widget.playlistHeaderBuilder?.call(playlist),
+              : (playlistReference, state) =>
+                  widget.playlistHeaderBuilder?.call(playlist, state),
         );
       },
     );

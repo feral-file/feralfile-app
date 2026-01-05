@@ -83,7 +83,7 @@ Future<String> getNftBalance(
   String address,
 ) async {
   final tokenDao = injector<IndexerDatabaseAbstract>();
-  final tokens = tokenDao.getTokensByOwner(ownerAddress: address);
+  final tokens = tokenDao.getTokensByOwners(owners: [address]);
   final nftBalance =
       "${tokens.length} ${tokens.length == 1 ? 'nft'.tr() : 'nfts'.tr()}";
 

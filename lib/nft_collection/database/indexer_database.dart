@@ -4,14 +4,9 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/col
 enum IndexerDatabaseSortBy { updatedAt }
 
 abstract class IndexerDatabaseAbstract {
-  int insertToken(v2.AssetToken token);
+  // int insertToken(v2.AssetToken token);
 
   void insertTokens(List<v2.AssetToken> tokens);
-
-  List<v2.AssetToken> getTokensByOwner({
-    required String ownerAddress,
-    IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt,
-  });
 
   List<AddressAssetTokens> getGroupAssetTokensByOwnersGroupByAddress(
       {required List<String> owners,
@@ -19,7 +14,6 @@ abstract class IndexerDatabaseAbstract {
 
   List<v2.AssetToken> getTokensByOwners({
     required List<String> owners,
-    IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt,
   });
 
   List<v2.AssetToken> getTokensByCIDs({

@@ -19,7 +19,11 @@ class FetchTokensOfAddresses extends UserAllOwnCollectionEvent {
     this.shouldUpdateAddressState = true,
     this.onDone,
     this.onError,
-  });
+  }) {
+    if (addresses.isEmpty) {
+      return;
+    }
+  }
   final List<String> addresses;
   final bool shouldUpdateLastRefreshedTime;
   final bool shouldUpdateAddressState;
@@ -27,7 +31,8 @@ class FetchTokensOfAddresses extends UserAllOwnCollectionEvent {
   final void Function(Object error, StackTrace stackTrace)? onError;
 
   @override
-  String get streamKey => 'FetchTokensOfAddresses:${addresses.join(',')}';
+  String get streamKey =>
+      'FetchTokensOfAddresses:${addresses.join(',')}_${shouldUpdateAddressState}_${shouldUpdateLastRefreshedTime}';
 }
 
 class UpdateDynamicQueryEvent extends UserAllOwnCollectionEvent {

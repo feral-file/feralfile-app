@@ -3,6 +3,7 @@ import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
@@ -196,8 +197,9 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
               playlistReference: playlistData.playlistReference,
               playlistCreator: playlistData.creator,
               headerBuilder: widget.payload.playlistType == PlaylistType.me
-                  ? (playlistReference) =>
-                      _mePlaylistHeaderBuilder(playlistData, playlistReference)
+                  ? (playlistReference, playlistDetailsState) =>
+                      _mePlaylistHeaderBuilder(
+                          playlistData, playlistReference, playlistDetailsState)
                   : null,
               onItemTap: (item) {
                 final assetToken = item.assetToken;
@@ -230,6 +232,7 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
   Widget _mePlaylistHeaderBuilder(
     PlaylistData playlistData,
     PlaylistReference playlistReference,
+    PlaylistDetailsState playlistDetailsState,
   ) {
     final playlist = playlistReference.playlist;
     final owners = playlist.firstDynamicQuery?.params.owners ?? <String>[];
@@ -250,13 +253,17 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
             }
           }
 
-          stateSuffix = targetState?.state.description ?? '';
+          stateSuffix =
+              (targetState?.state == AddressStateType.fetchingArtworksDone)
+                  ? ''
+                  : targetState?.state.description ?? '';
         }
 
         return PlaylistTitle(
-          primaryText:
-              '${playlist.title} ${stateSuffix.isNotEmpty ? '($stateSuffix)' : ''}',
+          primaryText: '${playlist.title}',
+          primaryTextSuffix: stateSuffix.isNotEmpty ? '$stateSuffix' : null,
           secondaryText: playlistData.creator,
+          total: playlistDetailsState.total,
         );
       },
     );

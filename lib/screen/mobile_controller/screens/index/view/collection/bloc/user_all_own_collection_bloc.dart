@@ -11,6 +11,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/pla
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
+import 'package:autonomy_flutter/util/completer_ext.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sentry/sentry.dart';
@@ -76,9 +77,11 @@ class UserAllOwnCollectionBloc
       final completedAddresses = <String>{};
       final maxAttempts = 5;
       int attempts = 0;
+      Object? error = null;
 
       while (attempts < maxAttempts) {
         attempts++;
+        error = null;
         final addressesToReindex = addresses
             .where((addr) => !completedAddresses.contains(addr))
             .toList();
@@ -90,7 +93,7 @@ class UserAllOwnCollectionBloc
               addresses: addressesToReindex, shouldUpdateAddressState: false));
           await _tokensService.reindexAddressesAndPullStatus(
             addresses: addressesToReindex,
-            timeout: const Duration(days: 1),
+            timeout: const Duration(hours: 1),
             onBatchStart: (batchAddresses) async {
               // Update state to indexing when batch starts
               final updatedStates = state.addressStates.updateStates(
@@ -153,12 +156,7 @@ class UserAllOwnCollectionBloc
                 },
                 throwable: 'Timeout for batch: $batchAddresses',
               ));
-              // Update state to indexingIncomplete on timeout
-              // final updatedStates = state.addressStates.updateStates(
-              //   batchAddresses,
-              //   AddressStateType.indexingIncomplete,
-              // );
-              // emit(state.copyWith(addressStates: updatedStates));
+              error = Exception('Timeout for batch: $batchAddresses');
             },
             onError: (error, stackTrace, batchAddresses) {
               // Keep polling despite transient errors
@@ -173,10 +171,12 @@ class UserAllOwnCollectionBloc
                 },
                 throwable: error,
               )));
+              error = error;
             },
           );
         } catch (e, st) {
           Sentry.captureException(e, stackTrace: st);
+          error = e;
         }
 
         // Wait a bit for events to be processed
@@ -229,138 +229,161 @@ class UserAllOwnCollectionBloc
     FetchTokensOfAddresses event,
     Emitter<UserAllOwnCollectionState> emit,
   ) async {
-    try {
-      log.info('[UserAllOwnCollectionBloc][_onFetchTokensOfAddresses] started');
-      // Use event-specific key so we can run multiple concurrent operations
-      // for different address sets, while still deduplicating identical ones.
-      final subKey = event.streamKey;
-
-      // If the same operation key is already being processed, ignore this event
-      final isProcessing = _tokensStreamSubs[subKey] != null ||
-          _activeCompleters[subKey]?.isCompleted == false;
-      if (isProcessing) {
+    final maxRetryAttempts = 3;
+    int retryAttempts = 0;
+    Object? error = null;
+    while (retryAttempts < maxRetryAttempts) {
+      retryAttempts++;
+      error = null;
+      try {
         log.info(
-            '[UserAllOwnCollectionBloc][_onFetchTokensOfAddresses] fetching, ignore');
-        return;
-      } else {
-        log.info(
-            '[UserAllOwnCollectionBloc][_onFetchTokensOfAddresses] not fetching, start fetching');
-      }
-      // cancel the previous stream
-      await _tokensStreamSubs[subKey]?.cancel();
-      _tokensStreamSubs[subKey] = null;
+            '[UserAllOwnCollectionBloc][_onFetchTokensOfAddresses] started');
+        // Use event-specific key so we can run multiple concurrent operations
+        // for different address sets, while still deduplicating identical ones.
+        final subKey = event.streamKey;
 
-      DateTime newLastUpdatedAt = DateTime.now();
-
-      final prevCompleter = _activeCompleters[subKey];
-      if (prevCompleter?.isCompleted == false) {
-        prevCompleter?.complete('Cancelled by new fetch load');
-      }
-      final completer = Completer<void>();
-      _activeCompleters[subKey] = completer;
-
-      // Update state to fetchingArtworks when starting to fetch
-      if (event.shouldUpdateAddressState) {
-        final updatedStatesStart = state.addressStates.updateStates(
-          event.addresses,
-          AddressStateType.fetchingArtworks,
-        );
-        emit(state.copyWith(
-          addressStates: updatedStatesStart,
-          status: UserAllOwnCollectionStatus.loading,
-        ));
-      }
-
-      // get the stream
-      final stream = await _tokensService.fetchTokensInIsolate(
-          event.addresses, null, null);
-
-      final List<AssetToken> collected = [];
-
-      _tokensStreamSubs[subKey] = stream.listen(
-        (tokens) {
+        // If the same operation key is already being processed, ignore this event
+        final isProcessing = _tokensStreamSubs[subKey] != null ||
+            _activeCompleters[subKey]?.isCompleted == false;
+        if (isProcessing) {
+          // log.info(
+          //     '[UserAllOwnCollectionBloc][_onFetchTokensOfAddresses] fetching, ignore');
+          // return;
+        } else {
           log.info(
-              '[${event.runtimeType}] Received ${tokens.length} tokens from stream for addresses: ${event.addresses.join(',')}');
-          collected.addAll(tokens);
-          if (tokens.isNotEmpty) {
-            add(ReloadAssetTokensFromIndexerDatabase());
-          }
-          final updatedAts =
-              tokens.map((token) => token.updatedAt).nonNulls.toList();
-          if (updatedAts.isNotEmpty) {
-            final lastUpdated =
-                updatedAts.reduce((a, b) => a.isAfter(b) ? a : b);
-            newLastUpdatedAt = lastUpdated;
-          }
-        },
-        onError: (Object error, StackTrace stackTrace) {
-          log.info('[${event.runtimeType}] Stream error: $error');
-          Sentry.captureException('Failed to fetch asset tokens: $error');
-          // Update state to gettingArtworksFailed on error
-          final updatedStates = state.addressStates.updateStates(
+              '[UserAllOwnCollectionBloc][_onFetchTokensOfAddresses] not fetching, start fetching');
+        }
+        // cancel the previous stream
+        await _tokensStreamSubs[subKey]?.cancel();
+        _tokensStreamSubs[subKey] = null;
+
+        DateTime newLastUpdatedAt = DateTime.now();
+
+        final prevCompleter = _activeCompleters[subKey];
+        if (prevCompleter?.isCompleted == false) {
+          prevCompleter?.complete('Cancelled by new fetch load');
+        }
+        final completer = Completer<void>();
+        _activeCompleters[subKey] = completer;
+
+        // Update state to fetchingArtworks when starting to fetch
+        if (event.shouldUpdateAddressState) {
+          final updatedStatesStart = state.addressStates.updateStates(
             event.addresses,
-            AddressStateType.fetchingArtworksFailed,
+            AddressStateType.fetchingArtworks,
           );
-          emit(state.copyWith(addressStates: updatedStates));
-          _activeCompleters[subKey]?.completeError(error);
-        },
-        onDone: () {
-          // Stream done successfully (onDone only called when no error with cancelOnError: true)
-          if (event.shouldUpdateAddressState) {
+          emit(state.copyWith(
+            addressStates: updatedStatesStart,
+            status: UserAllOwnCollectionStatus.loading,
+          ));
+        }
+
+        // get the stream
+        final stream = await _tokensService.fetchTokensInIsolate(
+            event.addresses, null, null);
+
+        final List<AssetToken> collected = [];
+
+        _tokensStreamSubs[subKey] = stream.listen(
+          (tokens) {
+            log.info(
+                '[${event.runtimeType}] Received ${tokens.length} tokens from stream for addresses: ${event.addresses.join(',')}');
+            collected.addAll(tokens);
+            if (tokens.isNotEmpty) {
+              add(ReloadAssetTokensFromIndexerDatabase());
+            }
+            final updatedAts =
+                tokens.map((token) => token.updatedAt).nonNulls.toList();
+            if (updatedAts.isNotEmpty) {
+              final lastUpdated =
+                  updatedAts.reduce((a, b) => a.isAfter(b) ? a : b);
+              newLastUpdatedAt = lastUpdated;
+            }
+          },
+          onError: (Object error, StackTrace stackTrace) {
+            log.info('[${event.runtimeType}] Stream error: $error');
+            Sentry.captureException(
+                'Failed to fetch asset tokens: $error attempt: $retryAttempts / $maxRetryAttempts');
+            final isLastAttempt = retryAttempts == maxRetryAttempts;
+            // Update state to gettingArtworksFailed on error
+            if (isLastAttempt && event.shouldUpdateAddressState) {
+              final updatedStates = state.addressStates.updateStates(
+                event.addresses,
+                AddressStateType.fetchingArtworksFailed,
+              );
+              emit(state.copyWith(addressStates: updatedStates));
+            }
+            completer.safeCompleteError(error);
+          },
+          onDone: () {
+            // Stream done successfully (onDone only called when no error with cancelOnError: true)
+            if (event.shouldUpdateAddressState) {
+              final updatedStates = state.addressStates.updateStates(
+                event.addresses,
+                AddressStateType.fetchingArtworksDone,
+              );
+              emit(state.copyWith(
+                addressStates: updatedStates,
+                status: UserAllOwnCollectionStatus.loaded,
+              ));
+            }
+            log.info(
+                '[${event.runtimeType}] Stream done successfully with total ${collected.length} tokens');
+            completer.safeComplete(null);
+          },
+          cancelOnError: true,
+        );
+
+        try {
+          await completer.future;
+        } catch (e) {
+          // Stream completed with error
+          log.info('[${event.runtimeType}] Stream completed with error: $e');
+          final isLastAttempt = retryAttempts == maxRetryAttempts;
+          if (isLastAttempt && event.shouldUpdateAddressState) {
             final updatedStates = state.addressStates.updateStates(
               event.addresses,
-              AddressStateType.fetchingArtworksDone,
+              AddressStateType.fetchingArtworksFailed,
             );
-            emit(state.copyWith(
-              addressStates: updatedStates,
-              status: UserAllOwnCollectionStatus.loaded,
-            ));
+            emit(state.copyWith(addressStates: updatedStates));
           }
-          log.info(
-              '[${event.runtimeType}] Stream done successfully with total ${collected.length} tokens');
-          _activeCompleters[subKey]?.complete();
-        },
-        cancelOnError: true,
-      );
-
-      try {
-        await completer.future;
-      } catch (e) {
-        // Stream completed with error
-        log.info('[${event.runtimeType}] Stream completed with error: $e');
-        if (event.shouldUpdateAddressState) {
-          final updatedStates = state.addressStates.updateStates(
-            event.addresses,
-            AddressStateType.fetchingArtworksFailed,
-          );
-          emit(state.copyWith(addressStates: updatedStates));
+          rethrow;
+        } finally {
+          _tokensStreamSubs[subKey] = null;
+          _activeCompleters[subKey] = null;
         }
-        rethrow;
-      } finally {
-        _tokensStreamSubs[subKey] = null;
-        _activeCompleters[subKey] = null;
+
+        final addressMap = {
+          for (final addr in event.addresses) addr: newLastUpdatedAt,
+        };
+
+        if (event.shouldUpdateLastRefreshedTime) {
+          // update the last updated at
+          await injector<UserDp1PlaylistService>()
+              .updateAddressLastFetchTokenTime(
+            addresses: addressMap,
+          );
+        }
+
+        // add(ReloadAssetTokensFromIndexerDatabase());
+      } catch (e) {
+        error = e;
+        log.info('[${event.runtimeType}] error $e');
+        Sentry.captureException('Failed to refresh asset tokens: $e');
       }
-
-      final addressMap = {
-        for (final addr in event.addresses) addr: newLastUpdatedAt,
-      };
-
-      if (event.shouldUpdateLastRefreshedTime) {
-        // update the last updated at
-        await injector<UserDp1PlaylistService>()
-            .updateAddressLastFetchTokenTime(
-          addresses: addressMap,
-        );
+      log.info('[${event.runtimeType}] completed');
+      if (error == null) {
+        break;
+      } else {
+        log.info('[${event.runtimeType}] error $error, retrying...');
+        await Future<void>.delayed(const Duration(seconds: 5));
       }
-
-      // add(ReloadAssetTokensFromIndexerDatabase());
-      event.onDone?.call();
-    } catch (e) {
-      log.info('[${event.runtimeType}] error $e');
-      Sentry.captureException('Failed to refresh asset tokens: $e');
-      event.onError?.call(e, StackTrace.current);
     }
-    log.info('[${event.runtimeType}] completed');
+    if (error != null) {
+      event.onError?.call(error, StackTrace.current);
+    } else {
+      event.onDone?.call();
+    }
   }
 
   Future<void> _onReloadAssetTokensFromIndexerDatabase(
@@ -418,8 +441,6 @@ class UserAllOwnCollectionBloc
 
     emit(const UserAllOwnCollectionState());
   }
-
-
 
   // Removed deprecated _onPollWorkflowStatus
 

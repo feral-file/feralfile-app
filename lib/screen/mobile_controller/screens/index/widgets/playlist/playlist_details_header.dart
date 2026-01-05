@@ -1,10 +1,10 @@
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channel_details/channel_detail.page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/dp1_playlist_details.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
@@ -15,6 +15,8 @@ import 'package:flutter_svg/svg.dart';
 class PlaylistDetailsHeader extends StatelessWidget {
   const PlaylistDetailsHeader({
     required this.playlistReference,
+    this.titleSuffix,
+    this.total,
     this.channelReference,
     this.dividerColor = AppColor.primaryBlack,
     this.channelVisible = true,
@@ -25,6 +27,8 @@ class PlaylistDetailsHeader extends StatelessWidget {
   });
 
   final PlaylistReference playlistReference;
+  final String? titleSuffix;
+  final int? total;
   final ChannelReference? channelReference;
   final Color dividerColor;
   final bool channelVisible;
@@ -67,11 +71,31 @@ class PlaylistDetailsHeader extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         // Playlist info
-                        Text(
-                          playlist.title,
-                          style: AppTypography.body(context).white,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        Row(
+                          children: [
+                            Text(
+                              playlist.title,
+                              style: AppTypography.body(context).white,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (total != null) ...[
+                              SizedBox(width: LayoutConstants.space1),
+                              Text(
+                                '($total)',
+                                style: AppTypography.bodySmall(context).grey,
+                              ),
+                            ],
+                            if (titleSuffix != null) ...[
+                              SizedBox(width: LayoutConstants.space1),
+                              Text(
+                                titleSuffix!,
+                                style: AppTypography.bodySmall(context).grey,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ],
                         ),
                         if (channelReference != null && channelVisible)
                           GestureDetector(
