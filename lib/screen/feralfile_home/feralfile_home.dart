@@ -5,6 +5,7 @@ import 'package:autonomy_flutter/screen/feralfile_home/feralfile_home_state.dart
 import 'package:autonomy_flutter/screen/feralfile_home/filter_bar.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/list_alumni_view.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/list_exhibition_view.dart';
+import 'package:autonomy_flutter/screen/feralfile_home/wallet_view.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -16,7 +17,8 @@ enum FeralfileHomeTab {
   exhibitions,
   artworks,
   artists,
-  curators;
+  curators,
+  wallets;
 
   List<SortBy> getSortBy({bool isSearching = false}) {
     switch (this) {
@@ -39,6 +41,8 @@ enum FeralfileHomeTab {
           SortBy.firstExhibitionJoinedAt,
           SortBy.alias,
         ];
+      case FeralfileHomeTab.wallets:
+        return [];
     }
   }
 
@@ -97,6 +101,7 @@ class FeralfileHomePageState extends State<FeralfileHomePage>
   final _exhibitionViewKey = GlobalKey<ExploreExhibitionState>();
   final _artistViewKey = GlobalKey<ExploreArtistViewState>();
   final _curatorViewKey = GlobalKey<ExploreCuratorViewState>();
+  final _walletViewKey = GlobalKey<ExploreWalletViewState>();
   final GlobalKey<_ItemExpandedWidgetState> _itemExpandedKey = GlobalKey();
 
   @override
@@ -117,6 +122,8 @@ class FeralfileHomePageState extends State<FeralfileHomePage>
         _artistViewKey.currentState?.scrollToTop();
       case FeralfileHomeTab.curators:
         _curatorViewKey.currentState?.scrollToTop();
+      case FeralfileHomeTab.wallets:
+        _walletViewKey.currentState?.scrollToTop();
     }
   }
 
@@ -190,6 +197,14 @@ class FeralfileHomePageState extends State<FeralfileHomePage>
           _selectTab(FeralfileHomeTab.curators);
         },
       ),
+      Item(
+        id: FeralfileHomeTab.wallets.index.toString(),
+        title: 'wallet'.tr(),
+        subtitle: '-',
+        onSelected: () {
+          _selectTab(FeralfileHomeTab.wallets);
+        },
+      ),
     ];
   }
 
@@ -204,6 +219,8 @@ class FeralfileHomePageState extends State<FeralfileHomePage>
         return _artistsWidget(context);
       case FeralfileHomeTab.curators:
         return _curatorsWidget(context);
+      case FeralfileHomeTab.wallets:
+        return _walletsWidget(context);
     }
   }
 
@@ -254,6 +271,11 @@ class FeralfileHomePageState extends State<FeralfileHomePage>
 
   Widget _curatorsWidget(BuildContext context) => ExploreCuratorView(
         key: _curatorViewKey,
+        header: _getHeader(context),
+      );
+
+  Widget _walletsWidget(BuildContext context) => ExploreWalletView(
+        key: _walletViewKey,
         header: _getHeader(context),
       );
 
