@@ -87,55 +87,55 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
       final imageBytes = _decodeDataUri(widget.url);
       if (imageBytes != null) {
         // Handle SVG data URI
-        if (_isSvgDataUri(widget.url)) {
-          if (_hasSvgError) {
-            return widget.errorWidget ?? const GalleryThumbnailErrorWidget();
-          }
+        // if (_isSvgDataUri(widget.url)) {
+        //   if (_hasSvgError) {
+        //     return widget.errorWidget ?? const GalleryThumbnailErrorWidget();
+        //   }
 
-          // Try using SvgPicture.string first (more reliable for SVG)
-          final svgString = _decodeSvgDataUri(widget.url);
-          if (svgString != null) {
-            // Use a separate widget to handle SVG rendering with better error handling
-            return _SvgPictureWidget(
-              svgString: svgString,
-              imageBytes: imageBytes,
-              cacheWidth: widget.cacheWidth?.toDouble(),
-              cacheHeight: widget.cacheHeight?.toDouble(),
-              placeholder: widget.placeholder,
-              errorWidget: widget.errorWidget,
-              fit: widget.fit,
-              onError: () {
-                if (mounted) {
-                  setState(() {
-                    _hasSvgError = true;
-                  });
-                }
-              },
-            );
-          } else {
-            // If string decoding fails, try memory approach with original bytes
-            try {
-              return SvgPicture.memory(
-                imageBytes,
-                width: widget.cacheWidth?.toDouble(),
-                height: widget.cacheHeight?.toDouble(),
-                fit: widget.fit,
-                placeholderBuilder: (context) =>
-                    widget.placeholder ?? const GalleryThumbnailPlaceholder(),
-              );
-            } catch (e) {
-              // If SVG parsing fails, show error widget
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted) {
-                  setState(() {
-                    _hasSvgError = true;
-                  });
-                }
-              });
-              return widget.errorWidget ?? const GalleryThumbnailErrorWidget();
-            }
-          }
-        }
+        //   // Try using SvgPicture.string first (more reliable for SVG)
+        //   final svgString = _decodeSvgDataUri(widget.url);
+        //   if (svgString != null) {
+        //     // Use a separate widget to handle SVG rendering with better error handling
+        //     return _SvgPictureWidget(
+        //       svgString: svgString,
+        //       imageBytes: imageBytes,
+        //       cacheWidth: widget.cacheWidth?.toDouble(),
+        //       cacheHeight: widget.cacheHeight?.toDouble(),
+        //       placeholder: widget.placeholder,
+        //       errorWidget: widget.errorWidget,
+        //       fit: widget.fit,
+        //       onError: () {
+        //         if (mounted) {
+        //           setState(() {
+        //             _hasSvgError = true;
+        //           });
+        //         }
+        //       },
+        //     );
+        //   } else {
+        //     // If string decoding fails, try memory approach with original bytes
+        //     try {
+        //       return SvgPicture.memory(
+        //         imageBytes,
+        //         width: widget.cacheWidth?.toDouble(),
+        //         height: widget.cacheHeight?.toDouble(),
+        //         fit: widget.fit,
+        //         placeholderBuilder: (context) =>
+        //             widget.placeholder ?? const GalleryThumbnailPlaceholder(),
+        //       );
+        //     } catch (e) {
+        //       // If SVG parsing fails, show error widget
+        //       WidgetsBinding.instance.addPostFrameCallback((_) {
+        //         if (mounted) {
+        //           setState(() {
+        //             _hasSvgError = true;
+        //           });
+        //         }
+        //       });
+        //       return widget.errorWidget ?? const GalleryThumbnailErrorWidget();
+        //     }
+        //   }
+        // }
         // Handle other image data URIs
         return Image.memory(
           imageBytes,
@@ -152,18 +152,18 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
     }
 
     // Handle regular network images
-    if (widget.url.isSvgImage()) {
-      return SvgPicture.network(
-        widget.url,
-        width: widget.cacheWidth?.toDouble(),
-        height: widget.cacheHeight?.toDouble(),
-        fit: widget.fit,
-        placeholderBuilder: (context) =>
-            widget.placeholder ?? const GalleryThumbnailPlaceholder(),
-        errorBuilder: (context, error, stackTrace) =>
-            widget.errorWidget ?? const GalleryThumbnailErrorWidget(),
-      );
-    }
+    // if (widget.url.isSvgImage()) {
+    //   return SvgPicture.network(
+    //     widget.url,
+    //     width: widget.cacheWidth?.toDouble(),
+    //     height: widget.cacheHeight?.toDouble(),
+    //     fit: widget.fit,
+    //     placeholderBuilder: (context) =>
+    //         widget.placeholder ?? const GalleryThumbnailPlaceholder(),
+    //     errorBuilder: (context, error, stackTrace) =>
+    //         widget.errorWidget ?? const GalleryThumbnailErrorWidget(),
+    //   );
+    // }
 
     return FFCacheNetworkImage(
       cacheManager: injector<CacheManager>(),
