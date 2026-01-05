@@ -25,40 +25,32 @@ class FFBluetoothResponseError implements FFError {
   final String message;
   final String title;
 
+  /// Whether this error should trigger navigation back when caught.
+  bool get shouldGoBack => false;
+
+  /// Whether this error should show a "Contact support" button in the dialog.
+  bool get shouldShowSupportButton => false;
+
   static FFBluetoothResponseError fromErrorCode(int errorCode) {
     final error = FFBluetoothResponseErrorCode.values
         .firstWhereOrNull((e) => e.code == errorCode);
     switch (error) {
       case FFBluetoothResponseErrorCode.userEnterWrongPassword:
-        // user enter wrong password
-        return FFBluetoothResponseError(
-            title: 'Incorrect Wi-Fi Password',
-            'Failed to connect to Wi-Fi. Please check your password and try again.');
+        return WrongWifiPasswordError();
       case FFBluetoothResponseErrorCode.wifiConnectedButCannotReachServer:
-        return FFBluetoothResponseError(
-          title: 'Server Unreachable',
-          'Connected to Wi-Fi but cannot reach our server. Please check your internet connection.',
-        );
+        return WifiServerUnreachableError();
       case FFBluetoothResponseErrorCode.wifiConnectedButNoInternet:
-        return FFBluetoothResponseError(
-          title: 'No Internet Access',
-          'Connected to Wi-Fi but no internet access. Please check your internet connection.',
-        );
+        return WifiNoInternetError();
       case FFBluetoothResponseErrorCode.wifiRequired:
-        return FFBluetoothResponseError(
-          title: 'Wi-Fi Required',
-          'This device requires a Wi-Fi connection to function properly. Please connect to a Wi-Fi network.',
-        );
+        return WifiRequiredError();
       case FFBluetoothResponseErrorCode.deviceUpdating:
         return DeviceUpdatingError();
 
       case FFBluetoothResponseErrorCode.versionCheckFailed:
         return DeviceVersionCheckFailedError();
       default:
-        return FFBluetoothResponseError(
-          title: 'Wi-Fi Connection Error',
-          'Unknown error occurred while connecting to Wi-Fi. Error code: $errorCode',
-        );
+        // Treat all other / unknown codes as unknown send‑WiFi errors.
+        return UnknownSendWifiError(errorCode);
     }
   }
 
@@ -69,18 +61,79 @@ class FFBluetoothResponseError implements FFError {
   }
 }
 
-class DeviceUpdatingError extends FFBluetoothResponseError {
-  DeviceUpdatingError()
+/// Base class for all errors related to the send‑WiFi‑credentials flow.
+///
+/// This makes it easier to distinguish Wi‑Fi setup issues from other
+/// Bluetooth features while still preserving the existing
+/// `FFBluetoothResponseError` contract.
+abstract class SendWifiError extends FFBluetoothResponseError {
+  SendWifiError(
+    super.message, {
+    super.title,
+  });
+}
+
+class WrongWifiPasswordError extends SendWifiError {
+  WrongWifiPasswordError()
       : super(
-          'The FF1 is currently updating. Please wait for the update to complete and try again.',
-          title: 'FF1 is Updating',
+          'FF1 couldn\'t connect to Wi‑Fi. The password may be incorrect. Check it and try again.',
+          title: 'Incorrect Wi‑Fi password',
         );
 }
 
-class DeviceVersionCheckFailedError extends FFBluetoothResponseError {
+class WifiNoInternetError extends SendWifiError {
+  WifiNoInternetError()
+      : super(
+          'FF1 is connected to Wi‑Fi but can\'t reach the internet. Check the router connection, then try again.',
+          title: 'No internet access',
+        );
+}
+
+class WifiServerUnreachableError extends SendWifiError {
+  WifiServerUnreachableError()
+      : super(
+          'FF1 is online but can\'t reach the server. Network settings may be blocking access. Check firewall settings or try a different network.',
+          title: 'Can\'t reach server',
+        );
+}
+
+class WifiRequiredError extends SendWifiError {
+  WifiRequiredError()
+      : super(
+          'FF1 needs a Wi‑Fi connection. Connect to a network to continue.',
+          title: 'Wi‑Fi required',
+        );
+}
+
+class UnknownSendWifiError extends SendWifiError {
+  UnknownSendWifiError(int errorCode)
+      : super(
+          'FF1 couldn\'t connect to Wi‑Fi. The network conditions may be unstable. Move FF1 closer to the router and try again.',
+          title: 'Wi‑Fi connection failed',
+        );
+}
+
+class DeviceUpdatingError extends SendWifiError {
+  DeviceUpdatingError()
+      : super(
+          'FF1 is installing an update. Wait for the update to finish, then try again.',
+          title: 'FF1 is updating',
+        );
+
+  @override
+  bool get shouldGoBack => true;
+}
+
+class DeviceVersionCheckFailedError extends SendWifiError {
   DeviceVersionCheckFailedError()
       : super(
-          'The FF1 version check failed. Please try again or contact support.',
-          title: 'Version Check Failed',
+          'FF1 couldn\'t complete setup. This may be related to a connection issue. Contact support for help.',
+          title: 'Setup failed',
         );
+
+  @override
+  bool get shouldGoBack => true;
+
+  @override
+  bool get shouldShowSupportButton => true;
 }

@@ -261,15 +261,23 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
         ),
       );
     } on FFBluetoothResponseError catch (e) {
-      if (e is DeviceUpdatingError || e is DeviceVersionCheckFailedError) {
+      if (e.shouldGoBack) {
         injector<NavigationService>().goBack();
       }
       final context = injector<NavigationService>().context;
+
       await UIHelper.showInfoDialog(
         context,
         e.title,
         e.message,
+        closeButton: e.shouldShowSupportButton ? 'Contact support' : '',
+        onClose: e.shouldShowSupportButton
+            ? () async {
+                injector<NavigationService>().showCustomerSupport();
+              }
+            : null,
       );
+
       rethrow;
     } on Exception catch (e) {
       await UIHelper.showInfoDialog(
