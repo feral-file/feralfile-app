@@ -15,7 +15,6 @@ import 'package:autonomy_flutter/model/ff_account.dart';
 import 'package:autonomy_flutter/model/jwt.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
-import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/user_interactivity_service.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
@@ -62,7 +61,6 @@ void nameContinue(BuildContext context) {
 
 class UIHelper {
   static String currentDialogTitle = '';
-  static final metricClient = injector.get<MetricClientService>();
   static const String ignoreBackLayerPopUpRouteName = 'popUp.ignoreBackLayer';
   static const String homeMenu = 'homeMenu';
   static const String artDisplaySettingModal = 'artDisplaySettingModal';

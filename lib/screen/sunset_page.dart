@@ -8,7 +8,9 @@
 import 'dart:io';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
+import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/view/loading.dart';
 import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/gestures.dart';
@@ -239,50 +241,65 @@ class _SunsetPageState extends State<SunsetPage> {
         child: Scaffold(
           backgroundColor: AppColor.primaryBlack,
           extendBodyBehindAppBar: true,
-          body: Container(
-            width: double.infinity,
-            height: double.infinity,
-            color: AppColor.primaryBlack,
-            child: SafeArea(
-              child: _isLoading
-                  ? const Center(
-                      child: LoadingWidget(),
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 30,
-                        vertical: 40,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Spacer(),
-                          if (_title != null && _title!.isNotEmpty) ...[
-                            // Title
-                            Text(
-                              _title!,
-                              style: theme.textTheme.ppMori700White24,
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 32),
-                          ],
-                          if (_description != null &&
-                              _description!.isNotEmpty) ...[
-                            // Description
-                            RichText(
-                              text: _buildDescriptionTextSpan(
-                                _description!,
-                                theme.textTheme.ppMori400White14,
-                              ),
-                              textAlign: TextAlign.left,
-                            ),
-                          ],
-                          const Spacer(),
-                        ],
-                      ),
-                    ),
-            ),
+          body: Stack(
+            children: [
+              Container(
+                width: double.infinity,
+                height: double.infinity,
+                color: AppColor.primaryBlack,
+                child: SafeArea(
+                  child: _isLoading
+                      ? const Center(
+                          child: LoadingWidget(),
+                        )
+                      : Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 30,
+                            vertical: 40,
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const Spacer(),
+                              if (_title != null && _title!.isNotEmpty) ...[
+                                // Title
+                                Text(
+                                  _title!,
+                                  style: theme.textTheme.ppMori700White24,
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 32),
+                              ],
+                              if (_description != null &&
+                                  _description!.isNotEmpty) ...[
+                                // Description
+                                RichText(
+                                  text: _buildDescriptionTextSpan(
+                                    _description!,
+                                    theme.textTheme.ppMori400White14,
+                                  ),
+                                  textAlign: TextAlign.left,
+                                ),
+                              ],
+                              const Spacer(),
+                            ],
+                          ),
+                        ),
+                ),
+              ),
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 40,
+                right: 30,
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context)
+                      .pushReplacementNamed(AppRouter.homePageNoTransition),
+                  child: closeIcon(
+                    color: AppColor.white,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

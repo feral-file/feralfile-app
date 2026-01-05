@@ -9,28 +9,29 @@
 // ignore_for_file: avoid_annotating_with_dynamic
 
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/screen/sunset_page.dart';
+import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
+import 'package:autonomy_flutter/util/au_file_service.dart';
 import 'package:autonomy_flutter/util/custom_route_observer.dart';
 import 'package:autonomy_flutter/util/device.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:system_date_time_format/system_date_time_format.dart';
-
-ValueNotifier<bool> shouldShowNowDisplaying = ValueNotifier<bool>(false);
-ValueNotifier<bool> shouldShowNowDisplayingOnDisconnect =
-    ValueNotifier<bool>(true);
-ValueNotifier<bool> nowDisplayingVisibility = ValueNotifier<bool>(true);
 
 void main() async {
   unawaited(
@@ -75,7 +76,19 @@ Future<void> runFeralFileApp() async {
     'Initial Route: ${WidgetsBinding.instance.platformDispatcher.defaultRouteName}',
   );
 
+  await EasyLocalization.ensureInitialized();
+
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+
+  await FlutterDownloader.initialize();
+  FlutterDownloader.registerCallback(downloadCallback);
+  await Hive.initFlutter();
+  try {
+    await AuFileService().setup();
+  } catch (e) {
+    log.info('Error in AuFileService setup: $e');
+  }
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -103,7 +116,7 @@ Future<void> _setupApp() async {
     Sentry.captureException(e);
   }
 
-  setupInjectorForSunsetPage();
+  await setupInjector();
 
   // Pre-load remote config
   try {
@@ -113,9 +126,15 @@ Future<void> _setupApp() async {
   }
 
   runApp(
-    const SDTFScope(
-      child: OverlaySupport.global(
-        child: AutonomyApp(),
+    SDTFScope(
+      child: EasyLocalization(
+        supportedLocales: const [Locale('en', 'US'), Locale('ja')],
+        path: 'assets/translations',
+        fallbackLocale: const Locale('en', 'US'),
+        useFallbackTranslations: true,
+        child: const OverlaySupport.global(
+          child: AutonomyApp(),
+        ),
       ),
     ),
   );
@@ -141,8 +160,22 @@ class AutonomyApp extends StatelessWidget {
                 ? AppTheme.lightTheme()
                 : AppTheme.tabletLightTheme(),
             darkTheme: AppTheme.lightTheme(),
+            localizationsDelegates: context.localizationDelegates,
+            supportedLocales: context.supportedLocales,
+            locale: context.locale,
             debugShowCheckedModeBanner: false,
-            home: const SunsetPage(),
+            navigatorKey: injector<NavigationService>().navigatorKey,
+            navigatorObservers: [
+              routeObserver,
+              SentryNavigatorObserver(),
+              HeroController(),
+            ],
+            initialRoute: AppRouter.sunsetPage,
+            onGenerateRoute: AppRouter.onGenerateRoute,
+            builder: (context, child) => SafeArea(
+              top: false,
+              child: child!,
+            ),
           );
         },
       );
@@ -150,3 +183,9 @@ class AutonomyApp extends StatelessWidget {
 
 final RouteObserver<ModalRoute<void>> routeObserver =
     CustomRouteObserver<ModalRoute<void>>();
+
+@pragma('vm:entry-point')
+void downloadCallback(String id, int status, int progress) {
+  final send = IsolateNameServer.lookupPortByName('downloader_send_port');
+  send?.send([id, status, progress]);
+}

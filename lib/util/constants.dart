@@ -31,13 +31,6 @@ const KNOWN_BUGS_LINK = 'https://github.com/orgs/bitmark-inc/projects/33';
 
 const AUTONOMY_CLIENT_GITHUB_LINK =
     'https://github.com/bitmark-inc/autonomy-client';
-const DEEP_LINKS = [
-  'autonomy://',
-  'https://autonomy.io',
-  'https://au.bitmark.com',
-  ...Constants.bluetoothConnectDeepLinks,
-  ...Constants.linkArtistDeepLinks,
-];
 const WEB3_PRIMER_URL = 'https://autonomy.io/catalog/primer/';
 const COLLECTOR_RIGHTS_DEFAULT_DOCS =
     '/bitmark-inc/feral-file-docs/main/agreements/ff-collector-rights/en_US.md';
@@ -390,22 +383,8 @@ class Constants {
   static const paddingMobile = EdgeInsets.symmetric(horizontal: 14);
   static const paddingTablet = EdgeInsets.symmetric(horizontal: 20);
   static const paddingTabletLandScape = EdgeInsets.symmetric(horizontal: 32);
-  static const homeWidgetDeepLinks = [
-    'home-widget://',
-  ];
 
-  static const bluetoothConnectDeepLinks = [
-    'feralfile://device_connect',
-    'https://link.feralfile.com/device_connect',
-  ];
-
-  static const linkArtistDeepLinks = [
-    'https://link.feralfile.com/linkage_token',
-  ];
-
-  static const navigationPrefixes = [
-    'feralfile://navigation/',
-  ];
+  static const johnGerrardLatestRevealIndex = 9047;
 }
 
 Map<String, String> specifiedSeriesTitle = {
@@ -414,9 +393,6 @@ Map<String, String> specifiedSeriesTitle = {
 };
 
 class LinkType {
-  static const local = 'Local Deep Link';
-  static const dAppConnect = 'Dapp Connect Deeplink';
-  static const feralFile = 'FeralFile Deeplink';
   static const feralFileToken = 'FeralFile Token';
   static const undefined = 'Undefined';
 }

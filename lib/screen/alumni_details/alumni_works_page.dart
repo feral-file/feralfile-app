@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/ff_alumni.dart';
 import 'package:autonomy_flutter/model/ff_series.dart';
+import 'package:autonomy_flutter/nft_collection/models/user_collection.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/artwork_view.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
 import 'package:autonomy_flutter/util/feralfile_alumni_ext.dart';
@@ -11,8 +12,6 @@ import 'package:autonomy_flutter/view/loading.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:autonomy_flutter/nft_collection/models/user_collection.dart';
-import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 
 class AlumniWorksPagePayload {
   final AlumniAccount alumni;
@@ -39,12 +38,9 @@ class _AlumniWorksPageState extends State<AlumniWorksPage> {
       artistIds: alumni.allRelatedAccountIDs,
     );
 
-    final indexerCollections = await injector<IndexerService>()
-        .getCollectionsByAddresses(alumni.allRelatedAddresses);
-
     setState(() {
       _seriesList = response.result;
-      _userCollections = indexerCollections;
+      _userCollections = [];
     });
     return response.result;
   }

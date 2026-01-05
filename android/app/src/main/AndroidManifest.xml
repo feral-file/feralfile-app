@@ -70,79 +70,16 @@
                 android:name="io.flutter.embedding.android.SplashScreenDrawable"
                 android:resource="@drawable/launch_background" />
 
-            <meta-data
-                android:name="flutter_deeplinking_enabled"
-                android:value="false" />
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:host="au.bitmark.com"
-                    android:pathPrefix="/apps"
-                    android:scheme="https" />
-            </intent-filter>
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:host="autonomy.io"
-                    android:pathPrefix="/apps"
-                    android:scheme="https" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="autonomy" />
-            </intent-filter>
-
-            <!-- Disable Flutter's automatic deep link handling -->
-            <meta-data
-                android:name="flutter_deeplinking_enabled"
-                android:value="false" />
-
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="feralfile" />
-            </intent-filter>
 
             <!-- Home widget -->
             <intent-filter>
                 <action android:name="es.antonborri.home_widget.action.LAUNCH" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".EmergencyLog"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:host="emergency-logs"
-                    android:pathPattern="/.*"
-                    android:scheme="feralfile" />
             </intent-filter>
         </activity>
         <!--

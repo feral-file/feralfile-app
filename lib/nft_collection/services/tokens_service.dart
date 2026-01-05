@@ -8,15 +8,9 @@
 import 'dart:async';
 import 'dart:isolate';
 
-import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
-import 'package:get_it/get_it.dart';
-import 'package:autonomy_flutter/nft_collection/data/api/indexer_api.dart';
 import 'package:autonomy_flutter/nft_collection/data/api/tzkt_api.dart';
 import 'package:autonomy_flutter/nft_collection/database/dao/dao.dart';
 import 'package:autonomy_flutter/nft_collection/database/nft_collection_database.dart';
-import 'package:autonomy_flutter/nft_collection/graphql/clients/indexer_client.dart';
-import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:autonomy_flutter/nft_collection/models/pending_tx_params.dart';
@@ -25,8 +19,10 @@ import 'package:autonomy_flutter/nft_collection/models/token.dart';
 import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/nft_collection/services/address_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/configuration_service.dart';
-import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/nft_collection/utils/logging_interceptor.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:get_it/get_it.dart';
 import 'package:uuid/uuid.dart';
 
 abstract class TokensService {
@@ -53,21 +49,14 @@ final _isolateScopeInjector = GetIt.asNewInstance();
 
 class TokensServiceImpl extends TokensService {
   TokensServiceImpl(
-    this._indexerUrl,
     this._database,
     this._configurationService,
     this._addressService, [
     Dio? dio,
   ]) {
     dio ??= Dio()..interceptors.add(LoggingInterceptor());
-    _indexer = IndexerApi(dio, baseUrl: _indexerUrl);
-    final indexerClient = IndexerClient(_indexerUrl);
-    _indexerService = IndexerService(indexerClient, _indexer);
   }
 
-  final String _indexerUrl;
-  late IndexerApi _indexer;
-  late IndexerService _indexerService;
   final NftCollectionDatabase _database;
   final NftCollectionPrefs _configurationService;
   final AddressService _addressService;
@@ -105,7 +94,6 @@ class TokensServiceImpl extends TokensService {
 
     _isolate = await Isolate.spawn(_isolateEntry, [
       _receivePort!.sendPort,
-      _indexerUrl,
     ]);
   }
 
@@ -244,25 +232,11 @@ class TokensServiceImpl extends TokensService {
 
   @override
   Future<List<AssetToken>> fetchManualTokens(List<String> indexerIds) async {
-    final request = QueryListTokensRequest(
-      ids: indexerIds,
-    );
-
-    final manuallyAssets = await _indexerService.getNftTokens(request);
-
-    //stripe owner for manual asset
-    for (var i = 0; i < manuallyAssets.length; i++) {
-      manuallyAssets[i].owner = '';
-      manuallyAssets[i].isManual = true;
-    }
-
+    // Indexer support removed - returning empty list
     NftCollection.logger.info('[TokensService] '
-        'fetched ${manuallyAssets.length} manual tokens. '
+        'fetchManualTokens called but indexer support has been removed. '
         'IDs: $indexerIds');
-    if (manuallyAssets.isNotEmpty) {
-      await insertAssetsWithProvenance(manuallyAssets);
-    }
-    return manuallyAssets;
+    return [];
   }
 
   @override
@@ -290,24 +264,15 @@ class TokensServiceImpl extends TokensService {
 
     final receivePort = ReceivePort()..listen(_handleMessageInIsolate);
 
-    _setupInjector(arguments[1] as String);
+    _setupInjector();
     sendPort.send(receivePort.sendPort);
     _isolateSendPort = sendPort;
   }
 
-  static void _setupInjector(String indexerUrl) {
+  static void _setupInjector() {
     final dio = Dio();
     dio.interceptors.add(LoggingInterceptor());
-    _isolateScopeInjector
-        .registerLazySingleton(() => IndexerApi(dio, baseUrl: indexerUrl));
-    final indexerClient = IndexerClient(indexerUrl);
-    _isolateScopeInjector
-      ..registerLazySingleton(() => indexerClient)
-      ..registerLazySingleton(
-        () =>
-            IndexerService(indexerClient, _isolateScopeInjector<IndexerApi>()),
-      )
-      ..registerLazySingleton(() => TZKTApi(dio));
+    _isolateScopeInjector.registerLazySingleton(() => TZKTApi(dio));
   }
 
   Future<void> _handleMessageInMain(dynamic message) async {
@@ -417,53 +382,10 @@ class TokensServiceImpl extends TokensService {
     String uuid,
     Map<int, List<String>> addresses,
   ) async {
-    try {
-      final isolateIndexerService = _isolateScopeInjector<IndexerService>();
-      final offsetMap = addresses.map((key, value) => MapEntry(key, 0));
-
-      await Future.wait(
-        addresses.keys.map((lastRefreshedTime) async {
-          if (addresses[lastRefreshedTime]?.isEmpty ?? true) return;
-          final owners = addresses[lastRefreshedTime]?.join(',');
-          if (owners == null) return;
-
-          do {
-            final request = QueryListTokensRequest(
-              owners: addresses[lastRefreshedTime] ?? [],
-              offset: offsetMap[lastRefreshedTime] ?? 0,
-              lastUpdatedAt: lastRefreshedTime != 0
-                  ? DateTime.fromMillisecondsSinceEpoch(lastRefreshedTime)
-                  : null,
-            );
-
-            final assets = await isolateIndexerService.getNftTokens(request);
-
-            if (assets.isEmpty) {
-              offsetMap.remove(lastRefreshedTime);
-            } else {
-              _isolateSendPort?.send(
-                FetchTokensSuccess(
-                  key,
-                  uuid,
-                  addresses[lastRefreshedTime]!,
-                  assets,
-                  false,
-                ),
-              );
-
-              offsetMap[lastRefreshedTime] =
-                  (offsetMap[lastRefreshedTime] ?? 0) + assets.length;
-            }
-          } while (offsetMap[lastRefreshedTime] != null);
-        }),
-      );
-      final inputAddresses = addresses.values.expand((list) => list).toList();
-
-      _isolateSendPort
-          ?.send(FetchTokensSuccess(key, uuid, inputAddresses, [], true));
-    } catch (exception) {
-      _isolateSendPort?.send(FetchTokenFailure(key, uuid, exception));
-    }
+    // Indexer support removed - sending empty success response
+    final inputAddresses = addresses.values.expand((list) => list).toList();
+    _isolateSendPort
+        ?.send(FetchTokensSuccess(key, uuid, inputAddresses, [], true));
   }
 
   static Future<void> _reindexAddressesInIndexer(
@@ -471,12 +393,7 @@ class TokensServiceImpl extends TokensService {
     List<String> addresses, {
     bool history = true,
   }) async {
-    final indexerAPI = _isolateScopeInjector<IndexerApi>();
-    for (final address in addresses) {
-      if (address.startsWith('tz') || address.startsWith('0x')) {
-        await indexerAPI.requestIndex({'owner': address, 'history': history});
-      }
-    }
+    // Indexer support removed - no-op
     _isolateSendPort?.send(ReindexAddressesDone(uuid));
   }
 }

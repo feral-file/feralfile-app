@@ -1,26 +1,12 @@
-import 'dart:async';
-
-import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/explore_statistics_data.dart';
-import 'package:autonomy_flutter/model/ff_artwork.dart';
-import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
-import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/artwork_view.dart';
-import 'package:autonomy_flutter/screen/feralfile_home/featured_work_view.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/feralfile_home_bloc.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/feralfile_home_state.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/filter_bar.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/list_alumni_view.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/list_exhibition_view.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
-import 'package:autonomy_flutter/util/exhibition_ext.dart';
-import 'package:autonomy_flutter/util/playlist_ext.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
-import 'package:autonomy_flutter/view/cast_button.dart';
-import 'package:autonomy_flutter/view/keep_alive_widget.dart';
-import 'package:autonomy_flutter/view/stream_common_widget.dart';
-import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:feralfile_app_theme/feral_file_app_theme.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +14,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 enum FeralfileHomeTab {
   exhibitions,
-  featured,
   artworks,
   artists,
   curators;
@@ -53,12 +38,6 @@ enum FeralfileHomeTab {
           if (isSearching) SortBy.relevance,
           SortBy.firstExhibitionJoinedAt,
           SortBy.alias,
-        ];
-      default:
-        return [
-          if (isSearching) SortBy.relevance,
-          SortBy.createdAt,
-          SortBy.title,
         ];
     }
   }
@@ -114,8 +93,6 @@ class FeralfileHomePage extends StatefulWidget {
 class FeralfileHomePageState extends State<FeralfileHomePage>
     with AutomaticKeepAliveClientMixin {
   late int _selectedIndex;
-  late CanvasDeviceBloc _canvasDeviceBloc;
-  final _featuredWorkKey = GlobalKey<FeaturedWorkViewState>();
   final _artworkViewKey = GlobalKey<ExploreSeriesViewState>();
   final _exhibitionViewKey = GlobalKey<ExploreExhibitionState>();
   final _artistViewKey = GlobalKey<ExploreArtistViewState>();
@@ -125,47 +102,13 @@ class FeralfileHomePageState extends State<FeralfileHomePage>
   @override
   void initState() {
     super.initState();
-    _canvasDeviceBloc = injector.get<CanvasDeviceBloc>();
     context.read<FeralfileHomeBloc>().add(FeralFileHomeFetchDataEvent());
     _selectedIndex = FeralfileHomeTab.exhibitions.index;
-  }
-
-  Widget _castButton(BuildContext context, List<Artwork> featuredArtworks) {
-    final tokenIDs =
-        featuredArtworks.map((e) => e.indexerTokenId).whereNotNull().toList();
-    final displayKey = tokenIDs.displayKey ?? '';
-    return FFCastButton(
-      displayKey: displayKey,
-      onDeviceSelected: (device) async {
-        final duration = speedValues.values.first;
-        final listPlayArtwork = tokenIDs
-            .map(
-              (e) => PlayArtworkV2(
-                token: CastAssetToken(id: e),
-                duration: duration,
-              ),
-            )
-            .toList();
-        final completer = Completer<void>();
-        _canvasDeviceBloc.add(
-          CanvasDeviceCastListArtworkEvent(
-            device,
-            listPlayArtwork,
-            onDone: () {
-              completer.complete();
-            },
-          ),
-        );
-        await completer.future;
-      },
-    );
   }
 
   void scrollToTop() {
     final tab = FeralfileHomeTab.values[_selectedIndex];
     switch (tab) {
-      case FeralfileHomeTab.featured:
-        _featuredWorkKey.currentState?.scrollToTop();
       case FeralfileHomeTab.artworks:
         _artworkViewKey.currentState?.scrollToTop();
       case FeralfileHomeTab.exhibitions:
@@ -218,16 +161,6 @@ class FeralfileHomePageState extends State<FeralfileHomePage>
         },
       ),
       Item(
-        id: FeralfileHomeTab.featured.index.toString(),
-        title: 'featured'.tr(),
-        subtitle: state.featuredArtworks != null
-            ? numberFormater.format(state.featuredArtworks!.length)
-            : '-',
-        onSelected: () {
-          _selectTab(FeralfileHomeTab.featured);
-        },
-      ),
-      Item(
         id: FeralfileHomeTab.artworks.index.toString(),
         title: '_artworks'.tr(),
         subtitle: state.exploreStatisticsData != null
@@ -263,13 +196,6 @@ class FeralfileHomePageState extends State<FeralfileHomePage>
   Widget _bodyWidget(FeralfileHomeBlocState state) {
     final tab = FeralfileHomeTab.values[_selectedIndex];
     switch (tab) {
-      case FeralfileHomeTab.featured:
-        return KeepAliveWidget(
-          child: _featuredWidget(
-            context,
-            state.featuredArtworks ?? [],
-          ),
-        );
       case FeralfileHomeTab.artworks:
         return _artworksWidget(context);
       case FeralfileHomeTab.exhibitions:
@@ -304,33 +230,10 @@ class FeralfileHomePageState extends State<FeralfileHomePage>
                 quarterTurns: 1,
                 child: icon,
               ),
-              actions: [
-                if (_selectedIndex == FeralfileHomeTab.featured.index &&
-                    state.featuredArtworks != null &&
-                    state.featuredArtworks!.isNotEmpty)
-                  _castButton(context, state.featuredArtworks ?? []),
-              ],
             ),
           ),
         ),
       ],
-    );
-  }
-
-  Widget _featuredWidget(BuildContext context, List<Artwork> featuredArtworks) {
-    final tokenIDs =
-        featuredArtworks.map((e) => e.indexerTokenId).whereNotNull().toList();
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<IdentityBloc>.value(
-          value: injector.get<IdentityBloc>(),
-        ),
-      ],
-      child: FeaturedWorkView(
-        key: _featuredWorkKey,
-        tokenIDs: tokenIDs,
-        header: _getHeader(context),
-      ),
     );
   }
 

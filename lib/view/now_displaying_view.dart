@@ -1,6 +1,5 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/device/base_device.dart';
 import 'package:autonomy_flutter/model/ff_artwork.dart';
@@ -551,7 +550,7 @@ class NowDisplayingStatusView extends StatelessWidget {
             ),
           ),
           IconButton(
-            onPressed: () => shouldShowNowDisplayingOnDisconnect.value = false,
+            onPressed: () {},
             icon: SvgPicture.asset(
               'assets/images/closeCycle.svg',
               width: 22,

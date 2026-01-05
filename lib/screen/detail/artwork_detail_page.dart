@@ -6,41 +6,31 @@
 //
 
 import 'dart:async';
-import 'dart:collection';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
-import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/play_list_model.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
 import 'package:autonomy_flutter/nft_collection/models/provenance.dart';
 import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
-import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/screen/bloc/accounts/accounts_bloc.dart';
-import 'package:autonomy_flutter/screen/bloc/accounts/accounts_state.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_state.dart';
-import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
-import 'package:autonomy_flutter/screen/detail/preview/keyboard_control_page.dart';
 import 'package:autonomy_flutter/screen/detail/preview_detail/preview_detail_widget.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
-import 'package:autonomy_flutter/service/metric_client_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/settings_data_service.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/feral_file_custom_tab.dart';
-import 'package:autonomy_flutter/util/metric_helper.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
-import 'package:autonomy_flutter/view/cast_button.dart';
 import 'package:autonomy_flutter/view/loading.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
@@ -79,7 +69,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
   ScrollController? _scrollController;
   ValueNotifier<double> downloadProgress = ValueNotifier(0);
 
-  HashSet<String> _accountNumberHash = HashSet.identity();
   AssetToken? currentAsset;
   final _focusNode = FocusNode();
   final _textController = TextEditingController();
@@ -88,7 +77,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
   static const _infoShrinkPosition = 0.001;
   static const _infoExpandPosition = 0.29;
   late ArtworkDetailBloc _bloc;
-  late CanvasDeviceBloc _canvasDeviceBloc;
   late AnimationController _animationController;
   double? _appBarBottomDy;
   bool _isFullScreen = false;
@@ -108,15 +96,12 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
     );
     _infoShrink();
     _bloc = context.read<ArtworkDetailBloc>();
-    _canvasDeviceBloc = injector.get<CanvasDeviceBloc>();
     _bloc.add(
       ArtworkDetailGetInfoEvent(
         widget.payload.identity,
         useIndexer: widget.payload.useIndexer,
       ),
     );
-    context.read<AccountsBloc>().add(FetchAllAddressesEvent());
-    context.read<AccountsBloc>().add(GetAccountsEvent());
   }
 
   @override
@@ -127,17 +112,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
       onPhoneShake: (event) async {
         await _exitFullScreen();
       },
-    );
-    _sendMetricPlaylistView();
-  }
-
-  void _sendMetricPlaylistView() {
-    final data = {
-      MetricParameter.tokenId: widget.payload.identity.id,
-    };
-    unawaited(
-      injector<MetricClientService>()
-          .addEvent(MetricEventName.playlistView, data: data),
     );
   }
 
@@ -240,157 +214,129 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
         final artistName =
             asset.artistName?.toIdentityOrMask(identityState.identityMap);
 
-        return BlocBuilder<CanvasDeviceBloc, CanvasDeviceState>(
-          bloc: _canvasDeviceBloc,
-          builder: (context, canvasState) => Stack(
-            children: [
-              BackdropScaffold(
-                backgroundColor: AppColor.primaryBlack,
-                resizeToAvoidBottomInset: !hasKeyboard,
-                frontLayerElevation: _isFullScreen ? 0 : 1,
-                appBar: _isFullScreen
-                    ? null
-                    : PreferredSize(
-                        preferredSize: const Size.fromHeight(kToolbarHeight),
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 14),
-                          child: AppBar(
-                            systemOverlayStyle: systemUiOverlayDarkStyle,
-                            leading: Semantics(
-                              label: 'BACK',
-                              child: IconButton(
-                                onPressed: () => Navigator.pop(context),
-                                constraints: const BoxConstraints(
-                                  maxWidth: 44,
-                                  maxHeight: 44,
-                                  minWidth: 44,
-                                  minHeight: 44,
-                                ),
-                                icon: Padding(
-                                  padding: EdgeInsets.zero,
-                                  child: SvgPicture.asset(
-                                    'assets/images/ff_back_dark.svg',
-                                    width: 28,
-                                    height: 28,
-                                  ),
+        return Stack(
+          children: [
+            BackdropScaffold(
+              backgroundColor: AppColor.primaryBlack,
+              resizeToAvoidBottomInset: !hasKeyboard,
+              frontLayerElevation: _isFullScreen ? 0 : 1,
+              appBar: _isFullScreen
+                  ? null
+                  : PreferredSize(
+                      preferredSize: const Size.fromHeight(kToolbarHeight),
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 14),
+                        child: AppBar(
+                          systemOverlayStyle: systemUiOverlayDarkStyle,
+                          leading: Semantics(
+                            label: 'BACK',
+                            child: IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              constraints: const BoxConstraints(
+                                maxWidth: 44,
+                                maxHeight: 44,
+                                minWidth: 44,
+                                minHeight: 44,
+                              ),
+                              icon: Padding(
+                                padding: EdgeInsets.zero,
+                                child: SvgPicture.asset(
+                                  'assets/images/ff_back_dark.svg',
+                                  width: 28,
+                                  height: 28,
                                 ),
                               ),
                             ),
-                            centerTitle: false,
-                            backgroundColor: Colors.transparent,
-                            actions: [
-                              FFCastButton(
-                                displayKey: _getDisplayKey(asset),
-                                onDeviceSelected: (device) async {
-                                  final artwork = PlayArtworkV2(
-                                    token: CastAssetToken(id: asset.id),
-                                    duration: Duration.zero,
-                                  );
-                                  final completer = Completer<void>();
-                                  _canvasDeviceBloc.add(
-                                    CanvasDeviceCastListArtworkEvent(
-                                      device,
-                                      [artwork],
-                                      onDone: () {
-                                        completer.complete();
-                                      },
-                                    ),
-                                  );
-                                  await completer.future;
-                                },
-                              ),
-                            ],
                           ),
+                          centerTitle: false,
+                          backgroundColor: Colors.transparent,
                         ),
-                      ),
-                backLayer: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: ArtworkPreviewWidget(
-                        useIndexer: widget.payload.useIndexer,
-                        identity: widget.payload.identity,
-                        onLoaded: _onLoaded,
                       ),
                     ),
-                    if (!_isFullScreen)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 18),
-                        child: ArtworkDetailsHeader(
-                          title: 'I',
-                          subTitle: 'I',
-                          color: Colors.transparent,
-                        ),
-                      ),
-                  ],
-                ),
-                reverseAnimationCurve: Curves.ease,
-                frontLayer: _isFullScreen
-                    ? const SizedBox()
-                    : _infoContent(context, identityState, state, artistName),
-                frontLayerBackgroundColor:
-                    _isFullScreen ? Colors.transparent : AppColor.primaryBlack,
-                backLayerBackgroundColor: AppColor.primaryBlack,
-                animationController: _animationController,
-                revealBackLayerAtStart: true,
-                frontLayerScrim: Colors.transparent,
-                backLayerScrim: Colors.transparent,
-                subHeaderAlwaysActive: false,
-                frontLayerShape: const BeveledRectangleBorder(),
-                subHeader: _isFullScreen
-                    ? null
-                    : DecoratedBox(
-                        decoration:
-                            const BoxDecoration(color: AppColor.primaryBlack),
-                        child: GestureDetector(
-                          onVerticalDragEnd: (details) {
-                            final dy = details.primaryVelocity ?? 0;
-                            if (dy <= 0) {
-                              _infoExpand();
-                            } else {
-                              _infoShrink();
-                            }
-                          },
-                          child: Container(
-                            color: Colors.transparent,
-                            child: _infoHeader(
-                              context,
-                              asset,
-                              artistName,
-                              canvasState,
-                            ),
-                          ),
-                        ),
-                      ),
-              ),
-              if (_isInfoExpand && !_isFullScreen)
-                Positioned(
-                  top: _appBarBottomDy ?? 80,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.translucent,
-                    onTap: _infoShrink,
-                    onVerticalDragEnd: (details) {
-                      final dy = details.primaryVelocity ?? 0;
-                      if (dy > 0) {
-                        _infoShrink();
-                      }
-                    },
-                    child: Container(
-                      color: Colors.transparent,
-                      height: MediaQuery.of(context).size.height / 2 -
-                          (_appBarBottomDy ?? 80),
-                      width: MediaQuery.of(context).size.width,
+              backLayer: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: ArtworkPreviewWidget(
+                      useIndexer: widget.payload.useIndexer,
+                      identity: widget.payload.identity,
+                      onLoaded: _onLoaded,
                     ),
                   ),
+                  if (!_isFullScreen)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 18),
+                      child: ArtworkDetailsHeader(
+                        title: 'I',
+                        subTitle: 'I',
+                        color: Colors.transparent,
+                      ),
+                    ),
+                ],
+              ),
+              reverseAnimationCurve: Curves.ease,
+              frontLayer: _isFullScreen
+                  ? const SizedBox()
+                  : _infoContent(context, identityState, state, artistName),
+              frontLayerBackgroundColor:
+                  _isFullScreen ? Colors.transparent : AppColor.primaryBlack,
+              backLayerBackgroundColor: AppColor.primaryBlack,
+              animationController: _animationController,
+              revealBackLayerAtStart: true,
+              frontLayerScrim: Colors.transparent,
+              backLayerScrim: Colors.transparent,
+              subHeaderAlwaysActive: false,
+              frontLayerShape: const BeveledRectangleBorder(),
+              subHeader: _isFullScreen
+                  ? null
+                  : DecoratedBox(
+                      decoration:
+                          const BoxDecoration(color: AppColor.primaryBlack),
+                      child: GestureDetector(
+                        onVerticalDragEnd: (details) {
+                          final dy = details.primaryVelocity ?? 0;
+                          if (dy <= 0) {
+                            _infoExpand();
+                          } else {
+                            _infoShrink();
+                          }
+                        },
+                        child: ColoredBox(
+                          color: Colors.transparent,
+                          child: _infoHeader(
+                            context,
+                            asset,
+                            artistName,
+                          ),
+                        ),
+                      ),
+                    ),
+            ),
+            if (_isInfoExpand && !_isFullScreen)
+              Positioned(
+                top: _appBarBottomDy ?? 80,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTap: _infoShrink,
+                  onVerticalDragEnd: (details) {
+                    final dy = details.primaryVelocity ?? 0;
+                    if (dy > 0) {
+                      _infoShrink();
+                    }
+                  },
+                  child: Container(
+                    color: Colors.transparent,
+                    height: MediaQuery.of(context).size.height / 2 -
+                        (_appBarBottomDy ?? 80),
+                    width: MediaQuery.of(context).size.width,
+                  ),
                 ),
-            ],
-          ),
+              ),
+          ],
         );
       },
     );
   }
-
-  String _getDisplayKey(AssetToken asset) => asset.displayKey;
 
   Widget _artworkInfoIcon() => Semantics(
         label: 'artworkInfoIcon',
@@ -422,7 +368,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
     BuildContext context,
     AssetToken asset,
     String? artistName,
-    CanvasDeviceState canvasState,
   ) {
     var subTitle = '';
     if (artistName != null && artistName.isNotEmpty) {
@@ -453,7 +398,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                 onPressed: () async => _showArtworkOptionsDialog(
                   context,
                   asset,
-                  canvasState,
                 ),
                 constraints: const BoxConstraints(
                   maxWidth: 44,
@@ -593,20 +537,10 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
   Widget _provenanceView(BuildContext context, List<Provenance> provenances) =>
       BlocBuilder<IdentityBloc, IdentityState>(
         builder: (context, identityState) =>
-            BlocBuilder<AccountsBloc, AccountsState>(
-          builder: (context, accountsState) {
-            final addresses = accountsState.addresses?.map((e) => e.address);
-            if (addresses?.isNotEmpty == true) {
-              _accountNumberHash = HashSet.of(addresses!);
-            }
-
-            return artworkDetailsProvenanceSectionNotEmpty(
-              context,
-              provenances,
-              _accountNumberHash,
-              identityState.identityMap,
-            );
-          },
+            artworkDetailsProvenanceSectionNotEmpty(
+          context,
+          provenances,
+          identityState.identityMap,
         ),
       );
 
@@ -617,10 +551,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
   Future<void> _showArtworkOptionsDialog(
     BuildContext context,
     AssetToken asset,
-    CanvasDeviceState canvasDeviceState,
   ) async {
-    final castingDevice =
-        canvasDeviceState.lastSelectedActiveDeviceForKey(_getDisplayKey(asset));
     final connectedDevice = BluetoothDeviceManager().castingBluetoothDevice;
     final isCasting = connectedDevice != null;
     final hasLocalAddress = await asset.hasLocalAddress();
@@ -648,24 +579,7 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
               icon: SvgPicture.asset('assets/images/keyboard_icon.svg'),
               onTap: () {
                 Navigator.of(context).pop();
-                final castingDevice = canvasDeviceState
-                    .lastSelectedActiveDeviceForKey(_getDisplayKey(asset));
-                final bluetoothConnectedDevice =
-                    BluetoothDeviceManager().castingBluetoothDevice;
-                if (castingDevice != null || bluetoothConnectedDevice != null) {
-                  unawaited(
-                    Navigator.of(context).pushNamed(
-                      AppRouter.keyboardControlPage,
-                      arguments: KeyboardControlPagePayload(
-                        getEditionSubTitle(asset),
-                        asset.description ?? '',
-                        [bluetoothConnectedDevice ?? castingDevice!],
-                      ),
-                    ),
-                  );
-                } else {
-                  FocusScope.of(context).requestFocus(_focusNode);
-                }
+                FocusScope.of(context).requestFocus(_focusNode);
               },
             ),
           if (asset.secondaryMarketURL.isNotEmpty)
@@ -708,26 +622,6 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
                       );
                     },
                   ),
-                );
-              },
-            ),
-          if (!widget.payload.shouldUseLocalCache)
-            OptionItem(
-              title: 'refresh_metadata'.tr(),
-              icon: SvgPicture.asset(
-                'assets/images/refresh_metadata_white.svg',
-                width: 20,
-                height: 20,
-              ),
-              onTap: () async {
-                await injector<TokensService>().fetchManualTokens([asset.id]);
-                if (!context.mounted) {
-                  return;
-                }
-                Navigator.of(context).pop();
-                await Navigator.of(context).pushReplacementNamed(
-                  AppRouter.artworkDetailsPage,
-                  arguments: widget.payload.copyWith(),
                 );
               },
             ),

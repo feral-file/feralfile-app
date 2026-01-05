@@ -5,8 +5,6 @@
 //  that can be found in the LICENSE file.
 //
 
-import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
@@ -105,10 +103,8 @@ class _ReleaseNotesPageState extends State<ReleaseNotesPage> {
                         if (href == null) {
                           return;
                         }
-                        if (DEEP_LINKS
-                            .any((prefix) => href.startsWith(prefix))) {
-                          injector<DeeplinkService>().handleDeeplink(href);
-                        } else if (await canLaunchUrlString(href)) {
+
+                        if (await canLaunchUrlString(href)) {
                           await launchUrlString(href,
                               mode: LaunchMode.externalApplication);
                         }

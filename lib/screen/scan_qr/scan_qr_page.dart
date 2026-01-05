@@ -8,12 +8,8 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/service/deeplink_service.dart';
-import 'package:autonomy_flutter/service/metric_client_service.dart';
-import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
@@ -248,7 +244,6 @@ class QRScanViewState extends State<QRScanView>
   bool _isLoading = false;
   bool? _cameraPermission;
   String? currentCode;
-  final metricClient = injector<MetricClientService>();
   Timer? _timer;
 
   Barcode? _barcode;
@@ -568,67 +563,36 @@ class QRScanViewState extends State<QRScanView>
       currentCode = scanData.barcodes.first.rawValue;
       String code = scanData.barcodes.first.rawValue!;
 
-      if (DEEP_LINKS.any((prefix) => code.startsWith(prefix))) {
-        setState(() {
-          _isLoading = true;
-        });
-        await pauseCamera();
-        if (!mounted) {
-          return;
-        }
-        if (_shouldPop) {
-          Navigator.pop(context);
-        }
+      switch (widget.scannerItem) {
+        case ScannerItem.CANVAS:
+        // dont need to do anything here
 
-        injector<DeeplinkService>().handleDeeplink(
-          code,
-          delay: const Duration(seconds: 1),
-          // ignore: avoid_annotating_with_dynamic
-          onFinished: (dynamic object) {
-            if (mounted) {
-              setState(() {
-                _isLoading = false;
-              });
-              unawaited(resumeCamera());
-            }
-            widget.onHandleFinished?.call(object);
-          },
-        );
-        return;
-      } else {
-        switch (widget.scannerItem) {
-          case ScannerItem.CANVAS:
-          // dont need to do anything here,
-          // it has been processed in the branch deeplink
-          /// handled with deeplink
-
-          case ScannerItem.ETH_ADDRESS:
-          case ScannerItem.XTZ_ADDRESS:
-            setState(() {
-              _isLoading = true;
-            });
-            await pauseCamera();
-            if (!mounted) {
-              return;
-            }
-            if (_shouldPop) {
-              Navigator.pop(context, code);
-            }
-            await Future.delayed(const Duration(milliseconds: 300));
-          case ScannerItem.GLOBAL:
-            {
-              _handleError(code);
-            }
-        }
-        if (mounted) {
-          await resumeCamera();
+        case ScannerItem.ETH_ADDRESS:
+        case ScannerItem.XTZ_ADDRESS:
           setState(() {
-            _isLoading = false;
+            _isLoading = true;
           });
-        }
-        if (!isScanDataError) {
-          widget.onHandleFinished?.call();
-        }
+          await pauseCamera();
+          if (!mounted) {
+            return;
+          }
+          if (_shouldPop) {
+            Navigator.pop(context, code);
+          }
+          await Future.delayed(const Duration(milliseconds: 300));
+        case ScannerItem.GLOBAL:
+          {
+            _handleError(code);
+          }
+      }
+      if (mounted) {
+        await resumeCamera();
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      if (!isScanDataError) {
+        widget.onHandleFinished?.call();
       }
     }
   }

@@ -3,9 +3,6 @@ import 'dart:math' as math;
 
 import 'package:autonomy_flutter/model/dailies.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
-import 'package:autonomy_flutter/service/metric_client_service.dart';
-import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/util/metric_helper.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
@@ -15,21 +12,11 @@ abstract class UserInteractivityService {
 }
 
 class UserInteractivityServiceImpl implements UserInteractivityService {
+  UserInteractivityServiceImpl(this._configurationService);
   final ConfigurationService _configurationService;
-  final MetricClientService _metricClientService;
-
-  UserInteractivityServiceImpl(
-      this._configurationService, this._metricClientService);
 
   @override
   Future<void> likeDailyWork(DailyToken dailyToken) async {
-    final data = {
-      MetricParameter.tokenId: dailyToken.tokenID,
-      MetricParameter.localTime: DateTime.now().toIso8601String(),
-    };
-    unawaited(
-        _metricClientService.addEvent(MetricEventName.dailyLiked, data: data));
-    log.info('Liked daily work: ${dailyToken.tokenID}');
     await _countDailyLiked();
   }
 

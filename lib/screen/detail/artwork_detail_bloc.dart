@@ -9,25 +9,19 @@ import 'dart:async';
 
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/nft_collection/database/dao/dao.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_state.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:http/http.dart' as http;
-import 'package:autonomy_flutter/nft_collection/data/api/indexer_api.dart';
-import 'package:autonomy_flutter/nft_collection/database/dao/dao.dart';
-import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
-import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
-import 'package:sentry/sentry.dart';
 
 class ArtworkDetailBloc extends AuBloc<ArtworkDetailEvent, ArtworkDetailState> {
   ArtworkDetailBloc(
     this._assetTokenDao,
     this._assetDao,
     this._provenanceDao,
-    this._indexerService,
     this._tokenDao,
-    this._indexerApi,
   ) : super(ArtworkDetailState(provenances: [])) {
     on<ArtworkDetailGetInfoEvent>((event, emit) async {
       final tokens = await _tokenDao.findTokensByID(event.identity.id);
@@ -38,36 +32,6 @@ class ArtworkDetailBloc extends AuBloc<ArtworkDetailEvent, ArtworkDetailState> {
         }
       }
       if (event.useIndexer) {
-        final request = QueryListTokensRequest(
-          ids: [event.identity.id],
-        );
-        final assetToken = await _indexerService.getNftTokens(request);
-
-        if (assetToken.isNotEmpty) {
-          final token = assetToken.first;
-          emit(
-            ArtworkDetailState(
-              assetToken: token,
-              provenances: token.provenance,
-              owners: owners,
-            ),
-          );
-          if (event.withArtwork && token.isFeralfile) {
-            final artwork =
-                await injector<FeralFileService>().getArtwork(token.tokenId!);
-            final exhibition = await injector<FeralFileService>()
-                .getExhibitionFromTokenID(token.tokenId!);
-            emit(
-              ArtworkDetailState(
-                assetToken: token,
-                provenances: token.provenance,
-                owners: owners,
-                artwork: artwork,
-                exhibition: exhibition,
-              ),
-            );
-          }
-        }
         return;
       } else {
         final assetToken = await _assetTokenDao.findAssetTokenByIdAndOwner(
@@ -106,7 +70,6 @@ class ArtworkDetailBloc extends AuBloc<ArtworkDetailEvent, ArtworkDetailState> {
             }
           }
         }
-        await _indexHistory(event.identity.id);
         if (event.withArtwork && assetToken != null && assetToken.isFeralfile) {
           final artwork = await injector<FeralFileService>()
               .getArtwork(assetToken.tokenId!);
@@ -129,20 +92,5 @@ class ArtworkDetailBloc extends AuBloc<ArtworkDetailEvent, ArtworkDetailState> {
   final AssetTokenDao _assetTokenDao;
   final AssetDao _assetDao;
   final ProvenanceDao _provenanceDao;
-  final IndexerService _indexerService;
   final TokenDao _tokenDao;
-  final IndexerApi _indexerApi;
-
-  Future<void> _indexHistory(String tokenId) async {
-    try {
-      await _indexerApi.indexTokenHistory({'indexID': tokenId});
-    } catch (e) {
-      log.info('index history error: $e');
-      unawaited(
-        Sentry.captureException(
-          '[ArtworkDetailBloc] index history error: $e',
-        ),
-      );
-    }
-  }
 }

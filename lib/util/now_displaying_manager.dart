@@ -1,13 +1,9 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/ff_artwork.dart';
-import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
-import 'package:autonomy_flutter/nft_collection/models/models.dart';
-import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/screen/dailies_work/dailies_work_bloc.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/service/feralfile_service.dart';
@@ -40,17 +36,10 @@ class NowDisplayingManager {
     _streamController.add(status);
     _onDisconnectTimer?.cancel();
     if (status is DeviceDisconnected) {
-      _onDisconnectTimer = Timer(const Duration(seconds: 5), () {
-        shouldShowNowDisplayingOnDisconnect.value = false;
-      });
+      _onDisconnectTimer = Timer(const Duration(seconds: 5), () {});
     } else if (status is ConnectionLost) {
-      _onDisconnectTimer = Timer(const Duration(seconds: 10), () {
-        shouldShowNowDisplayingOnDisconnect.value = false;
-      });
-    } else if (status is NowDisplayingSuccess) {
-      shouldShowNowDisplayingOnDisconnect.value = true;
-    }
-    nowDisplayingVisibility.value = true;
+      _onDisconnectTimer = Timer(const Duration(seconds: 10), () {});
+    } else if (status is NowDisplayingSuccess) {}
     injector<NavigationService>().hideDeviceSettings();
   }
 
@@ -126,8 +115,7 @@ class NowDisplayingManager {
       if (tokenId == null) {
         return null;
       }
-      final assetToken = await _fetchAssetToken(tokenId);
-      return NowDisplayingObject(assetToken: assetToken);
+      return NowDisplayingObject();
     } else {
       if (status.displayKey == CastDailyWorkRequest.displayKey) {
         return NowDisplayingObject(
@@ -136,11 +124,5 @@ class NowDisplayingManager {
       }
     }
     return null;
-  }
-
-  Future<AssetToken?> _fetchAssetToken(String tokenId) async {
-    final request = QueryListTokensRequest(ids: [tokenId]);
-    final assetToken = await injector<IndexerService>().getNftTokens(request);
-    return assetToken.isNotEmpty ? assetToken.first : null;
   }
 }

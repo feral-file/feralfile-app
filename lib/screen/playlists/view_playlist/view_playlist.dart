@@ -22,7 +22,6 @@ import 'package:autonomy_flutter/util/token_ext.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
-import 'package:autonomy_flutter/view/cast_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/view/stream_common_widget.dart';
 import 'package:autonomy_flutter/view/title_text.dart';
@@ -237,36 +236,6 @@ class _ViewPlaylistScreenState extends State<ViewPlaylistScreen> {
               ),
             ),
           ),
-        ],
-        if (_getDisplayKey(playList) != null) ...[
-          FFCastButton(
-            shouldCheckSubscription: playList.requiredPremiumToDisplay,
-            displayKey: _getDisplayKey(playList)!,
-            onDeviceSelected: (device) async {
-              final listTokenIds = playList.tokenIDs;
-              if (listTokenIds.isEmpty) {
-                log.info('playList is empty');
-                return;
-              }
-              final duration = speedValues.values.first;
-              final listPlayArtwork = listTokenIds
-                  .map((e) => PlayArtworkV2(
-                      token: CastAssetToken(id: e), duration: duration))
-                  .toList();
-              final completer = Completer<void>();
-              _canvasDeviceBloc.add(
-                CanvasDeviceCastListArtworkEvent(
-                  device,
-                  listPlayArtwork,
-                  onDone: () {
-                    completer.complete();
-                  },
-                ),
-              );
-              await completer.future;
-            },
-          ),
-          const SizedBox(width: 15),
         ],
       ];
 

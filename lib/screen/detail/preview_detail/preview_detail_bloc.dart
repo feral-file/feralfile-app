@@ -11,9 +11,7 @@ import 'dart:convert';
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_collection/database/dao/dao.dart';
-import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
 import 'package:autonomy_flutter/nft_collection/models/asset_token.dart';
-import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/screen/detail/preview_detail/preview_detail_state.dart';
 import 'package:autonomy_flutter/service/ethereum_service.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
@@ -27,20 +25,13 @@ class ArtworkPreviewDetailBloc
   ArtworkPreviewDetailBloc(
     this._assetTokenDao,
     this._ethereumService,
-    this._indexerService,
     this._assetDao,
   ) : super(ArtworkPreviewDetailLoadingState()) {
     on<ArtworkPreviewDetailGetAssetTokenEvent>((event, emit) async {
       AssetToken? assetToken;
 
       if (event.useIndexer) {
-        final request = QueryListTokensRequest(
-          ids: [event.identity.id],
-        );
-        final tokens = await _indexerService.getNftTokens(request);
-        if (tokens.isNotEmpty) {
-          assetToken = tokens.first;
-        }
+        return;
       } else {
         assetToken = await _assetTokenDao.findAssetTokenByIdAndOwner(
           event.identity.id,
@@ -98,7 +89,6 @@ class ArtworkPreviewDetailBloc
 
   final AssetTokenDao _assetTokenDao;
   final EthereumService _ethereumService;
-  final IndexerService _indexerService;
   final AssetDao _assetDao;
 
   Future<String?> _fetchFeralFileFramePreview(AssetToken token) async {
