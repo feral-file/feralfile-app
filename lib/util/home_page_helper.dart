@@ -16,6 +16,7 @@ import 'package:autonomy_flutter/service/network_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
+import 'package:autonomy_flutter/model/device/device_status.dart';
 import 'package:autonomy_flutter/shared.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
@@ -58,6 +59,7 @@ class HomePageHelper {
   StreamSubscription<FGBGType>? _fgbgSubscription;
   bool _isBackground = false;
   bool _isShowingOfflineDialog = false;
+  bool _isShowingUpdateDialog = false;
 
   final _remoteConfig = injector<RemoteConfigService>();
   final _networkService = injector<NetworkService>();
@@ -79,6 +81,13 @@ class HomePageHelper {
           final compatibility = await injector<VersionService>()
               .checkDeviceVersionCompatibility();
           log.info('Compatibility check result: $compatibility');
+
+          // Check for firmware update
+          final deviceStatus =
+              BluetoothDeviceManager().castingDeviceStatus.value;
+          if (deviceStatus != null && context.mounted) {
+            _checkAndShowFirmwareUpdateDialog(context, deviceStatus);
+          }
         } else {
           log.info('Casting device is not alive or not set');
         }
@@ -313,5 +322,43 @@ class HomePageHelper {
 
     // refresh stale/missing addresses when app resume
     unawaited(_refreshAddressesNeedingReindex());
+  }
+
+  Future<void> _checkAndShowFirmwareUpdateDialog(
+    BuildContext context,
+    DeviceStatus deviceStatus,
+  ) async {
+    if (_isShowingUpdateDialog) return;
+
+    final latestVersion = deviceStatus.latestVersion;
+    final installedVersion = deviceStatus.installedVersion;
+
+    if (latestVersion == null || installedVersion == null) return;
+    if (latestVersion == installedVersion) return;
+
+    final dismissedVersion =
+        injector<ConfigurationService>().getDismissedFirmwareUpdateVersion();
+
+    if (latestVersion == dismissedVersion) return;
+
+    _showFirmwareUpdateDialog(context, deviceStatus);
+  }
+
+  Future<void> _showFirmwareUpdateDialog(
+    BuildContext context,
+    DeviceStatus deviceStatus,
+  ) async {
+    if (_isShowingUpdateDialog || !context.mounted) return;
+
+    _isShowingUpdateDialog = true;
+
+    try {
+      await injector<NavigationService>().showFirmwareUpdateDialog(
+        deviceStatus,
+        saveDismissedOnCancel: true,
+      );
+    } finally {
+      _isShowingUpdateDialog = false;
+    }
   }
 }

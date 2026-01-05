@@ -1469,6 +1469,9 @@ class BluetoothConnectedDeviceConfigState
   void _showOption(BuildContext context, CanvasDeviceState state) {
     final isDeviceAlive = selectedDevice.isAlive;
     final isQEMU = selectedDevice.isQEMU;
+    final hasUpdateAvailable = deviceStatus?.latestVersion != null &&
+        deviceStatus?.installedVersion != null &&
+        deviceStatus!.latestVersion != deviceStatus!.installedVersion;
 
     final options = [
       if (isDeviceAlive & !isQEMU)
@@ -1492,6 +1495,19 @@ class BluetoothConnectedDeviceConfigState
           ),
           onTap: () {
             _onRebootSelected();
+          },
+        ),
+      // Update to latest version
+      if (isDeviceAlive & !isQEMU && hasUpdateAvailable)
+        OptionItem(
+          title: 'Update to Latest Version',
+          icon: const Icon(
+            Icons.system_update,
+            size: 24,
+          ),
+          onTap: () {
+            Navigator.pop(context); // Close drawer first
+            _onUpdateToLatestVersionSelected();
           },
         ),
       if (!isQEMU)
@@ -1851,6 +1867,23 @@ class BluetoothConnectedDeviceConfigState
   void _onConfigureWiFiSelected() {
     injector<NavigationService>().navigateTo(AppRouter.scanWifiNetworkPage,
         arguments: ScanWifiNetworkPagePayload(selectedDevice, onWifiSelected));
+  }
+
+  Future<void> _onUpdateToLatestVersionSelected() async {
+    if (deviceStatus == null) {
+      return;
+    }
+
+    final result = await injector<NavigationService>().showFirmwareUpdateDialog(
+      deviceStatus!,
+      saveDismissedOnCancel: false,
+    );
+
+    if (result == true) {
+      log.info('Update to latest version started');
+    } else if (result == false) {
+      log.info('Update to latest version cancelled');
+    }
   }
 }
 

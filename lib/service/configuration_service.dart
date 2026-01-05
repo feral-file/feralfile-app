@@ -135,6 +135,10 @@ abstract class ConfigurationService {
   Future<void> setLastUpdateChangeAnchor({
     required List<AddressAnchor> addressAnchors,
   });
+
+  String? getDismissedFirmwareUpdateVersion();
+
+  Future<void> setDismissedFirmwareUpdateVersion(String? version);
 }
 
 class ConfigurationServiceImpl implements ConfigurationService {
@@ -231,6 +235,8 @@ class ConfigurationServiceImpl implements ConfigurationService {
 
   static const String KEY_HAS_SEEN_PLAY_TO_FF1_TOOLTIP =
       'has_seen_play_to_ff1_tooltip';
+  static const String KEY_DISMISSED_FIRMWARE_UPDATE_VERSION =
+      'dismissed_firmware_update_version';
 
   final SharedPreferences _preferences;
 
@@ -591,6 +597,20 @@ class ConfigurationServiceImpl implements ConfigurationService {
         KEY_LAST_UPDATE_CHANGE_ANCHOR,
         addressAnchors.map((e) => jsonEncode(e.toJson())).toList(),
       );
+
+  @override
+  String? getDismissedFirmwareUpdateVersion() =>
+      _preferences.getString(KEY_DISMISSED_FIRMWARE_UPDATE_VERSION);
+
+  @override
+  Future<void> setDismissedFirmwareUpdateVersion(String? version) async {
+    if (version == null) {
+      await _preferences.remove(KEY_DISMISSED_FIRMWARE_UPDATE_VERSION);
+      return;
+    }
+    await _preferences.setString(
+        KEY_DISMISSED_FIRMWARE_UPDATE_VERSION, version);
+  }
 }
 
 enum ConflictAction {
