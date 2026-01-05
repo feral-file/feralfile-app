@@ -176,8 +176,8 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                       unawaited(
                         UIHelper.showInfoDialog(
                           context,
-                          'Failed to connect to wifi',
-                          'The Portal failed to connect to ${e.ssid}',
+                          'Couldn\'t connect to Wi‑Fi',
+                          'FF1 couldn\'t connect to ${e.ssid}. Check the password and signal strength, then try again.',
                         ),
                       );
                     } on FFBluetoothResponseError catch (e) {
@@ -193,7 +193,7 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                             context,
                             e.title,
                             e.message,
-                            closeButton: 'Connect support',
+                            closeButton: 'Contact support',
                             onClose: () async {
                               injector<NavigationService>()
                                   .showCustomerSupport();
@@ -228,8 +228,8 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                       unawaited(
                         UIHelper.showInfoDialog(
                           context,
-                          'Wi-Fi setup failed',
-                          'Wi-Fi setup couldn\'t be completed. Check your connection and attempt the setup again',
+                          'Can\'t reach FF1',
+                          'FF1 didn\'t respond in time. Make sure FF1 is nearby and try again.',
                         ).then((_) {
                           widget.payload.onSubmitted?.call(null, e);
                         }),
@@ -244,8 +244,12 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                       unawaited(
                         UIHelper.showInfoDialog(
                           context,
-                          'Wi-Fi setup failed',
-                          'Wi-Fi setup couldn\'t be completed. Check your connection and attempt the setup again',
+                          'Wi‑Fi setup failed',
+                          'FF1 couldn\'t complete Wi‑Fi setup because of an unexpected issue. Contact support for help.',
+                          closeButton: 'Contact support',
+                          onClose: () async {
+                            injector<NavigationService>().showCustomerSupport();
+                          },
                         ).then((_) {
                           widget.payload.onSubmitted?.call(null, e);
                         }),
