@@ -33,6 +33,9 @@ import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/device_info_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
+import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
+import 'package:autonomy_flutter/service/configuration_service.dart';
+import 'package:autonomy_flutter/model/device/device_status.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_ext.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/constants.dart';
@@ -46,6 +49,7 @@ import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/now_displaying/now_display_setting.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
+import 'package:autonomy_flutter/theme/app_color.dart';
 
 class NavigationService {
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -991,5 +995,116 @@ class NavigationService {
       return '***';
     }
     return '${address.substring(0, 6)}...${address.substring(address.length - 4)}';
+  }
+
+  /// Show firmware update dialog with engineering voice compliant content.
+  /// Returns true if user tapped Update, false if Cancel, null if dialog was dismissed.
+  Future<bool?> showFirmwareUpdateDialog(
+    DeviceStatus deviceStatus, {
+    bool saveDismissedOnCancel = true,
+  }) async {
+    if (!mounted) {
+      return null;
+    }
+
+    final latestVersion = deviceStatus.latestVersion ?? 'latest version';
+    final installedVersion = deviceStatus.installedVersion ?? 'current version';
+
+    final result = await UIHelper.showCenterDialog(
+      context,
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Update available',
+            style: AppTypography.body(context).bold.white,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'A new firmware version is available for your FF1. '
+            'Current version: $installedVersion. '
+            'Latest version: $latestVersion. '
+            'This update may take 5–10 minutes and your device will restart.',
+            style: AppTypography.body(context).white,
+          ),
+          const SizedBox(height: 36),
+          Row(
+            children: [
+              Expanded(
+                child: PrimaryAsyncButton(
+                  text: 'Cancel',
+                  textColor: AppColor.white,
+                  color: Colors.transparent,
+                  borderColor: AppColor.white,
+                  onTap: () async {
+                    if (saveDismissedOnCancel) {
+                      await injector<ConfigurationService>()
+                          .setDismissedFirmwareUpdateVersion(
+                        deviceStatus.latestVersion,
+                      );
+                    }
+                    goBack(result: false);
+                  },
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: PrimaryAsyncButton(
+                  text: 'Update',
+                  textColor: AppColor.white,
+                  borderColor: AppColor.white,
+                  color: Colors.transparent,
+                  onTap: () async {
+                    final device =
+                        BluetoothDeviceManager().castingBluetoothDevice;
+                    if (device != null && mounted) {
+                      try {
+                        await injector<CanvasClientServiceV2>()
+                            .updateToLatestVersion(device);
+                        if (mounted) {
+                          goBack(result: true);
+                          // Show success message
+                          UIHelper.showDialog<void>(
+                            context,
+                            'Update started',
+                            Text(
+                              'Your FF1 is updating to the latest version. '
+                              'This may take 5–10 minutes.',
+                              style: AppTypography.body(context).white,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        log.warning('Failed to update firmware: $e');
+                        if (mounted) {
+                          goBack();
+                          UIHelper.showDialog<void>(
+                            context,
+                            'Update failed',
+                            Text(
+                              'We couldn\'t start the update. '
+                              'Check your connection and try again.',
+                              style: AppTypography.body(context).white,
+                            ),
+                          );
+                        }
+                      }
+                    } else {
+                      goBack(result: false);
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    // Cast result to bool? (false for Cancel, true for Update, null for dismissed)
+    if (result is bool) {
+      return result;
+    }
+    return null;
   }
 }
