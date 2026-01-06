@@ -193,7 +193,7 @@ class HandleBluetoothDeviceScanDeeplinkScreenState
             children: [
               Text(
                 'Connecting via Bluetooth...',
-                style: AppTypography.h2(context),
+                style: AppTypography.h2(context).white,
               ),
               SizedBox(height: LayoutConstants.space5),
               Text(
