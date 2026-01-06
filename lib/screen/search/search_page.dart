@@ -79,57 +79,82 @@ class _SearchPageState extends State<SearchPage> {
           backgroundColor: AppColor.auGreyBackground,
           statusBarColor: AppColor.auGreyBackground,
         ),
-        body: Column(
-          children: [
-            Padding(
-              padding: EdgeInsets.all(LayoutConstants.pageHorizontalDefault),
-              child: search_widgets.SearchBar(
-                controller: _searchController,
-                onSubmitted: _onSearchSubmitted,
-              ),
-            ),
-            BlocBuilder<MeiliSearchBloc, MeiliSearchState>(
-              bloc: _bloc,
-              builder: (context, state) {
-                return FilterBar(
+        body: BlocBuilder<MeiliSearchBloc, MeiliSearchState>(
+          bloc: _bloc,
+          builder: (context, state) {
+            final resultsContent = Column(
+              children: [
+                FilterBar(
                   selectedFilterType: state.filterType,
                   onFilterTypeChanged: _onFilterTypeChanged,
                   hasChannels: state.channels.isNotEmpty,
                   hasPlaylists: state.playlists.isNotEmpty,
                   hasItems: state.items.isNotEmpty,
-                );
-              },
-            ),
-            Expanded(
-              child: BlocBuilder<MeiliSearchBloc, MeiliSearchState>(
-                bloc: _bloc,
-                builder: (context, state) {
-                  if (state.isLoading && !state.hasResults) {
-                    return const Center(
-                      child: LoadingWidget(),
-                    );
-                  }
+                ),
+                Expanded(
+                  child: _buildResultsSection(context, state),
+                ),
+              ],
+            );
 
-                  if (state.hasError) {
-                    return _buildErrorView(context, state);
-                  }
+            final resultsWithOverlay = state.isLoading
+                ? Stack(
+                    children: [
+                      resultsContent,
+                      Positioned.fill(
+                        child: ColoredBox(
+                          color:
+                              AppColor.auGreyBackground.withValues(alpha: 0.6),
+                          child: Center(
+                            child: LoadingWidget(
+                              backgroundColor: AppColor.auGreyBackground
+                                  .withValues(alpha: 0.6),
+                              text: 'Searching...',
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : resultsContent;
 
-                  if (!state.hasResults && state.query.isNotEmpty) {
-                    return _buildEmptyView(context);
-                  }
-
-                  if (state.query.isEmpty) {
-                    return _buildInitialView(context);
-                  }
-
-                  return _buildResultsView(context, state);
-                },
-              ),
-            ),
-          ],
+            return Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.all(
+                    LayoutConstants.pageHorizontalDefault,
+                  ),
+                  child: search_widgets.SearchBar(
+                    controller: _searchController,
+                    onSubmitted: _onSearchSubmitted,
+                  ),
+                ),
+                Expanded(child: resultsWithOverlay),
+              ],
+            );
+          },
         ),
       ),
     );
+  }
+
+  Widget _buildResultsSection(
+    BuildContext context,
+    MeiliSearchState state,
+  ) {
+    if (state.hasError) {
+      return _buildErrorView(context, state);
+    }
+
+    if (!state.hasResults && state.query.isNotEmpty) {
+      return _buildEmptyView(context);
+    }
+
+    if (state.query.isEmpty) {
+      return _buildInitialView(context);
+    }
+
+    return _buildResultsView(context, state);
   }
 
   Widget _buildInitialView(BuildContext context) {
@@ -215,7 +240,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _buildResultsView(BuildContext context, MeiliSearchState state) {
-    // Filter client-side based on filterType
+    // Base content: filter client-side based on filterType
     switch (state.filterType) {
       case SearchFilterType.channels:
         return _buildChannelsView(context, state);

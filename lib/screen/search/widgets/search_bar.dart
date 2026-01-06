@@ -11,7 +11,7 @@ import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class SearchBar extends StatelessWidget {
+class SearchBar extends StatefulWidget {
   const SearchBar({
     required this.controller,
     required this.onSubmitted,
@@ -24,42 +24,79 @@ class SearchBar extends StatelessWidget {
   final String? hintText;
 
   @override
+  State<SearchBar> createState() => _SearchBarState();
+}
+
+class _SearchBarState extends State<SearchBar> {
+  late final FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         border: Border.all(
-          color: const Color(0xFF4A4A4A),
+          color: AppColor.auGrey,
           width: 1,
         ),
+        borderRadius: BorderRadius.circular(5),
       ),
-      padding: EdgeInsets.all(LayoutConstants.space5),
+      padding: EdgeInsets.all(LayoutConstants.space2),
       child: Row(
         children: [
           Expanded(
             child: TextField(
-              controller: controller,
+              focusNode: _focusNode,
+              controller: widget.controller,
               style: AppTypography.body(context).white,
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
-                hintText: hintText ?? '|Search',
+                hintText: widget.hintText ?? 'Search',
                 hintStyle: AppTypography.body(context).copyWith(
-                  color: const Color(0xFFB7B7B7),
+                  color: AppColor.auGrey,
                 ),
+                //boder radius 10
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
+                contentPadding: EdgeInsets.all(LayoutConstants.space2),
                 isDense: true,
               ),
-              onSubmitted: onSubmitted,
+              onSubmitted: (value) {
+                widget.onSubmitted(value);
+              },
             ),
           ),
           SizedBox(width: LayoutConstants.space5),
-          SvgPicture.asset(
-            'assets/images/search.svg',
-            width: LayoutConstants.iconSizeMedium,
-            height: LayoutConstants.iconSizeMedium,
-            colorFilter: const ColorFilter.mode(
-              AppColor.white,
-              BlendMode.srcIn,
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              _focusNode.unfocus();
+              widget.onSubmitted(widget.controller.text);
+            },
+            child: SizedBox(
+              width: LayoutConstants.minTouchTarget,
+              height: LayoutConstants.minTouchTarget,
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/images/search.svg',
+                  width: LayoutConstants.iconSizeMedium,
+                  height: LayoutConstants.iconSizeMedium,
+                  colorFilter: const ColorFilter.mode(
+                    AppColor.white,
+                    BlendMode.srcIn,
+                  ),
+                ),
+              ),
             ),
           ),
         ],
