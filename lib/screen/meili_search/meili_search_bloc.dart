@@ -17,12 +17,24 @@ import 'package:autonomy_flutter/util/latest_async.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+enum SearchFilterType {
+  channels,
+  playlists,
+  items,
+}
+
 abstract class MeiliSearchEvent {}
 
-class MeiliSearchQueryChanged extends MeiliSearchEvent {
-  final List<String> queries;
+class MeiliSearchQuerySubmitted extends MeiliSearchEvent {
+  final String query;
 
-  MeiliSearchQueryChanged(this.queries);
+  MeiliSearchQuerySubmitted(this.query);
+}
+
+class MeiliSearchFilterTypeChanged extends MeiliSearchEvent {
+  final SearchFilterType filterType;
+
+  MeiliSearchFilterTypeChanged(this.filterType);
 }
 
 class MeiliSearchCleared extends MeiliSearchEvent {}
@@ -31,6 +43,7 @@ class MeiliSearchLoadMore extends MeiliSearchEvent {}
 
 class MeiliSearchState {
   final String query;
+  final SearchFilterType filterType;
   final List<Channel> channels;
   final List<DP1Call> playlists;
   final List<DP1Item> items;
@@ -46,6 +59,7 @@ class MeiliSearchState {
 
   MeiliSearchState({
     this.query = '',
+    this.filterType = SearchFilterType.channels,
     this.channels = const [],
     this.playlists = const [],
     this.items = const [],
@@ -61,6 +75,7 @@ class MeiliSearchState {
 
   MeiliSearchState copyWith({
     String? query,
+    SearchFilterType? filterType,
     List<Channel>? channels,
     List<DP1Call>? playlists,
     List<DP1Item>? items,
@@ -75,6 +90,7 @@ class MeiliSearchState {
   }) {
     return MeiliSearchState(
       query: query ?? this.query,
+      filterType: filterType ?? this.filterType,
       channels: channels ?? this.channels,
       playlists: playlists ?? this.playlists,
       items: items ?? this.items,
@@ -103,7 +119,8 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
       LatestAsync<MeiliSearchResult>();
 
   MeiliSearchBloc(this._meiliSearchService) : super(MeiliSearchState()) {
-    on<MeiliSearchQueryChanged>(_onQueryChanged);
+    on<MeiliSearchQuerySubmitted>(_onQuerySubmitted);
+    on<MeiliSearchFilterTypeChanged>(_onFilterTypeChanged);
     on<MeiliSearchCleared>(_onCleared);
     // on<MeiliSearchLoadMore>(_onLoadMore);
   }
@@ -114,13 +131,25 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
     super.add(event);
   }
 
-  Future<void> _onQueryChanged(
-    MeiliSearchQueryChanged event,
+  Future<void> _onQuerySubmitted(
+    MeiliSearchQuerySubmitted event,
     Emitter<MeiliSearchState> emit,
   ) async {
     final start = DateTime.now();
+    final query = event.query.trim();
+
+    if (query.isEmpty) {
+      emit(state.copyWith(
+        query: '',
+        isLoading: false,
+        hasError: false,
+        errorMessage: null,
+      ));
+      return;
+    }
+
     emit(state.copyWith(
-      query: event.queries.join(' ').trim(),
+      query: query,
       isLoading: true,
       hasError: false,
       errorMessage: null,
@@ -128,11 +157,10 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
 
     try {
       _currentOffset = 0;
-      // Normalize queries and allow empty to fetch defaults
-      final normalizedQueries = event.queries.map((e) => e.trim()).toList();
+      // Always call searchAll() to search across all indexes
       await _latestSearch.run(
         () async => _meiliSearchService.searchAll(
-          texts: normalizedQueries,
+          texts: [query],
           limit: _pageSize,
           offset: _currentOffset,
         ),
@@ -140,21 +168,51 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
           double _maxOrZero(List<double> values) =>
               values.isEmpty ? 0.0 : values.reduce(math.max);
 
-          emit(state.copyWith(
-            channels: result.channels,
-            playlists: result.playlists,
-            items: result.items,
-            channelsTopScore: _maxOrZero(result.channelsRankingScore),
-            playlistsTopScore: _maxOrZero(result.playlistsRankingScore),
-            itemsTopScore: _maxOrZero(result.itemsRankingScore),
-            isLoading: false,
-            totalHits: result.totalHits,
-            hasMoreResults: result.totalHits > _pageSize,
-          ));
+          final channels = result.channels;
+          final playlists = result.playlists;
+          final items = result.items;
+
+          final channelsTop = _maxOrZero(result.channelsRankingScore);
+          final playlistsTop = _maxOrZero(result.playlistsRankingScore);
+          final itemsTop = _maxOrZero(result.itemsRankingScore);
+
+          // Pick filter type with highest topScore among non-empty sections
+          var nextFilterType = state.filterType;
+          var bestScore = -1.0;
+
+          void considerType(
+            SearchFilterType type,
+            List<dynamic> list,
+            double score,
+          ) {
+            if (list.isNotEmpty && score >= 0 && score >= bestScore) {
+              bestScore = score;
+              nextFilterType = type;
+            }
+          }
+
+          considerType(SearchFilterType.channels, channels, channelsTop);
+          considerType(SearchFilterType.playlists, playlists, playlistsTop);
+          considerType(SearchFilterType.items, items, itemsTop);
+
+          emit(
+            state.copyWith(
+              channels: channels,
+              playlists: playlists,
+              items: items,
+              channelsTopScore: channelsTop,
+              playlistsTopScore: playlistsTop,
+              itemsTopScore: itemsTop,
+              filterType: nextFilterType,
+              isLoading: false,
+              totalHits: result.totalHits,
+              hasMoreResults: result.totalHits > _pageSize,
+            ),
+          );
 
           final duration = DateTime.now().difference(start);
           log.info(
-              '_onQueryChanged MeiliSearch queries "${event.queries}" took ${duration.inMilliseconds} ms');
+              '_onQuerySubmitted MeiliSearch query "$query" took ${duration.inMilliseconds} ms');
 
           _currentOffset = _pageSize;
         },
@@ -176,7 +234,17 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
       ));
     }
 
-    log.info('_onQueryChanged MeiliSearch finished');
+    log.info('_onQuerySubmitted MeiliSearch finished');
+  }
+
+  Future<void> _onFilterTypeChanged(
+    MeiliSearchFilterTypeChanged event,
+    Emitter<MeiliSearchState> emit,
+  ) async {
+    // Only update filterType, no need to re-search since we already have all results
+    emit(state.copyWith(
+      filterType: event.filterType,
+    ));
   }
 
   Future<void> _onCleared(

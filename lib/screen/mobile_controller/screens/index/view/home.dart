@@ -111,6 +111,17 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
             isNowDisplayingBarExpanded.value = false;
           },
         ),
+      // Search
+      OptionItem(
+        title: 'Search',
+        icon: const Icon(
+          Icons.search,
+        ),
+        onTap: () {
+          injector<NavigationService>().navigateTo(AppRouter.searchPage);
+          isNowDisplayingBarExpanded.value = false;
+        },
+      ),
       // FF1 Setting
       OptionItem(
         title: 'FF1 Art Computer',
