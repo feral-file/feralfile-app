@@ -361,7 +361,26 @@ class TvCastServiceImpl extends BaseTvCastService {
         }
         throw error;
       });
-      return (result['message'] as Map).cast<String, dynamic>();
+
+      // Convert result to Map if it's not already
+      final resultMap = result is Map<String, dynamic>
+          ? result
+          : Map<String, dynamic>.from(result as Map);
+
+      if (!resultMap.containsKey('message')) {
+        return resultMap;
+      }
+
+      // Extract message field
+      var message = resultMap['message'];
+      while (message is Map<String, dynamic> && message.containsKey('message')) {
+        message = message['message'];
+      }
+
+      // Convert message to Map<String, dynamic>
+      return message is Map<String, dynamic>
+          ? message
+          : Map<String, dynamic>.from(message as Map);
     } catch (e) {
       unawaited(Sentry.captureException(e));
       if (shouldShowError) {
