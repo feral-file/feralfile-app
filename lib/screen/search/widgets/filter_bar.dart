@@ -59,7 +59,7 @@ class FilterBar extends StatelessWidget {
       }
       tabs.add(
         _FilterTab(
-          label: 'Playlist Items',
+          label: 'Works',
           isSelected: selectedFilterType == SearchFilterType.items,
           onTap: () => onFilterTypeChanged(SearchFilterType.items),
         ),
@@ -108,4 +108,3 @@ class _FilterTab extends StatelessWidget {
     );
   }
 }
-

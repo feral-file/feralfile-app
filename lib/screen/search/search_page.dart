@@ -15,8 +15,8 @@ import 'package:autonomy_flutter/screen/search/widgets/search_bar.dart'
     as search_widgets;
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/view/dp1_playlist_grid_view.dart';
 import 'package:autonomy_flutter/view/loading.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
@@ -24,8 +24,21 @@ import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+class SearchPagePayload {
+  const SearchPagePayload({
+    this.autoFocus = false,
+  });
+
+  final bool autoFocus;
+}
+
 class SearchPage extends StatefulWidget {
-  const SearchPage({super.key});
+  const SearchPage({
+    super.key,
+    required this.payload,
+  });
+
+  final SearchPagePayload payload;
 
   @override
   State<SearchPage> createState() => _SearchPageState();
@@ -105,12 +118,8 @@ class _SearchPageState extends State<SearchPage> {
                         child: ColoredBox(
                           color:
                               AppColor.auGreyBackground.withValues(alpha: 0.6),
-                          child: Center(
-                            child: LoadingWidget(
-                              backgroundColor: AppColor.auGreyBackground
-                                  .withValues(alpha: 0.6),
-                              text: 'Searching...',
-                            ),
+                          child: const Center(
+                            child: LoadingWidget(),
                           ),
                         ),
                       ),
@@ -127,6 +136,7 @@ class _SearchPageState extends State<SearchPage> {
                   child: search_widgets.SearchBar(
                     controller: _searchController,
                     onSubmitted: _onSearchSubmitted,
+                    autoFocus: widget.payload.autoFocus,
                   ),
                 ),
                 Expanded(child: resultsWithOverlay),
@@ -165,7 +175,7 @@ class _SearchPageState extends State<SearchPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Search for channels, playlists, or items',
+              'Search for channels, playlists, or works',
               style: AppTypography.body(context).white,
               textAlign: TextAlign.center,
             ),
@@ -295,7 +305,7 @@ class _SearchPageState extends State<SearchPage> {
 
   Widget _buildItemsView(BuildContext context, MeiliSearchState state) {
     if (state.items.isEmpty) {
-      return _buildNoResultsForFilterView(context, 'playlist items');
+      return _buildNoResultsForFilterView(context, 'works');
     }
 
     final playlist = DP1CallExtension.fromItems(items: state.items);

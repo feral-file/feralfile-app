@@ -17,11 +17,13 @@ class SearchBar extends StatefulWidget {
     required this.onSubmitted,
     super.key,
     this.hintText,
+    this.autoFocus = false,
   });
 
   final TextEditingController controller;
   final void Function(String) onSubmitted;
   final String? hintText;
+  final bool autoFocus;
 
   @override
   State<SearchBar> createState() => _SearchBarState();
@@ -34,6 +36,15 @@ class _SearchBarState extends State<SearchBar> {
   void initState() {
     super.initState();
     _focusNode = FocusNode();
+
+    if (widget.autoFocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        _focusNode.requestFocus();
+      });
+    }
   }
 
   @override

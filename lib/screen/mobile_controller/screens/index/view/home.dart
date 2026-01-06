@@ -9,6 +9,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/pla
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/works/works_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/home_index_header.dart';
 import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
+import 'package:autonomy_flutter/screen/search/search_page.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
@@ -246,35 +247,38 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
             },
             child: Container(
               color: Colors.transparent,
-              child: Padding(
-                padding: EdgeInsets.all(LayoutConstants.space4),
+              width: LayoutConstants.minTouchTarget,
+              height: LayoutConstants.minTouchTarget,
+              child: Center(
                 child: SvgPicture.asset(
                   'assets/images/Drawer.svg',
-                  width: 22,
-                  height: 14,
-                  colorFilter: const ColorFilter.mode(
-                    AppColor.white,
-                    BlendMode.srcIn,
-                  ),
+                  width: LayoutConstants.iconSizeMedium,
+                  height: LayoutConstants.iconSizeMedium,
+                  colorFilter:
+                      const ColorFilter.mode(AppColor.white, BlendMode.srcIn),
                 ),
               ),
             ),
           );
           final searchButton = GestureDetector(
             onTap: () {
-              injector<NavigationService>().navigateTo(AppRouter.searchPage);
+              injector<NavigationService>().navigateTo(AppRouter.searchPage,
+                  arguments: SearchPagePayload(autoFocus: true));
               isNowDisplayingBarExpanded.value = false;
             },
             child: Container(
               color: Colors.transparent,
-              padding: EdgeInsets.all(LayoutConstants.space4),
-              child: SvgPicture.asset(
-                'assets/images/search.svg',
-                width: 14,
-                height: 14,
-                colorFilter: const ColorFilter.mode(
-                  AppColor.white,
-                  BlendMode.srcIn,
+              width: LayoutConstants.minTouchTarget,
+              height: LayoutConstants.minTouchTarget,
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/images/search.svg',
+                  width: LayoutConstants.iconSizeMedium,
+                  height: LayoutConstants.iconSizeMedium,
+                  colorFilter: const ColorFilter.mode(
+                    AppColor.white,
+                    BlendMode.srcIn,
+                  ),
                 ),
               ),
             ),
@@ -314,6 +318,7 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
                           ),
                           searchButton,
                           hamburgerButton,
+                          SizedBox(width: LayoutConstants.space3),
                         ],
                       ),
                     ],

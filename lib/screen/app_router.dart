@@ -553,11 +553,15 @@ class AppRouter {
         );
 
       case searchPage:
+        final payload = (settings.arguments as SearchPagePayload?) ??
+            const SearchPagePayload();
         return CupertinoPageRoute(
           settings: settings,
           builder: (context) => BlocProvider<MeiliSearchBloc>.value(
             value: injector<MeiliSearchBloc>(),
-            child: const SearchPage(),
+            child: SearchPage(
+              payload: payload,
+            ),
           ),
         );
 

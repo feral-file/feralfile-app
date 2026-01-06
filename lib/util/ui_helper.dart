@@ -19,7 +19,8 @@ import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel_item.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel/channel_list_row.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel/channel_list_row.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_item_card.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_list_row.dart';
@@ -1358,20 +1359,15 @@ class UIHelper {
     required List<ChannelReference> channelReferences,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
   }) {
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final channel = channelReferences[index];
-          return ColoredBox(
-            color: Colors.transparent,
-            child: ChannelHeader(
-              channelReference: channel,
-              maxLines: 3,
-            ),
-          );
-        },
-        childCount: channelReferences.length,
-      ),
+    return SliverList.builder(
+      itemBuilder: (context, index) {
+        final channelRef = channelReferences[index];
+        return ChannelListRow(
+          channelReference: channelRef,
+          carouselItems: const <DP1NowDisplayingItem>[],
+        );
+      },
+      itemCount: channelReferences.length,
     );
   }
 
