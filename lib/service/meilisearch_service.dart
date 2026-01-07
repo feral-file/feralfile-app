@@ -11,6 +11,7 @@ import 'dart:math' as math;
 
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/model/pair.dart';
+import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
@@ -27,6 +28,7 @@ enum MeiliSearchIndexType {
   channels,
   playlists,
   playlistItems,
+  nftTokens,
 }
 
 /// Service for searching across multiple MeiliSearch indexes using the official MeiliSearch SDK
@@ -108,6 +110,7 @@ class MeiliSearchService {
           MeiliSearchIndexType.channels,
           MeiliSearchIndexType.playlists,
           MeiliSearchIndexType.playlistItems,
+          MeiliSearchIndexType.nftTokens,
         ];
 
     // Build multi index query for all texts and specified indexes
@@ -116,19 +119,23 @@ class MeiliSearchService {
     for (final text in normalizedTexts) {
       for (final indexType in indexesToSearch) {
         String indexUid;
-        String attributeToRetrieve;
+        List<String>? attributesToRetrieve;
         switch (indexType) {
           case MeiliSearchIndexType.channels:
             indexUid = '${prefix}_channels';
-            attributeToRetrieve = 'channel';
+            attributesToRetrieve = ['channel'];
             break;
           case MeiliSearchIndexType.playlists:
             indexUid = '${prefix}_playlists';
-            attributeToRetrieve = 'playlist';
+            attributesToRetrieve = ['playlist'];
             break;
           case MeiliSearchIndexType.playlistItems:
             indexUid = '${prefix}_playlist_items';
-            attributeToRetrieve = 'playlistItem';
+            attributesToRetrieve = ['playlistItem'];
+            break;
+          case MeiliSearchIndexType.nftTokens:
+            indexUid = '${prefix}_nft_tokens';
+            attributesToRetrieve = null; // Retrieve all attributes
             break;
         }
 
@@ -139,7 +146,7 @@ class MeiliSearchService {
             limit: limit,
             offset: 0,
             showRankingScore: true,
-            attributesToRetrieve: [attributeToRetrieve],
+            attributesToRetrieve: attributesToRetrieve,
           ),
         );
       }
@@ -169,6 +176,7 @@ class MeiliSearchService {
     final channelsRaw = indexUidToHits['${prefix}_channels'] ?? const [];
     final playlistsRaw = indexUidToHits['${prefix}_playlists'] ?? const [];
     final itemsRaw = indexUidToHits['${prefix}_playlist_items'] ?? const [];
+    final nftTokensRaw = indexUidToHits['${prefix}_nft_tokens'] ?? const [];
 
     // Parse with scores and create unified list for sorting
     final allChannelPairs = channelsRaw.map((map) {
@@ -189,6 +197,14 @@ class MeiliSearchService {
           Map<String, dynamic>.from(map['playlistItem'] as Map));
       return Pair<DP1Item, double>(data, score);
     }).toList();
+    final allNftTokenPairs = nftTokensRaw.map((map) {
+      final score = (map['_rankingScore'] as num?)?.toDouble() ?? 0.0;
+      // Remove _rankingScore from the map before parsing
+      final hitData = Map<String, dynamic>.from(map);
+      hitData.remove('_rankingScore');
+      final data = AssetToken.fromMeilisearchResult(hitData);
+      return Pair<AssetToken, double>(data, score);
+    }).toList();
 
     // Get estimatedTotalHits for each index
     final channelsEstimatedTotal =
@@ -197,16 +213,21 @@ class MeiliSearchService {
         indexUidToEstimatedTotal['${prefix}_playlists'] ?? 0;
     final itemsEstimatedTotal =
         indexUidToEstimatedTotal['${prefix}_playlist_items'] ?? 0;
+    final nftTokensEstimatedTotal =
+        indexUidToEstimatedTotal['${prefix}_nft_tokens'] ?? 0;
 
-    // Separate back into channels, playlists, items with scores
+    // Separate back into channels, playlists, items, nftTokens with scores
     final channels = allChannelPairs.map((pair) => pair.first).toList();
     final playlists = allPlaylistPairs.map((pair) => pair.first).toList();
     final items = allItemPairs.map((pair) => pair.first).toList();
+    final nftTokens = allNftTokenPairs.map((pair) => pair.first).toList();
     final channelsRankingScore =
         allChannelPairs.map((pair) => pair.second).toList();
     final playlistsRankingScore =
         allPlaylistPairs.map((pair) => pair.second).toList();
     final itemsRankingScore = allItemPairs.map((pair) => pair.second).toList();
+    final nftTokensRankingScore =
+        allNftTokenPairs.map((pair) => pair.second).toList();
 
     // Calculate maxRankingScore for each index
     double _maxOrZero(List<double> values) =>
@@ -215,6 +236,7 @@ class MeiliSearchService {
     final channelsMaxScore = _maxOrZero(channelsRankingScore);
     final playlistsMaxScore = _maxOrZero(playlistsRankingScore);
     final itemsMaxScore = _maxOrZero(itemsRankingScore);
+    final nftTokensMaxScore = _maxOrZero(nftTokensRankingScore);
 
     // Create individual result objects for each index
     final channelsResult = MeiliSearchChannelResult(
@@ -238,10 +260,18 @@ class MeiliSearchService {
       offset: offset,
     );
 
+    final nftTokensResult = MeiliSearchNftTokensResult(
+      items: nftTokens,
+      maxRankingScore: nftTokensMaxScore,
+      totalHits: nftTokensEstimatedTotal,
+      offset: offset,
+    );
+
     final result = MeiliSearchResult(
       channels: channelsResult,
       playlists: playlistsResult,
       works: worksResult,
+      nftTokens: nftTokensResult,
     );
 
     final processingTimeMs = multiResult.results

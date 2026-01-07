@@ -5,6 +5,7 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
@@ -75,25 +76,48 @@ class MeiliSearchWorksResult extends MeiliSearchIndexResult<DP1Item> {
       );
 }
 
+/// Result for NFT Tokens index
+class MeiliSearchNftTokensResult extends MeiliSearchIndexResult<AssetToken> {
+  MeiliSearchNftTokensResult({
+    required super.items,
+    required super.maxRankingScore,
+    required super.totalHits,
+    required super.offset,
+  });
+
+  factory MeiliSearchNftTokensResult.empty() => MeiliSearchNftTokensResult(
+        items: [],
+        maxRankingScore: 0.0,
+        totalHits: 0,
+        offset: 0,
+      );
+}
+
 /// Result class for MeiliSearch operations
 class MeiliSearchResult {
   final MeiliSearchChannelResult channels;
   final MeiliSearchPlaylistResult playlists;
   final MeiliSearchWorksResult works;
+  final MeiliSearchNftTokensResult nftTokens;
 
   MeiliSearchResult({
     required this.channels,
     required this.playlists,
     required this.works,
+    required this.nftTokens,
   });
 
   factory MeiliSearchResult.empty() => MeiliSearchResult(
         channels: MeiliSearchChannelResult.empty(),
         playlists: MeiliSearchPlaylistResult.empty(),
         works: MeiliSearchWorksResult.empty(),
+        nftTokens: MeiliSearchNftTokensResult.empty(),
       );
 
   /// Get total hits across all indexes
   int get totalHits =>
-      channels.totalHits + playlists.totalHits + works.totalHits;
+      channels.totalHits +
+      playlists.totalHits +
+      works.totalHits +
+      nftTokens.totalHits;
 }

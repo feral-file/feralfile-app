@@ -18,6 +18,7 @@ class FilterBar extends StatelessWidget {
     required this.hasChannels,
     required this.hasPlaylists,
     required this.hasItems,
+    required this.hasNftTokens,
     super.key,
   });
 
@@ -26,6 +27,7 @@ class FilterBar extends StatelessWidget {
   final bool hasChannels;
   final bool hasPlaylists;
   final bool hasItems;
+  final bool hasNftTokens;
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +56,15 @@ class FilterBar extends StatelessWidget {
         const _FilterTypeOption(
           type: SearchFilterType.items,
           label: 'Works',
+        ),
+      );
+    }
+
+    if (hasNftTokens) {
+      options.add(
+        const _FilterTypeOption(
+          type: SearchFilterType.nftTokens,
+          label: 'Collections',
         ),
       );
     }

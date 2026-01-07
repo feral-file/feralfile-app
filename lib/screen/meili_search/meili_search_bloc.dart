@@ -8,6 +8,7 @@
 import 'dart:math' as math;
 
 import 'package:autonomy_flutter/au_bloc.dart';
+import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
@@ -21,6 +22,7 @@ enum SearchFilterType {
   channels,
   playlists,
   items,
+  nftTokens,
 }
 
 abstract class MeiliSearchEvent {}
@@ -84,12 +86,17 @@ class MeiliSearchState {
   List<Channel> get channels => result?.channels.items ?? const [];
   List<DP1Call> get playlists => result?.playlists.items ?? const [];
   List<DP1Item> get items => result?.works.items ?? const [];
+  List<AssetToken> get nftTokens => result?.nftTokens.items ?? const [];
   double get channelsTopScore => result?.channels.maxRankingScore ?? 0.0;
   double get playlistsTopScore => result?.playlists.maxRankingScore ?? 0.0;
   double get itemsTopScore => result?.works.maxRankingScore ?? 0.0;
+  double get nftTokensTopScore => result?.nftTokens.maxRankingScore ?? 0.0;
 
   bool get hasResults =>
-      channels.isNotEmpty || playlists.isNotEmpty || items.isNotEmpty;
+      channels.isNotEmpty ||
+      playlists.isNotEmpty ||
+      items.isNotEmpty ||
+      nftTokens.isNotEmpty;
 
   bool get isEmpty => !hasResults && !isLoading && query.isNotEmpty;
 }
@@ -154,10 +161,12 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
           final channels = result.channels.items;
           final playlists = result.playlists.items;
           final items = result.works.items;
+          final nftTokens = result.nftTokens.items;
 
           final channelsTop = result.channels.maxRankingScore;
           final playlistsTop = result.playlists.maxRankingScore;
           final itemsTop = result.works.maxRankingScore;
+          final nftTokensTop = result.nftTokens.maxRankingScore;
 
           // Pick filter type with highest topScore among non-empty sections
           var nextFilterType = state.filterType;
@@ -177,6 +186,7 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
           considerType(SearchFilterType.channels, channels, channelsTop);
           considerType(SearchFilterType.playlists, playlists, playlistsTop);
           considerType(SearchFilterType.items, items, itemsTop);
+          considerType(SearchFilterType.nftTokens, nftTokens, nftTokensTop);
 
           emit(
             state.copyWith(
@@ -245,6 +255,7 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
       MeiliSearchChannelResult? newChannelsResult;
       MeiliSearchPlaylistResult? newPlaylistsResult;
       MeiliSearchWorksResult? newWorksResult;
+      MeiliSearchNftTokensResult? newNftTokensResult;
 
       // Load more for requested indexes
       if (event.indexTypes.isEmpty) {
@@ -273,6 +284,10 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
             currentOffset = existingResult.works.offset;
             currentItemsCount = existingResult.works.items.length;
             totalHits = existingResult.works.totalHits;
+          case MeiliSearchIndexType.nftTokens:
+            currentOffset = existingResult.nftTokens.offset;
+            currentItemsCount = existingResult.nftTokens.items.length;
+            totalHits = existingResult.nftTokens.totalHits;
         }
 
         final nextOffset = currentOffset + currentItemsCount;
@@ -306,6 +321,10 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
         if (event.indexTypes.contains(MeiliSearchIndexType.playlistItems) &&
             indexToHasMore[MeiliSearchIndexType.playlistItems] == true) {
           newWorksResult = newResult.works;
+        }
+        if (event.indexTypes.contains(MeiliSearchIndexType.nftTokens) &&
+            indexToHasMore[MeiliSearchIndexType.nftTokens] == true) {
+          newNftTokensResult = newResult.nftTokens;
         }
       }
 
@@ -355,10 +374,26 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
             )
           : existingResult.works;
 
+      final mergedNftTokens = newNftTokensResult != null
+          ? MeiliSearchNftTokensResult(
+              items: [
+                ...existingResult.nftTokens.items,
+                ...newNftTokensResult.items,
+              ],
+              maxRankingScore: math.max(
+                existingResult.nftTokens.maxRankingScore,
+                newNftTokensResult.maxRankingScore,
+              ),
+              totalHits: newNftTokensResult.totalHits,
+              offset: newNftTokensResult.offset,
+            )
+          : existingResult.nftTokens;
+
       final mergedResult = MeiliSearchResult(
         channels: mergedChannels,
         playlists: mergedPlaylists,
         works: mergedWorks,
+        nftTokens: mergedNftTokens,
       );
 
       emit(

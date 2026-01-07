@@ -8,8 +8,10 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/layout_constants.dart';
+import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/screen/meili_search/meili_search_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
 import 'package:autonomy_flutter/screen/search/widgets/filter_bar.dart';
 import 'package:autonomy_flutter/screen/search/widgets/search_bar.dart'
     as search_widgets;
@@ -103,6 +105,7 @@ class _SearchPageState extends State<SearchPage> {
                   hasChannels: state.channels.isNotEmpty,
                   hasPlaylists: state.playlists.isNotEmpty,
                   hasItems: state.items.isNotEmpty,
+                  hasNftTokens: state.nftTokens.isNotEmpty,
                 ),
                 Expanded(
                   child: _buildResultsSection(context, state),
@@ -258,6 +261,8 @@ class _SearchPageState extends State<SearchPage> {
         return _buildPlaylistsView(context, state);
       case SearchFilterType.items:
         return _buildItemsView(context, state);
+      case SearchFilterType.nftTokens:
+        return _buildNftTokensView(context, state);
     }
   }
 
@@ -314,6 +319,28 @@ class _SearchPageState extends State<SearchPage> {
       playlist: playlist,
       physics: const AlwaysScrollableScrollPhysics(),
       showLoadingOnUpdating: false,
+    );
+  }
+
+  Widget _buildNftTokensView(BuildContext context, MeiliSearchState state) {
+    if (state.nftTokens.isEmpty) {
+      return _buildNoResultsForFilterView(context, 'collections');
+    }
+
+    final nowDisplayingItems = state.nftTokens.map((assetToken) {
+      final dp1Item =
+          DP1PlaylistItemExtension.fromAssetToken(token: assetToken);
+      return DP1NowDisplayingItem(dp1Item: dp1Item, assetToken: assetToken);
+    }).toList();
+
+    return CustomScrollView(
+      controller: _scrollController,
+      slivers: [
+        UIHelper.dp1ItemSliverGrid(context, nowDisplayingItems, 'Collections'),
+        SliverToBoxAdapter(
+          child: SizedBox(height: LayoutConstants.space16),
+        ),
+      ],
     );
   }
 

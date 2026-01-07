@@ -191,6 +191,69 @@ class AssetToken {
             .toList(),
       );
 
+  factory AssetToken.fromMeilisearchResult(Map<String, dynamic> json) {
+    // Extract display_data once to avoid repetition
+    final displayData = Map<String, dynamic>.from(json['display_data'] as Map);
+
+    return AssetToken(
+      // Top-level fields (direct mapping)
+      id: int.parse(json['id'].toString()),
+      cid: json['token_cid'] as String,
+      chain: json['chain'] as String,
+      standard: json['standard'] as String,
+      contractAddress: json['contract_address'] as String,
+      tokenNumber: json['token_number'] as String,
+
+      // Nested fields from display_data
+      currentOwner: displayData?['current_owner'] as String?,
+      updatedAt: displayData?['updated_at'] != null
+          ? DateTime.tryParse(displayData!['updated_at'] as String)
+          : null,
+
+      // Nested complex objects from display_data
+      metadata: displayData?['metadata'] != null
+          ? TokenMetadata.fromJson(
+              Map<String, dynamic>.from(displayData!['metadata'] as Map),
+            )
+          : null,
+
+      owners: displayData?['owners'] != null
+          ? PaginatedOwners.fromJson(
+              Map<String, dynamic>.from(displayData!['owners'] as Map),
+            )
+          : null,
+
+      provenanceEvents: displayData?['provenance_events'] != null
+          ? PaginatedProvenanceEvents.fromJson(
+              Map<String, dynamic>.from(
+                  displayData!['provenance_events'] as Map),
+            )
+          : null,
+
+      enrichmentSource: displayData?['enrichment_source'] != null
+          ? EnrichmentSource.fromJson(
+              Map<String, dynamic>.from(
+                  displayData!['enrichment_source'] as Map),
+            )
+          : null,
+
+      metadataMediaAssets: displayData?['metadata_media_assets'] != null
+          ? (displayData!['metadata_media_assets'] as List)
+              .map((e) =>
+                  MediaAsset.fromJson(Map<String, dynamic>.from(e as Map)))
+              .toList()
+          : null,
+
+      enrichmentSourceMediaAssets:
+          displayData?['enrichment_source_media_assets'] != null
+              ? (displayData!['enrichment_source_media_assets'] as List)
+                  .map((e) =>
+                      MediaAsset.fromJson(Map<String, dynamic>.from(e as Map)))
+                  .toList()
+              : null,
+    );
+  }
+
   AssetToken copyWith({
     int? id,
     String? cid,
