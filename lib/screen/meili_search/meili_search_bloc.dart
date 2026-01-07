@@ -39,71 +39,54 @@ class MeiliSearchFilterTypeChanged extends MeiliSearchEvent {
 
 class MeiliSearchCleared extends MeiliSearchEvent {}
 
-class MeiliSearchLoadMore extends MeiliSearchEvent {}
+class MeiliSearchLoadMore extends MeiliSearchEvent {
+  final Set<MeiliSearchIndexType> indexTypes;
+
+  MeiliSearchLoadMore(this.indexTypes);
+}
 
 class MeiliSearchState {
   final String query;
   final SearchFilterType filterType;
-  final List<Channel> channels;
-  final List<DP1Call> playlists;
-  final List<DP1Item> items;
-  // Highest ranking scores per section
-  final double channelsTopScore;
-  final double playlistsTopScore;
-  final double itemsTopScore;
+  final MeiliSearchResult? result;
   final bool isLoading;
   final bool hasError;
   final String? errorMessage;
-  final int totalHits;
-  final bool hasMoreResults;
 
   MeiliSearchState({
     this.query = '',
     this.filterType = SearchFilterType.channels,
-    this.channels = const [],
-    this.playlists = const [],
-    this.items = const [],
-    this.channelsTopScore = 0.0,
-    this.playlistsTopScore = 0.0,
-    this.itemsTopScore = 0.0,
+    this.result,
     this.isLoading = false,
     this.hasError = false,
     this.errorMessage,
-    this.totalHits = 0,
-    this.hasMoreResults = false,
   });
 
   MeiliSearchState copyWith({
     String? query,
     SearchFilterType? filterType,
-    List<Channel>? channels,
-    List<DP1Call>? playlists,
-    List<DP1Item>? items,
-    double? channelsTopScore,
-    double? playlistsTopScore,
-    double? itemsTopScore,
+    MeiliSearchResult? result,
     bool? isLoading,
     bool? hasError,
     String? errorMessage,
-    int? totalHits,
-    bool? hasMoreResults,
   }) {
     return MeiliSearchState(
       query: query ?? this.query,
       filterType: filterType ?? this.filterType,
-      channels: channels ?? this.channels,
-      playlists: playlists ?? this.playlists,
-      items: items ?? this.items,
-      channelsTopScore: channelsTopScore ?? this.channelsTopScore,
-      playlistsTopScore: playlistsTopScore ?? this.playlistsTopScore,
-      itemsTopScore: itemsTopScore ?? this.itemsTopScore,
+      result: result ?? this.result,
       isLoading: isLoading ?? this.isLoading,
       hasError: hasError ?? this.hasError,
       errorMessage: errorMessage ?? this.errorMessage,
-      totalHits: totalHits ?? this.totalHits,
-      hasMoreResults: hasMoreResults ?? this.hasMoreResults,
     );
   }
+
+  // Convenience getters for backward compatibility
+  List<Channel> get channels => result?.channels.items ?? const [];
+  List<DP1Call> get playlists => result?.playlists.items ?? const [];
+  List<DP1Item> get items => result?.works.items ?? const [];
+  double get channelsTopScore => result?.channels.maxRankingScore ?? 0.0;
+  double get playlistsTopScore => result?.playlists.maxRankingScore ?? 0.0;
+  double get itemsTopScore => result?.works.maxRankingScore ?? 0.0;
 
   bool get hasResults =>
       channels.isNotEmpty || playlists.isNotEmpty || items.isNotEmpty;
@@ -113,16 +96,18 @@ class MeiliSearchState {
 
 class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
   final MeiliSearchService _meiliSearchService;
-  static const int _pageSize = 5;
-  int _currentOffset = 0;
+  final int pageSize;
   final LatestAsync<MeiliSearchResult> _latestSearch =
       LatestAsync<MeiliSearchResult>();
 
-  MeiliSearchBloc(this._meiliSearchService) : super(MeiliSearchState()) {
+  MeiliSearchBloc(
+    this._meiliSearchService, {
+    this.pageSize = 10,
+  }) : super(MeiliSearchState()) {
     on<MeiliSearchQuerySubmitted>(_onQuerySubmitted);
     on<MeiliSearchFilterTypeChanged>(_onFilterTypeChanged);
     on<MeiliSearchCleared>(_onCleared);
-    // on<MeiliSearchLoadMore>(_onLoadMore);
+    on<MeiliSearchLoadMore>(_onLoadMore);
   }
 
   @override
@@ -156,25 +141,23 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
     ));
 
     try {
-      _currentOffset = 0;
       // Always call searchAll() to search across all indexes
+      // Start from offset 0
+      const offset = 0;
       await _latestSearch.run(
         () async => _meiliSearchService.searchAll(
           texts: [query],
-          limit: _pageSize,
-          offset: _currentOffset,
+          offset: offset,
+          limit: pageSize,
         ),
         onData: (result) {
-          double _maxOrZero(List<double> values) =>
-              values.isEmpty ? 0.0 : values.reduce(math.max);
+          final channels = result.channels.items;
+          final playlists = result.playlists.items;
+          final items = result.works.items;
 
-          final channels = result.channels;
-          final playlists = result.playlists;
-          final items = result.items;
-
-          final channelsTop = _maxOrZero(result.channelsRankingScore);
-          final playlistsTop = _maxOrZero(result.playlistsRankingScore);
-          final itemsTop = _maxOrZero(result.itemsRankingScore);
+          final channelsTop = result.channels.maxRankingScore;
+          final playlistsTop = result.playlists.maxRankingScore;
+          final itemsTop = result.works.maxRankingScore;
 
           // Pick filter type with highest topScore among non-empty sections
           var nextFilterType = state.filterType;
@@ -197,24 +180,15 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
 
           emit(
             state.copyWith(
-              channels: channels,
-              playlists: playlists,
-              items: items,
-              channelsTopScore: channelsTop,
-              playlistsTopScore: playlistsTop,
-              itemsTopScore: itemsTop,
+              result: result,
               filterType: nextFilterType,
               isLoading: false,
-              totalHits: result.totalHits,
-              hasMoreResults: result.totalHits > _pageSize,
             ),
           );
 
           final duration = DateTime.now().difference(start);
           log.info(
-              '_onQuerySubmitted MeiliSearch query "$query" took ${duration.inMilliseconds} ms');
-
-          _currentOffset = _pageSize;
+              '_onQuerySubmitted MeiliSearch query "$query" took ${duration.inMilliseconds} ms, totalHits: ${result.totalHits}');
         },
         onError: (e, st) {
           log.severe('MeiliSearch error: $e');
@@ -252,5 +226,160 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
     Emitter<MeiliSearchState> emit,
   ) async {
     emit(MeiliSearchState());
+  }
+
+  Future<void> _onLoadMore(
+    MeiliSearchLoadMore event,
+    Emitter<MeiliSearchState> emit,
+  ) async {
+    if (state.isLoading || state.result == null) {
+      return;
+    }
+
+    final start = DateTime.now();
+    final existingResult = state.result!;
+    emit(state.copyWith(isLoading: true));
+
+    try {
+      // Load more for each requested index type
+      MeiliSearchChannelResult? newChannelsResult;
+      MeiliSearchPlaylistResult? newPlaylistsResult;
+      MeiliSearchWorksResult? newWorksResult;
+
+      // Load more for requested indexes
+      if (event.indexTypes.isEmpty) {
+        emit(state.copyWith(isLoading: false));
+        return;
+      }
+
+      // Calculate next offset for each requested index
+      final indexToOffset = <MeiliSearchIndexType, int>{};
+      final indexToHasMore = <MeiliSearchIndexType, bool>{};
+
+      for (final indexType in event.indexTypes) {
+        int currentOffset;
+        int currentItemsCount;
+        int totalHits;
+        switch (indexType) {
+          case MeiliSearchIndexType.channels:
+            currentOffset = existingResult.channels.offset;
+            currentItemsCount = existingResult.channels.items.length;
+            totalHits = existingResult.channels.totalHits;
+          case MeiliSearchIndexType.playlists:
+            currentOffset = existingResult.playlists.offset;
+            currentItemsCount = existingResult.playlists.items.length;
+            totalHits = existingResult.playlists.totalHits;
+          case MeiliSearchIndexType.playlistItems:
+            currentOffset = existingResult.works.offset;
+            currentItemsCount = existingResult.works.items.length;
+            totalHits = existingResult.works.totalHits;
+        }
+
+        final nextOffset = currentOffset + currentItemsCount;
+        final hasMore = nextOffset < totalHits;
+        indexToHasMore[indexType] = hasMore;
+        if (hasMore) {
+          indexToOffset[indexType] = nextOffset;
+        }
+      }
+
+      // Load more for all requested indexes in one call
+      if (indexToOffset.isNotEmpty) {
+        // Use the minimum offset for all indexes (they should be similar)
+        final minOffset = indexToOffset.values.reduce((a, b) => a < b ? a : b);
+        final newResult = await _meiliSearchService.searchAll(
+          texts: [state.query],
+          indexTypes: event.indexTypes.toList(),
+          offset: minOffset,
+          limit: pageSize,
+        );
+
+        // Extract results for each index
+        if (event.indexTypes.contains(MeiliSearchIndexType.channels) &&
+            indexToHasMore[MeiliSearchIndexType.channels] == true) {
+          newChannelsResult = newResult.channels;
+        }
+        if (event.indexTypes.contains(MeiliSearchIndexType.playlists) &&
+            indexToHasMore[MeiliSearchIndexType.playlists] == true) {
+          newPlaylistsResult = newResult.playlists;
+        }
+        if (event.indexTypes.contains(MeiliSearchIndexType.playlistItems) &&
+            indexToHasMore[MeiliSearchIndexType.playlistItems] == true) {
+          newWorksResult = newResult.works;
+        }
+      }
+
+      // Merge results
+      final mergedChannels = newChannelsResult != null
+          ? MeiliSearchChannelResult(
+              items: [
+                ...existingResult.channels.items,
+                ...newChannelsResult.items,
+              ],
+              maxRankingScore: math.max(
+                existingResult.channels.maxRankingScore,
+                newChannelsResult.maxRankingScore,
+              ),
+              totalHits: newChannelsResult.totalHits,
+              offset: newChannelsResult.offset,
+            )
+          : existingResult.channels;
+
+      final mergedPlaylists = newPlaylistsResult != null
+          ? MeiliSearchPlaylistResult(
+              items: [
+                ...existingResult.playlists.items,
+                ...newPlaylistsResult.items,
+              ],
+              maxRankingScore: math.max(
+                existingResult.playlists.maxRankingScore,
+                newPlaylistsResult.maxRankingScore,
+              ),
+              totalHits: newPlaylistsResult.totalHits,
+              offset: newPlaylistsResult.offset,
+            )
+          : existingResult.playlists;
+
+      final mergedWorks = newWorksResult != null
+          ? MeiliSearchWorksResult(
+              items: [
+                ...existingResult.works.items,
+                ...newWorksResult.items,
+              ],
+              maxRankingScore: math.max(
+                existingResult.works.maxRankingScore,
+                newWorksResult.maxRankingScore,
+              ),
+              totalHits: newWorksResult.totalHits,
+              offset: newWorksResult.offset,
+            )
+          : existingResult.works;
+
+      final mergedResult = MeiliSearchResult(
+        channels: mergedChannels,
+        playlists: mergedPlaylists,
+        works: mergedWorks,
+      );
+
+      emit(
+        state.copyWith(
+          result: mergedResult,
+          isLoading: false,
+        ),
+      );
+
+      final duration = DateTime.now().difference(start);
+      log.info(
+          '_onLoadMore MeiliSearch query "${state.query}" for ${event.indexTypes} took ${duration.inMilliseconds} ms');
+    } catch (e) {
+      log.severe('MeiliSearch load more error: $e');
+      emit(state.copyWith(
+        isLoading: false,
+        hasError: true,
+        errorMessage: e.toString(),
+      ));
+    }
+
+    log.info('_onLoadMore MeiliSearch finished');
   }
 }

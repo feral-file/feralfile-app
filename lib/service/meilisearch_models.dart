@@ -9,37 +9,91 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 
+/// Abstract base class for MeiliSearch index results
+abstract class MeiliSearchIndexResult<T> {
+  final List<T> items;
+  final double maxRankingScore;
+  final int totalHits;
+  final int offset;
+
+  MeiliSearchIndexResult({
+    required this.items,
+    required this.maxRankingScore,
+    required this.totalHits,
+    required this.offset,
+  });
+}
+
+/// Result for Channel index
+class MeiliSearchChannelResult extends MeiliSearchIndexResult<Channel> {
+  MeiliSearchChannelResult({
+    required super.items,
+    required super.maxRankingScore,
+    required super.totalHits,
+    required super.offset,
+  });
+
+  factory MeiliSearchChannelResult.empty() => MeiliSearchChannelResult(
+        items: [],
+        maxRankingScore: 0.0,
+        totalHits: 0,
+        offset: 0,
+      );
+}
+
+/// Result for Playlist index
+class MeiliSearchPlaylistResult extends MeiliSearchIndexResult<DP1Call> {
+  MeiliSearchPlaylistResult({
+    required super.items,
+    required super.maxRankingScore,
+    required super.totalHits,
+    required super.offset,
+  });
+
+  factory MeiliSearchPlaylistResult.empty() => MeiliSearchPlaylistResult(
+        items: [],
+        maxRankingScore: 0.0,
+        totalHits: 0,
+        offset: 0,
+      );
+}
+
+/// Result for Works (playlist items) index
+class MeiliSearchWorksResult extends MeiliSearchIndexResult<DP1Item> {
+  MeiliSearchWorksResult({
+    required super.items,
+    required super.maxRankingScore,
+    required super.totalHits,
+    required super.offset,
+  });
+
+  factory MeiliSearchWorksResult.empty() => MeiliSearchWorksResult(
+        items: [],
+        maxRankingScore: 0.0,
+        totalHits: 0,
+        offset: 0,
+      );
+}
+
 /// Result class for MeiliSearch operations
 class MeiliSearchResult {
-  final List<Channel> channels;
-  final List<DP1Call> playlists;
-  final List<DP1Item> items;
-  // Ranking scores from MeiliSearch (_rankingScore)
-  final List<double> channelsRankingScore;
-  final List<double> playlistsRankingScore;
-  final List<double> itemsRankingScore;
-  final int totalHits;
-  final int processingTimeMs;
+  final MeiliSearchChannelResult channels;
+  final MeiliSearchPlaylistResult playlists;
+  final MeiliSearchWorksResult works;
 
   MeiliSearchResult({
     required this.channels,
     required this.playlists,
-    required this.items,
-    this.channelsRankingScore = const [],
-    this.playlistsRankingScore = const [],
-    this.itemsRankingScore = const [],
-    required this.totalHits,
-    required this.processingTimeMs,
+    required this.works,
   });
 
   factory MeiliSearchResult.empty() => MeiliSearchResult(
-        channels: [],
-        playlists: [],
-        items: [],
-        channelsRankingScore: const [],
-        playlistsRankingScore: const [],
-        itemsRankingScore: const [],
-        totalHits: 0,
-        processingTimeMs: 0,
+        channels: MeiliSearchChannelResult.empty(),
+        playlists: MeiliSearchPlaylistResult.empty(),
+        works: MeiliSearchWorksResult.empty(),
       );
+
+  /// Get total hits across all indexes
+  int get totalHits =>
+      channels.totalHits + playlists.totalHits + works.totalHits;
 }
