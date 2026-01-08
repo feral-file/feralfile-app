@@ -701,7 +701,7 @@
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				CURRENT_PROJECT_VERSION = 594;
 				DEVELOPMENT_TEAM = Z5CE7A3A7N;
 				ENABLE_BITCODE = NO;
 				FLAVOR_APP_NAME = "Feralfile App";
@@ -711,6 +711,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 0.67.0;
 				PACKAGE_CONFIG = .dart_tool/package_config.json;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bitmark.autonomywallet;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -802,7 +803,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				CURRENT_PROJECT_VERSION = 594;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = Z5CE7A3A7N;
 				ENABLE_BITCODE = NO;
@@ -813,6 +814,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 0.67.0;
 				PACKAGE_CONFIG = .dart_tool/package_config.json;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bitmark.autonomywallet;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -899,7 +901,7 @@
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				CURRENT_PROJECT_VERSION = 594;
 				DEVELOPMENT_TEAM = Z5CE7A3A7N;
 				ENABLE_BITCODE = NO;
 				FLAVOR_APP_NAME = "Feralfile App";
@@ -909,6 +911,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 0.67.0;
 				PACKAGE_CONFIG = .dart_tool/package_config.json;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bitmark.autonomywallet;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -999,7 +1002,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Runner/RunnerDebug-development.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				CURRENT_PROJECT_VERSION = 594;
 				DEVELOPMENT_TEAM = Z5CE7A3A7N;
 				ENABLE_BITCODE = NO;
 				FLAVOR_APP_NAME = "[DEV] Feralfile App";
@@ -1010,6 +1013,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 0.67.0;
 				PACKAGE_CONFIG = .dart_tool/package_config.json;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.bitmark.autonomy-wallet.inhouse";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1098,7 +1102,7 @@
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				CURRENT_PROJECT_VERSION = 594;
 				DEVELOPMENT_TEAM = Z5CE7A3A7N;
 				ENABLE_BITCODE = NO;
 				FLAVOR_APP_NAME = "[DEV] Feralfile App";
@@ -1108,6 +1112,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 0.67.0;
 				PACKAGE_CONFIG = .dart_tool/package_config.json;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.bitmark.autonomy-wallet.inhouse";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1195,7 +1200,7 @@
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				CURRENT_PROJECT_VERSION = 594;
 				DEVELOPMENT_TEAM = Z5CE7A3A7N;
 				ENABLE_BITCODE = NO;
 				FLAVOR_APP_NAME = "[DEV] Feralfile App";
@@ -1205,6 +1210,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 0.67.0;
 				PACKAGE_CONFIG = .dart_tool/package_config.json;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.bitmark.autonomy-wallet.inhouse";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1295,7 +1301,7 @@
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				CURRENT_PROJECT_VERSION = 594;
 				DEVELOPMENT_TEAM = Z5CE7A3A7N;
 				ENABLE_BITCODE = NO;
 				FLAVOR_APP_NAME = "[STG] Feralfile App";
@@ -1305,6 +1311,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 0.67.0;
 				PACKAGE_CONFIG = .dart_tool/package_config.json;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bitmark.autonomywallet;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1395,7 +1402,7 @@
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				CURRENT_PROJECT_VERSION = 594;
 				DEVELOPMENT_TEAM = Z5CE7A3A7N;
 				ENABLE_BITCODE = NO;
 				FLAVOR_APP_NAME = "[STG] Feralfile App";
@@ -1405,6 +1412,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 0.67.0;
 				PACKAGE_CONFIG = .dart_tool/package_config.json;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bitmark.autonomywallet;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1490,7 +1498,7 @@
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				CURRENT_PROJECT_VERSION = 594;
 				DEVELOPMENT_TEAM = Z5CE7A3A7N;
 				ENABLE_BITCODE = NO;
 				FLAVOR_APP_NAME = "[STG] Feralfile App";
@@ -1500,6 +1508,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 0.67.0;
 				PACKAGE_CONFIG = .dart_tool/package_config.json;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bitmark.autonomywallet;
 				PRODUCT_NAME = "$(TARGET_NAME)";

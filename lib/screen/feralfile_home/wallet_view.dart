@@ -5,15 +5,18 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/model/persona_wallet.dart';
+import 'package:autonomy_flutter/model/wallet_address.dart';
+import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/explore_wallet_bloc.dart';
 import 'package:autonomy_flutter/service/channel_service.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feralfile_app_theme/feral_file_app_theme.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:url_launcher/url_launcher_string.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
-/// Widget displaying wallet count from secure storage
+/// Widget displaying full wallets (personas) with recovery phrases in the Explore tab
 class ExploreWalletView extends StatefulWidget {
   const ExploreWalletView({
     required this.header,
@@ -30,12 +33,32 @@ class ExploreWalletViewState extends State<ExploreWalletView>
     with AutomaticKeepAliveClientMixin {
   final ScrollController _scrollController = ScrollController();
   late final ExploreWalletBloc _bloc;
+  final Set<String> _visibleRecoveryPhrases = {};
 
   @override
   void initState() {
     super.initState();
-    _bloc = ExploreWalletBloc(ChannelService());
-    _bloc.add(LoadWalletCountEvent());
+    _bloc = ExploreWalletBloc(
+      ChannelService(),
+      () async {
+        try {
+          // Try to get addresses from nft collection database
+          final addresses =
+              await NftCollection.addressService.getAllAddresses();
+          return addresses
+              .map((e) => WalletAddress(
+                    address: e.address,
+                    createdAt: e.lastRefreshedTime,
+                  ))
+              .toList();
+        } catch (e) {
+          // If address service not initialized or error, return empty list
+          // Personas can still be displayed without addresses
+          return [];
+        }
+      },
+    );
+    _bloc.add(LoadPersonaWalletsEvent());
   }
 
   @override
@@ -51,6 +74,16 @@ class ExploreWalletViewState extends State<ExploreWalletView>
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
+  }
+
+  void _toggleRecoveryPhrase(String uuid) {
+    setState(() {
+      if (_visibleRecoveryPhrases.contains(uuid)) {
+        _visibleRecoveryPhrases.remove(uuid);
+      } else {
+        _visibleRecoveryPhrases.add(uuid);
+      }
+    });
   }
 
   @override
@@ -82,77 +115,194 @@ class ExploreWalletViewState extends State<ExploreWalletView>
                 );
               }
 
-              // Show simple wallet count message
-              return SliverFillRemaining(
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(40),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          state.walletCount == 0
-                              ? Icons.account_balance_wallet_outlined
-                              : Icons.verified_user_outlined,
-                          size: 64,
-                          color: state.walletCount == 0
-                              ? AppColor.auQuickSilver
-                              : AppColor.feralFileHighlight,
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          state.walletCount == 0
-                              ? 'No wallets found'
-                              : state.walletCount == 1
-                                  ? 'You have 1 wallet that can be recovered'
-                                  : 'You have ${state.walletCount} wallets that can be recovered',
-                          style: theme.textTheme.ppMori700White16,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        RichText(
-                          textAlign: TextAlign.center,
-                          text: TextSpan(
-                            style: theme.textTheme.ppMori400Grey14,
-                            children: state.walletCount == 0
-                                ? [
-                                    const TextSpan(
-                                      text:
-                                          'No wallets found in secure storage.',
-                                    ),
-                                  ]
-                                : [
-                                    const TextSpan(
-                                      text:
-                                          'These wallets are stored in secure storage. For more information, please contact Feral File at ',
-                                    ),
-                                    TextSpan(
-                                      text: 'support@feralfile.com',
-                                      style: theme.textTheme.ppMori400Grey14
-                                          .copyWith(
-                                        decoration: TextDecoration.underline,
-                                        color: AppColor.feralFileHighlight,
-                                      ),
-                                      recognizer: TapGestureRecognizer()
-                                        ..onTap = () {
-                                          const href =
-                                              'mailto:support@feralfile.com';
-                                          launchUrlString(href);
-                                        },
-                                    ),
-                                    const TextSpan(
-                                      text: '.',
-                                    ),
-                                  ],
+              if (state.personaWallets.isEmpty) {
+                return SliverFillRemaining(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Text(
+                              'No full wallets found',
+                              style: theme.textTheme.ppMori400White14,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 12),
+                          Center(
+                            child: Text(
+                              'Full wallets (with recovery phrases) will appear here if you have created them.',
+                              style: theme.textTheme.ppMori400Grey12,
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
+                );
+              }
+
+              return SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final persona = state.personaWallets[index];
+                    final isRecoveryPhraseVisible =
+                        _visibleRecoveryPhrases.contains(persona.uuid);
+
+                    return _personaWalletCard(
+                      context,
+                      persona,
+                      isRecoveryPhraseVisible,
+                    );
+                  },
+                  childCount: state.personaWallets.length,
                 ),
               );
             },
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _personaWalletCard(
+    BuildContext context,
+    PersonaWallet persona,
+    bool isRecoveryPhraseVisible,
+  ) {
+    final theme = Theme.of(context);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: AppColor.auGreyBackground,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Wallet name and UUID
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      persona.displayName,
+                      style: theme.textTheme.ppMori700Black16,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'UUID: ${persona.uuid.substring(0, 8)}...',
+                      style: theme.textTheme.ppMori400Grey14,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // Note: Addresses cannot be reliably associated with personas
+          // (WalletAddress model has no personaUUID field)
+          // Removing address display for accuracy
+
+          // Recovery phrase section
+          const SizedBox(height: 12),
+          const Divider(
+            height: 1,
+            thickness: 1,
+            color: AppColor.auLightGrey,
+          ),
+          const SizedBox(height: 12),
+
+          // Toggle recovery phrase button
+          GestureDetector(
+            onTap: () => _toggleRecoveryPhrase(persona.uuid),
+            child: Row(
+              children: [
+                Text(
+                  'recovery_phrase'.tr(),
+                  style: theme.textTheme.ppMori700Black14,
+                ),
+                const Spacer(),
+                SvgPicture.asset(
+                  isRecoveryPhraseVisible
+                      ? 'assets/images/hide.svg'
+                      : 'assets/images/unhide.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter: ColorFilter.mode(
+                    theme.colorScheme.secondary,
+                    BlendMode.srcIn,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Recovery phrase display
+          if (isRecoveryPhraseVisible) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColor.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColor.auLightGrey),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: persona.mnemonic.asMap().entries.map((entry) {
+                      final index = entry.key + 1;
+                      final word = entry.value;
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColor.auLightGrey,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '$index. $word',
+                          style: theme.textTheme.ppMori400Black14,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  if (persona.passphrase != null &&
+                      persona.passphrase!.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    const Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: AppColor.auLightGrey,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'passphrase'.tr(),
+                      style: theme.textTheme.ppMori400Grey14,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      persona.passphrase!,
+                      style: theme.textTheme.ppMori400Black14,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
