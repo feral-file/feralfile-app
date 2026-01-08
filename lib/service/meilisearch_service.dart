@@ -12,6 +12,7 @@ import 'dart:math' as math;
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/model/token.dart';
+import 'package:autonomy_flutter/screen/meili_search/meili_search_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
@@ -29,6 +30,98 @@ enum MeiliSearchIndexType {
   playlists,
   playlistItems,
   nftTokens,
+}
+
+class IndexSearchQueryBuilder {
+  IndexSearchQueryBuilder({
+    required this.prefix,
+    required this.indexType,
+    required this.query,
+  });
+
+  final String prefix;
+  final MeiliSearchIndexType indexType;
+  final String query;
+
+  int _limit = 10;
+  int _offset = 0;
+  List<String>? _filters;
+  List<String>? _sort;
+  List<String>? _attributesToRetrieve;
+
+  IndexSearchQueryBuilder limit(int value) {
+    _limit = value;
+    return this;
+  }
+
+  IndexSearchQueryBuilder offset(int value) {
+    _offset = value;
+    return this;
+  }
+
+  IndexSearchQueryBuilder filters(List<String>? filters) {
+    _filters = filters;
+    return this;
+  }
+
+  IndexSearchQueryBuilder sort(List<String>? sort) {
+    _sort = sort;
+    return this;
+  }
+
+  IndexSearchQueryBuilder attributesToRetrieve(List<String>? attrs) {
+    _attributesToRetrieve = attrs;
+    return this;
+  }
+
+  IndexSearchQuery build() {
+    final indexUid = _buildIndexUid();
+    final attrs = _buildAttributesToRetrieve();
+
+    return IndexSearchQuery(
+      indexUid: indexUid,
+      query: query,
+      limit: _limit,
+      offset: _offset,
+      showRankingScore: true,
+      attributesToRetrieve: attrs,
+      // These fields depend on the MeiliSearch Dart client signature.
+      // We pass through filters and sort if they are supported.
+      filter: _filters,
+      sort: _sort,
+    );
+  }
+
+  String _buildIndexUid() {
+    switch (indexType) {
+      case MeiliSearchIndexType.channels:
+        return '${prefix}_channels';
+      case MeiliSearchIndexType.playlists:
+        return '${prefix}_playlists';
+      case MeiliSearchIndexType.playlistItems:
+        return '${prefix}_playlist_items';
+      case MeiliSearchIndexType.nftTokens:
+        return '${prefix}_nft_tokens';
+    }
+  }
+
+  List<String>? _buildAttributesToRetrieve() {
+    if (_attributesToRetrieve != null) {
+      return _attributesToRetrieve;
+    }
+
+    switch (indexType) {
+      case MeiliSearchIndexType.channels:
+        return ['channel'];
+      case MeiliSearchIndexType.playlists:
+        return ['playlist'];
+      case MeiliSearchIndexType.playlistItems:
+        return ['playlistItem'];
+      case MeiliSearchIndexType.nftTokens:
+        // Retrieve full document for nft_tokens.
+        return null;
+    }
+  }
 }
 
 /// Service for searching across multiple MeiliSearch indexes using the official MeiliSearch SDK
@@ -79,81 +172,13 @@ class MeiliSearchService {
     unawaited(_client.health());
   }
 
-  /// Search across specified indexes (channels, playlists, playlist_items) for multiple queries
-  ///
-  /// [texts] - List of search queries
-  /// [indexTypes] - List of index types to search (default: all indexes)
-  /// [offset] - Offset for pagination (default: 0)
-  /// [limit] - Number of results to return (default: 10)
-  /// [filters] - Optional filters
   Future<MeiliSearchResult> searchAll({
-    required List<String> texts,
-    List<MeiliSearchIndexType>? indexTypes,
-    int offset = 0,
-    int limit = 10,
-    List<String>? filters,
+    required List<IndexSearchQuery> queries,
   }) async {
     final start = DateTime.now();
 
-    // Normalize queries (trim and remove empties). If empty, use single empty query to fetch defaults
-    final normalizedTexts =
-        texts.map((t) => t.trim()).where((t) => t.isNotEmpty).toList();
-    if (normalizedTexts.isEmpty) {
-      normalizedTexts.add('');
-    }
-
-    // Fetch more results from each index to ensure we get top N by ranking
-
-    // Determine which indexes to search (default: all)
-    final indexesToSearch = indexTypes ??
-        [
-          MeiliSearchIndexType.channels,
-          MeiliSearchIndexType.playlists,
-          MeiliSearchIndexType.playlistItems,
-          MeiliSearchIndexType.nftTokens,
-        ];
-
-    // Build multi index query for all texts and specified indexes
-    // Use offset=0 and limit=fetchLimit to get enough results for proper ranking
-    final queries = <IndexSearchQuery>[];
-    for (final text in normalizedTexts) {
-      for (final indexType in indexesToSearch) {
-        String indexUid;
-        List<String>? attributesToRetrieve;
-        switch (indexType) {
-          case MeiliSearchIndexType.channels:
-            indexUid = '${prefix}_channels';
-            attributesToRetrieve = ['channel'];
-            break;
-          case MeiliSearchIndexType.playlists:
-            indexUid = '${prefix}_playlists';
-            attributesToRetrieve = ['playlist'];
-            break;
-          case MeiliSearchIndexType.playlistItems:
-            indexUid = '${prefix}_playlist_items';
-            attributesToRetrieve = ['playlistItem'];
-            break;
-          case MeiliSearchIndexType.nftTokens:
-            indexUid = '${prefix}_nft_tokens';
-            attributesToRetrieve = null; // Retrieve all attributes
-            break;
-        }
-
-        queries.add(
-          IndexSearchQuery(
-            indexUid: indexUid,
-            query: text,
-            limit: limit,
-            offset: 0,
-            showRankingScore: true,
-            attributesToRetrieve: attributesToRetrieve,
-          ),
-        );
-      }
-    }
-
     final multiResult = await timerMetric(
-        'Meili Multi Search for ${normalizedTexts.join(', ')}',
+        'Meili Multi Search for ${queries.length} queries',
         () async =>
             await _client.multiSearch(MultiSearchQuery(queries: queries)));
 
@@ -239,32 +264,35 @@ class MeiliSearchService {
     final nftTokensMaxScore = _maxOrZero(nftTokensRankingScore);
 
     // Create individual result objects for each index
+    // For now, we use a shared offset of 0 for all indexes in the aggregated result.
+    const aggregatedOffset = 0;
+
     final channelsResult = MeiliSearchChannelResult(
       items: channels,
       maxRankingScore: channelsMaxScore,
       totalHits: channelsEstimatedTotal,
-      offset: offset,
+      offset: aggregatedOffset,
     );
 
     final playlistsResult = MeiliSearchPlaylistResult(
       items: playlists,
       maxRankingScore: playlistsMaxScore,
       totalHits: playlistsEstimatedTotal,
-      offset: offset,
+      offset: aggregatedOffset,
     );
 
     final worksResult = MeiliSearchWorksResult(
       items: items,
       maxRankingScore: itemsMaxScore,
       totalHits: itemsEstimatedTotal,
-      offset: offset,
+      offset: aggregatedOffset,
     );
 
     final nftTokensResult = MeiliSearchNftTokensResult(
       items: nftTokens,
       maxRankingScore: nftTokensMaxScore,
       totalHits: nftTokensEstimatedTotal,
-      offset: offset,
+      offset: aggregatedOffset,
     );
 
     final result = MeiliSearchResult(
@@ -290,6 +318,71 @@ class MeiliSearchService {
     final res = await timerMetric(
         'Meili Search $indexName', () async => idx.search(text, query));
     return res;
+  }
+
+  /// Get facet values for a specific index type.
+  ///
+  /// Returns a map of SearchFilterBy to list of available facet values.
+  Future<Map<SearchFilterBy, List<String>>> getFacetValuesForIndex(
+    MeiliSearchIndexType indexType,
+  ) async {
+    final supportedFilters = indexType.supportedFilters;
+    if (supportedFilters.isEmpty) {
+      return {};
+    }
+
+    final indexUid = _buildIndexUid(indexType);
+    final index = _client.index(indexUid);
+
+    // Get field names for facets
+    final facetFields =
+        supportedFilters.map((filter) => filter.meiliFieldName).toList();
+
+    // Perform a search with facets to get facet distribution
+    // Use empty query to get all facet values
+    final query = SearchQuery(
+      facets: facetFields,
+      limit: 0, // We only need facets, not hits
+    );
+
+    final result = await index.search('', query);
+    final facetDistribution = result.facetDistribution as Map<String, dynamic>?;
+
+    final facetValues = <SearchFilterBy, List<String>>{};
+
+    if (facetDistribution != null) {
+      for (final filter in supportedFilters) {
+        final fieldName = filter.meiliFieldName;
+        final distribution =
+            facetDistribution[fieldName] as Map<String, dynamic>?;
+        if (distribution != null) {
+          final values = distribution.keys.toList()..sort();
+          facetValues[filter] = values;
+        } else {
+          facetValues[filter] = [];
+        }
+      }
+    } else {
+      // If no facet distribution, return empty lists
+      for (final filter in supportedFilters) {
+        facetValues[filter] = [];
+      }
+    }
+
+    return facetValues;
+  }
+
+  String _buildIndexUid(MeiliSearchIndexType indexType) {
+    switch (indexType) {
+      case MeiliSearchIndexType.channels:
+        return '${prefix}_channels';
+      case MeiliSearchIndexType.playlists:
+        return '${prefix}_playlists';
+      case MeiliSearchIndexType.playlistItems:
+        return '${prefix}_playlist_items';
+      case MeiliSearchIndexType.nftTokens:
+        return '${prefix}_nft_tokens';
+    }
   }
 }
 

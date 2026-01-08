@@ -61,8 +61,7 @@ class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {
 
   void onCurrentRouteChanged() {
     final routeName = currentRoute.value?.settings.name;
-    if (routeName == null ||
-        routeName == UIHelper.ignoreBackLayerPopUpRouteName ||
+    if (routeName == UIHelper.ignoreBackLayerPopUpRouteName ||
         routeName == UIHelper.artDisplaySettingModal) {
       return;
     }

@@ -102,10 +102,24 @@ class _SearchPageState extends State<SearchPage> {
                 FilterBar(
                   selectedFilterType: state.filterType,
                   onFilterTypeChanged: _onFilterTypeChanged,
-                  hasChannels: state.channels.isNotEmpty,
-                  hasPlaylists: state.playlists.isNotEmpty,
-                  hasItems: state.items.isNotEmpty,
-                  hasNftTokens: state.nftTokens.isNotEmpty,
+                  availableTypes: [
+                    if (state.playlists.isNotEmpty) SearchFilterType.playlists,
+                    if (state.channels.isNotEmpty) SearchFilterType.channels,
+                    if (state.items.isNotEmpty) SearchFilterType.items,
+                    if (state.nftTokens.isNotEmpty) SearchFilterType.nftTokens,
+                  ],
+                  sortOrder: state.sortOrder,
+                  onSortOrderChanged: (order) {
+                    _bloc.add(MeiliSearchSortChanged(order));
+                  },
+                  result: state.result,
+                  selectedFilters: state.filtersByType[state.filterType] ?? [],
+                  onFilterToggled: (type, selections) {
+                    _bloc.add(MeiliSearchFilterToggled(
+                      filterType: type,
+                      selections: selections,
+                    ));
+                  },
                 ),
                 Expanded(
                   child: _buildResultsSection(context, state),

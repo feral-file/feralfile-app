@@ -197,7 +197,7 @@ class AssetToken {
 
     return AssetToken(
       // Top-level fields (direct mapping)
-      id: int.parse(json['id'].toString()),
+      id: int.parse(displayData['id'].toString()),
       cid: json['token_cid'] as String,
       chain: json['chain'] as String,
       standard: json['standard'] as String,

@@ -6,6 +6,7 @@
 //
 
 import 'package:autonomy_flutter/model/token.dart';
+import 'package:autonomy_flutter/screen/meili_search/meili_search_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
@@ -23,6 +24,38 @@ abstract class MeiliSearchIndexResult<T> {
     required this.totalHits,
     required this.offset,
   });
+
+  /// Get the SearchFilterType that corresponds to this index result
+  SearchFilterType get filterType;
+
+  /// Get the list of available filter selections for this index type
+  /// Extracts unique filter values from items based on supported filters
+  /// Returns one MeiliFilterSelection for each supported filter with available values
+  List<MeiliFilterSelection> getAvailableFilters() {
+    final supportedFilters = filterType.supportedFilters;
+    if (supportedFilters.isEmpty) {
+      return [];
+    }
+
+    final filterSelections = <MeiliFilterSelection>[];
+
+    for (final filterBy in supportedFilters) {
+      final values = _extractFilterValues(filterBy);
+      // Always create a MeiliFilterSelection for each supported filter,
+      // even if values is empty (user can still see the filter option)
+      filterSelections.add(
+        MeiliFilterSelection(
+          filterBy: filterBy,
+          value: values,
+        ),
+      );
+    }
+
+    return filterSelections;
+  }
+
+  /// Extract unique filter values from items for a specific filter
+  Set<String> _extractFilterValues(SearchFilterBy filterBy);
 }
 
 /// Result for Channel index
@@ -40,6 +73,36 @@ class MeiliSearchChannelResult extends MeiliSearchIndexResult<Channel> {
         totalHits: 0,
         offset: 0,
       );
+
+  @override
+  SearchFilterType get filterType => SearchFilterType.channels;
+
+  @override
+  Set<String> _extractFilterValues(SearchFilterBy filterBy) {
+    switch (filterBy) {
+      case SearchFilterBy.curator:
+        return _extractCuratorValues();
+      case SearchFilterBy.publisher:
+        return _extractPublisherValues();
+      default:
+        return {};
+    }
+  }
+
+  Set<String> _extractCuratorValues() {
+    final values = <String>{};
+    for (final channel in items) {
+      if (channel.curator != null && channel.curator!.isNotEmpty) {
+        values.add(channel.curator!);
+      }
+    }
+    return values;
+  }
+
+  Set<String> _extractPublisherValues() {
+    // Publisher field not found in Channel model
+    return {};
+  }
 }
 
 /// Result for Playlist index
@@ -57,6 +120,29 @@ class MeiliSearchPlaylistResult extends MeiliSearchIndexResult<DP1Call> {
         totalHits: 0,
         offset: 0,
       );
+
+  @override
+  SearchFilterType get filterType => SearchFilterType.playlists;
+
+  @override
+  Set<String> _extractFilterValues(SearchFilterBy filterBy) {
+    switch (filterBy) {
+      case SearchFilterBy.dp1Version:
+        return _extractDp1VersionValues();
+      default:
+        return {};
+    }
+  }
+
+  Set<String> _extractDp1VersionValues() {
+    final values = <String>{};
+    for (final playlist in items) {
+      if (playlist.dpVersion.isNotEmpty) {
+        values.add(playlist.dpVersion);
+      }
+    }
+    return values;
+  }
 }
 
 /// Result for Works (playlist items) index
@@ -74,6 +160,15 @@ class MeiliSearchWorksResult extends MeiliSearchIndexResult<DP1Item> {
         totalHits: 0,
         offset: 0,
       );
+
+  @override
+  SearchFilterType get filterType => SearchFilterType.items;
+
+  @override
+  Set<String> _extractFilterValues(SearchFilterBy filterBy) {
+    // Items don't support any filters
+    return {};
+  }
 }
 
 /// Result for NFT Tokens index
@@ -91,6 +186,66 @@ class MeiliSearchNftTokensResult extends MeiliSearchIndexResult<AssetToken> {
         totalHits: 0,
         offset: 0,
       );
+
+  @override
+  SearchFilterType get filterType => SearchFilterType.nftTokens;
+
+  @override
+  Set<String> _extractFilterValues(SearchFilterBy filterBy) {
+    switch (filterBy) {
+      case SearchFilterBy.chain:
+        return _extractChainValues();
+      case SearchFilterBy.standard:
+        return _extractStandardValues();
+      case SearchFilterBy.artist:
+        return _extractArtistValues();
+      default:
+        return {};
+    }
+  }
+
+  Set<String> _extractChainValues() {
+    final values = <String>{};
+    for (final token in items) {
+      if (token.chain.isNotEmpty) {
+        values.add(token.chain);
+      }
+    }
+    return values;
+  }
+
+  Set<String> _extractStandardValues() {
+    final values = <String>{};
+    for (final token in items) {
+      if (token.standard.isNotEmpty) {
+        values.add(token.standard);
+      }
+    }
+    return values;
+  }
+
+  Set<String> _extractArtistValues() {
+    final values = <String>{};
+    for (final token in items) {
+      // Extract all artist names from metadata
+      if (token.metadata?.artists != null) {
+        for (final artist in token.metadata!.artists!) {
+          if (artist.name.isNotEmpty) {
+            values.add(artist.name);
+          }
+        }
+      }
+      // Extract all artist names from enrichmentSource
+      if (token.enrichmentSource?.artists != null) {
+        for (final artist in token.enrichmentSource!.artists!) {
+          if (artist.name.isNotEmpty) {
+            values.add(artist.name);
+          }
+        }
+      }
+    }
+    return values;
+  }
 }
 
 /// Result class for MeiliSearch operations
@@ -120,4 +275,18 @@ class MeiliSearchResult {
       playlists.totalHits +
       works.totalHits +
       nftTokens.totalHits;
+
+  MeiliSearchResult copyWith({
+    MeiliSearchChannelResult? channels,
+    MeiliSearchPlaylistResult? playlists,
+    MeiliSearchWorksResult? works,
+    MeiliSearchNftTokensResult? nftTokens,
+  }) {
+    return MeiliSearchResult(
+      channels: channels ?? this.channels,
+      playlists: playlists ?? this.playlists,
+      works: works ?? this.works,
+      nftTokens: nftTokens ?? this.nftTokens,
+    );
+  }
 }
