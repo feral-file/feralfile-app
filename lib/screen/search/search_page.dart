@@ -113,6 +113,7 @@ class _SearchPageState extends State<SearchPage> {
                     _bloc.add(MeiliSearchSortChanged(order));
                   },
                   result: state.result,
+                  unfilteredResult: state.unfilteredResult,
                   selectedFilters: state.filtersByType[state.filterType] ?? [],
                   onFilterToggled: (type, selections) {
                     _bloc.add(MeiliSearchFilterToggled(
@@ -366,7 +367,7 @@ class _SearchPageState extends State<SearchPage> {
       child: Padding(
         padding: EdgeInsets.all(LayoutConstants.space6),
         child: Text(
-          'No $filterType found',
+          'No results found',
           style: AppTypography.body(context).white,
           textAlign: TextAlign.center,
         ),

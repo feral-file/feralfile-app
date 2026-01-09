@@ -21,6 +21,7 @@ class FilterBar extends StatelessWidget {
     required this.sortOrder,
     required this.onSortOrderChanged,
     required this.result,
+    required this.unfilteredResult,
     required this.selectedFilters,
     required this.onFilterToggled,
     super.key,
@@ -32,6 +33,7 @@ class FilterBar extends StatelessWidget {
   final SearchSortOrder sortOrder;
   final void Function(SearchSortOrder) onSortOrderChanged;
   final MeiliSearchResult? result;
+  final MeiliSearchResult? unfilteredResult;
   final List<MeiliFilterSelection> selectedFilters;
   final void Function(
           SearchFilterType type, List<MeiliFilterSelection> selections)
@@ -111,7 +113,7 @@ class FilterBar extends StatelessWidget {
                 TextButton(
                   onPressed: () async {
                     final availableFilters = _getAvailableFiltersForType(
-                      result,
+                      unfilteredResult,
                       selectedFilterType,
                     );
 
@@ -206,22 +208,22 @@ class FilterBar extends StatelessWidget {
   }
 
   List<MeiliFilterSelection> _getAvailableFiltersForType(
-    MeiliSearchResult? result,
+    MeiliSearchResult? unfilteredResult,
     SearchFilterType filterType,
   ) {
-    if (result == null) {
+    if (unfilteredResult == null) {
       return [];
     }
 
     switch (filterType) {
       case SearchFilterType.channels:
-        return result.channels.getAvailableFilters();
+        return unfilteredResult.channels.getAvailableFilters();
       case SearchFilterType.playlists:
-        return result.playlists.getAvailableFilters();
+        return unfilteredResult.playlists.getAvailableFilters();
       case SearchFilterType.items:
-        return result.works.getAvailableFilters();
+        return unfilteredResult.works.getAvailableFilters();
       case SearchFilterType.nftTokens:
-        return result.nftTokens.getAvailableFilters();
+        return unfilteredResult.nftTokens.getAvailableFilters();
     }
   }
 }

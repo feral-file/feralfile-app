@@ -40,13 +40,14 @@ abstract class MeiliSearchIndexResult<T> {
     final filterSelections = <MeiliFilterSelection>[];
 
     for (final filterBy in supportedFilters) {
-      final values = _extractFilterValues(filterBy);
+      final values = _extractFilterValues(filterBy).toList();
+      values.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
       // Always create a MeiliFilterSelection for each supported filter,
       // even if values is empty (user can still see the filter option)
       filterSelections.add(
         MeiliFilterSelection(
           filterBy: filterBy,
-          value: values,
+          value: Set<String>.from(values),
         ),
       );
     }

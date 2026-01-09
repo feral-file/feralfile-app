@@ -244,6 +244,7 @@ class MeiliSearchState {
   final String query;
   final SearchFilterType filterType;
   final MeiliSearchResult? result;
+  final MeiliSearchResult? unfilteredResult;
   final Map<MeiliSearchIndexType, bool> loadingByIndex;
   final Map<MeiliSearchIndexType, String?> errorsByIndex;
   final Map<MeiliSearchIndexType, SearchSortOrder> sortOrdersByIndex;
@@ -253,6 +254,7 @@ class MeiliSearchState {
     this.query = '',
     this.filterType = SearchFilterType.channels,
     this.result,
+    this.unfilteredResult,
     Map<MeiliSearchIndexType, bool>? loadingByIndex,
     Map<MeiliSearchIndexType, String?>? errorsByIndex,
     Map<MeiliSearchIndexType, SearchSortOrder>? sortOrdersByIndex,
@@ -278,6 +280,7 @@ class MeiliSearchState {
     String? query,
     SearchFilterType? filterType,
     MeiliSearchResult? result,
+    MeiliSearchResult? unfilteredResult,
     Map<MeiliSearchIndexType, bool>? loadingByIndex,
     Map<MeiliSearchIndexType, String?>? errorsByIndex,
     Map<MeiliSearchIndexType, SearchSortOrder>? sortOrdersByIndex,
@@ -308,6 +311,7 @@ class MeiliSearchState {
         query: query ?? this.query,
         filterType: nextFilterType,
         result: result ?? this.result,
+        unfilteredResult: unfilteredResult ?? this.unfilteredResult,
         loadingByIndex: nextLoadingByIndex,
         errorsByIndex: nextErrorsByIndex,
         sortOrdersByIndex: updatedSortOrders,
@@ -319,6 +323,7 @@ class MeiliSearchState {
       query: query ?? this.query,
       filterType: nextFilterType,
       result: result ?? this.result,
+      unfilteredResult: unfilteredResult ?? this.unfilteredResult,
       loadingByIndex: nextLoadingByIndex,
       errorsByIndex: nextErrorsByIndex,
       sortOrdersByIndex: nextSortOrdersByIndex,
@@ -401,7 +406,7 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
 
   MeiliSearchBloc(
     this._meiliSearchService, {
-    this.pageSize = 10,
+    this.pageSize = 100,
   }) : super(MeiliSearchState()) {
     on<MeiliSearchQuerySubmitted>(_onQuerySubmitted);
     on<MeiliSearchFilterTypeChanged>(_onFilterTypeChanged);
@@ -434,6 +439,8 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
       };
       emit(state.copyWith(
         query: '',
+        result: null,
+        unfilteredResult: null,
         loadingByIndex: resetLoading,
         errorsByIndex: resetErrors,
       ));
@@ -562,6 +569,7 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
           emit(
             state.copyWith(
               result: result,
+              unfilteredResult: result,
               filterType: nextFilterType,
               loadingByIndex: successLoading,
               errorsByIndex: successErrors,
@@ -793,7 +801,10 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
     MeiliSearchCleared event,
     Emitter<MeiliSearchState> emit,
   ) async {
-    emit(MeiliSearchState());
+    emit(MeiliSearchState(
+      result: null,
+      unfilteredResult: null,
+    ));
   }
 
   Future<void> _onLoadMore(
@@ -1021,6 +1032,17 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
         nftTokens: mergedNftTokens,
       );
 
+      // Check if there are any user-selected filters for the requested index types
+      bool hasUserSelectedFilters = false;
+      for (final indexType in event.indexTypes) {
+        final filterType = _mapIndexTypeToSearchFilterType(indexType);
+        final selections = state.filtersByType[filterType];
+        if (selections != null && selections.isNotEmpty) {
+          hasUserSelectedFilters = true;
+          break;
+        }
+      }
+
       // Clear loading and errors for requested indexes on success
       final successLoading = Map<MeiliSearchIndexType, bool>.from(
         updatedLoading,
@@ -1033,13 +1055,108 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
         successErrors[indexType] = null;
       }
 
-      emit(
-        state.copyWith(
-          result: mergedResult,
-          loadingByIndex: successLoading,
-          errorsByIndex: successErrors,
-        ),
-      );
+      // If no user-selected filters, also update unfilteredResult
+      if (!hasUserSelectedFilters && state.unfilteredResult != null) {
+        final existingUnfilteredResult = state.unfilteredResult!;
+
+        // Merge unfiltered results for requested indexes
+        final mergedUnfilteredChannels =
+            event.indexTypes.contains(MeiliSearchIndexType.channels) &&
+                    indexToHasMore[MeiliSearchIndexType.channels] == true &&
+                    newChannelsResult != null
+                ? MeiliSearchChannelResult(
+                    items: [
+                      ...existingUnfilteredResult.channels.items,
+                      ...newChannelsResult.items,
+                    ],
+                    maxRankingScore: math.max(
+                      existingUnfilteredResult.channels.maxRankingScore,
+                      newChannelsResult.maxRankingScore,
+                    ),
+                    totalHits: newChannelsResult.totalHits,
+                    offset: newChannelsResult.offset,
+                  )
+                : existingUnfilteredResult.channels;
+
+        final mergedUnfilteredPlaylists =
+            event.indexTypes.contains(MeiliSearchIndexType.playlists) &&
+                    indexToHasMore[MeiliSearchIndexType.playlists] == true &&
+                    newPlaylistsResult != null
+                ? MeiliSearchPlaylistResult(
+                    items: [
+                      ...existingUnfilteredResult.playlists.items,
+                      ...newPlaylistsResult.items,
+                    ],
+                    maxRankingScore: math.max(
+                      existingUnfilteredResult.playlists.maxRankingScore,
+                      newPlaylistsResult.maxRankingScore,
+                    ),
+                    totalHits: newPlaylistsResult.totalHits,
+                    offset: newPlaylistsResult.offset,
+                  )
+                : existingUnfilteredResult.playlists;
+
+        final mergedUnfilteredWorks = event.indexTypes
+                    .contains(MeiliSearchIndexType.playlistItems) &&
+                indexToHasMore[MeiliSearchIndexType.playlistItems] == true &&
+                newWorksResult != null
+            ? MeiliSearchWorksResult(
+                items: [
+                  ...existingUnfilteredResult.works.items,
+                  ...newWorksResult.items,
+                ],
+                maxRankingScore: math.max(
+                  existingUnfilteredResult.works.maxRankingScore,
+                  newWorksResult.maxRankingScore,
+                ),
+                totalHits: newWorksResult.totalHits,
+                offset: newWorksResult.offset,
+              )
+            : existingUnfilteredResult.works;
+
+        final mergedUnfilteredNftTokens =
+            event.indexTypes.contains(MeiliSearchIndexType.nftTokens) &&
+                    indexToHasMore[MeiliSearchIndexType.nftTokens] == true &&
+                    newNftTokensResult != null
+                ? MeiliSearchNftTokensResult(
+                    items: [
+                      ...existingUnfilteredResult.nftTokens.items,
+                      ...newNftTokensResult.items,
+                    ],
+                    maxRankingScore: math.max(
+                      existingUnfilteredResult.nftTokens.maxRankingScore,
+                      newNftTokensResult.maxRankingScore,
+                    ),
+                    totalHits: newNftTokensResult.totalHits,
+                    offset: newNftTokensResult.offset,
+                  )
+                : existingUnfilteredResult.nftTokens;
+
+        final mergedUnfilteredResult = MeiliSearchResult(
+          channels: mergedUnfilteredChannels,
+          playlists: mergedUnfilteredPlaylists,
+          works: mergedUnfilteredWorks,
+          nftTokens: mergedUnfilteredNftTokens,
+        );
+
+        emit(
+          state.copyWith(
+            result: mergedResult,
+            unfilteredResult: mergedUnfilteredResult,
+            loadingByIndex: successLoading,
+            errorsByIndex: successErrors,
+          ),
+        );
+      } else {
+        // If there are filters, only update result, preserve unfilteredResult
+        emit(
+          state.copyWith(
+            result: mergedResult,
+            loadingByIndex: successLoading,
+            errorsByIndex: successErrors,
+          ),
+        );
+      }
 
       final duration = DateTime.now().difference(start);
       log.info(
