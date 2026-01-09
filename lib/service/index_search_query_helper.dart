@@ -19,7 +19,8 @@ class IndexSearchQueryHelper {
   /// Returns `null` if [addresses] is empty.
   static String? buildNftTokensOwnerFilter(List<String> addresses) {
     if (addresses.isEmpty) {
-      return null;
+      // Return a condition that matches no addresses
+      return 'owner_addresses = -';
     }
 
     final conditions = addresses
