@@ -5,11 +5,13 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:autonomy_flutter/model/blockchain.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/screen/meili_search/meili_search_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/provenance.dart';
 
 /// Abstract base class for MeiliSearch index results
 abstract class MeiliSearchIndexResult<T> {
@@ -212,7 +214,9 @@ class MeiliSearchNftTokensResult extends MeiliSearchIndexResult<AssetToken> {
         values.add(token.chain);
       }
     }
-    return values;
+    final Set<Blockchain> blockchainValues =
+        values.map((value) => Blockchain.fromChain(value)).toSet();
+    return blockchainValues.map((blockchain) => blockchain.name).toSet();
   }
 
   Set<String> _extractStandardValues() {
@@ -222,7 +226,9 @@ class MeiliSearchNftTokensResult extends MeiliSearchIndexResult<AssetToken> {
         values.add(token.standard);
       }
     }
-    return values;
+    final Set<DP1ProvenanceStandard> standardValues =
+        values.map((value) => DP1ProvenanceStandard.fromString(value)).toSet();
+    return standardValues.map((standard) => standard.name).toSet();
   }
 
   Set<String> _extractArtistValues() {

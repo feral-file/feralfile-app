@@ -9,10 +9,12 @@ import 'dart:math' as math;
 
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/model/blockchain.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/provenance.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/index_search_query_helper.dart';
 import 'package:autonomy_flutter/service/meilisearch_models.dart';
@@ -148,6 +150,34 @@ extension SearchFilterByExt on SearchFilterBy {
         return 'publisher';
       case SearchFilterBy.dp1Version:
         return 'dp_version';
+    }
+  }
+
+  // convert the value to the display value
+  String fromValue(String value) {
+    switch (this) {
+      case SearchFilterBy.chain:
+        return Blockchain.fromChain(value).name;
+      case SearchFilterBy.standard:
+        return DP1ProvenanceStandard.fromString(value).name;
+
+      default:
+        return value;
+    }
+  }
+
+  // convert the display value to the value, return a list of values
+  // many values are possible for a single display value
+  List<String> toValue(String value) {
+    switch (this) {
+      case SearchFilterBy.chain:
+        final blockchains = Blockchain.fromName(value);
+        return blockchains.map((blockchain) => blockchain.chain).toList();
+      case SearchFilterBy.standard:
+        final standards = DP1ProvenanceStandard.fromName(value);
+        return standards.map((standard) => standard.value).toList();
+      default:
+        return [value];
     }
   }
 }
@@ -1391,8 +1421,10 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
 
       final fieldName = filterBy.meiliFieldName;
       // Build OR conditions for multi-select values
-      final conditions =
-          selection.value.map((val) => '$fieldName = "$val"').toList();
+      final conditions = selection.value.map((val) {
+        final values = filterBy.toValue(val);
+        return '($fieldName IN [${values.map((value) => '"$value"').join(' OR ')}])';
+      }).toList();
       if (conditions.isNotEmpty) {
         filterExpressions.add('(${conditions.join(' OR ')})');
       }

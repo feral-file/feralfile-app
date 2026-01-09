@@ -87,7 +87,7 @@ class IndexSearchQueryBuilder {
       attributesToRetrieve: attrs,
       // These fields depend on the MeiliSearch Dart client signature.
       // We pass through filters and sort if they are supported.
-      filter: _filters,
+      filter: _filters?.map((filter) => '($filter)').join(' AND '),
       sort: _sort,
     );
   }
@@ -176,6 +176,15 @@ class MeiliSearchService {
     required List<IndexSearchQuery> queries,
   }) async {
     final start = DateTime.now();
+    log.info(
+      'MeiliSearchService.searchAll queries: ${queries.map(
+        (query) {
+          final map = Map<String, Object?>.from(query.buildMap());
+          map.removeWhere((key, value) => value == null);
+          return map;
+        },
+      ).toList()}',
+    );
 
     final multiResult = await timerMetric(
         'Meili Multi Search for ${queries.length} queries',
