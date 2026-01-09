@@ -50,6 +50,7 @@ import 'package:card_swiper/card_swiper.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart'; // import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:jiffy/jiffy.dart';
@@ -1412,7 +1413,6 @@ class UIHelper {
         final channelRef = channelReferences[index];
         return ChannelListRow(
           channelReference: channelRef,
-          carouselItems: const <DP1NowDisplayingItem>[],
         );
       },
       itemCount: channelReferences.length,

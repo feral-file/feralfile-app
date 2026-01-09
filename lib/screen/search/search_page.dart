@@ -306,7 +306,12 @@ class _SearchPageState extends State<SearchPage> {
     }
 
     final channelReferences = state.channels
-        .map((channel) => ChannelReference.fromFeralFileDP1Channel(channel))
+        .map((channel) {
+          final channelReference = injector<FeralFileFeedManager>()
+              .getChannelReferenceByChannelId(channel.id);
+          return channelReference;
+        })
+        .nonNulls
         .toList();
 
     return CustomScrollView(

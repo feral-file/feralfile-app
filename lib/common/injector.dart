@@ -38,6 +38,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/col
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc_manager.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channel_preview_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/works/bloc/works_bloc.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/audio_service.dart';
@@ -420,5 +421,10 @@ Future<void> setupInjector() async {
   // PlaylistDetailsBloc Manager
   injector.registerLazySingleton<PlaylistDetailsBlocManager>(
     PlaylistDetailsBlocManager.new,
+  );
+
+  // ChannelPreviewBloc Manager
+  injector.registerLazySingleton<ChannelPreviewBlocManager>(
+    ChannelPreviewBlocManager.new,
   );
 }

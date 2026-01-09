@@ -45,11 +45,3 @@ class LoadMoreChannelsEvent extends ChannelsEvent {
 class RefreshChannelsEvent extends ChannelsEvent {
   const RefreshChannelsEvent();
 }
-
-class LoadMoreChannelItemsEvent extends ChannelsEvent {
-  const LoadMoreChannelItemsEvent({
-    required this.channelId,
-  });
-
-  final String channelId;
-}

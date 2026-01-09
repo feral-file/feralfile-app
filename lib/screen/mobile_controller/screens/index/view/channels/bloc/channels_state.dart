@@ -13,7 +13,6 @@ class ChannelsState {
   const ChannelsState({
     this.status = ChannelsStateStatus.initial,
     this.channels = const [],
-    this.channelData = const [],
     this.hasMore = true,
     this.cursor,
     this.error,
@@ -21,7 +20,6 @@ class ChannelsState {
 
   final ChannelsStateStatus status;
   final List<ChannelReference> channels;
-  final List<ChannelData> channelData;
   final bool hasMore;
   final String? cursor;
   final String? error;
@@ -32,7 +30,6 @@ class ChannelsState {
   ChannelsState copyWith({
     ChannelsStateStatus? status,
     List<ChannelReference>? channels,
-    List<ChannelData>? channelData,
     bool? hasMore,
     String? cursor,
     String? error,
@@ -40,7 +37,6 @@ class ChannelsState {
     return ChannelsState(
       status: status ?? this.status,
       channels: channels ?? this.channels,
-      channelData: channelData ?? this.channelData,
       hasMore: hasMore ?? this.hasMore,
       cursor: cursor ?? this.cursor,
       error: error ?? this.error,
@@ -53,7 +49,6 @@ class ChannelsState {
     return other is ChannelsState &&
         other.status == status &&
         other.channels == channels &&
-        other.channelData == channelData &&
         other.hasMore == hasMore &&
         other.cursor == cursor &&
         other.error == error;
@@ -63,7 +58,6 @@ class ChannelsState {
   int get hashCode {
     return status.hashCode ^
         channels.hashCode ^
-        channelData.hashCode ^
         hasMore.hashCode ^
         cursor.hashCode ^
         error.hashCode;
@@ -74,8 +68,6 @@ class ChannelsState {
   bool get isLoadingMore => status == ChannelsStateStatus.loadingMore;
   bool get isLoaded => status == ChannelsStateStatus.loaded;
   bool get isError => status == ChannelsStateStatus.error;
-
-  List<ChannelData> get top5ChannelData => channelData.safeSublist(0, 5);
 }
 
 class LoadChannelPaginationResponse {
