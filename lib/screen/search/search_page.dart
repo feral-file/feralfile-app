@@ -118,30 +118,33 @@ class _SearchPageState extends State<SearchPage> {
             //   availableTypes.add(state.filterType);
             // }
 
-            final resultsContent = Column(
-              children: [
-                FilterBar(
-                  selectedFilterType: state.filterType,
-                  onFilterTypeChanged: _onFilterTypeChanged,
-                  availableTypes: availableTypes,
-                  sortOrder: state.sortOrder,
-                  onSortOrderChanged: (order) {
-                    _bloc.add(MeiliSearchSortChanged(order));
-                  },
-                  result: state.result,
-                  unfilteredResult: state.unfilteredResult,
-                  selectedFilters: state.filtersByType[state.filterType] ?? [],
-                  onFilterToggled: (type, selections) {
-                    _bloc.add(MeiliSearchFilterToggled(
-                      filterType: type,
-                      selections: selections,
-                    ));
-                  },
-                ),
-                Expanded(
-                  child: _buildResultsSection(context, state),
-                ),
-              ],
+            final resultsContent = SizedBox.expand(
+              child: Column(
+                children: [
+                  FilterBar(
+                    selectedFilterType: state.filterType,
+                    onFilterTypeChanged: _onFilterTypeChanged,
+                    availableTypes: availableTypes,
+                    sortOrder: state.sortOrder,
+                    onSortOrderChanged: (order) {
+                      _bloc.add(MeiliSearchSortChanged(order));
+                    },
+                    result: state.result,
+                    unfilteredResult: state.unfilteredResult,
+                    selectedFilters:
+                        state.filtersByType[state.filterType] ?? [],
+                    onFilterToggled: (type, selections) {
+                      _bloc.add(MeiliSearchFilterToggled(
+                        filterType: type,
+                        selections: selections,
+                      ));
+                    },
+                  ),
+                  Expanded(
+                    child: _buildResultsSection(context, state),
+                  ),
+                ],
+              ),
             );
 
             final resultsWithOverlay = state.isCurrentIndexLoading
@@ -193,12 +196,17 @@ class _SearchPageState extends State<SearchPage> {
       return _buildErrorView(context, state);
     }
 
-    if (!state.hasResults && state.query.isNotEmpty) {
-      return _buildEmptyView(context);
-    }
-
     if (state.query.isEmpty) {
       return _buildInitialView(context);
+    }
+
+    if (state.isCurrentIndexLoading) {
+      // Don't show empty view while loading
+      return const SizedBox.shrink();
+    }
+
+    if (!state.hasResults && state.query.isNotEmpty) {
+      return _buildEmptyView(context);
     }
 
     return _buildResultsView(context, state);
