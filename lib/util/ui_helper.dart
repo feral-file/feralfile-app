@@ -964,6 +964,54 @@ class UIHelper {
     );
   }
 
+  static Future<dynamic> showCustomCenterDialog(
+    BuildContext context, {
+    required Widget content,
+    bool showHideOtherDialog = true,
+  }) async {
+    if (showHideOtherDialog) {
+      UIHelper.hideInfoDialog(context);
+    }
+    final theme = Theme.of(context);
+    return await showCupertinoModalPopup(
+      context: context,
+      builder: (context) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          children: [
+            GestureDetector(
+              child: Container(
+                color: AppColor.primaryBlack.withOpacity(0.5),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Center(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: theme.auGreyBackground,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  constraints: const BoxConstraints(
+                    maxHeight: 600,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 20,
+                    horizontal: 15,
+                  ),
+                  child: content,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   static Future<void> showCenterMenu(
     BuildContext context, {
     required List<OptionItem> options,

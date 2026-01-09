@@ -127,7 +127,7 @@ class _SearchPageState extends State<SearchPage> {
               ],
             );
 
-            final resultsWithOverlay = state.isLoading
+            final resultsWithOverlay = state.isCurrentIndexLoading
                 ? Stack(
                     children: [
                       resultsContent,
@@ -135,8 +135,11 @@ class _SearchPageState extends State<SearchPage> {
                         child: ColoredBox(
                           color:
                               AppColor.auGreyBackground.withValues(alpha: 0.6),
-                          child: const Center(
-                            child: LoadingWidget(),
+                          child: Center(
+                            child: LoadingWidget(
+                                backgroundColor:
+                                    AppColor.auGreyBackground.withOpacity(0.8),
+                                text: 'Searching...'),
                           ),
                         ),
                       ),
@@ -169,7 +172,7 @@ class _SearchPageState extends State<SearchPage> {
     BuildContext context,
     MeiliSearchState state,
   ) {
-    if (state.hasError) {
+    if (state.hasCurrentIndexError) {
       return _buildErrorView(context, state);
     }
 

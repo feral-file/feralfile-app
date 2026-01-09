@@ -24,7 +24,7 @@ class FilterDialog {
     required List<MeiliFilterSelection> selectedFilters,
     required SearchFilterType filterType,
   }) async {
-    final result = await UIHelper.showCenterDialog(
+    final result = await UIHelper.showCustomCenterDialog(
       context,
       content: _FilterDialogContent(
         availableFilters: availableFilters,
@@ -102,34 +102,33 @@ class _FilterDialogContentState extends State<_FilterDialogContent> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CustomScrollView(
-          shrinkWrap: true,
-          slivers: [
-            SliverToBoxAdapter(
-              child: Text('Filter', style: AppTypography.h4(context).white),
-            ),
-            SliverToBoxAdapter(
-              child: SizedBox(height: LayoutConstants.space4),
-            ),
-            SliverList.separated(
-              itemBuilder: (context, index) {
-                final availableFilter = widget.availableFilters[index];
-                final localSelected =
-                    _localSelectedFilters[availableFilter.filterBy] ??
-                        <String>{};
-                final selectedFilter = MeiliFilterSelection(
-                  filterBy: availableFilter.filterBy,
-                  value: localSelected,
-                );
-                return _buildFilterSelection(
-                    context, availableFilter, selectedFilter);
-              },
-              separatorBuilder: (context, index) =>
-                  addOnlyDivider(color: AppColor.auLightGrey),
-              itemCount: widget.availableFilters.length,
-            ),
-          ],
+        Text('Filter', style: AppTypography.h4(context).white),
+        SizedBox(height: LayoutConstants.space4),
+        Expanded(
+          child: CustomScrollView(
+            shrinkWrap: true,
+            slivers: [
+              SliverList.separated(
+                itemBuilder: (context, index) {
+                  final availableFilter = widget.availableFilters[index];
+                  final localSelected =
+                      _localSelectedFilters[availableFilter.filterBy] ??
+                          <String>{};
+                  final selectedFilter = MeiliFilterSelection(
+                    filterBy: availableFilter.filterBy,
+                    value: localSelected,
+                  );
+                  return _buildFilterSelection(
+                      context, availableFilter, selectedFilter);
+                },
+                separatorBuilder: (context, index) =>
+                    addOnlyDivider(color: AppColor.auLightGrey),
+                itemCount: widget.availableFilters.length,
+              ),
+            ],
+          ),
         ),
         SizedBox(height: LayoutConstants.space2),
         Row(
@@ -167,18 +166,31 @@ class _FilterDialogContentState extends State<_FilterDialogContent> {
           Text(availableFilter.filterBy.label,
               style: AppTypography.bodyBold(context).white),
           SizedBox(height: LayoutConstants.space2),
-          ...availableFilter.value.map((value) => Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: LayoutConstants.space4,
-                ),
-                child: _FilterDialogItem(
-                    option: _FilterOptionItem(
-                  title: value,
-                  isSelected: selectedFilter.value.contains(value),
-                  isEnabled: availableFilter.value.length > 1,
-                  onTap: () => _toggleFilter(availableFilter.filterBy, value),
-                )),
-              )),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 200),
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: availableFilter.value.map((value) {
+                  return Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: LayoutConstants.space4,
+                    ),
+                    child: _FilterDialogItem(
+                      option: _FilterOptionItem(
+                        title: value,
+                        isSelected: selectedFilter.value.contains(value),
+                        isEnabled: availableFilter.value.length > 1,
+                        onTap: () =>
+                            _toggleFilter(availableFilter.filterBy, value),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
         ],
       ),
     );
