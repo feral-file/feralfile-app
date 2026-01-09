@@ -97,17 +97,33 @@ class _SearchPageState extends State<SearchPage> {
         body: BlocBuilder<MeiliSearchBloc, MeiliSearchState>(
           bloc: _bloc,
           builder: (context, state) {
+            // Determine available types from unfilteredResult to always show filter bar
+            final availableTypes = <SearchFilterType>[];
+            if (state.unfilteredResult != null) {
+              if (state.unfilteredResult!.playlists.items.isNotEmpty) {
+                availableTypes.add(SearchFilterType.playlists);
+              }
+              if (state.unfilteredResult!.channels.items.isNotEmpty) {
+                availableTypes.add(SearchFilterType.channels);
+              }
+              if (state.unfilteredResult!.works.items.isNotEmpty) {
+                availableTypes.add(SearchFilterType.items);
+              }
+              if (state.unfilteredResult!.nftTokens.items.isNotEmpty) {
+                availableTypes.add(SearchFilterType.nftTokens);
+              }
+            }
+            // Always include current filterType to ensure filter bar is visible
+            // if (!availableTypes.contains(state.filterType)) {
+            //   availableTypes.add(state.filterType);
+            // }
+
             final resultsContent = Column(
               children: [
                 FilterBar(
                   selectedFilterType: state.filterType,
                   onFilterTypeChanged: _onFilterTypeChanged,
-                  availableTypes: [
-                    if (state.playlists.isNotEmpty) SearchFilterType.playlists,
-                    if (state.channels.isNotEmpty) SearchFilterType.channels,
-                    if (state.items.isNotEmpty) SearchFilterType.items,
-                    if (state.nftTokens.isNotEmpty) SearchFilterType.nftTokens,
-                  ],
+                  availableTypes: availableTypes,
                   sortOrder: state.sortOrder,
                   onSortOrderChanged: (order) {
                     _bloc.add(MeiliSearchSortChanged(order));
@@ -363,15 +379,6 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _buildNoResultsForFilterView(BuildContext context, String filterType) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(LayoutConstants.space6),
-        child: Text(
-          'No results found',
-          style: AppTypography.body(context).white,
-          textAlign: TextAlign.center,
-        ),
-      ),
-    );
+    return _buildEmptyView(context);
   }
 }

@@ -130,13 +130,16 @@ class _FilterDialogContentState extends State<_FilterDialogContent> {
             ],
           ),
         ),
-        SizedBox(height: LayoutConstants.space2),
+        SizedBox(height: LayoutConstants.space3),
         Row(
           children: [
             Expanded(
               child: PrimaryAsyncButton(
                 onTap: () => Navigator.pop(context),
                 text: 'Cancel',
+                color: AppColor.auGreyBackground,
+                borderColor: AppColor.white,
+                textColor: AppColor.white,
               ),
             ),
             SizedBox(width: LayoutConstants.space2),

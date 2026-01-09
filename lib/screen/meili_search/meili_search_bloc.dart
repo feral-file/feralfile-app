@@ -78,7 +78,7 @@ extension SearchFilterTypeExt on SearchFilterType {
       case SearchFilterType.items:
         return 'Works';
       case SearchFilterType.nftTokens:
-        return 'Collections';
+        return 'Me';
     }
   }
 
@@ -1237,37 +1237,12 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
     emit(updatedState.copyWith(loadingByIndex: updatedLoading));
 
     try {
-      int limit;
-      switch (filterType) {
-        case SearchFilterType.channels:
-          limit = updatedState.result!.channels.items.length;
-          break;
-        case SearchFilterType.playlists:
-          limit = updatedState.result!.playlists.items.length;
-          break;
-        case SearchFilterType.items:
-          limit = updatedState.result!.works.items.length;
-          break;
-        case SearchFilterType.nftTokens:
-          limit = updatedState.result!.nftTokens.items.length;
-          break;
-      }
-
-      if (limit == 0) {
-        final finalLoading = Map<MeiliSearchIndexType, bool>.from(
-          updatedLoading,
-        );
-        finalLoading[indexTypeToUpdate] = false;
-        emit(updatedState.copyWith(loadingByIndex: finalLoading));
-        return;
-      }
-
       final builder = IndexSearchQueryBuilder(
         prefix: _meiliSearchService.prefix,
         indexType: indexTypeToUpdate,
         query: currentQuery,
       )
-        ..limit(limit)
+        ..limit(pageSize)
         ..offset(0);
 
       // Use sort order for this specific index
