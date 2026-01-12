@@ -395,7 +395,7 @@ class UserAllOwnCollectionBloc
       emit(state.copyWith(addressStates: []));
       return;
     }
-    final assetTokenGroupByAddress = injector<IndexerDatabaseAbstract>()
+    final assetTokenGroupByAddress = await injector<IndexerDatabaseAbstract>()
         .getGroupAssetTokensByOwnersGroupByAddress(
       owners: owners,
     );

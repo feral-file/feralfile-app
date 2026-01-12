@@ -252,7 +252,7 @@ class NftTokensServiceImpl extends NftTokensService {
   Future<void> purgeCachedGallery() async {
     disposeIsolate();
     await _configurationService.setDidSyncAddress(false);
-    _database.clearAll();
+    await _database.clearAll();
     await injector<ConfigurationService>().clearAddressLastFetchTokenTime();
   }
 
@@ -667,11 +667,14 @@ class NftTokensServiceImpl extends NftTokensService {
   }
 
   Future<void> insertAssetsWithProvenance(List<AssetToken> assetTokens) async {
-    _database.insertTokens(assetTokens);
+    NftCollection.logger.info(
+        '[insertAssetsWithProvenance] Starting to insert ${assetTokens.length} tokens');
+    
+    await _database.insertTokens(assetTokens);
 
     final tokensLog = assetTokens.map((e) => 'cid: ${e.cid}').toList();
     NftCollection.logger.info(
-        '[insertAssetsWithProvenance][tokens] ${assetTokens.length} $tokensLog');
+        '[insertAssetsWithProvenance][tokens] Completed inserting ${assetTokens.length} tokens: $tokensLog');
   }
 
   // fetch manual tokens from indexer in batches of 40
@@ -709,7 +712,7 @@ class NftTokensServiceImpl extends NftTokensService {
   }) async {
     try {
       // get from database
-      final assetTokenFromDatabase = _database.getTokensByCIDs(cids: cids);
+      final assetTokenFromDatabase = await _database.getTokensByCIDs(cids: cids);
       final res = [...assetTokenFromDatabase];
       final missingIds = cids
           .where((cid) => !assetTokenFromDatabase.any((e) => e.cid == cid))
@@ -1158,7 +1161,7 @@ class NftTokensServiceImpl extends NftTokensService {
             groupedChanges.keys.toList().where((id) => id.isNotEmpty).toList();
 
         // Get tokens from database
-        final tokens = _database.getTokensByTokenIds(tokenIds: tokenIds);
+        final tokens = await _database.getTokensByTokenIds(tokenIds: tokenIds);
         final updatedTokens = <AssetToken>[];
 
         // Apply all changes to each token

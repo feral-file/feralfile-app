@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/token.dart';
-import 'package:autonomy_flutter/nft_collection/database/asset_token_repository.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
@@ -39,7 +38,7 @@ class PlaylistDetailsBloc
 
     try {
       final isStatic = _playlist.items.isNotEmpty;
-      AssetTokenWatcher watcher;
+      Stream<List<AssetToken>> watchStream;
 
       if (isStatic) {
         // Watch tokens by CIDs for static playlists
@@ -47,20 +46,22 @@ class PlaylistDetailsBloc
             .map((item) => item.cid)
             .whereType<String>()
             .toList();
-        watcher = AssetTokenCidsWatcher(cids: cids);
+        watchStream =
+            injector<IndexerDatabaseAbstract>().watchTokensByCIDs(cids: cids);
         log.info(
           '[PlaylistDetailsBloc] Setting up database listener for static playlist ${_playlist.id} with ${cids.length} CIDs',
         );
       } else {
         // Watch tokens by owner addresses for dynamic playlists
         final owners = _playlist.firstDynamicQuery?.params.owners ?? [];
-        watcher = AssetTokenAddressesWatcher(owners: owners);
+        watchStream = injector<IndexerDatabaseAbstract>()
+            .watchTokensByOwners(owners: owners);
         log.info(
           '[PlaylistDetailsBloc] Setting up database listener for dynamic playlist ${_playlist.id} with owners: $owners',
         );
       }
 
-      _databaseSubscription = watcher.watch().listen(
+      _databaseSubscription = watchStream.listen(
         (tokens) async {
           log.info(
             '[PlaylistDetailsBloc] Database changed, checking playlist ${_playlist.id} with ${tokens.length} tokens',
@@ -165,7 +166,7 @@ class PlaylistDetailsBloc
         if (dynamicQuery != null) {
           final owners = dynamicQuery.params.owners;
           if (owners.isNotEmpty) {
-            final allTokens = injector<IndexerDatabaseAbstract>()
+            final allTokens = await injector<IndexerDatabaseAbstract>()
                 .getTokensByOwners(owners: owners);
             total = allTokens.length;
           } else {

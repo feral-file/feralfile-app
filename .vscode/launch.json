@@ -23,23 +23,23 @@
 			]
         },
         {
-            "name": "autonomy-flutter (profile mode)",
+            "name": "autonomy-production (profile mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile",
             "args": [
 				"--flavor",
-				"prd"
+				"production"
 			]
         },
         {
-            "name": "autonomy-flutter (release mode)",
+            "name": "autonomy-production (release mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release",
             "args": [
 				"--flavor",
-				"prd"
+				"production"
 			]
         }
     ]

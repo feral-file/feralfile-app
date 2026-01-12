@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
+import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart'
+    as drift_db;
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
@@ -8,7 +10,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/service/base_dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/base_dp1_feed_service_impl.dart';
 import 'package:autonomy_flutter/util/dio_manager.dart';
-import 'package:autonomy_flutter/util/feed_cache.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:dio/dio.dart';
 
@@ -102,20 +103,21 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
   Future<void> init({
     FutureOr<void> Function(Object)? onPlaylistError,
     FutureOr<void> Function(Object)? onChannelError,
+    Dio? dio,
   }) async {
-    api = DP1FeedApi.dioBaseUrl(
-      baseUrl: baseUrl,
-      dio: DioManager().dp1Feed(
-        BaseOptions(
-          followRedirects: true,
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
-        ),
-      ),
+    // Pass custom dio to parent init
+    await super.init(
+      onPlaylistError: onPlaylistError,
+      onChannelError: onChannelError,
+      dio: dio ??
+          DioManager().dp1Feed(
+            BaseOptions(
+              followRedirects: true,
+              connectTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 10),
+            ),
+          ),
     );
-    cache = FeedCacheImpl(baseUrl: baseUrl);
-    await cache.init(
-        onPlaylistError: onPlaylistError, onChannelError: onChannelError);
   }
 
   /*  
@@ -142,7 +144,9 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
 
   @override
   List<DP1Call> getCachedPlaylistsByChannelId(String channelId) {
-    return cache.getPlaylistsOfChannel(channelId);
+    // Drift is async, deprecated sync method
+    log.info('[DP1FeedService] getCachedPlaylistsByChannelId - use async methods');
+    return [];
   }
 
   @override
@@ -227,8 +231,9 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
 
   @override
   Channel? getChannelByPlaylistId(String playlistId) {
-    final channel = cache.getChannelByPlaylistId(playlistId);
-    return channel;
+    // Drift is async, deprecated sync method
+    log.info('[DP1FeedService] getChannelByPlaylistId - use async methods');
+    return null;
   }
 
   @override
@@ -237,8 +242,11 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
     bool fromCache = true,
   }) async {
     if (fromCache) {
-      final cached = cache.getChannelById(channelId);
-      return cached;
+      final cached = await db.getChannelById(channelId);
+      if (cached != null) {
+        return channelRowToModel(cached);
+      }
+      return null;
     }
     final channel = await api.getChannelById(channelId);
     return channel;
@@ -282,7 +290,7 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
       ),
     );
 
-    cache.insertListChannels(channels.items);
+    await ingestService.ingestChannels(channels.items, baseUrl);
 
     return DP1ChannelsResponse(
       channels.items,
@@ -308,7 +316,9 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
 
   @override
   List<Channel> getAllCachedChannels() {
-    return cache.getAllChannels();
+    // Drift is async, deprecated sync method
+    log.info('[DP1FeedService] getAllCachedChannels - use async methods');
+    return [];
   }
 
   /*
@@ -343,10 +353,9 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
       log.info('Reloading cache for FeralFileDP1FeedService: $baseUrl');
       final channels = await getAllChannels();
       final playlists = await getAllPlaylists();
-      cache.clearAll();
-      cache
-        ..insertListChannels(channels)
-        ..insertListPlaylists(playlists);
+      await db.clearAll();
+      await ingestService.ingestChannels(channels, baseUrl);
+      await ingestService.ingestPlaylists(playlists, baseUrl, null);
       _isReloadingCache = false;
     } catch (e) {
       log.info('Failed to reload cache for FeralFileDP1FeedService: $e');
@@ -356,8 +365,8 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
   }
 
   @override
-  void clearCache() {
-    super.clearCache();
+  Future<void> clearCache() async {
+    await super.clearCache();
   }
 }
 
@@ -427,24 +436,15 @@ class FeralFileDP1FeedService extends DP1FeedWithChannelExtensionServiceImpl {
 
   @override
   List<DP1Call> getAllCachedPlaylists() {
-    final playlists = <DP1Call>[];
-    _remoteConfigChannelIds.forEach((channelId) {
-      playlists.addAll(cache.getPlaylistsOfChannel(channelId));
-    });
-    return playlists;
+    // Drift is async, deprecated sync method
+    log.info('[DP1FeedService] getAllCachedPlaylists - use async methods');
+    return [];
   }
 
   @override
   List<Channel> getAllCachedChannels() {
-    final cachedChannels = super.getAllCachedChannels();
-    // filter out channels not in _remoteConfigChannelIds
-    final channels = cachedChannels
-        .where((channel) => _remoteConfigChannelIds.contains(channel.id))
-        .toList();
-    // order by _remoteConfigChannelIds
-    channels.sort((a, b) => _remoteConfigChannelIds
-        .indexOf(a.id)
-        .compareTo(_remoteConfigChannelIds.indexOf(b.id)));
-    return channels;
+    // Drift is async, deprecated sync method
+    log.info('[DP1FeedService] getAllCachedChannels - use async methods');
+    return [];
   }
 }

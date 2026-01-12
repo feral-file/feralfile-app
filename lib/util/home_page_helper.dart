@@ -259,10 +259,10 @@ class HomePageHelper {
         // Clear cached tokens for these addresses before fetching
         final db = injector<IndexerDatabaseAbstract>();
         final tokens =
-            db.getTokensByOwners(owners: addressesToReindex.toList());
+            await db.getTokensByOwners(owners: addressesToReindex.toList());
         if (tokens.isNotEmpty) {
           final cids = tokens.map((v2.AssetToken t) => t.cid).toList();
-          db.deleteTokens(cids);
+          await db.deleteTokens(cids);
         }
 
         log.info(

@@ -4,33 +4,43 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/col
 enum IndexerDatabaseSortBy { updatedAt }
 
 abstract class IndexerDatabaseAbstract {
-  // int insertToken(v2.AssetToken token);
+  // Write operations (async for Drift compatibility)
+  Future<void> insertTokens(List<v2.AssetToken> tokens);
 
-  void insertTokens(List<v2.AssetToken> tokens);
+  Future<void> clearAll();
 
-  List<AddressAssetTokens> getGroupAssetTokensByOwnersGroupByAddress(
-      {required List<String> owners,
-      IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt});
+  Future<void> deleteToken(String cid);
 
-  List<v2.AssetToken> getTokensByOwners({
+  Future<void> deleteTokens(List<String> cids);
+
+  // Read operations (async with Future)
+  Future<List<AddressAssetTokens>> getGroupAssetTokensByOwnersGroupByAddress({
+    required List<String> owners,
+    IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt,
+  });
+
+  Future<List<v2.AssetToken>> getTokensByOwners({
     required List<String> owners,
   });
 
-  List<v2.AssetToken> getTokensByCIDs({
+  Future<List<v2.AssetToken>> getTokensByCIDs({
     required List<String> cids,
     IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt,
   });
 
-  void clearAll();
+  Future<v2.AssetToken?> findTokenByCid(String cid);
 
-  v2.AssetToken? findTokenByCid(String cid);
-
-  void deleteToken(String cid);
-
-  void deleteTokens(List<String> cids);
-
-  List<v2.AssetToken> getTokensByTokenIds({
+  Future<List<v2.AssetToken>> getTokensByTokenIds({
     required List<String> tokenIds,
     IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt,
+  });
+
+  // Reactive streams for UI
+  Stream<List<v2.AssetToken>> watchTokensByOwners({
+    required List<String> owners,
+  });
+
+  Stream<List<v2.AssetToken>> watchTokensByCIDs({
+    required List<String> cids,
   });
 }

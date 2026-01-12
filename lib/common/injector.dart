@@ -11,6 +11,8 @@ import 'package:autonomy_flutter/common/database.dart';
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/database/hive_database.dart';
+import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_bootstrap_service.dart';
 import 'package:autonomy_flutter/gateway/customer_support_api.dart';
 import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
 import 'package:autonomy_flutter/gateway/feralfile_api.dart';
@@ -108,11 +110,6 @@ Future<void> setupInjector() async {
   );
   final dio = DioManager().base(dioOptions);
 
-  // Initialize ObjectBox store only if not already initialized
-  if (!ObjectBox.isInitialized) {
-    await ObjectBox.create();
-  }
-
   injector.registerLazySingleton<NetworkService>(NetworkService.new);
   // Services
 
@@ -147,10 +144,20 @@ Future<void> setupInjector() async {
     ),
   );
 
+  // Initialize ObjectBox store for other app data (not tokens)
+  if (!ObjectBox.isInitialized) {
+    await ObjectBox.create();
+  }
+
+  // Register PlaylistDatabase (Drift) before NftCollection
+  final playlistDb = PlaylistDatabase();
+  injector.registerSingleton<PlaylistDatabase>(playlistDb);
+
   await NftCollection.initNftCollection(
     indexerUrl: Environment.indexerURL,
     logger: log,
     apiLogger: apiLog,
+    playlistDb: playlistDb,
   );
   injector.registerLazySingleton<NftTokensService>(
     () => NftCollection.tokenService,
@@ -421,4 +428,12 @@ Future<void> setupInjector() async {
   injector.registerLazySingleton<PlaylistDetailsBlocManager>(
     PlaylistDetailsBlocManager.new,
   );
+
+  // Drift Bootstrap Service
+  injector.registerLazySingleton<DriftBootstrapService>(
+    () => DriftBootstrapService(playlistDb),
+  );
+
+  // Bootstrap Drift database (creates my_collection + address playlists)
+  await injector<DriftBootstrapService>().bootstrapIfNeeded();
 }

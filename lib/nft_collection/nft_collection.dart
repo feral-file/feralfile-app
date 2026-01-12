@@ -1,6 +1,6 @@
-import 'package:autonomy_flutter/common/database.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
-import 'package:autonomy_flutter/nft_collection/database/indexer_database_manager.dart';
+import 'package:autonomy_flutter/nft_collection/database/indexer_database_drift.dart';
+import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart';
 import 'package:autonomy_flutter/nft_collection/services/configuration_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -22,14 +22,16 @@ class NftCollection {
     required String indexerUrl,
     Logger? logger,
     Logger? apiLogger,
+    PlaylistDatabase? playlistDb,
   }) async {
     if (logger != null) {
       NftCollection.logger = logger;
       NftCollection.apiLog = logger;
     }
 
-    final store = ObjectBox.store;
-    database = IndexerDataBaseObjectBox(store);
+    // Use Drift-backed database
+    final db = playlistDb ?? PlaylistDatabase();
+    database = IndexerDatabaseDrift(db);
     prefs = NftCollectionPrefs(await SharedPreferences.getInstance());
     tokenService = NftTokensServiceImpl(indexerUrl, database, prefs);
   }

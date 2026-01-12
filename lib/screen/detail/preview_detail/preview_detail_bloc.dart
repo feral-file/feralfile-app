@@ -39,7 +39,7 @@ class ArtworkPreviewDetailBloc
           assetToken = token;
         }
       } else {
-        assetToken = _database.findTokenByCid(
+        assetToken = await _database.findTokenByCid(
           event.identity.cid,
         );
       }

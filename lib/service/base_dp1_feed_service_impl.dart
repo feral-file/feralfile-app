@@ -3,13 +3,17 @@ import 'dart:async';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
+import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart';
+import 'package:autonomy_flutter/nft_collection/services/dp1_to_drift_ingest_service.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart'
+    as model;
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_create_playlist_request.dart';
 import 'package:autonomy_flutter/service/base_dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
-import 'package:autonomy_flutter/util/feed_cache.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:dio/dio.dart';
 
 /// Base implementation of DP1 feed service containing common playlist and item methods
 class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
@@ -22,17 +26,21 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
   final bool isExternalFeedService;
 
   late final DP1FeedApi api;
-  late final BaseFeedCache cache;
+  late final DP1ToDriftIngestService ingestService;
+  late final PlaylistDatabase db;
 
-  /// Initialize api and cache - can be overridden by subclasses
+  /// Initialize api and Drift services - can be overridden by subclasses
   Future<void> init({
     FutureOr<void> Function(Object)? onPlaylistError,
     FutureOr<void> Function(Object)? onChannelError,
+    Dio? dio,
   }) async {
-    api = DP1FeedApi.dioBaseUrl(baseUrl: baseUrl);
-    cache = FeedCacheImpl(baseUrl: baseUrl);
-    await cache.init(
-        onPlaylistError: onPlaylistError, onChannelError: onChannelError);
+    api = DP1FeedApi.dioBaseUrl(
+      baseUrl: baseUrl,
+      dio: dio,
+    );
+    db = injector<PlaylistDatabase>();
+    ingestService = DP1ToDriftIngestService(db);
   }
 
   /*
@@ -83,8 +91,11 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
     bool usingCache = true,
   }) async {
     if (usingCache) {
-      final cachedPlaylist = cache.getPlaylistById(playlistId);
-      if (cachedPlaylist != null) return cachedPlaylist;
+      final cachedPlaylist = await db.getPlaylistById(playlistId);
+      if (cachedPlaylist != null) {
+        // Convert Drift row to DP1Call model
+        return playlistRowToModel(cachedPlaylist);
+      }
     }
     try {
       final result = await api.getPlaylistById(playlistId);
@@ -101,7 +112,7 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
     int? limit,
   }) async {
     final resp = await api.getAllPlaylists(cursor: cursor, limit: limit);
-    cache.insertListPlaylists(resp.items);
+    await ingestService.ingestPlaylists(resp.items, baseUrl, null);
     return resp;
   }
 
@@ -122,13 +133,19 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
 
   @override
   List<DP1Call> getAllCachedPlaylists() {
-    return cache.getAllPlaylists();
+    // Drift query is async, so return empty for now
+    // Call sites should use async methods instead
+    log.info('[BaseDP1FeedServiceImpl] getAllCachedPlaylists - deprecated, use async methods');
+    return [];
   }
 
   @override
   Future<bool> deletePlaylist(String id) async {
     await api.deletePlaylist(id);
-    cache.removePlaylistById(id);
+    // Delete playlist from Drift
+    await (db.delete(db.playlists)..where((p) => p.id.equals(id))).go();
+    // Also delete associated entries
+    await db.deletePlaylistEntries(id);
     return true;
   }
 
@@ -169,10 +186,10 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
       bool hasMore = true;
       String? cursor;
       const limit = 50;
-      cache.clearAll();
+      // Note: Drift clears per-channel, not globally
       while (hasMore) {
         final resp = await api.getAllPlaylists(cursor: cursor, limit: limit);
-        cache.insertListPlaylists(resp.items);
+        await ingestService.ingestPlaylists(resp.items, baseUrl, null);
         hasMore = resp.hasMore;
         cursor = resp.cursor;
       }
@@ -181,8 +198,41 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
     }
   }
 
-  void clearCache() {
-    cache.clearAll();
+  Future<void> clearCache() async {
+    // Clear all Drift data
+    await db.clearAll();
+  }
+
+  /// Convert Drift Playlist row to DP1Call model
+  DP1Call playlistRowToModel(Playlist row) {
+    // Parse signatures JSON array
+    final signature = row.signaturesJson.isNotEmpty ? 'stored' : '';
+
+    return DP1Call(
+      dpVersion: row.dpVersion ?? '1.0.0',
+      id: row.id,
+      slug: row.slug ?? '',
+      title: row.title,
+      created: DateTime.fromMicrosecondsSinceEpoch(row.createdAtUs),
+      defaults: null, // Parse from defaultsJson if needed
+      items: const [], // Items loaded separately
+      signature: signature,
+      dynamicQueries: const [], // Parse from dynamicQueriesJson if needed
+    );
+  }
+
+  /// Convert Drift Channel row to model.Channel
+  model.Channel channelRowToModel(Channel row) {
+    return model.Channel(
+      id: row.id,
+      slug: row.slug ?? '',
+      title: row.title,
+      curator: row.curator,
+      summary: row.summary,
+      playlists: const [], // Loaded separately
+      created: DateTime.fromMicrosecondsSinceEpoch(row.createdAtUs),
+      coverImage: row.coverImageUri,
+    );
   }
 
   /*

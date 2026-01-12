@@ -1,0 +1,405 @@
+//
+//  SPDX-License-Identifier: BSD-2-Clause-Patent
+//  Copyright © 2022 Bitmark. All rights reserved.
+//  Use of this source code is governed by the BSD-2-Clause Plus Patent License
+//  that can be found in the LICENSE file.
+//
+
+import 'dart:io';
+
+import 'package:autonomy_flutter/util/log.dart';
+import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+
+part 'playlist_database.g.dart';
+
+/// Channel table - stores DP1 channels and local virtual channels
+class Channels extends Table {
+  TextColumn get id => text()();
+  IntColumn get type => integer()(); // 0=dp1, 1=local_virtual
+  TextColumn get baseUrl => text().nullable()();
+  TextColumn get slug => text().nullable()();
+  TextColumn get title => text()();
+  TextColumn get curator => text().nullable()();
+  TextColumn get summary => text().nullable()();
+  TextColumn get coverImageUri => text().nullable()();
+  IntColumn get createdAtUs => integer()();
+  IntColumn get updatedAtUs => integer()();
+  IntColumn get sortOrder => integer().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Playlist table - stores DP1 playlists and address-based playlists
+class Playlists extends Table {
+  TextColumn get id => text()();
+  TextColumn get channelId => text().nullable()();
+  IntColumn get type => integer()(); // 0=dp1, 1=address_playlist
+  TextColumn get baseUrl => text().nullable()();
+
+  TextColumn get dpVersion => text().nullable()();
+  TextColumn get slug => text().nullable()();
+  TextColumn get title => text()();
+  IntColumn get createdAtUs => integer()();
+  IntColumn get updatedAtUs => integer()();
+
+  // DP1 signatures stored as JSON array
+  // v1.1.0+: array of objects
+  // legacy v1.0.x: ["ed25519:<hex>"]
+  TextColumn get signaturesJson => text()();
+  TextColumn get defaultsJson => text().nullable()();
+  TextColumn get dynamicQueriesJson => text().nullable()();
+
+  // Address playlist fields
+  TextColumn get ownerAddress => text().nullable()(); // uppercase
+  TextColumn get ownerChain => text().nullable()();
+
+  IntColumn get sortMode => integer()(); // 0=position, 1=provenance
+  IntColumn get itemCount => integer().withDefault(const Constant(0))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Items table - stores unique playlist items (DP1 items and indexer tokens)
+class Items extends Table {
+  TextColumn get id => text()();
+  IntColumn get kind => integer()(); // 0=dp1_item, 1=indexer_token
+
+  // Lite UI fields (enrichment → metadata priority)
+  TextColumn get title => text().nullable()();
+  TextColumn get subtitle => text().nullable()(); // artists string
+  TextColumn get thumbnailUri => text().nullable()();
+  IntColumn get durationSec => integer().nullable()();
+
+  // DP1 fields
+  TextColumn get sourceUri => text().nullable()();
+  TextColumn get refUri => text().nullable()();
+  TextColumn get license => text().nullable()();
+  TextColumn get overrideJson => text().nullable()();
+
+  // Full token data for indexer tokens (kind=1)
+  // Stores complete AssetToken JSON for reconstruction
+  TextColumn get tokenDataJson => text().nullable()();
+
+  IntColumn get updatedAtUs => integer()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// PlaylistEntries table - join table for playlist membership
+/// with per-playlist ordering
+class PlaylistEntries extends Table {
+  TextColumn get playlistId => text()();
+  TextColumn get itemId => text()();
+
+  // Per-playlist ordering
+  IntColumn get position => integer().nullable()();
+  IntColumn get sortKeyUs => integer()();
+
+  IntColumn get updatedAtUs => integer()();
+
+  @override
+  Set<Column> get primaryKey => {playlistId, itemId};
+}
+
+@DriftDatabase(tables: [Channels, Playlists, Items, PlaylistEntries])
+class PlaylistDatabase extends _$PlaylistDatabase {
+  PlaylistDatabase() : super(_openConnection());
+
+  @override
+  int get schemaVersion => 3; // Added tokenDataJson field for full token storage
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (Migrator m) async {
+          await m.createAll();
+
+          // Create indexes via customStatement as recommended
+          // Note: Drift converts camelCase to snake_case in SQL
+          await customStatement(
+            'CREATE INDEX idx_channels_type_order ON channels(type, sort_order)',
+          );
+          await customStatement(
+            'CREATE INDEX idx_playlists_channel ON playlists(channel_id, type)',
+          );
+          await customStatement(
+            'CREATE INDEX idx_playlists_owner ON playlists(type, owner_address)',
+          );
+          await customStatement(
+            'CREATE INDEX idx_items_kind_updated ON items(kind, updated_at_us)',
+          );
+          await customStatement(
+            'CREATE INDEX idx_entries_sort ON playlist_entries(playlist_id, sort_key_us DESC, item_id DESC)',
+          );
+          await customStatement(
+            'CREATE INDEX idx_entries_position ON playlist_entries(playlist_id, position ASC, item_id ASC)',
+          );
+        },
+        onUpgrade: (Migrator m, int from, int to) async {
+          // Handle upgrade from v1 to v2: Fix indexes with wrong column names
+          if (from == 1 && to >= 2) {
+            // Drop old indexes with incorrect column names (if they exist)
+            await customStatement('DROP INDEX IF EXISTS idx_channels_type_order');
+            await customStatement('DROP INDEX IF EXISTS idx_playlists_channel');
+            await customStatement('DROP INDEX IF EXISTS idx_playlists_owner');
+            await customStatement('DROP INDEX IF EXISTS idx_items_kind_updated');
+            await customStatement('DROP INDEX IF EXISTS idx_entries_sort');
+            await customStatement('DROP INDEX IF EXISTS idx_entries_position');
+
+            // Recreate indexes with correct column names
+            await customStatement(
+              'CREATE INDEX idx_channels_type_order ON channels(type, sort_order)',
+            );
+            await customStatement(
+              'CREATE INDEX idx_playlists_channel ON playlists(channel_id, type)',
+            );
+            await customStatement(
+              'CREATE INDEX idx_playlists_owner ON playlists(type, owner_address)',
+            );
+            await customStatement(
+              'CREATE INDEX idx_items_kind_updated ON items(kind, updated_at_us)',
+            );
+            await customStatement(
+              'CREATE INDEX idx_entries_sort ON playlist_entries(playlist_id, sort_key_us DESC, item_id DESC)',
+            );
+            await customStatement(
+              'CREATE INDEX idx_entries_position ON playlist_entries(playlist_id, position ASC, item_id ASC)',
+            );
+          }
+          
+          // Handle upgrade from v2 to v3: Add tokenDataJson column
+          if (from <= 2 && to >= 3) {
+            await m.addColumn(items, items.tokenDataJson);
+            
+            // Clear existing items since they don't have tokenDataJson
+            // They will be repopulated by reindexing
+            log.info('[PlaylistDatabase] Migration v2->v3: Clearing items without tokenDataJson');
+            await customStatement('DELETE FROM items WHERE token_data_json IS NULL');
+            await customStatement('DELETE FROM playlist_entries WHERE item_id NOT IN (SELECT id FROM items)');
+            log.info('[PlaylistDatabase] Migration v2->v3: Cleared old items, will repopulate via reindex');
+          }
+        },
+      );
+
+  // ========== Channels ==========
+
+  Future<void> upsertChannel(ChannelsCompanion channel) async {
+    await into(channels).insertOnConflictUpdate(channel);
+  }
+
+  Future<void> upsertChannels(List<ChannelsCompanion> channelList) async {
+    await batch((batch) {
+      batch.insertAllOnConflictUpdate(channels, channelList);
+    });
+  }
+
+  Stream<List<Channel>> watchChannels({int? type, String? baseUrl}) {
+    final query = select(channels);
+    if (type != null) {
+      query.where((c) => c.type.equals(type));
+    }
+    if (baseUrl != null) {
+      query.where((c) => c.baseUrl.equals(baseUrl));
+    }
+    query.orderBy([
+      (c) => OrderingTerm(expression: c.sortOrder, mode: OrderingMode.asc),
+    ]);
+    return query.watch();
+  }
+
+  Future<Channel?> getChannelById(String channelId) async {
+    return (select(channels)..where((c) => c.id.equals(channelId)))
+        .getSingleOrNull();
+  }
+
+  // ========== Playlists ==========
+
+  Future<void> upsertPlaylist(PlaylistsCompanion playlist) async {
+    await into(playlists).insertOnConflictUpdate(playlist);
+  }
+
+  Future<void> upsertPlaylists(List<PlaylistsCompanion> playlistList) async {
+    await batch((batch) {
+      batch.insertAllOnConflictUpdate(playlists, playlistList);
+    });
+  }
+
+  Stream<List<Playlist>> watchPlaylists({String? channelId, int? type}) {
+    final query = select(playlists);
+    if (channelId != null) {
+      query.where((p) => p.channelId.equals(channelId));
+    }
+    if (type != null) {
+      query.where((p) => p.type.equals(type));
+    }
+    query.orderBy([
+      (p) => OrderingTerm(expression: p.createdAtUs, mode: OrderingMode.desc),
+    ]);
+    return query.watch();
+  }
+
+  Future<Playlist?> getPlaylistById(String playlistId) async {
+    return (select(playlists)..where((p) => p.id.equals(playlistId)))
+        .getSingleOrNull();
+  }
+
+  // ========== Items ==========
+
+  Future<void> upsertItem(ItemsCompanion item) async {
+    await into(items).insertOnConflictUpdate(item);
+  }
+
+  Future<void> upsertItems(List<ItemsCompanion> itemList) async {
+    await batch((batch) {
+      batch.insertAllOnConflictUpdate(items, itemList);
+    });
+  }
+
+  Future<Item?> getItemById(String itemId) async {
+    return (select(items)..where((i) => i.id.equals(itemId))).getSingleOrNull();
+  }
+
+  // ========== PlaylistEntries ==========
+
+  Future<void> upsertPlaylistEntry(PlaylistEntriesCompanion entry) async {
+    await into(playlistEntries).insertOnConflictUpdate(entry);
+  }
+
+  Future<void> upsertPlaylistEntries(
+      List<PlaylistEntriesCompanion> entryList) async {
+    await batch((batch) {
+      batch.insertAllOnConflictUpdate(playlistEntries, entryList);
+    });
+  }
+
+  /// Watch playlist items page with join (lite projection) and keyset paging
+  Stream<List<PlaylistItemLite>> watchPlaylistItemsPage({
+    required String playlistId,
+    int limit = 10,
+    int? cursorSortKeyUs,
+    String? cursorItemId,
+    bool orderByProvenance = true,
+  }) {
+    final query = select(playlistEntries).join([
+      innerJoin(items, items.id.equalsExp(playlistEntries.itemId)),
+    ])
+      ..where(playlistEntries.playlistId.equals(playlistId))
+      ..limit(limit);
+
+    if (orderByProvenance) {
+      query.orderBy([
+        OrderingTerm(
+          expression: playlistEntries.sortKeyUs,
+          mode: OrderingMode.desc,
+        ),
+        OrderingTerm(expression: items.id, mode: OrderingMode.desc),
+      ]);
+
+      // Apply keyset cursor for provenance ordering
+      if (cursorSortKeyUs != null && cursorItemId != null) {
+        query.where(
+          (playlistEntries.sortKeyUs.isSmallerThanValue(cursorSortKeyUs)) |
+              ((playlistEntries.sortKeyUs.equals(cursorSortKeyUs)) &
+                  (items.id.isSmallerThanValue(cursorItemId))),
+        );
+      }
+    } else {
+      query.orderBy([
+        OrderingTerm(
+            expression: playlistEntries.position, mode: OrderingMode.asc),
+        OrderingTerm(expression: items.id, mode: OrderingMode.asc),
+      ]);
+
+      // Apply keyset cursor for position ordering
+      if (cursorSortKeyUs != null && cursorItemId != null) {
+        // Note: cursorSortKeyUs is actually position in this case
+        query.where(
+          (playlistEntries.position.isBiggerThanValue(cursorSortKeyUs)) |
+              ((playlistEntries.position.equals(cursorSortKeyUs)) &
+                  (items.id.isBiggerThanValue(cursorItemId))),
+        );
+      }
+    }
+
+    return query.watch().map((rows) {
+      return rows.map((row) {
+        final entry = row.readTable(playlistEntries);
+        final item = row.readTable(items);
+        return PlaylistItemLite(
+          playlistId: entry.playlistId,
+          itemId: item.id,
+          kind: item.kind,
+          title: item.title,
+          subtitle: item.subtitle,
+          thumbnailUri: item.thumbnailUri,
+          durationSec: item.durationSec,
+          position: entry.position,
+          sortKeyUs: entry.sortKeyUs,
+        );
+      }).toList();
+    });
+  }
+
+  /// Count entries for a playlist
+  Future<int> countPlaylistEntries(String playlistId) async {
+    final query = selectOnly(playlistEntries)
+      ..addColumns([playlistEntries.itemId.count()])
+      ..where(playlistEntries.playlistId.equals(playlistId));
+    final result = await query.getSingle();
+    return result.read(playlistEntries.itemId.count()) ?? 0;
+  }
+
+  /// Delete all entries for a playlist
+  Future<void> deletePlaylistEntries(String playlistId) async {
+    await (delete(playlistEntries)
+          ..where((e) => e.playlistId.equals(playlistId)))
+        .go();
+  }
+
+  /// Clear all data
+  Future<void> clearAll() async {
+    await delete(playlistEntries).go();
+    await delete(items).go();
+    await delete(playlists).go();
+    await delete(channels).go();
+  }
+}
+
+/// Lightweight DTO for playlist item list display
+class PlaylistItemLite {
+  PlaylistItemLite({
+    required this.playlistId,
+    required this.itemId,
+    required this.kind,
+    this.title,
+    this.subtitle,
+    this.thumbnailUri,
+    this.durationSec,
+    this.position,
+    required this.sortKeyUs,
+  });
+
+  final String playlistId;
+  final String itemId;
+  final int kind;
+  final String? title;
+  final String? subtitle;
+  final String? thumbnailUri;
+  final int? durationSec;
+  final int? position;
+  final int sortKeyUs;
+}
+
+LazyDatabase _openConnection() {
+  return LazyDatabase(() async {
+    final dbFolder = await getApplicationDocumentsDirectory();
+    final file = File(p.join(dbFolder.path, 'playlist_cache.sqlite'));
+    log.info('[PlaylistDatabase] SQLite database location: ${file.path}');
+    return NativeDatabase.createInBackground(file);
+  });
+}

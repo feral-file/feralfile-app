@@ -9,30 +9,33 @@
 // **************************************************************************
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'package:autonomy_flutter/widgetbook/screens/home/home_page.dart' as _i2;
-import 'package:widgetbook/widgetbook.dart' as _i1;
+import 'package:autonomy_flutter/widgetbook/screens/home/home_page.dart'
+    as _autonomy_flutter_widgetbook_screens_home_home_page;
+import 'package:widgetbook/widgetbook.dart' as _widgetbook;
 
-final directories = <_i1.WidgetbookNode>[
-  _i1.WidgetbookFolder(
+final directories = <_widgetbook.WidgetbookNode>[
+  _widgetbook.WidgetbookFolder(
     name: 'screen',
     children: [
-      _i1.WidgetbookFolder(
+      _widgetbook.WidgetbookFolder(
         name: 'mobile_controller',
         children: [
-          _i1.WidgetbookFolder(
+          _widgetbook.WidgetbookFolder(
             name: 'screens',
             children: [
-              _i1.WidgetbookFolder(
+              _widgetbook.WidgetbookFolder(
                 name: 'home',
                 children: [
-                  _i1.WidgetbookFolder(
+                  _widgetbook.WidgetbookFolder(
                     name: 'view',
                     children: [
-                      _i1.WidgetbookLeafComponent(
+                      _widgetbook.WidgetbookLeafComponent(
                         name: 'MobileControllerHomePage',
-                        useCase: _i1.WidgetbookUseCase(
+                        useCase: _widgetbook.WidgetbookUseCase(
                           name: 'Home Page',
-                          builder: _i2.homePageComponent,
+                          builder:
+                              _autonomy_flutter_widgetbook_screens_home_home_page
+                                  .homePageComponent,
                         ),
                       )
                     ],

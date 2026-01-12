@@ -15,7 +15,7 @@ class HiddenArtworksBloc extends AuBloc<HiddenArtworksEvent, List<AssetToken>> {
     on<HiddenArtworksEvent>((event, emit) async {
       final hiddenArtworks =
           appDataManager.appSettingsStorageService.hiddenTokenIDs;
-      final tokens = database.getTokensByCIDs(cids: hiddenArtworks)
+      final tokens = await database.getTokensByCIDs(cids: hiddenArtworks)
         ..removeWhere((element) => !hiddenArtworks.contains(element.cid));
       emit(tokens);
     });
