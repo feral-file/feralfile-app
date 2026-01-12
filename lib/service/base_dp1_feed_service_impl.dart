@@ -5,6 +5,7 @@ import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
 import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart';
 import 'package:autonomy_flutter/nft_collection/services/dp1_to_drift_ingest_service.dart';
+import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart'
     as model;
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
@@ -40,7 +41,8 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
       dio: dio,
     );
     db = injector<PlaylistDatabase>();
-    ingestService = DP1ToDriftIngestService(db);
+    final indexerService = injector<NftIndexerService>();
+    ingestService = DP1ToDriftIngestService(db, indexerService);
   }
 
   /*

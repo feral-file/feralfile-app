@@ -8,7 +8,11 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart';
+import 'package:autonomy_flutter/nft_collection/database/token_to_playlist_item_transformer.dart';
+import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
+import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart'
     as model;
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
@@ -19,9 +23,10 @@ import 'package:sentry/sentry.dart';
 
 /// Service to ingest DP1 channels/playlists/items into Drift
 class DP1ToDriftIngestService {
-  DP1ToDriftIngestService(this._db);
+  DP1ToDriftIngestService(this._db, this._indexerService);
 
   final PlaylistDatabase _db;
+  final NftIndexerService _indexerService;
 
   /// Ingest a DP1 channel
   Future<void> ingestChannel(model.Channel channel, String baseUrl) async {
@@ -54,6 +59,7 @@ class DP1ToDriftIngestService {
   }
 
   /// Ingest a DP1 playlist with its items
+  /// If the playlist has dynamic queries, fetch tokens from indexer and store them
   Future<void> ingestPlaylist(
     DP1Call playlist,
     String baseUrl,
@@ -65,7 +71,7 @@ class DP1ToDriftIngestService {
           _playlistToCompanion(playlist, baseUrl, channelId);
       await _db.upsertPlaylist(playlistCompanion);
 
-      // Convert and upsert items
+      // Handle static items (DP1 items)
       if (playlist.items.isNotEmpty) {
         final itemCompanions = <ItemsCompanion>[];
         final entryCompanions = <PlaylistEntriesCompanion>[];
@@ -84,7 +90,7 @@ class DP1ToDriftIngestService {
         await _db.upsertItems(itemCompanions);
         await _db.upsertPlaylistEntries(entryCompanions);
 
-        // Update item count
+        // Update item count for static items
         await _db.upsertPlaylist(
           playlistCompanion.copyWith(
             itemCount: Value(playlist.items.length),
@@ -92,8 +98,17 @@ class DP1ToDriftIngestService {
         );
       }
 
+      // Handle dynamic queries - fetch tokens from indexer
+      if (playlist.dynamicQueries.isNotEmpty) {
+        log.info(
+          '[DP1ToDriftIngestService] Playlist ${playlist.id} has ${playlist.dynamicQueries.length} dynamic queries, fetching tokens from indexer',
+        );
+        
+        await _resolveDynamicQueriesAndStore(playlist);
+      }
+
       log.info(
-        '[DP1ToDriftIngestService] Ingested playlist: ${playlist.id} with ${playlist.items.length} items',
+        '[DP1ToDriftIngestService] Ingested playlist: ${playlist.id} with ${playlist.items.length} static items and ${playlist.dynamicQueries.length} dynamic queries',
       );
     } catch (e, st) {
       log.info('[DP1ToDriftIngestService] Error ingesting playlist: $e');
@@ -231,5 +246,139 @@ class DP1ToDriftIngestService {
     );
 
     return (itemCompanion: itemCompanion, entryCompanion: entryCompanion);
+  }
+
+  /// Resolve dynamic queries and fetch tokens from indexer
+  /// Store tokens as items in the database
+  Future<void> _resolveDynamicQueriesAndStore(DP1Call playlist) async {
+    try {
+      for (final dynamicQuery in playlist.dynamicQueries) {
+        final owners = dynamicQuery.params.owners;
+        if (owners.isEmpty) {
+          log.info(
+            '[DP1ToDriftIngestService] No owners in dynamic query for playlist ${playlist.id}, skipping',
+          );
+          continue;
+        }
+
+        log.info(
+          '[DP1ToDriftIngestService] Resolving dynamic query for playlist ${playlist.id} with owners: $owners',
+        );
+
+        // Fetch tokens from indexer for the specified owners
+        final tokens = await _fetchTokensForOwners(owners);
+        
+        if (tokens.isEmpty) {
+          log.info(
+            '[DP1ToDriftIngestService] No tokens found for owners: $owners',
+          );
+          continue;
+        }
+
+        log.info(
+          '[DP1ToDriftIngestService] Found ${tokens.length} tokens for owners: $owners',
+        );
+
+        // Store tokens as items and create playlist entries
+        await _storeTokensAsItems(
+          tokens: tokens,
+          playlistId: playlist.id,
+          ownerAddresses: owners,
+        );
+      }
+    } catch (e, st) {
+      log.info(
+        '[DP1ToDriftIngestService] Error resolving dynamic queries: $e',
+      );
+      unawaited(Sentry.captureException(e, stackTrace: st));
+    }
+  }
+
+  /// Fetch tokens from indexer for the specified owners
+  Future<List<AssetToken>> _fetchTokensForOwners(List<String> owners) async {
+    try {
+      final request = QueryListTokensRequest(
+        owners: owners,
+        limit: 1000, // Fetch up to 1000 tokens per query
+        expands: [
+          ExpandField.provenanceEvents,
+          ExpandField.owners,
+          ExpandField.metadataMediaAsset,
+          ExpandField.enrichmentSourceMediaAsset,
+          ExpandField.enrichmentSource,
+        ],
+      );
+
+      final tokens = await _indexerService.getNftTokens(request);
+      return tokens;
+    } catch (e, st) {
+      log.info(
+        '[DP1ToDriftIngestService] Error fetching tokens for owners: $e',
+      );
+      unawaited(Sentry.captureException(e, stackTrace: st));
+      return [];
+    }
+  }
+
+  /// Store tokens as items in the database
+  /// Creates both Items and PlaylistEntries
+  Future<void> _storeTokensAsItems({
+    required List<AssetToken> tokens,
+    required String playlistId,
+    required List<String> ownerAddresses,
+  }) async {
+    try {
+      if (tokens.isEmpty) {
+        return;
+      }
+
+      final itemCompanions = <ItemsCompanion>[];
+      final entryCompanions = <PlaylistEntriesCompanion>[];
+
+      // Use the first owner address for sorting computation
+      // This matches the behavior of address-based playlists
+      final primaryOwner = ownerAddresses.first.toUpperCase();
+
+      // Transform each token to item + entry companions
+      for (final token in tokens) {
+        final input = TokenTransformInput(
+          token: token,
+          playlistId: playlistId,
+          ownerAddress: primaryOwner,
+        );
+        
+        final result = transformTokenToPlaylistItem(input);
+        itemCompanions.add(result.itemCompanion);
+        entryCompanions.add(result.entryCompanion);
+      }
+
+      log.info(
+        '[DP1ToDriftIngestService] Storing ${itemCompanions.length} tokens as items for playlist $playlistId',
+      );
+
+      // Upsert items and entries
+      await _db.upsertItems(itemCompanions);
+      await _db.upsertPlaylistEntries(entryCompanions);
+
+      // Update playlist item count
+      final count = await _db.countPlaylistEntries(playlistId);
+      await (_db.update(_db.playlists)
+            ..where((p) => p.id.equals(playlistId)))
+          .write(
+        PlaylistsCompanion(
+          itemCount: Value(count),
+          updatedAtUs: Value(DateTime.now().microsecondsSinceEpoch),
+        ),
+      );
+
+      log.info(
+        '[DP1ToDriftIngestService] Stored ${tokens.length} tokens for playlist $playlistId, total count: $count',
+      );
+    } catch (e, st) {
+      log.info(
+        '[DP1ToDriftIngestService] Error storing tokens as items: $e',
+      );
+      unawaited(Sentry.captureException(e, stackTrace: st));
+    }
   }
 }
