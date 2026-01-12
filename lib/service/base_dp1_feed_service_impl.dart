@@ -114,7 +114,14 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
     int? limit,
   }) async {
     final resp = await api.getAllPlaylists(cursor: cursor, limit: limit);
-    await ingestService.ingestPlaylists(resp.items, baseUrl, null);
+    
+    // Don't ingest playlists here without channel context
+    // Playlists should be fetched via channel-specific methods that provide channelId
+    // If needed, fetch channels first and map playlists to channels
+    log.info(
+      '[BaseDP1FeedServiceImpl] getPlaylists: Fetched ${resp.items.length} playlists without channel context. Use getPlaylistsByChannelId for proper ingestion.',
+    );
+    
     return resp;
   }
 
@@ -130,6 +137,11 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
       hasMore = resp.hasMore;
       cursor = resp.cursor;
     }
+    
+    log.info(
+      '[BaseDP1FeedServiceImpl] getAllPlaylists: Fetched ${playlists.length} playlists without channel context',
+    );
+    
     return playlists;
   }
 
@@ -185,16 +197,12 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
     if (_isReloadingCache) return;
     _isReloadingCache = true;
     try {
-      bool hasMore = true;
-      String? cursor;
-      const limit = 50;
-      // Note: Drift clears per-channel, not globally
-      while (hasMore) {
-        final resp = await api.getAllPlaylists(cursor: cursor, limit: limit);
-        await ingestService.ingestPlaylists(resp.items, baseUrl, null);
-        hasMore = resp.hasMore;
-        cursor = resp.cursor;
-      }
+      // Base implementation doesn't have channel context
+      // Subclasses with channel support should override this method
+      // to properly fetch and ingest playlists with channel IDs
+      log.info(
+        '[BaseDP1FeedServiceImpl] reloadCache: Base implementation does not support cache reloading. Override in subclass with channel support.',
+      );
     } finally {
       _isReloadingCache = false;
     }

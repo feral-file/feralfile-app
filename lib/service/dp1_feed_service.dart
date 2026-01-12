@@ -1,8 +1,5 @@
 import 'dart:async';
 
-import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
-import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart'
-    as drift_db;
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
@@ -139,6 +136,8 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
       cursor: cursor,
       limit: limit,
     );
+    // Ingest playlists with their channel ID
+    await ingestService.ingestPlaylists(resp.items, baseUrl, channelId);
     return resp;
   }
 
@@ -187,6 +186,7 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
           limit: remainingLimit,
         );
 
+        // Playlists are already ingested by getPlaylistsByChannelId
         allItems.addAll(response.items);
 
         // If we've reached the requested limit, prepare next cursor
@@ -351,11 +351,53 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
     _isReloadingCache = true;
     try {
       log.info('Reloading cache for FeralFileDP1FeedService: $baseUrl');
-      final channels = await getAllChannels();
-      final playlists = await getAllPlaylists();
+      
+      // Clear existing data first
       await db.clearAll();
+      
+      // Fetch and ingest channels
+      final channels = await getAllChannels();
       await ingestService.ingestChannels(channels, baseUrl);
-      await ingestService.ingestPlaylists(playlists, baseUrl, null);
+      
+      // Fetch and ingest playlists for each channel
+      for (final channel in channels) {
+        try {
+          log.info(
+            'Fetching playlists for channel ${channel.id} (${channel.title})',
+          );
+          
+          // Fetch all playlists for this channel
+          var hasMore = true;
+          String? cursor;
+          const limit = 50;
+          
+          while (hasMore) {
+            final resp = await api.getAllPlaylists(
+              channelId: channel.id,
+              cursor: cursor,
+              limit: limit,
+            );
+            
+            // Ingest playlists with their channel ID
+            await ingestService.ingestPlaylists(
+              resp.items,
+              baseUrl,
+              channel.id,
+            );
+            
+            hasMore = resp.hasMore;
+            cursor = resp.cursor;
+          }
+          
+          log.info(
+            'Completed fetching playlists for channel ${channel.id}',
+          );
+        } catch (e) {
+          log.info('Error fetching playlists for channel ${channel.id}: $e');
+          // Continue with next channel even if one fails
+        }
+      }
+      
       _isReloadingCache = false;
     } catch (e) {
       log.info('Failed to reload cache for FeralFileDP1FeedService: $e');
