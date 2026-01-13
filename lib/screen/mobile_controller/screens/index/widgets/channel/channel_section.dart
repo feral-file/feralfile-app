@@ -14,18 +14,16 @@ class ChannelSection extends StatelessWidget {
     this.onChannelItemTap,
     this.scrollController,
     this.hasMore = true,
-    this.onLoadMore,
     super.key,
   });
 
   final String sectionName;
-  final List<ChannelData> channels;
+  final List<ChannelReference> channels;
   final Widget? sectionIcon;
   final VoidCallback? onViewAllTap;
   final void Function(DP1NowDisplayingItem)? onChannelItemTap;
   final ScrollController? scrollController;
   final bool hasMore;
-  final void Function(ChannelData)? onLoadMore;
 
   @override
   Widget build(BuildContext context) {
@@ -54,17 +52,12 @@ class ChannelSection extends StatelessWidget {
 
         // List items
         final channelIndex = index - 2;
-        final channel = channels[channelIndex];
+        final channelReference = channels[channelIndex];
+
         return ChannelListRow(
-          channelReference: channel.channelReference,
-          channelCreator: channel.creator,
-          carouselItems: channel.items,
+          channelReference: channelReference,
           onItemTap: onChannelItemTap,
           scrollController: scrollController,
-          isLoadingMore: channel.isLoadingMore,
-          onLoadMore: () {
-            onLoadMore?.call(channel);
-          },
         );
       },
     );

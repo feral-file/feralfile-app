@@ -204,9 +204,13 @@ extension DP1NowDisplayingItemListExt on List<DP1NowDisplayingItem> {
     log.info(
         '[DP1NowDisplayingItemListExt][_buildFromDynamicQuery] Fetching tokens for playlist ${playlist.id} with owners: $owners, offset: $offset, size: $size');
 
+    final start = DateTime.now();
     final allTokensOwners = initialAssetTokens ??
         await injector<IndexerDatabaseAbstract>()
             .getTokensByOwners(owners: owners);
+
+    log.info(
+        '[DP1NowDisplayingItemListExt][_buildFromDynamicQuery] Fetched ${allTokensOwners.length} tokens in ${DateTime.now().difference(start).inMilliseconds}ms');
 
     final allTokens = allTokensOwners.safeSublist(offset, offset + size);
 
@@ -232,7 +236,8 @@ extension DP1NowDisplayingItemListExt on List<DP1NowDisplayingItem> {
 
     log.info(
         '[DP1NowDisplayingItemListExt][_buildFromDynamicQuery] Returning ${nowDisplayingItems.length} items for playlist ${playlist.id}');
-
+    log.info(
+        '[DP1NowDisplayingItemListExt][_buildFromDynamicQuery] Returning ${nowDisplayingItems.length} items for playlist ${playlist.id} in ${DateTime.now().difference(start).inMilliseconds}ms');
     return nowDisplayingItems;
   }
 }

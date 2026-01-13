@@ -136,7 +136,7 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
                 right: 0,
                 child: PrimaryAsyncButton(
                   padding: const EdgeInsets.only(top: 13, bottom: 10),
-                  enabled: _password.isNotEmpty,
+                  enabled: true,
                   onTap: () async {
                     final ssid = widget.payload.wifiAccessPoint.ssid;
                     final password = passwordController.text.trim();

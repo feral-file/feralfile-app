@@ -66,6 +66,8 @@ abstract class DP1FeedWithChannelExtensionServiceBase
 
   Future<Channel?> getChannelDetail(String channelId, {bool fromCache = true});
 
+  Future<Channel?> getCachedChannelById(String channelId);
+
   Future<List<Channel>> getChannelsByIds({
     required List<String> channelIds,
     bool usingCache = true,
@@ -250,6 +252,12 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
     }
     final channel = await api.getChannelById(channelId);
     return channel;
+  }
+
+  @override
+  Future<Channel?> getCachedChannelById(String channelId) async {
+    final channel = await driftDb.getChannelById(channelId);
+    return channel != null ? channelRowToModel(channel) : null;
   }
 
   @override

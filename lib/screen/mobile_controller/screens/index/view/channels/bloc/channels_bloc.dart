@@ -1,13 +1,8 @@
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/model/now_displaying_object.dart';
-import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel/channel_section.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -19,18 +14,15 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
     required this.channelType,
     this.total,
     this.pageSize = 5,
-    this.channelItemsPageSize = 10,
   }) : super(const ChannelsState()) {
     on<LoadChannelsEvent>(_onLoadChannels);
     on<LoadMoreChannelsEvent>(_onLoadMoreChannels);
     on<RefreshChannelsEvent>(_onRefreshChannels);
-    on<LoadMoreChannelItemsEvent>(_onLoadMoreChannelItems);
   }
 
   final ChannelType channelType;
   final int? total;
   final int pageSize;
-  final int channelItemsPageSize;
   Future<void> _onLoadChannels(
     LoadChannelsEvent event,
     Emitter<ChannelsState> emit,
@@ -184,193 +176,18 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
 
       final channels = paginationResponse.channels;
 
-      // Create ChannelData list for channels with their items
-      final channelDataList = <ChannelData>[];
-      for (final channelRef in channels) {
-        final playlists = await injector<FeralFileFeedManager>()
-            .getAllCachedPlaylistsOfChannels([channelRef]);
-        final playlistItems = <DP1Item>[];
-        for (final playlist in playlists) {
-          playlistItems.addAll(playlist.playlist.items);
-        }
-
-        final pageItems = playlistItems.safeSublist(0, channelItemsPageSize);
-
-        final cids = pageItems.map((item) => item.cid).nonNulls.toList();
-        final assetTokens =
-            await injector<NftTokensService>().getManualTokens(cids: cids);
-
-        // Collect items from all playlists in this channel
-        final channelItems = <DP1NowDisplayingItem>[];
-        for (final item in pageItems) {
-          final assetToken =
-              assetTokens.firstWhereOrNull((token) => token.cid == item.cid);
-          channelItems.add(DP1NowDisplayingItem(
-            dp1Item: item,
-            assetToken: assetToken,
-          ));
-        }
-
-        final service = injector<FeralFileFeedManager>()
-            .getFeedServiceByUrl(channelRef.url);
-        final creator = service?.name ?? '';
-
-        final currentItemsPage = 0;
-        final hasMore = playlistItems.length >= channelItemsPageSize;
-
-        channelDataList.add(
-          ChannelData(
-            channelReference: channelRef,
-            creator: creator,
-            items: channelItems,
-            currentItemsPage: 0,
-            hasMoreItems: hasMore,
-          ),
-        );
-      }
-
       final newChannels =
           isLoadMore ? [...state.channels, ...channels] : channels;
-      final newChannelDataList = isLoadMore
-          ? [...state.channelData, ...channelDataList]
-          : channelDataList;
 
       emit(state.copyWith(
         status: ChannelsStateStatus.loaded,
         channels: newChannels,
-        channelData: newChannelDataList,
         hasMore: paginationResponse.hasMore,
         cursor: paginationResponse.cursor,
         error: '',
       ));
     } catch (e) {
       log.info('Error loading channels: $e');
-      emit(
-        state.copyWith(
-          status: ChannelsStateStatus.error,
-          error: e.toString(),
-        ),
-      );
-    }
-  }
-
-  Future<void> _onLoadMoreChannelItems(
-    LoadMoreChannelItemsEvent event,
-    Emitter<ChannelsState> emit,
-  ) async {
-    log.info('[ChannelsBloc] LoadMoreChannelItemsEvent: ${event.channelId}');
-
-    // Find the channel data to update
-    final channelDataIndex = state.channelData.indexWhere(
-      (data) => data.channelReference.channel.id == event.channelId,
-    );
-
-    if (channelDataIndex == -1) {
-      log.info('Channel not found: ${event.channelId}');
-      return;
-    }
-
-    final channelData = state.channelData[channelDataIndex];
-
-    if (channelData.isLoadingMore) {
-      log.info(
-          '[ChannelsBloc] LoadMoreChannelItemsEvent: ${event.channelId} already loading');
-      return;
-    }
-
-    log.info(
-        '[ChannelsBloc] LoadMoreChannelItemsEvent: ${event.channelId} loading more');
-
-    // Check if there are more items to load
-    if (!channelData.hasMoreItems) {
-      return;
-    }
-
-    try {
-      final loadingMoreChannelData = channelData.copyWith(
-        isLoadingMore: true,
-      );
-
-      final loadingMoreChannelDataList = [...state.channelData];
-      loadingMoreChannelDataList[channelDataIndex] = loadingMoreChannelData;
-
-      emit(state.copyWith(
-        channelData: loadingMoreChannelDataList,
-        status: ChannelsStateStatus.loaded,
-      ));
-      // Get playlists for this channel
-      final channelPlaylists = await injector<FeralFileFeedManager>()
-          .getAllCachedPlaylistsOfChannels([channelData.channelReference]);
-
-      // Collect all items from playlists
-      final allChannelItems = <DP1Item>[];
-      for (final playlist in channelPlaylists) {
-        allChannelItems.addAll(playlist.playlist.items);
-      }
-
-      // Calculate pagination
-      final nextPage = channelData.currentItemsPage + 1;
-      final start = nextPage * channelItemsPageSize;
-      final end = start + channelItemsPageSize;
-
-      if (start >= allChannelItems.length) {
-        // No more items to load
-        return;
-      }
-
-      // Get the page items
-      final pageItems = allChannelItems.safeSublist(start, end);
-      final pageCids =
-          pageItems.map((item) => item.cid).whereType<String>().toList();
-
-      // Get asset tokens for the page items
-      final assetTokens =
-          await injector<NftTokensService>().getManualTokens(cids: pageCids);
-
-      // Create DP1NowDisplayingItem list
-      final newDisplayingItems = <DP1NowDisplayingItem>[];
-      for (int i = 0; i < pageItems.length; i++) {
-        final dp1Item = pageItems[i];
-        final assetToken =
-            assetTokens.firstWhereOrNull((t) => t.cid == dp1Item.cid);
-        newDisplayingItems.add(
-          DP1NowDisplayingItem(
-            dp1Item: dp1Item,
-            assetToken: assetToken,
-          ),
-        );
-      }
-
-      // Determine if there are more items to load
-      final hasMore = end < allChannelItems.length;
-
-      // Update the channel data with new items and pagination info
-      final updatedChannelData = channelData.copyWith(
-        items: [...channelData.items, ...newDisplayingItems],
-        currentItemsPage: nextPage,
-        hasMoreItems: hasMore,
-        isLoadingMore: false,
-      );
-
-      // get the index
-      final updatedChannelDataIndex = state.channelData.indexWhere(
-          (data) => data.channelReference.channel.id == event.channelId);
-
-      if (updatedChannelDataIndex == -1) {
-        log.info('Channel not found: ${event.channelId}');
-        return;
-      }
-
-      // Update the state
-      final updatedChannelDataList = [...state.channelData];
-      updatedChannelDataList[updatedChannelDataIndex] = updatedChannelData;
-
-      emit(state.copyWith(
-        channelData: updatedChannelDataList,
-        status: ChannelsStateStatus.loaded,
-      ));
-    } catch (e) {
-      log.info('Error loading more channel items for ${event.channelId}: $e');
       emit(
         state.copyWith(
           status: ChannelsStateStatus.error,

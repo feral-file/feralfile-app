@@ -11,7 +11,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
-import 'package:autonomy_flutter/util/channel_data_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -98,11 +97,11 @@ class ChannelsPageState extends State<ChannelsPage>
     return BlocBuilder<ChannelsBloc, ChannelsState>(
       bloc: _curatedChannelsBloc,
       buildWhen: (previous, current) {
-        final previousTop5ChannelData = previous.top5ChannelData;
-        final currentTop5ChannelData = current.top5ChannelData;
-        final isEqualTo =
-            previousTop5ChannelData.isEqualTo(currentTop5ChannelData);
-        return !isEqualTo;
+        final previousChannels = previous.channels;
+        final currentChannels = current.channels;
+        final isEqualTo = previousChannels.length == currentChannels.length &&
+            previousChannels.every(currentChannels.contains);
+        return !isEqualTo || previous.status != current.status;
       },
       builder: (context, state) => _buildContent(state, _curatedChannelsBloc),
     );
@@ -128,10 +127,8 @@ class ChannelsPageState extends State<ChannelsPage>
 
   Widget _buildChannels(ChannelsState state, ChannelsBloc channelsBloc) {
     final channelType = channelsBloc.channelType;
-    // only get the first 5 channels for section
-    final channelDataList = state.top5ChannelData;
-    final hasMore = state.top5ChannelData.length < state.channelData.length ||
-        state.hasMore;
+    final channels = state.channels.take(5).toList();
+    final hasMore = state.hasMore || state.channels.length > channels.length;
 
     return SliverList.builder(
       itemCount: 1,
@@ -148,7 +145,7 @@ class ChannelsPageState extends State<ChannelsPage>
                 BlendMode.srcIn,
               ),
             ),
-            channels: channelDataList,
+            channels: channels,
             hasMore: hasMore,
             onViewAllTap: () {
               Navigator.of(context).pushNamed(
@@ -165,11 +162,6 @@ class ChannelsPageState extends State<ChannelsPage>
                       ArtworkDetailPayload(ArtworkIdentity(assetToken.cid)),
                 );
               }
-            },
-            onLoadMore: (channel) {
-              channelsBloc.add(LoadMoreChannelItemsEvent(
-                channelId: channel.channelReference.channel.id,
-              ));
             },
           ),
         ],
