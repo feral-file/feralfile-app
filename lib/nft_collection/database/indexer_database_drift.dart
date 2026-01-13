@@ -12,6 +12,8 @@ import 'package:autonomy_flutter/model/token.dart' as v2;
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart';
 import 'package:autonomy_flutter/nft_collection/database/token_to_playlist_item_transformer.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/provenance.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
@@ -28,11 +30,13 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
   @override
   Future<void> insertTokens(List<v2.AssetToken> tokens) async {
     if (tokens.isEmpty) {
-      log.info('[IndexerDatabaseDrift] insertTokens called with 0 tokens, skipping');
+      log.info(
+          '[IndexerDatabaseDrift] insertTokens called with 0 tokens, skipping');
       return;
     }
 
-    log.info('[IndexerDatabaseDrift] insertTokens called with ${tokens.length} tokens');
+    log.info(
+        '[IndexerDatabaseDrift] insertTokens called with ${tokens.length} tokens');
 
     try {
       final addressService = injector<AddressService>();
@@ -44,13 +48,7 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
         if (walletAddress == null) {
           continue;
         }
-
-        final chain = walletAddress.cryptoType == CryptoType.ETH
-            ? 'evm'
-            : walletAddress.cryptoType == CryptoType.XTZ
-                ? 'tezos'
-                : 'other';
-        final playlistId = 'addr:$chain:$address';
+        final playlistId = DP1CallExtension.generatePlaylistId(address);
 
         // Filter tokens to only include ones owned by this address
         final normalizedAddress = address.toUpperCase();
@@ -87,11 +85,12 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
         final entryCompanions = results.map((r) => r.entryCompanion).toList();
 
         // Debug: Check if tokenDataJson is present
-        final withJson = itemCompanions.where((c) => 
-          c.tokenDataJson.present && 
-          c.tokenDataJson.value != null && 
-          c.tokenDataJson.value!.isNotEmpty
-        ).length;
+        final withJson = itemCompanions
+            .where((c) =>
+                c.tokenDataJson.present &&
+                c.tokenDataJson.value != null &&
+                c.tokenDataJson.value!.isNotEmpty)
+            .length;
         log.info(
           '[IndexerDatabaseDrift] insertTokens: upserting ${itemCompanions.length} items ($withJson have tokenDataJson) and ${entryCompanions.length} entries for $playlistId',
         );
@@ -109,7 +108,7 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
             updatedAtUs: drift.Value(DateTime.now().microsecondsSinceEpoch),
           ),
         );
-        
+
         // Log if playlist doesn't exist (should have been created by bootstrap)
         if (updated == 0) {
           log.info(
@@ -143,8 +142,7 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
     if (cids.isEmpty) {
       return;
     }
-    await (_playlistDb.delete(_playlistDb.items)
-          ..where((i) => i.id.isIn(cids)))
+    await (_playlistDb.delete(_playlistDb.items)..where((i) => i.id.isIn(cids)))
         .go();
   }
 
@@ -196,17 +194,18 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
         if (walletAddress == null) continue;
 
         final chain = walletAddress.cryptoType == CryptoType.ETH
-            ? 'evm'
+            ? DP1ProvenanceChain.evm.value
             : walletAddress.cryptoType == CryptoType.XTZ
-                ? 'tezos'
-                : 'other';
+                ? DP1ProvenanceChain.tezos.value
+                : DP1ProvenanceChain.other.value;
         playlistIds.add('addr:$chain:$owner');
       }
 
       if (playlistIds.isEmpty) return [];
 
       // Debug: Check playlist entries count
-      final entryCount = await _playlistDb.countPlaylistEntries(playlistIds.first);
+      final entryCount =
+          await _playlistDb.countPlaylistEntries(playlistIds.first);
       log.info(
         '[IndexerDatabaseDrift] getTokensByOwners: playlist ${playlistIds.first} has $entryCount entries',
       );
@@ -215,8 +214,7 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
       final query = _playlistDb.select(_playlistDb.items).join([
         drift.innerJoin(
           _playlistDb.playlistEntries,
-          _playlistDb.playlistEntries.itemId
-              .equalsExp(_playlistDb.items.id),
+          _playlistDb.playlistEntries.itemId.equalsExp(_playlistDb.items.id),
         ),
       ])
         ..where(_playlistDb.playlistEntries.playlistId.isIn(playlistIds))
@@ -236,14 +234,14 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
       final tokens = <v2.AssetToken>[];
       var nullJsonCount = 0;
       var parseErrorCount = 0;
-      
+
       for (final row in results) {
         final item = row.readTable(_playlistDb.items);
         if (item.tokenDataJson == null || item.tokenDataJson!.isEmpty) {
           nullJsonCount++;
           continue;
         }
-        
+
         try {
           final tokenMap =
               json.decode(item.tokenDataJson!) as Map<String, dynamic>;
@@ -401,8 +399,7 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
       final query = _playlistDb.select(_playlistDb.items).join([
         drift.innerJoin(
           _playlistDb.playlistEntries,
-          _playlistDb.playlistEntries.itemId
-              .equalsExp(_playlistDb.items.id),
+          _playlistDb.playlistEntries.itemId.equalsExp(_playlistDb.items.id),
         ),
       ])
         ..where(_playlistDb.playlistEntries.playlistId.isIn(playlistIds))
@@ -418,18 +415,18 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
         log.info(
           '[IndexerDatabaseDrift] watchTokensByOwners: received ${results.length} rows from watch stream',
         );
-        
+
         final tokens = <v2.AssetToken>[];
         var nullJsonCount = 0;
         var parseErrorCount = 0;
-        
+
         for (final row in results) {
           final item = row.readTable(_playlistDb.items);
           if (item.tokenDataJson == null || item.tokenDataJson!.isEmpty) {
             nullJsonCount++;
             continue;
           }
-          
+
           try {
             final tokenMap =
                 json.decode(item.tokenDataJson!) as Map<String, dynamic>;
@@ -441,7 +438,7 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
             );
           }
         }
-        
+
         log.info(
           '[IndexerDatabaseDrift] watchTokensByOwners: emitting ${tokens.length} tokens (nullJson: $nullJsonCount, parseErrors: $parseErrorCount)',
         );

@@ -42,7 +42,10 @@ abstract class BaseDP1FeedService {
 
   Future<List<DP1Call>> getAllPlaylists();
 
-  List<DP1Call> getAllCachedPlaylists();
+  /// Get all cached playlists from local storage (Drift).
+  ///
+  /// Implementations may scope results by feed service (e.g. baseUrl).
+  Future<List<DP1Call>> getAllCachedPlaylists();
 
   /// Delete a playlist
   Future<bool> deletePlaylist(String id);

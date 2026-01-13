@@ -78,75 +78,75 @@ class _CustomFeedServersPageState extends State<CustomFeedServersPage>
 
             return Stack(
               children: [
-                Column(
-                  children: [
-                    const SizedBox(height: 64),
-                    Expanded(
-                      child: CustomScrollView(
-                        controller: _scrollController,
-                        shrinkWrap: true,
-                        slivers: [
-                          ...state.feedServices
-                              .map((feedService) => UIHelper
-                                      .customFeedServerExpandableSliverStickyHeader(
-                                          context,
-                                          playlists: feedService
-                                              .getAllCachedPlaylists()
-                                              .map((playlist) =>
-                                                  PlaylistReference(
-                                                      playlist: playlist,
-                                                      url: feedService.baseUrl))
-                                              .toList(),
-                                          title: feedService.baseUrl,
-                                          scrollController: _scrollController,
-                                          slidableActions: [
-                                        CustomSlidableAction(
-                                          backgroundColor:
-                                              AppColor.primaryBlack,
-                                          padding: EdgeInsets.zero,
-                                          onPressed:
-                                              (BuildContext context) async {
-                                            UIHelper
-                                                .showDeleteFeedServerConfirmation(
-                                                    feedService, (feedService) {
-                                              _bloc.add(
-                                                  RemoveCustomFeedServerEvent(
-                                                      feedService.baseUrl));
-                                            });
-                                          },
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 16,
-                                            ),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                SvgPicture.asset(
-                                                  'assets/images/trash.svg',
-                                                  height: 15,
-                                                ),
-                                                const SizedBox(width: 12),
-                                                Text(
-                                                  'Delete',
-                                                  style:
-                                                      AppTypography.bodySmall(
-                                                              context)
-                                                          .white,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        )
-                                      ]))
-                              .toList(),
-                          SliverToBoxAdapter(child: const SizedBox(height: 32)),
-                          const SliverToBoxAdapter(child: BottomSpacing()),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                // Column(
+                //   children: [
+                //     const SizedBox(height: 64),
+                //     Expanded(
+                //       child: CustomScrollView(
+                //         controller: _scrollController,
+                //         shrinkWrap: true,
+                //         slivers: [
+                //           ...state.feedServices
+                //               .map((feedService) => UIHelper
+                //                       .customFeedServerExpandableSliverStickyHeader(
+                //                           context,
+                //                           playlists: feedService
+                //                               .getAllCachedPlaylists()
+                //                               .map((playlist) =>
+                //                                   PlaylistReference(
+                //                                       playlist: playlist,
+                //                                       url: feedService.baseUrl))
+                //                               .toList(),
+                //                           title: feedService.baseUrl,
+                //                           scrollController: _scrollController,
+                //                           slidableActions: [
+                //                         CustomSlidableAction(
+                //                           backgroundColor:
+                //                               AppColor.primaryBlack,
+                //                           padding: EdgeInsets.zero,
+                //                           onPressed:
+                //                               (BuildContext context) async {
+                //                             UIHelper
+                //                                 .showDeleteFeedServerConfirmation(
+                //                                     feedService, (feedService) {
+                //                               _bloc.add(
+                //                                   RemoveCustomFeedServerEvent(
+                //                                       feedService.baseUrl));
+                //                             });
+                //                           },
+                //                           child: Container(
+                //                             padding: const EdgeInsets.symmetric(
+                //                               vertical: 16,
+                //                             ),
+                //                             child: Row(
+                //                               mainAxisAlignment:
+                //                                   MainAxisAlignment.center,
+                //                               children: [
+                //                                 SvgPicture.asset(
+                //                                   'assets/images/trash.svg',
+                //                                   height: 15,
+                //                                 ),
+                //                                 const SizedBox(width: 12),
+                //                                 Text(
+                //                                   'Delete',
+                //                                   style:
+                //                                       AppTypography.bodySmall(
+                //                                               context)
+                //                                           .white,
+                //                                 ),
+                //                               ],
+                //                             ),
+                //                           ),
+                //                         )
+                //                       ]))
+                //               .toList(),
+                //           SliverToBoxAdapter(child: const SizedBox(height: 32)),
+                //           const SliverToBoxAdapter(child: BottomSpacing()),
+                //         ],
+                //       ),
+                //     ),
+                //   ],
+                // ),
                 Positioned(
                   bottom: 0,
                   left: 0,

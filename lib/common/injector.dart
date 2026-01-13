@@ -13,6 +13,7 @@ import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/database/hive_database.dart';
 import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart';
 import 'package:autonomy_flutter/nft_collection/services/drift_bootstrap_service.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/gateway/customer_support_api.dart';
 import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
 import 'package:autonomy_flutter/gateway/feralfile_api.dart';
@@ -432,6 +433,11 @@ Future<void> setupInjector() async {
   // Drift Bootstrap Service
   injector.registerLazySingleton<DriftBootstrapService>(
     () => DriftBootstrapService(playlistDb),
+  );
+
+  // DriftDatabaseService now handles all DP1 ingest operations
+  injector.registerLazySingleton<DriftDatabaseService>(
+    () => DriftDatabaseService(playlistDb, injector<NftIndexerService>()),
   );
 
   // Bootstrap Drift database (creates my_collection + address playlists)

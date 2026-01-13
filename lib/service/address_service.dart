@@ -10,9 +10,12 @@ import 'dart:async';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/exception.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -54,35 +57,54 @@ class AddressService {
     bool checkAddressDuplicated = true,
     bool refreshPlaylist = true,
   }) async {
-    log.info('Insert address: ${address.address}');
-    var checkSumAddress = address.address;
-    final cryptoType = address.cryptoType;
-    if (cryptoType == CryptoType.ETH || cryptoType == CryptoType.USDC) {
-      checkSumAddress = await address.getETHEip55Address();
-    }
-    log.info('Check sum address: $checkSumAddress');
-    if (checkAddressDuplicated) {
-      final walletAddress =
-          _appDataManager.addressStorageService.getAllAddresses();
-      if (walletAddress.any((element) => element.address == checkSumAddress)) {
-        log.info('Address already exists: $checkSumAddress');
-        throw AddAddressException(type: AddAddressExceptionType.alreadyAdded);
+    try {
+      log.info('Insert address: ${address.address}');
+      var checkSumAddress = address.address;
+      final cryptoType = address.cryptoType;
+      if (cryptoType == CryptoType.ETH || cryptoType == CryptoType.USDC) {
+        checkSumAddress = await address.getETHEip55Address();
       }
-    }
-    final newAddress = address.copyWith(address: checkSumAddress);
-    await _appDataManager.addressStorageService.insertAddresses([newAddress]);
-    injector<PlaylistsBloc>(instanceName: PlaylistsBlocInstance.my.instanceName)
-        .add(RefreshPlaylistsEvent());
-    if (refreshPlaylist) {
-      injector<UserAllOwnCollectionBloc>().add(
-        ReindexAddresses(
-          addresses: [newAddress.address],
-        ),
+      log.info('Check sum address: $checkSumAddress');
+      if (checkAddressDuplicated) {
+        final walletAddress =
+            _appDataManager.addressStorageService.getAllAddresses();
+        if (walletAddress
+            .any((element) => element.address == checkSumAddress)) {
+          log.info('Address already exists: $checkSumAddress');
+          throw AddAddressException(type: AddAddressExceptionType.alreadyAdded);
+        }
+      }
+      final newAddress = address.copyWith(address: checkSumAddress);
+      // await _appDataManager.addressStorageService.insertAddresses([newAddress]);
+      final playlist = DP1CallExtension.fromOwner(
+        owners: [newAddress.address],
       );
+      final playlistRef = PlaylistReference(
+        playlist: playlist,
+        url: '',
+        type: PlaylistReferenceType.address,
+      );
+      await injector<DriftDatabaseService>().ingestPlaylist(
+        playlistRef,
+        'my_collection',
+      );
+      injector<PlaylistsBloc>(
+              instanceName: PlaylistsBlocInstance.my.instanceName)
+          .add(RefreshPlaylistsEvent());
+      if (refreshPlaylist) {
+        injector<UserAllOwnCollectionBloc>().add(
+          ReindexAddresses(
+            addresses: [newAddress.address],
+          ),
+        );
+      }
+      await _onAddressUpdate();
+      log.info('Inserted address: ${newAddress.address}');
+      return newAddress;
+    } catch (e) {
+      log.info('Error inserting address: $e');
+      throw e;
     }
-    await _onAddressUpdate();
-    log.info('Inserted address: ${newAddress.address}');
-    return newAddress;
   }
 
   Future<void> insertAddresses(List<WalletAddress> addresses) async {

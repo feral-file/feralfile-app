@@ -1,8 +1,7 @@
 import 'dart:async';
 
-import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
-import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart'
-    as drift_db;
+import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
@@ -10,8 +9,10 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/service/base_dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/base_dp1_feed_service_impl.dart';
 import 'package:autonomy_flutter/util/dio_manager.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 
 class RemoteConfigChannel {
   RemoteConfigChannel({
@@ -45,7 +46,7 @@ abstract class DP1FeedWithChannelExtensionServiceBase
     int? limit,
   });
 
-  List<DP1Call> getCachedPlaylistsByChannelId(String channelId);
+  Future<List<DP1Call>> getCachedPlaylistsByChannelId(String channelId);
 
   Future<DP1PlaylistResponse> getAllPlaylistsByChannelIds({
     required List<String> channelIds,
@@ -70,14 +71,10 @@ abstract class DP1FeedWithChannelExtensionServiceBase
     bool usingCache = true,
   });
 
-  Future<DP1ChannelsResponse> getChannels({
-    String? cursor,
-    int? limit,
-  });
+  @protected
+  Future<List<Channel>> _getAllChannels();
 
-  Future<List<Channel>> getAllChannels();
-
-  List<Channel> getAllCachedChannels();
+  Future<List<Channel>> getAllCachedChannels();
 
   /*
   =======================================================================
@@ -143,10 +140,13 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
   }
 
   @override
-  List<DP1Call> getCachedPlaylistsByChannelId(String channelId) {
-    // Drift is async, deprecated sync method
-    log.info('[DP1FeedService] getCachedPlaylistsByChannelId - use async methods');
-    return [];
+  Future<List<DP1Call>> getCachedPlaylistsByChannelId(String channelId) async {
+    final playlists = await driftDb.getPlaylistRows(
+      channelId: channelId,
+      kind: DriftPlaylistKind.dp1,
+      baseUrl: baseUrl,
+    );
+    return playlists.map((p) => playlistRowToModel(p)).toList();
   }
 
   @override
@@ -274,33 +274,7 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
   }
 
   @override
-  Future<DP1ChannelsResponse> getChannels({
-    String? cursor,
-    int? limit,
-  }) async {
-    String? currentCursor = cursor;
-    final channels = await api.getAllChannels(
-      cursor: currentCursor,
-      limit: limit,
-    );
-    currentCursor = channels.cursor;
-    channels.items.sort(
-      (channel1, channel2) => channel1.created.compareTo(
-        channel2.created,
-      ),
-    );
-
-    await ingestService.ingestChannels(channels.items, baseUrl);
-
-    return DP1ChannelsResponse(
-      channels.items,
-      channels.hasMore,
-      channels.cursor,
-    );
-  }
-
-  @override
-  Future<List<Channel>> getAllChannels() async {
+  Future<List<Channel>> _getAllChannels() async {
     final channels = <Channel>[];
     bool hasMore = true;
     String? cursor = null;
@@ -308,6 +282,16 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
     while (hasMore) {
       final resp = await api.getAllChannels(cursor: cursor, limit: limit);
       channels.addAll(resp.items);
+      // final channelRefs = resp.items
+      //     .map(
+      //       (c) => ChannelReference(
+      //         channel: c,
+      //         url: baseUrl,
+      //       ),
+      //     )
+      //     .toList();
+      // just return the channels, no need to ingest
+      // await driftDb.ingestChannels(channelRefs);
       hasMore = resp.hasMore;
       cursor = resp.cursor;
     }
@@ -315,10 +299,12 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
   }
 
   @override
-  List<Channel> getAllCachedChannels() {
-    // Drift is async, deprecated sync method
-    log.info('[DP1FeedService] getAllCachedChannels - use async methods');
-    return [];
+  Future<List<Channel>> getAllCachedChannels() async {
+    // Drift is async; synchronous cached access is deprecated.
+    // Call sites should migrate to async DriftDatabaseService if needed.
+    final channels = await injector<DriftDatabaseService>()
+        .getChannels(kind: DriftChannelKind.dp1, baseUrl: baseUrl);
+    return channels.map((c) => channelRowToModel(c)).toList();
   }
 
   /*
@@ -351,11 +337,27 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
     _isReloadingCache = true;
     try {
       log.info('Reloading cache for FeralFileDP1FeedService: $baseUrl');
-      final channels = await getAllChannels();
+      final channels = await _getAllChannels();
       final playlists = await getAllPlaylists();
-      await db.clearAll();
-      await ingestService.ingestChannels(channels, baseUrl);
-      await ingestService.ingestPlaylists(playlists, baseUrl, null);
+      await clearCache();
+      final channelRefs = channels
+          .map(
+            (c) => ChannelReference(
+              channel: c,
+              url: baseUrl,
+            ),
+          )
+          .toList();
+      await driftDb.ingestChannels(channelRefs);
+      final playlistRefs = playlists
+          .map(
+            (p) => PlaylistReference(
+              playlist: p,
+              url: baseUrl,
+            ),
+          )
+          .toList();
+      await driftDb.ingestPlaylists(playlistRefs, null);
       _isReloadingCache = false;
     } catch (e) {
       log.info('Failed to reload cache for FeralFileDP1FeedService: $e');
@@ -367,6 +369,8 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
   @override
   Future<void> clearCache() async {
     await super.clearCache();
+    await driftDb.deleteAllChannels(
+        kind: DriftChannelKind.dp1, baseUrl: baseUrl);
   }
 }
 
@@ -421,7 +425,7 @@ class FeralFileDP1FeedService extends DP1FeedWithChannelExtensionServiceImpl {
   */
 
   @override
-  Future<List<Channel>> getAllChannels() async {
+  Future<List<Channel>> _getAllChannels() async {
     if (_remoteConfigChannelIds.isNotEmpty) {
       final channels = await getChannelsByIds(
         channelIds: _remoteConfigChannelIds,
@@ -429,22 +433,11 @@ class FeralFileDP1FeedService extends DP1FeedWithChannelExtensionServiceImpl {
       );
       return channels;
     } else {
-      final res = await super.getAllChannels();
+      final res = await super._getAllChannels();
       return res;
     }
   }
 
-  @override
-  List<DP1Call> getAllCachedPlaylists() {
-    // Drift is async, deprecated sync method
-    log.info('[DP1FeedService] getAllCachedPlaylists - use async methods');
-    return [];
-  }
-
-  @override
-  List<Channel> getAllCachedChannels() {
-    // Drift is async, deprecated sync method
-    log.info('[DP1FeedService] getAllCachedChannels - use async methods');
-    return [];
-  }
+  // Cached playlist / channel access is handled in BaseDP1FeedServiceImpl
+  // via DriftDatabaseService. This subclass does not add extra caching.
 }

@@ -16,6 +16,7 @@ import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -51,7 +52,8 @@ class OnboardingAddAddressInputPage extends StatefulWidget {
 
 class _OnboardingAddAddressInputPageState
     extends State<OnboardingAddAddressInputPage> {
-  final _controller = TextEditingController();
+  final _controller = TextEditingController(
+      text: kDebugMode ? '0x99fc8AD516FBCC9bA3123D56e63A35d05AA9EFB8' : '');
 
   late final OnboardingAddAddressBloc _bloc;
 

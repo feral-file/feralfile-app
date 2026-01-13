@@ -4,8 +4,8 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
 import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart';
-import 'package:autonomy_flutter/nft_collection/services/dp1_to_drift_ingest_service.dart';
-import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart'
     as model;
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
@@ -27,8 +27,8 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
   final bool isExternalFeedService;
 
   late final DP1FeedApi api;
-  late final DP1ToDriftIngestService ingestService;
   late final PlaylistDatabase db;
+  late final DriftDatabaseService driftDb;
 
   /// Initialize api and Drift services - can be overridden by subclasses
   Future<void> init({
@@ -41,8 +41,7 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
       dio: dio,
     );
     db = injector<PlaylistDatabase>();
-    final indexerService = injector<NftIndexerService>();
-    ingestService = DP1ToDriftIngestService(db, indexerService);
+    driftDb = injector<DriftDatabaseService>();
   }
 
   /*
@@ -114,7 +113,15 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
     int? limit,
   }) async {
     final resp = await api.getAllPlaylists(cursor: cursor, limit: limit);
-    await ingestService.ingestPlaylists(resp.items, baseUrl, null);
+    final playlistRefs = resp.items
+        .map(
+          (p) => PlaylistReference(
+            playlist: p,
+            url: baseUrl,
+          ),
+        )
+        .toList();
+    await driftDb.ingestPlaylists(playlistRefs, null);
     return resp;
   }
 
@@ -127,6 +134,15 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
     while (hasMore) {
       final resp = await api.getAllPlaylists(cursor: cursor, limit: limit);
       playlists.addAll(resp.items);
+      final playlistRefs = resp.items
+          .map(
+            (p) => PlaylistReference(
+              playlist: p,
+              url: baseUrl,
+            ),
+          )
+          .toList();
+      await driftDb.ingestPlaylists(playlistRefs, null);
       hasMore = resp.hasMore;
       cursor = resp.cursor;
     }
@@ -134,11 +150,13 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
   }
 
   @override
-  List<DP1Call> getAllCachedPlaylists() {
-    // Drift query is async, so return empty for now
-    // Call sites should use async methods instead
-    log.info('[BaseDP1FeedServiceImpl] getAllCachedPlaylists - deprecated, use async methods');
-    return [];
+  Future<List<DP1Call>> getAllCachedPlaylists() async {
+    // Fetch cached DP1 playlists for this feed service from Drift.
+    final rows = await driftDb.getPlaylistRows(
+      kind: DriftPlaylistKind.dp1,
+      baseUrl: baseUrl,
+    );
+    return rows.map<DP1Call>(playlistRowToModel).toList();
   }
 
   @override
@@ -191,7 +209,15 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
       // Note: Drift clears per-channel, not globally
       while (hasMore) {
         final resp = await api.getAllPlaylists(cursor: cursor, limit: limit);
-        await ingestService.ingestPlaylists(resp.items, baseUrl, null);
+        final refs = resp.items
+            .map(
+              (p) => PlaylistReference(
+                playlist: p,
+                url: baseUrl,
+              ),
+            )
+            .toList();
+        await driftDb.ingestPlaylists(refs, null);
         hasMore = resp.hasMore;
         cursor = resp.cursor;
       }
@@ -202,7 +228,8 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
 
   Future<void> clearCache() async {
     // Clear all Drift data
-    await db.clearAll();
+    await driftDb.deleteAllPlaylists(
+        kind: DriftPlaylistKind.dp1, baseUrl: baseUrl);
   }
 
   /// Convert Drift Playlist row to DP1Call model

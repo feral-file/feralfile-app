@@ -14,6 +14,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   permission_handler_windows
   sentry_flutter
   share_plus
+  sqlite3_flutter_libs
   system_date_time_format
   url_launcher_windows
 )

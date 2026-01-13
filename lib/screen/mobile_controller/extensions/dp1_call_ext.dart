@@ -1,6 +1,8 @@
 import 'package:autonomy_flutter/common/environment.dart';
+import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
+import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:uuid/uuid.dart';
 
@@ -43,6 +45,19 @@ extension DP1CallExtension on DP1Call {
         signature: '0x17794533e25b08');
   }
 
+  static String generatePlaylistId(String owner) {
+    final walletAddress = injector<AddressService>().getWalletAddress(owner);
+    if (walletAddress == null) {
+      return 'addr:other:${owner.toLowerCase()}';
+    }
+    final chain = walletAddress.cryptoType == CryptoType.ETH
+        ? 'evm'
+        : walletAddress.cryptoType == CryptoType.XTZ
+            ? 'tezos'
+            : 'other';
+    return 'addr:$chain:${owner.toLowerCase()}';
+  }
+
   static DP1Call fromOwner({
     required List<String> owners,
     String? playlistId,
@@ -51,7 +66,7 @@ extension DP1CallExtension on DP1Call {
   }) {
     return DP1Call(
         dpVersion: DP_VERSION,
-        id: playlistId ?? Uuid().v1(),
+        id: playlistId ?? generatePlaylistId(owners.first),
         slug: '',
         title: title ?? 'Playlist',
         created: created ?? DateTime.now(),

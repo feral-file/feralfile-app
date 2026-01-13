@@ -119,7 +119,7 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
       final playlist = DP1CallExtension.fromOwner(
           owners: [address.address],
           title: '${address.name}',
-          playlistId: address.address);
+          playlistId: DP1CallExtension.generatePlaylistId(address.address));
       final playlistRef = AddressPlaylistReference(
           playlist: playlist,
           url: '',

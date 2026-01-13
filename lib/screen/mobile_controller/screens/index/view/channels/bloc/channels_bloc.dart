@@ -187,7 +187,7 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
       // Create ChannelData list for channels with their items
       final channelDataList = <ChannelData>[];
       for (final channelRef in channels) {
-        final playlists = injector<FeralFileFeedManager>()
+        final playlists = await injector<FeralFileFeedManager>()
             .getAllCachedPlaylistsOfChannels([channelRef]);
         final playlistItems = <DP1Item>[];
         for (final playlist in playlists) {
@@ -299,7 +299,7 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
         status: ChannelsStateStatus.loaded,
       ));
       // Get playlists for this channel
-      final channelPlaylists = injector<FeralFileFeedManager>()
+      final channelPlaylists = await injector<FeralFileFeedManager>()
           .getAllCachedPlaylistsOfChannels([channelData.channelReference]);
 
       // Collect all items from playlists

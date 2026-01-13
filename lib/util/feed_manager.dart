@@ -3,6 +3,7 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
@@ -106,7 +107,7 @@ class FeedManager {
       await injector<ConfigurationService>().setLastTimeRefreshFeeds(timeStart);
       log.info(
           'Reload all cache, last time refresh feeds: $lastTimeRefreshFeeds, duration: $updateFeedDuration, force: $force');
-      await Future.delayed(const Duration(milliseconds: 500));
+      await Future<void>.delayed(const Duration(milliseconds: 500));
       injector<ChannelsBloc>(
               instanceName: ChannelsBlocInstance.curated.instanceName)
           .add(const RefreshChannelsEvent());
@@ -116,16 +117,44 @@ class FeedManager {
     } else {
       log.info(
           'Skip reload all cache, last time refresh feeds: $lastTimeRefreshFeeds, duration: $updateFeedDuration, force: $force');
+      injector<ChannelsBloc>(
+              instanceName: ChannelsBlocInstance.curated.instanceName)
+          .add(const RefreshChannelsEvent());
+      injector<PlaylistsBloc>(
+              instanceName: PlaylistsBlocInstance.curated.instanceName)
+          .add(RefreshPlaylistsEvent());
     }
   }
 
   Future<List<PlaylistReference>> getAllCachedPlaylists() async {
-    List<PlaylistReference> allPlaylists = [];
+    final allPlaylists = <PlaylistReference>[];
+
+    // 1. DP1 playlists from all feed services (cached via Drift)
     for (final feedService in feedServices) {
       final playlists = await feedService.getAllCachedPlaylists();
-      allPlaylists.addAll(playlists.map((item) =>
-          PlaylistReference(playlist: item, url: feedService.baseUrl)));
+      allPlaylists.addAll(
+        playlists.map(
+          (item) => PlaylistReference(
+            playlist: item,
+            url: feedService.baseUrl,
+          ),
+        ),
+      );
     }
+
+    // 2. Address playlists (collection) from Drift via DriftDatabaseService
+    final driftDb = injector<DriftDatabaseService>();
+    final addressPlaylists = await driftDb.getAddressPlaylistsAsDp1Calls();
+    allPlaylists.addAll(
+      addressPlaylists.map(
+        (item) => PlaylistReference(
+          playlist: item,
+          url: '',
+          type: PlaylistReferenceType.address,
+        ),
+      ),
+    );
+
     return allPlaylists;
   }
 
@@ -235,22 +264,11 @@ class FeralFileFeedManager extends FeedManager {
     }
   }
 
-  Future<List<Channel>> fetchAllChannels() async {
-    List<Channel> allChannels = [];
-    for (final feedService in feedServices) {
-      if (feedService is FeralFileDP1FeedService) {
-        final channels = await feedService.getChannels();
-        allChannels.addAll(channels.items);
-      }
-    }
-    return allChannels;
-  }
-
   Future<List<ChannelReference>> getAllCachedChannels() async {
     List<ChannelReference> allChannelReferences = [];
     for (final feedService in feedServices) {
       if (feedService is FeralFileDP1FeedService) {
-        final channels = feedService.getAllCachedChannels();
+        final channels = await feedService.getAllCachedChannels();
         allChannelReferences.addAll(channels.map((item) =>
             ChannelReference(channel: item, url: feedService.baseUrl)));
       }
@@ -259,14 +277,14 @@ class FeralFileFeedManager extends FeedManager {
   }
 
   // get all cache playlists of channels
-  List<PlaylistReference> getAllCachedPlaylistsOfChannels(
-      List<ChannelReference> channels) {
+  Future<List<PlaylistReference>> getAllCachedPlaylistsOfChannels(
+      List<ChannelReference> channels) async {
     List<PlaylistReference> allPlaylistReferences = [];
     for (final channel in channels) {
       final service = getFeedServiceByUrl(channel.url);
       if (service is FeralFileDP1FeedService) {
         final playlists =
-            service.getCachedPlaylistsByChannelId(channel.channel.id);
+            await service.getCachedPlaylistsByChannelId(channel.channel.id);
         allPlaylistReferences.addAll(playlists.map(
             (item) => PlaylistReference(playlist: item, url: channel.url)));
       }
