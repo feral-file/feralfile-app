@@ -9,10 +9,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:autonomy_flutter/common/environment.dart';
-import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/gateway/customer_support_api.dart';
-import 'package:autonomy_flutter/model/ff_account.dart';
-import 'package:autonomy_flutter/service/configuration_service.dart';
+import 'package:autonomy_flutter/service/tv_cast_service.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
 import 'package:autonomy_flutter/util/exception.dart';
 import 'package:autonomy_flutter/util/int_ext.dart';
@@ -157,39 +154,6 @@ class SentryInterceptor extends InterceptorsWrapper {
       ),
     );
     super.onError(err, handler);
-  }
-}
-
-class CustomerSupportInterceptor extends Interceptor {
-  CustomerSupportInterceptor();
-
-  final _configurationService = injector<ConfigurationService>();
-
-  @override
-  Future<void> onRequest(
-    RequestOptions options,
-    RequestInterceptorHandler handler,
-  ) async {
-    final isIgnoreHeaderApi = options.path == CustomerSupportApi.issuesPath;
-
-    if (isIgnoreHeaderApi) {
-      // do nothing get list issues, create issue: add header at api level
-    } else {
-      final pathElements = options.path.split('/');
-      final anonymousIssueIds =
-          injector<ConfigurationService>().getAnonymousIssueIds();
-      if (pathElements.any(anonymousIssueIds.contains)) {
-        // get issue details, add header
-        options.headers[CustomerSupportApi.apiKeyHeader] =
-            Environment.supportApiKey;
-        options.headers[CustomerSupportApi.deviceIdHeader] =
-            await _configurationService.getDeviceId();
-      } else {
-        throw Exception('can_not_authenticate_desc'.tr());
-      }
-    }
-
-    return handler.next(options);
   }
 }
 

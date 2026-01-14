@@ -292,11 +292,12 @@ class FeralFileFeedManager extends FeedManager {
     return allPlaylistReferences;
   }
 
-  ChannelReference? getChannelReferenceByChannelId(String channelId) {
+  Future<ChannelReference?> getChannelReferenceByChannelId(
+      String channelId) async {
     for (final feedService in feedServices) {
       if (feedService is FeralFileDP1FeedService) {
         try {
-          final channel = feedService.getCachedChannelById(channelId);
+          final channel = await feedService.getCachedChannelById(channelId);
           if (channel != null) {
             return ChannelReference(channel: channel, url: feedService.baseUrl);
           }
@@ -410,10 +411,11 @@ class FeralFileFeedManager extends FeedManager {
     );
   }
 
-  ChannelReference? getCachedChannelReferenceByPlaylist(DP1Call playlist) {
+  Future<ChannelReference?> getCachedChannelReferenceByPlaylist(
+      DP1Call playlist) async {
     for (final feedService in feedServices) {
       if (feedService is FeralFileDP1FeedService) {
-        final channel = feedService.getChannelByPlaylistId(playlist.id);
+        final channel = await feedService.getChannelByPlaylistId(playlist.id);
         if (channel != null) {
           return ChannelReference(channel: channel, url: feedService.baseUrl);
         }
@@ -483,8 +485,8 @@ class AddressPlaylistReference extends PlaylistReference {
 
 extension PlaylistReferenceExtension on PlaylistReference {
   /// Get creator title of the playlist from cached channel reference.
-  String get creator {
-    final channelReference = injector<FeralFileFeedManager>()
+  Future<String> getCreator() async {
+    final channelReference = await injector<FeralFileFeedManager>()
         .getCachedChannelReferenceByPlaylist(playlist);
 
     return channelReference != null ? channelReference.channel.title : '';

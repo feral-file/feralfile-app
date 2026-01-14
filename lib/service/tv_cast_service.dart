@@ -373,7 +373,8 @@ class TvCastServiceImpl extends BaseTvCastService {
 
       // Extract message field
       var message = resultMap['message'];
-      while (message is Map<String, dynamic> && message.containsKey('message')) {
+      while (
+          message is Map<String, dynamic> && message.containsKey('message')) {
         message = message['message'];
       }
 
@@ -397,4 +398,24 @@ class TvCastServiceImpl extends BaseTvCastService {
     await BluetoothDeviceManager().switchDevice(_device);
     return super.castDP1Playlist(request);
   }
+}
+
+class FeralfileError {
+  FeralfileError(
+    this.code,
+    this.message,
+  );
+
+  factory FeralfileError.fromJson(Map<String, dynamic> json) =>
+      FeralfileError(json['code'] as int, json['message'] as String);
+  final int code;
+  final String message;
+
+  Map<String, dynamic> toJson() => {
+        'code': code,
+        'message': message,
+      };
+
+  @override
+  String toString() => 'FeralfileError{code: $code, message: $message}';
 }

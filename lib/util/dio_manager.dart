@@ -108,16 +108,6 @@ class DioManager {
         },
       );
 
-  /// Create or get a Customer Support-configured Dio.
-  Dio customerSupport(BaseOptions options) => _getOrCreate(
-        _key('customerSupport', options),
-        () {
-          final dio = _createBaseDio(options);
-          dio.interceptors.add(CustomerSupportInterceptor());
-          return dio;
-        },
-      );
-
   /// Create or get a TV Cast-configured Dio.
   Dio tvCast(BaseOptions options) => _getOrCreate(
         _key('tvCast', options),

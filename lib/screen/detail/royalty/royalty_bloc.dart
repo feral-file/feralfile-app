@@ -24,13 +24,13 @@ class RoyaltyState {
 }
 
 class RoyaltyBloc extends AuBloc<RoyaltyEvent, RoyaltyState> {
-  final FeralFileService _feralFileService;
+  // final FeralFileService _feralFileService;
   final dio = DioManager().base(BaseOptions(
     baseUrl: 'https://raw.githubusercontent.com',
     connectTimeout: const Duration(seconds: 5),
   ));
 
-  RoyaltyBloc(this._feralFileService) : super(RoyaltyState()) {
+  RoyaltyBloc() : super(RoyaltyState()) {
     on<GetRoyaltyInfoEvent>((event, emit) async {
       // try {
       //   final String? exhibitionID = event.exhibitionID ??
@@ -75,16 +75,16 @@ class RoyaltyBloc extends AuBloc<RoyaltyEvent, RoyaltyState> {
     });
   }
 
-  String _getRevenueSetting(
-      FeralFileResaleInfo resaleInfo, String partnerName) {
-    final artist = (resaleInfo.artist * 100).toString();
-    final platform = (resaleInfo.platform * 100).toString();
-    final partner = (resaleInfo.partner * 100).toString();
-    if (resaleInfo.partner > 0) {
-      return 'revenue_setting_with'
-          .tr(args: [artist, platform, partnerName, partner]);
-    } else {
-      return 'revenue_setting'.tr(args: [artist, platform]);
-    }
-  }
+  // String _getRevenueSetting(
+  //     FeralFileResaleInfo resaleInfo, String partnerName) {
+  //   final artist = (resaleInfo.artist * 100).toString();
+  //   final platform = (resaleInfo.platform * 100).toString();
+  //   final partner = (resaleInfo.partner * 100).toString();
+  //   if (resaleInfo.partner > 0) {
+  //     return 'revenue_setting_with'
+  //         .tr(args: [artist, platform, partnerName, partner]);
+  //   } else {
+  //     return 'revenue_setting'.tr(args: [artist, platform]);
+  //   }
+  // }
 }

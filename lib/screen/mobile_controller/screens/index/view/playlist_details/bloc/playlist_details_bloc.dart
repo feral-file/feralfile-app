@@ -5,11 +5,14 @@ import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_event.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/util/dp1_now_displaying_item_ext.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sentry/sentry.dart';
@@ -141,6 +144,15 @@ class PlaylistDetailsBloc
       ),
     );
     try {
+      final channelRow = await injector<DriftDatabaseService>()
+          .getChannelByPlaylistId(_playlist.id);
+      final channel = channelRow != null
+          ? ChannelExtension.fromDriftChannel(channelRow)
+          : null;
+      final channelReference = await injector<FeralFileFeedManager>()
+              .getChannelReferenceByChannelId(channel?.id ?? '') ??
+          null;
+
       final nowDisplayingItems =
           await DP1NowDisplayingItemListExt.buildFromPlaylist(
         playlist: _playlist,
@@ -181,6 +193,7 @@ class PlaylistDetailsBloc
           hasMore: hasMore,
           offset: offset,
           total: total,
+          channelReference: channelReference,
         ),
       );
     } catch (e) {

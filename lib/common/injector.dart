@@ -11,15 +11,12 @@ import 'package:autonomy_flutter/common/database.dart';
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/database/hive_database.dart';
-import 'package:autonomy_flutter/gateway/customer_support_api.dart';
 import 'package:autonomy_flutter/gateway/dp1_playlist_api.dart';
-import 'package:autonomy_flutter/gateway/feralfile_api.dart';
 import 'package:autonomy_flutter/gateway/feralfile_docs_api.dart';
 import 'package:autonomy_flutter/gateway/mobile_controller_api.dart';
 import 'package:autonomy_flutter/gateway/pubdoc_api.dart';
 import 'package:autonomy_flutter/gateway/remote_config_api.dart';
 import 'package:autonomy_flutter/gateway/tv_cast_api.dart';
-import 'package:autonomy_flutter/nft_collection/data/api/tzkt_api.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/clients/indexer_client.dart';
@@ -132,7 +129,7 @@ Future<void> setupInjector() async {
   final tzktUrl = Environment.appTestnetConfig
       ? Environment.tzktTestnetURL
       : Environment.tzktMainnetURL;
-  injector.registerLazySingleton(() => TZKTApi(dio, baseUrl: tzktUrl));
+  // injector.registerLazySingleton(() => TZKTApi(dio, baseUrl: tzktUrl));
   injector.registerLazySingleton(
     () => PubdocAPI(dio, baseUrl: Environment.pubdocURL),
   );
@@ -189,22 +186,22 @@ Future<void> setupInjector() async {
   injector.registerLazySingleton<VersionService>(
     () => VersionServiceImpl(injector(), injector(), injector(), injector()),
   );
-  injector.registerLazySingleton<CustomerSupportService>(
-    () => CustomerSupportServiceImpl(
-      DraftCustomerSupportStore(),
-      CustomerSupportApi(
-        DioManager().customerSupport(
-          dioOptions.copyWith(
-            connectTimeout: const Duration(seconds: 10),
-            receiveTimeout: const Duration(seconds: 10),
-          ),
-        ),
-        baseUrl: Environment.customerSupportURL,
-      ),
-      injector(),
-    ),
-  );
-  await injector<CustomerSupportService>().init();
+  // injector.registerLazySingleton<CustomerSupportService>(
+  //   () => CustomerSupportServiceImpl(
+  //     DraftCustomerSupportStore(),
+  //     CustomerSupportApi(
+  //       DioManager().customerSupport(
+  //         dioOptions.copyWith(
+  //           connectTimeout: const Duration(seconds: 10),
+  //           receiveTimeout: const Duration(seconds: 10),
+  //         ),
+  //       ),
+  //       baseUrl: Environment.customerSupportURL,
+  //     ),
+  //     injector(),
+  //   ),
+  // );
+  // await injector<CustomerSupportService>().init();
 
   injector.registerLazySingleton<DomainService>(DomainServiceImpl.new);
 
@@ -216,12 +213,12 @@ Future<void> setupInjector() async {
     () => Web3Client(Environment.web3RpcURL, injector()),
   );
 
-  injector.registerLazySingleton<FeralFileApi>(
-    () => FeralFileApi(
-      DioManager().feralFile(dioOptions),
-      baseUrl: Environment.feralFileAPIURL,
-    ),
-  );
+  // injector.registerLazySingleton<FeralFileApi>(
+  //   () => FeralFileApi(
+  //     DioManager().feralFile(dioOptions),
+  //     baseUrl: Environment.feralFileAPIURL,
+  //   ),
+  // );
   // injector.registerLazySingleton<IndexerApi>(
   //   () => IndexerApi(dio, baseUrl: Environment.indexerURL),
   // );
@@ -245,11 +242,11 @@ Future<void> setupInjector() async {
     () => CanvasClientServiceV2(injector(), injector()),
   );
 
-  injector.registerLazySingleton<FeralFileService>(
-    () => FeralFileServiceImpl(
-      injector(),
-    ),
-  );
+  // injector.registerLazySingleton<FeralFileService>(
+  //   () => FeralFileServiceImpl(
+  //     injector(),
+  //   ),
+  // );
 
   injector.registerLazySingleton<DeeplinkService>(
     () => DeeplinkServiceImpl(

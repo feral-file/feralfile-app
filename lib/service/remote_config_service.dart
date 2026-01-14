@@ -221,7 +221,7 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
         _completer?.safeComplete(_configs ?? _defaults);
         _completer = null;
       }
-      return _configs!;
+      return _configs ?? _defaults;
     } catch (e) {
       log.warning('RemoteConfigService: loadConfigs: $e');
       Sentry.captureEvent(

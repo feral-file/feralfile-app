@@ -131,8 +131,8 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
     final channel = (feedService is FeralFileDP1FeedService)
         ? feedService.getChannelByPlaylistId(playlist.id)
         : null;
-    final channelReference =
-        channel != null ? ChannelReference(channel: channel, url: url) : null;
+    final channelReference = null as ChannelReference?;
+    // channel != null ? ChannelReference(channel: channel, url: url) : null;
 
     final isDynamicPlaylist = playlist.isDynamic;
 

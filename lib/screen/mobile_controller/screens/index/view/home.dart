@@ -152,7 +152,8 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
         title: 'Support & Feedback',
         icon: ValueListenableBuilder<List<int>?>(
           valueListenable:
-              injector<CustomerSupportService>().numberOfIssuesInfo,
+              // injector<CustomerSupportService>().numberOfIssuesInfo,
+              ValueNotifier<List<int>?>(null),
           builder: (
             BuildContext context,
             List<int>? numberOfIssuesInfo,

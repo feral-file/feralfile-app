@@ -191,6 +191,26 @@ class AssetToken {
             .toList(),
       );
 
+  Map<String, dynamic> toRestJson() => {
+        'id': id,
+        'cid': cid,
+        'chain': chain,
+        'standard': standard,
+        'contract_address': contractAddress,
+        'token_number': tokenNumber,
+        'metadata': metadata?.toJson(),
+        'owners': owners?.toJson(),
+        'provenance_events': provenanceEvents?.toJson(),
+        'enrichment_source': enrichmentSource?.toJson(),
+        'metadata_media_assets':
+            metadataMediaAssets?.map((e) => e.toJson()).toList(),
+        'enrichment_source_media_assets':
+            enrichmentSourceMediaAssets?.map((e) => e.toJson()).toList(),
+        'current_owner': currentOwner,
+        'updated_at': updatedAt?.toIso8601String(),
+        'current_wner': currentOwner,
+      };
+
   factory AssetToken.fromMeilisearchResult(Map<String, dynamic> json) {
     // Extract display_data once to avoid repetition
     final displayData = Map<String, dynamic>.from(json['display_data'] as Map);

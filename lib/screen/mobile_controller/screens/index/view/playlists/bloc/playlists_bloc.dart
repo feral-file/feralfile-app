@@ -86,14 +86,14 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     final nextCursor = end < allPlaylists.length ? end.toString() : null;
     final hasMore = nextCursor != null;
 
-    final playlistDataList = topPlaylists
+    final playlistDataList = await Future.wait(topPlaylists
         .map(
-          (playlistRef) => PlaylistData(
+          (playlistRef) async => PlaylistData(
             playlistReference: playlistRef,
-            creator: playlistRef.creator,
+            creator: await playlistRef.getCreator(),
           ),
         )
-        .toList();
+        .toList());
 
     return LoadPlaylistPaginationResponse(
       playlistData: playlistDataList,
@@ -125,10 +125,9 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
           url: '',
           type: PlaylistReferenceType.address,
           address: address);
+      final creator = await playlistRef.getCreator();
       final addressPlaylistData = AddressPlaylistData(
-          playlistReference: playlistRef,
-          creator: playlistRef.creator,
-          address: address);
+          playlistReference: playlistRef, creator: creator, address: address);
       playlistDataList.add(addressPlaylistData);
     }
 

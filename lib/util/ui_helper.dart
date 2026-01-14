@@ -28,6 +28,7 @@ import 'package:autonomy_flutter/service/base_dp1_feed_service_impl.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
+import 'package:autonomy_flutter/service/tv_cast_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/color_extension.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
@@ -1349,13 +1350,13 @@ class UIHelper {
         final service =
             injector<FeralFileFeedManager>().getFeedServiceByUrl(playlist.url);
         ChannelReference? channelReference;
-        if (service is FeralFileDP1FeedService) {
-          final channel = service.getChannelByPlaylistId(playlist.playlist.id);
-          if (channel != null) {
-            channelReference =
-                ChannelReference(channel: channel, url: playlist.url);
-          }
-        }
+        // if (service is FeralFileDP1FeedService) {
+        //   final channel = service.getChannelByPlaylistId(playlist.playlist.id);
+        //   if (channel != null) {
+        //     channelReference =
+        //         ChannelReference(channel: channel, url: playlist.url);
+        //   }
+        // }
 
         return Column(
           children: [

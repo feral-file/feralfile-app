@@ -1,4 +1,5 @@
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 
 abstract class PlaylistDetailsState {
   const PlaylistDetailsState({
@@ -6,23 +7,27 @@ abstract class PlaylistDetailsState {
     required this.hasMore,
     required this.offset,
     this.total,
+    this.channelReference,
   });
   final List<DP1NowDisplayingItem> nowDisplayingItems;
   final bool hasMore;
   final int offset;
   final int? total;
+  final ChannelReference? channelReference;
 
   PlaylistDetailsState copyWith({
     List<DP1NowDisplayingItem>? nowDisplayingItems,
     bool? hasMore,
     int? offset,
     int? total,
+    ChannelReference? channelReference,
   }) {
     return PlaylistDetailsLoadedState(
       nowDisplayingItems: nowDisplayingItems ?? this.nowDisplayingItems,
       hasMore: hasMore ?? this.hasMore,
       offset: offset ?? this.offset,
       total: total ?? this.total,
+      channelReference: channelReference ?? this.channelReference,
     );
   }
 
@@ -54,6 +59,7 @@ class PlaylistDetailsLoadedState extends PlaylistDetailsState {
     required super.hasMore,
     required super.offset,
     super.total,
+    super.channelReference,
   });
 }
 
@@ -63,6 +69,7 @@ class PlaylistDetailsLoadingMoreState extends PlaylistDetailsState {
     required super.hasMore,
     required super.offset,
     super.total,
+    super.channelReference,
   });
 }
 
@@ -73,6 +80,7 @@ class PlaylistDetailsErrorState extends PlaylistDetailsState {
     required super.hasMore,
     required super.offset,
     super.total,
+    super.channelReference,
   });
   final String error;
 

@@ -1376,6 +1376,12 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
   late final GeneratedColumn<int> durationSec = GeneratedColumn<int>(
       'duration_sec', aliasedName, true,
       type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _provenanceJsonMeta =
+      const VerificationMeta('provenanceJson');
+  @override
+  late final GeneratedColumn<String> provenanceJson = GeneratedColumn<String>(
+      'provenance_json', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _sourceUriMeta =
       const VerificationMeta('sourceUri');
   @override
@@ -1393,11 +1399,29 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
   late final GeneratedColumn<String> license = GeneratedColumn<String>(
       'license', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _sourceUrlMeta =
+      const VerificationMeta('sourceUrl');
+  @override
+  late final GeneratedColumn<String> sourceUrl = GeneratedColumn<String>(
+      'source_url', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _reproJsonMeta =
+      const VerificationMeta('reproJson');
+  @override
+  late final GeneratedColumn<String> reproJson = GeneratedColumn<String>(
+      'repro_json', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _overrideJsonMeta =
       const VerificationMeta('overrideJson');
   @override
   late final GeneratedColumn<String> overrideJson = GeneratedColumn<String>(
       'override_json', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _displayJsonMeta =
+      const VerificationMeta('displayJson');
+  @override
+  late final GeneratedColumn<String> displayJson = GeneratedColumn<String>(
+      'display_json', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _tokenDataJsonMeta =
       const VerificationMeta('tokenDataJson');
@@ -1419,10 +1443,14 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
         subtitle,
         thumbnailUri,
         durationSec,
+        provenanceJson,
         sourceUri,
         refUri,
         license,
+        sourceUrl,
+        reproJson,
         overrideJson,
+        displayJson,
         tokenDataJson,
         updatedAtUs
       ];
@@ -1467,6 +1495,12 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
           durationSec.isAcceptableOrUnknown(
               data['duration_sec']!, _durationSecMeta));
     }
+    if (data.containsKey('provenance_json')) {
+      context.handle(
+          _provenanceJsonMeta,
+          provenanceJson.isAcceptableOrUnknown(
+              data['provenance_json']!, _provenanceJsonMeta));
+    }
     if (data.containsKey('source_uri')) {
       context.handle(_sourceUriMeta,
           sourceUri.isAcceptableOrUnknown(data['source_uri']!, _sourceUriMeta));
@@ -1479,11 +1513,25 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
       context.handle(_licenseMeta,
           license.isAcceptableOrUnknown(data['license']!, _licenseMeta));
     }
+    if (data.containsKey('source_url')) {
+      context.handle(_sourceUrlMeta,
+          sourceUrl.isAcceptableOrUnknown(data['source_url']!, _sourceUrlMeta));
+    }
+    if (data.containsKey('repro_json')) {
+      context.handle(_reproJsonMeta,
+          reproJson.isAcceptableOrUnknown(data['repro_json']!, _reproJsonMeta));
+    }
     if (data.containsKey('override_json')) {
       context.handle(
           _overrideJsonMeta,
           overrideJson.isAcceptableOrUnknown(
               data['override_json']!, _overrideJsonMeta));
+    }
+    if (data.containsKey('display_json')) {
+      context.handle(
+          _displayJsonMeta,
+          displayJson.isAcceptableOrUnknown(
+              data['display_json']!, _displayJsonMeta));
     }
     if (data.containsKey('token_data_json')) {
       context.handle(
@@ -1520,14 +1568,22 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
           .read(DriftSqlType.string, data['${effectivePrefix}thumbnail_uri']),
       durationSec: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}duration_sec']),
+      provenanceJson: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}provenance_json']),
       sourceUri: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}source_uri']),
       refUri: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}ref_uri']),
       license: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}license']),
+      sourceUrl: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}source_url']),
+      reproJson: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}repro_json']),
       overrideJson: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}override_json']),
+      displayJson: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}display_json']),
       tokenDataJson: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}token_data_json']),
       updatedAtUs: attachedDatabase.typeMapping
@@ -1548,10 +1604,14 @@ class Item extends DataClass implements Insertable<Item> {
   final String? subtitle;
   final String? thumbnailUri;
   final int? durationSec;
+  final String? provenanceJson;
   final String? sourceUri;
   final String? refUri;
   final String? license;
+  final String? sourceUrl;
+  final String? reproJson;
   final String? overrideJson;
+  final String? displayJson;
   final String? tokenDataJson;
   final int updatedAtUs;
   const Item(
@@ -1561,10 +1621,14 @@ class Item extends DataClass implements Insertable<Item> {
       this.subtitle,
       this.thumbnailUri,
       this.durationSec,
+      this.provenanceJson,
       this.sourceUri,
       this.refUri,
       this.license,
+      this.sourceUrl,
+      this.reproJson,
       this.overrideJson,
+      this.displayJson,
       this.tokenDataJson,
       required this.updatedAtUs});
   @override
@@ -1584,6 +1648,9 @@ class Item extends DataClass implements Insertable<Item> {
     if (!nullToAbsent || durationSec != null) {
       map['duration_sec'] = Variable<int>(durationSec);
     }
+    if (!nullToAbsent || provenanceJson != null) {
+      map['provenance_json'] = Variable<String>(provenanceJson);
+    }
     if (!nullToAbsent || sourceUri != null) {
       map['source_uri'] = Variable<String>(sourceUri);
     }
@@ -1593,8 +1660,17 @@ class Item extends DataClass implements Insertable<Item> {
     if (!nullToAbsent || license != null) {
       map['license'] = Variable<String>(license);
     }
+    if (!nullToAbsent || sourceUrl != null) {
+      map['source_url'] = Variable<String>(sourceUrl);
+    }
+    if (!nullToAbsent || reproJson != null) {
+      map['repro_json'] = Variable<String>(reproJson);
+    }
     if (!nullToAbsent || overrideJson != null) {
       map['override_json'] = Variable<String>(overrideJson);
+    }
+    if (!nullToAbsent || displayJson != null) {
+      map['display_json'] = Variable<String>(displayJson);
     }
     if (!nullToAbsent || tokenDataJson != null) {
       map['token_data_json'] = Variable<String>(tokenDataJson);
@@ -1618,6 +1694,9 @@ class Item extends DataClass implements Insertable<Item> {
       durationSec: durationSec == null && nullToAbsent
           ? const Value.absent()
           : Value(durationSec),
+      provenanceJson: provenanceJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(provenanceJson),
       sourceUri: sourceUri == null && nullToAbsent
           ? const Value.absent()
           : Value(sourceUri),
@@ -1626,9 +1705,18 @@ class Item extends DataClass implements Insertable<Item> {
       license: license == null && nullToAbsent
           ? const Value.absent()
           : Value(license),
+      sourceUrl: sourceUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceUrl),
+      reproJson: reproJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reproJson),
       overrideJson: overrideJson == null && nullToAbsent
           ? const Value.absent()
           : Value(overrideJson),
+      displayJson: displayJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(displayJson),
       tokenDataJson: tokenDataJson == null && nullToAbsent
           ? const Value.absent()
           : Value(tokenDataJson),
@@ -1646,10 +1734,14 @@ class Item extends DataClass implements Insertable<Item> {
       subtitle: serializer.fromJson<String?>(json['subtitle']),
       thumbnailUri: serializer.fromJson<String?>(json['thumbnailUri']),
       durationSec: serializer.fromJson<int?>(json['durationSec']),
+      provenanceJson: serializer.fromJson<String?>(json['provenanceJson']),
       sourceUri: serializer.fromJson<String?>(json['sourceUri']),
       refUri: serializer.fromJson<String?>(json['refUri']),
       license: serializer.fromJson<String?>(json['license']),
+      sourceUrl: serializer.fromJson<String?>(json['sourceUrl']),
+      reproJson: serializer.fromJson<String?>(json['reproJson']),
       overrideJson: serializer.fromJson<String?>(json['overrideJson']),
+      displayJson: serializer.fromJson<String?>(json['displayJson']),
       tokenDataJson: serializer.fromJson<String?>(json['tokenDataJson']),
       updatedAtUs: serializer.fromJson<int>(json['updatedAtUs']),
     );
@@ -1664,10 +1756,14 @@ class Item extends DataClass implements Insertable<Item> {
       'subtitle': serializer.toJson<String?>(subtitle),
       'thumbnailUri': serializer.toJson<String?>(thumbnailUri),
       'durationSec': serializer.toJson<int?>(durationSec),
+      'provenanceJson': serializer.toJson<String?>(provenanceJson),
       'sourceUri': serializer.toJson<String?>(sourceUri),
       'refUri': serializer.toJson<String?>(refUri),
       'license': serializer.toJson<String?>(license),
+      'sourceUrl': serializer.toJson<String?>(sourceUrl),
+      'reproJson': serializer.toJson<String?>(reproJson),
       'overrideJson': serializer.toJson<String?>(overrideJson),
+      'displayJson': serializer.toJson<String?>(displayJson),
       'tokenDataJson': serializer.toJson<String?>(tokenDataJson),
       'updatedAtUs': serializer.toJson<int>(updatedAtUs),
     };
@@ -1680,10 +1776,14 @@ class Item extends DataClass implements Insertable<Item> {
           Value<String?> subtitle = const Value.absent(),
           Value<String?> thumbnailUri = const Value.absent(),
           Value<int?> durationSec = const Value.absent(),
+          Value<String?> provenanceJson = const Value.absent(),
           Value<String?> sourceUri = const Value.absent(),
           Value<String?> refUri = const Value.absent(),
           Value<String?> license = const Value.absent(),
+          Value<String?> sourceUrl = const Value.absent(),
+          Value<String?> reproJson = const Value.absent(),
           Value<String?> overrideJson = const Value.absent(),
+          Value<String?> displayJson = const Value.absent(),
           Value<String?> tokenDataJson = const Value.absent(),
           int? updatedAtUs}) =>
       Item(
@@ -1694,11 +1794,16 @@ class Item extends DataClass implements Insertable<Item> {
         thumbnailUri:
             thumbnailUri.present ? thumbnailUri.value : this.thumbnailUri,
         durationSec: durationSec.present ? durationSec.value : this.durationSec,
+        provenanceJson:
+            provenanceJson.present ? provenanceJson.value : this.provenanceJson,
         sourceUri: sourceUri.present ? sourceUri.value : this.sourceUri,
         refUri: refUri.present ? refUri.value : this.refUri,
         license: license.present ? license.value : this.license,
+        sourceUrl: sourceUrl.present ? sourceUrl.value : this.sourceUrl,
+        reproJson: reproJson.present ? reproJson.value : this.reproJson,
         overrideJson:
             overrideJson.present ? overrideJson.value : this.overrideJson,
+        displayJson: displayJson.present ? displayJson.value : this.displayJson,
         tokenDataJson:
             tokenDataJson.present ? tokenDataJson.value : this.tokenDataJson,
         updatedAtUs: updatedAtUs ?? this.updatedAtUs,
@@ -1714,12 +1819,19 @@ class Item extends DataClass implements Insertable<Item> {
           : this.thumbnailUri,
       durationSec:
           data.durationSec.present ? data.durationSec.value : this.durationSec,
+      provenanceJson: data.provenanceJson.present
+          ? data.provenanceJson.value
+          : this.provenanceJson,
       sourceUri: data.sourceUri.present ? data.sourceUri.value : this.sourceUri,
       refUri: data.refUri.present ? data.refUri.value : this.refUri,
       license: data.license.present ? data.license.value : this.license,
+      sourceUrl: data.sourceUrl.present ? data.sourceUrl.value : this.sourceUrl,
+      reproJson: data.reproJson.present ? data.reproJson.value : this.reproJson,
       overrideJson: data.overrideJson.present
           ? data.overrideJson.value
           : this.overrideJson,
+      displayJson:
+          data.displayJson.present ? data.displayJson.value : this.displayJson,
       tokenDataJson: data.tokenDataJson.present
           ? data.tokenDataJson.value
           : this.tokenDataJson,
@@ -1737,10 +1849,14 @@ class Item extends DataClass implements Insertable<Item> {
           ..write('subtitle: $subtitle, ')
           ..write('thumbnailUri: $thumbnailUri, ')
           ..write('durationSec: $durationSec, ')
+          ..write('provenanceJson: $provenanceJson, ')
           ..write('sourceUri: $sourceUri, ')
           ..write('refUri: $refUri, ')
           ..write('license: $license, ')
+          ..write('sourceUrl: $sourceUrl, ')
+          ..write('reproJson: $reproJson, ')
           ..write('overrideJson: $overrideJson, ')
+          ..write('displayJson: $displayJson, ')
           ..write('tokenDataJson: $tokenDataJson, ')
           ..write('updatedAtUs: $updatedAtUs')
           ..write(')'))
@@ -1755,10 +1871,14 @@ class Item extends DataClass implements Insertable<Item> {
       subtitle,
       thumbnailUri,
       durationSec,
+      provenanceJson,
       sourceUri,
       refUri,
       license,
+      sourceUrl,
+      reproJson,
       overrideJson,
+      displayJson,
       tokenDataJson,
       updatedAtUs);
   @override
@@ -1771,10 +1891,14 @@ class Item extends DataClass implements Insertable<Item> {
           other.subtitle == this.subtitle &&
           other.thumbnailUri == this.thumbnailUri &&
           other.durationSec == this.durationSec &&
+          other.provenanceJson == this.provenanceJson &&
           other.sourceUri == this.sourceUri &&
           other.refUri == this.refUri &&
           other.license == this.license &&
+          other.sourceUrl == this.sourceUrl &&
+          other.reproJson == this.reproJson &&
           other.overrideJson == this.overrideJson &&
+          other.displayJson == this.displayJson &&
           other.tokenDataJson == this.tokenDataJson &&
           other.updatedAtUs == this.updatedAtUs);
 }
@@ -1786,10 +1910,14 @@ class ItemsCompanion extends UpdateCompanion<Item> {
   final Value<String?> subtitle;
   final Value<String?> thumbnailUri;
   final Value<int?> durationSec;
+  final Value<String?> provenanceJson;
   final Value<String?> sourceUri;
   final Value<String?> refUri;
   final Value<String?> license;
+  final Value<String?> sourceUrl;
+  final Value<String?> reproJson;
   final Value<String?> overrideJson;
+  final Value<String?> displayJson;
   final Value<String?> tokenDataJson;
   final Value<int> updatedAtUs;
   final Value<int> rowid;
@@ -1800,10 +1928,14 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     this.subtitle = const Value.absent(),
     this.thumbnailUri = const Value.absent(),
     this.durationSec = const Value.absent(),
+    this.provenanceJson = const Value.absent(),
     this.sourceUri = const Value.absent(),
     this.refUri = const Value.absent(),
     this.license = const Value.absent(),
+    this.sourceUrl = const Value.absent(),
+    this.reproJson = const Value.absent(),
     this.overrideJson = const Value.absent(),
+    this.displayJson = const Value.absent(),
     this.tokenDataJson = const Value.absent(),
     this.updatedAtUs = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1815,10 +1947,14 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     this.subtitle = const Value.absent(),
     this.thumbnailUri = const Value.absent(),
     this.durationSec = const Value.absent(),
+    this.provenanceJson = const Value.absent(),
     this.sourceUri = const Value.absent(),
     this.refUri = const Value.absent(),
     this.license = const Value.absent(),
+    this.sourceUrl = const Value.absent(),
+    this.reproJson = const Value.absent(),
     this.overrideJson = const Value.absent(),
+    this.displayJson = const Value.absent(),
     this.tokenDataJson = const Value.absent(),
     required int updatedAtUs,
     this.rowid = const Value.absent(),
@@ -1832,10 +1968,14 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     Expression<String>? subtitle,
     Expression<String>? thumbnailUri,
     Expression<int>? durationSec,
+    Expression<String>? provenanceJson,
     Expression<String>? sourceUri,
     Expression<String>? refUri,
     Expression<String>? license,
+    Expression<String>? sourceUrl,
+    Expression<String>? reproJson,
     Expression<String>? overrideJson,
+    Expression<String>? displayJson,
     Expression<String>? tokenDataJson,
     Expression<int>? updatedAtUs,
     Expression<int>? rowid,
@@ -1847,10 +1987,14 @@ class ItemsCompanion extends UpdateCompanion<Item> {
       if (subtitle != null) 'subtitle': subtitle,
       if (thumbnailUri != null) 'thumbnail_uri': thumbnailUri,
       if (durationSec != null) 'duration_sec': durationSec,
+      if (provenanceJson != null) 'provenance_json': provenanceJson,
       if (sourceUri != null) 'source_uri': sourceUri,
       if (refUri != null) 'ref_uri': refUri,
       if (license != null) 'license': license,
+      if (sourceUrl != null) 'source_url': sourceUrl,
+      if (reproJson != null) 'repro_json': reproJson,
       if (overrideJson != null) 'override_json': overrideJson,
+      if (displayJson != null) 'display_json': displayJson,
       if (tokenDataJson != null) 'token_data_json': tokenDataJson,
       if (updatedAtUs != null) 'updated_at_us': updatedAtUs,
       if (rowid != null) 'rowid': rowid,
@@ -1864,10 +2008,14 @@ class ItemsCompanion extends UpdateCompanion<Item> {
       Value<String?>? subtitle,
       Value<String?>? thumbnailUri,
       Value<int?>? durationSec,
+      Value<String?>? provenanceJson,
       Value<String?>? sourceUri,
       Value<String?>? refUri,
       Value<String?>? license,
+      Value<String?>? sourceUrl,
+      Value<String?>? reproJson,
       Value<String?>? overrideJson,
+      Value<String?>? displayJson,
       Value<String?>? tokenDataJson,
       Value<int>? updatedAtUs,
       Value<int>? rowid}) {
@@ -1878,10 +2026,14 @@ class ItemsCompanion extends UpdateCompanion<Item> {
       subtitle: subtitle ?? this.subtitle,
       thumbnailUri: thumbnailUri ?? this.thumbnailUri,
       durationSec: durationSec ?? this.durationSec,
+      provenanceJson: provenanceJson ?? this.provenanceJson,
       sourceUri: sourceUri ?? this.sourceUri,
       refUri: refUri ?? this.refUri,
       license: license ?? this.license,
+      sourceUrl: sourceUrl ?? this.sourceUrl,
+      reproJson: reproJson ?? this.reproJson,
       overrideJson: overrideJson ?? this.overrideJson,
+      displayJson: displayJson ?? this.displayJson,
       tokenDataJson: tokenDataJson ?? this.tokenDataJson,
       updatedAtUs: updatedAtUs ?? this.updatedAtUs,
       rowid: rowid ?? this.rowid,
@@ -1909,6 +2061,9 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     if (durationSec.present) {
       map['duration_sec'] = Variable<int>(durationSec.value);
     }
+    if (provenanceJson.present) {
+      map['provenance_json'] = Variable<String>(provenanceJson.value);
+    }
     if (sourceUri.present) {
       map['source_uri'] = Variable<String>(sourceUri.value);
     }
@@ -1918,8 +2073,17 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     if (license.present) {
       map['license'] = Variable<String>(license.value);
     }
+    if (sourceUrl.present) {
+      map['source_url'] = Variable<String>(sourceUrl.value);
+    }
+    if (reproJson.present) {
+      map['repro_json'] = Variable<String>(reproJson.value);
+    }
     if (overrideJson.present) {
       map['override_json'] = Variable<String>(overrideJson.value);
+    }
+    if (displayJson.present) {
+      map['display_json'] = Variable<String>(displayJson.value);
     }
     if (tokenDataJson.present) {
       map['token_data_json'] = Variable<String>(tokenDataJson.value);
@@ -1942,10 +2106,14 @@ class ItemsCompanion extends UpdateCompanion<Item> {
           ..write('subtitle: $subtitle, ')
           ..write('thumbnailUri: $thumbnailUri, ')
           ..write('durationSec: $durationSec, ')
+          ..write('provenanceJson: $provenanceJson, ')
           ..write('sourceUri: $sourceUri, ')
           ..write('refUri: $refUri, ')
           ..write('license: $license, ')
+          ..write('sourceUrl: $sourceUrl, ')
+          ..write('reproJson: $reproJson, ')
           ..write('overrideJson: $overrideJson, ')
+          ..write('displayJson: $displayJson, ')
           ..write('tokenDataJson: $tokenDataJson, ')
           ..write('updatedAtUs: $updatedAtUs, ')
           ..write('rowid: $rowid')
@@ -2889,10 +3057,14 @@ typedef $$ItemsTableCreateCompanionBuilder = ItemsCompanion Function({
   Value<String?> subtitle,
   Value<String?> thumbnailUri,
   Value<int?> durationSec,
+  Value<String?> provenanceJson,
   Value<String?> sourceUri,
   Value<String?> refUri,
   Value<String?> license,
+  Value<String?> sourceUrl,
+  Value<String?> reproJson,
   Value<String?> overrideJson,
+  Value<String?> displayJson,
   Value<String?> tokenDataJson,
   required int updatedAtUs,
   Value<int> rowid,
@@ -2904,10 +3076,14 @@ typedef $$ItemsTableUpdateCompanionBuilder = ItemsCompanion Function({
   Value<String?> subtitle,
   Value<String?> thumbnailUri,
   Value<int?> durationSec,
+  Value<String?> provenanceJson,
   Value<String?> sourceUri,
   Value<String?> refUri,
   Value<String?> license,
+  Value<String?> sourceUrl,
+  Value<String?> reproJson,
   Value<String?> overrideJson,
+  Value<String?> displayJson,
   Value<String?> tokenDataJson,
   Value<int> updatedAtUs,
   Value<int> rowid,
@@ -2940,6 +3116,10 @@ class $$ItemsTableFilterComposer
   ColumnFilters<int> get durationSec => $composableBuilder(
       column: $table.durationSec, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get provenanceJson => $composableBuilder(
+      column: $table.provenanceJson,
+      builder: (column) => ColumnFilters(column));
+
   ColumnFilters<String> get sourceUri => $composableBuilder(
       column: $table.sourceUri, builder: (column) => ColumnFilters(column));
 
@@ -2949,8 +3129,17 @@ class $$ItemsTableFilterComposer
   ColumnFilters<String> get license => $composableBuilder(
       column: $table.license, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get sourceUrl => $composableBuilder(
+      column: $table.sourceUrl, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get reproJson => $composableBuilder(
+      column: $table.reproJson, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<String> get overrideJson => $composableBuilder(
       column: $table.overrideJson, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get displayJson => $composableBuilder(
+      column: $table.displayJson, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get tokenDataJson => $composableBuilder(
       column: $table.tokenDataJson, builder: (column) => ColumnFilters(column));
@@ -2987,6 +3176,10 @@ class $$ItemsTableOrderingComposer
   ColumnOrderings<int> get durationSec => $composableBuilder(
       column: $table.durationSec, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get provenanceJson => $composableBuilder(
+      column: $table.provenanceJson,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get sourceUri => $composableBuilder(
       column: $table.sourceUri, builder: (column) => ColumnOrderings(column));
 
@@ -2996,9 +3189,18 @@ class $$ItemsTableOrderingComposer
   ColumnOrderings<String> get license => $composableBuilder(
       column: $table.license, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get sourceUrl => $composableBuilder(
+      column: $table.sourceUrl, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get reproJson => $composableBuilder(
+      column: $table.reproJson, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get overrideJson => $composableBuilder(
       column: $table.overrideJson,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get displayJson => $composableBuilder(
+      column: $table.displayJson, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get tokenDataJson => $composableBuilder(
       column: $table.tokenDataJson,
@@ -3035,6 +3237,9 @@ class $$ItemsTableAnnotationComposer
   GeneratedColumn<int> get durationSec => $composableBuilder(
       column: $table.durationSec, builder: (column) => column);
 
+  GeneratedColumn<String> get provenanceJson => $composableBuilder(
+      column: $table.provenanceJson, builder: (column) => column);
+
   GeneratedColumn<String> get sourceUri =>
       $composableBuilder(column: $table.sourceUri, builder: (column) => column);
 
@@ -3044,8 +3249,17 @@ class $$ItemsTableAnnotationComposer
   GeneratedColumn<String> get license =>
       $composableBuilder(column: $table.license, builder: (column) => column);
 
+  GeneratedColumn<String> get sourceUrl =>
+      $composableBuilder(column: $table.sourceUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get reproJson =>
+      $composableBuilder(column: $table.reproJson, builder: (column) => column);
+
   GeneratedColumn<String> get overrideJson => $composableBuilder(
       column: $table.overrideJson, builder: (column) => column);
+
+  GeneratedColumn<String> get displayJson => $composableBuilder(
+      column: $table.displayJson, builder: (column) => column);
 
   GeneratedColumn<String> get tokenDataJson => $composableBuilder(
       column: $table.tokenDataJson, builder: (column) => column);
@@ -3083,10 +3297,14 @@ class $$ItemsTableTableManager extends RootTableManager<
             Value<String?> subtitle = const Value.absent(),
             Value<String?> thumbnailUri = const Value.absent(),
             Value<int?> durationSec = const Value.absent(),
+            Value<String?> provenanceJson = const Value.absent(),
             Value<String?> sourceUri = const Value.absent(),
             Value<String?> refUri = const Value.absent(),
             Value<String?> license = const Value.absent(),
+            Value<String?> sourceUrl = const Value.absent(),
+            Value<String?> reproJson = const Value.absent(),
             Value<String?> overrideJson = const Value.absent(),
+            Value<String?> displayJson = const Value.absent(),
             Value<String?> tokenDataJson = const Value.absent(),
             Value<int> updatedAtUs = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -3098,10 +3316,14 @@ class $$ItemsTableTableManager extends RootTableManager<
             subtitle: subtitle,
             thumbnailUri: thumbnailUri,
             durationSec: durationSec,
+            provenanceJson: provenanceJson,
             sourceUri: sourceUri,
             refUri: refUri,
             license: license,
+            sourceUrl: sourceUrl,
+            reproJson: reproJson,
             overrideJson: overrideJson,
+            displayJson: displayJson,
             tokenDataJson: tokenDataJson,
             updatedAtUs: updatedAtUs,
             rowid: rowid,
@@ -3113,10 +3335,14 @@ class $$ItemsTableTableManager extends RootTableManager<
             Value<String?> subtitle = const Value.absent(),
             Value<String?> thumbnailUri = const Value.absent(),
             Value<int?> durationSec = const Value.absent(),
+            Value<String?> provenanceJson = const Value.absent(),
             Value<String?> sourceUri = const Value.absent(),
             Value<String?> refUri = const Value.absent(),
             Value<String?> license = const Value.absent(),
+            Value<String?> sourceUrl = const Value.absent(),
+            Value<String?> reproJson = const Value.absent(),
             Value<String?> overrideJson = const Value.absent(),
+            Value<String?> displayJson = const Value.absent(),
             Value<String?> tokenDataJson = const Value.absent(),
             required int updatedAtUs,
             Value<int> rowid = const Value.absent(),
@@ -3128,10 +3354,14 @@ class $$ItemsTableTableManager extends RootTableManager<
             subtitle: subtitle,
             thumbnailUri: thumbnailUri,
             durationSec: durationSec,
+            provenanceJson: provenanceJson,
             sourceUri: sourceUri,
             refUri: refUri,
             license: license,
+            sourceUrl: sourceUrl,
+            reproJson: reproJson,
             overrideJson: overrideJson,
+            displayJson: displayJson,
             tokenDataJson: tokenDataJson,
             updatedAtUs: updatedAtUs,
             rowid: rowid,

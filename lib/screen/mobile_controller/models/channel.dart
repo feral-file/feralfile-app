@@ -1,3 +1,6 @@
+import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart'
+    as driftModel;
+
 class Channel {
   Channel({
     required this.id,
@@ -65,5 +68,20 @@ extension ChannelListExtension on List<Channel> {
     }
 
     return uniqueChannels;
+  }
+}
+
+extension ChannelExtension on Channel {
+  static Channel fromDriftChannel(driftModel.Channel channel) {
+    return Channel(
+      id: channel.id,
+      slug: channel.slug ?? '',
+      title: channel.title,
+      curator: channel.curator,
+      summary: channel.summary,
+      playlists: const [],
+      created: DateTime.fromMicrosecondsSinceEpoch(channel.createdAtUs),
+      coverImage: channel.coverImageUri,
+    );
   }
 }

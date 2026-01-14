@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/dp1/dp1_manifest.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
@@ -150,26 +152,17 @@ extension DP1NowDisplayingItemListExt on List<DP1NowDisplayingItem> {
       return [];
     }
 
-    final pageCids =
-        pageItems.map((item) => item.cid).whereType<String>().toList();
+    final pageIds =
+        pageItems.map((item) => item.id).whereType<String>().toList();
     final pageAssetTokens = <AssetToken>[];
     try {
-      final assetTokens = initialAssetTokens ??
-          await injector<NftTokensService>().getManualTokens(cids: pageCids);
-
-      if (assetTokens.length != pageItems.length) {
-        final missingTokens = pageItems
-            .where((item) => !assetTokens.any((t) => t.cid == item.cid))
-            .toList();
-        unawaited(
-          Sentry.captureException(
-            Exception(
-              'Can not get all tokens. Missing tokens:  ${missingTokens.map((t) => t.cid).join(', ')}',
-            ),
-          ),
-        );
-      }
-
+      final localDp1Items =
+          await injector<DriftDatabaseService>().getItemsByIds(pageIds);
+      final assetTokens = localDp1Items
+          .map((item) => AssetToken.fromRest(
+              jsonDecode(item.tokenDataJson!) as Map<String, dynamic>))
+          .nonNulls
+          .toList();
       pageAssetTokens.addAll(assetTokens);
     } catch (e) {
       log.info('Error getting tokens: $e');

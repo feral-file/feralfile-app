@@ -134,7 +134,7 @@ class AppRouter {
 
     final subscriptionBloc = injector<SubscriptionBloc>();
 
-    final royaltyBloc = RoyaltyBloc(injector());
+    final royaltyBloc = RoyaltyBloc();
 
     switch (settings.name) {
       case onboardingPage:

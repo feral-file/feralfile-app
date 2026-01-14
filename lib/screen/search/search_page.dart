@@ -313,7 +313,8 @@ class _SearchPageState extends State<SearchPage> {
       return _buildNoResultsForFilterView(context, 'channels');
     }
 
-    final channelReferences = state.channels
+    final channelReferences = <ChannelReference>[];
+    state.channels
         .map((channel) {
           final channelReference = injector<FeralFileFeedManager>()
               .getChannelReferenceByChannelId(channel.id);

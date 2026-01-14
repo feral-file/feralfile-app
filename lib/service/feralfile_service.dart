@@ -106,18 +106,18 @@ enum GenerativeMediumTypes {
   }
 }
 
-abstract class FeralFileService {
-  Future<FeralFileResaleInfo> getResaleInfo(String exhibitionID);
-}
+// abstract class FeralFileService {
+//   Future<FeralFileResaleInfo> getResaleInfo(String exhibitionID);
+// }
 
-class FeralFileServiceImpl extends FeralFileService {
-  FeralFileServiceImpl(
-    this._feralFileApi,
-  );
-  final FeralFileApi _feralFileApi;
-  @override
-  Future<FeralFileResaleInfo> getResaleInfo(String exhibitionID) async {
-    final resaleInfo = await _feralFileApi.getResaleInfo(exhibitionID);
-    return resaleInfo.result;
-  }
-}
+// class FeralFileServiceImpl extends FeralFileService {
+//   FeralFileServiceImpl(
+//     this._feralFileApi,
+//   );
+//   final FeralFileApi _feralFileApi;
+//   @override
+//   Future<FeralFileResaleInfo> getResaleInfo(String exhibitionID) async {
+//     final resaleInfo = await _feralFileApi.getResaleInfo(exhibitionID);
+//     return resaleInfo.result;
+//   }
+// }

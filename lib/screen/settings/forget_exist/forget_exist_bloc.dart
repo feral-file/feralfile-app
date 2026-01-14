@@ -50,7 +50,7 @@ class ForgetExistBloc extends AuBloc<ForgetExistEvent, ForgetExistState> {
       // remove all local settings data
       unawaited(injector<AppDataManager>().deleteAll());
 
-      await injector<CustomerSupportService>().clear();
+      // await injector<CustomerSupportService>().clear();
       await injector<IdentityBloc>().clear();
       injector<UserAllOwnCollectionBloc>().add(ClearDataEvent());
       injector<CanvasDeviceBloc>().clear();

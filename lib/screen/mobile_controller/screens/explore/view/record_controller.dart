@@ -115,7 +115,7 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
     return BlocProvider.value(
       value: recordBloc,
       child: BlocConsumer<RecordBloc, RecordState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           // Update transcribedText when transcription is complete
           if (state is RecordProcessingState &&
               state.status == RecordProcessingStatus.transcribed &&
@@ -183,8 +183,9 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                   if (channelId == null) {
                     return;
                   }
-                  final channelReference = injector<FeralFileFeedManager>()
-                      .getChannelReferenceByChannelId(channelId);
+                  final channelReference =
+                      await injector<FeralFileFeedManager>()
+                          .getChannelReferenceByChannelId(channelId);
                   if (channelReference == null) {
                     Sentry.captureMessage(
                         '[RecordControllerScreen] Channel not found in DP1 service, id: $channelId');

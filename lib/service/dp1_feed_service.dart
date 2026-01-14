@@ -62,7 +62,7 @@ abstract class DP1FeedWithChannelExtensionServiceBase
   =======================================================================
   */
 
-  Channel? getChannelByPlaylistId(String playlistId);
+  Future<Channel?> getChannelByPlaylistId(String playlistId);
 
   Future<Channel?> getChannelDetail(String channelId, {bool fromCache = true});
 
@@ -143,12 +143,12 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
 
   @override
   Future<List<DP1Call>> getCachedPlaylistsByChannelId(String channelId) async {
-    final playlists = await driftDb.getPlaylistRows(
+    final playlists = await driftDb.getPlaylistRowsAsDp1Calls(
       channelId: channelId,
       kind: DriftPlaylistKind.dp1,
       baseUrl: baseUrl,
     );
-    return playlists.map((p) => playlistRowToModel(p)).toList();
+    return playlists;
   }
 
   @override
@@ -232,10 +232,17 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
   */
 
   @override
-  Channel? getChannelByPlaylistId(String playlistId) {
-    // Drift is async, deprecated sync method
-    log.info('[DP1FeedService] getChannelByPlaylistId - use async methods');
-    return null;
+  Future<Channel?> getChannelByPlaylistId(String playlistId) async {
+    final playlist = await driftDb.getPlaylistRowById(playlistId);
+    if (playlist == null) {
+      return null;
+    }
+    final channelId = playlist.channelId;
+    if (channelId == null) {
+      return null;
+    }
+    final channel = await driftDb.getChannelById(channelId);
+    return channel != null ? ChannelExtension.fromDriftChannel(channel) : null;
   }
 
   @override
@@ -365,7 +372,13 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
             ),
           )
           .toList();
-      await driftDb.ingestPlaylists(playlistRefs, null);
+      // group playlists by channel id
+      for (final channel in channelRefs) {
+        final playlists = playlistRefs
+            .where((p) => channel.channel.playlists.contains(p.fullUrl))
+            .toList();
+        await driftDb.ingestPlaylists(playlists, channel.channel.id);
+      }
       _isReloadingCache = false;
     } catch (e) {
       log.info('Failed to reload cache for FeralFileDP1FeedService: $e');

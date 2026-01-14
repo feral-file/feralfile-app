@@ -669,7 +669,7 @@ class NftTokensServiceImpl extends NftTokensService {
   Future<void> insertAssetsWithProvenance(List<AssetToken> assetTokens) async {
     NftCollection.logger.info(
         '[insertAssetsWithProvenance] Starting to insert ${assetTokens.length} tokens');
-    
+
     await _database.insertTokens(assetTokens);
 
     final tokensLog = assetTokens.map((e) => 'cid: ${e.cid}').toList();
@@ -712,7 +712,8 @@ class NftTokensServiceImpl extends NftTokensService {
   }) async {
     try {
       // get from database
-      final assetTokenFromDatabase = await _database.getTokensByCIDs(cids: cids);
+      final assetTokenFromDatabase =
+          await _database.getTokensByCIDs(cids: cids);
       final res = [...assetTokenFromDatabase];
       final missingIds = cids
           .where((cid) => !assetTokenFromDatabase.any((e) => e.cid == cid))
@@ -1401,6 +1402,11 @@ class NftTokensServiceImpl extends NftTokensService {
       final isolateIndexerService = _isolateScopeInjector<NftIndexerService>();
       var numberOfToken = 0;
       var currentOffset = offset ?? 0;
+
+      if (addresses.isEmpty) {
+        _isolateSendPort?.send(FetchTokensSuccess(key, uuid, addresses));
+        return;
+      }
 
       while (total == null || numberOfToken < total) {
         final tokens = await getTokensPageWithAllOwnersAndProvenances(

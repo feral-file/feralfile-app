@@ -7,6 +7,9 @@
 
 import 'dart:io';
 
+import 'package:autonomy_flutter/nft_collection/database/model.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/provenance.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
@@ -15,104 +18,13 @@ import 'package:path_provider/path_provider.dart';
 
 part 'playlist_database.g.dart';
 
-/// Channel table - stores DP1 channels and local virtual channels
-class Channels extends Table {
-  TextColumn get id => text()();
-  IntColumn get type => integer()(); // 0=dp1, 1=local_virtual
-  TextColumn get baseUrl => text().nullable()();
-  TextColumn get slug => text().nullable()();
-  TextColumn get title => text()();
-  TextColumn get curator => text().nullable()();
-  TextColumn get summary => text().nullable()();
-  TextColumn get coverImageUri => text().nullable()();
-  IntColumn get createdAtUs => integer()();
-  IntColumn get updatedAtUs => integer()();
-  IntColumn get sortOrder => integer().nullable()();
-
-  @override
-  Set<Column> get primaryKey => {id};
-}
-
-/// Playlist table - stores DP1 playlists and address-based playlists
-class Playlists extends Table {
-  TextColumn get id => text()();
-  TextColumn get channelId => text().nullable()();
-  IntColumn get type => integer()(); // 0=dp1, 1=address_playlist
-  TextColumn get baseUrl => text().nullable()();
-
-  TextColumn get dpVersion => text().nullable()();
-  TextColumn get slug => text().nullable()();
-  TextColumn get title => text()();
-  IntColumn get createdAtUs => integer()();
-  IntColumn get updatedAtUs => integer()();
-
-  // DP1 signatures stored as JSON array
-  // v1.1.0+: array of objects
-  // legacy v1.0.x: ["ed25519:<hex>"]
-  TextColumn get signaturesJson => text()();
-  TextColumn get defaultsJson => text().nullable()();
-  TextColumn get dynamicQueriesJson => text().nullable()();
-
-  // Address playlist fields
-  TextColumn get ownerAddress => text().nullable()(); // uppercase
-  TextColumn get ownerChain => text().nullable()();
-
-  IntColumn get sortMode => integer()(); // 0=position, 1=provenance
-  IntColumn get itemCount => integer().withDefault(const Constant(0))();
-
-  @override
-  Set<Column> get primaryKey => {id};
-}
-
-/// Items table - stores unique playlist items (DP1 items and indexer tokens)
-class Items extends Table {
-  TextColumn get id => text()();
-  IntColumn get kind => integer()(); // 0=dp1_item, 1=indexer_token
-
-  // Lite UI fields (enrichment → metadata priority)
-  TextColumn get title => text().nullable()();
-  TextColumn get subtitle => text().nullable()(); // artists string
-  TextColumn get thumbnailUri => text().nullable()();
-  IntColumn get durationSec => integer().nullable()();
-
-  // DP1 fields
-  TextColumn get sourceUri => text().nullable()();
-  TextColumn get refUri => text().nullable()();
-  TextColumn get license => text().nullable()();
-  TextColumn get overrideJson => text().nullable()();
-
-  // Full token data for indexer tokens (kind=1)
-  // Stores complete AssetToken JSON for reconstruction
-  TextColumn get tokenDataJson => text().nullable()();
-
-  IntColumn get updatedAtUs => integer()();
-
-  @override
-  Set<Column> get primaryKey => {id};
-}
-
-/// PlaylistEntries table - join table for playlist membership
-/// with per-playlist ordering
-class PlaylistEntries extends Table {
-  TextColumn get playlistId => text()();
-  TextColumn get itemId => text()();
-
-  // Per-playlist ordering
-  IntColumn get position => integer().nullable()();
-  IntColumn get sortKeyUs => integer()();
-
-  IntColumn get updatedAtUs => integer()();
-
-  @override
-  Set<Column> get primaryKey => {playlistId, itemId};
-}
-
 @DriftDatabase(tables: [Channels, Playlists, Items, PlaylistEntries])
 class PlaylistDatabase extends _$PlaylistDatabase {
   PlaylistDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3; // Added tokenDataJson field for full token storage
+  int get schemaVersion =>
+      3; // Added tokenDataJson field for full token storage
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -144,10 +56,12 @@ class PlaylistDatabase extends _$PlaylistDatabase {
           // Handle upgrade from v1 to v2: Fix indexes with wrong column names
           if (from == 1 && to >= 2) {
             // Drop old indexes with incorrect column names (if they exist)
-            await customStatement('DROP INDEX IF EXISTS idx_channels_type_order');
+            await customStatement(
+                'DROP INDEX IF EXISTS idx_channels_type_order');
             await customStatement('DROP INDEX IF EXISTS idx_playlists_channel');
             await customStatement('DROP INDEX IF EXISTS idx_playlists_owner');
-            await customStatement('DROP INDEX IF EXISTS idx_items_kind_updated');
+            await customStatement(
+                'DROP INDEX IF EXISTS idx_items_kind_updated');
             await customStatement('DROP INDEX IF EXISTS idx_entries_sort');
             await customStatement('DROP INDEX IF EXISTS idx_entries_position');
 
@@ -171,17 +85,21 @@ class PlaylistDatabase extends _$PlaylistDatabase {
               'CREATE INDEX idx_entries_position ON playlist_entries(playlist_id, position ASC, item_id ASC)',
             );
           }
-          
+
           // Handle upgrade from v2 to v3: Add tokenDataJson column
           if (from <= 2 && to >= 3) {
             await m.addColumn(items, items.tokenDataJson);
-            
+
             // Clear existing items since they don't have tokenDataJson
             // They will be repopulated by reindexing
-            log.info('[PlaylistDatabase] Migration v2->v3: Clearing items without tokenDataJson');
-            await customStatement('DELETE FROM items WHERE token_data_json IS NULL');
-            await customStatement('DELETE FROM playlist_entries WHERE item_id NOT IN (SELECT id FROM items)');
-            log.info('[PlaylistDatabase] Migration v2->v3: Cleared old items, will repopulate via reindex');
+            log.info(
+                '[PlaylistDatabase] Migration v2->v3: Clearing items without tokenDataJson');
+            await customStatement(
+                'DELETE FROM items WHERE token_data_json IS NULL');
+            await customStatement(
+                'DELETE FROM playlist_entries WHERE item_id NOT IN (SELECT id FROM items)');
+            log.info(
+                '[PlaylistDatabase] Migration v2->v3: Cleared old items, will repopulate via reindex');
           }
         },
       );
@@ -275,6 +193,72 @@ class PlaylistDatabase extends _$PlaylistDatabase {
     await batch((batch) {
       batch.insertAllOnConflictUpdate(playlistEntries, entryList);
     });
+  }
+
+  /// Get all playlist items for a playlist by joining Playlists, PlaylistEntries
+  /// and Items.
+  ///
+  /// This returns a full, non-paginated list ordered according to the
+  /// playlist's sort mode:
+  /// - sortMode = 0 → order by position ascending
+  /// - sortMode = 1 → order by provenance (sortKeyUs descending)
+  Future<List<PlaylistItemLite>> getPlaylistItems(String playlistId) async {
+    // Look up playlist to determine sort mode
+    final playlist = await getPlaylistById(playlistId);
+    final orderByProvenance = playlist?.sortMode == 1;
+
+    final query = select(playlists).join([
+      innerJoin(
+        playlistEntries,
+        playlistEntries.playlistId.equalsExp(playlists.id),
+      ),
+      innerJoin(
+        items,
+        items.id.equalsExp(playlistEntries.itemId),
+      ),
+    ])
+      ..where(playlists.id.equals(playlistId));
+
+    if (orderByProvenance) {
+      query.orderBy([
+        OrderingTerm(
+          expression: playlistEntries.sortKeyUs,
+          mode: OrderingMode.desc,
+        ),
+        OrderingTerm(
+          expression: items.id,
+          mode: OrderingMode.desc,
+        ),
+      ]);
+    } else {
+      query.orderBy([
+        OrderingTerm(
+          expression: playlistEntries.position,
+          mode: OrderingMode.asc,
+        ),
+        OrderingTerm(
+          expression: items.id,
+          mode: OrderingMode.asc,
+        ),
+      ]);
+    }
+
+    final rows = await query.get();
+    return rows.map((row) {
+      final entry = row.readTable(playlistEntries);
+      final item = row.readTable(items);
+      return PlaylistItemLite(
+        playlistId: entry.playlistId,
+        itemId: item.id,
+        kind: item.kind,
+        title: item.title,
+        subtitle: item.subtitle,
+        thumbnailUri: item.thumbnailUri,
+        durationSec: item.durationSec,
+        position: entry.position,
+        sortKeyUs: entry.sortKeyUs,
+      );
+    }).toList();
   }
 
   /// Watch playlist items page with join (lite projection) and keyset paging
@@ -393,6 +377,16 @@ class PlaylistItemLite {
   final int? durationSec;
   final int? position;
   final int sortKeyUs;
+
+  DP1Item toDP1Item() {
+    return DP1Item(
+      id: itemId,
+      duration: durationSec ?? 0,
+      title: title,
+      source: thumbnailUri,
+      license: ArtworkDisplayLicense.open,
+    );
+  }
 }
 
 LazyDatabase _openConnection() {

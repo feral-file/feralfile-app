@@ -165,10 +165,7 @@ Future<void> runFeralFileApp() async {
 }
 
 void _registerHiveAdapter() {
-  Hive
-    ..registerAdapter(AnnouncementLocalAdapter())
-    ..registerAdapter(DraftCustomerSupportAdapter())
-    ..registerAdapter(IndexerIdentityAdapter());
+  Hive..registerAdapter(IndexerIdentityAdapter());
 }
 
 Future<void> _setupApp() async {

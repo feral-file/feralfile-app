@@ -92,11 +92,8 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
     bool usingCache = true,
   }) async {
     if (usingCache) {
-      final cachedPlaylist = await db.getPlaylistById(playlistId);
-      if (cachedPlaylist != null) {
-        // Convert Drift row to DP1Call model
-        return playlistRowToModel(cachedPlaylist);
-      }
+      final cachedPlaylist = await driftDb.getPlaylistRowAsDp1Call(playlistId);
+      return cachedPlaylist;
     }
     try {
       final result = await api.getPlaylistById(playlistId);
@@ -152,11 +149,11 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
   @override
   Future<List<DP1Call>> getAllCachedPlaylists() async {
     // Fetch cached DP1 playlists for this feed service from Drift.
-    final rows = await driftDb.getPlaylistRows(
+    final playlists = await driftDb.getPlaylistRowsAsDp1Calls(
       kind: DriftPlaylistKind.dp1,
       baseUrl: baseUrl,
     );
-    return rows.map<DP1Call>(playlistRowToModel).toList();
+    return playlists;
   }
 
   @override
@@ -230,24 +227,6 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
     // Clear all Drift data
     await driftDb.deleteAllPlaylists(
         kind: DriftPlaylistKind.dp1, baseUrl: baseUrl);
-  }
-
-  /// Convert Drift Playlist row to DP1Call model
-  DP1Call playlistRowToModel(Playlist row) {
-    // Parse signatures JSON array
-    final signature = row.signaturesJson.isNotEmpty ? 'stored' : '';
-
-    return DP1Call(
-      dpVersion: row.dpVersion ?? '1.0.0',
-      id: row.id,
-      slug: row.slug ?? '',
-      title: row.title,
-      created: DateTime.fromMicrosecondsSinceEpoch(row.createdAtUs),
-      defaults: null, // Parse from defaultsJson if needed
-      items: const [], // Items loaded separately
-      signature: signature,
-      dynamicQueries: const [], // Parse from dynamicQueriesJson if needed
-    );
   }
 
   /// Convert Drift Channel row to model.Channel

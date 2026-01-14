@@ -9,17 +9,23 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:autonomy_flutter/common/environment.dart';
+import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/token.dart';
-import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart';
+import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart'
+    as db;
+import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
 import 'package:autonomy_flutter/nft_collection/database/token_to_playlist_item_transformer.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
+import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart'
-    as model;
+    as dp1Model;
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
+import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:collection/collection.dart';
 import 'package:drift/drift.dart';
 import 'package:sentry/sentry.dart';
 
@@ -61,14 +67,16 @@ abstract class DriftDatabaseServiceAbstract {
   ///
   /// When [kind] is null, all channel types are returned.
   /// When [baseUrl] is provided, only channels with that baseUrl are returned.
-  Future<List<Channel>> getChannels({
+  Future<List<db.Channel>> getChannels({
     DriftChannelKind? kind,
     String? baseUrl,
   });
 
-  Future<Channel?> getChannelById(String id);
+  Future<db.Channel?> getChannelById(String id);
 
-  Future<Channel?> getMyCollectionChannel();
+  Future<db.Channel?> getChannelByPlaylistId(String playlistId);
+
+  Future<db.Channel?> getMyCollectionChannel();
 
   // ========= Playlists (raw Drift rows) =========
 
@@ -77,17 +85,25 @@ abstract class DriftDatabaseServiceAbstract {
   /// - [channelId] null means any channel.
   /// - [kind] filters by playlist type (dp1 vs address).
   /// - [baseUrl] allows scoping DP1 playlists to a specific feed server.
-  Future<List<Playlist>> getPlaylistRows({
+  Future<List<db.Playlist>> getPlaylistRows({
     String? channelId,
     DriftPlaylistKind? kind,
     String? baseUrl,
   });
 
-  Future<Playlist?> getPlaylistRowById(String id);
+  Future<db.Playlist?> getPlaylistRowById(String id);
+
+  Future<List<DP1Call>> getPlaylistRowsAsDp1Calls({
+    String? channelId,
+    DriftPlaylistKind? kind,
+    String? baseUrl,
+  });
+
+  Future<DP1Call?> getPlaylistRowAsDp1Call(String id);
 
   /// Convenience helper to fetch all address playlists (collection playlists)
   /// under the `my_collection` virtual channel as raw Drift rows.
-  Future<List<Playlist>> getAddressPlaylistRows();
+  Future<List<db.Playlist>> getAddressPlaylistRows();
 
   // ========= Address playlists as DP1Call =========
 
@@ -100,14 +116,6 @@ abstract class DriftDatabaseServiceAbstract {
   /// Get a single address playlist by its playlist id (`addr:<chain>:<address>`)
   /// as a [DP1Call] model.
   Future<DP1Call?> getAddressPlaylistAsDp1Call(String id);
-
-  // ========= Mapping helpers =========
-
-  /// Convert a Drift [Channel] row into the public [model.Channel] model.
-  ///
-  /// This is a helper that other layers can use when they need a full
-  /// channel model from a Drift row.
-  model.Channel channelRowToModel(Channel row);
 
   // ========= DP1 Ingest Methods =========
 
@@ -143,6 +151,20 @@ abstract class DriftDatabaseServiceAbstract {
     required DriftChannelKind kind,
     required String baseUrl,
   });
+
+  // ========= Items =========
+
+  /// Get all items for a playlist by playlistId.
+  ///
+  /// Returns items ordered according to the playlist's sort mode:
+  /// - sortMode = 0 → order by position ascending
+  /// - sortMode = 1 → order by provenance (sortKeyUs descending)
+  Future<List<db.Item>> getItemsByPlaylistId(String playlistId);
+
+  /// Get items by a list of item IDs.
+  ///
+  /// Returns items in the same order as the provided IDs list.
+  Future<List<db.Item>> getItemsByIds(List<String> itemIds);
 }
 
 /// Service that encapsulates all access to the Drift [PlaylistDatabase].
@@ -154,7 +176,7 @@ abstract class DriftDatabaseServiceAbstract {
 class DriftDatabaseService extends DriftDatabaseServiceAbstract {
   DriftDatabaseService(this._db, this._indexerService);
 
-  final PlaylistDatabase _db;
+  final db.PlaylistDatabase _db;
   final NftIndexerService _indexerService;
 
   // ========= Channels (raw Drift rows) =========
@@ -164,7 +186,7 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
   /// When [kind] is null, all channel types are returned.
   /// When [baseUrl] is provided, only channels with that baseUrl are returned.
   @override
-  Future<List<Channel>> getChannels({
+  Future<List<db.Channel>> getChannels({
     DriftChannelKind? kind,
     String? baseUrl,
   }) async {
@@ -183,10 +205,24 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
   }
 
   @override
-  Future<Channel?> getChannelById(String id) => _db.getChannelById(id);
+  Future<db.Channel?> getChannelById(String id) => _db.getChannelById(id);
 
   @override
-  Future<Channel?> getMyCollectionChannel() => getChannelById('my_collection');
+  Future<db.Channel?> getChannelByPlaylistId(String playlistId) async {
+    final playlist = await getPlaylistRowById(playlistId);
+    if (playlist == null) {
+      return null;
+    }
+    final channelId = playlist.channelId;
+    if (channelId == null) {
+      return null;
+    }
+    return await getChannelById(channelId);
+  }
+
+  @override
+  Future<db.Channel?> getMyCollectionChannel() =>
+      getChannelById('my_collection');
 
   // ========= Playlists (raw Drift rows) =========
 
@@ -196,7 +232,7 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
   /// - [kind] filters by playlist type (dp1 vs address).
   /// - [baseUrl] allows scoping DP1 playlists to a specific feed server.
   @override
-  Future<List<Playlist>> getPlaylistRows({
+  Future<List<db.Playlist>> getPlaylistRows({
     String? channelId,
     DriftPlaylistKind? kind,
     String? baseUrl,
@@ -219,12 +255,32 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
   }
 
   @override
-  Future<Playlist?> getPlaylistRowById(String id) => _db.getPlaylistById(id);
+  Future<db.Playlist?> getPlaylistRowById(String id) => _db.getPlaylistById(id);
+
+  @override
+  Future<List<DP1Call>> getPlaylistRowsAsDp1Calls({
+    String? channelId,
+    DriftPlaylistKind? kind,
+    String? baseUrl,
+  }) async {
+    final rows = await getPlaylistRows(
+        channelId: channelId, kind: kind, baseUrl: baseUrl);
+    return await Future.wait(rows.map(_addressPlaylistRowToModel));
+  }
+
+  @override
+  Future<DP1Call?> getPlaylistRowAsDp1Call(String id) async {
+    final row = await getPlaylistRowById(id);
+    if (row == null) {
+      return null;
+    }
+    return _addressPlaylistRowToModel(row);
+  }
 
   /// Convenience helper to fetch all address playlists (collection playlists)
   /// under the `my_collection` virtual channel as raw Drift rows.
   @override
-  Future<List<Playlist>> getAddressPlaylistRows() => getPlaylistRows(
+  Future<List<db.Playlist>> getAddressPlaylistRows() => getPlaylistRows(
         channelId: 'my_collection',
         kind: DriftPlaylistKind.address,
       );
@@ -238,7 +294,7 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
   @override
   Future<List<DP1Call>> getAddressPlaylistsAsDp1Calls() async {
     final rows = await getAddressPlaylistRows();
-    return rows.map(_addressPlaylistRowToModel).toList();
+    return await Future.wait(rows.map(_addressPlaylistRowToModel));
   }
 
   /// Get a single address playlist by its playlist id (`addr:<chain>:<address>`)
@@ -258,9 +314,12 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
   ///
   /// This mirrors the semantics of a DP1 dynamic playlist created from owners,
   /// using the `ownerAddress` column to build the dynamic query.
-  DP1Call _addressPlaylistRowToModel(Playlist row) {
+  Future<DP1Call> _addressPlaylistRowToModel(db.Playlist row) async {
     final owner = row.ownerAddress ?? '';
     final owners = owner.isEmpty ? <String>[] : <String>[owner];
+
+    final items = await getItemsByPlaylistId(row.id);
+    final dp1Items = items.map((e) => DP1ItemExtension.fromItemRow(e)).toList();
 
     return DP1Call(
       dpVersion: row.dpVersion ?? '1.0.0',
@@ -270,7 +329,7 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
       created: DateTime.fromMicrosecondsSinceEpoch(row.createdAtUs),
       defaults: null,
       // Items are provided by the indexer / playlist_entries join, not DP1.
-      items: const [],
+      items: dp1Items,
       dynamicQueries: owners.isEmpty
           ? const []
           : [
@@ -281,24 +340,6 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
             ],
       // Address playlists don't have DP1 signatures.
       signature: '',
-    );
-  }
-
-  /// Convert a Drift [Channel] row into the public [model.Channel] model.
-  ///
-  /// This is a helper that other layers can use when they need a full
-  /// channel model from a Drift row.
-  @override
-  model.Channel channelRowToModel(Channel row) {
-    return model.Channel(
-      id: row.id,
-      slug: row.slug ?? '',
-      title: row.title,
-      curator: row.curator,
-      summary: row.summary,
-      playlists: const [],
-      created: DateTime.fromMicrosecondsSinceEpoch(row.createdAtUs),
-      coverImage: row.coverImageUri,
     );
   }
 
@@ -355,19 +396,25 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
       // Convert playlist
       final playlistCompanion =
           _playlistToCompanion(playlist, baseUrl, channelId);
-      await _db.upsertPlaylist(playlistCompanion);
+
+      final cids = playlist.items.map((e) => e.cid).nonNulls.toList();
+
+      final tokens =
+          await injector<NftTokensService>().getManualTokens(cids: cids);
 
       // Handle static items (DP1 items)
       if (playlist.items.isNotEmpty) {
-        final itemCompanions = <ItemsCompanion>[];
-        final entryCompanions = <PlaylistEntriesCompanion>[];
+        final itemCompanions = <db.ItemsCompanion>[];
+        final entryCompanions = <db.PlaylistEntriesCompanion>[];
 
         for (var i = 0; i < playlist.items.length; i++) {
           final dp1Item = playlist.items[i];
+          final token = tokens.firstWhereOrNull((e) => e.cid == dp1Item.cid);
           final result = _dp1ItemToCompanions(
             dp1Item: dp1Item,
             playlistId: playlist.id,
             position: i,
+            token: token,
           );
           itemCompanions.add(result.itemCompanion);
           entryCompanions.add(result.entryCompanion);
@@ -396,6 +443,7 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
       log.info(
         '[DriftDatabaseService] Ingested playlist: ${playlist.id} with ${playlist.items.length} static items and ${playlist.dynamicQueries.length} dynamic queries',
       );
+      await _db.upsertPlaylist(playlistCompanion);
     } catch (e, st) {
       log.info('[DriftDatabaseService] Error ingesting playlist: $e');
       unawaited(Sentry.captureException(e, stackTrace: st));
@@ -416,11 +464,11 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
   // ========= Private Ingest Helpers =========
 
   /// Convert Channel to Drift companion
-  ChannelsCompanion _channelToCompanion(
-    model.Channel channel,
+  db.ChannelsCompanion _channelToCompanion(
+    dp1Model.Channel channel,
     String baseUrl,
   ) {
-    return ChannelsCompanion.insert(
+    return db.ChannelsCompanion.insert(
       id: channel.id,
       type: 0, // dp1
       baseUrl: Value(baseUrl),
@@ -436,7 +484,7 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
   }
 
   /// Convert DP1Call to Drift companion
-  PlaylistsCompanion _playlistToCompanion(
+  db.PlaylistsCompanion _playlistToCompanion(
     DP1Call playlist,
     String baseUrl,
     String? channelId,
@@ -446,7 +494,7 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
     // DP1 v1.0.x: signature field (single string) -> wrap as ["signature"]
     final signaturesJson = _convertSignaturesToArray(playlist);
 
-    return PlaylistsCompanion.insert(
+    return db.PlaylistsCompanion.insert(
       id: playlist.id,
       channelId: Value(channelId),
       type: 0, // dp1
@@ -492,10 +540,13 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
   }
 
   /// Convert DP1Item to item + entry companions
-  ({ItemsCompanion itemCompanion, PlaylistEntriesCompanion entryCompanion})
-      _dp1ItemToCompanions({
+  ({
+    db.ItemsCompanion itemCompanion,
+    db.PlaylistEntriesCompanion entryCompanion
+  }) _dp1ItemToCompanions({
     required DP1Item dp1Item,
     required String playlistId,
+    required AssetToken? token,
     required int position,
   }) {
     final now = DateTime.now().microsecondsSinceEpoch;
@@ -510,22 +561,31 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
     final refUri = dp1Item.ref;
     final durationSec = dp1Item.duration;
     final license = dp1Item.license?.value;
+    final thumbnailUri = token?.getGalleryThumbnailUrl();
+    final provenanceJson = dp1Item.provenance?.toJson();
+    final reproJson = dp1Item.repro?.toJson();
+    final displayJson = dp1Item.display?.toJson();
+    final tokenDataJson = token?.toRestJson();
 
-    final itemCompanion = ItemsCompanion.insert(
+    final itemCompanion = db.ItemsCompanion.insert(
       id: itemId,
       kind: 0, // dp1_item
       title: Value(title),
       subtitle: const Value(null), // DP1 items don't have subtitle
-      thumbnailUri: const Value(null), // Will be populated from ref later
+      thumbnailUri: Value(thumbnailUri),
       durationSec: Value(durationSec),
       sourceUri: Value(sourceUri),
       refUri: Value(refUri),
       license: Value(license),
       overrideJson: const Value(null),
+      provenanceJson: Value(json.encode(provenanceJson)),
+      reproJson: Value(json.encode(reproJson)),
+      displayJson: Value(json.encode(displayJson)),
+      tokenDataJson: Value(json.encode(tokenDataJson)),
       updatedAtUs: now,
     );
 
-    final entryCompanion = PlaylistEntriesCompanion.insert(
+    final entryCompanion = db.PlaylistEntriesCompanion.insert(
       playlistId: playlistId,
       itemId: itemId,
       position: Value(position),
@@ -620,8 +680,8 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
         return;
       }
 
-      final itemCompanions = <ItemsCompanion>[];
-      final entryCompanions = <PlaylistEntriesCompanion>[];
+      final itemCompanions = <db.ItemsCompanion>[];
+      final entryCompanions = <db.PlaylistEntriesCompanion>[];
 
       // Use the first owner address for sorting computation
       // This matches the behavior of address-based playlists
@@ -652,7 +712,7 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
       final count = await _db.countPlaylistEntries(playlistId);
       await (_db.update(_db.playlists)..where((p) => p.id.equals(playlistId)))
           .write(
-        PlaylistsCompanion(
+        db.PlaylistsCompanion(
           itemCount: Value(count),
           updatedAtUs: Value(DateTime.now().microsecondsSinceEpoch),
         ),
@@ -698,5 +758,77 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
       ..where((c) => c.type.equals(typeFilter))
       ..where((c) => c.baseUrl.equals(baseUrl));
     await deleteQuery.go();
+  }
+
+  // ========= Items =========
+
+  /// Get all items for a playlist by playlistId.
+  ///
+  /// Returns items ordered according to the playlist's sort mode:
+  /// - sortMode = 0 → order by position ascending
+  /// - sortMode = 1 → order by provenance (sortKeyUs descending)
+  @override
+  Future<List<db.Item>> getItemsByPlaylistId(String playlistId) async {
+    // Look up playlist to determine sort mode
+    final playlist = await _db.getPlaylistById(playlistId);
+    if (playlist == null) {
+      return [];
+    }
+
+    final orderByProvenance = playlist.sortMode == 1;
+
+    final query = _db.select(_db.playlistEntries).join([
+      innerJoin(
+        _db.items,
+        _db.items.id.equalsExp(_db.playlistEntries.itemId),
+      ),
+    ])
+      ..where(_db.playlistEntries.playlistId.equals(playlistId));
+
+    if (orderByProvenance) {
+      query.orderBy([
+        OrderingTerm(
+          expression: _db.playlistEntries.sortKeyUs,
+          mode: OrderingMode.desc,
+        ),
+        OrderingTerm(
+          expression: _db.items.id,
+          mode: OrderingMode.desc,
+        ),
+      ]);
+    } else {
+      query.orderBy([
+        OrderingTerm(
+          expression: _db.playlistEntries.position,
+          mode: OrderingMode.asc,
+        ),
+        OrderingTerm(
+          expression: _db.items.id,
+          mode: OrderingMode.asc,
+        ),
+      ]);
+    }
+
+    final rows = await query.get();
+    return rows.map((row) => row.readTable(_db.items)).toList();
+  }
+
+  /// Get items by a list of item IDs.
+  ///
+  /// Returns items in the same order as the provided IDs list.
+  @override
+  Future<List<db.Item>> getItemsByIds(List<String> itemIds) async {
+    if (itemIds.isEmpty) {
+      return [];
+    }
+
+    final query = _db.select(_db.items)
+      ..where((items) => items.id.isIn(itemIds));
+
+    final items = await query.get();
+
+    // Preserve order of input IDs
+    final itemMap = {for (var item in items) item.id: item};
+    return itemIds.map((id) => itemMap[id]).whereType<db.Item>().toList();
   }
 }
