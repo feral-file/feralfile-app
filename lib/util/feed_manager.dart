@@ -96,6 +96,11 @@ class FeedManager {
     final shouldUpdate = lastTimeRefreshFeeds
             .isBefore(DateTime.now().subtract(updateFeedDuration)) ||
         lastFeedUpdateAt.isAfter(lastTimeRefreshFeeds);
+    log.info('[FeedManager] Reload all cache, shouldUpdate: $shouldUpdate');
+    log.info('[FeedManager] force: $force');
+    log.info('[FeedManager] lastTimeRefreshFeeds: $lastTimeRefreshFeeds');
+    log.info('[FeedManager] updateFeedDuration: $updateFeedDuration');
+    log.info('[FeedManager] lastFeedUpdateAt: $lastFeedUpdateAt');
     if (force || shouldUpdate) {
       // we should remove the last time refresh feeds
       await injector<ConfigurationService>()
@@ -106,7 +111,7 @@ class FeedManager {
       }
       await injector<ConfigurationService>().setLastTimeRefreshFeeds(timeStart);
       log.info(
-          'Reload all cache, last time refresh feeds: $lastTimeRefreshFeeds, duration: $updateFeedDuration, force: $force');
+          '[FeedManager] Reload all cache, last time refresh feeds: $lastTimeRefreshFeeds, duration: $updateFeedDuration, force: $force');
       await Future<void>.delayed(const Duration(milliseconds: 500));
       injector<ChannelsBloc>(
               instanceName: ChannelsBlocInstance.curated.instanceName)
@@ -116,7 +121,7 @@ class FeedManager {
           .add(RefreshPlaylistsEvent());
     } else {
       log.info(
-          'Skip reload all cache, last time refresh feeds: $lastTimeRefreshFeeds, duration: $updateFeedDuration, force: $force');
+          '[FeedManager] Skip reload all cache, last time refresh feeds: $lastTimeRefreshFeeds, duration: $updateFeedDuration, force: $force');
       injector<ChannelsBloc>(
               instanceName: ChannelsBlocInstance.curated.instanceName)
           .add(const RefreshChannelsEvent());
@@ -141,20 +146,6 @@ class FeedManager {
         ),
       );
     }
-
-    // 2. Address playlists (collection) from Drift via DriftDatabaseService
-    final driftDb = injector<DriftDatabaseService>();
-    final addressPlaylists = await driftDb.getAddressPlaylistsAsDp1Calls();
-    allPlaylists.addAll(
-      addressPlaylists.map(
-        (item) => PlaylistReference(
-          playlist: item,
-          url: '',
-          type: PlaylistReferenceType.address,
-        ),
-      ),
-    );
-
     return allPlaylists;
   }
 

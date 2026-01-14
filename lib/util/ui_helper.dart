@@ -24,6 +24,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_item_card.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_list_row.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/service/base_dp1_feed_service_impl.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
@@ -1444,6 +1445,95 @@ class UIHelper {
   //   );
   // }
 
+  static void showDeletePlaylistConfirmation(
+    DP1Call playlist,
+    FutureOr<void> Function(DP1Call playlist) onRemove,
+  ) {
+    final context = injector<NavigationService>().context;
+    final theme = Theme.of(context);
+    final playlistTitle =
+        playlist.title.isNotEmpty ? playlist.title : 'Playlist';
+
+    final bottomSheetKey = GlobalKey();
+
+    unawaited(
+      showModalBottomSheet(
+        context: context,
+        enableDrag: false,
+        backgroundColor: Colors.transparent,
+        constraints: BoxConstraints(
+          maxWidth: ResponsiveLayout.isMobile
+              ? double.infinity
+              : Constants.maxWidthModalTablet,
+        ),
+        routeSettings: RouteSettings(
+          name: ignoreBackLayerPopUpRouteName,
+          arguments: {
+            'key': bottomSheetKey,
+          },
+        ),
+        barrierColor: Colors.black.withOpacity(0.5),
+        builder: (context) => SafeArea(
+          key: bottomSheetKey,
+          child: Container(
+            color: Colors.transparent,
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.auGreyBackground,
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'delete_collection'.tr(),
+                    style: AppTypography.h2(context).white,
+                  ),
+                  const SizedBox(height: 40),
+                  RichText(
+                    textScaler: MediaQuery.textScalerOf(context),
+                    text: TextSpan(
+                      style: AppTypography.body(context).white,
+                      children: <TextSpan>[
+                        TextSpan(
+                          text: 'delete_playlist'.tr(),
+                        ),
+                        TextSpan(
+                          text: ' “$playlistTitle”',
+                          style: AppTypography.body(context).bold.white,
+                        ),
+                        const TextSpan(
+                          text: '?',
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  PrimaryAsyncButton(
+                    text: 'delete'.tr(),
+                    onTap: () async {
+                      await onRemove(playlist);
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  OutlineButton(
+                    onTap: () => Navigator.of(context).pop(),
+                    text: 'cancel_dialog'.tr(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   static void showDeleteAccountConfirmation(
     WalletAddress walletAddress,
     FutureOr<void> Function(WalletAddress walletAddress) onRemove,
@@ -1502,10 +1592,9 @@ class UIHelper {
                       children: <TextSpan>[
                         TextSpan(
                           text: 'sure_delete_account'.tr(),
-                          //'Are you sure you want to delete the account ',
                         ),
                         TextSpan(
-                          text: ' “$accountName”',
+                          text: ' "$accountName"',
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const TextSpan(

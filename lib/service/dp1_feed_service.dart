@@ -348,6 +348,7 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
 
   @override
   Future<void> reloadCache() async {
+    return;
     if (_isReloadingCache) return;
     _isReloadingCache = true;
     try {
@@ -380,6 +381,7 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
         await driftDb.ingestPlaylists(playlists, channel.channel.id);
       }
       _isReloadingCache = false;
+      log.info('Reloaded cache for FeedService: $baseUrl');
     } catch (e) {
       log.info('Failed to reload cache for FeralFileDP1FeedService: $e');
       _isReloadingCache = false;

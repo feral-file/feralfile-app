@@ -666,17 +666,6 @@ class NftTokensServiceImpl extends NftTokensService {
     return controller.stream;
   }
 
-  Future<void> insertAssetsWithProvenance(List<AssetToken> assetTokens) async {
-    NftCollection.logger.info(
-        '[insertAssetsWithProvenance] Starting to insert ${assetTokens.length} tokens');
-
-    await _database.insertTokens(assetTokens);
-
-    final tokensLog = assetTokens.map((e) => 'cid: ${e.cid}').toList();
-    NftCollection.logger.info(
-        '[insertAssetsWithProvenance][tokens] Completed inserting ${assetTokens.length} tokens: $tokensLog');
-  }
-
   // fetch manual tokens from indexer in batches of 40
   Future<List<AssetToken>> _fetchManualTokensInBatches(
       List<String> cids) async {
@@ -984,9 +973,9 @@ class NftTokensServiceImpl extends NftTokensService {
 
     final result = message;
     if (result is FetchTokensData) {
-      if (result.assets.isNotEmpty) {
-        await insertAssetsWithProvenance(result.assets);
-      }
+      // if (result.assets.isNotEmpty) {
+      //   await insertAssetsWithProvenance(result.assets);
+      // }
       NftCollection.logger
           .info('[${result.key}] receive ${result.assets.length} tokens');
 
@@ -1220,9 +1209,9 @@ class NftTokensServiceImpl extends NftTokensService {
         }
 
         // Insert updated tokens into database
-        if (updatedTokens.isNotEmpty) {
-          await insertAssetsWithProvenance(updatedTokens);
-        }
+        // if (updatedTokens.isNotEmpty) {
+        //   await insertAssetsWithProvenance(updatedTokens);
+        // }
 
         // Emit updated tokens to stream
         if (!controller.isClosed && !controller.isPaused) {
@@ -1283,9 +1272,9 @@ class NftTokensServiceImpl extends NftTokensService {
           '[FETCH_MANUAL_TOKENS][done] UUID: ${result.uuid}, tokens: ${result.tokens.length}',
         );
         // Insert tokens into database
-        if (result.tokens.isNotEmpty) {
-          await insertAssetsWithProvenance(result.tokens);
-        }
+        // if (result.tokens.isNotEmpty) {
+        //   await insertAssetsWithProvenance(result.tokens);
+        // }
       }
       return;
     }

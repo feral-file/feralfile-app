@@ -207,7 +207,7 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
   }
 
   List<OptionItem> _getOptions(PlaylistReference playlistReference) {
-    if (playlistReference is AddressPlaylistReference)
+    if (playlistReference.type == PlaylistReferenceType.address)
       return [
         OptionItem(
           title: 'Delete',
@@ -216,11 +216,26 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
             height: 15,
           ),
           onTap: () {
-            final address = playlistReference.address;
-            UIHelper.showDeleteAccountConfirmation(address, (address) async {
-              await injector<AddressService>().deleteAddress(address);
-              injector<NavigationService>().goBack();
-              injector<NavigationService>().goBack();
+            final playlist = playlistReference.playlist;
+            UIHelper.showDeletePlaylistConfirmation(playlist, (playlist) async {
+              // Extract address from playlist dynamic query or ID
+              final parts = playlist.id.split(':');
+              final addressString =
+                  playlist.firstDynamicQuery?.params.owners.firstOrNull ??
+                      (parts.length > 2 ? parts.last : null);
+              if (addressString != null) {
+                final addresses =
+                    injector<AddressService>().getAllWalletAddresses();
+                final address = addresses.firstWhereOrNull(
+                  (addr) =>
+                      addr.address.toLowerCase() == addressString.toLowerCase(),
+                );
+                if (address != null) {
+                  await injector<AddressService>().deleteAddress(address);
+                  injector<NavigationService>().goBack();
+                  injector<NavigationService>().goBack();
+                }
+              }
             });
           },
         ),

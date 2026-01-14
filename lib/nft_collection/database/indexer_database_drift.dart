@@ -12,6 +12,7 @@ import 'package:autonomy_flutter/model/token.dart' as v2;
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart';
 import 'package:autonomy_flutter/nft_collection/database/token_to_playlist_item_transformer.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/provenance.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
@@ -39,15 +40,13 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
         '[IndexerDatabaseDrift] insertTokens called with ${tokens.length} tokens');
 
     try {
-      final addressService = injector<AddressService>();
-      final addresses = addressService.getAllAddresses(isHidden: false);
+      final addressPlaylists =
+          await injector<DriftDatabaseService>().getAddressPlaylistRows();
+      final addresses =
+          addressPlaylists.map((p) => p.ownerAddress).nonNulls.toList();
 
       // Transform and insert for each address playlist
       for (final address in addresses) {
-        final walletAddress = addressService.getWalletAddress(address);
-        if (walletAddress == null) {
-          continue;
-        }
         final playlistId = DP1CallExtension.generatePlaylistId(address);
 
         // Filter tokens to only include ones owned by this address

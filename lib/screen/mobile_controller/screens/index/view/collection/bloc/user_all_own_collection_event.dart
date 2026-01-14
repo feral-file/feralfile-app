@@ -35,25 +35,6 @@ class FetchTokensOfAddresses extends UserAllOwnCollectionEvent {
       'FetchTokensOfAddresses:${addresses.join(',')}_${shouldUpdateAddressState}_${shouldUpdateLastRefreshedTime}';
 }
 
-class UpdateDynamicQueryEvent extends UserAllOwnCollectionEvent {
-  UpdateDynamicQueryEvent({required this.dynamicQuery});
-
-  final DynamicQuery dynamicQuery;
-
-  @override
-  String get streamKey => 'UpdateDynamicQueryEvent:${dynamicQuery.toJson()}';
-}
-
-class ReloadAssetTokensFromIndexerDatabase extends UserAllOwnCollectionEvent {
-  ReloadAssetTokensFromIndexerDatabase(
-      {this.sortBy = IndexerDatabaseSortBy.updatedAt});
-
-  final IndexerDatabaseSortBy sortBy;
-
-  @override
-  String get streamKey => 'ReloadAssetTokensFromIndexerDatabase';
-}
-
 class ClearDataEvent extends UserAllOwnCollectionEvent {
   @override
   String get streamKey => 'ClearDataEvent';

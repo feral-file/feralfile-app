@@ -2,6 +2,7 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/design/layout_constants.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
@@ -16,6 +17,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/playlist_data_ext.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:flutter/material.dart';
@@ -223,7 +225,8 @@ class PlaylistsPageState extends State<PlaylistsPage>
         );
 
         final slidableActions = [
-          if (playlistData is AddressPlaylistData)
+          if (playlistData.playlistReference.type ==
+              PlaylistReferenceType.address)
             ..._getAddressSlidableActions(playlistData),
         ];
 
@@ -245,15 +248,16 @@ class PlaylistsPageState extends State<PlaylistsPage>
   }
 
   List<CustomSlidableAction> _getAddressSlidableActions(
-      AddressPlaylistData playlistData) {
+      PlaylistData playlistData) {
     return [
       CustomSlidableAction(
         backgroundColor: AppColor.primaryBlack,
         padding: EdgeInsets.zero,
         onPressed: (BuildContext context) async {
-          final address = playlistData.address;
-          UIHelper.showDeleteAccountConfirmation(address, (address) async {
-            await injector<AddressService>().deleteAddress(address);
+          final playlist = playlistData.playlistReference.playlist;
+          UIHelper.showDeletePlaylistConfirmation(playlist, (playlist) async {
+            await injector<DriftDatabaseService>()
+                .deletePlaylistById(playlist.id);
           });
         },
         child: Container(

@@ -1,9 +1,8 @@
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
-import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:flutter/foundation.dart';
@@ -106,33 +105,29 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     required Emitter<PlaylistsState> emit,
     required String? cursor,
   }) async {
-    final allAddresses = injector<AddressService>().getAllWalletAddresses();
-    final addresses = allAddresses.toList();
-
     final start = int.tryParse(cursor ?? '0') ?? 0;
     final end = start + pageSize;
 
-    final topAddresses = addresses.safeSublist(start, end).toList();
+    final addressPlaylists =
+        await injector<DriftDatabaseService>().getAddressPlaylistsAsDp1Calls();
 
-    final playlistDataList = <AddressPlaylistData>[];
-    for (final address in topAddresses) {
-      final playlist = DP1CallExtension.fromOwner(
-          owners: [address.address],
-          title: '${address.name}',
-          playlistId: DP1CallExtension.generatePlaylistId(address.address));
-      final playlistRef = AddressPlaylistReference(
-          playlist: playlist,
-          url: '',
-          type: PlaylistReferenceType.address,
-          address: address);
+    final topAddressPlaylists =
+        addressPlaylists.safeSublist(start, end).toList();
+
+    final playlistDataList = <PlaylistData>[];
+    for (final addressPlaylist in topAddressPlaylists) {
+      final playlistRef = PlaylistReference(
+        playlist: addressPlaylist,
+        url: '',
+        type: PlaylistReferenceType.address,
+      );
       final creator = await playlistRef.getCreator();
-      final addressPlaylistData = AddressPlaylistData(
-          playlistReference: playlistRef, creator: creator, address: address);
-      playlistDataList.add(addressPlaylistData);
+      playlistDataList
+          .add(PlaylistData(playlistReference: playlistRef, creator: creator));
     }
 
-    final nextCursor = end < addresses.length
-        ? (topAddresses.length + start).toString()
+    final nextCursor = end < addressPlaylists.length
+        ? (topAddressPlaylists.length + start).toString()
         : null;
 
     final hasMore = nextCursor != null;

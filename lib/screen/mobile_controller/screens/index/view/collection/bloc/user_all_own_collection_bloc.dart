@@ -6,9 +6,6 @@ import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/util/completer_ext.dart';
@@ -32,8 +29,6 @@ class UserAllOwnCollectionBloc
   UserAllOwnCollectionBloc(this._tokensService)
       : super(const UserAllOwnCollectionState()) {
     on<FetchTokensOfAddresses>(_onFetchTokensOfAddresses);
-    on<ReloadAssetTokensFromIndexerDatabase>(
-        _onReloadAssetTokensFromIndexerDatabase);
     on<ClearDataEvent>(_onClearData);
     on<ReindexAddresses>(_onReindexAddresses);
     on<WorkflowStatusTick>(_onWorkflowStatusTick);
@@ -289,9 +284,7 @@ class UserAllOwnCollectionBloc
             log.info(
                 '[${event.runtimeType}] Received ${tokens.length} tokens from stream for addresses: ${event.addresses.join(',')}');
             collected.addAll(tokens);
-            if (tokens.isNotEmpty) {
-              add(ReloadAssetTokensFromIndexerDatabase());
-            }
+            injector<IndexerDatabaseAbstract>().insertTokens(tokens);
             final updatedAts =
                 tokens.map((token) => token.updatedAt).nonNulls.toList();
             if (updatedAts.isNotEmpty) {
@@ -384,47 +377,6 @@ class UserAllOwnCollectionBloc
     } else {
       event.onDone?.call();
     }
-  }
-
-  Future<void> _onReloadAssetTokensFromIndexerDatabase(
-    ReloadAssetTokensFromIndexerDatabase event,
-    Emitter<UserAllOwnCollectionState> emit,
-  ) async {
-    final owners = injector<AddressService>().getAllAddresses();
-    if (owners.isEmpty) {
-      emit(state.copyWith(addressStates: []));
-      return;
-    }
-    final assetTokenGroupByAddress = await injector<IndexerDatabaseAbstract>()
-        .getGroupAssetTokensByOwnersGroupByAddress(
-      owners: owners,
-    );
-
-    // Preserve existing states when reloading
-    final existingStatesMap = {
-      for (final addrState in state.addressStates)
-        addrState.address.address: addrState.state
-    };
-
-    emit(
-      state.copyWith(
-        addressStates: assetTokenGroupByAddress
-            .map(
-              (e) => AddressState(
-                address: e.address,
-                assetTokens: e.assetTokens,
-                state: existingStatesMap[e.address.address] ??
-                    AddressStateType.fetchingArtworksDone,
-              ),
-            )
-            .toList(),
-      ),
-    );
-    log.info(
-        '[UserAllOwnCollectionBloc] Reloaded asset tokens from indexer database. Update my playlist');
-
-    injector<PlaylistsBloc>(instanceName: PlaylistsBlocInstance.my.instanceName)
-        .add(RefreshPlaylistsEvent());
   }
 
   Future<void> _onClearData(
@@ -555,9 +507,7 @@ class UserAllOwnCollectionBloc
         (tokens) {
           log.info(
               '[${event.runtimeType}] Received ${tokens.length} tokens from stream for addresses: ${event.addresses.join(',')}');
-          if (tokens.isNotEmpty) {
-            add(ReloadAssetTokensFromIndexerDatabase());
-          }
+          injector<IndexerDatabaseAbstract>().insertTokens(tokens);
         },
         onError: (Object error, StackTrace stackTrace) {
           log.info('[${event.runtimeType}] Stream error: $error');

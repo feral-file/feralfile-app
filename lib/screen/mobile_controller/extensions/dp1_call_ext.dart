@@ -46,15 +46,8 @@ extension DP1CallExtension on DP1Call {
   }
 
   static String generatePlaylistId(String owner) {
-    final walletAddress = injector<AddressService>().getWalletAddress(owner);
-    if (walletAddress == null) {
-      return 'addr:other:${owner.toLowerCase()}';
-    }
-    final chain = walletAddress.cryptoType == CryptoType.ETH
-        ? 'evm'
-        : walletAddress.cryptoType == CryptoType.XTZ
-            ? 'tezos'
-            : 'other';
+    final cryptoType = CryptoType.fromAddress(owner);
+    final chain = cryptoType?.name ?? 'other';
     return 'addr:$chain:${owner.toLowerCase()}';
   }
 
@@ -68,7 +61,7 @@ extension DP1CallExtension on DP1Call {
         dpVersion: DP_VERSION,
         id: playlistId ?? generatePlaylistId(owners.first),
         slug: '',
-        title: title ?? 'Playlist',
+        title: title ?? owners.first,
         created: created ?? DateTime.now(),
         items: [],
         defaults: {},

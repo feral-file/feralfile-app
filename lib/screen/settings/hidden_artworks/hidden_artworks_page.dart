@@ -201,8 +201,6 @@ class _HiddenArtworksPageState extends State<HiddenArtworksPage> {
                       [asset.cid],
                       !isHidden,
                     );
-                    injector<UserAllOwnCollectionBloc>()
-                        .add(ReloadAssetTokensFromIndexerDatabase());
 
                     if (!context.mounted) {
                       return;

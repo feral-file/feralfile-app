@@ -88,6 +88,11 @@ class AddressService {
         playlistRef,
         'my_collection',
       );
+      injector<UserAllOwnCollectionBloc>().add(
+        ReindexAddresses(
+          addresses: [newAddress.address],
+        ),
+      );
       injector<PlaylistsBloc>(
               instanceName: PlaylistsBlocInstance.my.instanceName)
           .add(RefreshPlaylistsEvent());

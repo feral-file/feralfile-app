@@ -123,13 +123,3 @@ class PlaylistData {
   @override
   int get hashCode => Object.hash(playlistReference, creator);
 }
-
-class AddressPlaylistData extends PlaylistData {
-  AddressPlaylistData({
-    required super.playlistReference,
-    required super.creator,
-    required this.address,
-  });
-
-  final WalletAddress address;
-}

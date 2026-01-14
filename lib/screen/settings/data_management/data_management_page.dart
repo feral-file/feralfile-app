@@ -10,6 +10,7 @@ import 'dart:async';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
@@ -126,6 +127,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
         //"This action will safely clear local cache and\nre-download all artwork metadata. We recommend only doing this if instructed to do so by customer support to resolve a problem.",
         'rebuild'.tr(),
         () async {
+          await injector<DriftDatabaseService>().deleteAllAddressPlaylists();
           // remove all cached data
           await injector<NftTokensService>().purgeCachedGallery();
           await injector<UserDp1PlaylistService>()
@@ -135,8 +137,6 @@ class _DataManagementPageState extends State<DataManagementPage> {
           await injector<CacheManager>().emptyCache();
           await DefaultCacheManager().emptyCache();
           injector<UserAllOwnCollectionBloc>().add(ClearDataEvent());
-          injector<UserAllOwnCollectionBloc>()
-              .add(ReloadAssetTokensFromIndexerDatabase());
           injector<FeralFileFeedManager>().clearAllCache();
           //redownload data
           final addresses = injector<AddressService>().getAllAddresses();

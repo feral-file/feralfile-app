@@ -10,6 +10,7 @@ import 'dart:isolate';
 
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:drift/drift.dart';
 
@@ -49,7 +50,8 @@ TokenTransformResult transformTokenToPlaylistItem(TokenTransformInput input) {
 
   // Extract lite fields using existing priority (enrichment → metadata)
   final title = token.displayTitle; // enrichmentSource.name → metadata.name
-  final artists = token.getArtists; // enrichmentSource.artists → metadata.artists
+  final artists =
+      token.getArtists; // enrichmentSource.artists → metadata.artists
   final subtitle = artists.map((a) => a.name).join(', ');
   final thumbnailUri = token.getGalleryThumbnailUrl(
     size: 'xs',
@@ -66,7 +68,8 @@ TokenTransformResult transformTokenToPlaylistItem(TokenTransformInput input) {
     'contract_address': token.contractAddress,
     'token_number': token.tokenNumber,
     if (token.currentOwner != null) 'current_owner': token.currentOwner,
-    if (token.updatedAt != null) 'updated_at': token.updatedAt!.toIso8601String(),
+    if (token.updatedAt != null)
+      'updated_at': token.updatedAt!.toIso8601String(),
     if (token.metadata != null) 'metadata': token.metadata!.toJson(),
     if (token.owners != null) 'owners': token.owners!.toJson(),
     if (token.provenanceEvents != null)
@@ -85,7 +88,7 @@ TokenTransformResult transformTokenToPlaylistItem(TokenTransformInput input) {
   // Create item companion (unique)
   final itemCompanion = ItemsCompanion.insert(
     id: token.cid,
-    kind: 1, // indexer_token
+    kind: DriftItemKind.indexerToken.value,
     title: Value(title),
     subtitle: Value(subtitle.isEmpty ? null : subtitle),
     thumbnailUri: Value(thumbnailUri),

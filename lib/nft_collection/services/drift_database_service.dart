@@ -23,6 +23,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart'
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
+import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:collection/collection.dart';
@@ -52,6 +53,18 @@ enum DriftChannelKind {
   localVirtual(1);
 
   const DriftChannelKind(this.value);
+  final int value;
+}
+
+/// Kind of item row stored in Drift.
+///
+/// This is mapped to the `kind` column in the `Items` table:
+/// - 0: DP1 item stored from DP1 playlists.
+enum DriftItemKind {
+  dp1Item(0),
+  indexerToken(1);
+
+  const DriftItemKind(this.value);
   final int value;
 }
 
@@ -146,11 +159,39 @@ abstract class DriftDatabaseServiceAbstract {
     required String baseUrl,
   });
 
+  /// Delete a playlist by its ID and its related entries and items.
+  ///
+  /// This will:
+  /// - Delete PlaylistEntries for the playlist
+  /// - Delete Items that are only used by this playlist
+  /// - Delete the Playlist itself
+  Future<void> deletePlaylistById(String id);
+
   /// Delete all channels of a specific kind and baseUrl
   Future<void> deleteAllChannels({
     required DriftChannelKind kind,
     required String baseUrl,
   });
+
+  // ========= Address Playlist Deletion =========
+
+  /// Delete all address playlists and their related entries and items.
+  ///
+  /// This will:
+  /// - Delete all PlaylistEntries for address playlists
+  /// - Delete Items that are only used by address playlists
+  /// - Delete the address Playlists themselves
+  Future<void> deleteAllAddressPlaylists();
+
+  /// Delete address playlist by owner address and its related entries and items.
+  ///
+  /// This will:
+  /// - Delete PlaylistEntries for the playlist
+  /// - Delete Items that are only used by this playlist
+  /// - Delete the Playlist itself
+  ///
+  /// [address] should be the owner address (case-insensitive).
+  Future<void> deleteAddressPlaylistByAddress(String address);
 
   // ========= Items =========
 
@@ -159,7 +200,11 @@ abstract class DriftDatabaseServiceAbstract {
   /// Returns items ordered according to the playlist's sort mode:
   /// - sortMode = 0 → order by position ascending
   /// - sortMode = 1 → order by provenance (sortKeyUs descending)
-  Future<List<db.Item>> getItemsByPlaylistId(String playlistId);
+  /// When [type] is provided, only items with matching [kind] are returned.
+  Future<List<db.Item>> getItemsByPlaylistId(
+    String playlistId, {
+    DriftItemKind? type,
+  });
 
   /// Get items by a list of item IDs.
   ///
@@ -237,17 +282,20 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
     DriftPlaylistKind? kind,
     String? baseUrl,
   }) async {
-    final typeFilter = switch (kind) {
-      DriftPlaylistKind.dp1 => 0,
-      DriftPlaylistKind.address => 1,
-      null => null,
-    };
+    final typeFilter = kind?.value;
 
-    final stream = _db.watchPlaylists(
-      channelId: channelId,
-      type: typeFilter,
-    );
-    final rows = await stream.first;
+    final query = _db.select(_db.playlists);
+    if (channelId != null) {
+      query.where((p) => p.channelId.equals(channelId));
+    }
+    if (typeFilter != null) {
+      query.where((p) => p.type.equals(typeFilter));
+    }
+    query.orderBy([
+      (p) => OrderingTerm(expression: p.createdAtUs, mode: OrderingMode.desc),
+    ]);
+    
+    final rows = await query.get();
     if (baseUrl == null) {
       return rows;
     }
@@ -282,7 +330,7 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
   @override
   Future<List<db.Playlist>> getAddressPlaylistRows() => getPlaylistRows(
         channelId: 'my_collection',
-        kind: DriftPlaylistKind.address,
+        // kind: DriftPlaylistKind.address,
       );
 
   // ========= Address playlists as DP1Call =========
@@ -318,7 +366,8 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
     final owner = row.ownerAddress ?? '';
     final owners = owner.isEmpty ? <String>[] : <String>[owner];
 
-    final items = await getItemsByPlaylistId(row.id);
+    final items =
+        await getItemsByPlaylistId(row.id, type: DriftItemKind.dp1Item);
     final dp1Items = items.map((e) => DP1ItemExtension.fromItemRow(e)).toList();
 
     return DP1Call(
@@ -392,10 +441,8 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
   ) async {
     try {
       final playlist = playlistRef.playlist;
-      final baseUrl = playlistRef.url;
       // Convert playlist
-      final playlistCompanion =
-          _playlistToCompanion(playlist, baseUrl, channelId);
+      final playlistCompanion = _playlistToCompanion(playlistRef, channelId);
 
       final cids = playlist.items.map((e) => e.cid).nonNulls.toList();
 
@@ -432,13 +479,13 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
       }
 
       // Handle dynamic queries - fetch tokens from indexer
-      if (playlist.dynamicQueries.isNotEmpty) {
-        log.info(
-          '[DriftDatabaseService] Playlist ${playlist.id} has ${playlist.dynamicQueries.length} dynamic queries, fetching tokens from indexer',
-        );
+      // if (playlist.dynamicQueries.isNotEmpty) {
+      //   log.info(
+      //     '[DriftDatabaseService] Playlist ${playlist.id} has ${playlist.dynamicQueries.length} dynamic queries, fetching tokens from indexer',
+      //   );
 
-        await _resolveDynamicQueriesAndStore(playlist);
-      }
+      //   await _resolveDynamicQueriesAndStore(playlist);
+      // }
 
       log.info(
         '[DriftDatabaseService] Ingested playlist: ${playlist.id} with ${playlist.items.length} static items and ${playlist.dynamicQueries.length} dynamic queries',
@@ -485,19 +532,31 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
 
   /// Convert DP1Call to Drift companion
   db.PlaylistsCompanion _playlistToCompanion(
-    DP1Call playlist,
-    String baseUrl,
+    PlaylistReference playlistRef,
     String? channelId,
   ) {
     // Convert signatures to JSON array
     // DP1 v1.1.0+: signatures field (array of objects)
     // DP1 v1.0.x: signature field (single string) -> wrap as ["signature"]
-    final signaturesJson = _convertSignaturesToArray(playlist);
+    final signaturesJson = _convertSignaturesToArray(playlistRef.playlist);
+    final playlist = playlistRef.playlist;
+    final baseUrl = playlistRef.url;
+    final type = switch (playlistRef.type) {
+      PlaylistReferenceType.channel => DriftPlaylistKind.dp1,
+      PlaylistReferenceType.address => DriftPlaylistKind.address,
+    };
+
+    final ownerAddress = playlistRef.type == PlaylistReferenceType.address
+        ? playlist.firstDynamicQuery?.params.owners.first
+        : null;
+
+    final cryptoType =
+        ownerAddress != null ? CryptoType.fromAddress(ownerAddress) : null;
 
     return db.PlaylistsCompanion.insert(
       id: playlist.id,
       channelId: Value(channelId),
-      type: 0, // dp1
+      type: type.value,
       baseUrl: Value(baseUrl),
       dpVersion: Value(playlist.dpVersion),
       slug: Value(playlist.slug),
@@ -506,7 +565,9 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
       updatedAtUs: DateTime.now().microsecondsSinceEpoch,
       signaturesJson: signaturesJson,
       defaultsJson: Value(
-        playlist.defaults != null ? json.encode(playlist.defaults) : null,
+        playlist.defaults != null
+            ? json.encode(playlistRef.playlist.defaults)
+            : null,
       ),
       dynamicQueriesJson: Value(
         playlist.dynamicQueries.isNotEmpty
@@ -514,8 +575,8 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
                 .encode(playlist.dynamicQueries.map((q) => q.toJson()).toList())
             : null,
       ),
-      ownerAddress: const Value(null),
-      ownerChain: const Value(null),
+      ownerAddress: Value(ownerAddress),
+      ownerChain: Value(cryptoType?.name),
       sortMode: 0, // position for DP1 playlists
       itemCount: Value(playlist.items.length),
     );
@@ -569,7 +630,7 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
 
     final itemCompanion = db.ItemsCompanion.insert(
       id: itemId,
-      kind: 0, // dp1_item
+      kind: DriftItemKind.dp1Item.value, // dp1_item
       title: Value(title),
       subtitle: const Value(null), // DP1 items don't have subtitle
       thumbnailUri: Value(thumbnailUri),
@@ -744,6 +805,29 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
     await deleteQuery.go();
   }
 
+  /// Delete a playlist by its ID and its related entries and items.
+  ///
+  /// This will:
+  /// - Delete PlaylistEntries for the playlist
+  /// - Delete Items that are only used by this playlist
+  /// - Delete the Playlist itself
+  @override
+  Future<void> deletePlaylistById(String id) async {
+    // Check if playlist exists
+    final playlist = await getPlaylistRowById(id);
+    if (playlist == null) {
+      log.info(
+        '[DriftDatabaseService] No playlist found with id: $id',
+      );
+      return;
+    }
+
+    await _deletePlaylistsAndRelatedData([id]);
+    log.info(
+      '[DriftDatabaseService] Deleted playlist: $id',
+    );
+  }
+
   @override
   Future<void> deleteAllChannels({
     required DriftChannelKind kind,
@@ -760,6 +844,131 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
     await deleteQuery.go();
   }
 
+  // ========= Address Playlist Deletion =========
+
+  /// Delete all address playlists and their related entries and items.
+  ///
+  /// This will:
+  /// - Delete all PlaylistEntries for address playlists
+  /// - Delete Items that are only used by address playlists
+  /// - Delete the address Playlists themselves
+  @override
+  Future<void> deleteAllAddressPlaylists() async {
+    // Get all address playlists
+    final addressPlaylists = await getPlaylistRows(
+      channelId: 'my_collection',
+      kind: DriftPlaylistKind.address,
+    );
+
+    if (addressPlaylists.isEmpty) {
+      return;
+    }
+
+    final playlistIds = addressPlaylists.map((p) => p.id).toList();
+    await _deletePlaylistsAndRelatedData(playlistIds);
+  }
+
+  /// Delete address playlist by owner address and its related entries and items.
+  ///
+  /// This will:
+  /// - Delete PlaylistEntries for the playlist
+  /// - Delete Items that are only used by this playlist
+  /// - Delete the Playlist itself
+  ///
+  /// [address] should be the owner address (case-insensitive).
+  @override
+  Future<void> deleteAddressPlaylistByAddress(String address) async {
+    // Normalize address to uppercase (as stored in database)
+    final normalizedAddress = address.toUpperCase();
+
+    // Find address playlist by ownerAddress
+    final addressPlaylists = await getPlaylistRows(
+      channelId: 'my_collection',
+      kind: DriftPlaylistKind.address,
+    );
+
+    final playlist = addressPlaylists
+        .where((p) => p.ownerAddress?.toUpperCase() == normalizedAddress)
+        .firstOrNull;
+
+    if (playlist == null) {
+      log.info(
+        '[DriftDatabaseService] No address playlist found for address: $address',
+      );
+      return;
+    }
+
+    await _deletePlaylistsAndRelatedData([playlist.id]);
+  }
+
+  /// Helper method to delete playlists and their related data.
+  ///
+  /// This will:
+  /// - Delete PlaylistEntries for the playlists
+  /// - Delete Items that are only used by these playlists
+  /// - Delete the Playlists themselves
+  Future<void> _deletePlaylistsAndRelatedData(List<String> playlistIds) async {
+    if (playlistIds.isEmpty) {
+      return;
+    }
+
+    try {
+      // Get all item IDs from these playlists
+      final entriesQuery = _db.selectOnly(_db.playlistEntries)
+        ..addColumns([_db.playlistEntries.itemId])
+        ..where(_db.playlistEntries.playlistId.isIn(playlistIds));
+      final entries = await entriesQuery.get();
+      final itemIds = entries
+          .map((e) => e.read(_db.playlistEntries.itemId))
+          .whereType<String>()
+          .toSet()
+          .toList();
+
+      // Delete PlaylistEntries for these playlists
+      await (_db.delete(_db.playlistEntries)
+            ..where((e) => e.playlistId.isIn(playlistIds)))
+          .go();
+
+      // Find items that are only used by these playlists
+      // (not used by any other playlists)
+      if (itemIds.isNotEmpty) {
+        final remainingEntriesQuery = _db.selectOnly(_db.playlistEntries)
+          ..addColumns([_db.playlistEntries.itemId])
+          ..where(_db.playlistEntries.itemId.isIn(itemIds));
+        final remainingEntries = await remainingEntriesQuery.get();
+        final itemsStillInUse = remainingEntries
+            .map((e) => e.read(_db.playlistEntries.itemId))
+            .whereType<String>()
+            .toSet();
+
+        // Delete items that are no longer used by any playlist
+        final itemsToDelete =
+            itemIds.where((id) => !itemsStillInUse.contains(id)).toList();
+        if (itemsToDelete.isNotEmpty) {
+          await (_db.delete(_db.items)..where((i) => i.id.isIn(itemsToDelete)))
+              .go();
+          log.info(
+            '[DriftDatabaseService] Deleted ${itemsToDelete.length} items that were only used by deleted playlists',
+          );
+        }
+      }
+
+      // Delete the playlists themselves
+      await (_db.delete(_db.playlists)..where((p) => p.id.isIn(playlistIds)))
+          .go();
+
+      log.info(
+        '[DriftDatabaseService] Deleted ${playlistIds.length} playlists and their related data',
+      );
+    } catch (e, st) {
+      log.info(
+        '[DriftDatabaseService] Error deleting playlists and related data: $e',
+      );
+      unawaited(Sentry.captureException(e, stackTrace: st));
+      rethrow;
+    }
+  }
+
   // ========= Items =========
 
   /// Get all items for a playlist by playlistId.
@@ -768,7 +977,10 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
   /// - sortMode = 0 → order by position ascending
   /// - sortMode = 1 → order by provenance (sortKeyUs descending)
   @override
-  Future<List<db.Item>> getItemsByPlaylistId(String playlistId) async {
+  Future<List<db.Item>> getItemsByPlaylistId(
+    String playlistId, {
+    DriftItemKind? type,
+  }) async {
     // Look up playlist to determine sort mode
     final playlist = await _db.getPlaylistById(playlistId);
     if (playlist == null) {
@@ -784,6 +996,10 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
       ),
     ])
       ..where(_db.playlistEntries.playlistId.equals(playlistId));
+
+    if (type != null) {
+      query.where(_db.items.kind.equals(type.value));
+    }
 
     if (orderByProvenance) {
       query.orderBy([
