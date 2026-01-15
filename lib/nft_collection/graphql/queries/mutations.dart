@@ -7,11 +7,11 @@ const String triggerTokenIndexing = r'''
   }
 ''';
 
-const String triggerOwnerIndexing = r'''
-  mutation triggerOwnerIndexing($addresses: [String!]!) {
-    triggerOwnerIndexing(addresses: $addresses) {
+const String triggerOwnerIndexingList = r'''
+  mutation triggerOwnerIndexingList($addresses: [String!]!) {
+    triggerOwnerIndexingList(addresses: $addresses) {
+      address
       workflow_id
-      run_id
     }
   }
 ''';

@@ -10,3 +10,22 @@ const String workflowStatusQuery = r'''
     }
   }
 ''';
+
+const String addressIndexingJobStatusQuery = r'''
+  query getAddressIndexingJobStatus($workflow_id: String!) {
+    addressIndexingJobStatus(workflow_id: $workflow_id) {
+      workflow_id
+      address
+      chain
+      status
+      tokens_processed
+      current_min_block
+      current_max_block
+      started_at
+      paused_at
+      completed_at
+      failed_at
+      canceled_at
+    }
+  }
+''';

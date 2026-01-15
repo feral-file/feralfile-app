@@ -15,10 +15,6 @@ abstract class NftIndexerServiceBase {
 
   Future<Identity> getIdentity(QueryIdentityRequest request);
 
-  /// Trigger indexing for a list of addresses
-  /// Returns the workflow_id and run_id from the indexing operation
-  Future<TriggerIndexingResult> indexAddresses(List<String> addresses);
-
   /// Trigger indexing for a list of token CIDs
   /// Returns the workflow_id and run_id from the indexing operation
   Future<TriggerIndexingResult> indexTokens(List<String> tokenCids);
@@ -26,6 +22,16 @@ abstract class NftIndexerServiceBase {
   /// Get workflow status by workflow ID and run ID
   /// Returns the status of a Temporal workflow execution
   Future<WorkflowStatus> getWorkflowStatus(String workflowId, String runId);
+
+  /// Index a list of addresses and return per-address workflowIds
+  /// Returns a list of AddressIndexingResult with address and workflowId pairs
+  Future<List<AddressIndexingResult>> indexAddressesList(
+      List<String> addresses);
+
+  /// Get address indexing job status by workflowId (no runId needed)
+  /// Returns AddressIndexingJobResponse with detailed status information
+  Future<AddressIndexingJobResponse> getAddressIndexingJobStatus(
+      String workflowId);
 
   /// Get changes with filters
   /// Returns a paginated list of changes
@@ -84,35 +90,6 @@ class NftIndexerService implements NftIndexerServiceBase {
     return data.identity;
   }
 
-  /// Trigger indexing for a list of addresses
-  /// This will index all tokens owned by the provided addresses
-  ///
-  /// [addresses] - List of owner addresses to index
-  ///
-  /// Returns TriggerIndexingResult with workflow_id and run_id
-  @override
-  Future<TriggerIndexingResult> indexAddresses(List<String> addresses) async {
-    if (addresses.isEmpty) {
-      throw ArgumentError('Addresses list cannot be empty');
-    }
-
-    final result = await _client.mutate(
-      doc: triggerOwnerIndexing,
-      vars: {
-        'addresses': addresses,
-      },
-      withToken: true,
-    );
-
-    if (result == null || result['triggerOwnerIndexing'] == null) {
-      throw Exception(
-          'Failed to trigger indexing for addresses ${addresses.join(', ')}');
-    }
-
-    final data = result['triggerOwnerIndexing'] as Map<String, dynamic>;
-    return TriggerIndexingResult.fromJson(data);
-  }
-
   /// Trigger indexing for a list of token CIDs
   /// This will index the specified tokens by their CIDs
   ///
@@ -169,6 +146,67 @@ class NftIndexerService implements NftIndexerServiceBase {
 
     final data = result['workflowStatus'] as Map<String, dynamic>;
     return WorkflowStatus.fromJson(data);
+  }
+
+  /// Index a list of addresses and return per-address workflowIds
+  /// This will index all tokens owned by the provided addresses
+  ///
+  /// [addresses] - List of owner addresses to index
+  ///
+  /// Returns a list of AddressIndexingResult with address and workflowId pairs
+  @override
+  Future<List<AddressIndexingResult>> indexAddressesList(
+      List<String> addresses) async {
+    if (addresses.isEmpty) {
+      throw ArgumentError('Addresses list cannot be empty');
+    }
+
+    final result = await _client.mutate(
+      doc: triggerOwnerIndexingList,
+      vars: {
+        'addresses': addresses,
+      },
+      withToken: true,
+    );
+
+    if (result == null || result['triggerOwnerIndexingList'] == null) {
+      throw Exception(
+          'Failed to trigger indexing for addresses ${addresses.join(', ')}');
+    }
+
+    final data = result['triggerOwnerIndexingList'] as List<dynamic>;
+    return data
+        .map((item) => AddressIndexingResult.fromJson(
+            Map<String, dynamic>.from(item as Map)))
+        .toList();
+  }
+
+  /// Get address indexing job status by workflowId (no runId needed)
+  /// This retrieves the detailed status of an address indexing job
+  ///
+  /// [workflowId] - The workflow ID
+  ///
+  /// Returns AddressIndexingJobResponse with status, tokens_processed, block ranges, etc.
+  @override
+  Future<AddressIndexingJobResponse> getAddressIndexingJobStatus(
+      String workflowId) async {
+    if (workflowId.isEmpty) {
+      throw ArgumentError('Workflow ID cannot be empty');
+    }
+
+    final result = await _client.query(
+      doc: addressIndexingJobStatusQuery,
+      vars: {
+        'workflow_id': workflowId,
+      },
+    );
+
+    if (result == null || result['addressIndexingJobStatus'] == null) {
+      throw Exception('Failed to get address indexing job status');
+    }
+
+    final data = result['addressIndexingJobStatus'] as Map<String, dynamic>;
+    return AddressIndexingJobResponse.fromJson(data);
   }
 
   /// Get changes with filters
@@ -442,5 +480,174 @@ class WorkflowStatus {
         'start_time': startTime?.toIso8601String(),
         'close_time': closeTime?.toIso8601String(),
         'execution_time_ms': executionTimeMs,
+      };
+}
+
+/// Indexing job status enum
+/// Based on new indexer API status values
+enum IndexingJobStatus {
+  running,
+  paused,
+  failed,
+  completed,
+  canceled;
+
+  String toJson() {
+    switch (this) {
+      case IndexingJobStatus.running:
+        return 'running';
+      case IndexingJobStatus.paused:
+        return 'paused';
+      case IndexingJobStatus.failed:
+        return 'failed';
+      case IndexingJobStatus.completed:
+        return 'completed';
+      case IndexingJobStatus.canceled:
+        return 'canceled';
+    }
+  }
+
+  static IndexingJobStatus fromJson(String? value) {
+    if (value == null) return IndexingJobStatus.running;
+    switch (value.toLowerCase()) {
+      case 'running':
+        return IndexingJobStatus.running;
+      case 'paused':
+        return IndexingJobStatus.paused;
+      case 'failed':
+        return IndexingJobStatus.failed;
+      case 'completed':
+        return IndexingJobStatus.completed;
+      case 'canceled':
+        return IndexingJobStatus.canceled;
+      default:
+        return IndexingJobStatus.running;
+    }
+  }
+
+  bool get isDone {
+    return this == IndexingJobStatus.completed ||
+        this == IndexingJobStatus.failed ||
+        this == IndexingJobStatus.canceled;
+  }
+
+  bool get isSuccess {
+    return this == IndexingJobStatus.completed;
+  }
+
+  bool get isRunning {
+    return this == IndexingJobStatus.running;
+  }
+
+  bool get isPaused {
+    return this == IndexingJobStatus.paused;
+  }
+
+  bool get isFailed {
+    return this == IndexingJobStatus.failed;
+  }
+
+  bool get isCanceled {
+    return this == IndexingJobStatus.canceled;
+  }
+}
+
+/// Address indexing job response from new indexer API
+/// Matches the Go struct AddressIndexingJobResponse
+class AddressIndexingJobResponse {
+  AddressIndexingJobResponse({
+    required this.workflowId,
+    required this.address,
+    required this.chain,
+    required this.status,
+    required this.tokensProcessed,
+    required this.startedAt,
+    this.currentMinBlock,
+    this.currentMaxBlock,
+    this.pausedAt,
+    this.completedAt,
+    this.failedAt,
+    this.canceledAt,
+  });
+
+  final String workflowId;
+  final String address;
+  final String chain;
+  final IndexingJobStatus status;
+  final int tokensProcessed;
+  final int? currentMinBlock;
+  final int? currentMaxBlock;
+  final DateTime startedAt;
+  final DateTime? pausedAt;
+  final DateTime? completedAt;
+  final DateTime? failedAt;
+  final DateTime? canceledAt;
+
+  factory AddressIndexingJobResponse.fromJson(Map<String, dynamic> json) =>
+      AddressIndexingJobResponse(
+        workflowId: json['workflow_id'] as String,
+        address: json['address'] as String,
+        chain: json['chain'] as String,
+        status: IndexingJobStatus.fromJson(json['status'] as String?),
+        tokensProcessed: json['tokens_processed'] as int? ?? 0,
+        currentMinBlock: json['current_min_block'] != null
+            ? int.tryParse(json['current_min_block'].toString())
+            : null,
+        currentMaxBlock: json['current_max_block'] != null
+            ? int.tryParse(json['current_max_block'].toString())
+            : null,
+        startedAt: json['started_at'] != null
+            ? DateTime.parse(json['started_at'] as String)
+            : DateTime.now(),
+        pausedAt: json['paused_at'] != null
+            ? DateTime.tryParse(json['paused_at'] as String)
+            : null,
+        completedAt: json['completed_at'] != null
+            ? DateTime.tryParse(json['completed_at'] as String)
+            : null,
+        failedAt: json['failed_at'] != null
+            ? DateTime.tryParse(json['failed_at'] as String)
+            : null,
+        canceledAt: json['canceled_at'] != null
+            ? DateTime.tryParse(json['canceled_at'] as String)
+            : null,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'workflow_id': workflowId,
+        'address': address,
+        'chain': chain,
+        'status': status.toJson(),
+        'tokens_processed': tokensProcessed,
+        'current_min_block': currentMinBlock,
+        'current_max_block': currentMaxBlock,
+        'started_at': startedAt.toIso8601String(),
+        'paused_at': pausedAt?.toIso8601String(),
+        'completed_at': completedAt?.toIso8601String(),
+        'failed_at': failedAt?.toIso8601String(),
+        'canceled_at': canceledAt?.toIso8601String(),
+      };
+}
+
+/// Result from batch address indexing operation
+/// Contains address and workflowId pair
+class AddressIndexingResult {
+  AddressIndexingResult({
+    required this.address,
+    required this.workflowId,
+  });
+
+  final String address;
+  final String workflowId;
+
+  factory AddressIndexingResult.fromJson(Map<String, dynamic> json) =>
+      AddressIndexingResult(
+        address: json['address'] as String,
+        workflowId: json['workflow_id'] as String,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'address': address,
+        'workflow_id': workflowId,
       };
 }

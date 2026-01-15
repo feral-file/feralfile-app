@@ -78,6 +78,21 @@ class WorkflowStatusTick extends UserAllOwnCollectionEvent {
   String get streamKey => 'WorkflowStatusTick:$operationId';
 }
 
+class AddressIndexingJobStatusTick extends UserAllOwnCollectionEvent {
+  AddressIndexingJobStatusTick({
+    required this.address,
+    required this.workflowId,
+    required this.jobStatus,
+  });
+
+  final String address;
+  final String workflowId;
+  final AddressIndexingJobResponse jobStatus;
+
+  @override
+  String get streamKey => 'AddressIndexingJobStatusTick:$address';
+}
+
 class UpdateTokens extends UserAllOwnCollectionEvent {
   UpdateTokens();
 

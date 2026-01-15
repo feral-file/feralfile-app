@@ -39,6 +39,7 @@ class UserAllOwnCollectionBloc
     on<ClearDataEvent>(_onClearData);
     on<Reindex>(_onReindex);
     on<WorkflowStatusTick>(_onWorkflowStatusTick);
+    on<AddressIndexingJobStatusTick>(_onAddressIndexingJobStatusTick);
     on<UpdateTokens>(_onUpdateTokens);
   }
 
@@ -103,66 +104,56 @@ class UserAllOwnCollectionBloc
               );
               emit(state.copyWith(addressStates: updatedStates));
               log.info(
-                  '[UserAllOwnCollectionBloc] Started indexing batch: $batchAddresses');
+                  '[UserAllOwnCollectionBloc] Started indexing addresses: $batchAddresses');
             },
-            onStatus: (status, workflowId, runId, batchAddresses) async {
+            onStatus: (status, address) async {
               log.info(
-                  '[ReindexAddresses][${batchAddresses.join(',')}] status: ${status.toJson()}');
-              if (status.isDone) {
+                  '[ReindexAddresses][$address] status: ${status.status.toJson()}, tokensProcessed: ${status.tokensProcessed}');
+
+              // Store detailed status in state
+              final updatedStates =
+                  state.addressStates.updateAddressStatus(address, status);
+              emit(state.copyWith(addressStates: updatedStates));
+
+              if (status.status.isDone) {
                 log.info(
-                    'Pull workflow status done with status: ${status.toJson()}, workflowId: $workflowId, runId: $runId');
-                if (status.isSuccess) {
-                  // Mark addresses from this batch as completed
-                  completedAddresses.addAll(batchAddresses);
+                    'Pull workflow status done with status: ${status.status.toJson()}, workflowId: ${status.workflowId}, address: $address');
+                if (status.status.isSuccess) {
+                  // Mark address as completed
+                  completedAddresses.add(address);
                   log.info(
-                      '[UserAllOwnCollectionBloc] Batch $batchAddresses completed successfully. Completed addresses: ${completedAddresses.length}/${addresses.length}');
-                  // Update state to gettingArtworks
-                  final updatedStates = state.addressStates.updateStates(
-                    batchAddresses,
-                    AddressStateType.indexingDone,
-                  );
+                      '[UserAllOwnCollectionBloc] Address $address completed successfully. Completed addresses: ${completedAddresses.length}/${addresses.length}');
+                  // Update last index time
                   await injector<UserDp1PlaylistService>()
                       .updateAddressLastIndexTime(
-                    addresses: {
-                      for (final addr in batchAddresses) addr: DateTime.now(),
-                    },
+                    addresses: {address: DateTime.now()},
                   );
-                  emit(state.copyWith(addressStates: updatedStates));
                 }
+                // Return true to complete polling for this address
+                return true;
               } else {
                 // Still indexing, fetch tokens
                 add(FetchTokens(shouldUpdateAddressState: false));
+                return false;
               }
-              add(
-                WorkflowStatusTick(
-                  operationId: batchAddresses.join(','),
-                  workflowId: workflowId,
-                  runId: runId,
-                  status: status,
-                ),
-              );
-              // Return true to complete if status is done
-              return status.isDone;
             },
-            onTimeout: (batchAddresses) {
-              log.info('[ReindexAddresses] Timeout for batch: $batchAddresses');
+            onTimeout: (address) {
+              log.info('[ReindexAddresses] Timeout for address: $address');
               Sentry.captureEvent(SentryEvent(
-                message: SentryMessage('Timeout for batch: $batchAddresses'),
+                message: SentryMessage('Timeout for address: $address'),
                 level: SentryLevel.error,
                 extra: {
                   'stackTrace': StackTrace.current.toString(),
                 },
-                throwable: 'Timeout for batch: $batchAddresses',
+                throwable: 'Timeout for address: $address',
               ));
-              error = Exception('Timeout for batch: $batchAddresses');
+              error = Exception('Timeout for address: $address');
             },
-            onError: (error, stackTrace, batchAddresses) {
+            onError: (error, stackTrace, address) {
               // Keep polling despite transient errors
-              log.info(
-                  '[ReindexAddresses] Error for batch $batchAddresses: $error');
+              log.info('[ReindexAddresses] Error for address $address: $error');
               unawaited(Sentry.captureEvent(SentryEvent(
-                message:
-                    SentryMessage('Error for batch $batchAddresses: $error'),
+                message: SentryMessage('Error for address $address: $error'),
                 level: SentryLevel.error,
                 extra: {
                   'stackTrace': stackTrace.toString(),
@@ -498,6 +489,29 @@ class UserAllOwnCollectionBloc
             stackTrace: stackTrace);
       }
     }
+  }
+
+  Future<void> _onAddressIndexingJobStatusTick(
+    AddressIndexingJobStatusTick event,
+    Emitter<UserAllOwnCollectionState> emit,
+  ) async {
+    final address = event.address;
+    final status = event.jobStatus;
+
+    // Update state with latest status
+    final updatedStates =
+        state.addressStates.updateAddressStatus(address, status);
+    emit(state.copyWith(addressStates: updatedStates));
+
+    if (status.status == IndexingJobStatus.completed) {
+      // Fetch tokens after completion
+      add(FetchTokens(shouldUpdateLastRefreshedTime: true));
+    } else if (status.status == IndexingJobStatus.running ||
+        status.status == IndexingJobStatus.paused) {
+      // Still indexing, fetch tokens periodically
+      add(FetchTokens(shouldUpdateLastRefreshedTime: false));
+    }
+    // Failed/canceled states already handled in onStatus callback
   }
 
   Future<void> _onUpdateTokens(

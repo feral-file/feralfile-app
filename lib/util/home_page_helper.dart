@@ -248,6 +248,7 @@ class HomePageHelper {
 
       NftCollection.logger.info('Already indexed addresses: $alreadyIndexed');
       if (alreadyIndexed.isNotEmpty) {
+        // Use new API - trigger indexing but don't wait for completion
         unawaited(
           injector<NftTokensService>().reindexAddresses(alreadyIndexed),
         );

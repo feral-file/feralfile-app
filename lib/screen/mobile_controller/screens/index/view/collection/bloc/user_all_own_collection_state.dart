@@ -42,64 +42,28 @@ class AddressState {
   final WalletAddress address;
   final List<AssetToken> assetTokens;
   final AddressStateType state;
+  final AddressIndexingJobResponse? indexingStatus;
 
   AddressState({
     required this.address,
     required this.assetTokens,
     required this.state,
+    this.indexingStatus,
   });
 
   AddressState copyWith({
     WalletAddress? address,
     List<AssetToken>? assetTokens,
     AddressStateType? state,
+    AddressIndexingJobResponse? indexingStatus,
   }) {
     return AddressState(
       address: address ?? this.address,
       assetTokens: assetTokens ?? this.assetTokens,
       state: state ?? this.state,
+      indexingStatus: indexingStatus ?? this.indexingStatus,
     );
   }
-}
-
-class IndexingOperation {
-  const IndexingOperation({
-    required this.id,
-    required this.addresses,
-    this.workflowId,
-    this.runId,
-  });
-
-  final String id; // key of operation
-  final List<String> addresses;
-  final String? workflowId;
-  final String? runId;
-
-  IndexingOperation copyWith({
-    List<String>? addresses,
-    String? workflowId,
-    String? runId,
-    bool clearWorkflowIds = false,
-  }) {
-    return IndexingOperation(
-      id: id,
-      addresses: addresses ?? this.addresses,
-      workflowId: clearWorkflowIds ? null : (workflowId ?? this.workflowId),
-      runId: clearWorkflowIds ? null : (runId ?? this.runId),
-    );
-  }
-
-  String get key => id;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is IndexingOperation &&
-          runtimeType == other.runtimeType &&
-          id == other.id;
-
-  @override
-  int get hashCode => id.hashCode;
 }
 
 class UserAllOwnCollectionState {
@@ -133,11 +97,15 @@ class UserAllOwnCollectionState {
 extension AddressStateListExtension on List<AddressState> {
   List<AddressState> updateStates(
     List<String> addresses,
-    AddressStateType newState,
-  ) {
+    AddressStateType newState, {
+    AddressIndexingJobResponse? indexingStatus,
+  }) {
     final updatedStates = map((addressState) {
       if (addresses.contains(addressState.address.address)) {
-        return addressState.copyWith(state: newState);
+        return addressState.copyWith(
+          state: newState,
+          indexingStatus: indexingStatus,
+        );
       }
       return addressState;
     }).toList();
@@ -154,6 +122,7 @@ extension AddressStateListExtension on List<AddressState> {
               address: walletAddress,
               assetTokens: [],
               state: newState,
+              indexingStatus: indexingStatus,
             ),
           );
         }
@@ -161,5 +130,36 @@ extension AddressStateListExtension on List<AddressState> {
     }
 
     return updatedStates;
+  }
+
+  // Helper method to update status for a single address
+  List<AddressState> updateAddressStatus(
+    String address,
+    AddressIndexingJobResponse status,
+  ) {
+    return map((addressState) {
+      if (addressState.address.address == address) {
+        // Determine AddressStateType from IndexingJobStatus
+        final stateType = _mapIndexingStatusToStateType(status.status);
+        return addressState.copyWith(
+          state: stateType,
+          indexingStatus: status,
+        );
+      }
+      return addressState;
+    }).toList();
+  }
+
+  AddressStateType _mapIndexingStatusToStateType(IndexingJobStatus status) {
+    switch (status) {
+      case IndexingJobStatus.running:
+      case IndexingJobStatus.paused:
+        return AddressStateType.indexing;
+      case IndexingJobStatus.completed:
+        return AddressStateType.indexingDone;
+      case IndexingJobStatus.failed:
+      case IndexingJobStatus.canceled:
+        return AddressStateType.indexingIncomplete;
+    }
   }
 }
