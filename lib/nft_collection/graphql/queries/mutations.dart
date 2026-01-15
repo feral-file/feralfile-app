@@ -8,10 +8,12 @@ const String triggerTokenIndexing = r'''
 ''';
 
 const String triggerOwnerIndexingList = r'''
-  mutation triggerOwnerIndexingList($addresses: [String!]!) {
-    triggerOwnerIndexingList(addresses: $addresses) {
+  mutation triggerAddressIndexing($addresses: [String!]!) {
+  triggerAddressIndexing(addresses: $addresses) {
+    jobs {
       address
       workflow_id
     }
   }
+}
 ''';

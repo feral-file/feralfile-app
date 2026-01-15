@@ -9,7 +9,6 @@ import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
-import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/util/completer_ext.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -59,8 +58,8 @@ class UserAllOwnCollectionBloc
       log.info('[UserAllOwnCollectionBloc] Reindex addresses: $addresses');
       // Check if any of the addresses are already being reindexed
       final allIndexingAddresses = state.addressStates
-          .where((state) => state.state == AddressStateType.indexing)
-          .map((state) => state.address.address)
+          .where((state) => state.state == AddressStateType.indexStated)
+          .map((state) => state.address)
           .toSet();
       final newAddresses = addresses
           .where((addr) => !allIndexingAddresses.contains(addr))
@@ -73,13 +72,20 @@ class UserAllOwnCollectionBloc
       }
 
       // Update state to indexing for new addresses
-      final updatedStates = state.addressStates.updateStates(
-        newAddresses,
-        AddressStateType.indexing,
-      );
+      final updatedStates = state.addressStates.map((state) {
+        if (newAddresses.contains(state.address)) {
+          return AddressState(
+              address: state.address,
+              assetTokens: state.assetTokens,
+              state: AddressStateType.indexStated,
+              indexingStatus: null);
+        }
+        return state;
+      }).toList();
+
       emit(state.copyWith(addressStates: updatedStates));
 
-      final maxAttempts = 5;
+      final maxAttempts = 3;
       int attempts = 0;
       Object? error = null;
 
@@ -106,7 +112,6 @@ class UserAllOwnCollectionBloc
             infos: infos,
           );
 
-          // Successfully submitted indexing jobs, stop retrying
           break;
         } catch (e, st) {
           Sentry.captureException(e, stackTrace: st);
@@ -125,11 +130,20 @@ class UserAllOwnCollectionBloc
         log.info(
           '[UserAllOwnCollectionBloc] Failed to submit reindex jobs for addresses: ${newAddresses.join(',')}',
         );
-        final updatedStates = state.addressStates.updateStates(
-          newAddresses,
-          AddressStateType.indexingIncomplete,
-        );
-        emit(state.copyWith(addressStates: updatedStates));
+        final updatedStates = state.addressStates.map((state) {
+          if (newAddresses.contains(state.address)) {
+            return AddressState(
+                address: state.address,
+                assetTokens: state.assetTokens,
+                state: AddressStateType.indexingIncomplete,
+                indexingStatus: null);
+          }
+          return state;
+        }).toList();
+        final newState = state.copyWith(
+            addressStates: updatedStates,
+            status: UserAllOwnCollectionStatus.error);
+        emit(newState);
         return;
       }
 
@@ -140,10 +154,13 @@ class UserAllOwnCollectionBloc
       log.info('[UserAllOwnCollectionBloc] Reindex error: $e');
       unawaited(Sentry.captureException(e, stackTrace: st));
       // Update state to indexingIncomplete on error
-      final updatedStates = state.addressStates.updateStates(
-        addresses,
-        AddressStateType.indexingIncomplete,
-      );
+      final updatedStates = state.addressStates.map((state) {
+        return AddressState(
+            address: state.address,
+            assetTokens: state.assetTokens,
+            state: AddressStateType.indexingIncomplete,
+            indexingStatus: null);
+      }).toList();
       emit(state.copyWith(
         status: UserAllOwnCollectionStatus.error,
         error: 'Something went wrong while indexing addresses.',
@@ -195,14 +212,22 @@ class UserAllOwnCollectionBloc
 
         // Update state to fetchingArtworks when starting to fetch
         if (event.shouldUpdateAddressState) {
-          final updatedStatesStart = state.addressStates.updateStates(
-            addresses,
-            AddressStateType.fetchingArtworks,
-          );
-          emit(state.copyWith(
-            addressStates: updatedStatesStart,
-            status: UserAllOwnCollectionStatus.loading,
-          ));
+          final addressState =
+              state.addressStates.getAddressState(addresses.first);
+          final updatedStatesStart = state.addressStates.map((state) {
+            if (addresses.contains(state.address)) {
+              return AddressState(
+                  address: state.address,
+                  assetTokens: state.assetTokens,
+                  state: AddressStateType.fetchingArtworks,
+                  indexingStatus: addressState?.indexingStatus);
+            }
+            return state;
+          }).toList();
+          final newState = state.copyWith(
+              addressStates: updatedStatesStart,
+              status: UserAllOwnCollectionStatus.loading);
+          emit(newState);
         }
 
         // get the stream
@@ -234,25 +259,40 @@ class UserAllOwnCollectionBloc
             final isLastAttempt = retryAttempts == maxRetryAttempts;
             // Update state to gettingArtworksFailed on error
             if (isLastAttempt && event.shouldUpdateAddressState) {
-              final updatedStates = state.addressStates.updateStates(
-                addresses,
-                AddressStateType.fetchingArtworksFailed,
-              );
-              emit(state.copyWith(addressStates: updatedStates));
+              final updatedStates = state.addressStates.map((state) {
+                if (addresses.contains(state.address)) {
+                  return AddressState(
+                      address: state.address,
+                      assetTokens: state.assetTokens,
+                      state: AddressStateType.fetchingArtworksFailed,
+                      indexingStatus: null);
+                }
+                return state;
+              }).toList();
+              final newState = state.copyWith(
+                  addressStates: updatedStates,
+                  status: UserAllOwnCollectionStatus.error);
+              emit(newState);
             }
             completer.safeCompleteError(error);
           },
           onDone: () {
             // Stream done successfully (onDone only called when no error with cancelOnError: true)
             if (event.shouldUpdateAddressState) {
-              final updatedStates = state.addressStates.updateStates(
-                addresses,
-                AddressStateType.fetchingArtworksDone,
-              );
-              emit(state.copyWith(
-                addressStates: updatedStates,
-                status: UserAllOwnCollectionStatus.loaded,
-              ));
+              final updatedStates = state.addressStates.map((state) {
+                if (addresses.contains(state.address)) {
+                  return AddressState(
+                      address: state.address,
+                      assetTokens: state.assetTokens,
+                      state: AddressStateType.fetchingArtworksDone,
+                      indexingStatus: state.indexingStatus);
+                }
+                return state;
+              }).toList();
+              final newState = state.copyWith(
+                  addressStates: updatedStates,
+                  status: UserAllOwnCollectionStatus.loaded);
+              emit(newState);
             }
             log.info(
                 '[${event.runtimeType}] Stream done successfully with total ${collected.length} tokens');
@@ -268,10 +308,16 @@ class UserAllOwnCollectionBloc
           log.info('[${event.runtimeType}] Stream completed with error: $e');
           final isLastAttempt = retryAttempts == maxRetryAttempts;
           if (isLastAttempt && event.shouldUpdateAddressState) {
-            final updatedStates = state.addressStates.updateStates(
-              addresses,
-              AddressStateType.fetchingArtworksFailed,
-            );
+            final updatedStates = state.addressStates.map((state) {
+              if (addresses.contains(state.address)) {
+                return AddressState(
+                    address: state.address,
+                    assetTokens: state.assetTokens,
+                    state: AddressStateType.fetchingArtworksFailed,
+                    indexingStatus: null);
+              }
+              return state;
+            }).toList();
             emit(state.copyWith(addressStates: updatedStates));
           }
           rethrow;
@@ -326,25 +372,34 @@ class UserAllOwnCollectionBloc
       owners: addresses,
     );
 
-    // Preserve existing states when reloading
-    final existingStatesMap = {
-      for (final addrState in state.addressStates)
-        addrState.address.address: addrState.state
+    // Create a map of address to asset tokens for quick lookup
+    final addressToTokensMap = {
+      for (final e in assetTokenGroupByAddress)
+        e.address.address: e.assetTokens,
     };
 
+    // Update tokens of existing AddressStates only
+    final updatedAddressStates = state.addressStates.map((existingState) {
+      final tokens = addressToTokensMap[existingState.address];
+      if (tokens != null) {
+        // Update tokens while preserving state and indexingStatus
+        return AddressState(
+          address: existingState.address,
+          assetTokens: tokens,
+          state: existingState.state,
+          indexingStatus: existingState.indexingStatus,
+        );
+      }
+      // If no tokens found, keep existing state as is
+      return existingState;
+    }).toList();
+
+    final newState = state.copyWith(
+      addressStates: updatedAddressStates,
+    );
+
     emit(
-      state.copyWith(
-        addressStates: assetTokenGroupByAddress
-            .map(
-              (e) => AddressState(
-                address: e.address,
-                assetTokens: e.assetTokens,
-                state: existingStatesMap[e.address.address] ??
-                    AddressStateType.fetchingArtworksDone,
-              ),
-            )
-            .toList(),
-      ),
+      newState,
     );
     log.info(
         '[UserAllOwnCollectionBloc] Reloaded asset tokens from indexer database. Update my playlist');
@@ -366,6 +421,41 @@ class UserAllOwnCollectionBloc
     _activeCompleters.clear();
 
     emit(const UserAllOwnCollectionState());
+  }
+
+  /// Helper method to update or create an AddressState for a given address
+  List<AddressState> _updateOrCreateAddressState(
+    String addressString,
+    AddressStateType newState,
+    AddressIndexingJobResponse? indexingStatus,
+  ) {
+    final existingStateIndex = state.addressStates.indexWhere(
+      (state) => state.address == addressString,
+    );
+
+    if (existingStateIndex != -1) {
+      // Update existing state
+      return state.addressStates.map((state) {
+        if (state.address == addressString) {
+          return AddressState(
+            address: state.address,
+            assetTokens: state.assetTokens,
+            state: newState,
+            indexingStatus: indexingStatus,
+          );
+        }
+        return state;
+      }).toList();
+    } else {
+      // Create new state for address that doesn't exist yet
+      final newAddressState = AddressState(
+        address: addressString,
+        assetTokens: [],
+        state: newState,
+        indexingStatus: indexingStatus,
+      );
+      return [...state.addressStates, newAddressState];
+    }
   }
 
   Future<void> _onPullStatus(
@@ -398,12 +488,15 @@ class UserAllOwnCollectionBloc
         timeout: const Duration(hours: 1),
         onStatus: (status, address) async {
           log.info(
-            '[PullStatus][$address] status: ${status.status.toJson()}, tokensProcessed: ${status.tokensProcessed}',
+            '[PullStatus][$address] workflowId: ${addressToWorkflowId[address]} status: ${status.status.toJson()}, tokensProcessed: ${status.tokensProcessed}',
           );
 
-          // Update state with latest status
-          final updatedStates =
-              state.addressStates.updateAddressStatus(address, status);
+          // Update or create state with latest status
+          final updatedStates = _updateOrCreateAddressState(
+            address,
+            AddressStateType.indexStated,
+            status,
+          );
           emit(state.copyWith(addressStates: updatedStates));
 
           if (status.status.isDone) {
@@ -411,7 +504,9 @@ class UserAllOwnCollectionBloc
               '[UserAllOwnCollectionBloc] Address $address indexing completed via PullStatus',
             );
             // Fetch tokens after completion
-            add(FetchTokens(shouldUpdateLastRefreshedTime: true));
+            add(FetchTokens(
+                shouldUpdateLastRefreshedTime: true,
+                shouldUpdateAddressState: true));
             return true;
           } else {
             // Still indexing, fetch tokens periodically
@@ -455,6 +550,9 @@ class UserAllOwnCollectionBloc
           );
         },
       );
+      log.info(
+        '[UserAllOwnCollectionBloc] PullStatus: completed',
+      );
     } catch (e, stackTrace) {
       log.warning(
         '[UserAllOwnCollectionBloc] PullStatus: error while checking indexing status: $e',
@@ -470,14 +568,18 @@ class UserAllOwnCollectionBloc
     final address = event.address;
     final status = event.jobStatus;
 
-    // Update state with latest status
-    final updatedStates =
-        state.addressStates.updateAddressStatus(address, status);
+    // Update or create state with latest status
+    final updatedStates = _updateOrCreateAddressState(
+      address,
+      AddressStateType.indexStated,
+      status,
+    );
     emit(state.copyWith(addressStates: updatedStates));
 
     if (status.status == IndexingJobStatus.completed) {
       // Fetch tokens after completion
-      add(FetchTokens(shouldUpdateLastRefreshedTime: true));
+      add(FetchTokens(
+          shouldUpdateLastRefreshedTime: true, shouldUpdateAddressState: true));
     } else if (status.status == IndexingJobStatus.running ||
         status.status == IndexingJobStatus.paused) {
       // Still indexing, fetch tokens periodically

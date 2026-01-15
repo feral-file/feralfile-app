@@ -2,6 +2,7 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/design/layout_constants.dart';
+import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
@@ -227,26 +228,25 @@ class PlaylistsPageState extends State<PlaylistsPage>
     return BlocBuilder<UserAllOwnCollectionBloc, UserAllOwnCollectionState>(
       bloc: bloc,
       builder: (context, collectionState) {
-        String stateSuffix = '';
-
-        AddressState? targetState;
-        for (final addressState in collectionState.addressStates) {
-          if (addressState.address.address == targetAddress) {
-            targetState = addressState;
-            break;
-          }
-        }
-
-        stateSuffix =
-            (targetState?.state == AddressStateType.fetchingArtworksDone)
-                ? ''
-                : targetState?.state.description ?? '';
+        final addressState = collectionState.addressStates.isNotEmpty
+            ? collectionState.addressStates.first
+            : null;
+        final isError =
+            addressState?.indexingStatus?.status == IndexingJobStatus.failed ||
+                addressState?.indexingStatus?.status ==
+                    IndexingJobStatus.canceled ||
+                addressState?.state == AddressStateType.fetchingArtworksFailed;
 
         final child = PlaylistTitle(
           primaryText: '${playlist.title}',
-          primaryTextSuffix: stateSuffix.isNotEmpty ? '$stateSuffix' : null,
+          collectionState: collectionState,
           secondaryText: playlistData.creator,
           total: playlistDetailsState.total,
+          onTap: isError
+              ? () {
+                  bloc.add(Reindex());
+                }
+              : null,
         );
 
         final slidableActions = [

@@ -12,8 +12,8 @@ const String workflowStatusQuery = r'''
 ''';
 
 const String addressIndexingJobStatusQuery = r'''
-  query getAddressIndexingJobStatus($workflow_id: String!) {
-    addressIndexingJobStatus(workflow_id: $workflow_id) {
+  query indexingJob($workflow_id: String!) {
+    indexingJob(workflow_id: $workflow_id) {
       workflow_id
       address
       chain

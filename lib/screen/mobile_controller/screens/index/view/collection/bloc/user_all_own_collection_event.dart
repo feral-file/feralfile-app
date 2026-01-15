@@ -15,7 +15,7 @@ abstract class UserAllOwnCollectionEvent {
 class FetchTokens extends UserAllOwnCollectionEvent {
   FetchTokens({
     this.shouldUpdateLastRefreshedTime = false,
-    this.shouldUpdateAddressState = true,
+    this.shouldUpdateAddressState = false,
     this.onDone,
     this.onError,
   });

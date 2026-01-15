@@ -3,7 +3,7 @@ part of 'user_all_own_collection_bloc.dart';
 enum UserAllOwnCollectionStatus { initial, loading, loaded, error }
 
 enum AddressStateType {
-  indexing,
+  indexStated,
   indexingDone,
   indexingIncomplete,
   fetchingArtworks,
@@ -12,7 +12,7 @@ enum AddressStateType {
 
   String get description {
     switch (this) {
-      case AddressStateType.indexing:
+      case AddressStateType.indexStated:
         return 'Syncing...';
       case AddressStateType.indexingDone:
         return 'Synced';
@@ -39,7 +39,7 @@ class AddressAssetTokens {
 }
 
 class AddressState {
-  final WalletAddress address;
+  final String address;
   final List<AssetToken> assetTokens;
   final AddressStateType state;
   final AddressIndexingJobResponse? indexingStatus;
@@ -49,10 +49,14 @@ class AddressState {
     required this.assetTokens,
     required this.state,
     this.indexingStatus,
-  });
+  }) {
+    if (indexingStatus == null) {
+      log.info('indexingStatus is null for address: $address');
+    }
+  }
 
   AddressState copyWith({
-    WalletAddress? address,
+    String? address,
     List<AssetToken>? assetTokens,
     AddressStateType? state,
     AddressIndexingJobResponse? indexingStatus,
@@ -95,66 +99,17 @@ class UserAllOwnCollectionState {
 }
 
 extension AddressStateListExtension on List<AddressState> {
-  List<AddressState> updateStates(
-    List<String> addresses,
-    AddressStateType newState, {
-    AddressIndexingJobResponse? indexingStatus,
-  }) {
-    final updatedStates = map((addressState) {
-      if (addresses.contains(addressState.address.address)) {
-        return addressState.copyWith(
-          state: newState,
-          indexingStatus: indexingStatus,
-        );
-      }
-      return addressState;
-    }).toList();
-
-    // Add new addresses that don't exist in current states
-    final existingAddresses = map((state) => state.address.address).toSet();
-    for (final addressStr in addresses) {
-      if (!existingAddresses.contains(addressStr)) {
-        final walletAddress =
-            injector<AddressService>().getWalletAddress(addressStr);
-        if (walletAddress != null) {
-          updatedStates.add(
-            AddressState(
-              address: walletAddress,
-              assetTokens: [],
-              state: newState,
-              indexingStatus: indexingStatus,
-            ),
-          );
-        }
-      }
-    }
-
-    return updatedStates;
+  AddressState? getAddressState(String address) {
+    return firstWhere((state) => state.address == address);
   }
 
   // Helper method to update status for a single address
-  List<AddressState> updateAddressStatus(
-    String address,
-    AddressIndexingJobResponse status,
-  ) {
-    return map((addressState) {
-      if (addressState.address.address == address) {
-        // Determine AddressStateType from IndexingJobStatus
-        final stateType = _mapIndexingStatusToStateType(status.status);
-        return addressState.copyWith(
-          state: stateType,
-          indexingStatus: status,
-        );
-      }
-      return addressState;
-    }).toList();
-  }
 
   AddressStateType _mapIndexingStatusToStateType(IndexingJobStatus status) {
     switch (status) {
       case IndexingJobStatus.running:
       case IndexingJobStatus.paused:
-        return AddressStateType.indexing;
+        return AddressStateType.indexStated;
       case IndexingJobStatus.completed:
         return AddressStateType.indexingDone;
       case IndexingJobStatus.failed:

@@ -202,8 +202,8 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
     return BlocBuilder<UserAllOwnCollectionBloc, UserAllOwnCollectionState>(
       bloc: bloc,
       builder: (context, collectionState) {
-        final targetState = collectionState.addressStates.firstWhereOrNull(
-            (element) => element.address.address == targetAddress);
+        final targetState = collectionState.addressStates
+            .firstWhereOrNull((element) => element.address == targetAddress);
         final stateSuffix =
             (targetState?.state == AddressStateType.fetchingArtworksDone)
                 ? ''

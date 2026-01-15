@@ -76,18 +76,6 @@ class NftIndexerService implements NftIndexerServiceBase {
   @override
   Future<Identity> getIdentity(QueryIdentityRequest request) async {
     return Identity('', '', '');
-    final vars = request.toJson();
-    final result = await _client.query(
-      doc: identity,
-      vars: vars,
-    );
-    if (result == null) {
-      return Identity('', '', '');
-    }
-    final data = QueryIdentityResponse.fromJson(
-      Map<String, dynamic>.from(result as Map),
-    );
-    return data.identity;
   }
 
   /// Trigger indexing for a list of token CIDs
@@ -157,28 +145,65 @@ class NftIndexerService implements NftIndexerServiceBase {
   @override
   Future<List<AddressIndexingResult>> indexAddressesList(
       List<String> addresses) async {
+    // final fakeResults = addresses
+    //     .map((address) => AddressIndexingResult(
+    //         address: address, workflowId: 'fake_workflow_id'))
+    //     .toList();
+    // return fakeResults;
     if (addresses.isEmpty) {
       throw ArgumentError('Addresses list cannot be empty');
     }
 
-    final result = await _client.mutate(
-      doc: triggerOwnerIndexingList,
-      vars: {
-        'addresses': addresses,
-      },
-      withToken: true,
-    );
+    try {
+      final result = await _client.mutate(
+        doc: triggerOwnerIndexingList,
+        vars: {
+          'addresses': addresses,
+        },
+        withToken: true,
+      );
 
-    if (result == null || result['triggerOwnerIndexingList'] == null) {
-      throw Exception(
-          'Failed to trigger indexing for addresses ${addresses.join(', ')}');
+      if (result == null) {
+        throw Exception(
+            'Received null response when triggering indexing for addresses ${addresses.join(', ')}');
+      }
+
+      if (result['triggerAddressIndexing'] == null) {
+        throw Exception(
+            'Response missing triggerAddressIndexing field. Response keys: ${result.keys.join(', ')}. Addresses: ${addresses.join(', ')}');
+      }
+
+      final triggerResult =
+          result['triggerAddressIndexing'] as Map<String, dynamic>?;
+      if (triggerResult == null) {
+        throw Exception(
+            'triggerAddressIndexing is null in response. Addresses: ${addresses.join(', ')}');
+      }
+
+      final jobs = triggerResult['jobs'] as List<dynamic>?;
+
+      if (jobs == null) {
+        throw Exception(
+            'Invalid response format: missing jobs array. Response structure: ${triggerResult.keys.join(', ')}. Addresses: ${addresses.join(', ')}');
+      }
+
+      return jobs
+          .map((item) => AddressIndexingResult.fromJson(
+              Map<String, dynamic>.from(item as Map)))
+          .toList();
+    } catch (e) {
+      // Re-throw with more context about the mutation
+      if (e.toString().contains('FormatException') ||
+          e.toString().contains('Unexpected character')) {
+        throw Exception(
+            'Server returned invalid response format (not JSON) when triggering address indexing. '
+            'This may indicate a server error or authentication issue. '
+            'Addresses: ${addresses.join(', ')}. '
+            'Original error: $e');
+      }
+      // Re-throw other exceptions as-is
+      rethrow;
     }
-
-    final data = result['triggerOwnerIndexingList'] as List<dynamic>;
-    return data
-        .map((item) => AddressIndexingResult.fromJson(
-            Map<String, dynamic>.from(item as Map)))
-        .toList();
   }
 
   /// Get address indexing job status by workflowId (no runId needed)
@@ -190,6 +215,14 @@ class NftIndexerService implements NftIndexerServiceBase {
   @override
   Future<AddressIndexingJobResponse> getAddressIndexingJobStatus(
       String workflowId) async {
+    // final fakeResult = AddressIndexingJobResponse(
+    //     workflowId: workflowId,
+    //     address: 'fake_address',
+    //     chain: 'fake_chain',
+    //     status: IndexingJobStatus.failed,
+    //     tokensProcessed: Random().nextInt(1000),
+    //     startedAt: DateTime.now());
+    // return fakeResult;
     if (workflowId.isEmpty) {
       throw ArgumentError('Workflow ID cannot be empty');
     }
@@ -201,11 +234,11 @@ class NftIndexerService implements NftIndexerServiceBase {
       },
     );
 
-    if (result == null || result['addressIndexingJobStatus'] == null) {
+    if (result == null || result['indexingJob'] == null) {
       throw Exception('Failed to get address indexing job status');
     }
 
-    final data = result['addressIndexingJobStatus'] as Map<String, dynamic>;
+    final data = result['indexingJob'] as Map<String, dynamic>;
     return AddressIndexingJobResponse.fromJson(data);
   }
 
