@@ -18,6 +18,7 @@ import 'package:autonomy_flutter/nft_collection/graphql/model/get_changes.dart';
 import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
 import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/nft_collection/services/configuration_service.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
@@ -253,6 +254,7 @@ class NftTokensServiceImpl extends NftTokensService {
     disposeIsolate();
     await _configurationService.setDidSyncAddress(false);
     await _database.clearAll();
+    await injector<DriftDatabaseService>().deleteAllPlaylistItems();
     await injector<ConfigurationService>().clearAddressLastFetchTokenTime();
   }
 

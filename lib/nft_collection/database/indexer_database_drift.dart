@@ -125,7 +125,7 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
 
   @override
   Future<void> clearAll() async {
-    await _playlistDb.clearAll();
+    // await _playlistDb.clearAll();
   }
 
   @override
@@ -384,12 +384,8 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
         final walletAddress = addressService.getWalletAddress(owner);
         if (walletAddress == null) continue;
 
-        final chain = walletAddress.cryptoType == CryptoType.ETH
-            ? 'evm'
-            : walletAddress.cryptoType == CryptoType.XTZ
-                ? 'tezos'
-                : 'other';
-        playlistIds.add('addr:$chain:$owner');
+        final playlistId = DP1CallExtension.generatePlaylistId(owner);
+        playlistIds.add(playlistId);
       }
 
       if (playlistIds.isEmpty) return Stream.value([]);

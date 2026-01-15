@@ -127,7 +127,6 @@ class _DataManagementPageState extends State<DataManagementPage> {
         //"This action will safely clear local cache and\nre-download all artwork metadata. We recommend only doing this if instructed to do so by customer support to resolve a problem.",
         'rebuild'.tr(),
         () async {
-          await injector<DriftDatabaseService>().deleteAllAddressPlaylists();
           // remove all cached data
           await injector<NftTokensService>().purgeCachedGallery();
           await injector<UserDp1PlaylistService>()
@@ -138,8 +137,10 @@ class _DataManagementPageState extends State<DataManagementPage> {
           await DefaultCacheManager().emptyCache();
           injector<UserAllOwnCollectionBloc>().add(ClearDataEvent());
           injector<FeralFileFeedManager>().clearAllCache();
+
           //redownload data
-          final addresses = injector<AddressService>().getAllAddresses();
+          final addresses =
+              await injector<AddressService>().getAllAddressesFromDrift();
           injector<UserAllOwnCollectionBloc>().add(FetchTokensOfAddresses(
               addresses: addresses, shouldUpdateLastRefreshedTime: true));
 

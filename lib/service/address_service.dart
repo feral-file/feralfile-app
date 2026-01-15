@@ -26,6 +26,14 @@ class AddressService {
 
   final AppDataManager _appDataManager;
 
+  Future<List<String>> getAllAddressesFromDrift(
+      {CryptoType? chain, bool? isHidden}) async {
+    return (await injector<DriftDatabaseService>().getAddressPlaylistRows())
+        .map((p) => p.ownerAddress)
+        .nonNulls
+        .toList();
+  }
+
   List<String> getAllAddresses({CryptoType? chain, bool? isHidden}) {
     return getAllWalletAddresses(chain: chain, isHidden: isHidden)
         .map((e) => e.address)
@@ -87,11 +95,6 @@ class AddressService {
       await injector<DriftDatabaseService>().ingestPlaylist(
         playlistRef,
         'my_collection',
-      );
-      injector<UserAllOwnCollectionBloc>().add(
-        ReindexAddresses(
-          addresses: [newAddress.address],
-        ),
       );
       injector<PlaylistsBloc>(
               instanceName: PlaylistsBlocInstance.my.instanceName)

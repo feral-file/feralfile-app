@@ -4,6 +4,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
+import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:uuid/uuid.dart';
 
 extension DP1CallExtension on DP1Call {
@@ -61,7 +62,7 @@ extension DP1CallExtension on DP1Call {
         dpVersion: DP_VERSION,
         id: playlistId ?? generatePlaylistId(owners.first),
         slug: '',
-        title: title ?? owners.first,
+        title: title ?? owners.first.maskIfNeeded(),
         created: created ?? DateTime.now(),
         items: [],
         defaults: {},

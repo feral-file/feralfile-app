@@ -14,6 +14,7 @@ import 'package:autonomy_flutter/model/metric/dp1_playlist_metric.dart';
 import 'package:autonomy_flutter/model/metric/identify_user_payload.dart';
 import 'package:autonomy_flutter/onboarding/introduce_page.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/works/bloc/works_bloc.dart';
 import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/bluetooth_service.dart';
 import 'package:autonomy_flutter/service/canvas_notification_manager.dart';
@@ -306,6 +307,7 @@ class _OnboardingPageState extends State<OnboardingPage>
             channelUrls,
           );
           await injector<FeralFileFeedManager>().reloadAllCache();
+          injector<WorksBloc>().add(const LoadWorksEvent());
         },
         onError: (Object e) {
           log.info('Failed to load remote config: $e');

@@ -106,6 +106,21 @@ abstract class DriftDatabaseServiceAbstract {
 
   Future<db.Playlist?> getPlaylistRowById(String id);
 
+  /// Watch playlists filtered by channel and/or kind.
+  ///
+  /// - [channelId] null means any channel.
+  /// - [kind] filters by playlist type (dp1 vs address).
+  Stream<List<db.Playlist>> watchPlaylistRows({
+    String? channelId,
+    DriftPlaylistKind? kind,
+  });
+
+  /// Watch items in a playlist by playlist ID.
+  ///
+  /// Returns a stream of items that updates when playlist entries or items
+  /// change. Items are ordered according to the playlist's sort mode.
+  Stream<List<db.Item>> watchPlaylistById(String playlistId);
+
   Future<List<DP1Call>> getPlaylistRowsAsDp1Calls({
     String? channelId,
     DriftPlaylistKind? kind,
@@ -166,6 +181,25 @@ abstract class DriftDatabaseServiceAbstract {
   /// - Delete Items that are only used by this playlist
   /// - Delete the Playlist itself
   Future<void> deletePlaylistById(String id);
+
+  /// Delete all entries and items of a playlist by ID.
+  ///
+  /// This will:
+  /// - Delete PlaylistEntries for the playlist
+  /// - Delete Items that are only used by this playlist
+  /// - Does NOT delete the Playlist itself
+  Future<void> deletePlaylistEntriesAndItemsById(String playlistId);
+
+  /// Delete all playlist items (entries and items) for playlists.
+  ///
+  /// If [kind] is provided, only deletes items for playlists of that kind.
+  /// If [kind] is null, deletes items for all playlists.
+  ///
+  /// This will:
+  /// - Delete all PlaylistEntries for the playlists
+  /// - Delete Items that are only used by these playlists
+  /// - Does NOT delete the Playlists themselves
+  Future<void> deleteAllPlaylistItems({DriftPlaylistKind? kind});
 
   /// Delete all channels of a specific kind and baseUrl
   Future<void> deleteAllChannels({
@@ -294,7 +328,7 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
     query.orderBy([
       (p) => OrderingTerm(expression: p.createdAtUs, mode: OrderingMode.desc),
     ]);
-    
+
     final rows = await query.get();
     if (baseUrl == null) {
       return rows;
@@ -304,6 +338,84 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
 
   @override
   Future<db.Playlist?> getPlaylistRowById(String id) => _db.getPlaylistById(id);
+
+  @override
+  Stream<List<db.Playlist>> watchPlaylistRows({
+    String? channelId,
+    DriftPlaylistKind? kind,
+  }) {
+    final typeFilter = kind?.value;
+    return _db.watchPlaylists(
+      channelId: channelId,
+      type: typeFilter,
+    );
+  }
+
+  @override
+  Stream<List<db.Item>> watchPlaylistById(String playlistId) {
+    // Watch playlist entries and items for the given playlist ID
+    // We need to get sort mode from playlist, but we'll watch entries directly
+    // and handle sort mode in a stream that combines playlist watch with entries
+    return Stream.multi((controller) async {
+      // Get initial playlist to determine sort mode
+      final playlist = await _db.getPlaylistById(playlistId);
+      if (playlist == null) {
+        controller.add(<db.Item>[]);
+        controller.close();
+        return;
+      }
+
+      final orderByProvenance = playlist.sortMode == 1;
+
+      // Watch playlist entries joined with items
+      final query = _db.select(_db.playlistEntries).join([
+        innerJoin(
+          _db.items,
+          _db.items.id.equalsExp(_db.playlistEntries.itemId),
+        ),
+      ])
+        ..where(_db.playlistEntries.playlistId.equals(playlistId));
+
+      if (orderByProvenance) {
+        query.orderBy([
+          OrderingTerm(
+            expression: _db.playlistEntries.sortKeyUs,
+            mode: OrderingMode.desc,
+          ),
+          OrderingTerm(
+            expression: _db.items.id,
+            mode: OrderingMode.desc,
+          ),
+        ]);
+      } else {
+        query.orderBy([
+          OrderingTerm(
+            expression: _db.playlistEntries.position,
+            mode: OrderingMode.asc,
+          ),
+          OrderingTerm(
+            expression: _db.items.id,
+            mode: OrderingMode.asc,
+          ),
+        ]);
+      }
+
+      final subscription = query.watch().listen(
+        (rows) {
+          final items = rows.map((row) => row.readTable(_db.items)).toList();
+          controller.add(items);
+        },
+        onError: controller.addError,
+        onDone: controller.close,
+        cancelOnError: false,
+      );
+
+      // Cancel subscription when controller is closed
+      controller.onCancel = () {
+        subscription.cancel();
+      };
+    });
+  }
 
   @override
   Future<List<DP1Call>> getPlaylistRowsAsDp1Calls({
@@ -829,6 +941,75 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
   }
 
   @override
+  Future<void> deletePlaylistEntriesAndItemsById(String playlistId) async {
+    // Check if playlist exists
+    final playlist = await getPlaylistRowById(playlistId);
+    if (playlist == null) {
+      log.info(
+        '[DriftDatabaseService] No playlist found with id: $playlistId',
+      );
+      return;
+    }
+
+    await _deletePlaylistEntriesAndItems([playlistId]);
+    log.info(
+      '[DriftDatabaseService] Deleted entries and items for playlist: '
+      '$playlistId',
+    );
+  }
+
+  @override
+  Future<void> deleteAllPlaylistItems({DriftPlaylistKind? kind}) async {
+    List<String> playlistIds;
+
+    if (kind != null) {
+      final typeFilter = switch (kind) {
+        DriftPlaylistKind.dp1 => 0,
+        DriftPlaylistKind.address => 1,
+      };
+
+      // Get all playlist IDs of this kind
+      final playlistsQuery = _db.selectOnly(_db.playlists)
+        ..addColumns([_db.playlists.id])
+        ..where(_db.playlists.type.equals(typeFilter));
+      final playlists = await playlistsQuery.get();
+      playlistIds = playlists
+          .map((p) => p.read(_db.playlists.id))
+          .whereType<String>()
+          .toList();
+
+      if (playlistIds.isEmpty) {
+        log.info(
+          '[DriftDatabaseService] No playlists found with kind: ${kind.name}',
+        );
+        return;
+      }
+    } else {
+      // Get all playlist IDs
+      final playlistsQuery = _db.selectOnly(_db.playlists)
+        ..addColumns([_db.playlists.id]);
+      final playlists = await playlistsQuery.get();
+      playlistIds = playlists
+          .map((p) => p.read(_db.playlists.id))
+          .whereType<String>()
+          .toList();
+
+      if (playlistIds.isEmpty) {
+        log.info(
+          '[DriftDatabaseService] No playlists found',
+        );
+        return;
+      }
+    }
+
+    await _deletePlaylistEntriesAndItems(playlistIds);
+    log.info(
+      '[DriftDatabaseService] Deleted entries and items for '
+      '${playlistIds.length} playlists${kind != null ? ' of kind: ${kind.name}' : ''}',
+    );
+  }
+
+  @override
   Future<void> deleteAllChannels({
     required DriftChannelKind kind,
     required String baseUrl,
@@ -901,13 +1082,13 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
     await _deletePlaylistsAndRelatedData([playlist.id]);
   }
 
-  /// Helper method to delete playlists and their related data.
+  /// Helper method to delete playlist entries and items (without deleting playlists).
   ///
   /// This will:
   /// - Delete PlaylistEntries for the playlists
   /// - Delete Items that are only used by these playlists
-  /// - Delete the Playlists themselves
-  Future<void> _deletePlaylistsAndRelatedData(List<String> playlistIds) async {
+  /// - Does NOT delete the Playlists themselves
+  Future<void> _deletePlaylistEntriesAndItems(List<String> playlistIds) async {
     if (playlistIds.isEmpty) {
       return;
     }
@@ -948,11 +1129,40 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
           await (_db.delete(_db.items)..where((i) => i.id.isIn(itemsToDelete)))
               .go();
           log.info(
-            '[DriftDatabaseService] Deleted ${itemsToDelete.length} items that were only used by deleted playlists',
+            '[DriftDatabaseService] Deleted ${itemsToDelete.length} items that '
+            'were only used by deleted playlists',
           );
         }
       }
 
+      log.info(
+        '[DriftDatabaseService] Deleted entries and items for '
+        '${playlistIds.length} playlists',
+      );
+    } catch (e, st) {
+      log.info(
+        '[DriftDatabaseService] Error deleting playlist entries and items: $e',
+      );
+      unawaited(Sentry.captureException(e, stackTrace: st));
+      rethrow;
+    }
+  }
+
+  /// Helper method to delete playlists and their related data.
+  ///
+  /// This will:
+  /// - Delete PlaylistEntries for the playlists
+  /// - Delete Items that are only used by these playlists
+  /// - Delete the Playlists themselves
+  Future<void> _deletePlaylistsAndRelatedData(List<String> playlistIds) async {
+    if (playlistIds.isEmpty) {
+      return;
+    }
+
+    // First delete entries and items
+    await _deletePlaylistEntriesAndItems(playlistIds);
+
+    try {
       // Delete the playlists themselves
       await (_db.delete(_db.playlists)..where((p) => p.id.isIn(playlistIds)))
           .go();

@@ -348,7 +348,6 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
 
   @override
   Future<void> reloadCache() async {
-    return;
     if (_isReloadingCache) return;
     _isReloadingCache = true;
     try {

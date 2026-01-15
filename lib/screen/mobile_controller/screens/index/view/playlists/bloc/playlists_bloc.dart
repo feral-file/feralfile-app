@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart'
+    as db;
 import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
@@ -7,6 +11,7 @@ import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sentry/sentry.dart';
 
 part 'playlists_event.dart';
 part 'playlists_state.dart';
@@ -17,6 +22,7 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     this.total,
     this.pageSize = 5,
   }) : super(const PlaylistsState()) {
+    _setupDatabaseListener();
     on<LoadPlaylistsEvent>(_onLoadPlaylists);
     on<LoadMorePlaylistsEvent>(_onLoadMorePlaylists);
     on<RefreshPlaylistsEvent>(_onRefreshPlaylists);
@@ -25,17 +31,91 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
   final PlaylistType playlistType;
   final int? total;
   final int pageSize;
+  StreamSubscription<List<db.Playlist>>? _databaseSubscription;
+
+  /// Setup database listener to watch for changes.
+  void _setupDatabaseListener() {
+    // Cancel existing subscription if any
+    _databaseSubscription?.cancel();
+    _databaseSubscription = null;
+
+    // Don't watch for global playlists
+    if (playlistType == PlaylistType.global) {
+      return;
+    }
+
+    try {
+      Stream<List<db.Playlist>> watchStream;
+
+      switch (playlistType) {
+        case PlaylistType.curated:
+          // Watch DP1 playlists (type=0)
+          watchStream = injector<DriftDatabaseService>().watchPlaylistRows(
+            kind: DriftPlaylistKind.dp1,
+          );
+          log.info(
+            '[PlaylistsBloc] Setting up database listener '
+            'for curated playlists',
+          );
+        case PlaylistType.me:
+          // Watch address playlists (type=1, channelId='my_collection')
+          watchStream = injector<DriftDatabaseService>().watchPlaylistRows(
+            channelId: 'my_collection',
+            kind: DriftPlaylistKind.address,
+          );
+          log.info(
+            '[PlaylistsBloc] Setting up database listener for my playlists',
+          );
+        case PlaylistType.global:
+          // No listener for global playlists
+          return;
+      }
+
+      _databaseSubscription = watchStream.listen(
+        (playlists) async {
+          log.info(
+            '[PlaylistsBloc] Database changed, reloading '
+            '${playlistType.name} playlists with ${playlists.length} playlists',
+          );
+
+          // Trigger reload when database changes
+          add(RefreshPlaylistsEvent());
+        },
+        onError: (Object error, StackTrace stackTrace) {
+          log.info(
+            '[PlaylistsBloc] Database listener error: $error',
+          );
+          unawaited(
+            Sentry.captureException(
+              'Database listener error in PlaylistsBloc: $error',
+              stackTrace: stackTrace,
+            ),
+          );
+        },
+      );
+    } catch (e, s) {
+      log.info(
+        '[PlaylistsBloc] Error setting up database listener: $e',
+      );
+      unawaited(
+        Sentry.captureException(
+          'Error setting up database listener: $e',
+          stackTrace: s,
+        ),
+      );
+    }
+  }
 
   Future<void> _onLoadPlaylists(
     LoadPlaylistsEvent event,
     Emitter<PlaylistsState> emit,
   ) async {
-    log.info("LoadPlaylistsEvent for ${playlistType.name}");
+    log.info('LoadPlaylistsEvent for ${playlistType.name}');
     await _loadPlaylists(
       emit: emit,
       cursor: null,
     );
-    log.info("LoadPlaylistsEvent for ${playlistType.name} done");
+    log.info('LoadPlaylistsEvent for ${playlistType.name} done');
   }
 
   Future<void> _onLoadMorePlaylists(
@@ -85,14 +165,16 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     final nextCursor = end < allPlaylists.length ? end.toString() : null;
     final hasMore = nextCursor != null;
 
-    final playlistDataList = await Future.wait(topPlaylists
-        .map(
-          (playlistRef) async => PlaylistData(
-            playlistReference: playlistRef,
-            creator: await playlistRef.getCreator(),
-          ),
-        )
-        .toList());
+    final playlistDataList = await Future.wait(
+      topPlaylists
+          .map(
+            (playlistRef) async => PlaylistData(
+              playlistReference: playlistRef,
+              creator: await playlistRef.getCreator(),
+            ),
+          )
+          .toList(),
+    );
 
     return LoadPlaylistPaginationResponse(
       playlistData: playlistDataList,
@@ -187,16 +269,20 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
           ? [...state.playlistData, ...playlistDataList]
           : playlistDataList;
 
-      emit(state.copyWith(
-        status: PlaylistsStateStatus.loaded,
-        playlists: newPlaylists,
-        playlistData: newPlaylistDataList,
-        hasMore: paginationResponse.hasMore,
-        cursor: paginationResponse.cursor,
-        error: '',
-      ));
+      emit(
+        state.copyWith(
+          status: PlaylistsStateStatus.loaded,
+          playlists: newPlaylists,
+          playlistData: newPlaylistDataList,
+          hasMore: paginationResponse.hasMore,
+          cursor: paginationResponse.cursor,
+          error: '',
+        ),
+      );
       log.info(
-          "LoadPlaylistsEvent for ${playlistType.name}: ${newPlaylists.length}");
+        'LoadPlaylistsEvent for ${playlistType.name}: '
+        '${newPlaylists.length}',
+      );
     } catch (e) {
       emit(
         state.copyWith(
@@ -206,16 +292,24 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
       );
     }
   }
+
+  @override
+  Future<void> close() {
+    log.info('[PlaylistsBloc] Closing, cancelling database subscription');
+    _databaseSubscription?.cancel();
+    _databaseSubscription = null;
+    return super.close();
+  }
 }
 
 class LoadPlaylistPaginationResponse {
-  final List<PlaylistData> playlistData;
-  final bool hasMore;
-  final String? cursor;
-
   LoadPlaylistPaginationResponse({
     required this.playlistData,
     required this.hasMore,
     required this.cursor,
   });
+
+  final List<PlaylistData> playlistData;
+  final bool hasMore;
+  final String? cursor;
 }
