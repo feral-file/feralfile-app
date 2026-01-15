@@ -61,23 +61,6 @@ class Reindex extends UserAllOwnCollectionEvent {
   String get streamKey => 'Reindex';
 }
 
-class WorkflowStatusTick extends UserAllOwnCollectionEvent {
-  WorkflowStatusTick({
-    required this.operationId,
-    required this.workflowId,
-    required this.runId,
-    required this.status,
-  });
-
-  final String operationId;
-  final String workflowId;
-  final String runId;
-  final WorkflowExecutionStatus status;
-
-  @override
-  String get streamKey => 'WorkflowStatusTick:$operationId';
-}
-
 class AddressIndexingJobStatusTick extends UserAllOwnCollectionEvent {
   AddressIndexingJobStatusTick({
     required this.address,

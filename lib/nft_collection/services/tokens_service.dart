@@ -68,6 +68,7 @@ abstract class NftTokensService {
             Object error, StackTrace stackTrace, String address)
         onError,
     FutureOr<void> Function(List<String> addresses)? onBatchStart,
+    FutureOr<void> Function(List<AddressIndexingResult> results)? onIndexed,
   });
 
   Future<void> reindexByCidsAndPullStatus({
@@ -384,6 +385,7 @@ class NftTokensServiceImpl extends NftTokensService {
             Object error, StackTrace stackTrace, String address)
         onError,
     FutureOr<void> Function(List<String> addresses)? onBatchStart,
+    FutureOr<void> Function(List<AddressIndexingResult> results)? onIndexed,
   }) async {
     if (addresses.isEmpty) return;
 
@@ -417,6 +419,11 @@ class NftTokensServiceImpl extends NftTokensService {
       final addressToWorkflowId = <String, String>{
         for (final result in results) result.address: result.workflowId
       };
+
+      // Notify caller about indexing results so it can persist workflow IDs
+      if (onIndexed != null) {
+        await onIndexed(results);
+      }
 
       NftCollection.logger.info(
           '[reindexAddressesAndPullStatus] Indexed ${results.length} addresses, got ${addressToWorkflowId.length} workflowIds');

@@ -38,7 +38,6 @@ class UserAllOwnCollectionBloc
         _onReloadAssetTokensFromIndexerDatabase);
     on<ClearDataEvent>(_onClearData);
     on<Reindex>(_onReindex);
-    on<WorkflowStatusTick>(_onWorkflowStatusTick);
     on<AddressIndexingJobStatusTick>(_onAddressIndexingJobStatusTick);
     on<UpdateTokens>(_onUpdateTokens);
   }
@@ -123,11 +122,6 @@ class UserAllOwnCollectionBloc
                   completedAddresses.add(address);
                   log.info(
                       '[UserAllOwnCollectionBloc] Address $address completed successfully. Completed addresses: ${completedAddresses.length}/${addresses.length}');
-                  // Update last index time
-                  await injector<UserDp1PlaylistService>()
-                      .updateAddressLastIndexTime(
-                    addresses: {address: DateTime.now()},
-                  );
                 }
                 // Return true to complete polling for this address
                 return true;
@@ -149,7 +143,7 @@ class UserAllOwnCollectionBloc
               ));
               error = Exception('Timeout for address: $address');
             },
-            onError: (error, stackTrace, address) {
+            onError: (Object error, StackTrace stackTrace, String address) {
               // Keep polling despite transient errors
               log.info('[ReindexAddresses] Error for address $address: $error');
               unawaited(Sentry.captureEvent(SentryEvent(
@@ -161,6 +155,20 @@ class UserAllOwnCollectionBloc
                 throwable: error,
               )));
               error = error;
+            },
+            onIndexed: (List<AddressIndexingResult> results) async {
+              final infos = results
+                  .map(
+                    (result) => AddressIndexingInfo(
+                      address: result.address,
+                      workflowId: result.workflowId,
+                    ),
+                  )
+                  .toList();
+              await injector<UserDp1PlaylistService>()
+                  .updateAddressIndexingInfo(
+                infos: infos,
+              );
             },
           );
         } catch (e, st) {
@@ -428,67 +436,6 @@ class UserAllOwnCollectionBloc
     _activeCompleters.clear();
 
     emit(const UserAllOwnCollectionState());
-  }
-
-  // Removed deprecated _onPollWorkflowStatus
-
-  Future<void> _onWorkflowStatusTick(
-    WorkflowStatusTick event,
-    Emitter<UserAllOwnCollectionState> emit,
-  ) async {
-    final opId = event.operationId;
-    if (event.status.isDone) {
-      _workflowStatusTimers[opId]?.cancel();
-      _workflowStatusTimers.remove(opId);
-
-      try {
-        if (event.status.isSuccess) {
-          // Update state to gettingArtworks before fetching
-          final updatedStates = state.addressStates.updateStates(
-            addresses,
-            AddressStateType.fetchingArtworks,
-          );
-          emit(state.copyWith(addressStates: updatedStates));
-
-          final completer = Completer<void>();
-          add(
-            FetchTokens(
-              shouldUpdateLastRefreshedTime: true,
-              onDone: () {
-                completer.complete();
-              },
-              onError: (error, stackTrace) {
-                completer.completeError(error);
-              },
-            ),
-          );
-          await completer.future;
-        } else if (event.status.isRunning) {
-          // Still running, keep indexing state
-          add(FetchTokens(shouldUpdateLastRefreshedTime: false));
-        } else if (event.status == WorkflowExecutionStatus.timedOut) {
-          // Update state to indexingIncomplete on timeout
-          final updatedStates = state.addressStates.updateStates(
-            addresses,
-            AddressStateType.indexingIncomplete,
-          );
-          emit(state.copyWith(addressStates: updatedStates));
-        } else {
-          // Update state to indexingIncomplete on failure
-          final updatedStates = state.addressStates.updateStates(
-            addresses,
-            AddressStateType.indexingIncomplete,
-          );
-          emit(state.copyWith(
-            addressStates: updatedStates,
-          ));
-        }
-      } catch (e, stackTrace) {
-        log.info('[UserAllOwnCollectionBloc][_onWorkflowStatusTick] error $e');
-        Sentry.captureException('Failed to fetch tokens of addresses: $e',
-            stackTrace: stackTrace);
-      }
-    }
   }
 
   Future<void> _onAddressIndexingJobStatusTick(

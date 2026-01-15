@@ -8,68 +8,84 @@ import 'package:autonomy_flutter/service/configuration_service.dart';
 ///
 /// This service coordinates between the remote DP1 feed API (via DP1FeedService)
 /// and local storage (via AppDataManager.dp1FeedStorageService).
+class AddressIndexingInfo {
+  AddressIndexingInfo({
+    required this.address,
+    required this.workflowId,
+  });
+
+  final String address;
+  final String workflowId;
+
+  Map<String, dynamic> toJson() => {
+        'address': address,
+        'workflow_id': workflowId,
+      };
+
+  factory AddressIndexingInfo.fromJson(Map<String, dynamic> json) =>
+      AddressIndexingInfo(
+        address: json['address'] as String,
+        workflowId: json['workflow_id'] as String,
+      );
+}
+
 class UserDp1PlaylistService {
   UserDp1PlaylistService();
 
   /*
   ------------------------------------------------------------
-  ADDRESS LAST INDEX TIME
+  ADDRESS INDEXING INFO
   ------------------------------------------------------------
-  This is used to track the last index time for each address.
+  This is used to track indexing metadata (including workflowId) for each address.
   */
 
-  Future<void> setAddressLastIndexTime({
-    required Map<String, DateTime> addresses,
+  Future<void> setAddressIndexingInfo({
+    required List<AddressIndexingInfo> infos,
   }) async {
-    await injector<ConfigurationService>().setAddressLastIndexTime(addresses);
+    await injector<ConfigurationService>().setAddressIndexingInfo(infos);
   }
 
-  Future<void> updateAddressLastIndexTime({
-    required Map<String, DateTime?> addresses,
+  Future<void> updateAddressIndexingInfo({
+    required List<AddressIndexingInfo> infos,
   }) async {
-    final addressLastRefreshedTime =
-        injector<ConfigurationService>().getAddressLastIndexTime();
-    // update the time for the addresses
-    for (final entry in addresses.entries) {
-      if (entry.value == null) {
-        addressLastRefreshedTime.remove(entry.key);
-      } else {
-        final candidate = entry.value!.toUtc();
-        final current = addressLastRefreshedTime[entry.key];
-        if (current == null || candidate.isAfter(current)) {
-          addressLastRefreshedTime[entry.key] = candidate;
-        } else {
-          addressLastRefreshedTime[entry.key] = current;
-        }
+    final currentInfos =
+        injector<ConfigurationService>().getAddressIndexingInfo();
+    final byAddress = {
+      for (final info in currentInfos) info.address: info,
+    };
+
+    for (final info in infos) {
+      byAddress[info.address] = info;
+    }
+
+    await setAddressIndexingInfo(infos: byAddress.values.toList());
+  }
+
+  AddressIndexingInfo? getAddressIndexingInfo(String address) {
+    final currentInfos =
+        injector<ConfigurationService>().getAddressIndexingInfo();
+    for (final info in currentInfos) {
+      if (info.address == address) {
+        return info;
       }
     }
-    await setAddressLastIndexTime(addresses: addressLastRefreshedTime);
+    return null;
   }
 
-  Map<String, DateTime?> getAddressOldestLastIndexTime({
-    required List<String> addresses,
-  }) {
-    final map = injector<ConfigurationService>().getAddressLastIndexTime();
-    final result = <String, DateTime?>{};
-    for (final addr in addresses) {
-      result[addr] = map[addr];
-    }
-    return result;
-  }
-
-  Future<void> clearAddressLastIndexTime({
+  Future<void> clearAddressIndexingInfo({
     required List<String> addresses,
   }) async {
-    final map = injector<ConfigurationService>().getAddressLastIndexTime();
-    for (final addr in addresses) {
-      map.remove(addr);
-    }
-    await setAddressLastIndexTime(addresses: map);
+    final currentInfos =
+        injector<ConfigurationService>().getAddressIndexingInfo();
+    final filtered = currentInfos
+        .where((info) => !addresses.contains(info.address))
+        .toList();
+    await setAddressIndexingInfo(infos: filtered);
   }
 
   bool isAddressIndexed(String address) {
-    final map = injector<ConfigurationService>().getAddressLastIndexTime();
-    return map.containsKey(address);
+    final info = getAddressIndexingInfo(address);
+    return info != null && info.workflowId.isNotEmpty;
   }
 
   /*
@@ -175,8 +191,7 @@ class UserDp1PlaylistService {
   }
 
   Future<void> clearData() async {
-    // await injector<ConfigurationService>().clearAddressLastRefreshedTime();
-    await setAddressLastIndexTime(addresses: {});
+    await setAddressIndexingInfo(infos: <AddressIndexingInfo>[]);
     await setAddressLastFetchTokenTime(addresses: {});
     await setLastUpdateChangeAnchor(addressAnchors: []);
   }
