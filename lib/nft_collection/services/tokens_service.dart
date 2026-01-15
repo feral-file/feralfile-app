@@ -57,8 +57,16 @@ abstract class NftTokensService {
     List<AddressAnchor> addressAnchors,
   );
 
-  Future<void> reindexAddressesAndPullStatus({
-    required List<String> addresses,
+  /// Pull address indexing status for existing workflows (no new indexing).
+  ///
+  /// [addressToWorkflowId] - Map of address to existing workflowId.
+  /// [timeout] - Max duration to keep polling for each address.
+  /// [onStatus] - Callback invoked on each status update. Return true to stop
+  /// polling for that address, false to continue.
+  /// [onTimeout] - Callback invoked when timeout is reached for an address.
+  /// [onError] - Callback invoked when a polling error occurs.
+  Future<void> pullAddressesIndexingStatus({
+    required Map<String, String> addressToWorkflowId,
     required Duration timeout,
     required FutureOr<bool> Function(
             AddressIndexingJobResponse status, String address)
@@ -67,8 +75,6 @@ abstract class NftTokensService {
     required FutureOr<void> Function(
             Object error, StackTrace stackTrace, String address)
         onError,
-    FutureOr<void> Function(List<String> addresses)? onBatchStart,
-    FutureOr<void> Function(List<AddressIndexingResult> results)? onIndexed,
   });
 
   Future<void> reindexByCidsAndPullStatus({
@@ -137,9 +143,6 @@ class NftTokensServiceImpl extends NftTokensService {
   // Track manual token fetch requests by UUID
   final Map<String, Completer<List<AssetToken>>> _fetchManualTokensCompleters =
       {};
-  // Track running reindex operations by addresses key (deduplication)
-  final Map<String, Completer<void>> _reindexAndPullCompleters = {};
-  final Map<String, Timer> _reindexAndPullTimers = {};
   // Track running reindex operations by token CIDs key (deduplication)
   final Map<String, Completer<void>> _reindexCidsAndPullCompleters = {};
   final Map<String, Timer> _reindexCidsAndPullTimers = {};
@@ -213,16 +216,6 @@ class NftTokensServiceImpl extends NftTokensService {
       controller.close();
     }
     _streamControllers.clear();
-    // Cancel all reindex and pull timers
-    for (final timer in _reindexAndPullTimers.values) {
-      timer.cancel();
-    }
-    _reindexAndPullTimers.clear();
-
-    for (final completer in _reindexAndPullCompleters.values) {
-      completer.completeError(Exception('Isolate disposed'));
-    }
-    _reindexAndPullCompleters.clear();
     for (final completer in _reindexCidsAndPullCompleters.values) {
       completer.completeError(Exception('Isolate disposed'));
     }
@@ -374,8 +367,9 @@ class NftTokensServiceImpl extends NftTokensService {
   }
 
   @override
-  Future<void> reindexAddressesAndPullStatus({
-    required List<String> addresses,
+  @override
+  Future<void> pullAddressesIndexingStatus({
+    required Map<String, String> addressToWorkflowId,
     required Duration timeout,
     required FutureOr<bool> Function(
             AddressIndexingJobResponse status, String address)
@@ -384,172 +378,132 @@ class NftTokensServiceImpl extends NftTokensService {
     required FutureOr<void> Function(
             Object error, StackTrace stackTrace, String address)
         onError,
-    FutureOr<void> Function(List<String> addresses)? onBatchStart,
-    FutureOr<void> Function(List<AddressIndexingResult> results)? onIndexed,
   }) async {
-    if (addresses.isEmpty) return;
+    if (addressToWorkflowId.isEmpty) return;
 
-    // Create key from addresses for deduplication
-    final addressesKey = addresses.join(',');
+    // Reuse common polling logic to pull indexing status
+    await _pollAddressesIndexingStatus(
+      addressToWorkflowId: addressToWorkflowId,
+      timeout: timeout,
+      onStatus: onStatus,
+      onTimeout: onTimeout,
+      onError: onError,
+      logPrefix: 'pullAddressesIndexingStatus',
+    );
+  }
 
-    // If same addresses are already running, return the same completer
-    final existingCompleter = _reindexAndPullCompleters[addressesKey];
-    if (existingCompleter != null && !existingCompleter.isCompleted) {
-      NftCollection.logger.info(
-          '[reindexAddressesAndPullStatus] Addresses $addresses already being processed, returning existing completer');
-      return existingCompleter.future;
+  Future<void> _pollAddressesIndexingStatus({
+    required Map<String, String> addressToWorkflowId,
+    required Duration timeout,
+    required FutureOr<bool> Function(
+            AddressIndexingJobResponse status, String address)
+        onStatus,
+    required FutureOr<void> Function(String address) onTimeout,
+    required FutureOr<void> Function(
+            Object error, StackTrace stackTrace, String address)
+        onError,
+    required String logPrefix,
+  }) async {
+    if (addressToWorkflowId.isEmpty) {
+      return;
     }
 
-    // Create new completer for this operation
-    final completer = Completer<void>();
-    _reindexAndPullCompleters[addressesKey] = completer;
+    // Track completed addresses
+    final completedAddresses = <String>{};
+    // Track timers per address
+    final addressTimers = <String, Timer>{};
+    // Track completers per address
+    final addressCompleters = <String, Completer<void>>{};
 
-    try {
-      NftCollection.logger.info(
-          '[reindexAddressesAndPullStatus] Start for addresses: $addresses');
+    // Poll status for each address individually
+    for (final entry in addressToWorkflowId.entries) {
+      final address = entry.key;
+      final workflowId = entry.value;
+      final addressKey = address;
 
-      // Call onBatchStart callback if provided
-      if (onBatchStart != null) {
-        await onBatchStart(addresses);
-      }
+      // Skip if already completed
+      if (completedAddresses.contains(address)) continue;
 
-      // Index all addresses at once using new API
-      // Note: indexAddressesList is already async and non-blocking, no need for isolate
-      final results = await _indexerService.indexAddressesList(addresses);
-      final addressToWorkflowId = <String, String>{
-        for (final result in results) result.address: result.workflowId
-      };
+      // Cancel previous timer if any
+      addressTimers[addressKey]?.cancel();
 
-      // Notify caller about indexing results so it can persist workflow IDs
-      if (onIndexed != null) {
-        await onIndexed(results);
-      }
+      final startedAt = DateTime.now();
+      final addressCompleter = Completer<void>();
+      addressCompleters[addressKey] = addressCompleter;
 
-      NftCollection.logger.info(
-          '[reindexAddressesAndPullStatus] Indexed ${results.length} addresses, got ${addressToWorkflowId.length} workflowIds');
-
-      // Track completed addresses
-      final completedAddresses = <String>{};
-      // Track timers per address
-      final addressTimers = <String, Timer>{};
-      // Track completers per address
-      final addressCompleters = <String, Completer<void>>{};
-
-      // Poll status for each address individually
-      for (final entry in addressToWorkflowId.entries) {
-        final address = entry.key;
-        final workflowId = entry.value;
-        final addressKey = address;
-
-        // Skip if already completed
-        if (completedAddresses.contains(address)) continue;
-
-        // Cancel previous timer if any
-        addressTimers[addressKey]?.cancel();
-
-        final startedAt = DateTime.now();
-        final addressCompleter = Completer<void>();
-        addressCompleters[addressKey] = addressCompleter;
-
-        addressTimers[addressKey] = Timer.periodic(
-          // random duration between 5 and 10 seconds
-          Duration(seconds: Random().nextInt(5) + 5),
-          (timer) async {
-            try {
-              // Skip polling if paused (app is in background)
-              if (_isPollingPaused) {
-                return;
-              }
-
-              // Skip if already completed
-              if (completedAddresses.contains(address)) {
-                timer.cancel();
-                addressTimers.remove(addressKey);
-                if (!addressCompleter.isCompleted) {
-                  addressCompleter.complete();
-                }
-                return;
-              }
-
-              // Check timeout
-              if (DateTime.now().difference(startedAt) > timeout) {
-                timer.cancel();
-                addressTimers.remove(addressKey);
-                await onTimeout(address);
-                if (!addressCompleter.isCompleted) {
-                  addressCompleter.complete();
-                }
-                return;
-              }
-
-              // Get address indexing job status (no runId needed)
-              final status =
-                  await _indexerService.getAddressIndexingJobStatus(workflowId);
-              NftCollection.logger.info(
-                  '[reindexAddressesAndPullStatus][$address] status: ${status.status.toJson()}, tokensProcessed: ${status.tokensProcessed}');
-
-              // Call onStatus callback - if returns true, complete and cleanup
-              final shouldComplete = await onStatus(status, address);
-              if (shouldComplete) {
-                completedAddresses.add(address);
-                timer.cancel();
-                addressTimers.remove(addressKey);
-                if (!addressCompleter.isCompleted) {
-                  addressCompleter.complete();
-                }
-              }
-            } catch (e, st) {
-              // Keep polling despite transient errors, but call onError
-              NftCollection.logger.warning(
-                  '[reindexAddressesAndPullStatus][$address] poll error: $e');
-              unawaited(Sentry.captureException(e, stackTrace: st));
-              await onError(e, st, address);
+      addressTimers[addressKey] = Timer.periodic(
+        // random duration between 5 and 10 seconds
+        Duration(seconds: Random().nextInt(5) + 5),
+        (timer) async {
+          try {
+            // Skip polling if paused (app is in background)
+            if (_isPollingPaused) {
+              return;
             }
-          },
-        );
-      }
 
-      // Wait for all addresses to complete
-      await Future.wait(
-        addressCompleters.values.map((c) => c.future),
-        eagerError: false,
+            // Skip if already completed
+            if (completedAddresses.contains(address)) {
+              timer.cancel();
+              addressTimers.remove(addressKey);
+              if (!addressCompleter.isCompleted) {
+                addressCompleter.complete();
+              }
+              return;
+            }
+
+            // Check timeout
+            if (DateTime.now().difference(startedAt) > timeout) {
+              timer.cancel();
+              addressTimers.remove(addressKey);
+              await onTimeout(address);
+              if (!addressCompleter.isCompleted) {
+                addressCompleter.complete();
+              }
+              return;
+            }
+
+            // Get address indexing job status (no runId needed)
+            final status =
+                await _indexerService.getAddressIndexingJobStatus(workflowId);
+            NftCollection.logger.info(
+              '[$logPrefix][$address] status: ${status.status.toJson()}, '
+              'tokensProcessed: ${status.tokensProcessed}',
+            );
+
+            // Call onStatus callback - if returns true, complete and cleanup
+            final shouldComplete = await onStatus(status, address);
+            if (shouldComplete) {
+              completedAddresses.add(address);
+              timer.cancel();
+              addressTimers.remove(addressKey);
+              if (!addressCompleter.isCompleted) {
+                addressCompleter.complete();
+              }
+            }
+          } catch (e, st) {
+            // Keep polling despite transient errors, but call onError
+            NftCollection.logger.warning(
+              '[$logPrefix][$address] poll error: $e',
+            );
+            unawaited(Sentry.captureException(e, stackTrace: st));
+            await onError(e, st, address);
+          }
+        },
       );
-
-      // Cleanup all timers
-      for (final timer in addressTimers.values) {
-        timer.cancel();
-      }
-      addressTimers.clear();
-      addressCompleters.clear();
-
-      // All addresses completed
-      _reindexAndPullCompleters.remove(addressesKey);
-      if (!completer.isCompleted) {
-        completer.complete();
-      }
-
-      NftCollection.logger.info(
-          '[reindexAddressesAndPullStatus] All addresses completed: $addresses');
-    } catch (e, st) {
-      NftCollection.logger.warning('[reindexAddressesAndPullStatus] Error: $e');
-      unawaited(Sentry.captureException(e, stackTrace: st));
-      _reindexAndPullCompleters.remove(addressesKey);
-      // Cancel all address timers
-      for (final timer in _reindexAndPullTimers.values) {
-        timer.cancel();
-      }
-      _reindexAndPullTimers.clear();
-      // Call onError for all addresses
-      for (final address in addresses) {
-        await onError(e, st, address);
-      }
-      if (!completer.isCompleted) {
-        completer.completeError(e);
-      }
-      rethrow;
     }
 
-    return completer.future;
+    // Wait for all addresses to complete
+    await Future.wait(
+      addressCompleters.values.map((c) => c.future),
+      eagerError: false,
+    );
+
+    // Cleanup all timers
+    for (final timer in addressTimers.values) {
+      timer.cancel();
+    }
+    addressTimers.clear();
+    addressCompleters.clear();
   }
 
   @override

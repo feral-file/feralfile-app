@@ -82,3 +82,8 @@ class UpdateTokens extends UserAllOwnCollectionEvent {
   @override
   String get streamKey => 'UpdateTokens';
 }
+
+class PullStatus extends UserAllOwnCollectionEvent {
+  @override
+  String get streamKey => 'PullStatus';
+}

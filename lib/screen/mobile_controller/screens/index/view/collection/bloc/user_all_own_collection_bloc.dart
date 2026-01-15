@@ -40,6 +40,10 @@ class UserAllOwnCollectionBloc
     on<Reindex>(_onReindex);
     on<AddressIndexingJobStatusTick>(_onAddressIndexingJobStatusTick);
     on<UpdateTokens>(_onUpdateTokens);
+    on<PullStatus>(_onPullStatus);
+
+    // On init, try to pull indexing status for all addresses in this bloc
+    add(PullStatus());
   }
 
   final NftTokensService _tokensService;
@@ -75,8 +79,6 @@ class UserAllOwnCollectionBloc
       );
       emit(state.copyWith(addressStates: updatedStates));
 
-      // Track completed addresses from this event only
-      final completedAddresses = <String>{};
       final maxAttempts = 5;
       int attempts = 0;
       Object? error = null;
@@ -84,128 +86,56 @@ class UserAllOwnCollectionBloc
       while (attempts < maxAttempts) {
         attempts++;
         error = null;
-        final addressesToReindex = addresses
-            .where((addr) => !completedAddresses.contains(addr))
-            .toList();
         log.info(
-            '[UserAllOwnCollectionBloc] Reindex addresses: $addressesToReindex, attempt: $attempts');
+          '[UserAllOwnCollectionBloc] Reindex addresses: $newAddresses, attempt: $attempts',
+        );
 
         try {
-          add(FetchTokens(shouldUpdateAddressState: false));
-          await _tokensService.reindexAddressesAndPullStatus(
-            addresses: addressesToReindex,
-            timeout: const Duration(hours: 1),
-            onBatchStart: (batchAddresses) async {
-              // Update state to indexing when batch starts
-              final updatedStates = state.addressStates.updateStates(
-                batchAddresses,
-                AddressStateType.indexing,
-              );
-              emit(state.copyWith(addressStates: updatedStates));
-              log.info(
-                  '[UserAllOwnCollectionBloc] Started indexing addresses: $batchAddresses');
-            },
-            onStatus: (status, address) async {
-              log.info(
-                  '[ReindexAddresses][$address] status: ${status.status.toJson()}, tokensProcessed: ${status.tokensProcessed}');
+          add(FetchTokens(shouldUpdateLastRefreshedTime: false));
+          final results = await _tokensService.reindexAddresses(newAddresses);
 
-              // Store detailed status in state
-              final updatedStates =
-                  state.addressStates.updateAddressStatus(address, status);
-              emit(state.copyWith(addressStates: updatedStates));
-
-              if (status.status.isDone) {
-                log.info(
-                    'Pull workflow status done with status: ${status.status.toJson()}, workflowId: ${status.workflowId}, address: $address');
-                if (status.status.isSuccess) {
-                  // Mark address as completed
-                  completedAddresses.add(address);
-                  log.info(
-                      '[UserAllOwnCollectionBloc] Address $address completed successfully. Completed addresses: ${completedAddresses.length}/${addresses.length}');
-                }
-                // Return true to complete polling for this address
-                return true;
-              } else {
-                // Still indexing, fetch tokens
-                add(FetchTokens(shouldUpdateAddressState: false));
-                return false;
-              }
-            },
-            onTimeout: (address) {
-              log.info('[ReindexAddresses] Timeout for address: $address');
-              Sentry.captureEvent(SentryEvent(
-                message: SentryMessage('Timeout for address: $address'),
-                level: SentryLevel.error,
-                extra: {
-                  'stackTrace': StackTrace.current.toString(),
-                },
-                throwable: 'Timeout for address: $address',
-              ));
-              error = Exception('Timeout for address: $address');
-            },
-            onError: (Object error, StackTrace stackTrace, String address) {
-              // Keep polling despite transient errors
-              log.info('[ReindexAddresses] Error for address $address: $error');
-              unawaited(Sentry.captureEvent(SentryEvent(
-                message: SentryMessage('Error for address $address: $error'),
-                level: SentryLevel.error,
-                extra: {
-                  'stackTrace': stackTrace.toString(),
-                },
-                throwable: error,
-              )));
-              error = error;
-            },
-            onIndexed: (List<AddressIndexingResult> results) async {
-              final infos = results
-                  .map(
-                    (result) => AddressIndexingInfo(
-                      address: result.address,
-                      workflowId: result.workflowId,
-                    ),
-                  )
-                  .toList();
-              await injector<UserDp1PlaylistService>()
-                  .updateAddressIndexingInfo(
-                infos: infos,
-              );
-            },
+          final infos = results
+              .map(
+                (result) => AddressIndexingInfo(
+                  address: result.address,
+                  workflowId: result.workflowId,
+                ),
+              )
+              .toList();
+          await injector<UserDp1PlaylistService>().updateAddressIndexingInfo(
+            infos: infos,
           );
+
+          // Successfully submitted indexing jobs, stop retrying
+          break;
         } catch (e, st) {
           Sentry.captureException(e, stackTrace: st);
           error = e;
-        }
-
-        // Wait a bit for events to be processed
-        await Future<void>.delayed(const Duration(milliseconds: 100));
-
-        // Also check completed addresses to ensure we have all
-        final allCompleted = completedAddresses.length == addresses.length;
-
-        if (allCompleted) {
           log.info(
-              '[UserAllOwnCollectionBloc] All addresses from this event have been indexed. Completed: ${completedAddresses.length}/${addresses.length}');
-          break;
-        } else {
-          log.info(
-              '[UserAllOwnCollectionBloc] Completed addresses: ${completedAddresses.join(',')}. Waiting for 10 seconds');
-          await Future<void>.delayed(const Duration(seconds: 10));
+            '[UserAllOwnCollectionBloc] reindexAddresses error: $e, attempt: $attempts / $maxAttempts',
+          );
+
+          if (attempts < maxAttempts) {
+            await Future<void>.delayed(const Duration(seconds: 10));
+          }
         }
       }
 
-      // after all attempts, if some addresses are not completed, mark them as failed
-      final failedAddresses = addresses
-          .where((addr) => !completedAddresses.contains(addr))
-          .toList();
-      if (failedAddresses.isNotEmpty) {
+      if (error != null) {
         log.info(
-            '[UserAllOwnCollectionBloc] Failed addresses: ${failedAddresses.join(',')}. Marking as incomplete');
+          '[UserAllOwnCollectionBloc] Failed to submit reindex jobs for addresses: ${newAddresses.join(',')}',
+        );
         final updatedStates = state.addressStates.updateStates(
-          failedAddresses,
+          newAddresses,
           AddressStateType.indexingIncomplete,
         );
         emit(state.copyWith(addressStates: updatedStates));
+        return;
       }
+
+      // After successfully submitting indexing jobs and storing workflowIds,
+      // start pulling indexing status via dedicated PullStatus handler.
+      add(PullStatus());
     } catch (e, st) {
       log.info('[UserAllOwnCollectionBloc] Reindex error: $e');
       unawaited(Sentry.captureException(e, stackTrace: st));
@@ -436,6 +366,101 @@ class UserAllOwnCollectionBloc
     _activeCompleters.clear();
 
     emit(const UserAllOwnCollectionState());
+  }
+
+  Future<void> _onPullStatus(
+    PullStatus event,
+    Emitter<UserAllOwnCollectionState> emit,
+  ) async {
+    try {
+      log.info(
+        '[UserAllOwnCollectionBloc] PullStatus: checking indexing status for bloc addresses',
+      );
+
+      final addressToWorkflowId = <String, String>{};
+      for (final address in addresses) {
+        final info =
+            injector<UserDp1PlaylistService>().getAddressIndexingInfo(address);
+        if (info != null && info.workflowId.isNotEmpty) {
+          addressToWorkflowId[address] = info.workflowId;
+        }
+      }
+
+      if (addressToWorkflowId.isEmpty) {
+        log.info(
+          '[UserAllOwnCollectionBloc] PullStatus: no indexing info found for bloc addresses, skip checking status',
+        );
+        return;
+      }
+
+      await _tokensService.pullAddressesIndexingStatus(
+        addressToWorkflowId: addressToWorkflowId,
+        timeout: const Duration(hours: 1),
+        onStatus: (status, address) async {
+          log.info(
+            '[PullStatus][$address] status: ${status.status.toJson()}, tokensProcessed: ${status.tokensProcessed}',
+          );
+
+          // Update state with latest status
+          final updatedStates =
+              state.addressStates.updateAddressStatus(address, status);
+          emit(state.copyWith(addressStates: updatedStates));
+
+          if (status.status.isDone) {
+            log.info(
+              '[UserAllOwnCollectionBloc] Address $address indexing completed via PullStatus',
+            );
+            // Fetch tokens after completion
+            add(FetchTokens(shouldUpdateLastRefreshedTime: true));
+            return true;
+          } else {
+            // Still indexing, fetch tokens periodically
+            add(FetchTokens(shouldUpdateLastRefreshedTime: false));
+            return false;
+          }
+        },
+        onTimeout: (address) async {
+          log.info(
+            '[PullStatus] Timeout for address: $address',
+          );
+          await Sentry.captureEvent(
+            SentryEvent(
+              message: SentryMessage(
+                'Timeout while checking indexing status for address: $address',
+              ),
+              level: SentryLevel.error,
+              extra: {
+                'stackTrace': StackTrace.current.toString(),
+              },
+              throwable:
+                  'Timeout while checking indexing status for address: $address',
+            ),
+          );
+        },
+        onError: (error, stackTrace, address) async {
+          log.info(
+            '[PullStatus] Error for address $address: $error',
+          );
+          await Sentry.captureEvent(
+            SentryEvent(
+              message: SentryMessage(
+                'Error while checking indexing status for address $address: $error',
+              ),
+              level: SentryLevel.error,
+              extra: {
+                'stackTrace': stackTrace.toString(),
+              },
+              throwable: error,
+            ),
+          );
+        },
+      );
+    } catch (e, stackTrace) {
+      log.warning(
+        '[UserAllOwnCollectionBloc] PullStatus: error while checking indexing status: $e',
+      );
+      unawaited(Sentry.captureException(e, stackTrace: stackTrace));
+    }
   }
 
   Future<void> _onAddressIndexingJobStatusTick(
