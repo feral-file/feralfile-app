@@ -5,6 +5,7 @@ import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
@@ -35,7 +36,6 @@ class PlaylistsPageState extends State<PlaylistsPage>
   final ScrollController _scrollController = ScrollController();
   late final PlaylistsBloc _curatedPlaylistsBloc;
   late final PlaylistsBloc _myPlaylistsBloc;
-  late final UserAllOwnCollectionBloc _userAllOwnCollectionBloc;
 
   @override
   bool get wantKeepAlive => true;
@@ -50,7 +50,6 @@ class PlaylistsPageState extends State<PlaylistsPage>
     _myPlaylistsBloc = injector<PlaylistsBloc>(
       instanceName: PlaylistsBlocInstance.my.instanceName,
     );
-    _userAllOwnCollectionBloc = injector<UserAllOwnCollectionBloc>();
   }
 
   @override
@@ -193,27 +192,55 @@ class PlaylistsPageState extends State<PlaylistsPage>
     final playlist = playlistReference.playlist;
     final owners = playlist.firstDynamicQuery?.params.owners ?? <String>[];
 
+    if (owners.isEmpty) {
+      final child = PlaylistTitle(
+        primaryText: '${playlist.title}',
+        secondaryText: playlistData.creator,
+        total: playlistDetailsState.total,
+      );
+
+      final slidableActions = [
+        if (playlistData is AddressPlaylistData)
+          ..._getAddressSlidableActions(playlistData),
+      ];
+
+      if (slidableActions.isEmpty) {
+        return child;
+      }
+
+      return Slidable(
+        groupTag: playlistData.playlistReference.playlist.id.toString(),
+        endActionPane: ActionPane(
+          extentRatio: 88 / 392,
+          motion: const DrawerMotion(),
+          children: slidableActions,
+        ),
+        child: child,
+      );
+    }
+
+    final manager = injector<UserAllOwnCollectionBlocManager>();
+    final targetAddress = owners.first;
+    final bloc = manager.getBlocForAddresses([targetAddress]) ??
+        manager.getDefaultBloc();
+
     return BlocBuilder<UserAllOwnCollectionBloc, UserAllOwnCollectionState>(
-      bloc: _userAllOwnCollectionBloc,
+      bloc: bloc,
       builder: (context, collectionState) {
         String stateSuffix = '';
 
-        if (owners.isNotEmpty) {
-          final targetAddress = owners.first;
-          AddressState? targetState;
-
-          for (final addressState in collectionState.addressStates) {
-            if (addressState.address.address == targetAddress) {
-              targetState = addressState;
-              break;
-            }
+        AddressState? targetState;
+        for (final addressState in collectionState.addressStates) {
+          if (addressState.address.address == targetAddress) {
+            targetState = addressState;
+            break;
           }
-
-          stateSuffix =
-              (targetState?.state == AddressStateType.fetchingArtworksDone)
-                  ? ''
-                  : targetState?.state.description ?? '';
         }
+
+        stateSuffix =
+            (targetState?.state == AddressStateType.fetchingArtworksDone)
+                ? ''
+                : targetState?.state.description ?? '';
 
         final child = PlaylistTitle(
           primaryText: '${playlist.title}',

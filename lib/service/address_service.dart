@@ -11,6 +11,7 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/util/constants.dart';
@@ -74,11 +75,9 @@ class AddressService {
     injector<PlaylistsBloc>(instanceName: PlaylistsBlocInstance.my.instanceName)
         .add(RefreshPlaylistsEvent());
     if (refreshPlaylist) {
-      injector<UserAllOwnCollectionBloc>().add(
-        ReindexAddresses(
-          addresses: [newAddress.address],
-        ),
-      );
+      final manager = injector<UserAllOwnCollectionBlocManager>();
+      final bloc = manager.getOrCreateBloc([newAddress.address]);
+      bloc.add(Reindex());
     }
     await _onAddressUpdate();
     log.info('Inserted address: ${newAddress.address}');

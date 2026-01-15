@@ -9,6 +9,7 @@ import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/home/home_bloc.dart';
 import 'package:autonomy_flutter/screen/home/home_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc_manager.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
@@ -110,8 +111,9 @@ class HomePageHelper {
           log.info('No addresses to refresh');
           return;
         }
-        injector<UserAllOwnCollectionBloc>()
-            .add(UpdateTokensOfAddresses(addresses: addressesToRefresh));
+        final manager = injector<UserAllOwnCollectionBlocManager>();
+        final bloc = manager.getOrCreateBloc(addressesToRefresh);
+        bloc.add(UpdateTokens());
       } catch (e) {
         log.info('Error in refresh tokens : $e');
         unawaited(
@@ -216,9 +218,10 @@ class HomePageHelper {
 
     if (addressesToRefresh.isNotEmpty) {
       log.info('Force fetching tokens for ${addressesToRefresh.toList()}');
-      injector<UserAllOwnCollectionBloc>().add(
-        FetchTokensOfAddresses(
-          addresses: addressesToRefresh,
+      final manager = injector<UserAllOwnCollectionBlocManager>();
+      final bloc = manager.getOrCreateBloc(addressesToRefresh);
+      bloc.add(
+        FetchTokens(
           shouldUpdateLastRefreshedTime: true,
         ),
       );
@@ -270,8 +273,9 @@ class HomePageHelper {
           '${addressesToReindex.toList()}',
         );
 
-        injector<UserAllOwnCollectionBloc>()
-            .add(ReindexAddresses(addresses: addressesToReindex.toList()));
+        final manager = injector<UserAllOwnCollectionBlocManager>();
+        final bloc = manager.getOrCreateBloc(addressesToReindex);
+        bloc.add(Reindex());
       }
     } catch (_) {
       // ignore errors in background refresh

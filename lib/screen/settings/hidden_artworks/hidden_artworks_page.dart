@@ -13,7 +13,9 @@ import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_rendering/svg_image.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/settings/hidden_artworks/hidden_artworks_bloc.dart';
+import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
@@ -201,8 +203,13 @@ class _HiddenArtworksPageState extends State<HiddenArtworksPage> {
                       [asset.cid],
                       !isHidden,
                     );
-                    injector<UserAllOwnCollectionBloc>()
-                        .add(ReloadAssetTokensFromIndexerDatabase());
+                    final manager = injector<UserAllOwnCollectionBlocManager>();
+                    final allAddresses =
+                        injector<AddressService>().getAllAddresses();
+                    if (allAddresses.isNotEmpty) {
+                      final bloc = manager.getDefaultBloc();
+                      bloc.add(ReloadAssetTokensFromIndexerDatabase());
+                    }
 
                     if (!context.mounted) {
                       return;

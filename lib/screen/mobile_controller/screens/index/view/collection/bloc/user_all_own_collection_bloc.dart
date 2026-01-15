@@ -29,24 +29,26 @@ class UserAllOwnCollectionBloc
       {};
   final Map<String, Completer<void>?> _activeCompleters = {};
   final Map<String, Timer> _workflowStatusTimers = {};
-  UserAllOwnCollectionBloc(this._tokensService)
-      : super(const UserAllOwnCollectionState()) {
-    on<FetchTokensOfAddresses>(_onFetchTokensOfAddresses);
+  UserAllOwnCollectionBloc(
+    this._tokensService, {
+    required this.addresses,
+  }) : super(const UserAllOwnCollectionState()) {
+    on<FetchTokens>(_onFetchTokens);
     on<ReloadAssetTokensFromIndexerDatabase>(
         _onReloadAssetTokensFromIndexerDatabase);
     on<ClearDataEvent>(_onClearData);
-    on<ReindexAddresses>(_onReindexAddresses);
+    on<Reindex>(_onReindex);
     on<WorkflowStatusTick>(_onWorkflowStatusTick);
-    on<UpdateTokensOfAddresses>(_onUpdateTokensOfAddresses);
+    on<UpdateTokens>(_onUpdateTokens);
   }
 
   final NftTokensService _tokensService;
+  final List<String> addresses;
 
-  Future<void> _onReindexAddresses(
-    ReindexAddresses event,
+  Future<void> _onReindex(
+    Reindex event,
     Emitter<UserAllOwnCollectionState> emit,
   ) async {
-    final addresses = event.addresses;
     if (addresses.isEmpty) return;
 
     try {
@@ -89,8 +91,7 @@ class UserAllOwnCollectionBloc
             '[UserAllOwnCollectionBloc] Reindex addresses: $addressesToReindex, attempt: $attempts');
 
         try {
-          add(FetchTokensOfAddresses(
-              addresses: addressesToReindex, shouldUpdateAddressState: false));
+          add(FetchTokens(shouldUpdateAddressState: false));
           await _tokensService.reindexAddressesAndPullStatus(
             addresses: addressesToReindex,
             timeout: const Duration(hours: 1),
@@ -130,14 +131,11 @@ class UserAllOwnCollectionBloc
                 }
               } else {
                 // Still indexing, fetch tokens
-                add(FetchTokensOfAddresses(
-                    addresses: batchAddresses,
-                    shouldUpdateAddressState: false));
+                add(FetchTokens(shouldUpdateAddressState: false));
               }
               add(
                 WorkflowStatusTick(
                   operationId: batchAddresses.join(','),
-                  addresses: batchAddresses,
                   workflowId: workflowId,
                   runId: runId,
                   status: status,
@@ -225,8 +223,8 @@ class UserAllOwnCollectionBloc
     }
   }
 
-  Future<void> _onFetchTokensOfAddresses(
-    FetchTokensOfAddresses event,
+  Future<void> _onFetchTokens(
+    FetchTokens event,
     Emitter<UserAllOwnCollectionState> emit,
   ) async {
     final maxRetryAttempts = 3;
@@ -237,7 +235,7 @@ class UserAllOwnCollectionBloc
       error = null;
       try {
         log.info(
-            '[UserAllOwnCollectionBloc][_onFetchTokensOfAddresses] started');
+            '[UserAllOwnCollectionBloc][_onFetchTokens] started for addresses: ${addresses.join(',')}');
         // Use event-specific key so we can run multiple concurrent operations
         // for different address sets, while still deduplicating identical ones.
         final subKey = event.streamKey;
@@ -251,7 +249,7 @@ class UserAllOwnCollectionBloc
           // return;
         } else {
           log.info(
-              '[UserAllOwnCollectionBloc][_onFetchTokensOfAddresses] not fetching, start fetching');
+              '[UserAllOwnCollectionBloc][_onFetchTokens] not fetching, start fetching');
         }
         // cancel the previous stream
         await _tokensStreamSubs[subKey]?.cancel();
@@ -269,7 +267,7 @@ class UserAllOwnCollectionBloc
         // Update state to fetchingArtworks when starting to fetch
         if (event.shouldUpdateAddressState) {
           final updatedStatesStart = state.addressStates.updateStates(
-            event.addresses,
+            addresses,
             AddressStateType.fetchingArtworks,
           );
           emit(state.copyWith(
@@ -279,15 +277,15 @@ class UserAllOwnCollectionBloc
         }
 
         // get the stream
-        final stream = await _tokensService.fetchTokensInIsolate(
-            event.addresses, null, null);
+        final stream =
+            await _tokensService.fetchTokensInIsolate(addresses, null, null);
 
         final List<AssetToken> collected = [];
 
         _tokensStreamSubs[subKey] = stream.listen(
           (tokens) {
             log.info(
-                '[${event.runtimeType}] Received ${tokens.length} tokens from stream for addresses: ${event.addresses.join(',')}');
+                '[${event.runtimeType}] Received ${tokens.length} tokens from stream for addresses: ${addresses.join(',')}');
             collected.addAll(tokens);
             if (tokens.isNotEmpty) {
               add(ReloadAssetTokensFromIndexerDatabase());
@@ -308,7 +306,7 @@ class UserAllOwnCollectionBloc
             // Update state to gettingArtworksFailed on error
             if (isLastAttempt && event.shouldUpdateAddressState) {
               final updatedStates = state.addressStates.updateStates(
-                event.addresses,
+                addresses,
                 AddressStateType.fetchingArtworksFailed,
               );
               emit(state.copyWith(addressStates: updatedStates));
@@ -319,7 +317,7 @@ class UserAllOwnCollectionBloc
             // Stream done successfully (onDone only called when no error with cancelOnError: true)
             if (event.shouldUpdateAddressState) {
               final updatedStates = state.addressStates.updateStates(
-                event.addresses,
+                addresses,
                 AddressStateType.fetchingArtworksDone,
               );
               emit(state.copyWith(
@@ -342,7 +340,7 @@ class UserAllOwnCollectionBloc
           final isLastAttempt = retryAttempts == maxRetryAttempts;
           if (isLastAttempt && event.shouldUpdateAddressState) {
             final updatedStates = state.addressStates.updateStates(
-              event.addresses,
+              addresses,
               AddressStateType.fetchingArtworksFailed,
             );
             emit(state.copyWith(addressStates: updatedStates));
@@ -354,7 +352,7 @@ class UserAllOwnCollectionBloc
         }
 
         final addressMap = {
-          for (final addr in event.addresses) addr: newLastUpdatedAt,
+          for (final addr in addresses) addr: newLastUpdatedAt,
         };
 
         if (event.shouldUpdateLastRefreshedTime) {
@@ -390,14 +388,13 @@ class UserAllOwnCollectionBloc
     ReloadAssetTokensFromIndexerDatabase event,
     Emitter<UserAllOwnCollectionState> emit,
   ) async {
-    final owners = injector<AddressService>().getAllAddresses();
-    if (owners.isEmpty) {
+    if (addresses.isEmpty) {
       emit(state.copyWith(addressStates: []));
       return;
     }
     final assetTokenGroupByAddress = injector<IndexerDatabaseAbstract>()
         .getGroupAssetTokensByOwnersGroupByAddress(
-      owners: owners,
+      owners: addresses,
     );
 
     // Preserve existing states when reloading
@@ -457,15 +454,14 @@ class UserAllOwnCollectionBloc
         if (event.status.isSuccess) {
           // Update state to gettingArtworks before fetching
           final updatedStates = state.addressStates.updateStates(
-            event.addresses,
+            addresses,
             AddressStateType.fetchingArtworks,
           );
           emit(state.copyWith(addressStates: updatedStates));
 
           final completer = Completer<void>();
           add(
-            FetchTokensOfAddresses(
-              addresses: event.addresses,
+            FetchTokens(
               shouldUpdateLastRefreshedTime: true,
               onDone: () {
                 completer.complete();
@@ -478,20 +474,18 @@ class UserAllOwnCollectionBloc
           await completer.future;
         } else if (event.status.isRunning) {
           // Still running, keep indexing state
-          add(FetchTokensOfAddresses(
-              addresses: event.addresses,
-              shouldUpdateLastRefreshedTime: false));
+          add(FetchTokens(shouldUpdateLastRefreshedTime: false));
         } else if (event.status == WorkflowExecutionStatus.timedOut) {
           // Update state to indexingIncomplete on timeout
           final updatedStates = state.addressStates.updateStates(
-            event.addresses,
+            addresses,
             AddressStateType.indexingIncomplete,
           );
           emit(state.copyWith(addressStates: updatedStates));
         } else {
           // Update state to indexingIncomplete on failure
           final updatedStates = state.addressStates.updateStates(
-            event.addresses,
+            addresses,
             AddressStateType.indexingIncomplete,
           );
           emit(state.copyWith(
@@ -506,20 +500,20 @@ class UserAllOwnCollectionBloc
     }
   }
 
-  Future<void> _onUpdateTokensOfAddresses(
-    UpdateTokensOfAddresses event,
+  Future<void> _onUpdateTokens(
+    UpdateTokens event,
     Emitter<UserAllOwnCollectionState> emit,
   ) async {
     try {
       log.info(
-          '[UserAllOwnCollectionBloc][_onUpdateTokensOfAddresses] started with addresses: ${event.addresses.join(',')}');
+          '[UserAllOwnCollectionBloc][_onUpdateTokens] started with addresses: ${addresses.join(',')}');
       // Use event-specific key so we can run multiple concurrent update streams
       // for different address sets.
       final subKey = event.streamKey;
 
-      if (event.addresses.isEmpty) {
+      if (addresses.isEmpty) {
         log.info(
-            '[UserAllOwnCollectionBloc][_onUpdateTokensOfAddresses] addresses list cannot be empty');
+            '[UserAllOwnCollectionBloc][_onUpdateTokens] addresses list cannot be empty');
         return;
       }
 
@@ -535,7 +529,7 @@ class UserAllOwnCollectionBloc
       _activeCompleters[subKey] = completer;
 
       final lastFetchTokenTimeMap = injector<UserDp1PlaylistService>()
-          .getAddressOldestLastFetchTokenTime(addresses: event.addresses);
+          .getAddressOldestLastFetchTokenTime(addresses: addresses);
 
       final sinceIsoValues = lastFetchTokenTimeMap.values.nonNulls.toList();
       final oldestLastFetchTokenTime = sinceIsoValues.isEmpty
@@ -544,7 +538,7 @@ class UserAllOwnCollectionBloc
 
       final addressAnchors = injector<UserDp1PlaylistService>()
           .getLastUpdateChangeAnchor(
-              addresses: event.addresses,
+              addresses: addresses,
               defaultAnchorBuilder: (address) =>
                   AddressAnchor(address: address, anchor: 0));
 
@@ -554,7 +548,7 @@ class UserAllOwnCollectionBloc
       _tokensStreamSubs[subKey] = stream.listen(
         (tokens) {
           log.info(
-              '[${event.runtimeType}] Received ${tokens.length} tokens from stream for addresses: ${event.addresses.join(',')}');
+              '[${event.runtimeType}] Received ${tokens.length} tokens from stream for addresses: ${addresses.join(',')}');
           if (tokens.isNotEmpty) {
             add(ReloadAssetTokensFromIndexerDatabase());
           }

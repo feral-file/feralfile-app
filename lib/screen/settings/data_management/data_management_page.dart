@@ -14,6 +14,7 @@ import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/settings/forget_exist/forget_exist_bloc.dart';
 import 'package:autonomy_flutter/screen/settings/forget_exist/forget_exist_view.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
@@ -134,14 +135,16 @@ class _DataManagementPageState extends State<DataManagementPage> {
               .setLastUpdateChangeAnchor(addressAnchors: []);
           await injector<CacheManager>().emptyCache();
           await DefaultCacheManager().emptyCache();
-          injector<UserAllOwnCollectionBloc>().add(ClearDataEvent());
-          injector<UserAllOwnCollectionBloc>()
-              .add(ReloadAssetTokensFromIndexerDatabase());
+          final manager = injector<UserAllOwnCollectionBlocManager>();
+          await manager.disposeAll();
           injector<FeralFileFeedManager>().clearAllCache();
           //redownload data
           final addresses = injector<AddressService>().getAllAddresses();
-          injector<UserAllOwnCollectionBloc>().add(FetchTokensOfAddresses(
-              addresses: addresses, shouldUpdateLastRefreshedTime: true));
+          if (addresses.isNotEmpty) {
+            final bloc = manager.getOrCreateBloc(addresses);
+            bloc.add(ReloadAssetTokensFromIndexerDatabase());
+            bloc.add(FetchTokens(shouldUpdateLastRefreshedTime: true));
+          }
 
           unawaited(
               injector<FeralFileFeedManager>().reloadAllCache(force: true));

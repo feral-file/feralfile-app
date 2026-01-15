@@ -7,6 +7,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_intent.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
@@ -179,18 +180,32 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
       required ChannelReference? channelReference,
       required PlaylistDetailsState state}) {
     final total = state.total;
+    final owners =
+        playlistReference.playlist.firstDynamicQuery?.params.owners ??
+            <String>[];
+
+    if (owners.isEmpty) {
+      return PlaylistDetailsHeader(
+        playlistReference: playlistReference,
+        channelReference: channelReference,
+        clickable: false,
+        total: total,
+        options: _getOptions(playlistReference),
+      );
+    }
+
+    final manager = injector<UserAllOwnCollectionBlocManager>();
+    final targetAddress = owners.first;
+    final bloc = manager.getBlocForAddresses([targetAddress]) ??
+        manager.getDefaultBloc();
+
     return BlocBuilder<UserAllOwnCollectionBloc, UserAllOwnCollectionState>(
-      bloc: injector<UserAllOwnCollectionBloc>(),
+      bloc: bloc,
       builder: (context, collectionState) {
-        final owners =
-            playlistReference.playlist.firstDynamicQuery?.params.owners ??
-                <String>[];
-        final targetState = owners.isNotEmpty
-            ? collectionState.addressStates.firstWhereOrNull(
-                (element) => element.address.address == owners.first)
-            : null;
+        final targetState = collectionState.addressStates.firstWhereOrNull(
+            (element) => element.address.address == targetAddress);
         final stateSuffix =
-            (targetState == AddressStateType.fetchingArtworksDone)
+            (targetState?.state == AddressStateType.fetchingArtworksDone)
                 ? ''
                 : targetState?.state.description ?? '';
 
