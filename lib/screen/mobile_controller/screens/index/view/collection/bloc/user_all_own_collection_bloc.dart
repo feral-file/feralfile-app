@@ -31,7 +31,18 @@ class UserAllOwnCollectionBloc
   UserAllOwnCollectionBloc(
     this._tokensService, {
     required this.addresses,
-  }) : super(const UserAllOwnCollectionState()) {
+  }) : super(
+          UserAllOwnCollectionState(
+            addressStates: addresses.map((address) {
+              return AddressState(
+                address: address,
+                assetTokens: [],
+                state: AddressStateType.init,
+                indexingStatus: null,
+              );
+            }).toList(),
+          ),
+        ) {
     on<FetchTokens>(_onFetchTokens);
     on<ReloadAssetTokensFromIndexerDatabase>(
         _onReloadAssetTokensFromIndexerDatabase);
@@ -488,7 +499,7 @@ class UserAllOwnCollectionBloc
         timeout: const Duration(hours: 1),
         onStatus: (status, address) async {
           log.info(
-            '[PullStatus][$address] workflowId: ${addressToWorkflowId[address]} status: ${status.status.toJson()}, tokensProcessed: ${status.tokensProcessed}',
+            '[PullStatus][$address] workflowId: ${addressToWorkflowId[address]} status: ${status.status.toJson()}, totalTokensIndexed: ${status.totalTokensIndexed}, totalTokensViewable: ${status.totalTokensViewable}',
           );
 
           // Update or create state with latest status
@@ -499,7 +510,7 @@ class UserAllOwnCollectionBloc
           );
           emit(state.copyWith(addressStates: updatedStates));
 
-          if (status.status.isDone) {
+          if (status.status.isDone || status.status.isPaused) {
             log.info(
               '[UserAllOwnCollectionBloc] Address $address indexing completed via PullStatus',
             );
@@ -531,6 +542,10 @@ class UserAllOwnCollectionBloc
                   'Timeout while checking indexing status for address: $address',
             ),
           );
+          final updatedStates = _updateOrCreateAddressState(
+              address, AddressStateType.getStatusFailed, null);
+          emit(state.copyWith(addressStates: updatedStates));
+          return true;
         },
         onError: (error, stackTrace, address) async {
           log.info(
@@ -548,6 +563,10 @@ class UserAllOwnCollectionBloc
               throwable: error,
             ),
           );
+          final updatedStates = _updateOrCreateAddressState(
+              address, AddressStateType.getStatusFailed, null);
+          emit(state.copyWith(addressStates: updatedStates));
+          return true;
         },
       );
       log.info(

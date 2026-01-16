@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:autonomy_flutter/model/base_object.dart';
 import 'package:autonomy_flutter/nft_collection/models/models.dart';
 import 'package:autonomy_flutter/util/constants.dart';
+import 'package:autonomy_flutter/util/string_ext.dart';
 
 class WalletAddress implements BaseObject {
   WalletAddress({
@@ -10,7 +11,7 @@ class WalletAddress implements BaseObject {
     required this.createdAt,
     this.isHidden = false,
     String? name,
-  }) : name = name ?? CryptoType.fromAddress(address).name;
+  }) : name = name?.maskIfNeeded() ?? CryptoType.fromAddress(address).name;
 
   // fromJson and toJson methods
   factory WalletAddress.fromJson(Map<String, dynamic> json) => WalletAddress(

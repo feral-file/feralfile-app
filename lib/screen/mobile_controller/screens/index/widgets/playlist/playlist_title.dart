@@ -10,8 +10,9 @@ class PlaylistTitle extends StatelessWidget {
   const PlaylistTitle({
     required this.primaryText,
     required this.secondaryText,
-    this.collectionState,
+    required this.collectionState,
     this.onTap,
+    this.onRetry,
     this.total,
     super.key,
   });
@@ -21,9 +22,11 @@ class PlaylistTitle extends StatelessWidget {
   final String secondaryText;
   final int? total;
   final VoidCallback? onTap;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
+    final statusWidget = _buildStatus(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -32,62 +35,54 @@ class PlaylistTitle extends StatelessWidget {
           horizontal: PlaylistListItemTokens.paddingHorizontal,
           vertical: PlaylistListItemTokens.paddingVertical,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
+        child: Column(
           children: [
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Text(
-                          primaryText,
-                          style: AppTypography.body(context).white,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                primaryText,
+                                style: AppTypography.body(context).white,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
-                        if (total != null) ...[
-                          SizedBox(width: LayoutConstants.space1),
-                          Text(
-                            '($total)',
-                            style: AppTypography.bodySmall(context).grey.italic,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                        if (_buildStatusText() != null) ...[
-                          SizedBox(width: LayoutConstants.space2),
-                          Text(
-                            _buildStatusText()!,
-                            style: AppTypography.bodySmall(context).grey.italic,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ],
-                    ),
+                      ),
+                      SizedBox(width: LayoutConstants.space2),
+                      Text(
+                        secondaryText,
+                        style: AppTypography.body(context).italic.grey,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                  SizedBox(width: LayoutConstants.space2),
-                  Text(
-                    secondaryText,
-                    style: AppTypography.body(context).italic.grey,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
+            if (statusWidget != null) ...[
+              SizedBox(height: LayoutConstants.space1),
+              statusWidget
+            ],
           ],
         ),
       ),
     );
   }
 
-  String? _buildStatusText() {
+  Widget? _buildStatus(BuildContext context) {
     if (collectionState == null || collectionState!.addressStates.isEmpty) {
       return null;
     }
@@ -96,36 +91,135 @@ class PlaylistTitle extends StatelessWidget {
     final addressState = collectionState!.addressStates.first;
     final indexingStatus = addressState.indexingStatus;
 
-    final readyCount =
-        indexingStatus?.tokensProcessed ?? addressState.assetTokens.length;
-    final discoveredTotal = indexingStatus?.tokensProcessed ?? 0;
+    final readyCount = total; // ?? addressState.assetTokens.length;
+    final discoveredTotal = indexingStatus?.totalTokensIndexed;
 
-    // Check indexing status first
-    if (indexingStatus != null) {
-      switch (indexingStatus.status) {
-        case IndexingJobStatus.running:
-          return 'Syncing • $readyCount ready • $discoveredTotal found';
-        case IndexingJobStatus.paused:
-          return 'Paused • $readyCount ready • resumes later';
-        case IndexingJobStatus.completed:
-          return 'Up to date • $discoveredTotal works';
-        case IndexingJobStatus.failed:
-        case IndexingJobStatus.canceled:
-          return 'Sync issue • Tap to retry.';
-      }
-    }
+    String? statusText;
+    bool showRetry = false;
 
-    // Fallback to AddressStateType
+    // Check AddressStateType first (error states have highest priority)
     switch (addressState.state) {
-      case AddressStateType.fetchingArtworksDone:
-        return 'Up to date • $discoveredTotal works';
+      // Initial state - show syncing
+      case AddressStateType.init:
+        statusText = 'Syncing';
+        break;
+
+      // Error states - always show error regardless of IndexingJobStatus
+      case AddressStateType.indexingIncomplete:
+      case AddressStateType.getStatusFailed:
       case AddressStateType.fetchingArtworksFailed:
-        return 'Sync issue • Tap to retry.';
+        statusText = 'Sync issue';
+        showRetry = true;
+        break;
+
+      // Non-error states - use IndexingJobStatus if available
       case AddressStateType.indexStated:
+      case AddressStateType.indexingDone:
       case AddressStateType.fetchingArtworks:
-        return 'Syncing • $readyCount ready • $discoveredTotal found';
-      default:
-        return null;
+      case AddressStateType.fetchingArtworksDone:
+        // If indexingStatus is available, use IndexingJobStatus
+        if (indexingStatus != null) {
+          switch (indexingStatus.status) {
+            case IndexingJobStatus.running:
+              final parts = <String>['Syncing'];
+              parts.add('$readyCount ready');
+              if (discoveredTotal != null) {
+                parts.add('$discoveredTotal found');
+              }
+              statusText = parts.join(' • ');
+              break;
+            case IndexingJobStatus.paused:
+              final parts = <String>['Paused'];
+              parts.add('$readyCount ready');
+              parts.add('resumes later');
+              statusText = parts.join(' • ');
+              break;
+            case IndexingJobStatus.completed:
+              if (discoveredTotal != null) {
+                statusText = 'Up to date • $discoveredTotal works';
+              } else {
+                statusText = 'Up to date';
+              }
+              break;
+            case IndexingJobStatus.failed:
+            case IndexingJobStatus.canceled:
+              statusText = 'Sync issue';
+              showRetry = true;
+              break;
+          }
+        } else {
+          // Fallback to AddressStateType when no indexingStatus
+          switch (addressState.state) {
+            case AddressStateType.indexStated:
+            case AddressStateType.fetchingArtworks:
+              final parts = <String>['Syncing'];
+              parts.add('$readyCount ready');
+              if (discoveredTotal != null) {
+                parts.add('$discoveredTotal found');
+              }
+              statusText = parts.join(' • ');
+              break;
+            case AddressStateType.indexingDone:
+            case AddressStateType.fetchingArtworksDone:
+              if (discoveredTotal != null) {
+                statusText = 'Up to date • $discoveredTotal works';
+              } else {
+                statusText = 'Up to date';
+              }
+              break;
+            default:
+              statusText = null;
+              break;
+          }
+        }
+        break;
     }
+
+    if (statusText == null) {
+      return null;
+    }
+
+    return Row(
+      children: [
+        Text(
+          statusText,
+          style: AppTypography.bodySmall(context).grey.italic,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (showRetry) ...[
+          Text(
+            ' • ',
+            style: AppTypography.bodySmall(context).grey.italic,
+          ),
+          GestureDetector(
+            onTap: () {
+              if (onRetry != null) {
+                onRetry!();
+              }
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              color: Colors.transparent,
+              child: Row(
+                children: [
+                  Text(
+                    'Tap to retry',
+                    style:
+                        AppTypography.bodySmall(context).grey.italic.underline,
+                    maxLines: 1,
+                  ),
+                  // Icon(
+                  //   Icons.refresh,
+                  //   size: LayoutConstants.iconSizeSmall,
+                  //   color: AppColor.auQuickSilver,
+                  // ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
   }
 }

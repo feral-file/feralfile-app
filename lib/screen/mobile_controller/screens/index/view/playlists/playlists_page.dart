@@ -197,7 +197,14 @@ class PlaylistsPageState extends State<PlaylistsPage>
       final child = PlaylistTitle(
         primaryText: '${playlist.title}',
         secondaryText: playlistData.creator,
+        collectionState: null,
         total: playlistDetailsState.total,
+        onRetry: () {
+          final manager = injector<UserAllOwnCollectionBlocManager>();
+          final bloc =
+              manager.getBlocForAddresses(owners) ?? manager.getDefaultBloc();
+          bloc.add(Reindex());
+        },
       );
 
       final slidableActions = [
@@ -221,9 +228,8 @@ class PlaylistsPageState extends State<PlaylistsPage>
     }
 
     final manager = injector<UserAllOwnCollectionBlocManager>();
-    final targetAddress = owners.first;
-    final bloc = manager.getBlocForAddresses([targetAddress]) ??
-        manager.getDefaultBloc();
+    final bloc =
+        manager.getBlocForAddresses(owners) ?? manager.getDefaultBloc();
 
     return BlocBuilder<UserAllOwnCollectionBloc, UserAllOwnCollectionState>(
       bloc: bloc,
@@ -247,6 +253,9 @@ class PlaylistsPageState extends State<PlaylistsPage>
                   bloc.add(Reindex());
                 }
               : null,
+          onRetry: () {
+            bloc.add(Reindex());
+          },
         );
 
         final slidableActions = [

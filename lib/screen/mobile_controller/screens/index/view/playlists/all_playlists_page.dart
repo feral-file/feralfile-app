@@ -242,6 +242,7 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
         primaryText: '${playlist.title}',
         secondaryText: playlistData.creator,
         total: playlistDetailsState.total,
+        collectionState: null,
       );
     }
 
@@ -256,10 +257,11 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
         final addressState = collectionState.addressStates.isNotEmpty
             ? collectionState.addressStates.first
             : null;
-        final isError = addressState?.indexingStatus?.status ==
-                IndexingJobStatus.failed ||
-            addressState?.indexingStatus?.status == IndexingJobStatus.canceled ||
-            addressState?.state == AddressStateType.fetchingArtworksFailed;
+        final isError =
+            addressState?.indexingStatus?.status == IndexingJobStatus.failed ||
+                addressState?.indexingStatus?.status ==
+                    IndexingJobStatus.canceled ||
+                addressState?.state == AddressStateType.fetchingArtworksFailed;
 
         return PlaylistTitle(
           primaryText: '${playlist.title}',

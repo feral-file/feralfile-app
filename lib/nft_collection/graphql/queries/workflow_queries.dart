@@ -16,16 +16,9 @@ const String addressIndexingJobStatusQuery = r'''
     indexingJob(workflow_id: $workflow_id) {
       workflow_id
       address
-      chain
       status
-      tokens_processed
-      current_min_block
-      current_max_block
-      started_at
-      paused_at
-      completed_at
-      failed_at
-      canceled_at
+      total_tokens_indexed
+      total_tokens_viewable
     }
   }
 ''';

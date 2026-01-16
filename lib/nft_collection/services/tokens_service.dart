@@ -26,6 +26,7 @@ import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/list_extension.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:autonomy_flutter/util/timer_ext.dart';
 import 'package:collection/collection.dart';
 import 'package:get_it/get_it.dart';
 import 'package:sentry/sentry.dart';
@@ -71,8 +72,8 @@ abstract class NftTokensService {
     required FutureOr<bool> Function(
             AddressIndexingJobResponse status, String address)
         onStatus,
-    required FutureOr<void> Function(String address) onTimeout,
-    required FutureOr<void> Function(
+    required FutureOr<bool> Function(String address) onTimeout,
+    required FutureOr<bool> Function(
             Object error, StackTrace stackTrace, String address)
         onError,
   });
@@ -367,15 +368,14 @@ class NftTokensServiceImpl extends NftTokensService {
   }
 
   @override
-  @override
   Future<void> pullAddressesIndexingStatus({
     required Map<String, String> addressToWorkflowId,
     required Duration timeout,
     required FutureOr<bool> Function(
             AddressIndexingJobResponse status, String address)
         onStatus,
-    required FutureOr<void> Function(String address) onTimeout,
-    required FutureOr<void> Function(
+    required FutureOr<bool> Function(String address) onTimeout,
+    required FutureOr<bool> Function(
             Object error, StackTrace stackTrace, String address)
         onError,
   }) async {
@@ -398,8 +398,8 @@ class NftTokensServiceImpl extends NftTokensService {
     required FutureOr<bool> Function(
             AddressIndexingJobResponse status, String address)
         onStatus,
-    required FutureOr<void> Function(String address) onTimeout,
-    required FutureOr<void> Function(
+    required FutureOr<bool> Function(String address) onTimeout,
+    required FutureOr<bool> Function(
             Object error, StackTrace stackTrace, String address)
         onError,
     required String logPrefix,
@@ -431,9 +431,9 @@ class NftTokensServiceImpl extends NftTokensService {
       final addressCompleter = Completer<void>();
       addressCompleters[addressKey] = addressCompleter;
 
-      addressTimers[addressKey] = Timer.periodic(
+      addressTimers[addressKey] = TimerExtension.periodicAndRunNow(
         // random duration between 5 and 10 seconds
-        Duration(seconds: Random().nextInt(5) + 5),
+        Duration(seconds: Random().nextInt(10) + 5),
         (timer) async {
           try {
             // Skip polling if paused (app is in background)
@@ -455,9 +455,14 @@ class NftTokensServiceImpl extends NftTokensService {
             if (DateTime.now().difference(startedAt) > timeout) {
               timer.cancel();
               addressTimers.remove(addressKey);
-              await onTimeout(address);
-              if (!addressCompleter.isCompleted) {
-                addressCompleter.complete();
+              final shouldComplete = await onTimeout(address);
+              if (shouldComplete) {
+                completedAddresses.add(address);
+                timer.cancel();
+                addressTimers.remove(addressKey);
+                if (!addressCompleter.isCompleted) {
+                  addressCompleter.complete();
+                }
               }
               return;
             }
@@ -467,7 +472,7 @@ class NftTokensServiceImpl extends NftTokensService {
                 await _indexerService.getAddressIndexingJobStatus(workflowId);
             NftCollection.logger.info(
               '[$logPrefix][$address] status: ${status.status.toJson()}, '
-              'tokensProcessed: ${status.tokensProcessed}',
+              'totalTokensIndexed: ${status.totalTokensIndexed}, totalTokensViewable: ${status.totalTokensViewable}',
             );
 
             // Call onStatus callback - if returns true, complete and cleanup
@@ -486,7 +491,15 @@ class NftTokensServiceImpl extends NftTokensService {
               '[$logPrefix][$address] poll error: $e',
             );
             unawaited(Sentry.captureException(e, stackTrace: st));
-            await onError(e, st, address);
+            final shouldComplete = await onError(e, st, address);
+            if (shouldComplete) {
+              completedAddresses.add(address);
+              timer.cancel();
+              addressTimers.remove(addressKey);
+              if (!addressCompleter.isCompleted) {
+                addressCompleter.complete();
+              }
+            }
           }
         },
       );
@@ -547,7 +560,7 @@ class NftTokensServiceImpl extends NftTokensService {
       _reindexCidsAndPullTimers[cidsKey]?.cancel();
 
       final startedAt = DateTime.now();
-      _reindexCidsAndPullTimers[cidsKey] = Timer.periodic(
+      _reindexCidsAndPullTimers[cidsKey] = TimerExtension.periodicAndRunNow(
         const Duration(seconds: 15),
         (timer) async {
           try {

@@ -14,6 +14,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/col
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
+import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/exception.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -90,6 +91,10 @@ class AddressService {
 
   Future<void> deleteAddress(WalletAddress address) async {
     await _appDataManager.addressStorageService.deleteAddress(address);
+    // Clear Address Index Info when address is deleted
+    await injector<UserDp1PlaylistService>().clearAddressIndexingInfo(
+      addresses: [address.address],
+    );
     await _onAddressUpdate();
     log.info('Deleted address: ${address.address}');
   }

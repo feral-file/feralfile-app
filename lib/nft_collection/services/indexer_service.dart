@@ -211,7 +211,7 @@ class NftIndexerService implements NftIndexerServiceBase {
   ///
   /// [workflowId] - The workflow ID
   ///
-  /// Returns AddressIndexingJobResponse with status, tokens_processed, block ranges, etc.
+  /// Returns AddressIndexingJobResponse with status, total_tokens_indexed, total_tokens_viewable
   @override
   Future<AddressIndexingJobResponse> getAddressIndexingJobStatus(
       String workflowId) async {
@@ -591,74 +591,32 @@ class AddressIndexingJobResponse {
   AddressIndexingJobResponse({
     required this.workflowId,
     required this.address,
-    required this.chain,
     required this.status,
-    required this.tokensProcessed,
-    required this.startedAt,
-    this.currentMinBlock,
-    this.currentMaxBlock,
-    this.pausedAt,
-    this.completedAt,
-    this.failedAt,
-    this.canceledAt,
+    required this.totalTokensIndexed,
+    required this.totalTokensViewable,
   });
 
   final String workflowId;
   final String address;
-  final String chain;
   final IndexingJobStatus status;
-  final int tokensProcessed;
-  final int? currentMinBlock;
-  final int? currentMaxBlock;
-  final DateTime startedAt;
-  final DateTime? pausedAt;
-  final DateTime? completedAt;
-  final DateTime? failedAt;
-  final DateTime? canceledAt;
+  final int totalTokensIndexed;
+  final int totalTokensViewable;
 
   factory AddressIndexingJobResponse.fromJson(Map<String, dynamic> json) =>
       AddressIndexingJobResponse(
         workflowId: json['workflow_id'] as String,
         address: json['address'] as String,
-        chain: json['chain'] as String,
         status: IndexingJobStatus.fromJson(json['status'] as String?),
-        tokensProcessed: json['tokens_processed'] as int? ?? 0,
-        currentMinBlock: json['current_min_block'] != null
-            ? int.tryParse(json['current_min_block'].toString())
-            : null,
-        currentMaxBlock: json['current_max_block'] != null
-            ? int.tryParse(json['current_max_block'].toString())
-            : null,
-        startedAt: json['started_at'] != null
-            ? DateTime.parse(json['started_at'] as String)
-            : DateTime.now(),
-        pausedAt: json['paused_at'] != null
-            ? DateTime.tryParse(json['paused_at'] as String)
-            : null,
-        completedAt: json['completed_at'] != null
-            ? DateTime.tryParse(json['completed_at'] as String)
-            : null,
-        failedAt: json['failed_at'] != null
-            ? DateTime.tryParse(json['failed_at'] as String)
-            : null,
-        canceledAt: json['canceled_at'] != null
-            ? DateTime.tryParse(json['canceled_at'] as String)
-            : null,
+        totalTokensIndexed: json['total_tokens_indexed'] as int? ?? 0,
+        totalTokensViewable: json['total_tokens_viewable'] as int? ?? 0,
       );
 
   Map<String, dynamic> toJson() => {
         'workflow_id': workflowId,
         'address': address,
-        'chain': chain,
         'status': status.toJson(),
-        'tokens_processed': tokensProcessed,
-        'current_min_block': currentMinBlock,
-        'current_max_block': currentMaxBlock,
-        'started_at': startedAt.toIso8601String(),
-        'paused_at': pausedAt?.toIso8601String(),
-        'completed_at': completedAt?.toIso8601String(),
-        'failed_at': failedAt?.toIso8601String(),
-        'canceled_at': canceledAt?.toIso8601String(),
+        'total_tokens_indexed': totalTokensIndexed,
+        'total_tokens_viewable': totalTokensViewable,
       };
 }
 

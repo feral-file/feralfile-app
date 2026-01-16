@@ -3,25 +3,38 @@ part of 'user_all_own_collection_bloc.dart';
 enum UserAllOwnCollectionStatus { initial, loading, loaded, error }
 
 enum AddressStateType {
-  indexStated,
-  indexingDone,
-  indexingIncomplete,
-  fetchingArtworks,
-  fetchingArtworksFailed,
-  fetchingArtworksDone;
+  // Initial state
+  init, // Initial state when bloc is created
+
+  // Step 1: Index Address states
+  indexingIncomplete, // Error ở Step 1: không thể submit indexing job (sau retries)
+  indexStated, // Success ở Step 1: đã submit indexing job thành công
+
+  // Step 2: Pull Status states
+  getStatusFailed, // Error ở Step 2: không thể pull indexing status (sau retries)
+  indexingDone, // Success ở Step 2: indexing job completed
+
+  // Step 3: Fetch Artworks states
+  fetchingArtworks, // Đang fetch artworks
+  fetchingArtworksFailed, // Error ở Step 3: fetch artworks lỗi
+  fetchingArtworksDone; // Success ở Step 3: fetch artworks xong
 
   String get description {
     switch (this) {
+      case AddressStateType.init:
+        return 'Syncing...';
+      case AddressStateType.indexingIncomplete:
+        return 'Sync issue';
       case AddressStateType.indexStated:
         return 'Syncing...';
+      case AddressStateType.getStatusFailed:
+        return 'Sync issue';
       case AddressStateType.indexingDone:
         return 'Synced';
-      case AddressStateType.indexingIncomplete:
-        return 'Some missing';
       case AddressStateType.fetchingArtworks:
         return 'Syncing...';
       case AddressStateType.fetchingArtworksFailed:
-        return 'Some missing';
+        return 'Sync issue';
       case AddressStateType.fetchingArtworksDone:
         return 'Synced';
     }
@@ -101,20 +114,5 @@ class UserAllOwnCollectionState {
 extension AddressStateListExtension on List<AddressState> {
   AddressState? getAddressState(String address) {
     return firstWhere((state) => state.address == address);
-  }
-
-  // Helper method to update status for a single address
-
-  AddressStateType _mapIndexingStatusToStateType(IndexingJobStatus status) {
-    switch (status) {
-      case IndexingJobStatus.running:
-      case IndexingJobStatus.paused:
-        return AddressStateType.indexStated;
-      case IndexingJobStatus.completed:
-        return AddressStateType.indexingDone;
-      case IndexingJobStatus.failed:
-      case IndexingJobStatus.canceled:
-        return AddressStateType.indexingIncomplete;
-    }
   }
 }
