@@ -54,13 +54,17 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
   CanvasDeviceBloc get _canvasDeviceBloc => injector<CanvasDeviceBloc>();
 
   late PlaylistDetailsBloc _playlistDetailsBloc;
-  UserAllOwnCollectionBloc? _userAllOwnCollectionBloc;
+  late UserAllOwnCollectionBloc _userAllOwnCollectionBloc;
 
   @override
   void initState() {
     super.initState();
     _playlistDetailsBloc = injector<PlaylistDetailsBlocManager>()
         .getBloc(widget.payload.playlist.playlist);
+    _userAllOwnCollectionBloc = injector<UserAllOwnCollectionBlocManager>()
+        .getOrCreateBloc(
+            widget.payload.playlist.playlist.firstDynamicQuery?.params.owners ??
+                []);
   }
 
   @override
@@ -93,10 +97,13 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
     final newOwners =
         widget.payload.playlist.playlist.firstDynamicQuery?.params.owners ??
             <String>[];
-    if (oldOwners != newOwners && _userAllOwnCollectionBloc != null) {
+    if (oldOwners != newOwners) {
       injector<UserAllOwnCollectionBlocManager>()
           .releaseBlocByInstance(_userAllOwnCollectionBloc!);
-      _userAllOwnCollectionBloc = null;
+      _userAllOwnCollectionBloc = injector<UserAllOwnCollectionBlocManager>()
+          .getOrCreateBloc(widget
+                  .payload.playlist.playlist.firstDynamicQuery?.params.owners ??
+              []);
     }
   }
 
