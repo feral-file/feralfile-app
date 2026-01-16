@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/token.dart';
@@ -96,13 +97,17 @@ class UserAllOwnCollectionBloc
 
       emit(state.copyWith(addressStates: updatedStates));
 
-      final maxAttempts = 3;
       int attempts = 0;
-      Object? error = null;
+      final random = Random();
 
-      while (attempts < maxAttempts) {
+      while (true) {
         attempts++;
-        error = null;
+        if (attempts > 3) {
+          log.info(
+            '[UserAllOwnCollectionBloc] Reindex addresses: $newAddresses, attempt: $attempts, max attempts reached, will retry',
+          );
+          break;
+        }
         log.info(
           '[UserAllOwnCollectionBloc] Reindex addresses: $newAddresses, attempt: $attempts',
         );
@@ -123,39 +128,26 @@ class UserAllOwnCollectionBloc
             infos: infos,
           );
 
+          // Success, break out of retry loop
           break;
         } catch (e, st) {
           Sentry.captureException(e, stackTrace: st);
-          error = e;
           log.info(
-            '[UserAllOwnCollectionBloc] reindexAddresses error: $e, attempt: $attempts / $maxAttempts',
+            '[UserAllOwnCollectionBloc] reindexAddresses error: $e, attempt: $attempts, will retry',
           );
 
-          if (attempts < maxAttempts) {
-            await Future<void>.delayed(const Duration(seconds: 10));
-          }
-        }
-      }
+          // Calculate delay: attempt * 2 seconds (max 100 seconds) + random(-2, +2) seconds
+          final baseDelaySeconds = min(attempts * 2, 300);
+          final randomVariation =
+              random.nextInt(5) - 2; // Random between -2 and +2
+          final delaySeconds = max(0, baseDelaySeconds + randomVariation);
 
-      if (error != null) {
-        log.info(
-          '[UserAllOwnCollectionBloc] Failed to submit reindex jobs for addresses: ${newAddresses.join(',')}',
-        );
-        final updatedStates = state.addressStates.map((state) {
-          if (newAddresses.contains(state.address)) {
-            return AddressState(
-                address: state.address,
-                assetTokens: state.assetTokens,
-                state: AddressStateType.indexingIncomplete,
-                indexingStatus: null);
-          }
-          return state;
-        }).toList();
-        final newState = state.copyWith(
-            addressStates: updatedStates,
-            status: UserAllOwnCollectionStatus.error);
-        emit(newState);
-        return;
+          log.info(
+            '[UserAllOwnCollectionBloc] Waiting ${delaySeconds}s before retry (base: ${baseDelaySeconds}s, variation: ${randomVariation}s)',
+          );
+
+          await Future<void>.delayed(Duration(seconds: delaySeconds));
+        }
       }
 
       // After successfully submitting indexing jobs and storing workflowIds,
@@ -496,7 +488,7 @@ class UserAllOwnCollectionBloc
 
       await _tokensService.pullAddressesIndexingStatus(
         addressToWorkflowId: addressToWorkflowId,
-        timeout: const Duration(hours: 1),
+        timeout: const Duration(minutes: 1),
         onStatus: (status, address) async {
           log.info(
             '[PullStatus][$address] workflowId: ${addressToWorkflowId[address]} status: ${status.status.toJson()}, totalTokensIndexed: ${status.totalTokensIndexed}, totalTokensViewable: ${status.totalTokensViewable}',
@@ -566,7 +558,7 @@ class UserAllOwnCollectionBloc
           final updatedStates = _updateOrCreateAddressState(
               address, AddressStateType.getStatusFailed, null);
           emit(state.copyWith(addressStates: updatedStates));
-          return true;
+          return false;
         },
       );
       log.info(

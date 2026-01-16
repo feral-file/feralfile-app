@@ -192,16 +192,15 @@ class PlaylistTitle extends StatelessWidget {
     switch (addressState.state) {
       // Initial state - show syncing
       case AddressStateType.init:
-        statusText = 'Syncing';
-        break;
+      // statusText = 'Syncing';
+      // break;
 
-      // Error states - always show error regardless of IndexingJobStatus
+      // Error states - show syncing instead of sync issue
       case AddressStateType.indexingIncomplete:
       case AddressStateType.getStatusFailed:
       case AddressStateType.fetchingArtworksFailed:
-        statusText = 'Sync issue';
-        showRetry = true;
-        break;
+      // statusText = 'Syncing';
+      // break;
 
       // Non-error states - use IndexingJobStatus if available
       case AddressStateType.indexStated:
@@ -241,10 +240,16 @@ class PlaylistTitle extends StatelessWidget {
         } else {
           // Fallback to AddressStateType when no indexingStatus
           switch (addressState.state) {
+            case AddressStateType.init:
             case AddressStateType.indexStated:
             case AddressStateType.fetchingArtworks:
+            case AddressStateType.indexingIncomplete:
+            case AddressStateType.getStatusFailed:
+            case AddressStateType.fetchingArtworksFailed:
               final parts = <String>['Syncing'];
-              parts.add('$readyCount ready');
+              if (readyCount != null) {
+                parts.add('$readyCount ready');
+              }
               if (discoveredTotal != null) {
                 parts.add('$discoveredTotal found');
               }
@@ -257,6 +262,7 @@ class PlaylistTitle extends StatelessWidget {
               } else {
                 statusText = 'Up to date';
               }
+              break;
               break;
             default:
               statusText = null;
