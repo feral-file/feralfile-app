@@ -225,8 +225,8 @@ class PlaylistTitle extends StatelessWidget {
               statusText = parts.join(' • ');
               break;
             case IndexingJobStatus.completed:
-              if (discoveredTotal != null) {
-                statusText = 'Up to date • $discoveredTotal works';
+              if (readyCount != null) {
+                statusText = 'Up to date • $readyCount works';
               } else {
                 statusText = 'Up to date';
               }
