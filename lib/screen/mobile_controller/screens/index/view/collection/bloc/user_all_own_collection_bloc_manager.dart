@@ -97,21 +97,6 @@ class UserAllOwnCollectionBlocManager {
     return _blocs[key]?.bloc;
   }
 
-  /// Get or create a bloc instance for all addresses in the app.
-  UserAllOwnCollectionBloc getDefaultBloc() {
-    final allAddresses = injector<AddressService>().getAllAddresses();
-    if (allAddresses.isEmpty) {
-      log.warning(
-        '[UserAllOwnCollectionBlocManager] No addresses found, creating bloc with empty list',
-      );
-      log.warning(
-        '[UserAllOwnCollectionBlocManager] No addresses found for default bloc',
-      );
-      throw StateError('No addresses available for default bloc');
-    }
-    return getOrCreateBloc(allAddresses);
-  }
-
   /// Release a reference to a bloc by addresses.
   ///
   /// Decrements the reference count for the bloc. If the reference count

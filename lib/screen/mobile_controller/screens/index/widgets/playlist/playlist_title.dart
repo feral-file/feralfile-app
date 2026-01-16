@@ -1,9 +1,18 @@
+import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/components/PlaylistListItem.dart';
 import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
+import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channel_details/channel_detail.page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/service/navigation_service.dart';
+import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/util/feed_manager.dart';
+import 'package:autonomy_flutter/util/ui_helper.dart';
+import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 
 /// Playlist List Item - Displays playlist info with primary and secondary text
 class PlaylistTitle extends StatelessWidget {
@@ -14,6 +23,13 @@ class PlaylistTitle extends StatelessWidget {
     this.onTap,
     this.onRetry,
     this.total,
+    this.channelReference,
+    this.options = const [],
+    this.showDivider = false,
+    this.padding,
+    this.channelVisible = true,
+    this.isFromPlaylistsPage = false,
+    this.playlistReference,
     super.key,
   });
 
@@ -23,31 +39,42 @@ class PlaylistTitle extends StatelessWidget {
   final int? total;
   final VoidCallback? onTap;
   final VoidCallback? onRetry;
+  final ChannelReference? channelReference;
+  final List<OptionItem> options;
+  final bool showDivider;
+  final EdgeInsets? padding;
+  final bool channelVisible;
+  final bool isFromPlaylistsPage;
+  final PlaylistReference? playlistReference;
 
   @override
   Widget build(BuildContext context) {
     final statusWidget = _buildStatus(context);
+    final effectivePadding = padding ??
+        EdgeInsets.symmetric(
+          horizontal: showDivider
+              ? ResponsiveLayout.paddingHorizontal
+              : PlaylistListItemTokens.paddingHorizontal,
+          vertical: showDivider ? 16 : PlaylistListItemTokens.paddingVertical,
+        );
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         color: Colors.transparent,
-        padding: const EdgeInsets.symmetric(
-          horizontal: PlaylistListItemTokens.paddingHorizontal,
-          vertical: PlaylistListItemTokens.paddingVertical,
-        ),
         child: Column(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Row(
+            Container(
+              padding: effectivePadding,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Title row - for detail page: title, for list: title + secondary text
+                        Row(
                           children: [
                             Expanded(
                               child: Text(
@@ -57,28 +84,92 @@ class PlaylistTitle extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
+                            if (!showDivider) ...[
+                              SizedBox(width: LayoutConstants.space2),
+                              Text(
+                                secondaryText,
+                                style: AppTypography.body(context).italic.grey,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ],
                         ),
-                      ),
-                      SizedBox(width: LayoutConstants.space2),
-                      Text(
-                        secondaryText,
-                        style: AppTypography.body(context).italic.grey,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+                        // Channel reference
+                        if (channelReference != null && channelVisible) ...[
+                          SizedBox(height: LayoutConstants.space1),
+                          GestureDetector(
+                            onTap: () {
+                              if (playlistReference != null) {
+                                injector<NavigationService>().navigateTo(
+                                  AppRouter.channelDetailPage,
+                                  arguments: ChannelDetailPagePayload(
+                                    channelReference: channelReference!,
+                                    backTitle: isFromPlaylistsPage
+                                        ? 'Playlists'
+                                        : primaryText,
+                                  ),
+                                );
+                              }
+                            },
+                            child: Text(
+                              channelReference!.channel.title,
+                              style: AppTypography.body(context).grey,
+                            ),
+                          ),
+                        ],
+                        // Status widget
+                        if (statusWidget != null) ...[
+                          SizedBox(height: LayoutConstants.space1),
+                          statusWidget
+                        ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  // Options menu button
+                  if (options.isNotEmpty)
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () async => _showPlaylistOptionsDialog(
+                        context,
+                        playlistReference,
+                      ),
+                      constraints: const BoxConstraints(
+                        maxWidth: 44,
+                        maxHeight: 44,
+                        minWidth: 44,
+                        minHeight: 44,
+                      ),
+                      icon: SvgPicture.asset(
+                        'assets/images/more_circle.svg',
+                      ),
+                    )
+                ],
+              ),
             ),
-            if (statusWidget != null) ...[
-              SizedBox(height: LayoutConstants.space1),
-              statusWidget
-            ],
+            // Divider
+            if (showDivider)
+              Divider(
+                height: 1,
+                color: AppColor.primaryBlack,
+              ),
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _showPlaylistOptionsDialog(
+    BuildContext context,
+    PlaylistReference? playlistReference,
+  ) async {
+    if (playlistReference == null) return;
+    await UIHelper.showDrawerAction(
+      context,
+      options: [
+        ...options,
+        OptionItem.emptyOptionItem,
+      ],
     );
   }
 

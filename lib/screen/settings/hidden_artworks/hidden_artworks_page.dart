@@ -12,12 +12,10 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_rendering/svg_image.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/settings/hidden_artworks/hidden_artworks_bloc.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/util/style.dart';
@@ -207,8 +205,10 @@ class _HiddenArtworksPageState extends State<HiddenArtworksPage> {
                     final allAddresses =
                         injector<AddressService>().getAllAddresses();
                     if (allAddresses.isNotEmpty) {
-                      final bloc = manager.getDefaultBloc();
-                      bloc.add(ReloadAssetTokensFromIndexerDatabase());
+                      // Use getBlocForAddresses instead of getOrCreateBloc to avoid
+                      // incrementing ref count for a one-time event trigger.
+                      // If bloc doesn't exist, it means addresses aren't being tracked,
+                      // so there's no need to trigger reload.
                     }
 
                     if (!context.mounted) {

@@ -1,16 +1,14 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/main.dart';
-import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_header_with_collection_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_list_row.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_title.dart';
@@ -246,35 +244,11 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
       );
     }
 
-    final manager = injector<UserAllOwnCollectionBlocManager>();
-    final targetAddress = owners.first;
-    final bloc = manager.getBlocForAddresses([targetAddress]) ??
-        manager.getDefaultBloc();
-
-    return BlocBuilder<UserAllOwnCollectionBloc, UserAllOwnCollectionState>(
-      bloc: bloc,
-      builder: (context, collectionState) {
-        final addressState = collectionState.addressStates.isNotEmpty
-            ? collectionState.addressStates.first
-            : null;
-        final isError =
-            addressState?.indexingStatus?.status == IndexingJobStatus.failed ||
-                addressState?.indexingStatus?.status ==
-                    IndexingJobStatus.canceled ||
-                addressState?.state == AddressStateType.fetchingArtworksFailed;
-
-        return PlaylistTitle(
-          primaryText: '${playlist.title}',
-          collectionState: collectionState,
-          secondaryText: playlistData.creator,
-          total: playlistDetailsState.total,
-          onTap: isError
-              ? () {
-                  bloc.add(Reindex());
-                }
-              : null,
-        );
-      },
+    return PlaylistHeaderWithCollectionState(
+      primaryText: '${playlist.title}',
+      secondaryText: playlistData.creator,
+      owners: owners,
+      total: playlistDetailsState.total,
     );
   }
 

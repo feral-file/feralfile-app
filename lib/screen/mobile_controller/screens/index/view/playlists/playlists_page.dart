@@ -2,17 +2,15 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/design/layout_constants.dart';
-import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_header_with_collection_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_title.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
@@ -193,90 +191,37 @@ class PlaylistsPageState extends State<PlaylistsPage>
     final playlist = playlistReference.playlist;
     final owners = playlist.firstDynamicQuery?.params.owners ?? <String>[];
 
-    if (owners.isEmpty) {
-      final child = PlaylistTitle(
-        primaryText: '${playlist.title}',
-        secondaryText: playlistData.creator,
-        collectionState: null,
-        total: playlistDetailsState.total,
-        onRetry: () {
-          final manager = injector<UserAllOwnCollectionBlocManager>();
-          final bloc =
-              manager.getBlocForAddresses(owners) ?? manager.getDefaultBloc();
-          bloc.add(Reindex());
-        },
-      );
+    final child = owners.isEmpty
+        ? PlaylistTitle(
+            primaryText: '${playlist.title}',
+            secondaryText: playlistData.creator,
+            collectionState: null,
+            total: playlistDetailsState.total,
+          )
+        : PlaylistHeaderWithCollectionState(
+            primaryText: '${playlist.title}',
+            secondaryText: playlistData.creator,
+            owners: owners,
+            total: playlistDetailsState.total,
+          );
 
-      final slidableActions = [
-        if (playlistData is AddressPlaylistData)
-          ..._getAddressSlidableActions(playlistData),
-      ];
+    final slidableActions = [
+      if (playlistData is AddressPlaylistData)
+        ..._getAddressSlidableActions(playlistData),
+    ];
 
-      if (slidableActions.isEmpty) {
-        return child;
-      }
-
-      return Slidable(
-        groupTag: playlistData.playlistReference.playlist.id.toString(),
-        endActionPane: ActionPane(
-          extentRatio: 88 / 392,
-          motion: const DrawerMotion(),
-          children: slidableActions,
-        ),
-        child: child,
-      );
+    if (slidableActions.isEmpty) {
+      return child;
     }
 
-    final manager = injector<UserAllOwnCollectionBlocManager>();
-    final bloc =
-        manager.getBlocForAddresses(owners) ?? manager.getDefaultBloc();
-
-    return BlocBuilder<UserAllOwnCollectionBloc, UserAllOwnCollectionState>(
-      bloc: bloc,
-      builder: (context, collectionState) {
-        final addressState = collectionState.addressStates.isNotEmpty
-            ? collectionState.addressStates.first
-            : null;
-        final isError =
-            addressState?.indexingStatus?.status == IndexingJobStatus.failed ||
-                addressState?.indexingStatus?.status ==
-                    IndexingJobStatus.canceled ||
-                addressState?.state == AddressStateType.fetchingArtworksFailed;
-
-        final child = PlaylistTitle(
-          primaryText: '${playlist.title}',
-          collectionState: collectionState,
-          secondaryText: playlistData.creator,
-          total: playlistDetailsState.total,
-          onTap: isError
-              ? () {
-                  bloc.add(Reindex());
-                }
-              : null,
-          onRetry: () {
-            bloc.add(Reindex());
-          },
-        );
-
-        final slidableActions = [
-          if (playlistData is AddressPlaylistData)
-            ..._getAddressSlidableActions(playlistData),
-        ];
-
-        if (slidableActions.isEmpty) {
-          return child;
-        }
-
-        return Slidable(
-          groupTag: playlistData.playlistReference.playlist.id.toString(),
-          endActionPane: ActionPane(
-            extentRatio: 88 / 392,
-            motion: const DrawerMotion(),
-            children: slidableActions,
-          ),
-          child: child,
-        );
-      },
+    return Slidable(
+      groupTag: playlistData.playlistReference.playlist.id.toString(),
+      endActionPane: ActionPane(
+        extentRatio: 88 / 392,
+        motion: const DrawerMotion(),
+        children: slidableActions,
+      ),
+      child: child,
     );
   }
 

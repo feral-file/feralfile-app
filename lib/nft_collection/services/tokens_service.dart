@@ -433,7 +433,7 @@ class NftTokensServiceImpl extends NftTokensService {
 
       addressTimers[addressKey] = TimerExtension.periodicAndRunNow(
         // random duration between 5 and 10 seconds
-        Duration(seconds: Random().nextInt(10) + 5),
+        Duration(seconds: Random().nextInt(20) + 5),
         (timer) async {
           try {
             // Skip polling if paused (app is in background)

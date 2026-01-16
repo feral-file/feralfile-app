@@ -20,7 +20,6 @@ import 'package:autonomy_flutter/screen/settings/forget_exist/forget_exist_view.
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/style.dart';
@@ -41,9 +40,25 @@ class DataManagementPage extends StatefulWidget {
 }
 
 class _DataManagementPageState extends State<DataManagementPage> {
+  UserAllOwnCollectionBloc? _userAllOwnCollectionBloc;
+
   @override
   void initState() {
     super.initState();
+    final addresses = injector<AddressService>().getAllAddresses();
+    if (addresses.isNotEmpty) {
+      final manager = injector<UserAllOwnCollectionBlocManager>();
+      _userAllOwnCollectionBloc = manager.getOrCreateBloc(addresses);
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_userAllOwnCollectionBloc != null) {
+      injector<UserAllOwnCollectionBlocManager>()
+          .releaseBlocByInstance(_userAllOwnCollectionBloc!);
+    }
+    super.dispose();
   }
 
   @override
@@ -141,11 +156,12 @@ class _DataManagementPageState extends State<DataManagementPage> {
           //redownload data
           final addresses = injector<AddressService>().getAllAddresses();
           if (addresses.isNotEmpty) {
-            final bloc = manager.getOrCreateBloc(addresses);
-            bloc.add(ReloadAssetTokensFromIndexerDatabase());
-            bloc.add(FetchTokens(shouldUpdateLastRefreshedTime: true));
+            // Get or create new bloc after disposeAll
+            _userAllOwnCollectionBloc
+                ?.add(ReloadAssetTokensFromIndexerDatabase());
+            _userAllOwnCollectionBloc
+                ?.add(FetchTokens(shouldUpdateLastRefreshedTime: true));
           }
-
           unawaited(
               injector<FeralFileFeedManager>().reloadAllCache(force: true));
 
