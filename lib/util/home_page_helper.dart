@@ -85,7 +85,6 @@ class HomePageHelper {
         }
       },
     );
-    unawaited(_forceFetchTokensOfAddresses());
     _refreshAddressesNeedingReindex();
 
     unawaited(NowDisplayingManager().updateDisplayingNow());
@@ -169,63 +168,6 @@ class HomePageHelper {
       },
     );
     _isShowingOfflineDialog = false;
-  }
-
-  Future<void> _forceFetchTokensOfAddresses() async {
-    final addresses = injector<AddressService>().getAllAddresses();
-    final refreshedMap = injector<UserDp1PlaylistService>()
-        .getAddressOldestLastFetchTokenTime(addresses: addresses);
-
-    final rc = injector<RemoteConfigService>();
-    if (!rc.isLoaded) {
-      await rc.loadConfigs();
-    }
-
-    // Read cache policy (cache_valid_duration can be null/missing)
-    final cacheValidStr = rc.getConfig<String?>(
-      ConfigGroup.tokenMetadataRebuild,
-      ConfigKey.cacheValidDuration,
-      null,
-    );
-    final int? cacheValidSeconds =
-        cacheValidStr != null ? int.tryParse(cacheValidStr) : null;
-    final lastForceUpdateIso = rc.getConfig<String>(
-      ConfigGroup.tokenMetadataRebuild,
-      ConfigKey.lastForceUpdateTime,
-      '2025-01-01T00:00:00Z',
-    );
-
-    final now = DateTime.now().toUtc();
-    final threshold =
-        cacheValidSeconds != null ? Duration(seconds: cacheValidSeconds) : null;
-    final lastForceUpdateTime = DateTime.tryParse(lastForceUpdateIso)?.toUtc();
-
-    final addressesToRefresh = <String>[];
-    for (final addr in addresses) {
-      final isFetched =
-          injector<UserDp1PlaylistService>().isAddressFetched(addr);
-      final isIndexed =
-          injector<UserDp1PlaylistService>().isAddressIndexed(addr);
-      final last = refreshedMap[addr]?.toUtc();
-      final isExpired =
-          threshold != null && last != null && now.difference(last) > threshold;
-      final isBeforeForced = lastForceUpdateTime != null &&
-          (last == null || last.isBefore(lastForceUpdateTime));
-      if ((!isFetched && isIndexed) || isExpired || isBeforeForced) {
-        addressesToRefresh.add(addr);
-      }
-    }
-
-    if (addressesToRefresh.isNotEmpty) {
-      log.info('Force fetching tokens for ${addressesToRefresh.toList()}');
-      final manager = injector<UserAllOwnCollectionBlocManager>();
-      final bloc = manager.getOrCreateBloc(addressesToRefresh);
-      bloc.add(
-        FetchTokens(
-          shouldUpdateLastRefreshedTime: true,
-        ),
-      );
-    }
   }
 
   Future<void> _refreshAddressesNeedingReindex() async {

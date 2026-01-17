@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
+import 'package:autonomy_flutter/service/remote_config_service.dart';
+import 'package:autonomy_flutter/util/log.dart';
 
 /// A high-level service to manage a user's DP1 playlists.
 ///
@@ -147,6 +149,64 @@ class UserDp1PlaylistService {
   bool isAddressFetched(String address) {
     final map = injector<ConfigurationService>().getAddressLastFetchTokenTime();
     return map.containsKey(address);
+  }
+
+  /// Check if we should force fetch tokens for an address.
+  ///
+  /// Returns true if:
+  /// - Address is indexed but not fetched yet
+  /// - Cache has expired (exceeds cache valid duration)
+  /// - Last fetch was before the force update time
+  Future<bool> shouldForceFetchTokenForAddress(String address) async {
+    try {
+      final isFetched = isAddressFetched(address);
+      final isIndexed = isAddressIndexed(address);
+      final refreshedMap =
+          getAddressOldestLastFetchTokenTime(addresses: [address]);
+      final last = refreshedMap[address]?.toUtc();
+
+      final rc = injector<RemoteConfigService>();
+      if (!rc.isLoaded) {
+        await rc.loadConfigs();
+      }
+
+      // Read cache policy (cache_valid_duration can be null/missing)
+      final cacheValidStr = rc.getConfig<String?>(
+        ConfigGroup.tokenMetadataRebuild,
+        ConfigKey.cacheValidDuration,
+        null,
+      );
+      final int? cacheValidSeconds =
+          cacheValidStr != null ? int.tryParse(cacheValidStr) : null;
+      final lastForceUpdateIso = rc.getConfig<String>(
+        ConfigGroup.tokenMetadataRebuild,
+        ConfigKey.lastForceUpdateTime,
+        '2025-01-01T00:00:00Z',
+      );
+
+      final now = DateTime.now().toUtc();
+      final threshold = cacheValidSeconds != null
+          ? Duration(seconds: cacheValidSeconds)
+          : null;
+      final lastForceUpdateTime =
+          DateTime.tryParse(lastForceUpdateIso)?.toUtc();
+
+      // Check if address is indexed but not fetched
+      final needsInitialFetch = !isFetched && isIndexed;
+
+      // Check if cache has expired
+      final isExpired =
+          threshold != null && last != null && now.difference(last) > threshold;
+
+      // Check if last fetch was before force update time
+      final isBeforeForced = lastForceUpdateTime != null &&
+          (last == null || last.isBefore(lastForceUpdateTime));
+
+      return needsInitialFetch || isExpired || isBeforeForced;
+    } catch (e) {
+      log.info('Error in shouldForceFetchTokenForAddress: $e');
+      return true;
+    }
   }
 
   /*

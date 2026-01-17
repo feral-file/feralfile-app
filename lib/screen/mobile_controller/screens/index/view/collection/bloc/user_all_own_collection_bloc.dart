@@ -510,9 +510,9 @@ class UserAllOwnCollectionBloc
             );
             // Fetch tokens after completion
             // if we already fetch tokens, don't fetch again
-            final lastFetchTokenTime = injector<UserDp1PlaylistService>()
-                .getAddressOldestLastFetchTokenTime(addresses: addresses);
-            if (lastFetchTokenTime[address] != null) {
+            final shouldForceFetch = await injector<UserDp1PlaylistService>()
+                .shouldForceFetchTokenForAddress(address);
+            if (shouldForceFetch) {
               log.info(
                 '[UserAllOwnCollectionBloc] Address $address already fetched tokens, skip fetching',
               );
