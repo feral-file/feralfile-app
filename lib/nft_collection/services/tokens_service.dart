@@ -248,9 +248,10 @@ class NftTokensServiceImpl extends NftTokensService {
   @override
   Future<void> purgeCachedGallery() async {
     disposeIsolate();
+    await injector<ConfigurationService>().clearAddressLastFetchTokenTime();
+
     await _configurationService.setDidSyncAddress(false);
     _database.clearAll();
-    await injector<ConfigurationService>().clearAddressLastFetchTokenTime();
   }
 
   @override

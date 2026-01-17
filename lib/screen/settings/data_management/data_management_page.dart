@@ -146,8 +146,6 @@ class _DataManagementPageState extends State<DataManagementPage> {
           await injector<NftTokensService>().purgeCachedGallery();
           await injector<UserDp1PlaylistService>()
               .setLastUpdateChangeAnchor(addressAnchors: []);
-          await injector<UserDp1PlaylistService>()
-              .setLastUpdateChangeAnchor(addressAnchors: []);
           await injector<CacheManager>().emptyCache();
           await DefaultCacheManager().emptyCache();
           final manager = injector<UserAllOwnCollectionBlocManager>();
@@ -156,11 +154,12 @@ class _DataManagementPageState extends State<DataManagementPage> {
             bloc.add(ClearDataEvent());
           }
           injector<FeralFileFeedManager>().clearAllCache();
+          // await 2 seconds to wait for cache to be cleared
+          await Future<void>.delayed(const Duration(seconds: 2));
           //redownload data
           unawaited(
               injector<FeralFileFeedManager>().reloadAllCache(force: true));
           for (final bloc in blocs) {
-            bloc.add(ReloadAssetTokensFromIndexerDatabase());
             bloc.add(PullStatus());
           }
 

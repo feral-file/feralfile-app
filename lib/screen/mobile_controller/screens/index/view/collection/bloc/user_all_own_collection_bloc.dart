@@ -425,7 +425,18 @@ class UserAllOwnCollectionBloc
     _tokensStreamSubs.clear();
     _activeCompleters.clear();
 
-    emit(const UserAllOwnCollectionState());
+    emit(
+      UserAllOwnCollectionState(
+        addressStates: addresses.map((address) {
+          return AddressState(
+            address: address,
+            assetTokens: [],
+            state: AddressStateType.init,
+            indexingStatus: null,
+          );
+        }).toList(),
+      ),
+    );
   }
 
   /// Helper method to update or create an AddressState for a given address
@@ -513,6 +524,10 @@ class UserAllOwnCollectionBloc
             final shouldForceFetch = await injector<UserDp1PlaylistService>()
                 .shouldForceFetchTokenForAddress(address);
             if (shouldForceFetch) {
+              add(FetchTokens(
+                  shouldUpdateLastRefreshedTime: true,
+                  shouldUpdateAddressState: true));
+            } else {
               log.info(
                 '[UserAllOwnCollectionBloc] Address $address already fetched tokens, skip fetching',
               );
@@ -522,11 +537,8 @@ class UserAllOwnCollectionBloc
                 status,
               );
               emit(state.copyWith(addressStates: updatedStates));
-              return true;
             }
-            add(FetchTokens(
-                shouldUpdateLastRefreshedTime: true,
-                shouldUpdateAddressState: true));
+
             return true;
           } else {
             // Still indexing, fetch tokens periodically
