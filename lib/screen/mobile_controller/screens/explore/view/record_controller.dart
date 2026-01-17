@@ -183,28 +183,25 @@ class _RecordControllerScreenState extends State<RecordControllerScreen>
                   if (channelId == null) {
                     return;
                   }
-                  injector<FeralFileFeedManager>()
-                      .getChannelReferenceByChannelId(channelId)
-                      .then((value) {
-                    final channelReference = value;
-                    if (channelReference == null) {
-                      Sentry.captureMessage(
-                          '[RecordControllerScreen] Channel not found in DP1 service, id: $channelId');
-                      return;
-                    }
-                    final channel = channelReference.channel;
-                    if (channel.playlists.isEmpty) {
-                      Sentry.captureMessage(
-                          '[RecordControllerScreen] Channel playlists is empty, id: $channelId');
-                      return;
-                    }
-                    injector<NavigationService>().navigateTo(
-                      AppRouter.channelDetailPage,
-                      arguments: ChannelDetailPagePayload(
-                        channelReference: channelReference,
-                      ),
-                    );
-                  });
+                  final channelReference = injector<FeralFileFeedManager>()
+                      .getChannelReferenceByChannelId(channelId);
+                  if (channelReference == null) {
+                    Sentry.captureMessage(
+                        '[RecordControllerScreen] Channel not found in DP1 service, id: $channelId');
+                    return;
+                  }
+                  final channel = channelReference.channel;
+                  if (channel.playlists.isEmpty) {
+                    Sentry.captureMessage(
+                        '[RecordControllerScreen] Channel playlists is empty, id: $channelId');
+                    return;
+                  }
+                  injector<NavigationService>().navigateTo(
+                    AppRouter.channelDetailPage,
+                    arguments: ChannelDetailPagePayload(
+                      channelReference: channelReference,
+                    ),
+                  );
                 case AiEntityType.myCollection:
                   injector<NavigationService>().openMyCollection();
                   break;

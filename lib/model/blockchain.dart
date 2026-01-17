@@ -6,15 +6,20 @@
 //
 
 enum Blockchain {
-  ETHEREUM,
-  TEZOS;
+  ETHEREUM('eip155:1'),
+  TEZOS('tezos:mainnet');
+
+  const Blockchain(this.chain);
+
+  /// Chain identifier used in CAIP-2 (e.g. 'eip155', 'tezos').
+  final String chain;
 
   static Blockchain fromChain(String value) {
-    final chain = value.split(':')[0];
+    final chain = value;
     switch (chain) {
-      case "eip155":
+      case "eip155:1":
         return Blockchain.ETHEREUM;
-      case "tezos":
+      case "tezos:mainnet":
         return Blockchain.TEZOS;
       default:
         throw Exception('Invalid blockchain: $value');
@@ -24,9 +29,20 @@ enum Blockchain {
   String get name {
     switch (this) {
       case Blockchain.ETHEREUM:
-        return "Ethereum";
+        return 'Ethereum';
       case Blockchain.TEZOS:
-        return "Tezos";
+        return 'Tezos';
+    }
+  }
+
+  static List<Blockchain> fromName(String value) {
+    switch (value) {
+      case 'Ethereum':
+        return [Blockchain.ETHEREUM];
+      case 'Tezos':
+        return [Blockchain.TEZOS];
+      default:
+        return [];
     }
   }
 }

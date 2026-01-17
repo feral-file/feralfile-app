@@ -64,6 +64,8 @@ abstract class DP1FeedWithChannelExtensionServiceBase
 
   Future<Channel?> getChannelDetail(String channelId, {bool fromCache = true});
 
+  Channel? getCachedChannelById(String channelId);
+
   Future<List<Channel>> getChannelsByIds({
     required List<String> channelIds,
     bool usingCache = true,
@@ -242,6 +244,10 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
     }
     final channel = await api.getChannelById(channelId);
     return channel;
+  }
+
+  Channel? getCachedChannelById(String channelId) {
+    return cache.getChannelById(channelId);
   }
 
   @override

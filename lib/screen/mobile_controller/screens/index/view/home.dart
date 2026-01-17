@@ -1,5 +1,6 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/onboarding/add_address_input_page.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/device_setting/bluetooth_connected_device_config.dart';
@@ -8,6 +9,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/pla
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/works/works_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/home_index_header.dart';
 import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
+import 'package:autonomy_flutter/screen/search/search_page.dart';
 import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
@@ -245,17 +247,34 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
             },
             child: Container(
               color: Colors.transparent,
-              child: Padding(
-                padding: const EdgeInsets.only(
-                  right: 15,
-                  top: 14,
-                  left: 15,
-                  bottom: 14,
-                ),
+              width: LayoutConstants.minTouchTarget,
+              height: LayoutConstants.minTouchTarget,
+              child: Center(
                 child: SvgPicture.asset(
                   'assets/images/Drawer.svg',
-                  width: 22,
-                  height: 14,
+                  width: LayoutConstants.iconSizeMedium,
+                  height: LayoutConstants.iconSizeMedium,
+                  colorFilter:
+                      const ColorFilter.mode(AppColor.white, BlendMode.srcIn),
+                ),
+              ),
+            ),
+          );
+          final searchButton = GestureDetector(
+            onTap: () {
+              injector<NavigationService>().navigateTo(AppRouter.searchPage,
+                  arguments: SearchPagePayload(autoFocus: true));
+              isNowDisplayingBarExpanded.value = false;
+            },
+            child: Container(
+              color: Colors.transparent,
+              width: LayoutConstants.minTouchTarget,
+              height: LayoutConstants.minTouchTarget,
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/images/search.svg',
+                  width: LayoutConstants.iconSizeMedium,
+                  height: LayoutConstants.iconSizeMedium,
                   colorFilter: const ColorFilter.mode(
                     AppColor.white,
                     BlendMode.srcIn,
@@ -278,16 +297,6 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      // if (!innerBoxIsScrolled)
-                      //   SizedBox(
-                      //     height: 106,
-                      //     child: Row(
-                      //       mainAxisAlignment: MainAxisAlignment.end,
-                      //       children: [
-                      //         hamburgerButton,
-                      //       ],
-                      //     ),
-                      //   ),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -305,9 +314,11 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
                             ),
                           ),
                           SizedBox(
-                            width: 16,
+                            width: LayoutConstants.space3,
                           ),
+                          searchButton,
                           hamburgerButton,
+                          SizedBox(width: LayoutConstants.space3),
                         ],
                       ),
                     ],
@@ -353,187 +364,4 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
       ],
     );
   }
-}
-
-/// Combined header delegate: hamburgerButton on top, HomeIndexHeader below
-/// HomeIndexHeader scrolls out while hamburgerButton stays visible
-class _CombinedHeaderDelegate extends SliverPersistentHeaderDelegate {
-  _CombinedHeaderDelegate({
-    required this.selectedTab,
-    required this.onTabChanged,
-    required this.isBodyScrolling,
-  });
-
-  final HomeIndexTab selectedTab;
-  final void Function(HomeIndexTab) onTabChanged;
-  final bool isBodyScrolling;
-
-  static const double _minExtent = 75.0;
-  static const double _maxExtent = 123.0;
-  static const double _headerHeight = 17.0;
-  static const double _hamburgerHeight =
-      _maxExtent - _minExtent; // 48 - scroll range
-
-  @override
-  double get minExtent => _minExtent;
-
-  @override
-  double get maxExtent => _maxExtent;
-
-  List<OptionItem> get _defaultOptions {
-    return [
-      // FF1 Setting
-      OptionItem(
-        title: 'FF1 Art Computer',
-        icon: SvgPicture.asset(
-          'assets/images/portal_setting.svg',
-          colorFilter: const ColorFilter.mode(AppColor.white, BlendMode.srcIn),
-        ),
-        onTap: () {
-          if (BluetoothDeviceManager().castingBluetoothDevice != null) {
-            return;
-          }
-
-          injector<NavigationService>().navigateTo(
-            AppRouter.bluetoothConnectedDeviceConfig,
-            arguments: BluetoothConnectedDeviceConfigPayload(),
-          );
-          isNowDisplayingBarExpanded.value = false;
-        },
-      ),
-
-      // Personal Preferences & Data, Security Management
-      OptionItem(
-        title: 'Account',
-        icon: SvgPicture.asset(
-          'assets/images/account_setting.svg',
-          colorFilter: const ColorFilter.mode(AppColor.white, BlendMode.srcIn),
-        ),
-        onTap: () {
-          injector<NavigationService>().navigateTo(AppRouter.settingsPage);
-          isNowDisplayingBarExpanded.value = false;
-        },
-      ),
-
-      // Support & Feedback
-      OptionItem(
-        title: 'Support & Feedback',
-        icon: ValueListenableBuilder<List<int>?>(
-          valueListenable:
-              injector<CustomerSupportService>().numberOfIssuesInfo,
-          builder: (
-            BuildContext context,
-            List<int>? numberOfIssuesInfo,
-            Widget? child,
-          ) =>
-              iconWithRedDot(
-            icon: const Icon(
-              AuIcon.help,
-            ),
-            padding: const EdgeInsets.only(right: 2, top: 2),
-            withReddot: numberOfIssuesInfo != null && numberOfIssuesInfo[1] > 0,
-          ),
-        ),
-        onTap: () {
-          injector<NavigationService>()
-              .navigateTo(AppRouter.supportCustomerPage);
-          isNowDisplayingBarExpanded.value = false;
-        },
-      ),
-
-      // Release Notes
-      OptionItem(
-        title: 'Release Notes',
-        icon: SvgPicture.asset(
-          'assets/images/release_notes.svg',
-          width: 22,
-          height: 22,
-          colorFilter: const ColorFilter.mode(AppColor.white, BlendMode.srcIn),
-        ),
-        onTap: () {
-          injector<NavigationService>().navigateTo(AppRouter.releaseNotesPage);
-          isNowDisplayingBarExpanded.value = false;
-        },
-      ),
-    ];
-  }
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    // Calculate how much to scroll the HomeIndexHeader
-    // As we scroll, HomeIndexHeader moves up
-    final headerOffset = shrinkOffset.clamp(0.0, _hamburgerHeight);
-
-    // Calculate available height for hamburger button
-    // Shrinks proportionally as header collapses
-    final availableHeight = maxExtent - shrinkOffset;
-    final hamburgerHeight =
-        (availableHeight - _headerHeight).clamp(44.0, 106.0);
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Hamburger button - responsive height as header collapses
-        SizedBox(
-          height: hamburgerHeight,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 15.5),
-                child: GestureDetector(
-                  onTap: () {
-                    // Handle hamburger menu tap
-
-                    UIHelper.showCenterMenu(context, options: _defaultOptions);
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                      right: 15,
-                      top: 12,
-                      left: 15,
-                      bottom: 12,
-                    ),
-                    child: SvgPicture.asset(
-                      'assets/images/Drawer.svg',
-                      width: 22,
-                      height: 14,
-                      colorFilter: const ColorFilter.mode(
-                        AppColor.white,
-                        BlendMode.srcIn,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        // HomeIndexHeader - scrolls up
-        Transform.translate(
-          offset: Offset(0, -headerOffset),
-          child: SizedBox(
-            height: _headerHeight,
-            child: Align(
-              alignment: Alignment.bottomLeft,
-              child: HomeIndexHeader(
-                selectedTab: selectedTab,
-                onTabChanged: onTabChanged,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  @override
-  bool shouldRebuild(_CombinedHeaderDelegate oldDelegate) =>
-      oldDelegate.selectedTab != selectedTab ||
-      oldDelegate.isBodyScrolling != isBodyScrolling;
 }

@@ -115,11 +115,11 @@ class _AllChannelsPageState extends State<AllChannelsPage> with RouteAware {
   }
 
   Widget _buildContent(BuildContext context, ChannelsState state) {
-    if (state.isLoading && state.channelData.isEmpty) {
+    if (state.isLoading && state.channels.isEmpty) {
       return const LoadingView();
     }
 
-    if (state.isError && state.channelData.isEmpty) {
+    if (state.isError && state.channels.isEmpty) {
       return ErrorView(
         error: 'Error loading channels: ${state.error}',
         onRetry: () => _channelsBloc.add(const LoadChannelsEvent()),
@@ -131,9 +131,9 @@ class _AllChannelsPageState extends State<AllChannelsPage> with RouteAware {
 
   Widget _buildChannelsList(BuildContext context, ChannelsState state) {
     final theme = Theme.of(context);
-    final channelDataList = state.channelData;
+    final channelReferences = state.channels;
 
-    if (channelDataList.isEmpty) {
+    if (channelReferences.isEmpty) {
       return Center(
         child: Text(
           'No channels found',
@@ -151,30 +151,23 @@ class _AllChannelsPageState extends State<AllChannelsPage> with RouteAware {
         // ChannelList
         SliverList.builder(
           itemBuilder: (context, index) {
-            final channelData = channelDataList[index];
+            final channelReference = channelReferences[index];
             return ChannelListRow(
-              channelReference: channelData.channelReference,
-              channelCreator: channelData.creator,
-              carouselItems: channelData.items,
+              channelReference: channelReference,
               onItemTap: (item) {
                 final assetToken = item.assetToken;
                 if (assetToken != null) {
                   injector<NavigationService>().navigateTo(
                     AppRouter.artworkDetailsPage,
-                    arguments:
-                        ArtworkDetailPayload(ArtworkIdentity(assetToken.cid)),
+                    arguments: ArtworkDetailPayload(
+                      ArtworkIdentity(assetToken.cid),
+                    ),
                   );
                 }
               },
-              isLoadingMore: channelData.isLoadingMore,
-              onLoadMore: () {
-                _channelsBloc.add(LoadMoreChannelItemsEvent(
-                  channelId: channelData.channelReference.channel.id,
-                ));
-              },
             );
           },
-          itemCount: channelDataList.length,
+          itemCount: channelReferences.length,
         ),
         if (state.isLoadingMore)
           const SliverToBoxAdapter(

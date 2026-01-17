@@ -214,6 +214,33 @@ enum DP1ProvenanceStandard {
         return 'other';
     }
   }
+
+  String get name {
+    switch (this) {
+      case DP1ProvenanceStandard.erc721:
+        return 'ERC-721';
+      case DP1ProvenanceStandard.erc1155:
+        return 'ERC-1155';
+      case DP1ProvenanceStandard.fa2:
+        return 'FA2';
+      case DP1ProvenanceStandard.other:
+        return 'Other';
+    }
+  }
+
+  static List<DP1ProvenanceStandard> fromName(String value) {
+    switch (value) {
+      case 'ERC-721':
+        return [DP1ProvenanceStandard.erc721];
+      case 'ERC-1155':
+        return [DP1ProvenanceStandard.erc1155];
+      case 'FA2':
+        return [DP1ProvenanceStandard.fa2];
+      case 'Other':
+      default:
+        return [];
+    }
+  }
 }
 
 extension DP1ContractExt on DP1Contract {

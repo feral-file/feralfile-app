@@ -19,7 +19,8 @@ import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel_item.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel/channel_list_row.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel/channel_list_row.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_item_card.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_list_row.dart';
@@ -49,6 +50,7 @@ import 'package:card_swiper/card_swiper.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart'; // import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:jiffy/jiffy.dart';
@@ -963,6 +965,54 @@ class UIHelper {
     );
   }
 
+  static Future<dynamic> showCustomCenterDialog(
+    BuildContext context, {
+    required Widget content,
+    bool showHideOtherDialog = true,
+  }) async {
+    if (showHideOtherDialog) {
+      UIHelper.hideInfoDialog(context);
+    }
+    final theme = Theme.of(context);
+    return await showCupertinoModalPopup(
+      context: context,
+      builder: (context) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          children: [
+            GestureDetector(
+              child: Container(
+                color: AppColor.primaryBlack.withOpacity(0.5),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Center(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: theme.auGreyBackground,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  constraints: const BoxConstraints(
+                    maxHeight: 600,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 20,
+                    horizontal: 15,
+                  ),
+                  child: content,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   static Future<void> showCenterMenu(
     BuildContext context, {
     required List<OptionItem> options,
@@ -1358,20 +1408,14 @@ class UIHelper {
     required List<ChannelReference> channelReferences,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
   }) {
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final channel = channelReferences[index];
-          return ColoredBox(
-            color: Colors.transparent,
-            child: ChannelHeader(
-              channelReference: channel,
-              maxLines: 3,
-            ),
-          );
-        },
-        childCount: channelReferences.length,
-      ),
+    return SliverList.builder(
+      itemBuilder: (context, index) {
+        final channelRef = channelReferences[index];
+        return ChannelListRow(
+          channelReference: channelRef,
+        );
+      },
+      itemCount: channelReferences.length,
     );
   }
 
