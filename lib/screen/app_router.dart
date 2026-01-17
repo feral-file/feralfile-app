@@ -41,6 +41,7 @@ import 'package:autonomy_flutter/screen/home/home_bloc.dart';
 import 'package:autonomy_flutter/screen/local_feed_server/add_local_feed_server.dart';
 import 'package:autonomy_flutter/screen/local_feed_server/custom_feed_servers_page.dart';
 import 'package:autonomy_flutter/screen/meili_search/meili_search_bloc.dart';
+import 'package:autonomy_flutter/screen/search/search_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/bloc/record_controller_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/view/record_controller.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/home/view/home_mobile_controller.dart';
@@ -119,6 +120,7 @@ class AppRouter {
   static const customFeedServersPage = 'custom_feed_servers_page';
   static const allPlaylistsPage = 'all_playlists_page';
   static const allChannelsPage = 'all_channels_page';
+  static const searchPage = 'search_page';
   static const connectFF1 = 'connect_ff1';
   static const ff1DevicePickerPage = 'ff1_device_picker_page';
   static const ff1Updating = 'ff1_updating';
@@ -547,6 +549,19 @@ class AppRouter {
               instanceName: ChannelsBlocInstance.curated.instanceName,
             ),
             child: AllChannelsPage(payload: payload),
+          ),
+        );
+
+      case searchPage:
+        final payload = (settings.arguments as SearchPagePayload?) ??
+            const SearchPagePayload();
+        return CupertinoPageRoute(
+          settings: settings,
+          builder: (context) => BlocProvider<MeiliSearchBloc>.value(
+            value: injector<MeiliSearchBloc>(),
+            child: SearchPage(
+              payload: payload,
+            ),
           ),
         );
 

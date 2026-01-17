@@ -37,6 +37,7 @@ final listRouteShouldNotShowNowDisplaying = [
   AppRouter.onboardingAddAddressInputPage,
   AppRouter.ff1Updating,
   AppRouter.ff1DevicePickerPage,
+  AppRouter.searchPage,
 ];
 
 class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {
@@ -61,12 +62,12 @@ class CustomRouteObserver<R extends Route<dynamic>> extends RouteObserver<R> {
 
   void onCurrentRouteChanged() {
     final routeName = currentRoute.value?.settings.name;
-    if (routeName == null ||
-        routeName == UIHelper.ignoreBackLayerPopUpRouteName ||
+    if (routeName == UIHelper.ignoreBackLayerPopUpRouteName ||
         routeName == UIHelper.artDisplaySettingModal) {
       return;
     }
-    if (listRouteShouldNotShowNowDisplaying.contains(routeName)) {
+    if (routeName == null ||
+        listRouteShouldNotShowNowDisplaying.contains(routeName)) {
       _timer?.cancel();
       _timer = Timer.periodic(const Duration(milliseconds: 50), (_) {
         _timer?.cancel();

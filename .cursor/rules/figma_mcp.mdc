@@ -18,23 +18,92 @@ Generate Flutter widgets directly from Figma nodes with pixel-accurate layout an
 - Extract properties strictly from Figma. Do not infer or add unspecified styles.
 - Preserve exact dimensions/positions when provided by the design.
 - Avoid hardcoding width and height in general layouts; only apply fixed sizes to images, icons, and logos.
+
+### ⚠️ CRITICAL RULE - MANDATORY USE OF AppTypography AND LayoutConstants ⚠️
+
+**ALL text styles MUST use `AppTypography`**  
+**ALL spacing/sizing MUST use `LayoutConstants`**  
+**NO hard-coded numbers allowed - ZERO EXCEPTIONS**
+
+Even when extracting exact values from Figma, you MUST map them to `AppTypography` and `LayoutConstants`. Never use hard-coded font sizes, spacing, padding, margins, or dimensions.
+
+#### AppTypography - Text Styles (MANDATORY)
+- **ALWAYS use `AppTypography` methods** for ALL text widgets, even when Figma specifies exact font sizes
+- Map Figma text styles to the closest matching `AppTypography` method (h1, h2, h3, h4, body, bodySmall, caption, mono)
+- Use extension methods for colors (`.black`, `.white`, `.grey`, etc.)
+- **NEVER use `TextStyle()` with numeric font sizes**, even if Figma provides exact values
+- If Figma text style matches a predefined style from `/lib/util/text_style_ext.dart`, use that mapping
+
+```dart
+// ✅ CORRECT: Map Figma text to AppTypography
+Text(
+  'Title from Figma',
+  style: AppTypography.h2(context).black, // Map Figma's 22px bold to h2
+)
+
+// ❌ FORBIDDEN: Using Figma's exact fontSize value
+Text(
+  'Title from Figma',
+  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold), // NEVER!
+)
+```
+
+#### LayoutConstants - Spacing and Sizing (MANDATORY)
+- **ALWAYS use `LayoutConstants`** for ALL spacing values (padding, margin, gap, SizedBox dimensions)
+- Map Figma spacing values to the closest `LayoutConstants` value (space1, space2, space3, space4, etc.)
+- Use predefined constants for touch targets (`minTouchTarget`) and icon sizes (`iconSizeSmall`, `iconSizeDefault`, `iconSizeMedium`, `iconSizeLarge`)
+- **NEVER use numeric literals** for spacing, even if Figma specifies exact pixel values
+- Round Figma spacing values to the nearest `LayoutConstants` value (4px grid system)
+
+```dart
+// ✅ CORRECT: Map Figma spacing to LayoutConstants
+Padding(
+  padding: EdgeInsets.all(LayoutConstants.space4), // Map Figma's 16px to space4
+  child: Column(
+    children: [
+      SizedBox(height: LayoutConstants.space3), // Map Figma's 12px to space3
+      Icon(Icons.add, size: LayoutConstants.iconSizeLarge), // Map Figma's 24px icon
+    ],
+  ),
+)
+
+// ❌ FORBIDDEN: Using Figma's exact pixel values
+Padding(
+  padding: EdgeInsets.all(16), // NEVER! Use LayoutConstants.space4
+  child: Column(
+    children: [
+      SizedBox(height: 12), // NEVER! Use LayoutConstants.space3
+      Icon(Icons.add, size: 24), // NEVER! Use LayoutConstants.iconSizeLarge
+    ],
+  ),
+)
+```
+
+#### Mapping Strategy
+1. **Text**: Match Figma text properties (fontSize, fontWeight, lineHeight) to the closest `AppTypography` method
+2. **Spacing**: Round Figma spacing values to nearest `LayoutConstants` value (4px grid: 4, 8, 12, 16, 20, 24, 32, etc.)
+3. **Icons**: Map Figma icon sizes to `LayoutConstants` icon size constants
+4. **Touch targets**: Always use `LayoutConstants.minTouchTarget` for interactive elements
+5. **If no close match exists**: Use the nearest `LayoutConstants` value, or add a new constant if needed (don't hard-code)
+
 - Export raster/vector assets to Flutter `assets` using this structure:
   - Save all SVG assets into `assets/images`.
   - Save base-resolution PNG assets into `assets/images`.
   - Save 2x PNG variants into `assets/images/2x`.
   - Save 3x PNG variants into `assets/images/3x`.
-- Use built design tokens from `/lib/design/build` and `/lib/design/build/components`. If no token exists and Figma specifies a concrete value, use that value; otherwise, omit the style.
-- Variable linking: when a Figma Variable is linked for these properties — width, height, gap, padding, margin, fontSize, fontWeight, fontFamily, lineHeight, letterSpacing, color, backgroundColor, borderRadius, borderWidth, borderColor, opacity, boxShadow — map to design tokens first; if none, use the explicit Figma value. If no variable/value is specified, skip.
+- Use built design tokens from `/lib/design/build` and `/lib/design/build/components`. Map Figma values to tokens first; if no token exists, use `AppTypography`/`LayoutConstants` instead of hard-coding.
+- Variable linking: when a Figma Variable is linked for these properties — width, height, gap, padding, margin, fontSize, fontWeight, fontFamily, lineHeight, letterSpacing, color, backgroundColor, borderRadius, borderWidth, borderColor, opacity, boxShadow — map to design tokens first, then to `AppTypography`/`LayoutConstants`; if none match, use the explicit Figma value only as a last resort. If no variable/value is specified, skip.
 - Do not introduce responsive patterns beyond what the design specifies. Follow constraints and safe areas as appropriate for Flutter.
 - Export grouped images/vectors as single assets when intended.
 - Default font is PP Mori; set `fontFamily` only when different in the design.
-- Text styles: match the text style from existing source code if the design matches a pre-defined style. Available predefined styles from `/lib/util/text_style_ext.dart`.
+- Text styles: match the text style from existing source code if the design matches a pre-defined style. Available predefined styles from `/lib/util/text_style_ext.dart`. Always use `AppTypography` methods, never direct `TextStyle()`.
 - Break complex views into small, reusable widgets with clear names. Keep code clean and modular; avoid unnecessary comments.
 
 ## Output
 
 - Dart widgets that match the Figma layout and style.
-- Token-first styling; fall back to explicit Figma values only when tokens are unavailable and the design specifies a value.
+- **MANDATORY**: All text uses `AppTypography`, all spacing uses `LayoutConstants` - no hard-coded values.
+- Token-first styling: Map Figma values to design tokens → `AppTypography`/`LayoutConstants` → explicit Figma values (last resort only).
 - No extra behaviors or styles beyond the design.
 
 ## Stack
