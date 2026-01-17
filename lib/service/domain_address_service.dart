@@ -41,7 +41,8 @@ class DomainAddressServiceImpl implements DomainAddressService {
       if (ethAddress != null) {
         final checksumAddress = verifyEthereumAddress(ethAddress);
         if (checksumAddress != null) {
-          return Address(address: checksumAddress, type: CryptoType.ETH);
+          return Address(
+              address: checksumAddress, type: CryptoType.ETH, domain: value);
         }
       }
     } else if (value.isTNSFormat()) {
@@ -49,7 +50,8 @@ class DomainAddressServiceImpl implements DomainAddressService {
       if (tezosAddress != null) {
         final checksumAddress = verifyTezosAddress(tezosAddress);
         if (checksumAddress != null) {
-          return Address(address: checksumAddress, type: CryptoType.XTZ);
+          return Address(
+              address: checksumAddress, type: CryptoType.XTZ, domain: value);
         }
       }
     }

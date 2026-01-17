@@ -54,17 +54,19 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
   CanvasDeviceBloc get _canvasDeviceBloc => injector<CanvasDeviceBloc>();
 
   late PlaylistDetailsBloc _playlistDetailsBloc;
-  late UserAllOwnCollectionBloc _userAllOwnCollectionBloc;
+  UserAllOwnCollectionBloc? _userAllOwnCollectionBloc;
 
   @override
   void initState() {
     super.initState();
     _playlistDetailsBloc = injector<PlaylistDetailsBlocManager>()
         .getBloc(widget.payload.playlist.playlist);
-    _userAllOwnCollectionBloc = injector<UserAllOwnCollectionBlocManager>()
-        .getOrCreateBloc(
-            widget.payload.playlist.playlist.firstDynamicQuery?.params.owners ??
-                []);
+    final owners =
+        widget.payload.playlist.playlist.firstDynamicQuery?.params.owners ?? [];
+    if (owners.isNotEmpty) {
+      _userAllOwnCollectionBloc =
+          injector<UserAllOwnCollectionBlocManager>().getOrCreateBloc(owners);
+    }
   }
 
   @override
@@ -207,7 +209,7 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
         playlistReference.playlist.firstDynamicQuery?.params.owners ??
             <String>[];
 
-    if (owners.isEmpty) {
+    if (owners.isEmpty || _userAllOwnCollectionBloc == null) {
       return PlaylistTitle(
         primaryText: playlistReference.playlist.title,
         secondaryText: '',
@@ -221,7 +223,7 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
     }
 
     return BlocBuilder<UserAllOwnCollectionBloc, UserAllOwnCollectionState>(
-      bloc: _userAllOwnCollectionBloc!,
+      bloc: _userAllOwnCollectionBloc,
       builder: (context, collectionState) {
         return PlaylistTitle(
           primaryText: playlistReference.playlist.title,
@@ -233,7 +235,7 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
           showDivider: true,
           playlistReference: playlistReference,
           onRetry: () {
-            _userAllOwnCollectionBloc!.add(Reindex());
+            _userAllOwnCollectionBloc?.add(Reindex());
           },
         );
       },
