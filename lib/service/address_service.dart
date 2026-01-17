@@ -119,6 +119,20 @@ class AddressService {
     return newAddress;
   }
 
+  /// Check if tokens have been fetched for a list of addresses.
+  ///
+  /// Returns true if all addresses have been fetched (have a non-null
+  /// last fetch token time), false otherwise.
+  bool areAddressesFetched(List<String> addresses) {
+    if (addresses.isEmpty) return true;
+
+    final fetchTimes = injector<UserDp1PlaylistService>()
+        .getAddressOldestLastFetchTokenTime(addresses: addresses);
+
+    // Check if all addresses have been fetched (non-null DateTime)
+    return addresses.every((address) => fetchTimes[address] != null);
+  }
+
   FutureOr<void> _onAddressUpdate() async {
     injector<PlaylistsBloc>(instanceName: PlaylistsBlocInstance.my.instanceName)
         .add(RefreshPlaylistsEvent());

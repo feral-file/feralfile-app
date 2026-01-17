@@ -49,7 +49,6 @@ class UserAllOwnCollectionBloc
         _onReloadAssetTokensFromIndexerDatabase);
     on<ClearDataEvent>(_onClearData);
     on<Reindex>(_onReindex);
-    on<AddressIndexingJobStatusTick>(_onAddressIndexingJobStatusTick);
     on<UpdateTokens>(_onUpdateTokens);
     on<PullStatus>(_onPullStatus);
 
@@ -279,11 +278,14 @@ class UserAllOwnCollectionBloc
             }
             completer.safeCompleteError(error);
           },
-          onDone: () {
+          onDone: () async {
             // Stream done successfully (onDone only called when no error with cancelOnError: true)
             if (event.shouldUpdateAddressState) {
-              final updatedStates = state.addressStates.map((state) {
+              final updatedStates =
+                  await Future.wait(state.addressStates.map((state) async {
                 if (addresses.contains(state.address)) {
+                  // wait 3 seconds to wait for database to be updated
+                  await Future<void>.delayed(const Duration(seconds: 3));
                   return AddressState(
                       address: state.address,
                       assetTokens: state.assetTokens,
@@ -291,7 +293,7 @@ class UserAllOwnCollectionBloc
                       indexingStatus: state.indexingStatus);
                 }
                 return state;
-              }).toList();
+              }).toList());
               final newState = state.copyWith(
                   addressStates: updatedStates,
                   status: UserAllOwnCollectionStatus.loaded);
@@ -507,6 +509,21 @@ class UserAllOwnCollectionBloc
               '[UserAllOwnCollectionBloc] Address $address indexing completed via PullStatus',
             );
             // Fetch tokens after completion
+            // if we already fetch tokens, don't fetch again
+            final lastFetchTokenTime = injector<UserDp1PlaylistService>()
+                .getAddressOldestLastFetchTokenTime(addresses: addresses);
+            if (lastFetchTokenTime[address] != null) {
+              log.info(
+                '[UserAllOwnCollectionBloc] Address $address already fetched tokens, skip fetching',
+              );
+              final updatedStates = _updateOrCreateAddressState(
+                address,
+                AddressStateType.fetchingArtworksDone,
+                status,
+              );
+              emit(state.copyWith(addressStates: updatedStates));
+              return true;
+            }
             add(FetchTokens(
                 shouldUpdateLastRefreshedTime: true,
                 shouldUpdateAddressState: true));
@@ -570,33 +587,6 @@ class UserAllOwnCollectionBloc
       );
       unawaited(Sentry.captureException(e, stackTrace: stackTrace));
     }
-  }
-
-  Future<void> _onAddressIndexingJobStatusTick(
-    AddressIndexingJobStatusTick event,
-    Emitter<UserAllOwnCollectionState> emit,
-  ) async {
-    final address = event.address;
-    final status = event.jobStatus;
-
-    // Update or create state with latest status
-    final updatedStates = _updateOrCreateAddressState(
-      address,
-      AddressStateType.indexStated,
-      status,
-    );
-    emit(state.copyWith(addressStates: updatedStates));
-
-    if (status.status == IndexingJobStatus.completed) {
-      // Fetch tokens after completion
-      add(FetchTokens(
-          shouldUpdateLastRefreshedTime: true, shouldUpdateAddressState: true));
-    } else if (status.status == IndexingJobStatus.running ||
-        status.status == IndexingJobStatus.paused) {
-      // Still indexing, fetch tokens periodically
-      add(FetchTokens(shouldUpdateLastRefreshedTime: false));
-    }
-    // Failed/canceled states already handled in onStatus callback
   }
 
   Future<void> _onUpdateTokens(

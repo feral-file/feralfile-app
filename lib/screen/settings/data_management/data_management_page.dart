@@ -151,19 +151,18 @@ class _DataManagementPageState extends State<DataManagementPage> {
           await injector<CacheManager>().emptyCache();
           await DefaultCacheManager().emptyCache();
           final manager = injector<UserAllOwnCollectionBlocManager>();
-          await manager.disposeAll();
+          final blocs = manager.getAllBlocs();
+          for (final bloc in blocs) {
+            bloc.add(ClearDataEvent());
+          }
           injector<FeralFileFeedManager>().clearAllCache();
           //redownload data
-          final addresses = injector<AddressService>().getAllAddresses();
-          if (addresses.isNotEmpty) {
-            // Get or create new bloc after disposeAll
-            _userAllOwnCollectionBloc
-                ?.add(ReloadAssetTokensFromIndexerDatabase());
-            _userAllOwnCollectionBloc
-                ?.add(FetchTokens(shouldUpdateLastRefreshedTime: true));
-          }
           unawaited(
               injector<FeralFileFeedManager>().reloadAllCache(force: true));
+          for (final bloc in blocs) {
+            bloc.add(ReloadAssetTokensFromIndexerDatabase());
+            bloc.add(PullStatus());
+          }
 
           if (!mounted) {
             return;
