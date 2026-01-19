@@ -3,25 +3,38 @@ part of 'user_all_own_collection_bloc.dart';
 enum UserAllOwnCollectionStatus { initial, loading, loaded, error }
 
 enum AddressStateType {
-  indexing,
-  indexingDone,
-  indexingIncomplete,
-  fetchingArtworks,
-  fetchingArtworksFailed,
-  fetchingArtworksDone;
+  // Initial state
+  init, // Initial state when bloc is created
+
+  // Step 1: Index Address states
+  indexingIncomplete, // Error ở Step 1: không thể submit indexing job (sau retries)
+  indexStated, // Success ở Step 1: đã submit indexing job thành công
+
+  // Step 2: Pull Status states
+  getStatusFailed, // Error ở Step 2: không thể pull indexing status (sau retries)
+  indexingDone, // Success ở Step 2: indexing job completed
+
+  // Step 3: Fetch Artworks states
+  fetchingArtworks, // Đang fetch artworks
+  fetchingArtworksFailed, // Error ở Step 3: fetch artworks lỗi
+  fetchingArtworksDone; // Success ở Step 3: fetch artworks xong
 
   String get description {
     switch (this) {
-      case AddressStateType.indexing:
+      case AddressStateType.init:
         return 'Syncing...';
+      case AddressStateType.indexingIncomplete:
+        return 'Sync issue';
+      case AddressStateType.indexStated:
+        return 'Syncing...';
+      case AddressStateType.getStatusFailed:
+        return 'Sync issue';
       case AddressStateType.indexingDone:
         return 'Synced';
-      case AddressStateType.indexingIncomplete:
-        return 'Some missing';
       case AddressStateType.fetchingArtworks:
         return 'Syncing...';
       case AddressStateType.fetchingArtworksFailed:
-        return 'Some missing';
+        return 'Sync issue';
       case AddressStateType.fetchingArtworksDone:
         return 'Synced';
     }
@@ -39,67 +52,35 @@ class AddressAssetTokens {
 }
 
 class AddressState {
-  final WalletAddress address;
+  final String address;
   final List<AssetToken> assetTokens;
   final AddressStateType state;
+  final AddressIndexingJobResponse? indexingStatus;
 
   AddressState({
     required this.address,
     required this.assetTokens,
     required this.state,
-  });
+    this.indexingStatus,
+  }) {
+    if (indexingStatus == null) {
+      log.info('indexingStatus is null for address: $address');
+    }
+  }
 
   AddressState copyWith({
-    WalletAddress? address,
+    String? address,
     List<AssetToken>? assetTokens,
     AddressStateType? state,
+    AddressIndexingJobResponse? indexingStatus,
   }) {
     return AddressState(
       address: address ?? this.address,
       assetTokens: assetTokens ?? this.assetTokens,
       state: state ?? this.state,
+      indexingStatus: indexingStatus ?? this.indexingStatus,
     );
   }
-}
-
-class IndexingOperation {
-  const IndexingOperation({
-    required this.id,
-    required this.addresses,
-    this.workflowId,
-    this.runId,
-  });
-
-  final String id; // key of operation
-  final List<String> addresses;
-  final String? workflowId;
-  final String? runId;
-
-  IndexingOperation copyWith({
-    List<String>? addresses,
-    String? workflowId,
-    String? runId,
-    bool clearWorkflowIds = false,
-  }) {
-    return IndexingOperation(
-      id: id,
-      addresses: addresses ?? this.addresses,
-      workflowId: clearWorkflowIds ? null : (workflowId ?? this.workflowId),
-      runId: clearWorkflowIds ? null : (runId ?? this.runId),
-    );
-  }
-
-  String get key => id;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is IndexingOperation &&
-          runtimeType == other.runtimeType &&
-          id == other.id;
-
-  @override
-  int get hashCode => id.hashCode;
 }
 
 class UserAllOwnCollectionState {
@@ -131,35 +112,7 @@ class UserAllOwnCollectionState {
 }
 
 extension AddressStateListExtension on List<AddressState> {
-  List<AddressState> updateStates(
-    List<String> addresses,
-    AddressStateType newState,
-  ) {
-    final updatedStates = map((addressState) {
-      if (addresses.contains(addressState.address.address)) {
-        return addressState.copyWith(state: newState);
-      }
-      return addressState;
-    }).toList();
-
-    // Add new addresses that don't exist in current states
-    final existingAddresses = map((state) => state.address.address).toSet();
-    for (final addressStr in addresses) {
-      if (!existingAddresses.contains(addressStr)) {
-        final walletAddress =
-            injector<AddressService>().getWalletAddress(addressStr);
-        if (walletAddress != null) {
-          updatedStates.add(
-            AddressState(
-              address: walletAddress,
-              assetTokens: [],
-              state: newState,
-            ),
-          );
-        }
-      }
-    }
-
-    return updatedStates;
+  AddressState? getAddressState(String address) {
+    return firstWhere((state) => state.address == address);
   }
 }

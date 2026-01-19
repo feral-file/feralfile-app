@@ -11,8 +11,10 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
+import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/exception.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -74,11 +76,9 @@ class AddressService {
     injector<PlaylistsBloc>(instanceName: PlaylistsBlocInstance.my.instanceName)
         .add(RefreshPlaylistsEvent());
     if (refreshPlaylist) {
-      injector<UserAllOwnCollectionBloc>().add(
-        ReindexAddresses(
-          addresses: [newAddress.address],
-        ),
-      );
+      final manager = injector<UserAllOwnCollectionBlocManager>();
+      final bloc = manager.getOrCreateBloc([newAddress.address]);
+      bloc.add(Reindex());
     }
     await _onAddressUpdate();
     log.info('Inserted address: ${newAddress.address}');
@@ -91,6 +91,10 @@ class AddressService {
 
   Future<void> deleteAddress(WalletAddress address) async {
     await _appDataManager.addressStorageService.deleteAddress(address);
+    // Clear Address Index Info when address is deleted
+    await injector<UserDp1PlaylistService>().clearAddressIndexingInfo(
+      addresses: [address.address],
+    );
     await _onAddressUpdate();
     log.info('Deleted address: ${address.address}');
   }
@@ -113,6 +117,20 @@ class AddressService {
     await _appDataManager.addressStorageService.updateAddresses([newAddress]);
     await _onAddressUpdate();
     return newAddress;
+  }
+
+  /// Check if tokens have been fetched for a list of addresses.
+  ///
+  /// Returns true if all addresses have been fetched (have a non-null
+  /// last fetch token time), false otherwise.
+  bool areAddressesFetched(List<String> addresses) {
+    if (addresses.isEmpty) return true;
+
+    final fetchTimes = injector<UserDp1PlaylistService>()
+        .getAddressOldestLastFetchTokenTime(addresses: addresses);
+
+    // Check if all addresses have been fetched (non-null DateTime)
+    return addresses.every((address) => fetchTimes[address] != null);
   }
 
   FutureOr<void> _onAddressUpdate() async {

@@ -35,6 +35,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/bloc/r
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc_manager.dart';
@@ -328,8 +329,8 @@ Future<void> setupInjector() async {
     instanceName: PlaylistsBlocInstance.global.instanceName,
   );
 
-  injector.registerLazySingleton<UserAllOwnCollectionBloc>(
-    () => UserAllOwnCollectionBloc(injector()),
+  injector.registerLazySingleton<UserAllOwnCollectionBlocManager>(
+    () => UserAllOwnCollectionBlocManager(injector()),
   );
 
   // Curated channels (top 5)

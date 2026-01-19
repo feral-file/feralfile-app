@@ -10,6 +10,7 @@ import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/domain_address_service.dart';
 import 'package:autonomy_flutter/util/exception.dart';
+import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Onboarding-specific bloc for adding a view-only address.
@@ -106,7 +107,7 @@ class OnboardingAddAddressBloc
       domain = addressInfo.domain;
       final walletAddress = WalletAddress(
         address: address,
-        name: domain ?? text,
+        name: domain ?? address.maskIfNeeded(),
         createdAt: DateTime.now(),
       );
       final connection = await _addressService.insertAddress(

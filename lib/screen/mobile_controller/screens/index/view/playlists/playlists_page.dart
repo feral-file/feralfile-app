@@ -4,13 +4,13 @@ import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/error_view.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/loading_view.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_header_with_collection_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_title.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
@@ -35,7 +35,6 @@ class PlaylistsPageState extends State<PlaylistsPage>
   final ScrollController _scrollController = ScrollController();
   late final PlaylistsBloc _curatedPlaylistsBloc;
   late final PlaylistsBloc _myPlaylistsBloc;
-  late final UserAllOwnCollectionBloc _userAllOwnCollectionBloc;
 
   @override
   bool get wantKeepAlive => true;
@@ -50,7 +49,6 @@ class PlaylistsPageState extends State<PlaylistsPage>
     _myPlaylistsBloc = injector<PlaylistsBloc>(
       instanceName: PlaylistsBlocInstance.my.instanceName,
     );
-    _userAllOwnCollectionBloc = injector<UserAllOwnCollectionBloc>();
   }
 
   @override
@@ -193,54 +191,37 @@ class PlaylistsPageState extends State<PlaylistsPage>
     final playlist = playlistReference.playlist;
     final owners = playlist.firstDynamicQuery?.params.owners ?? <String>[];
 
-    return BlocBuilder<UserAllOwnCollectionBloc, UserAllOwnCollectionState>(
-      bloc: _userAllOwnCollectionBloc,
-      builder: (context, collectionState) {
-        String stateSuffix = '';
+    final child = owners.isEmpty
+        ? PlaylistTitle(
+            primaryText: '${playlist.title}',
+            secondaryText: playlistData.creator,
+            collectionState: null,
+            total: playlistDetailsState.total,
+          )
+        : PlaylistHeaderWithCollectionState(
+            primaryText: '${playlist.title}',
+            secondaryText: playlistData.creator,
+            owners: owners,
+            total: playlistDetailsState.total,
+          );
 
-        if (owners.isNotEmpty) {
-          final targetAddress = owners.first;
-          AddressState? targetState;
+    final slidableActions = [
+      if (playlistData is AddressPlaylistData)
+        ..._getAddressSlidableActions(playlistData),
+    ];
 
-          for (final addressState in collectionState.addressStates) {
-            if (addressState.address.address == targetAddress) {
-              targetState = addressState;
-              break;
-            }
-          }
+    if (slidableActions.isEmpty) {
+      return child;
+    }
 
-          stateSuffix =
-              (targetState?.state == AddressStateType.fetchingArtworksDone)
-                  ? ''
-                  : targetState?.state.description ?? '';
-        }
-
-        final child = PlaylistTitle(
-          primaryText: '${playlist.title}',
-          primaryTextSuffix: stateSuffix.isNotEmpty ? '$stateSuffix' : null,
-          secondaryText: playlistData.creator,
-          total: playlistDetailsState.total,
-        );
-
-        final slidableActions = [
-          if (playlistData is AddressPlaylistData)
-            ..._getAddressSlidableActions(playlistData),
-        ];
-
-        if (slidableActions.isEmpty) {
-          return child;
-        }
-
-        return Slidable(
-          groupTag: playlistData.playlistReference.playlist.id.toString(),
-          endActionPane: ActionPane(
-            extentRatio: 88 / 392,
-            motion: const DrawerMotion(),
-            children: slidableActions,
-          ),
-          child: child,
-        );
-      },
+    return Slidable(
+      groupTag: playlistData.playlistReference.playlist.id.toString(),
+      endActionPane: ActionPane(
+        extentRatio: 88 / 392,
+        motion: const DrawerMotion(),
+        children: slidableActions,
+      ),
+      child: child,
     );
   }
 

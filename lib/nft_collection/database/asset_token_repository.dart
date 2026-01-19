@@ -86,7 +86,7 @@ class AssetTokenCidsWatcher implements AssetTokenWatcher {
 
       return queryBuilder
           .watch(triggerImmediately: true)
-          .withBouncing(debounceDuration: Duration(seconds: 3))
+          .withBouncing(debounceDuration: Duration(seconds: 1))
           .map(
         (Query<TokenObject> q) {
           try {

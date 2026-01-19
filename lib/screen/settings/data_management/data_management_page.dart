@@ -14,12 +14,12 @@ import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/settings/forget_exist/forget_exist_bloc.dart';
 import 'package:autonomy_flutter/screen/settings/forget_exist/forget_exist_view.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/style.dart';
@@ -40,9 +40,25 @@ class DataManagementPage extends StatefulWidget {
 }
 
 class _DataManagementPageState extends State<DataManagementPage> {
+  UserAllOwnCollectionBloc? _userAllOwnCollectionBloc;
+
   @override
   void initState() {
     super.initState();
+    final addresses = injector<AddressService>().getAllAddresses();
+    if (addresses.isNotEmpty) {
+      final manager = injector<UserAllOwnCollectionBlocManager>();
+      _userAllOwnCollectionBloc = manager.getOrCreateBloc(addresses);
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_userAllOwnCollectionBloc != null) {
+      injector<UserAllOwnCollectionBlocManager>()
+          .releaseBlocByInstance(_userAllOwnCollectionBloc!);
+    }
+    super.dispose();
   }
 
   @override
@@ -130,21 +146,22 @@ class _DataManagementPageState extends State<DataManagementPage> {
           await injector<NftTokensService>().purgeCachedGallery();
           await injector<UserDp1PlaylistService>()
               .setLastUpdateChangeAnchor(addressAnchors: []);
-          await injector<UserDp1PlaylistService>()
-              .setLastUpdateChangeAnchor(addressAnchors: []);
           await injector<CacheManager>().emptyCache();
           await DefaultCacheManager().emptyCache();
-          injector<UserAllOwnCollectionBloc>().add(ClearDataEvent());
-          injector<UserAllOwnCollectionBloc>()
-              .add(ReloadAssetTokensFromIndexerDatabase());
+          final manager = injector<UserAllOwnCollectionBlocManager>();
+          final blocs = manager.getAllBlocs();
+          for (final bloc in blocs) {
+            bloc.add(ClearDataEvent());
+          }
           injector<FeralFileFeedManager>().clearAllCache();
+          // await 2 seconds to wait for cache to be cleared
+          await Future<void>.delayed(const Duration(seconds: 2));
           //redownload data
-          final addresses = injector<AddressService>().getAllAddresses();
-          injector<UserAllOwnCollectionBloc>().add(FetchTokensOfAddresses(
-              addresses: addresses, shouldUpdateLastRefreshedTime: true));
-
           unawaited(
               injector<FeralFileFeedManager>().reloadAllCache(force: true));
+          for (final bloc in blocs) {
+            bloc.add(PullStatus());
+          }
 
           if (!mounted) {
             return;
