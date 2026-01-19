@@ -74,6 +74,10 @@ extension DP1CallExtension on DP1Call {
         signature: '0x17794533e25b08');
   }
 
+  bool get isAddressPlaylist => id.startsWith('addr:');
+
+  List<String> get addressOwners => dynamicQueries.first.params.owners;
+
   String get channelName => 'Feral File';
 
   String get url => '${Environment.dp1FeedUrl}/api/v1/playlists/$id';

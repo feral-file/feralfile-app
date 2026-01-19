@@ -5,6 +5,7 @@ import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
@@ -15,6 +16,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_title.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
+import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/playlist_data_ext.dart';
@@ -237,6 +239,14 @@ class PlaylistsPageState extends State<PlaylistsPage>
           UIHelper.showDeletePlaylistConfirmation(playlist, (playlist) async {
             await injector<DriftDatabaseService>()
                 .deletePlaylistById(playlist.id);
+            final isAddressPlaylist = playlist.isAddressPlaylist;
+            if (isAddressPlaylist) {
+              final address = playlist.addressOwners;
+              if (address.isNotEmpty) {
+                await injector<UserDp1PlaylistService>()
+                    .clearAddressIndexingInfo(addresses: address);
+              }
+            }
           });
         },
         child: Container(

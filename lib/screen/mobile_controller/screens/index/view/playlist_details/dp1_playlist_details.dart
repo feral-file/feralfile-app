@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
@@ -16,6 +17,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
+import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/metric_helper.dart';
@@ -244,7 +246,7 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
   }
 
   List<OptionItem> _getOptions(PlaylistReference playlistReference) {
-    if (playlistReference.type == PlaylistReferenceType.address)
+    if (playlistReference.type == PlaylistReferenceType.address) {
       return [
         OptionItem(
           title: 'Delete',
@@ -256,27 +258,24 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
             final playlist = playlistReference.playlist;
             UIHelper.showDeletePlaylistConfirmation(playlist, (playlist) async {
               // Extract address from playlist dynamic query or ID
-              final parts = playlist.id.split(':');
-              final addressString =
-                  playlist.firstDynamicQuery?.params.owners.firstOrNull ??
-                      (parts.length > 2 ? parts.last : null);
-              if (addressString != null) {
-                final addresses =
-                    injector<AddressService>().getAllWalletAddresses();
-                final address = addresses.firstWhereOrNull(
-                  (addr) =>
-                      addr.address.toLowerCase() == addressString.toLowerCase(),
-                );
-                if (address != null) {
-                  await injector<AddressService>().deleteAddress(address);
-                  injector<NavigationService>().goBack();
-                  injector<NavigationService>().goBack();
+              injector<DriftDatabaseService>().deletePlaylistById(playlist.id);
+              final isAddressPlaylist = playlist.isAddressPlaylist;
+              if (isAddressPlaylist) {
+                final address = playlist.addressOwners;
+                if (address.isNotEmpty) {
+                  await injector<UserDp1PlaylistService>()
+                      .clearAddressIndexingInfo(
+                    addresses: address,
+                  );
                 }
               }
+              injector<NavigationService>().goBack();
+              injector<NavigationService>().goBack();
             });
           },
         ),
       ];
+    }
     return [];
   }
 }
