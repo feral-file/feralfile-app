@@ -115,7 +115,11 @@ class PlaylistDatabase extends _$PlaylistDatabase {
     });
   }
 
-  Stream<List<Channel>> watchChannels({int? type, String? baseUrl}) {
+  Stream<List<Channel>> watchChannels({
+    int? type,
+    String? baseUrl,
+    int? size,
+  }) {
     final query = select(channels);
     if (type != null) {
       query.where((c) => c.type.equals(type));
@@ -126,6 +130,9 @@ class PlaylistDatabase extends _$PlaylistDatabase {
     query.orderBy([
       (c) => OrderingTerm(expression: c.sortOrder, mode: OrderingMode.asc),
     ]);
+    if (size != null) {
+      query.limit(size);
+    }
     return query.watch();
   }
 
@@ -400,6 +407,15 @@ LazyDatabase _openConnection() {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'playlist_cache.sqlite'));
     log.info('[PlaylistDatabase] SQLite database location: ${file.path}');
-    return NativeDatabase.createInBackground(file);
+    return NativeDatabase.createInBackground(
+      file,
+      setup: (database) async {
+        // Allow more time when DB is locked before failing
+        database.execute('PRAGMA busy_timeout = 5000');
+
+        // Enable WAL mode for better concurrency
+        database.execute('PRAGMA journal_mode = WAL');
+      },
+    );
   });
 }

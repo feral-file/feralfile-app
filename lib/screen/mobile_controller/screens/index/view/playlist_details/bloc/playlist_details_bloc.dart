@@ -36,6 +36,7 @@ class PlaylistDetailsBloc
 
   /// Setup database listener to watch for changes.
   void _setupDatabaseListener() {
+    return;
     // Cancel existing subscription if any
     _databaseSubscription?.cancel();
     _databaseSubscription = null;

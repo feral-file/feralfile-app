@@ -1,10 +1,16 @@
+import 'dart:async';
+
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart'
+    as db;
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sentry/sentry.dart';
 
 part 'channels_event.dart';
 part 'channels_state.dart';
@@ -18,11 +24,90 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
     on<LoadChannelsEvent>(_onLoadChannels);
     on<LoadMoreChannelsEvent>(_onLoadMoreChannels);
     on<RefreshChannelsEvent>(_onRefreshChannels);
+
+    _setupDatabaseListener(state);
   }
 
   final ChannelType channelType;
   final int? total;
   final int pageSize;
+  StreamSubscription<List<db.Channel>>? _databaseSubscription;
+
+  void _setupDatabaseListener(ChannelsState nextState) {
+    _databaseSubscription?.cancel();
+    _databaseSubscription = null;
+
+    if (channelType == ChannelType.global) {
+      return;
+    }
+
+    final loadedLength = nextState.channels.length;
+    final listenSize = loadedLength > pageSize ? pageSize : loadedLength;
+
+    log.info(
+      '[ChannelsBloc] Setting up database listener for ${channelType.name} '
+      'with size $listenSize',
+    );
+
+    try {
+      Stream<List<db.Channel>> watchStream;
+
+      switch (channelType) {
+        case ChannelType.curated:
+          watchStream = injector<DriftDatabaseService>().watchChannelRows(
+            kind: DriftChannelKind.dp1,
+            size: listenSize,
+          );
+          log.info(
+            '[ChannelsBloc] Setting up database listener '
+            'for curated channels',
+          );
+        case ChannelType.me:
+          watchStream = injector<DriftDatabaseService>().watchChannelRows(
+            kind: DriftChannelKind.localVirtual,
+            size: listenSize,
+          );
+          log.info(
+            '[ChannelsBloc] Setting up database listener for my channels',
+          );
+        case ChannelType.global:
+          return;
+      }
+
+      _databaseSubscription = watchStream.listen(
+        (channels) async {
+          log.info(
+            '[ChannelsBloc] Database changed, reloading '
+            '${channelType.name} channels with ${channels.length} channels',
+          );
+
+          add(const RefreshChannelsEvent());
+        },
+        onError: (Object error, StackTrace stackTrace) {
+          log.info(
+            '[ChannelsBloc] Database listener error: $error',
+          );
+          unawaited(
+            Sentry.captureException(
+              'Database listener error in ChannelsBloc: $error',
+              stackTrace: stackTrace,
+            ),
+          );
+        },
+      );
+    } catch (e, s) {
+      log.info(
+        '[ChannelsBloc] Error setting up database listener: $e',
+      );
+      unawaited(
+        Sentry.captureException(
+          'Error setting up database listener: $e',
+          stackTrace: s,
+        ),
+      );
+    }
+  }
+
   Future<void> _onLoadChannels(
     LoadChannelsEvent event,
     Emitter<ChannelsState> emit,
@@ -179,13 +264,16 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
       final newChannels =
           isLoadMore ? [...state.channels, ...channels] : channels;
 
-      emit(state.copyWith(
+      final nextState = state.copyWith(
         status: ChannelsStateStatus.loaded,
         channels: newChannels,
         hasMore: paginationResponse.hasMore,
         cursor: paginationResponse.cursor,
         error: '',
-      ));
+      );
+
+      emit(nextState);
+      _setupDatabaseListener(nextState);
     } catch (e) {
       log.info('Error loading channels: $e');
       emit(
@@ -195,5 +283,13 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
         ),
       );
     }
+  }
+
+  @override
+  Future<void> close() {
+    log.info('[ChannelsBloc] Closing, cancelling database subscription');
+    _databaseSubscription?.cancel();
+    _databaseSubscription = null;
+    return super.close();
   }
 }

@@ -158,7 +158,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
             }
             log.info(
                 '[DataManagementPage][_showRebuildGalleryDialog] Cleared data for ${blocs.length} UserAllOwnCollectionBloc instances');
-            injector<FeralFileFeedManager>().clearAllCache();
+            await injector<FeralFileFeedManager>().clearAllCache();
             log.info(
                 '[DataManagementPage][_showRebuildGalleryDialog] Cleared FeralFileFeedManager cache');
 

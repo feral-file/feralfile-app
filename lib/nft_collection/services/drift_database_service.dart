@@ -91,6 +91,15 @@ abstract class DriftDatabaseServiceAbstract {
 
   Future<db.Channel?> getMyCollectionChannel();
 
+  /// Watch channels filtered by kind.
+  ///
+  /// - [kind] filters by channel type (dp1 vs localVirtual).
+  /// - [size] limits the number of channels observed (top [size] by sortOrder).
+  Stream<List<db.Channel>> watchChannelRows({
+    DriftChannelKind? kind,
+    int? size,
+  });
+
   // ========= Playlists (raw Drift rows) =========
 
   /// Get playlists filtered by channel, kind and/or baseUrl.
@@ -304,6 +313,18 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
   @override
   Future<db.Channel?> getMyCollectionChannel() =>
       getChannelById('my_collection');
+
+  @override
+  Stream<List<db.Channel>> watchChannelRows({
+    DriftChannelKind? kind,
+    int? size,
+  }) {
+    final typeFilter = kind?.value;
+    return _db.watchChannels(
+      type: typeFilter,
+      size: size,
+    );
+  }
 
   // ========= Playlists (raw Drift rows) =========
 

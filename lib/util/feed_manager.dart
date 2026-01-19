@@ -3,7 +3,6 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/pair.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
-import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
@@ -15,7 +14,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/pla
 import 'package:autonomy_flutter/service/base_dp1_feed_service_impl.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
-import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:collection/collection.dart';
@@ -72,63 +70,19 @@ class FeedManager {
   Future<void> reloadAllCache({
     bool force = false,
   }) async {
-    // local cache last refresh time
-    final lastTimeRefreshFeeds =
-        injector<ConfigurationService>().getLastTimeRefreshFeeds() ??
-            DateTime(1970, 1, 1);
-    final updateFeedDurationString =
-        injector<RemoteConfigService>().getConfig<String>(
-      ConfigGroup.dp1Playlist,
-      ConfigKey.dp1FeedCacheDuration,
-      const Duration(days: 1).toString(),
-    );
-    final updateFeedDuration =
-        Duration(seconds: int.parse(updateFeedDurationString));
-    // remote config last update time
-    final lastFeedUpdateAtString =
-        injector<RemoteConfigService>().getConfig<String>(
-      ConfigGroup.dp1Playlist,
-      ConfigKey.dp1FeedLastUpdated,
-      DateTime(2023, 1, 1).toString(),
-    );
-    final lastFeedUpdateAt = DateTime.parse(lastFeedUpdateAtString);
-    // we should update the cache if more than updateFeedDuration or lastFeedUpdateAt is before now
-    final shouldUpdate = lastTimeRefreshFeeds
-            .isBefore(DateTime.now().subtract(updateFeedDuration)) ||
-        lastFeedUpdateAt.isAfter(lastTimeRefreshFeeds);
-    log.info('[FeedManager] Reload all cache, shouldUpdate: $shouldUpdate');
-    log.info('[FeedManager] force: $force');
-    log.info('[FeedManager] lastTimeRefreshFeeds: $lastTimeRefreshFeeds');
-    log.info('[FeedManager] updateFeedDuration: $updateFeedDuration');
-    log.info('[FeedManager] lastFeedUpdateAt: $lastFeedUpdateAt');
-    if (force || shouldUpdate) {
-      // we should remove the last time refresh feeds
-      await injector<ConfigurationService>()
-          .setLastTimeRefreshFeeds(DateTime(1970, 1, 1));
-      final timeStart = DateTime.now();
-      for (final feedService in feedServices) {
-        await feedService.reloadCache();
-      }
-      await injector<ConfigurationService>().setLastTimeRefreshFeeds(timeStart);
-      log.info(
-          '[FeedManager] Reload all cache, last time refresh feeds: $lastTimeRefreshFeeds, duration: $updateFeedDuration, force: $force');
-      await Future<void>.delayed(const Duration(milliseconds: 500));
-      injector<ChannelsBloc>(
-              instanceName: ChannelsBlocInstance.curated.instanceName)
-          .add(const RefreshChannelsEvent());
-      injector<PlaylistsBloc>(
-              instanceName: PlaylistsBlocInstance.curated.instanceName)
-          .add(RefreshPlaylistsEvent());
-    } else {
-      log.info(
-          '[FeedManager] Skip reload all cache, last time refresh feeds: $lastTimeRefreshFeeds, duration: $updateFeedDuration, force: $force');
-      injector<ChannelsBloc>(
-              instanceName: ChannelsBlocInstance.curated.instanceName)
-          .add(const RefreshChannelsEvent());
-      injector<PlaylistsBloc>(
-              instanceName: PlaylistsBlocInstance.curated.instanceName)
-          .add(RefreshPlaylistsEvent());
+    log.info('[FeedManager] Reload all cache, force: $force');
+
+    for (final feedService in feedServices) {
+      await feedService.reloadCacheIfNeeded(force: force);
     }
+
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+    injector<ChannelsBloc>(
+            instanceName: ChannelsBlocInstance.curated.instanceName)
+        .add(const RefreshChannelsEvent());
+    injector<PlaylistsBloc>(
+            instanceName: PlaylistsBlocInstance.curated.instanceName)
+        .add(RefreshPlaylistsEvent());
   }
 
   Future<List<PlaylistReference>> getAllCachedPlaylists() async {
@@ -149,11 +103,11 @@ class FeedManager {
     return allPlaylists;
   }
 
-  void clearAllCache() {
+  Future<void> clearAllCache() async {
     injector<ConfigurationService>()
         .setLastTimeRefreshFeeds(DateTime(1970, 1, 1));
     for (final feedService in feedServices) {
-      feedService.clearCache();
+      await feedService.clearCache();
     }
   }
 }
@@ -208,7 +162,7 @@ class FeralFileFeedManager extends FeedManager {
         service.addRemoteConfigChannelIds(channelIdsByUrl[endpoint]!);
         if (error is Object) {
           log.info('Error initializing feed service: $error');
-          await service.reloadCache();
+          await service.reloadCacheIfNeeded(force: true);
         }
         addFeedService(service);
       }
@@ -230,7 +184,7 @@ class FeralFileFeedManager extends FeedManager {
       });
       if (error is Object) {
         log.info('Error initializing feed service: $error');
-        await service.reloadCache();
+        await service.reloadCacheIfNeeded(force: true);
       }
       addFeedService(service);
     }

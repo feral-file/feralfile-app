@@ -12,6 +12,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_respons
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_create_playlist_request.dart';
 import 'package:autonomy_flutter/service/base_dp1_feed_service.dart';
+import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:dio/dio.dart';
@@ -29,6 +30,8 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
   late final DP1FeedApi api;
   late final PlaylistDatabase db;
   late final DriftDatabaseService driftDb;
+  late final ConfigurationService _configurationService;
+  late final RemoteConfigService _remoteConfigService;
 
   /// Initialize api and Drift services - can be overridden by subclasses
   Future<void> init({
@@ -42,6 +45,8 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
     );
     db = injector<PlaylistDatabase>();
     driftDb = injector<DriftDatabaseService>();
+    _configurationService = injector<ConfigurationService>();
+    _remoteConfigService = injector<RemoteConfigService>();
   }
 
   /*
@@ -196,6 +201,10 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
 
   bool _isReloadingCache = false;
 
+  /// Low-level cache reload that always re-ingests data for this feed service.
+  ///
+  /// Callers should normally use [reloadCacheIfNeeded] so that each service
+  /// can respect its own cache policy and last-refresh time.
   Future<void> reloadCache() async {
     if (_isReloadingCache) return;
     _isReloadingCache = true;
@@ -227,6 +236,97 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
     // Clear all Drift data
     await driftDb.deleteAllPlaylists(
         kind: DriftPlaylistKind.dp1, baseUrl: baseUrl);
+  }
+
+  /// Get this service's last successful cache refresh time, based on baseUrl.
+  DateTime? _getServiceLastRefreshTime() {
+    final allByUrl = _configurationService.getDp1LastTimeRefreshFeedsByUrl();
+    return allByUrl[baseUrl];
+  }
+
+  /// Persist this service's last successful cache refresh time.
+  Future<void> _setServiceLastRefreshTime(DateTime time) async {
+    final allByUrl = _configurationService.getDp1LastTimeRefreshFeedsByUrl();
+    allByUrl[baseUrl] = time;
+    await _configurationService.setDp1LastTimeRefreshFeedsByUrl(allByUrl);
+  }
+
+  /// Decide whether this feed service should reload its cache.
+  ///
+  /// Uses the same remote-config driven policy as the legacy FeedManager:
+  /// - [ConfigKey.dp1FeedCacheDuration]: max allowed cache age in seconds
+  /// - [ConfigKey.dp1FeedLastUpdated]: global content last-updated timestamp
+  ///
+  /// Each service compares these values against its own last-refresh time.
+  Future<bool> shouldReloadCache() async {
+    final lastServiceRefresh =
+        _getServiceLastRefreshTime() ?? DateTime(1970, 1, 1);
+
+    final updateFeedDurationString = _remoteConfigService.getConfig<String>(
+      ConfigGroup.dp1Playlist,
+      ConfigKey.dp1FeedCacheDuration,
+      const Duration(days: 1).inSeconds.toString(),
+    );
+    final updateFeedDuration =
+        Duration(seconds: int.parse(updateFeedDurationString));
+
+    final lastFeedUpdateAtString = _remoteConfigService.getConfig<String>(
+      ConfigGroup.dp1Playlist,
+      ConfigKey.dp1FeedLastUpdated,
+      DateTime(2023, 1, 1).toIso8601String(),
+    );
+    final lastFeedUpdateAt = DateTime.parse(lastFeedUpdateAtString);
+
+    final now = DateTime.now();
+    final isStaleByAge =
+        lastServiceRefresh.isBefore(now.subtract(updateFeedDuration));
+    final isOutdatedByRemoteUpdate = lastFeedUpdateAt.isAfter(
+      lastServiceRefresh,
+    );
+
+    final shouldUpdate = isStaleByAge || isOutdatedByRemoteUpdate;
+
+    log.info(
+      '[BaseDP1FeedServiceImpl] shouldReloadCache '
+      'baseUrl=$baseUrl, shouldUpdate=$shouldUpdate, '
+      'lastServiceRefresh=$lastServiceRefresh, '
+      'updateFeedDuration=$updateFeedDuration, '
+      'lastFeedUpdateAt=$lastFeedUpdateAt',
+    );
+
+    return shouldUpdate;
+  }
+
+  /// Public entry point for callers that want this service to ensure its cache
+  /// is up to date.
+  ///
+  /// When [force] is true, the cache is always reloaded regardless of policy.
+  /// Otherwise, [shouldReloadCache] is evaluated and the reload is skipped
+  /// when not needed.
+  Future<void> reloadCacheIfNeeded({bool force = false}) async {
+    if (force) {
+      log.info(
+        '[BaseDP1FeedServiceImpl] Forced cache reload for baseUrl=$baseUrl',
+      );
+      await reloadCache();
+      await _setServiceLastRefreshTime(DateTime.now());
+      return;
+    }
+
+    final shouldUpdate = await shouldReloadCache();
+    if (!shouldUpdate) {
+      log.info(
+        '[BaseDP1FeedServiceImpl] Skip cache reload for baseUrl=$baseUrl '
+        '(up to date)',
+      );
+      return;
+    }
+
+    log.info(
+      '[BaseDP1FeedServiceImpl] Reloading cache (policy) for baseUrl=$baseUrl',
+    );
+    await reloadCache();
+    await _setServiceLastRefreshTime(DateTime.now());
   }
 
   /// Convert Drift Channel row to model.Channel

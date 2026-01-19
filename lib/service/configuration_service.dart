@@ -115,8 +115,16 @@ abstract class ConfigurationService {
   Future<void> setHasSeenPlayToFf1Tooltip(bool value);
 
   DateTime? getLastTimeRefreshFeeds();
-
   Future<void> setLastTimeRefreshFeeds(DateTime time);
+
+  /// Per-feed-service last refresh time keyed by DP1 feed baseUrl.
+  ///
+  /// This allows each DP1 feed service to decide its own cache reload policy
+  /// instead of relying on the global [getLastTimeRefreshFeeds] value.
+  Map<String, DateTime> getDp1LastTimeRefreshFeedsByUrl();
+
+  Future<void> setDp1LastTimeRefreshFeedsByUrl(
+      Map<String, DateTime> lastRefreshByUrl);
 
   DateTime? getLastUpdateChangeAt();
 
@@ -224,6 +232,15 @@ class ConfigurationServiceImpl implements ConfigurationService {
 
   static const String KEY_LAST_TIME_REFRESH_FEEDS =
       'last_time_refresh_feeds$_version';
+
+  /// Map<String, String> JSON storing per-feed-service last refresh times,
+  /// keyed by DP1 feed baseUrl and ISO8601 timestamps as values.
+  ///
+  /// This is used by DP1 feed services to decide if they should reload cache
+  /// individually instead of relying on the legacy global
+  /// [KEY_LAST_TIME_REFRESH_FEEDS] value.
+  static const String KEY_DP1_LAST_TIME_REFRESH_FEEDS_BY_URL =
+      'dp1_last_time_refresh_feeds_by_url$_version';
 
   static const String KEY_LAST_UPDATE_CHANGE_AT =
       'last_update_change_at$_version';
@@ -528,6 +545,43 @@ class ConfigurationServiceImpl implements ConfigurationService {
         KEY_LAST_TIME_REFRESH_FEEDS,
         time.toIso8601String(),
       );
+
+  @override
+  Map<String, DateTime> getDp1LastTimeRefreshFeedsByUrl() {
+    final raw = _preferences.getString(KEY_DP1_LAST_TIME_REFRESH_FEEDS_BY_URL);
+    if (raw == null) {
+      // Backward compatibility: if per-url map is not set yet, but the
+      // legacy global last-refresh value exists, expose it as an empty map
+      // and let services set their own timestamps after first successful
+      // reload. We deliberately do NOT try to fan out the single value to
+      // all URLs here to keep behavior simple and explicit.
+      return {};
+    }
+
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    return decoded.map(
+      (key, value) => MapEntry(
+        key,
+        DateTime.parse(value as String),
+      ),
+    );
+  }
+
+  @override
+  Future<void> setDp1LastTimeRefreshFeedsByUrl(
+    Map<String, DateTime> lastRefreshByUrl,
+  ) {
+    final encoded = lastRefreshByUrl.map(
+      (key, value) => MapEntry(
+        key,
+        value.toIso8601String(),
+      ),
+    );
+    return _preferences.setString(
+      KEY_DP1_LAST_TIME_REFRESH_FEEDS_BY_URL,
+      jsonEncode(encoded),
+    );
+  }
 
   @override
   DateTime? getLastUpdateChangeAt() {
