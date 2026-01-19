@@ -63,11 +63,11 @@ class DP1Item {
       'title': title,
       'source': source,
       'duration': duration,
-      'license': license?.value,
-      'repro': repro?.toJson(),
-      'ref': ref,
-      'display': display?.toJson(),
-      'provenance': provenance?.toJson(),
+      if (license != null) 'license': license?.value,
+      if (repro != null) 'repro': repro?.toJson(),
+      if (ref != null) 'ref': ref,
+      if (display != null) 'display': display?.toJson(),
+      if (provenance != null) 'provenance': provenance?.toJson(),
     };
   }
 }

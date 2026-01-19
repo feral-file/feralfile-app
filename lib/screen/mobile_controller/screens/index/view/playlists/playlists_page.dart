@@ -120,11 +120,11 @@ class PlaylistsPageState extends State<PlaylistsPage>
       children: [
         Builder(
           builder: (context) {
-            if (state.isLoading && state.playlists.isEmpty) {
+            if (state.isLoading && state.playlistData.isEmpty) {
               return const LoadingView();
             }
 
-            if (state.isError && state.playlists.isEmpty) {
+            if (state.isError && state.playlistData.isEmpty) {
               return ErrorView(
                 error: 'Error loading playlists: ${state.error}',
                 onRetry: () => playlistsBloc.add(LoadPlaylistsEvent()),

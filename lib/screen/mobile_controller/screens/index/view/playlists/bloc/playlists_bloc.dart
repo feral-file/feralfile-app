@@ -9,7 +9,7 @@ import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sentry/sentry.dart';
 
@@ -22,10 +22,12 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     this.total,
     this.pageSize = 5,
   }) : super(const PlaylistsState()) {
-    _setupDatabaseListener();
+    // Don't set up listener in constructor - wait for playlists to be loaded
     on<LoadPlaylistsEvent>(_onLoadPlaylists);
     on<LoadMorePlaylistsEvent>(_onLoadMorePlaylists);
     on<RefreshPlaylistsEvent>(_onRefreshPlaylists);
+
+    _setupDatabaseListener(state);
   }
 
   final PlaylistType playlistType;
@@ -33,8 +35,17 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
   final int pageSize;
   StreamSubscription<List<db.Playlist>>? _databaseSubscription;
 
-  /// Setup database listener to watch for changes.
-  void _setupDatabaseListener() {
+  // @override
+  // void onTransition(
+  //   Transition<PlaylistsEvent, PlaylistsState> transition,
+  // ) {
+  //   super.onTransition(transition);
+  //   _setupDatabaseListener(transition.nextState);
+  // }
+
+  /// Setup database listener to watch for changes in loaded playlists count
+  /// based on the given [nextState].
+  void _setupDatabaseListener(PlaylistsState nextState) {
     // Cancel existing subscription if any
     _databaseSubscription?.cancel();
     _databaseSubscription = null;
@@ -44,6 +55,17 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
       return;
     }
 
+    // Get current loaded playlists length from next state's playlistData
+    final loadedLength = nextState.playlistData.length;
+
+    // We only need to observe the visible portion: min(pageSize, loadedLength)
+    final listenSize = loadedLength > pageSize ? pageSize : loadedLength;
+
+    log.info(
+      '[PlaylistsBloc] Setting up database listener for ${playlistType.name} '
+      'with size $listenSize',
+    );
+
     try {
       Stream<List<db.Playlist>> watchStream;
 
@@ -52,6 +74,7 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
           // Watch DP1 playlists (type=0)
           watchStream = injector<DriftDatabaseService>().watchPlaylistRows(
             kind: DriftPlaylistKind.dp1,
+            size: listenSize,
           );
           log.info(
             '[PlaylistsBloc] Setting up database listener '
@@ -62,6 +85,7 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
           watchStream = injector<DriftDatabaseService>().watchPlaylistRows(
             channelId: 'my_collection',
             kind: DriftPlaylistKind.address,
+            size: listenSize,
           );
           log.info(
             '[PlaylistsBloc] Setting up database listener for my playlists',
@@ -260,28 +284,21 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
       }
 
       final playlistDataList = paginationResponse.playlistData;
-      final playlists =
-          playlistDataList.map((data) => data.playlistReference).toList();
-
-      final newPlaylists =
-          isLoadMore ? [...state.playlists, ...playlists] : playlists;
       final newPlaylistDataList = isLoadMore
           ? [...state.playlistData, ...playlistDataList]
           : playlistDataList;
-
-      emit(
-        state.copyWith(
-          status: PlaylistsStateStatus.loaded,
-          playlists: newPlaylists,
-          playlistData: newPlaylistDataList,
-          hasMore: paginationResponse.hasMore,
-          cursor: paginationResponse.cursor,
-          error: '',
-        ),
+      final nextState = state.copyWith(
+        status: PlaylistsStateStatus.loaded,
+        playlistData: newPlaylistDataList,
+        hasMore: paginationResponse.hasMore,
+        cursor: paginationResponse.cursor,
+        error: '',
       );
+
+      emit(nextState);
       log.info(
         'LoadPlaylistsEvent for ${playlistType.name}: '
-        '${newPlaylists.length}',
+        '${newPlaylistDataList.length}',
       );
     } catch (e) {
       emit(

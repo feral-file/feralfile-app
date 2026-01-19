@@ -6,6 +6,7 @@ import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart'
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/provenance.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
+import 'package:autonomy_flutter/util/log.dart';
 
 extension DP1PlaylistItemExtension on DP1Item {
   static DP1Item fromAssetToken({
@@ -28,6 +29,37 @@ extension DP1PlaylistItemExtension on DP1Item {
       license: license,
       provenance: dp1Provenance,
     );
+  }
+
+  static DP1Item fromItemRow(db.Item item) {
+    try {
+      final display = item.displayJson != null && item.displayJson!.isNotEmpty
+          ? DP1PlaylistDisplay.fromJson(
+              json.decode(item.displayJson!) as Map<String, dynamic>)
+          : null;
+      final repro = item.reproJson != null && item.reproJson!.isNotEmpty
+          ? ReproBlock.fromJson(
+              json.decode(item.reproJson!) as Map<String, dynamic>)
+          : null;
+      final provenance =
+          item.provenanceJson != null && item.provenanceJson!.isNotEmpty
+              ? DP1Provenance.fromJson(
+                  json.decode(item.provenanceJson!) as Map<String, dynamic>)
+              : null;
+      return DP1Item(
+          id: item.id,
+          title: item.title,
+          source: item.sourceUri ?? item.thumbnailUri,
+          duration: item.durationSec ?? 0,
+          license: ArtworkDisplayLicense.fromString(item.license ?? 'open'),
+          ref: item.refUri,
+          display: display,
+          repro: repro,
+          provenance: provenance);
+    } catch (e) {
+      log.info('Error in fromItemRow: $e');
+      rethrow;
+    }
   }
 }
 

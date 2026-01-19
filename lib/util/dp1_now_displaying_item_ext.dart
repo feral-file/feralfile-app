@@ -6,6 +6,7 @@ import 'package:autonomy_flutter/model/dp1/dp1_manifest.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
+import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
@@ -14,6 +15,9 @@ import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:collection/collection.dart';
 import 'package:sentry/sentry.dart';
+
+import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart'
+    as db;
 
 extension DP1NowDisplayingItemExt on DP1NowDisplayingItem {
   /// Get the best available thumbnail from the manifest, or null if not present
@@ -52,6 +56,20 @@ extension DP1NowDisplayingItemExt on DP1NowDisplayingItem {
 
   bool get canInteract {
     return assetToken != null && assetToken!.canInteract;
+  }
+
+  static DP1NowDisplayingItem fromItemRow(db.Item itemRow) {
+    AssetToken? assetToken;
+    try {
+      assetToken = AssetToken.fromRest(
+        jsonDecode(itemRow.tokenDataJson!) as Map<String, dynamic>,
+      );
+    } catch (e) {
+      log.info('Error in fromItemRow: $e');
+      unawaited(Sentry.captureException(e));
+    }
+    final dp1Item = DP1PlaylistItemExtension.fromItemRow(itemRow);
+    return DP1NowDisplayingItem(dp1Item: dp1Item, assetToken: assetToken);
   }
 }
 
@@ -117,7 +135,6 @@ extension DP1NowDisplayingItemListExt on List<DP1NowDisplayingItem> {
     required DP1Call playlist,
     required int offset,
     required int size,
-    List<AssetToken>? initialAssetTokens,
   }) async {
     final isStatic = playlist.items.isNotEmpty;
     if (isStatic) {
@@ -125,14 +142,12 @@ extension DP1NowDisplayingItemListExt on List<DP1NowDisplayingItem> {
         playlist: playlist,
         offset: offset,
         size: size,
-        initialAssetTokens: initialAssetTokens,
       );
     } else {
       return _buildFromDynamicQuery(
         playlist: playlist,
         offset: offset,
         size: size,
-        initialAssetTokens: initialAssetTokens,
       );
     }
   }
@@ -142,7 +157,6 @@ extension DP1NowDisplayingItemListExt on List<DP1NowDisplayingItem> {
     required DP1Call playlist,
     required int offset,
     required int size,
-    List<AssetToken>? initialAssetTokens,
   }) async {
     final items = playlist.items;
     final pageItems = items.safeSublist(offset, offset + size);
@@ -150,25 +164,38 @@ extension DP1NowDisplayingItemListExt on List<DP1NowDisplayingItem> {
       return [];
     }
 
+    final nowDisplayingItems = <DP1NowDisplayingItem>[];
+
     final pageIds =
         pageItems.map((item) => item.id).whereType<String>().toList();
-    final pageAssetTokens = <AssetToken>[];
     try {
       final localDp1Items =
           await injector<DriftDatabaseService>().getItemsByIds(pageIds);
-      final assetTokens = localDp1Items
-          .map((item) => AssetToken.fromRest(
-              jsonDecode(item.tokenDataJson!) as Map<String, dynamic>))
-          .nonNulls
+      final localNowDisplayingItems = localDp1Items
+          .map((item) => DP1NowDisplayingItemExt.fromItemRow(item))
           .toList();
-      pageAssetTokens.addAll(assetTokens);
+      nowDisplayingItems.addAll(localNowDisplayingItems);
     } catch (e) {
       log.info('Error getting tokens: $e');
       unawaited(Sentry.captureException(e));
+      return [];
     }
 
-    // Build nowDisplayingItems list
-    return buildFromTokens(pageItems, pageAssetTokens);
+    // if the items are missing in the database, add them to the list
+    // final missingItems = pageItems
+    //     .where(
+    //         (item) => !nowDisplayingItems.any((e) => e.dp1Item.cid == item.cid))
+    //     .toList();
+    // if (missingItems.isNotEmpty) {
+    //   final missingCid = missingItems.map((item) => item.cid).nonNulls.toList();
+    //   final missingAssetTokens =
+    //       await injector<NftTokensService>().getManualTokens(cids: missingCid);
+    //   final missingNowDisplayingItems =
+    //       buildFromTokens(missingItems, missingAssetTokens);
+    //   nowDisplayingItems.addAll(missingNowDisplayingItems);
+    // }
+
+    return nowDisplayingItems;
   }
 
   /// Build nowDisplayingItems for playlist with dynamic query (owners-based).
@@ -176,7 +203,6 @@ extension DP1NowDisplayingItemListExt on List<DP1NowDisplayingItem> {
     required DP1Call playlist,
     required int offset,
     required int size,
-    List<AssetToken>? initialAssetTokens,
   }) async {
     log.info(
       '[DP1NowDisplayingItemListExt][_buildFromDynamicQuery] Fetching items from Drift for playlist ${playlist.id}, offset: $offset, size: $size',

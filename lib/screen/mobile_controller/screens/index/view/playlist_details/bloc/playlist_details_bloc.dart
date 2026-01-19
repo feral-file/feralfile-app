@@ -94,7 +94,7 @@ class PlaylistDetailsBloc
             playlist: _playlist,
             offset: 0,
             size: loadedCount,
-            initialAssetTokens: tokens,
+            // initialAssetTokens: tokens,
           );
 
           // Compare with current state

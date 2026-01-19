@@ -1,6 +1,5 @@
 import 'package:autonomy_flutter/design/build/components/PlaylistSection.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
-import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_list_row.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section_header.dart';
@@ -21,7 +20,7 @@ class PlaylistSection extends StatefulWidget {
     super.key,
   });
 
-  final String sectionName;
+  final String? sectionName;
   final List<PlaylistData> playlists;
   final Widget? sectionIcon;
   final VoidCallback? onViewAllTap;
@@ -49,32 +48,33 @@ class _PlaylistSectionState extends State<PlaylistSection> {
 
   @override
   Widget build(BuildContext context) {
+    final headerOffset = widget.sectionName == null ? 0 : 1;
     return ListView.builder(
       shrinkWrap: true,
       padding: EdgeInsets.zero,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount:
-          2 + (widget.playlists.isNotEmpty ? widget.playlists.length : 1),
+      itemCount: headerOffset +
+          (widget.playlists.isNotEmpty ? widget.playlists.length : 0),
       itemBuilder: (context, index) {
         // Header
-        if (index == 0) {
-          return PlaylistSectionHeader(
-            sectionName: widget.sectionName,
-            sectionIcon: widget.sectionIcon,
-            onViewAllTap: widget.hasMore ? widget.onViewAllTap : null,
-            hasMore: widget.hasMore,
-          );
-        }
-
-        // Gap
-        if (index == 1) {
-          return const SizedBox(
-            height: PlaylistSectionTokens.gap,
+        if (index == headerOffset - 1) {
+          return Column(
+            children: [
+              PlaylistSectionHeader(
+                sectionName: widget.sectionName ?? '',
+                sectionIcon: widget.sectionIcon,
+                onViewAllTap: widget.hasMore ? widget.onViewAllTap : null,
+                hasMore: widget.hasMore,
+              ),
+              const SizedBox(
+                height: PlaylistSectionTokens.gap,
+              ),
+            ],
           );
         }
 
         // List items
-        final playlistIndex = index - 2;
+        final playlistIndex = index - headerOffset;
         final playlist = widget.playlists[playlistIndex];
         return PlaylistRowItem(
           playlistReference: playlist.playlistReference,

@@ -142,6 +142,8 @@ abstract class ConfigurationService {
 class ConfigurationServiceImpl implements ConfigurationService {
   ConfigurationServiceImpl(this._preferences);
 
+  static const int _version = 1;
+
   static const String keyDailyLikedCount = 'daily_liked_count';
   static const String keyDeviceId = 'device_id';
   static const String keyAnonymousIssueIds = 'anonymous_issue_ids';
@@ -215,14 +217,16 @@ class ConfigurationServiceImpl implements ConfigurationService {
   static const String PILOT_VERSION = 'pilot_version';
 
   static const String KEY_ADDRESS_LAST_FETCH_TOKEN_TIME =
-      'address_last_fetch_token_time';
+      'address_last_fetch_token_time$_version';
 
   static const String KEY_LAST_UPDATE_CHANGE_ANCHOR =
-      'last_update_change_anchor';
+      'last_update_change_anchor$_version';
 
-  static const String KEY_LAST_TIME_REFRESH_FEEDS = 'last_time_refresh_feeds';
+  static const String KEY_LAST_TIME_REFRESH_FEEDS =
+      'last_time_refresh_feeds$_version';
 
-  static const String KEY_LAST_UPDATE_CHANGE_AT = 'last_update_change_at';
+  static const String KEY_LAST_UPDATE_CHANGE_AT =
+      'last_update_change_at$_version';
 
   static const String POSTCARD_MINT = 'postcard_mint';
 
@@ -231,7 +235,8 @@ class ConfigurationServiceImpl implements ConfigurationService {
   static const String KEY_HAS_SEEN_PLAY_TO_FF1_TOOLTIP =
       'has_seen_play_to_ff1_tooltip';
 
-  static const String KEY_ADDRESS_INDEXING_INFO = 'address_indexing_info';
+  static const String KEY_ADDRESS_INDEXING_INFO =
+      'address_indexing_info$_version';
 
   final SharedPreferences _preferences;
 

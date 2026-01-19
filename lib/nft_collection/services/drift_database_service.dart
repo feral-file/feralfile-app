@@ -110,9 +110,11 @@ abstract class DriftDatabaseServiceAbstract {
   ///
   /// - [channelId] null means any channel.
   /// - [kind] filters by playlist type (dp1 vs address).
+  /// - [size] limits the number of playlists observed (top [size] by createdAt).
   Stream<List<db.Playlist>> watchPlaylistRows({
     String? channelId,
     DriftPlaylistKind? kind,
+    int? size,
   });
 
   /// Watch items in a playlist by playlist ID.
@@ -343,76 +345,124 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
   Stream<List<db.Playlist>> watchPlaylistRows({
     String? channelId,
     DriftPlaylistKind? kind,
+    int? size,
   }) {
     final typeFilter = kind?.value;
     return _db.watchPlaylists(
       channelId: channelId,
       type: typeFilter,
+      size: size,
     );
   }
 
   @override
   Stream<List<db.Item>> watchPlaylistById(String playlistId) {
     // Watch playlist entries and items for the given playlist ID
-    // We need to get sort mode from playlist, but we'll watch entries directly
-    // and handle sort mode in a stream that combines playlist watch with entries
+    // Also watch playlist to detect sortMode changes
     return Stream.multi((controller) async {
+      // Watch playlist to detect sortMode changes
+      final playlistQuery = _db.select(_db.playlists)
+        ..where((p) => p.id.equals(playlistId));
+
+      StreamSubscription<List<db.Playlist>>? playlistSubscription;
+      StreamSubscription<List<db.Item>>? entriesSubscription;
+
+      // Helper to create entries query with current sort mode
+      Stream<List<db.Item>> createEntriesStream(bool orderByProvenance) {
+        final query = _db.select(_db.playlistEntries).join([
+          innerJoin(
+            _db.items,
+            _db.items.id.equalsExp(_db.playlistEntries.itemId),
+          ),
+        ])
+          ..where(_db.playlistEntries.playlistId.equals(playlistId));
+
+        if (orderByProvenance) {
+          query.orderBy([
+            OrderingTerm(
+              expression: _db.playlistEntries.sortKeyUs,
+              mode: OrderingMode.desc,
+            ),
+            OrderingTerm(
+              expression: _db.items.id,
+              mode: OrderingMode.desc,
+            ),
+          ]);
+        } else {
+          query.orderBy([
+            OrderingTerm(
+              expression: _db.playlistEntries.position,
+              mode: OrderingMode.asc,
+            ),
+            OrderingTerm(
+              expression: _db.items.id,
+              mode: OrderingMode.asc,
+            ),
+          ]);
+        }
+
+        return query.watch().map((rows) {
+          return rows.map((row) => row.readTable(_db.items)).toList();
+        });
+      }
+
       // Get initial playlist to determine sort mode
-      final playlist = await _db.getPlaylistById(playlistId);
-      if (playlist == null) {
+      final initialPlaylist = await _db.getPlaylistById(playlistId);
+      if (initialPlaylist == null) {
         controller.add(<db.Item>[]);
         controller.close();
         return;
       }
 
-      final orderByProvenance = playlist.sortMode == 1;
+      var currentOrderByProvenance = initialPlaylist.sortMode == 1;
+      var currentEntriesStream = createEntriesStream(currentOrderByProvenance);
 
-      // Watch playlist entries joined with items
-      final query = _db.select(_db.playlistEntries).join([
-        innerJoin(
-          _db.items,
-          _db.items.id.equalsExp(_db.playlistEntries.itemId),
-        ),
-      ])
-        ..where(_db.playlistEntries.playlistId.equals(playlistId));
+      // Watch playlist for sortMode changes
+      playlistSubscription = playlistQuery.watch().listen(
+        (playlists) {
+          if (playlists.isEmpty) {
+            // Playlist was deleted
+            controller.add(<db.Item>[]);
+            return;
+          }
 
-      if (orderByProvenance) {
-        query.orderBy([
-          OrderingTerm(
-            expression: _db.playlistEntries.sortKeyUs,
-            mode: OrderingMode.desc,
-          ),
-          OrderingTerm(
-            expression: _db.items.id,
-            mode: OrderingMode.desc,
-          ),
-        ]);
-      } else {
-        query.orderBy([
-          OrderingTerm(
-            expression: _db.playlistEntries.position,
-            mode: OrderingMode.asc,
-          ),
-          OrderingTerm(
-            expression: _db.items.id,
-            mode: OrderingMode.asc,
-          ),
-        ]);
-      }
+          final playlist = playlists.first;
+          final newOrderByProvenance = playlist.sortMode == 1;
 
-      final subscription = query.watch().listen(
-        (rows) {
-          final items = rows.map((row) => row.readTable(_db.items)).toList();
-          controller.add(items);
+          // If sort mode changed, recreate entries stream
+          if (newOrderByProvenance != currentOrderByProvenance) {
+            entriesSubscription?.cancel();
+            currentOrderByProvenance = newOrderByProvenance;
+            currentEntriesStream =
+                createEntriesStream(currentOrderByProvenance);
+
+            // Subscribe to new stream
+            entriesSubscription = currentEntriesStream.listen(
+              (items) {
+                controller.add(items);
+              },
+              onError: controller.addError,
+              cancelOnError: false,
+            );
+          }
         },
         onError: controller.addError,
-        onDone: controller.close,
         cancelOnError: false,
       );
 
-      // Cancel subscription when controller is closed
+      // Watch entries with initial sort mode
+      entriesSubscription = currentEntriesStream.listen(
+        (items) {
+          controller.add(items);
+        },
+        onError: controller.addError,
+        cancelOnError: false,
+      );
+
+      // Cancel subscriptions when controller is closed
       controller.onCancel = () {
-        subscription.cancel();
+        playlistSubscription?.cancel();
+        entriesSubscription?.cancel();
       };
     });
   }
@@ -751,10 +801,18 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
       refUri: Value(refUri),
       license: Value(license),
       overrideJson: const Value(null),
-      provenanceJson: Value(json.encode(provenanceJson)),
-      reproJson: Value(json.encode(reproJson)),
-      displayJson: Value(json.encode(displayJson)),
-      tokenDataJson: Value(json.encode(tokenDataJson)),
+      provenanceJson: provenanceJson != null
+          ? Value(json.encode(provenanceJson))
+          : const Value.absent(),
+      reproJson: reproJson != null
+          ? Value(json.encode(reproJson))
+          : const Value.absent(),
+      displayJson: displayJson != null
+          ? Value(json.encode(displayJson))
+          : const Value.absent(),
+      tokenDataJson: tokenDataJson != null
+          ? Value(json.encode(tokenDataJson))
+          : const Value.absent(),
       updatedAtUs: now,
     );
 

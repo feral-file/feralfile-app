@@ -22,6 +22,7 @@ import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
+import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
@@ -31,6 +32,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:sentry/sentry.dart';
 
 class DataManagementPage extends StatefulWidget {
   const DataManagementPage({super.key});
@@ -142,37 +144,57 @@ class _DataManagementPageState extends State<DataManagementPage> {
         //"This action will safely clear local cache and\nre-download all artwork metadata. We recommend only doing this if instructed to do so by customer support to resolve a problem.",
         'rebuild'.tr(),
         () async {
-          // remove all cached data
-          await injector<NftTokensService>().purgeCachedGallery();
-          await injector<UserDp1PlaylistService>()
-              .setLastUpdateChangeAnchor(addressAnchors: []);
-          await injector<CacheManager>().emptyCache();
-          await DefaultCacheManager().emptyCache();
-          final manager = injector<UserAllOwnCollectionBlocManager>();
-          final blocs = manager.getAllBlocs();
-          for (final bloc in blocs) {
-            bloc.add(ClearDataEvent());
-          }
-          injector<FeralFileFeedManager>().clearAllCache();
+          try {
+            // remove all cached data
+            await injector<NftTokensService>().purgeCachedGallery();
+            await injector<UserDp1PlaylistService>()
+                .setLastUpdateChangeAnchor(addressAnchors: []);
+            await injector<CacheManager>().emptyCache();
+            await DefaultCacheManager().emptyCache();
+            final manager = injector<UserAllOwnCollectionBlocManager>();
+            final blocs = manager.getAllBlocs();
+            for (final bloc in blocs) {
+              bloc.add(ClearDataEvent());
+            }
+            log.info(
+                '[DataManagementPage][_showRebuildGalleryDialog] Cleared data for ${blocs.length} UserAllOwnCollectionBloc instances');
+            injector<FeralFileFeedManager>().clearAllCache();
+            log.info(
+                '[DataManagementPage][_showRebuildGalleryDialog] Cleared FeralFileFeedManager cache');
 
-          // await 2 seconds to wait for cache to be cleared
-          await Future<void>.delayed(const Duration(seconds: 2));
-          //redownload data
-          unawaited(
-              injector<FeralFileFeedManager>().reloadAllCache(force: true));
-          for (final bloc in blocs) {
-            bloc.add(PullStatus());
-          }
+            // await 2 seconds to wait for cache to be cleared
+            log.info(
+                '[DataManagementPage][_showRebuildGalleryDialog] Waiting for 2 seconds');
+            await Future<void>.delayed(const Duration(seconds: 2));
+            log.info(
+                '[DataManagementPage][_showRebuildGalleryDialog] Reloading all data');
 
-          if (!mounted) {
-            return;
+            //redownload data
+            unawaited(
+                injector<FeralFileFeedManager>().reloadAllCache(force: true));
+            for (final bloc in blocs) {
+              bloc.add(PullStatus());
+            }
+
+            if (!mounted) {
+              return;
+            }
+            context.read<IdentityBloc>().add(RemoveAllEvent());
+            Navigator.of(context).popUntil(
+              (route) =>
+                  route.settings.name == AppRouter.homePage ||
+                  route.settings.name == AppRouter.homePage,
+            );
+          } catch (e) {
+            log.info('Error in _showRebuildGalleryDialog: $e');
+            Sentry.captureEvent(SentryEvent(
+              message: SentryMessage('Error in rebuild metadata: $e'),
+              level: SentryLevel.error,
+              extra: {
+                'error': e.toString(),
+              },
+            ));
           }
-          context.read<IdentityBloc>().add(RemoveAllEvent());
-          Navigator.of(context).popUntil(
-            (route) =>
-                route.settings.name == AppRouter.homePage ||
-                route.settings.name == AppRouter.homePage,
-          );
         },
         'cancel'.tr(),
       ),

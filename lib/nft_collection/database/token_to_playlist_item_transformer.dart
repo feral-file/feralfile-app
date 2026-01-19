@@ -60,29 +60,7 @@ TokenTransformResult transformTokenToPlaylistItem(TokenTransformInput input) {
   final now = DateTime.now().microsecondsSinceEpoch;
 
   // Serialize full token to JSON for reconstruction
-  final tokenMap = <String, dynamic>{
-    'id': token.id.toString(),
-    'cid': token.cid,
-    'chain': token.chain,
-    'standard': token.standard,
-    'contract_address': token.contractAddress,
-    'token_number': token.tokenNumber,
-    if (token.currentOwner != null) 'current_owner': token.currentOwner,
-    if (token.updatedAt != null)
-      'updated_at': token.updatedAt!.toIso8601String(),
-    if (token.metadata != null) 'metadata': token.metadata!.toJson(),
-    if (token.owners != null) 'owners': token.owners!.toJson(),
-    if (token.provenanceEvents != null)
-      'provenance_events': token.provenanceEvents!.toJson(),
-    if (token.enrichmentSource != null)
-      'enrichment_source': token.enrichmentSource!.toJson(),
-    if (token.metadataMediaAssets != null)
-      'metadata_media_assets':
-          token.metadataMediaAssets!.map((e) => e.toJson()).toList(),
-    if (token.enrichmentSourceMediaAssets != null)
-      'enrichment_source_media_assets':
-          token.enrichmentSourceMediaAssets!.map((e) => e.toJson()).toList(),
-  };
+  final tokenMap = token.toRestJson();
   final tokenJson = json.encode(tokenMap);
 
   // Create item companion (unique)

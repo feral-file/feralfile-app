@@ -9,7 +9,6 @@ import 'dart:io';
 
 import 'package:autonomy_flutter/nft_collection/database/model.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/provenance.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
@@ -147,7 +146,11 @@ class PlaylistDatabase extends _$PlaylistDatabase {
     });
   }
 
-  Stream<List<Playlist>> watchPlaylists({String? channelId, int? type}) {
+  Stream<List<Playlist>> watchPlaylists({
+    String? channelId,
+    int? type,
+    int? size,
+  }) {
     final query = select(playlists);
     if (channelId != null) {
       query.where((p) => p.channelId.equals(channelId));
@@ -158,6 +161,9 @@ class PlaylistDatabase extends _$PlaylistDatabase {
     query.orderBy([
       (p) => OrderingTerm(expression: p.createdAtUs, mode: OrderingMode.desc),
     ]);
+    if (size != null) {
+      query.limit(size);
+    }
     return query.watch();
   }
 
