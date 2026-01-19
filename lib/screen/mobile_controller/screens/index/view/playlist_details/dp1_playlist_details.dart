@@ -7,10 +7,12 @@ import 'package:autonomy_flutter/screen/mobile_controller/constants/ui_constants
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_intent.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_details_header.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_title.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
@@ -53,18 +55,29 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
   CanvasDeviceBloc get _canvasDeviceBloc => injector<CanvasDeviceBloc>();
 
   late PlaylistDetailsBloc _playlistDetailsBloc;
+  UserAllOwnCollectionBloc? _userAllOwnCollectionBloc;
 
   @override
   void initState() {
     super.initState();
     _playlistDetailsBloc = injector<PlaylistDetailsBlocManager>()
         .getBloc(widget.payload.playlist.playlist);
+    final owners =
+        widget.payload.playlist.playlist.firstDynamicQuery?.params.owners ?? [];
+    if (owners.isNotEmpty) {
+      _userAllOwnCollectionBloc =
+          injector<UserAllOwnCollectionBlocManager>().getOrCreateBloc(owners);
+    }
   }
 
   @override
   void dispose() {
     injector<PlaylistDetailsBlocManager>()
         .releaseBlocByInstance(_playlistDetailsBloc);
+    if (_userAllOwnCollectionBloc != null) {
+      injector<UserAllOwnCollectionBlocManager>()
+          .releaseBlocByInstance(_userAllOwnCollectionBloc!);
+    }
     super.dispose();
   }
 
@@ -79,6 +92,21 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
         _playlistDetailsBloc = injector<PlaylistDetailsBlocManager>()
             .getBloc(widget.payload.playlist.playlist);
       });
+    }
+    // Check if owners changed and release old bloc if needed
+    final oldOwners =
+        oldWidget.payload.playlist.playlist.firstDynamicQuery?.params.owners ??
+            <String>[];
+    final newOwners =
+        widget.payload.playlist.playlist.firstDynamicQuery?.params.owners ??
+            <String>[];
+    if (oldOwners != newOwners) {
+      injector<UserAllOwnCollectionBlocManager>()
+          .releaseBlocByInstance(_userAllOwnCollectionBloc!);
+      _userAllOwnCollectionBloc = injector<UserAllOwnCollectionBlocManager>()
+          .getOrCreateBloc(widget
+                  .payload.playlist.playlist.firstDynamicQuery?.params.owners ??
+              []);
     }
   }
 
@@ -140,7 +168,6 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
       key: ValueKey(_playlistDetailsBloc.hashCode),
       bloc: _playlistDetailsBloc,
       builder: (context, state) {
-        final total = state.total;
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -179,28 +206,38 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
       required ChannelReference? channelReference,
       required PlaylistDetailsState state}) {
     final total = state.total;
-    return BlocBuilder<UserAllOwnCollectionBloc, UserAllOwnCollectionState>(
-      bloc: injector<UserAllOwnCollectionBloc>(),
-      builder: (context, collectionState) {
-        final owners =
-            playlistReference.playlist.firstDynamicQuery?.params.owners ??
-                <String>[];
-        final targetState = owners.isNotEmpty
-            ? collectionState.addressStates.firstWhereOrNull(
-                (element) => element.address.address == owners.first)
-            : null;
-        final stateSuffix =
-            (targetState == AddressStateType.fetchingArtworksDone)
-                ? ''
-                : targetState?.state.description ?? '';
+    final owners =
+        playlistReference.playlist.firstDynamicQuery?.params.owners ??
+            <String>[];
 
-        return PlaylistDetailsHeader(
-          playlistReference: playlistReference,
-          titleSuffix: stateSuffix,
-          channelReference: channelReference,
-          clickable: false,
+    if (owners.isEmpty || _userAllOwnCollectionBloc == null) {
+      return PlaylistTitle(
+        primaryText: playlistReference.playlist.title,
+        secondaryText: '',
+        collectionState: null,
+        total: total,
+        channelReference: channelReference,
+        options: _getOptions(playlistReference),
+        showDivider: true,
+        playlistReference: playlistReference,
+      );
+    }
+
+    return BlocBuilder<UserAllOwnCollectionBloc, UserAllOwnCollectionState>(
+      bloc: _userAllOwnCollectionBloc,
+      builder: (context, collectionState) {
+        return PlaylistTitle(
+          primaryText: playlistReference.playlist.title,
+          secondaryText: '',
+          collectionState: collectionState,
           total: total,
+          channelReference: channelReference,
           options: _getOptions(playlistReference),
+          showDivider: true,
+          playlistReference: playlistReference,
+          onRetry: () {
+            _userAllOwnCollectionBloc?.add(Reindex());
+          },
         );
       },
     );

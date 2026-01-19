@@ -12,19 +12,14 @@ abstract class UserAllOwnCollectionEvent {
   String get streamKey;
 }
 
-class FetchTokensOfAddresses extends UserAllOwnCollectionEvent {
-  FetchTokensOfAddresses({
-    required this.addresses,
+class FetchTokens extends UserAllOwnCollectionEvent {
+  FetchTokens({
     this.shouldUpdateLastRefreshedTime = false,
-    this.shouldUpdateAddressState = true,
+    this.shouldUpdateAddressState = false,
     this.onDone,
     this.onError,
-  }) {
-    if (addresses.isEmpty) {
-      return;
-    }
-  }
-  final List<String> addresses;
+  });
+
   final bool shouldUpdateLastRefreshedTime;
   final bool shouldUpdateAddressState;
   final void Function()? onDone;
@@ -32,7 +27,7 @@ class FetchTokensOfAddresses extends UserAllOwnCollectionEvent {
 
   @override
   String get streamKey =>
-      'FetchTokensOfAddresses:${addresses.join(',')}_${shouldUpdateAddressState}_${shouldUpdateLastRefreshedTime}';
+      'FetchTokens:${shouldUpdateAddressState}_${shouldUpdateLastRefreshedTime}';
 }
 
 class ClearDataEvent extends UserAllOwnCollectionEvent {
@@ -40,43 +35,36 @@ class ClearDataEvent extends UserAllOwnCollectionEvent {
   String get streamKey => 'ClearDataEvent';
 }
 
-class ReindexAddresses extends UserAllOwnCollectionEvent {
-  ReindexAddresses({
-    required this.addresses,
-  });
-
-  final List<String> addresses;
+class Reindex extends UserAllOwnCollectionEvent {
+  Reindex();
 
   @override
-  String get streamKey => 'ReindexAddresses:${addresses.join(',')}';
+  String get streamKey => 'Reindex';
 }
 
-class WorkflowStatusTick extends UserAllOwnCollectionEvent {
-  WorkflowStatusTick({
-    required this.operationId,
-    required this.addresses,
+class AddressIndexingJobStatusTick extends UserAllOwnCollectionEvent {
+  AddressIndexingJobStatusTick({
+    required this.address,
     required this.workflowId,
-    required this.runId,
-    required this.status,
+    required this.jobStatus,
   });
 
-  final String operationId;
-  final List<String> addresses;
+  final String address;
   final String workflowId;
-  final String runId;
-  final WorkflowExecutionStatus status;
+  final AddressIndexingJobResponse jobStatus;
 
   @override
-  String get streamKey => 'WorkflowStatusTick:$operationId';
+  String get streamKey => 'AddressIndexingJobStatusTick:$address';
 }
 
-class UpdateTokensOfAddresses extends UserAllOwnCollectionEvent {
-  UpdateTokensOfAddresses({
-    required this.addresses,
-  });
-
-  final List<String> addresses;
+class UpdateTokens extends UserAllOwnCollectionEvent {
+  UpdateTokens();
 
   @override
-  String get streamKey => 'UpdateTokensOfAddresses:${addresses.join(',')}';
+  String get streamKey => 'UpdateTokens';
+}
+
+class PullStatus extends UserAllOwnCollectionEvent {
+  @override
+  String get streamKey => 'PullStatus';
 }

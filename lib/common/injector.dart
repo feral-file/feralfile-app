@@ -35,7 +35,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/bloc/r
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channel_preview_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc_constants.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
@@ -46,7 +46,6 @@ import 'package:autonomy_flutter/service/auth_service.dart';
 import 'package:autonomy_flutter/service/bluetooth_service.dart';
 import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
-import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/device_info_service.dart';
 import 'package:autonomy_flutter/service/dls_service.dart';
@@ -55,7 +54,6 @@ import 'package:autonomy_flutter/service/domain_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/ethereum_service.dart';
 import 'package:autonomy_flutter/service/feed_registry_service.dart';
-import 'package:autonomy_flutter/service/feralfile_service.dart';
 import 'package:autonomy_flutter/service/meilisearch_service.dart';
 import 'package:autonomy_flutter/service/metric_service.dart';
 import 'package:autonomy_flutter/service/mobile_controller_service.dart';
@@ -129,7 +127,6 @@ Future<void> setupInjector() async {
   final tzktUrl = Environment.appTestnetConfig
       ? Environment.tzktTestnetURL
       : Environment.tzktMainnetURL;
-  // injector.registerLazySingleton(() => TZKTApi(dio, baseUrl: tzktUrl));
   injector.registerLazySingleton(
     () => PubdocAPI(dio, baseUrl: Environment.pubdocURL),
   );
@@ -186,22 +183,6 @@ Future<void> setupInjector() async {
   injector.registerLazySingleton<VersionService>(
     () => VersionServiceImpl(injector(), injector(), injector(), injector()),
   );
-  // injector.registerLazySingleton<CustomerSupportService>(
-  //   () => CustomerSupportServiceImpl(
-  //     DraftCustomerSupportStore(),
-  //     CustomerSupportApi(
-  //       DioManager().customerSupport(
-  //         dioOptions.copyWith(
-  //           connectTimeout: const Duration(seconds: 10),
-  //           receiveTimeout: const Duration(seconds: 10),
-  //         ),
-  //       ),
-  //       baseUrl: Environment.customerSupportURL,
-  //     ),
-  //     injector(),
-  //   ),
-  // );
-  // await injector<CustomerSupportService>().init();
 
   injector.registerLazySingleton<DomainService>(DomainServiceImpl.new);
 
@@ -212,16 +193,6 @@ Future<void> setupInjector() async {
   injector.registerLazySingleton(
     () => Web3Client(Environment.web3RpcURL, injector()),
   );
-
-  // injector.registerLazySingleton<FeralFileApi>(
-  //   () => FeralFileApi(
-  //     DioManager().feralFile(dioOptions),
-  //     baseUrl: Environment.feralFileAPIURL,
-  //   ),
-  // );
-  // injector.registerLazySingleton<IndexerApi>(
-  //   () => IndexerApi(dio, baseUrl: Environment.indexerURL),
-  // );
 
   final indexerClient = IndexerClient(
     Environment.indexerURL,
@@ -241,12 +212,6 @@ Future<void> setupInjector() async {
   injector.registerLazySingleton<CanvasClientServiceV2>(
     () => CanvasClientServiceV2(injector(), injector()),
   );
-
-  // injector.registerLazySingleton<FeralFileService>(
-  //   () => FeralFileServiceImpl(
-  //     injector(),
-  //   ),
-  // );
 
   injector.registerLazySingleton<DeeplinkService>(
     () => DeeplinkServiceImpl(
@@ -333,8 +298,8 @@ Future<void> setupInjector() async {
     instanceName: PlaylistsBlocInstance.global.instanceName,
   );
 
-  injector.registerLazySingleton<UserAllOwnCollectionBloc>(
-    () => UserAllOwnCollectionBloc(injector()),
+  injector.registerLazySingleton<UserAllOwnCollectionBlocManager>(
+    () => UserAllOwnCollectionBlocManager(injector()),
   );
 
   // Curated channels (top 5)

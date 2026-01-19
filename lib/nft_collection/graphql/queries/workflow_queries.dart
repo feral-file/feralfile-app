@@ -10,3 +10,15 @@ const String workflowStatusQuery = r'''
     }
   }
 ''';
+
+const String addressIndexingJobStatusQuery = r'''
+  query indexingJob($workflow_id: String!) {
+    indexingJob(workflow_id: $workflow_id) {
+      workflow_id
+      address
+      status
+      total_tokens_indexed
+      total_tokens_viewable
+    }
+  }
+''';

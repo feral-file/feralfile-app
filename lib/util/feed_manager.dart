@@ -150,6 +150,8 @@ class FeedManager {
   }
 
   void clearAllCache() {
+    injector<ConfigurationService>()
+        .setLastTimeRefreshFeeds(DateTime(1970, 1, 1));
     for (final feedService in feedServices) {
       feedService.clearCache();
     }

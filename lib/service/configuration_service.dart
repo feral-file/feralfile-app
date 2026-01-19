@@ -8,6 +8,7 @@
 import 'dart:convert';
 
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
+import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/util/list_extension.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:collection/collection.dart';
@@ -103,12 +104,6 @@ abstract class ConfigurationService {
 
   Future<void> setRecordedMessages(List<String> messages);
 
-  Future<void> setAddressLastIndexTime(Map<String, DateTime> time);
-
-  Map<String, DateTime> getAddressLastIndexTime();
-
-  Future<void> clearAddressLastIndexTime();
-
   Future<void> setAddressLastFetchTokenTime(Map<String, DateTime> time);
 
   Map<String, DateTime> getAddressLastFetchTokenTime();
@@ -135,6 +130,13 @@ abstract class ConfigurationService {
   Future<void> setLastUpdateChangeAnchor({
     required List<AddressAnchor> addressAnchors,
   });
+
+  /// Address indexing info (per-address workflow and related metadata)
+  Future<void> setAddressIndexingInfo(List<AddressIndexingInfo> infos);
+
+  List<AddressIndexingInfo> getAddressIndexingInfo();
+
+  Future<void> clearAddressIndexingInfo();
 }
 
 class ConfigurationServiceImpl implements ConfigurationService {
@@ -212,9 +214,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
 
   static const String PILOT_VERSION = 'pilot_version';
 
-  static const String KEY_ADDRESS_LAST_REFRESHED_TIME =
-      'address_last_refreshed_time_v2';
-
   static const String KEY_ADDRESS_LAST_FETCH_TOKEN_TIME =
       'address_last_fetch_token_time';
 
@@ -231,6 +230,8 @@ class ConfigurationServiceImpl implements ConfigurationService {
 
   static const String KEY_HAS_SEEN_PLAY_TO_FF1_TOOLTIP =
       'has_seen_play_to_ff1_tooltip';
+
+  static const String KEY_ADDRESS_INDEXING_INFO = 'address_indexing_info';
 
   final SharedPreferences _preferences;
 
@@ -483,32 +484,6 @@ class ConfigurationServiceImpl implements ConfigurationService {
   }
 
   @override
-  Future<void> clearAddressLastIndexTime() {
-    return _preferences.remove(KEY_ADDRESS_LAST_REFRESHED_TIME);
-  }
-
-  @override
-  Map<String, DateTime> getAddressLastIndexTime() {
-    final time = _preferences.getString(KEY_ADDRESS_LAST_REFRESHED_TIME);
-    if (time == null) {
-      return {};
-    }
-    final timeJson = jsonDecode(time) as Map<String, dynamic>;
-    return timeJson
-        .map((key, value) => MapEntry(key, DateTime.parse(value as String)));
-  }
-
-  @override
-  Future<void> setAddressLastIndexTime(Map<String, DateTime> time) {
-    final timeJson =
-        time.map((key, value) => MapEntry(key, value.toIso8601String()));
-    return _preferences.setString(
-      KEY_ADDRESS_LAST_REFRESHED_TIME,
-      jsonEncode(timeJson),
-    );
-  }
-
-  @override
   Future<void> clearAddressLastFetchTokenTime() {
     return _preferences.remove(KEY_ADDRESS_LAST_FETCH_TOKEN_TIME);
   }
@@ -591,6 +566,34 @@ class ConfigurationServiceImpl implements ConfigurationService {
         KEY_LAST_UPDATE_CHANGE_ANCHOR,
         addressAnchors.map((e) => jsonEncode(e.toJson())).toList(),
       );
+
+  @override
+  Future<void> setAddressIndexingInfo(List<AddressIndexingInfo> infos) async {
+    await _preferences.setStringList(
+      KEY_ADDRESS_INDEXING_INFO,
+      infos.map((e) => jsonEncode(e.toJson())).toList(),
+    );
+  }
+
+  @override
+  List<AddressIndexingInfo> getAddressIndexingInfo() {
+    final raw = _preferences.getStringList(KEY_ADDRESS_INDEXING_INFO);
+    if (raw == null) {
+      return [];
+    }
+    return raw
+        .map(
+          (e) => AddressIndexingInfo.fromJson(
+            jsonDecode(e) as Map<String, dynamic>,
+          ),
+        )
+        .toList();
+  }
+
+  @override
+  Future<void> clearAddressIndexingInfo() async {
+    await _preferences.remove(KEY_ADDRESS_INDEXING_INFO);
+  }
 }
 
 enum ConflictAction {
