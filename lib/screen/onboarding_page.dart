@@ -293,27 +293,26 @@ class _OnboardingPageState extends State<OnboardingPage>
     // }
 
     // Reload Feed caches
-    unawaited(
-      injector<RemoteConfigService>().loadConfigs().then(
-        (_) async {
-          final channelUrls = List<String>.from(
-            injector<RemoteConfigService>().getConfig<List<dynamic>>(
-              ConfigGroup.dp1Playlist,
-              ConfigKey.dp1PlaylistChannelUrls,
-              <dynamic>[],
-            ),
-          );
-          await injector<FeralFileFeedManager>().setupRemoteConfigChannels(
-            channelUrls,
-          );
-          await injector<FeralFileFeedManager>().reloadAllCache();
-          injector<WorksBloc>().add(const LoadWorksEvent());
-        },
-        onError: (Object e) {
-          log.info('Failed to load remote config: $e');
-        },
-      ),
-    );
+    await loadRemoteConfigs();
+    final loadDataFn = () async {
+      try {
+        final channelUrls = List<String>.from(
+          injector<RemoteConfigService>().getConfig<List<dynamic>>(
+            ConfigGroup.dp1Playlist,
+            ConfigKey.dp1PlaylistChannelUrls,
+            <dynamic>[],
+          ),
+        );
+        await injector<FeralFileFeedManager>().setupRemoteConfigChannels(
+          channelUrls,
+        );
+        await injector<FeralFileFeedManager>().reloadAllCache();
+        injector<WorksBloc>().add(const LoadWorksEvent());
+      } catch (e) {
+        log.info('Failed to setup remote config channels: $e');
+      }
+    };
+    unawaited(loadDataFn());
 
     if (!startHandleDeeplinkCompleter.isCompleted) {
       startHandleDeeplinkCompleter.complete();

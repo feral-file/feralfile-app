@@ -86,6 +86,7 @@ class HomePageHelper {
         }
       },
     );
+    _refreshAddressesNeedingReindex();
 
     unawaited(NowDisplayingManager().updateDisplayingNow());
 
@@ -171,6 +172,56 @@ class HomePageHelper {
       },
     );
     _isShowingOfflineDialog = false;
+  }
+
+  Future<void> _refreshAddressesNeedingReindex() async {
+    try {
+      final addresses =
+          await injector<AddressService>().getAllAddressesFromDrift();
+
+      final addressesToReindex = <String>[];
+      for (final addr in addresses) {
+        final isIndexed =
+            injector<UserDp1PlaylistService>().isAddressIndexed(addr);
+
+        if (!isIndexed) {
+          addressesToReindex.add(addr);
+        }
+      }
+
+      final alreadyIndexed = addresses
+          .where((addr) => !addressesToReindex.contains(addr))
+          .toList();
+
+      NftCollection.logger.info('Already indexed addresses: $alreadyIndexed');
+
+      log.info('Addresses to reindex: $addressesToReindex');
+      log.info('Addresses to refresh: ${addressesToReindex.toList()}');
+
+      if (addressesToReindex.isNotEmpty) {
+        log.info('Clearing cached tokens for ${addressesToReindex.toList()}');
+
+        // Clear cached tokens for these addresses before fetching
+        final db = injector<IndexerDatabaseAbstract>();
+        final tokens =
+            await db.getTokensByOwners(owners: addressesToReindex.toList());
+        if (tokens.isNotEmpty) {
+          final cids = tokens.map((v2.AssetToken t) => t.cid).toList();
+          await db.deleteTokens(cids);
+        }
+
+        log.info(
+          '[_refreshAddressesNeedingReindex] Reindexing tokens for '
+          '${addressesToReindex.toList()}',
+        );
+
+        final manager = injector<UserAllOwnCollectionBlocManager>();
+        final bloc = manager.getOrCreateBloc(addressesToReindex);
+        bloc.add(Reindex());
+      }
+    } catch (_) {
+      // ignore errors in background refresh
+    }
   }
 
   Future<void> _handleForeBackground(FGBGType event) async {

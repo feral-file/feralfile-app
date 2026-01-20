@@ -116,7 +116,7 @@ class DriftBootstrapService {
           continue;
         }
         final playlistId = DP1CallExtension.generatePlaylistId(address);
-        final playlistTitle = walletAddress.name;
+        final playlistTitle = walletAddress.name.maskIfNeeded();
         final chain = walletAddress.cryptoType.name;
 
         final dynamicQueriesParams = DynamicQueryParams(owners: [address]);

@@ -541,7 +541,8 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
             // Add filter for nft tokens if the index type is nft tokens
             // This is the automatic owner address filter, not a user-selected filter
             if (indexType == MeiliSearchIndexType.nftTokens) {
-              final ownerAddress = injector<AddressService>().getAllAddresses();
+              final ownerAddress =
+                  await injector<AddressService>().getAllAddressesFromDrift();
               final addressFilter =
                   IndexSearchQueryHelper.buildNftTokensOwnerFilter(
                       ownerAddress);
@@ -746,7 +747,8 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
 
       // Apply nftTokens owner filter if needed.
       if (indexType == MeiliSearchIndexType.nftTokens) {
-        final ownerAddress = injector<AddressService>().getAllAddresses();
+        final ownerAddress =
+            await injector<AddressService>().getAllAddressesFromDrift();
         final addressFilter =
             IndexSearchQueryHelper.buildNftTokensOwnerFilter(ownerAddress);
         if (addressFilter != null) {
@@ -1293,7 +1295,8 @@ class MeiliSearchBloc extends AuBloc<MeiliSearchEvent, MeiliSearchState> {
 
       // Apply nftTokens owner filter if needed
       if (indexTypeToUpdate == MeiliSearchIndexType.nftTokens) {
-        final ownerAddress = injector<AddressService>().getAllAddresses();
+        final ownerAddress =
+            await injector<AddressService>().getAllAddressesFromDrift();
         final addressFilter =
             IndexSearchQueryHelper.buildNftTokensOwnerFilter(ownerAddress);
         if (addressFilter != null) {
