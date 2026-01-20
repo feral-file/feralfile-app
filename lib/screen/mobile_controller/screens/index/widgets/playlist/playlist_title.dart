@@ -182,8 +182,9 @@ class PlaylistTitle extends StatelessWidget {
     final addressState = collectionState!.addressStates.first;
     final indexingStatus = addressState.indexingStatus;
 
-    final readyCount = total; // ?? addressState.assetTokens.length;
+    final cachedTotal = total; // ?? addressState.assetTokens.length;
     final discoveredTotal = indexingStatus?.totalTokensIndexed;
+    final readyTotal = indexingStatus?.totalTokensViewable;
 
     String? statusText;
     bool showRetry = false;
@@ -204,7 +205,7 @@ class PlaylistTitle extends StatelessWidget {
           switch (indexingStatus.status) {
             case IndexingJobStatus.running:
               final parts = <String>['Syncing'];
-              parts.add('$readyCount ready');
+              parts.add('$cachedTotal ready');
               if (discoveredTotal != null) {
                 parts.add('$discoveredTotal found');
               }
@@ -212,22 +213,22 @@ class PlaylistTitle extends StatelessWidget {
               break;
             case IndexingJobStatus.paused:
               final parts = <String>['Paused'];
-              parts.add('$readyCount ready');
+              parts.add('$cachedTotal ready');
               parts.add('resumes later');
               statusText = parts.join(' • ');
               break;
             case IndexingJobStatus.completed:
               if (addressState.state == AddressStateType.fetchingArtworksDone) {
                 final parts = <String>['Up to date'];
-                if (readyCount != null) {
-                  parts.add('$readyCount works');
+                if (readyTotal != null) {
+                  parts.add('$readyTotal works');
                 }
                 statusText = parts.join(' • ');
                 break;
               } else {
                 final parts = <String>['Syncing'];
-                if (readyCount != null) {
-                  parts.add('$readyCount ready');
+                if (cachedTotal != null) {
+                  parts.add('$cachedTotal ready');
                 }
                 if (discoveredTotal != null) {
                   parts.add('$discoveredTotal found');
@@ -245,8 +246,8 @@ class PlaylistTitle extends StatelessWidget {
           // Fallback to AddressStateType when no indexingStatus
 
           final parts = <String>['Syncing'];
-          if (readyCount != null) {
-            parts.add('$readyCount ready');
+          if (cachedTotal != null) {
+            parts.add('$cachedTotal ready');
           }
           if (discoveredTotal != null) {
             parts.add('$discoveredTotal found');
@@ -254,10 +255,6 @@ class PlaylistTitle extends StatelessWidget {
           statusText = parts.join(' • ');
         }
         break;
-    }
-
-    if (statusText == null) {
-      return null;
     }
 
     return Row(
