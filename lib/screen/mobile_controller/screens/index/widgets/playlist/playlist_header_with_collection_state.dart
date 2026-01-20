@@ -86,6 +86,7 @@ class _PlaylistHeaderWithCollectionStateState
         collectionState: null,
         total: widget.total,
         onTap: widget.onTap,
+        channelVisible: false,
       );
     }
 

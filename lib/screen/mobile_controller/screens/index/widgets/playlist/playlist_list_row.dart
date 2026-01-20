@@ -134,6 +134,7 @@ class _PlaylistRowItemState extends State<PlaylistRowItem> {
                       primaryText: playlistTitle,
                       secondaryText: creator,
                       collectionState: null,
+                      channelVisible: false,
                     ),
                 DP1Carousel(
                   items: state.nowDisplayingItems,

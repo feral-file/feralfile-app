@@ -241,6 +241,7 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
         secondaryText: playlistData.creator,
         total: playlistDetailsState.total,
         collectionState: null,
+        channelVisible: false,
       );
     }
 

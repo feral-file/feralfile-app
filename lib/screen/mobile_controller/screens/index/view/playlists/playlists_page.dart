@@ -200,6 +200,7 @@ class PlaylistsPageState extends State<PlaylistsPage>
             secondaryText: playlistData.creator,
             collectionState: null,
             total: playlistDetailsState.total,
+            channelVisible: false,
           )
         : PlaylistHeaderWithCollectionState(
             primaryText: '${playlist.title}',
