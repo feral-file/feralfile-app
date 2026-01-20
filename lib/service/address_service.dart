@@ -10,6 +10,7 @@ import 'dart:async';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_bootstrap_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
@@ -88,6 +89,7 @@ class AddressService {
       // await _appDataManager.addressStorageService.insertAddresses([newAddress]);
       final playlist = DP1CallExtension.fromOwner(
         owners: [newAddress.address],
+        title: newAddress.name,
       );
       final playlistRef = PlaylistReference(
         playlist: playlist,
@@ -96,7 +98,7 @@ class AddressService {
       );
       await injector<DriftDatabaseService>().ingestPlaylist(
         playlistRef,
-        'my_collection',
+        DriftBootstrapService.myCollectionChannelId,
       );
       injector<PlaylistsBloc>(
               instanceName: PlaylistsBlocInstance.my.instanceName)

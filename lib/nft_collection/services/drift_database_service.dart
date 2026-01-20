@@ -762,6 +762,10 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
     final cryptoType =
         ownerAddress != null ? CryptoType.fromAddress(ownerAddress) : null;
 
+    final sortMode = playlistRef.type == PlaylistReferenceType.address
+        ? DriftPlaylistSortMode.provenance.value
+        : DriftPlaylistSortMode.position.value;
+
     return db.PlaylistsCompanion.insert(
       id: playlist.id,
       channelId: Value(channelId),
@@ -786,7 +790,7 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
       ),
       ownerAddress: Value(ownerAddress),
       ownerChain: Value(cryptoType?.name),
-      sortMode: 0, // position for DP1 playlists
+      sortMode: sortMode, // position for DP1 playlists
       itemCount: Value(playlist.items.length),
     );
   }
@@ -867,7 +871,8 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
       playlistId: playlistId,
       itemId: itemId,
       position: Value(position),
-      sortKeyUs: 0, // DP1 items use position, not provenance sorting
+      sortKeyUs: DriftPlaylistSortMode
+          .position.value, // DP1 items use position, not provenance sorting
       updatedAtUs: now,
     );
 

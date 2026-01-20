@@ -108,19 +108,12 @@ int _computeSortKeyForOwner(AssetToken token, String normalizedOwner) {
     final fromAddress = event.fromAddress?.toUpperCase();
     final toAddress = event.toAddress?.toUpperCase();
 
-    if (fromAddress == normalizedOwner || toAddress == normalizedOwner) {
+    if (toAddress == normalizedOwner) {
       final eventTs = event.timestamp.microsecondsSinceEpoch;
       if (latestRelevantTs == null || eventTs > latestRelevantTs) {
         latestRelevantTs = eventTs;
       }
     }
-  }
-
-  // If no relevant event found, fallback to overall latest provenance
-  if (latestRelevantTs == null && events.isNotEmpty) {
-    latestRelevantTs = events
-        .map((e) => e.timestamp.microsecondsSinceEpoch)
-        .reduce((a, b) => a > b ? a : b);
   }
 
   return latestRelevantTs ?? 0;

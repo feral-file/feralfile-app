@@ -8,6 +8,7 @@
 import 'dart:io';
 
 import 'package:autonomy_flutter/nft_collection/database/model.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:drift/drift.dart';
@@ -218,7 +219,8 @@ class PlaylistDatabase extends _$PlaylistDatabase {
   Future<List<PlaylistItemLite>> getPlaylistItems(String playlistId) async {
     // Look up playlist to determine sort mode
     final playlist = await getPlaylistById(playlistId);
-    final orderByProvenance = playlist?.sortMode == 1;
+    final orderByProvenance =
+        playlist?.sortMode == DriftPlaylistSortMode.provenance.value;
 
     final query = select(playlists).join([
       innerJoin(
