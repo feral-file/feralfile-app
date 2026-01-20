@@ -6,18 +6,27 @@
 //
 
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:drift/drift.dart';
 import 'package:sentry/sentry.dart';
 
 /// Service to bootstrap Drift database on app start
 class DriftBootstrapService {
   DriftBootstrapService(this._db);
+
+  static String get myCollectionChannelId => 'my_collection';
 
   final PlaylistDatabase _db;
   bool _hasBootstrapped = false;
@@ -56,7 +65,7 @@ class DriftBootstrapService {
   Future<void> _createMyCollectionChannel() async {
     try {
       final myCollectionChannel = ChannelsCompanion.insert(
-        id: 'my_collection',
+        id: myCollectionChannelId,
         type: 1, // local_virtual
         title: 'My Collection',
         createdAtUs: DateTime.now().microsecondsSinceEpoch,
@@ -97,34 +106,33 @@ class DriftBootstrapService {
         if (walletAddress == null) {
           continue;
         }
+        final playlistId = DP1CallExtension.generatePlaylistId(address);
+        final playlistTitle = walletAddress.name;
+        final chain = walletAddress.cryptoType.name;
 
-        final chain = walletAddress.cryptoType == CryptoType.ETH
-            ? 'evm'
-            : walletAddress.cryptoType == CryptoType.XTZ
-                ? 'tezos'
-                : 'other';
-        final playlistId = 'addr:$chain:$address';
-        final playlistTitle =
-            walletAddress.name ?? 'Address ${address.substring(0, 8)}...';
+        final dynamicQueriesParams = DynamicQueryParams(owners: [address]);
+        final dynamicQuery = DynamicQuery(
+            endpoint: '${Environment.indexerURL}/graphql',
+            params: dynamicQueriesParams);
 
         playlistCompanions.add(
           PlaylistsCompanion.insert(
             id: playlistId,
-            channelId: const Value('my_collection'),
-            type: 1, // address_playlist
+            channelId: Value(myCollectionChannelId),
+            type: DriftPlaylistKind.address.value, // address_playlist
             title: playlistTitle,
             createdAtUs: walletAddress.createdAt.microsecondsSinceEpoch,
             updatedAtUs: DateTime.now().microsecondsSinceEpoch,
             signaturesJson: '[]', // No signatures for address playlists
             ownerAddress: Value(address.toUpperCase()),
             ownerChain: Value(chain),
-            sortMode: 1, // provenance
+            sortMode: DriftPlaylistSortMode.provenance.value, // provenance
             itemCount: const Value(0),
             baseUrl: const Value(null),
             dpVersion: const Value(null),
             slug: const Value(null),
             defaultsJson: const Value(null),
-            dynamicQueriesJson: const Value(null),
+            dynamicQueriesJson: Value(json.encode(dynamicQuery.toJson())),
           ),
         );
       }

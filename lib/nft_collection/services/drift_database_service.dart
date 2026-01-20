@@ -68,6 +68,14 @@ enum DriftItemKind {
   final int value;
 }
 
+enum DriftPlaylistSortMode {
+  position(0),
+  provenance(1);
+
+  const DriftPlaylistSortMode(this.value);
+  final int value;
+}
+
 /// Abstract base class for Drift database service.
 ///
 /// Defines the interface for accessing and ingesting data into the Drift
