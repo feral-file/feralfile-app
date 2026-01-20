@@ -619,7 +619,7 @@ class UserAllOwnCollectionBloc
 
   @override
   Future<void> close() {
-    log.info('UserAllOwnCollectionBloc closing, cancelling streams');
+    log.info('[UserAllOwnCollectionBloc] closing bloc ${addresses.join(',')}');
     // Cancel all timers
     for (final timer in _workflowStatusTimers.values) {
       timer.cancel();

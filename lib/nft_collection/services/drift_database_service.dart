@@ -257,6 +257,16 @@ abstract class DriftDatabaseServiceAbstract {
   Future<List<db.Item>> getItemsByPlaylistId(
     String playlistId, {
     DriftItemKind? type,
+    int? offset,
+    int? size,
+  });
+
+  /// Count items for a playlist by [playlistId].
+  ///
+  /// When [type] is provided, only items with matching [kind] are counted.
+  Future<int> countItemByPlaylistId(
+    String playlistId, {
+    DriftItemKind? type,
   });
 
   /// Get items by a list of item IDs.
@@ -388,7 +398,7 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
   Stream<List<db.Item>> watchPlaylistById(String playlistId) {
     // Watch playlist entries and items for the given playlist ID
     // Also watch playlist to detect sortMode changes
-    return Stream.multi((controller) async {
+    final baseStream = Stream<List<db.Item>>.multi((controller) async {
       // Watch playlist to detect sortMode changes
       final playlistQuery = _db.select(_db.playlists)
         ..where((p) => p.id.equals(playlistId));
@@ -494,6 +504,14 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
         entriesSubscription?.cancel();
       };
     });
+
+    // Drift invalidates this query on any write to the underlying tables,
+    // even if the WHERE clause still returns the same rows. To avoid
+    // unnecessary rebuilds upstream, only emit when the resulting list
+    // of items actually changes.
+    return baseStream.distinct(
+      (previous, next) => const ListEquality<db.Item>().equals(previous, next),
+    );
   }
 
   @override
@@ -1277,6 +1295,8 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
   Future<List<db.Item>> getItemsByPlaylistId(
     String playlistId, {
     DriftItemKind? type,
+    int? offset,
+    int? size,
   }) async {
     // Look up playlist to determine sort mode
     final playlist = await _db.getPlaylistById(playlistId);
@@ -1296,6 +1316,10 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
 
     if (type != null) {
       query.where(_db.items.kind.equals(type.value));
+    }
+
+    if (size != null) {
+      query.limit(size, offset: offset ?? 0);
     }
 
     if (orderByProvenance) {
@@ -1343,5 +1367,31 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
     // Preserve order of input IDs
     final itemMap = {for (var item in items) item.id: item};
     return itemIds.map((id) => itemMap[id]).whereType<db.Item>().toList();
+  }
+
+  @override
+  Future<int> countItemByPlaylistId(
+    String playlistId, {
+    DriftItemKind? type,
+  }) async {
+    final countExp = _db.playlistEntries.itemId.count();
+
+    final select = _db.selectOnly(_db.playlistEntries)..addColumns([countExp]);
+
+    if (type != null) {
+      select
+        ..join([
+          innerJoin(
+            _db.items,
+            _db.items.id.equalsExp(_db.playlistEntries.itemId),
+          ),
+        ])
+        ..where(_db.items.kind.equals(type.value));
+    }
+
+    select.where(_db.playlistEntries.playlistId.equals(playlistId));
+
+    final result = await select.map((row) => row.read(countExp)).getSingle();
+    return result ?? 0;
   }
 }

@@ -101,6 +101,10 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
             '[PlaylistsBloc] Database changed, reloading '
             '${playlistType.name} playlists with ${playlists.length} playlists',
           );
+          //current state
+          log.info(
+            '[PlaylistsBloc] Current state: ${state.playlistData.length}',
+          );
 
           // Trigger reload when database changes
           add(RefreshPlaylistsEvent());

@@ -4,6 +4,7 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/model/token.dart' as v2;
 import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/home/home_bloc.dart';
@@ -85,11 +86,11 @@ class HomePageHelper {
         }
       },
     );
-    _refreshAddressesNeedingReindex();
 
     unawaited(NowDisplayingManager().updateDisplayingNow());
 
     context.read<HomeBloc>().add(CheckReviewAppEvent());
+    final manager = injector<UserAllOwnCollectionBlocManager>();
 
     _collectionRefreshTimer?.cancel();
     _collectionRefreshTimer =
@@ -99,7 +100,8 @@ class HomePageHelper {
         return;
       }
       try {
-        final owners = injector<AddressService>().getAllAddresses();
+        final owners =
+            await injector<AddressService>().getAllAddressesFromDrift();
         // filter out addresses that have not been indexed
         final lastFetchTokenTime = injector<UserDp1PlaylistService>()
             .getAddressOldestLastFetchTokenTime(addresses: owners);
@@ -110,9 +112,10 @@ class HomePageHelper {
           log.info('No addresses to refresh');
           return;
         }
-        final manager = injector<UserAllOwnCollectionBlocManager>();
-        final bloc = manager.getOrCreateBloc(addressesToRefresh);
-        bloc.add(UpdateTokens());
+        for (final address in addressesToRefresh) {
+          final bloc = manager.getBlocForAddresses([address]);
+          bloc?.add(UpdateTokens());
+        }
       } catch (e) {
         log.info('Error in refresh tokens : $e');
         unawaited(
@@ -170,55 +173,6 @@ class HomePageHelper {
     _isShowingOfflineDialog = false;
   }
 
-  Future<void> _refreshAddressesNeedingReindex() async {
-    try {
-      final addresses = injector<AddressService>().getAllAddresses();
-
-      final addressesToReindex = <String>[];
-      for (final addr in addresses) {
-        final isIndexed =
-            injector<UserDp1PlaylistService>().isAddressIndexed(addr);
-
-        if (!isIndexed) {
-          addressesToReindex.add(addr);
-        }
-      }
-
-      final alreadyIndexed = addresses
-          .where((addr) => !addressesToReindex.contains(addr))
-          .toList();
-
-      NftCollection.logger.info('Already indexed addresses: $alreadyIndexed');
-
-      log.info('Addresses to reindex: $addressesToReindex');
-      log.info('Addresses to refresh: ${addressesToReindex.toList()}');
-
-      if (addressesToReindex.isNotEmpty) {
-        log.info('Clearing cached tokens for ${addressesToReindex.toList()}');
-
-        // Clear cached tokens for these addresses before fetching
-        final db = injector<IndexerDatabaseAbstract>();
-        final tokens =
-            await db.getTokensByOwners(owners: addressesToReindex.toList());
-        if (tokens.isNotEmpty) {
-          final cids = tokens.map((v2.AssetToken t) => t.cid).toList();
-          await db.deleteTokens(cids);
-        }
-
-        log.info(
-          '[_refreshAddressesNeedingReindex] Reindexing tokens for '
-          '${addressesToReindex.toList()}',
-        );
-
-        final manager = injector<UserAllOwnCollectionBlocManager>();
-        final bloc = manager.getOrCreateBloc(addressesToReindex);
-        bloc.add(Reindex());
-      }
-    } catch (_) {
-      // ignore errors in background refresh
-    }
-  }
-
   Future<void> _handleForeBackground(FGBGType event) async {
     switch (event) {
       case FGBGType.foreground:
@@ -251,8 +205,5 @@ class HomePageHelper {
     } catch (e) {
       log.info('Error resuming polling timers: $e');
     }
-
-    // refresh stale/missing addresses when app resume
-    unawaited(_refreshAddressesNeedingReindex());
   }
 }

@@ -321,13 +321,13 @@ Future<void> setupInjector() async {
   );
 
   // Global channels (all)
-  injector.registerLazySingleton<ChannelsBloc>(
-    () => ChannelsBloc(
-      channelType: ChannelType.global,
-      total: null,
-    ),
-    instanceName: ChannelsBlocInstance.global.instanceName,
-  );
+  // injector.registerLazySingleton<ChannelsBloc>(
+  //   () => ChannelsBloc(
+  //     channelType: ChannelType.global,
+  //     total: null,
+  //   ),
+  //   instanceName: ChannelsBlocInstance.global.instanceName,
+  // );
 
   injector.registerLazySingleton<DP1FeedApi>(
     () => DP1FeedApi(
@@ -403,11 +403,11 @@ Future<void> setupInjector() async {
     () => DriftDatabaseService(playlistDb, injector<NftIndexerService>()),
   );
 
-  // Bootstrap Drift database (creates my_collection + address playlists)
-  await injector<DriftBootstrapService>().bootstrapIfNeeded();
-
   // ChannelPreviewBloc Manager
   injector.registerLazySingleton<ChannelPreviewBlocManager>(
     ChannelPreviewBlocManager.new,
   );
+
+  // Bootstrap Drift database (creates my_collection + address playlists)
+  await injector<DriftBootstrapService>().bootstrapIfNeeded();
 }

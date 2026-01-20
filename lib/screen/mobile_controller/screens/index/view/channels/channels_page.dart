@@ -27,7 +27,7 @@ class ChannelsPageState extends State<ChannelsPage>
   final ScrollController _scrollController = ScrollController();
   late final ChannelsBloc _curatedChannelsBloc;
   late final ChannelsBloc _myChannelsBloc;
-  late final ChannelsBloc _globalChannelsBloc;
+  // late final ChannelsBloc _globalChannelsBloc;
 
   @override
   void initState() {
@@ -39,9 +39,9 @@ class ChannelsPageState extends State<ChannelsPage>
     _myChannelsBloc = injector<ChannelsBloc>(
       instanceName: ChannelsBlocInstance.me.instanceName,
     );
-    _globalChannelsBloc = injector<ChannelsBloc>(
-      instanceName: ChannelsBlocInstance.global.instanceName,
-    );
+    // _globalChannelsBloc = injector<ChannelsBloc>(
+    //   instanceName: ChannelsBlocInstance.global.instanceName,
+    // );
   }
 
   @override
@@ -68,7 +68,7 @@ class ChannelsPageState extends State<ChannelsPage>
         _scrollController.position.maxScrollExtent) {
       _curatedChannelsBloc.add(const LoadMoreChannelsEvent());
       _myChannelsBloc.add(const LoadMoreChannelsEvent());
-      _globalChannelsBloc.add(const LoadMoreChannelsEvent());
+      // _globalChannelsBloc.add(const LoadMoreChannelsEvent());
     }
   }
 

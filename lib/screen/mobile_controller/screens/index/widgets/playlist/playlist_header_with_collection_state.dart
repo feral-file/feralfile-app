@@ -3,6 +3,7 @@ import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_title.dart';
+import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -52,7 +53,7 @@ class _PlaylistHeaderWithCollectionStateState
   void didUpdateWidget(PlaylistHeaderWithCollectionState oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Check if owners changed
-    if (widget.owners != oldWidget.owners) {
+    if (!widget.owners.isEqual(oldWidget.owners)) {
       // Release old bloc if exists
       if (_bloc != null) {
         injector<UserAllOwnCollectionBlocManager>()

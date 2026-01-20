@@ -253,7 +253,8 @@ class NftTokensServiceImpl extends NftTokensService {
 
     await _configurationService.setDidSyncAddress(false);
     await _database.clearAll();
-    await injector<DriftDatabaseService>().deleteAllPlaylistItems();
+    await injector<DriftDatabaseService>()
+        .deleteAllPlaylistItems(kind: DriftPlaylistKind.address);
   }
 
   @override

@@ -56,7 +56,8 @@ class PlaylistDetailsBloc
             '${_playlist.id} with ${items.length} items',
           );
 
-          add(GetPlaylistDetailsEvent());
+          add(GetPlaylistDetailsEvent(
+              size: state.nowDisplayingItems.length + _pageSize));
           return;
 
           // Convert db.Items to AssetTokens
@@ -124,6 +125,12 @@ class PlaylistDetailsBloc
             ),
           );
         },
+        onDone: () {
+          log.info(
+            '[PlaylistDetailsBloc] Database listener done for playlist '
+            '${_playlist.id}',
+          );
+        },
       );
     } catch (e, s) {
       log.info(
@@ -174,7 +181,7 @@ class PlaylistDetailsBloc
       );
 
       log.info(
-        'PlaylistDetailsLoadedState loaded ${_playlist.id} with '
+        '[PlaylistDetailsBloc] [PlaylistDetailsLoadedState] loaded ${_playlist.id} with '
         '${nowDisplayingItems.length} items',
       );
 
@@ -189,10 +196,15 @@ class PlaylistDetailsBloc
         total = _playlist.items.length;
       } else {
         // For dynamic playlists, get total from database items
-        final allItems = await injector<DriftDatabaseService>()
-            .getItemsByPlaylistId(_playlist.id);
-        total = allItems.length;
+        total = await injector<DriftDatabaseService>().countItemByPlaylistId(
+            _playlist.id,
+            type: DriftItemKind.indexerToken);
       }
+
+      log.info(
+        '[PlaylistDetailsBloc] [PlaylistDetailsLoadedState] loaded ${_playlist.id} with '
+        '${nowDisplayingItems.length} items and total $total',
+      );
 
       emit(
         PlaylistDetailsLoadedState(
@@ -252,24 +264,43 @@ class PlaylistDetailsBloc
       );
 
       if (newNowDisplayingItems.isEmpty) {
+        log.info(
+          '[PlaylistDetailsBloc] [PlaylistDetailsLoadedState] no more items to load for ${_playlist.id}',
+        );
         emit(state.copyWith(hasMore: false));
         return;
       }
       final end = start + newNowDisplayingItems.length;
       final hasMore = newNowDisplayingItems.isNotEmpty;
 
+      final nowDisplayingItems = [
+        ...state.nowDisplayingItems,
+        ...newNowDisplayingItems,
+      ];
+
+      log.info(
+        '[PlaylistDetailsBloc] [PlaylistDetailsLoadedState] loaded more ${_playlist.id}: ${newNowDisplayingItems.length} items /'
+        '${nowDisplayingItems.length} items and total ${state.total}, offset $end, hasMore $hasMore',
+      );
+
       emit(
         PlaylistDetailsLoadedState(
-          nowDisplayingItems: [
-            ...state.nowDisplayingItems,
-            ...newNowDisplayingItems,
-          ],
+          nowDisplayingItems: nowDisplayingItems,
           hasMore: hasMore,
           offset: end,
           total: state.total,
         ),
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      log.info(
+        '[PlaylistDetailsBloc] [PlaylistDetailsErrorState] error loading more playlist details: $e',
+      );
+      unawaited(
+        Sentry.captureException(
+          'Error loading more playlist details: $e',
+          stackTrace: stackTrace,
+        ),
+      );
       emit(
         PlaylistDetailsErrorState(
           error: e.toString(),

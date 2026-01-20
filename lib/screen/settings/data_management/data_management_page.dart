@@ -42,24 +42,13 @@ class DataManagementPage extends StatefulWidget {
 }
 
 class _DataManagementPageState extends State<DataManagementPage> {
-  UserAllOwnCollectionBloc? _userAllOwnCollectionBloc;
-
   @override
   void initState() {
     super.initState();
-    final addresses = injector<AddressService>().getAllAddresses();
-    if (addresses.isNotEmpty) {
-      final manager = injector<UserAllOwnCollectionBlocManager>();
-      _userAllOwnCollectionBloc = manager.getOrCreateBloc(addresses);
-    }
   }
 
   @override
   void dispose() {
-    if (_userAllOwnCollectionBloc != null) {
-      injector<UserAllOwnCollectionBlocManager>()
-          .releaseBlocByInstance(_userAllOwnCollectionBloc!);
-    }
     super.dispose();
   }
 
@@ -144,6 +133,8 @@ class _DataManagementPageState extends State<DataManagementPage> {
         //"This action will safely clear local cache and\nre-download all artwork metadata. We recommend only doing this if instructed to do so by customer support to resolve a problem.",
         'rebuild'.tr(),
         () async {
+          final manager = injector<UserAllOwnCollectionBlocManager>();
+          final blocs = manager.getAllBlocs();
           try {
             // remove all cached data
             await injector<NftTokensService>().purgeCachedGallery();
@@ -151,8 +142,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
                 .setLastUpdateChangeAnchor(addressAnchors: []);
             await injector<CacheManager>().emptyCache();
             await DefaultCacheManager().emptyCache();
-            final manager = injector<UserAllOwnCollectionBlocManager>();
-            final blocs = manager.getAllBlocs();
+
             for (final bloc in blocs) {
               bloc.add(ClearDataEvent());
             }
@@ -179,7 +169,6 @@ class _DataManagementPageState extends State<DataManagementPage> {
             if (!mounted) {
               return;
             }
-            context.read<IdentityBloc>().add(RemoveAllEvent());
             Navigator.of(context).popUntil(
               (route) =>
                   route.settings.name == AppRouter.homePage ||

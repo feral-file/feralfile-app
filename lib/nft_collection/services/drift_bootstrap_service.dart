@@ -58,7 +58,10 @@ class DriftBootstrapService {
       log.info('[DriftBootstrapService] Bootstrap completed');
     } catch (e, st) {
       log.info('[DriftBootstrapService] Error during bootstrap: $e');
-      unawaited(Sentry.captureException(e, stackTrace: st));
+      unawaited(Sentry.captureEvent(SentryEvent(
+        message: SentryMessage('Error during bootstrap: $e'),
+        level: SentryLevel.error,
+      )));
     }
   }
 
@@ -66,7 +69,7 @@ class DriftBootstrapService {
     try {
       final myCollectionChannel = ChannelsCompanion.insert(
         id: myCollectionChannelId,
-        type: 1, // local_virtual
+        type: DriftChannelKind.localVirtual.value, // local_virtual
         title: 'My Collection',
         createdAtUs: DateTime.now().microsecondsSinceEpoch,
         updatedAtUs: DateTime.now().microsecondsSinceEpoch,
@@ -93,7 +96,13 @@ class DriftBootstrapService {
       final addressService = injector<AddressService>();
       final addresses = addressService.getAllAddresses(isHidden: false);
 
-      if (addresses.isEmpty) {
+      final addressInDrift = await addressService.getAllAddressesFromDrift();
+
+      final newAddresses = addresses
+          .where((address) => !addressInDrift.contains(address))
+          .toList();
+
+      if (newAddresses.isEmpty) {
         log.info(
           '[DriftBootstrapService] No addresses to create playlists for',
         );
@@ -101,7 +110,7 @@ class DriftBootstrapService {
       }
 
       final playlistCompanions = <PlaylistsCompanion>[];
-      for (final address in addresses) {
+      for (final address in newAddresses) {
         final walletAddress = addressService.getWalletAddress(address);
         if (walletAddress == null) {
           continue;
@@ -124,7 +133,7 @@ class DriftBootstrapService {
             createdAtUs: walletAddress.createdAt.microsecondsSinceEpoch,
             updatedAtUs: DateTime.now().microsecondsSinceEpoch,
             signaturesJson: '[]', // No signatures for address playlists
-            ownerAddress: Value(address.toUpperCase()),
+            ownerAddress: Value(address),
             ownerChain: Value(chain),
             sortMode: DriftPlaylistSortMode.provenance.value, // provenance
             itemCount: const Value(0),

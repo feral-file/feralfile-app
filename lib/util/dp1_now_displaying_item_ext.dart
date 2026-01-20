@@ -212,13 +212,15 @@ extension DP1NowDisplayingItemListExt on List<DP1NowDisplayingItem> {
     // Fetch all indexer-backed items for this playlist from Drift.
     // These items were previously ingested from indexer tokens and
     // have [tokenDataJson] populated.
-    final allItems =
+    final pageItems =
         await injector<DriftDatabaseService>().getItemsByPlaylistId(
       playlist.id,
       type: DriftItemKind.indexerToken,
+      offset: offset,
+      size: size,
     );
 
-    if (allItems.isEmpty) {
+    if (pageItems.isEmpty) {
       log.info(
         '[DP1NowDisplayingItemListExt][_buildFromDynamicQuery] No Drift items found for playlist ${playlist.id}',
       );
@@ -226,13 +228,6 @@ extension DP1NowDisplayingItemListExt on List<DP1NowDisplayingItem> {
     }
 
     // Apply pagination on the ordered list coming from Drift.
-    final pageItems = allItems.safeSublist(offset, offset + size);
-    if (pageItems.isEmpty) {
-      log.info(
-        '[DP1NowDisplayingItemListExt][_buildFromDynamicQuery] Page empty after pagination for playlist ${playlist.id}',
-      );
-      return <DP1NowDisplayingItem>[];
-    }
 
     final nowDisplayingItems = <DP1NowDisplayingItem>[];
 

@@ -208,6 +208,22 @@ extension ListStringExtension on List<String> {
     final newList = sublist(index)..addAll(sublist(0, index));
     return newList;
   }
+
+  /// Check if this list of strings is equal to another list of strings.
+  /// Equality is based on length and element-by-element comparison in order.
+  bool isEqual(List<String> other) {
+    if (length != other.length) {
+      return false;
+    }
+
+    for (var i = 0; i < length; i++) {
+      if (this[i] != other[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 }
 
 final List<String> listCharacters = [
