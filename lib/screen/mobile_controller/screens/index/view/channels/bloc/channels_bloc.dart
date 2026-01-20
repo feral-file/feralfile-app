@@ -273,7 +273,6 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
       );
 
       emit(nextState);
-      _setupDatabaseListener(nextState);
     } catch (e) {
       log.info('Error loading channels: $e');
       emit(
