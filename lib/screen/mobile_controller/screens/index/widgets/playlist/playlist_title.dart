@@ -178,7 +178,8 @@ class _PlaylistTitleState extends State<PlaylistTitle> {
   }
 
   Future<void> _sendSentryWhenCachedTotalIsGreaterThanDiscoveredTotal() async {
-    final addressState = widget.collectionState!.addressStates.first;
+    final addressState = widget.collectionState?.addressStates.first;
+    if (addressState == null) return;
 
     final totalTokensIndexed = addressState.indexingStatus?.totalTokensIndexed;
     final totalTokensViewable =
