@@ -1,10 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:math';
 
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart'
     as db;
 import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
@@ -56,36 +54,19 @@ class PlaylistDetailsBloc
             '${_playlist.id} with ${items.length} items',
           );
 
-          add(GetPlaylistDetailsEvent(
-              size: state.nowDisplayingItems.length + _pageSize));
-          return;
-
-          // Convert db.Items to AssetTokens
-          final tokens = <AssetToken>[];
-          for (final item in items) {
-            if (item.tokenDataJson != null && item.tokenDataJson!.isNotEmpty) {
-              try {
-                final tokenMap =
-                    json.decode(item.tokenDataJson!) as Map<String, dynamic>;
-                tokens.add(AssetToken.fromRest(tokenMap));
-              } catch (e) {
-                log.info(
-                  '[PlaylistDetailsBloc] Error parsing token JSON for '
-                  '${item.id}: $e',
-                );
-              }
-            }
-          }
-
-          // Only trigger reload if the paginated items (0 to offset)
-          // have changed
           final currentItems = state.nowDisplayingItems;
-          if (currentItems.isEmpty && tokens.isNotEmpty) {
-            // No items loaded yet, trigger initial load
+
+          // If no items loaded yet, trigger initial load immediately
+          if (currentItems.isEmpty) {
+            log.info(
+              '[PlaylistDetailsBloc] No items loaded yet, triggering initial '
+              'load for playlist ${_playlist.id}',
+            );
             add(GetPlaylistDetailsEvent());
             return;
           }
 
+          // For loaded items, check if data actually changed before reloading
           // Use the actual number of loaded items for comparison
           final loadedCount = max(_pageSize, currentItems.length);
 
@@ -95,7 +76,6 @@ class PlaylistDetailsBloc
             playlist: _playlist,
             offset: 0,
             size: loadedCount,
-            // initialAssetTokens: tokens,
           );
 
           // Compare with current state

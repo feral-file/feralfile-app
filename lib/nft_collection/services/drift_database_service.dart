@@ -28,6 +28,7 @@ import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:collection/collection.dart';
 import 'package:drift/drift.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:sentry/sentry.dart';
 
 /// Kind of playlist row stored in Drift.
@@ -389,11 +390,17 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
     int? size,
   }) {
     final typeFilter = kind?.value;
-    return _db.watchPlaylists(
-      channelId: channelId,
-      type: typeFilter,
-      size: size,
-    );
+    return _db
+        .watchPlaylists(
+          channelId: channelId,
+          type: typeFilter,
+          size: size,
+        )
+        .debounceTime(const Duration(milliseconds: 300))
+        .distinct(
+          (previous, next) =>
+              const ListEquality<db.Playlist>().equals(previous, next),
+        );
   }
 
   @override

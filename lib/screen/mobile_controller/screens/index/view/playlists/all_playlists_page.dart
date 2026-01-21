@@ -16,6 +16,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
+import 'package:autonomy_flutter/util/playlist_data_ext.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
 import 'package:flutter/material.dart';
@@ -115,6 +116,10 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
       body: SafeArea(
         child: BlocBuilder<PlaylistsBloc, PlaylistsState>(
           bloc: _playlistsBloc,
+          buildWhen: (previous, current) {
+            // Only rebuild if playlist data actually changed
+            return !previous.playlistData.isEqualTo(current.playlistData);
+          },
           builder: (context, state) {
             return RefreshIndicator(
               onRefresh: () async {

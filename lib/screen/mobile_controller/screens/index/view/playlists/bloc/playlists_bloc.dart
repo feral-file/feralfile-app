@@ -98,15 +98,27 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
       _databaseSubscription = watchStream.listen(
         (playlists) async {
           log.info(
-            '[PlaylistsBloc] Database changed, reloading '
+            '[PlaylistsBloc] Database changed, checking '
             '${playlistType.name} playlists with ${playlists.length} playlists',
           );
-          //current state
-          log.info(
-            '[PlaylistsBloc] Current state: ${state.playlistData.length}',
-          );
 
-          // Trigger reload when database changes
+          // If no playlists loaded yet, trigger initial load immediately
+          if (state.playlistData.isEmpty) {
+            log.info(
+              '[PlaylistsBloc] No playlists loaded yet, triggering initial '
+              'load for ${playlistType.name}',
+            );
+            add(RefreshPlaylistsEvent());
+            return;
+          }
+
+          // Since distinct() at source already filters unchanged playlists,
+          // receiving playlists here means database content changed.
+          // Trigger reload to sync the UI with the database.
+          log.info(
+            '[PlaylistsBloc] Database playlists changed for ${playlistType.name}, '
+            'reloading to sync UI',
+          );
           add(RefreshPlaylistsEvent());
         },
         onError: (Object error, StackTrace stackTrace) {
