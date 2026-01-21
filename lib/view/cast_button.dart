@@ -13,6 +13,7 @@ import 'package:autonomy_flutter/screen/bloc/subscription/subscription_state.dar
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
+import 'package:autonomy_flutter/util/canvas_playing_ext.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/widgets/buttons/play_button.dart';
 import 'package:flutter/material.dart';
@@ -201,9 +202,11 @@ class FFCastButtonState extends State<FFCastButton>
       bloc: _canvasDeviceBloc,
       builder: (context, state) {
         final hasDevice = state.activeDevices.isNotEmpty;
-        if (!hasDevice) {
+        final isSleeping = state.isSleeping();
+        if (!hasDevice || isSleeping) {
           return const SizedBox.shrink();
         }
+
         return BlocBuilder<SubscriptionBloc, SubscriptionState>(
           builder: (context, subscriptionState) {
             _isSubscribed = subscriptionState.isSubscribed;

@@ -234,6 +234,18 @@ class CanvasClientServiceV2 {
     }
   }
 
+  Future<bool> setSleepMode(BaseDevice device, bool sleepMode) async {
+    final stub = _getStub(device);
+    final request = SetSleepModeRequest(sleepMode: sleepMode);
+    try {
+      final response = await stub.setSleepMode(request);
+      return response.ok;
+    } catch (e) {
+      log.info('CanvasClientService: Set Sleep Mode Failed');
+      return false;
+    }
+  }
+
   Future<bool> updateArtFraming(
     BaseDevice device,
     ArtFraming artFraming,

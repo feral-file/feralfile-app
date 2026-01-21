@@ -136,6 +136,7 @@ class NowDisplayingManager {
         index: index,
         items: items,
         connectedDevice: device,
+        isSleeping: status.sleepMode ?? status.isPaused,
       );
     } else {
       log.info('NowDisplayingManager: no items to display');

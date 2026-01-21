@@ -567,7 +567,8 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
     }
     _focusNode.unfocus();
 
-    final isPlaying = canvasDeviceState.isAssetPlayingOnFF1(asset);
+    final isPlaying = canvasDeviceState.isAssetPlayingOnFF1(asset) &&
+        !canvasDeviceState.isSleeping();
 
     unawaited(
       UIHelper.showCenterMenu(

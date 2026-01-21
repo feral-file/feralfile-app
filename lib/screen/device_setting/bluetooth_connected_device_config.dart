@@ -1,27 +1,15 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:after_layout/after_layout.dart';
-import 'package:autonomy_flutter/design/layout_constants.dart';
-import 'package:autonomy_flutter/util/inapp_notifications.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_fgbg/flutter_fgbg.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:sentry/sentry.dart';
-
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/model/canvas_cast_request_reply.dart';
 import 'package:autonomy_flutter/model/device/device_status.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/pair.dart';
-import 'package:autonomy_flutter/nft_rendering/feralfile_webview.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/device_setting/device_config.dart';
@@ -36,7 +24,9 @@ import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_ext.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
+import 'package:autonomy_flutter/util/canvas_playing_ext.dart';
 import 'package:autonomy_flutter/util/device_realtime_metric_helper.dart';
+import 'package:autonomy_flutter/util/inapp_notifications.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
@@ -45,7 +35,14 @@ import 'package:autonomy_flutter/view/ff_text_name.dart';
 import 'package:autonomy_flutter/view/loading.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
-import 'package:autonomy_flutter/view/tappable_forward_row.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_fgbg/flutter_fgbg.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sentry/sentry.dart';
 
 enum ScreenOrientation {
   landscape,
@@ -514,7 +511,9 @@ class BluetoothConnectedDeviceConfigState
             PrimaryAsyncButton(
               text: 'rotate'.tr(),
               color: AppColor.white,
-              enabled: state.isDeviceAlive(blDevice) && deviceStatus != null,
+              enabled: state.isDeviceAlive(blDevice) &&
+                  !state.isSleeping() &&
+                  deviceStatus != null,
               onTap: () async {
                 final response = await injector<CanvasClientServiceV2>()
                     .rotateCanvas(blDevice);
@@ -559,7 +558,9 @@ class BluetoothConnectedDeviceConfigState
             const SizedBox(height: 30),
             SelectDeviceConfigView(
               selectedIndex: artFramingIndex,
-              isEnable: state.isDeviceAlive(blDevice) && deviceState != null,
+              isEnable: state.isDeviceAlive(blDevice) &&
+                  !state.isSleeping() &&
+                  deviceState != null,
               items: [
                 DeviceConfigItem(
                   title: 'fit'.tr(),
@@ -660,7 +661,6 @@ class BluetoothConnectedDeviceConfigState
     final version = deviceStatus?.installedVersion;
     final installedVersion = deviceStatus?.installedVersion ?? version;
     final branchName = device.isReleaseBranch ? '' : ' (${device.branchName})';
-    final theme = Theme.of(context);
     final deviceId = device.deviceId;
     final connectedWifi = deviceStatus?.connectedWifi;
 
@@ -677,6 +677,7 @@ class BluetoothConnectedDeviceConfigState
       // },
       builder: (context, state) {
         final isBLEDeviceConnected = state.isDeviceAlive(device);
+        final isSleeping = state.isSleeping();
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -715,7 +716,9 @@ class BluetoothConnectedDeviceConfigState
                           height: 12,
                           decoration: BoxDecoration(
                             color: isBLEDeviceConnected
-                                ? Colors.green
+                                ? isSleeping
+                                    ? PrimitivesTokens.colorsGrey
+                                    : Colors.green
                                 : Colors.red,
                             shape: BoxShape.circle,
                           ),
@@ -724,7 +727,9 @@ class BluetoothConnectedDeviceConfigState
                         Expanded(
                           child: Text(
                             isBLEDeviceConnected
-                                ? 'Connected'
+                                ? isSleeping
+                                    ? 'Sleeping'
+                                    : 'Connected'
                                 : 'Device not connected',
                             style: AppTypography.body(context).white,
                           ),
@@ -846,14 +851,14 @@ class BluetoothConnectedDeviceConfigState
                 ],
               ),
             ),
-            if (isBLEDeviceConnected) ...[
+            if (isBLEDeviceConnected && !isSleeping) ...[
               const SizedBox(height: 16),
               PrimaryAsyncButton(
                 text:
                     _isShowingQRCode ? 'Hide QR Code' : 'Show Pairing QR Code',
                 color: AppColor.white,
                 onTap: () async {
-                  final device = selectedDevice!;
+                  final device = selectedDevice;
                   await injector<CanvasClientServiceV2>()
                       .showPairingQRCode(device, !_isShowingQRCode);
                   setState(() {
