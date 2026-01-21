@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
@@ -9,6 +10,7 @@ import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:autonomy_flutter/util/playlist_data_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sentry/sentry.dart';
@@ -102,8 +104,10 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
             '${playlistType.name} playlists with ${playlists.length} playlists',
           );
 
+          final currentPlaylists = state.playlistData;
+
           // If no playlists loaded yet, trigger initial load immediately
-          if (state.playlistData.isEmpty) {
+          if (currentPlaylists.isEmpty) {
             log.info(
               '[PlaylistsBloc] No playlists loaded yet, triggering initial '
               'load for ${playlistType.name}',
@@ -112,14 +116,43 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
             return;
           }
 
-          // Since distinct() at source already filters unchanged playlists,
-          // receiving playlists here means database content changed.
-          // Trigger reload to sync the UI with the database.
-          log.info(
-            '[PlaylistsBloc] Database playlists changed for ${playlistType.name}, '
-            'reloading to sync UI',
-          );
-          add(RefreshPlaylistsEvent());
+          // For loaded playlists, check if data actually changed before reloading
+          // Use the actual number of loaded playlists for comparison
+          final loadedCount = max(pageSize, currentPlaylists.length);
+
+          // Convert database playlist rows to PlaylistData for comparison
+          final updatedPlaylists = <PlaylistData>[];
+          for (final playlist in playlists) {
+            final playlistRef = await injector<FeralFileFeedManager>()
+                .getPlaylistReferenceByPlaylistId(
+              playlist.id,
+            );
+            if (playlistRef != null) {
+              final creator = await playlistRef.getCreator();
+              updatedPlaylists.add(
+                PlaylistData(
+                  playlistReference: playlistRef,
+                  creator: creator,
+                ),
+              );
+            }
+          }
+
+          // Compare with current state
+          final hasChanged = !currentPlaylists.isEqualTo(updatedPlaylists);
+
+          if (hasChanged) {
+            log.info(
+              '[PlaylistsBloc] Paginated playlists (0 to $loadedCount) '
+              'changed, reloading ${playlistType.name}',
+            );
+            add(RefreshPlaylistsEvent(size: loadedCount));
+          } else {
+            log.info(
+              '[PlaylistsBloc] Paginated playlists (0 to $loadedCount) '
+              'unchanged, skipping reload',
+            );
+          }
         },
         onError: (Object error, StackTrace stackTrace) {
           log.info(
@@ -182,19 +215,22 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
       emit: emit,
       cursor: null,
       isRefresh: true,
+      loadSize: event.size,
     );
   }
 
   Future<LoadPlaylistPaginationResponse> _loadCuratedPlaylists({
     required Emitter<PlaylistsState> emit,
     required String? cursor,
+    int? loadSize,
   }) async {
     // Get all cached playlists
     final allPlaylists =
         await injector<FeralFileFeedManager>().getAllCachedPlaylists();
 
     final start = int.tryParse(cursor ?? '0') ?? 0;
-    final end = start + pageSize;
+    final size = loadSize ?? pageSize;
+    final end = start + size;
 
     // Get playlists based on total
     // If total is null, get all playlists
@@ -226,9 +262,11 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
   Future<LoadPlaylistPaginationResponse> _loadMyPlaylists({
     required Emitter<PlaylistsState> emit,
     required String? cursor,
+    int? loadSize,
   }) async {
     final start = int.tryParse(cursor ?? '0') ?? 0;
-    final end = start + pageSize;
+    final size = loadSize ?? pageSize;
+    final end = start + size;
 
     final addressPlaylists =
         await injector<DriftDatabaseService>().getAddressPlaylistsAsDp1Calls();
@@ -277,6 +315,7 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     required String? cursor,
     bool isLoadMore = false,
     bool isRefresh = false,
+    int? loadSize,
   }) async {
     try {
       // Emit appropriate loading state
@@ -289,11 +328,17 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
       LoadPlaylistPaginationResponse paginationResponse;
       switch (playlistType) {
         case PlaylistType.curated:
-          paginationResponse =
-              await _loadCuratedPlaylists(emit: emit, cursor: cursor);
+          paginationResponse = await _loadCuratedPlaylists(
+            emit: emit,
+            cursor: cursor,
+            loadSize: loadSize,
+          );
         case PlaylistType.me:
-          paginationResponse =
-              await _loadMyPlaylists(emit: emit, cursor: cursor);
+          paginationResponse = await _loadMyPlaylists(
+            emit: emit,
+            cursor: cursor,
+            loadSize: loadSize,
+          );
         case PlaylistType.global:
           paginationResponse =
               await _loadGlobalPlaylists(emit: emit, cursor: cursor);

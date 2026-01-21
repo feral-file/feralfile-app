@@ -45,7 +45,11 @@ class LoadMorePlaylistsEvent extends PlaylistsEvent {
 }
 
 class RefreshPlaylistsEvent extends PlaylistsEvent {
-  RefreshPlaylistsEvent() {
-    log.info("Create RefreshPlaylistsEvent");
+  RefreshPlaylistsEvent({this.size}) {
+    log.info("Create RefreshPlaylistsEvent with size: $size");
   }
+
+  /// Optional size to specify how many playlists to load
+  /// If null, loads default pageSize
+  final int? size;
 }
