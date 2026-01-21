@@ -258,7 +258,8 @@ class _DP1PlaylistDetailsScreenState extends State<DP1PlaylistDetailsScreen>
             final playlist = playlistReference.playlist;
             UIHelper.showDeletePlaylistConfirmation(playlist, (playlist) async {
               // Extract address from playlist dynamic query or ID
-              injector<DriftDatabaseService>().deletePlaylistById(playlist.id);
+              await injector<DriftDatabaseService>().deletePlaylistById(playlist.id);
+              await injector<AddressService>().deleteAddressFromDrift(playlist.id);
               final isAddressPlaylist = playlist.isAddressPlaylist;
               if (isAddressPlaylist) {
                 final address = playlist.addressOwners;

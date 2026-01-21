@@ -11,6 +11,10 @@ class AddressStorageService extends HiveStorageService {
     await delete([address.key]);
   }
 
+  Future<void> deleteAddresses(List<String> addresses) async {
+    await delete(addresses);
+  }
+
   WalletAddress? findByAddress(String address) {
     // address is also the key
     final value = query([address]);

@@ -121,6 +121,12 @@ class AddressService {
     await Future.wait(addresses.map(insertAddress));
   }
 
+  Future<void> deleteAddressFromDrift(String address) async {
+    await injector<DriftDatabaseService>().deletePlaylistById(address);
+    _appDataManager.addressStorageService.deleteAddresses([address]);
+    await _onAddressUpdate();
+  }
+
   Future<void> deleteAddress(WalletAddress address) async {
     await _appDataManager.addressStorageService.deleteAddress(address);
     // Clear Address Index Info when address is deleted
