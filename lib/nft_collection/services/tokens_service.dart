@@ -437,7 +437,7 @@ class NftTokensServiceImpl extends NftTokensService {
 
       addressTimers[addressKey] = TimerExtension.periodicAndRunNow(
         // random duration between 5 and 10 seconds
-        Duration(seconds: Random().nextInt(5) + 15),
+        Duration(seconds: Random().nextInt(5) + 5),
         (timer) async {
           try {
             // Skip polling if paused (app is in background)
@@ -1532,38 +1532,38 @@ class NftTokensServiceImpl extends NftTokensService {
 
       final tokens = await isolateIndexerService.getNftTokens(request);
 
-      final missingCids =
-          cids.where((cid) => !tokens.any((e) => e.cid == cid)).toList();
+      // final missingCids =
+      //     cids.where((cid) => !tokens.any((e) => e.cid == cid)).toList();
 
-      if (missingCids.isNotEmpty) {
-        // Try to reindex missing tokens
-        try {
-          final res = await isolateIndexerService.indexTokens(missingCids);
-          // Wait for indexing to complete
-          while (true) {
-            final status = await isolateIndexerService.getWorkflowStatus(
-              res.workflowId,
-              res.runId,
-            );
-            if (status.status.isDone) {
-              break;
-            }
-            await Future<void>.delayed(const Duration(milliseconds: 500));
-          }
-          // Fetch again after reindexing
-          final retryRequest = QueryListTokensRequest(
-            tokenCids: missingCids,
-            limit: missingCids.length,
-          );
-          final retryTokens =
-              await isolateIndexerService.getNftTokens(retryRequest);
-          tokens.addAll(retryTokens);
-        } catch (e) {
-          NftCollection.logger.warning(
-            '[FETCH_MANUAL_TOKENS][reindex] Error reindexing missing tokens: $e',
-          );
-        }
-      }
+      // if (missingCids.isNotEmpty) {
+      //   // Try to reindex missing tokens
+      //   try {
+      //     final res = await isolateIndexerService.indexTokens(missingCids);
+      //     // Wait for indexing to complete
+      //     while (true) {
+      //       final status = await isolateIndexerService.getWorkflowStatus(
+      //         res.workflowId,
+      //         res.runId,
+      //       );
+      //       if (status.status.isDone) {
+      //         break;
+      //       }
+      //       await Future<void>.delayed(const Duration(milliseconds: 500));
+      //     }
+      //     // Fetch again after reindexing
+      //     final retryRequest = QueryListTokensRequest(
+      //       tokenCids: missingCids,
+      //       limit: missingCids.length,
+      //     );
+      //     final retryTokens =
+      //         await isolateIndexerService.getNftTokens(retryRequest);
+      //     tokens.addAll(retryTokens);
+      //   } catch (e) {
+      //     NftCollection.logger.warning(
+      //       '[FETCH_MANUAL_TOKENS][reindex] Error reindexing missing tokens: $e',
+      //     );
+      //   }
+      // }
 
       NftCollection.logger.info(
         '[FETCH_MANUAL_TOKENS][done] UUID: $uuid, fetched ${tokens.length} tokens for cids: $cids',

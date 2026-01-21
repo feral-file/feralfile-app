@@ -445,7 +445,7 @@ class UserAllOwnCollectionBloc
 
       await _tokensService.pullAddressesIndexingStatus(
         addressToWorkflowId: addressToWorkflowId,
-        timeout: const Duration(minutes: 1),
+        timeout: const Duration(hours: 1),
         onStatus: (status, address) async {
           log.info(
             '[PullStatus][$address] workflowId: ${addressToWorkflowId[address]} status: ${status.status.toJson()}, totalTokensIndexed: ${status.totalTokensIndexed}, totalTokensViewable: ${status.totalTokensViewable}',
@@ -528,9 +528,9 @@ class UserAllOwnCollectionBloc
               throwable: error,
             ),
           );
-          final updatedStates = _updateOrCreateAddressState(
-              address, AddressStateType.getStatusFailed, null);
-          emit(state.copyWith(addressStates: updatedStates));
+          // final updatedStates = _updateOrCreateAddressState(
+          //     address, AddressStateType.getStatusFailed, null);
+          // emit(state.copyWith(addressStates: updatedStates));
           return false;
         },
       );

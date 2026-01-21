@@ -125,7 +125,7 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
 
   @override
   Future<void> clearAll() async {
-    // await _playlistDb.clearAll();
+    await injector<DriftDatabaseService>().deleteAllAddressPlaylists();
   }
 
   @override

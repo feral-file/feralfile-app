@@ -198,14 +198,14 @@ class PlaylistsPageState extends State<PlaylistsPage>
     final child = owners.isEmpty
         ? PlaylistTitle(
             primaryText: '${playlist.title}',
-            secondaryText: playlistData.creator,
+            secondaryText: '',
             collectionState: null,
             total: playlistDetailsState.total,
             channelVisible: false,
           )
         : PlaylistHeaderWithCollectionState(
             primaryText: '${playlist.title}',
-            secondaryText: playlistData.creator,
+            secondaryText: '',
             owners: owners,
             total: playlistDetailsState.total,
           );
