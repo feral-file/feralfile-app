@@ -2,20 +2,25 @@ import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/components/PlaylistListItem.dart';
 import 'package:autonomy_flutter/design/layout_constants.dart';
+import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
+import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channel_details/channel_detail.page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
+import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:sentry/sentry.dart';
 
 /// Playlist List Item - Displays playlist info with primary and secondary text
-class PlaylistTitle extends StatelessWidget {
+class PlaylistTitle extends StatefulWidget {
   const PlaylistTitle({
     required this.primaryText,
     required this.secondaryText,
@@ -48,18 +53,30 @@ class PlaylistTitle extends StatelessWidget {
   final PlaylistReference? playlistReference;
 
   @override
+  State<PlaylistTitle> createState() => _PlaylistTitleState();
+}
+
+class _PlaylistTitleState extends State<PlaylistTitle> {
+  @override
+  void initState() {
+    super.initState();
+    _sendSentryWhenCachedTotalIsGreaterThanDiscoveredTotal();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final statusWidget = _buildStatus(context);
-    final effectivePadding = padding ??
+    final effectivePadding = widget.padding ??
         EdgeInsets.symmetric(
-          horizontal: showDivider
+          horizontal: widget.showDivider
               ? ResponsiveLayout.paddingHorizontal
               : PlaylistListItemTokens.paddingHorizontal,
-          vertical: showDivider ? 16 : PlaylistListItemTokens.paddingVertical,
+          vertical:
+              widget.showDivider ? 16 : PlaylistListItemTokens.paddingVertical,
         );
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Container(
         color: Colors.transparent,
         child: Column(
@@ -78,16 +95,16 @@ class PlaylistTitle extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                primaryText,
+                                widget.primaryText,
                                 style: AppTypography.body(context).white,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (!showDivider) ...[
+                            if (!widget.showDivider) ...[
                               SizedBox(width: LayoutConstants.space2),
                               Text(
-                                secondaryText,
+                                widget.secondaryText,
                                 style: AppTypography.body(context).italic.grey,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -96,24 +113,25 @@ class PlaylistTitle extends StatelessWidget {
                           ],
                         ),
                         // Channel reference
-                        if (channelReference != null && channelVisible) ...[
+                        if (widget.channelReference != null &&
+                            widget.channelVisible) ...[
                           SizedBox(height: LayoutConstants.space1),
                           GestureDetector(
                             onTap: () {
-                              if (playlistReference != null) {
+                              if (widget.playlistReference != null) {
                                 injector<NavigationService>().navigateTo(
                                   AppRouter.channelDetailPage,
                                   arguments: ChannelDetailPagePayload(
-                                    channelReference: channelReference!,
-                                    backTitle: isFromPlaylistsPage
+                                    channelReference: widget.channelReference!,
+                                    backTitle: widget.isFromPlaylistsPage
                                         ? 'Playlists'
-                                        : primaryText,
+                                        : widget.primaryText,
                                   ),
                                 );
                               }
                             },
                             child: Text(
-                              channelReference!.channel.title,
+                              widget.channelReference!.channel.title,
                               style: AppTypography.body(context).grey,
                             ),
                           ),
@@ -127,12 +145,12 @@ class PlaylistTitle extends StatelessWidget {
                     ),
                   ),
                   // Options menu button
-                  if (options.isNotEmpty)
+                  if (widget.options.isNotEmpty)
                     IconButton(
                       padding: EdgeInsets.zero,
                       onPressed: () async => _showPlaylistOptionsDialog(
                         context,
-                        playlistReference,
+                        widget.playlistReference,
                       ),
                       constraints: const BoxConstraints(
                         maxWidth: 44,
@@ -148,7 +166,7 @@ class PlaylistTitle extends StatelessWidget {
               ),
             ),
             // Divider
-            if (showDivider)
+            if (widget.showDivider)
               Divider(
                 height: 1,
                 color: AppColor.primaryBlack,
@@ -159,6 +177,55 @@ class PlaylistTitle extends StatelessWidget {
     );
   }
 
+  Future<void> _sendSentryWhenCachedTotalIsGreaterThanDiscoveredTotal() async {
+    final addressState = widget.collectionState!.addressStates.first;
+
+    final totalTokensIndexed = addressState.indexingStatus?.totalTokensIndexed;
+    final totalTokensViewable =
+        addressState.indexingStatus?.totalTokensViewable;
+    if (widget.total != null &&
+        (totalTokensIndexed != null && widget.total! > totalTokensIndexed ||
+            totalTokensViewable != null &&
+                widget.total! > totalTokensViewable)) {
+      final cachedToken =
+          await injector<IndexerDatabaseAbstract>().getTokensByOwners(
+        owners: [addressState.address],
+      );
+      final cachedCids = cachedToken.map((e) => e.cid).toList();
+      log.info('cachedCids: $cachedCids');
+      log.info('totalTokensIndexed: $totalTokensIndexed');
+      log.info('totalTokensViewable: $totalTokensViewable');
+      log.info('total: ${widget.total}');
+      log.info('addressState.address: ${addressState.address}');
+
+      final indexerToken = await injector<NftTokensService>().fetchManualTokens(
+        cids: cachedCids,
+      );
+      final missingCids = cachedToken
+          .where((e) => !indexerToken.any((t) => t.cid == e.cid))
+          .map((e) => e.cid)
+          .toList();
+      log.info('missingCids: $missingCids');
+      await Sentry.captureEvent(SentryEvent(
+        message: SentryMessage('Cached total is greater than discovered total'),
+        extra: {
+          'cachedTotal': widget.total,
+          'totalTokensIndexed': totalTokensIndexed,
+          'totalTokensViewable': totalTokensViewable,
+          'missingCids': missingCids.join(','),
+          'cachedCids': cachedCids.join(','),
+        },
+        debugMeta: DebugMeta(unknown: {
+          'cachedTotal': widget.total,
+          'totalTokensIndexed': totalTokensIndexed,
+          'totalTokensViewable': totalTokensViewable,
+          'missingCids': missingCids.join(','),
+          'cachedCids': cachedCids.join(','),
+        }),
+      ));
+    }
+  }
+
   Future<void> _showPlaylistOptionsDialog(
     BuildContext context,
     PlaylistReference? playlistReference,
@@ -167,22 +234,23 @@ class PlaylistTitle extends StatelessWidget {
     await UIHelper.showDrawerAction(
       context,
       options: [
-        ...options,
+        ...widget.options,
         OptionItem.emptyOptionItem,
       ],
     );
   }
 
   Widget? _buildStatus(BuildContext context) {
-    if (collectionState == null || collectionState!.addressStates.isEmpty) {
+    if (widget.collectionState == null ||
+        widget.collectionState!.addressStates.isEmpty) {
       return null;
     }
 
     // Lấy AddressState đầu tiên
-    final addressState = collectionState!.addressStates.first;
+    final addressState = widget.collectionState!.addressStates.first;
     final indexingStatus = addressState.indexingStatus;
 
-    final cachedTotal = total; // ?? addressState.assetTokens.length;
+    final cachedTotal = widget.total; // ?? addressState.assetTokens.length;
     final discoveredTotal = indexingStatus?.totalTokensIndexed;
     final readyTotal = indexingStatus?.totalTokensViewable;
 
@@ -272,8 +340,8 @@ class PlaylistTitle extends StatelessWidget {
           ),
           GestureDetector(
             onTap: () {
-              if (onRetry != null) {
-                onRetry!();
+              if (widget.onRetry != null) {
+                widget.onRetry!();
               }
             },
             behavior: HitTestBehavior.opaque,
