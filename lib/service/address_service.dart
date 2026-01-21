@@ -77,10 +77,8 @@ class AddressService {
       }
       log.info('Check sum address: $checkSumAddress');
       if (checkAddressDuplicated) {
-        final walletAddress =
-            _appDataManager.addressStorageService.getAllAddresses();
-        if (walletAddress
-            .any((element) => element.address == checkSumAddress)) {
+        final driftAddress = await getAllAddressesFromDrift();
+        if (driftAddress.contains(checkSumAddress)) {
           log.info('Address already exists: $checkSumAddress');
           throw AddAddressException(type: AddAddressExceptionType.alreadyAdded);
         }
