@@ -12,12 +12,15 @@ import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/onboarding/add_address_input_page.dart';
 import 'package:autonomy_flutter/onboarding/onboarding_shell.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/screen/bloc/accounts/accounts_bloc.dart';
-import 'package:autonomy_flutter/screen/bloc/accounts/accounts_state.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/device_setting/check_bluetooth_state.dart';
+import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
@@ -52,19 +55,25 @@ class OnboardingAddAddressPage extends StatefulWidget {
 
 class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
     with RouteAware {
-  late final AccountsBloc _accountsBloc;
+  late final PlaylistsBloc _playlistsBloc;
+  late final AddressService _addressService;
+  late final DriftDatabaseService _driftDatabaseService;
 
   @override
   void initState() {
     super.initState();
-    _accountsBloc = injector<AccountsBloc>();
-    _accountsBloc.add(FetchAllAddressesEvent());
+    _playlistsBloc = injector<PlaylistsBloc>(
+      instanceName: PlaylistsBlocInstance.my.instanceName,
+    );
+    _addressService = injector<AddressService>();
+    _driftDatabaseService = injector<DriftDatabaseService>();
+    _playlistsBloc.add(LoadPlaylistsEvent());
   }
 
   @override
   void didPopNext() {
     super.didPopNext();
-    _accountsBloc.add(FetchAllAddressesEvent());
+    _playlistsBloc.add(RefreshPlaylistsEvent());
   }
 
   @override
@@ -77,7 +86,7 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
         withDivider: false,
       ),
       body: BlocProvider.value(
-        value: _accountsBloc,
+        value: _playlistsBloc,
         child: OnboardingShell(
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,10 +123,10 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
             ],
           ),
           onPrimaryPressed: () => onAddAddress(context),
-          secondaryButton: BlocBuilder<AccountsBloc, AccountsState>(
+          secondaryButton: BlocBuilder<PlaylistsBloc, PlaylistsState>(
             builder: (context, state) {
-              final addresses = state.addresses;
-              final isEmpty = addresses == null || addresses.isEmpty;
+              final addressEntries = _getAddressEntries(state);
+              final isEmpty = addressEntries.isEmpty;
               final buttonText = isEmpty ? 'Skip for now' : 'Next';
 
               return Row(
@@ -145,20 +154,46 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
     );
   }
 
-  void onDelete(WalletAddress address) {
-    UIHelper.showDeleteAccountConfirmation(address, (address) async {
-      final completer = Completer<void>();
-      _accountsBloc.add(
-        DeleteAddressEvent(
-          address,
-          onSuccess: () {
-            completer.complete();
-          },
-          onError: (error, stackTrace) {
-            completer.completeError(error);
-          },
+  List<_AddressEntry> _getAddressEntries(PlaylistsState state) {
+    final entries = <_AddressEntry>[];
+    for (final playlistData in state.playlistData) {
+      final playlist = playlistData.playlistReference.playlist;
+      if (!playlist.isAddressPlaylist) {
+        continue;
+      }
+      final owners = playlist.addressOwners;
+      if (owners.isEmpty) {
+        continue;
+      }
+      final ownerAddress = owners.first;
+      final walletAddress = _addressService.getWalletAddress(ownerAddress) ??
+          WalletAddress(
+            address: ownerAddress,
+            createdAt: playlist.created,
+            name: playlist.title,
+          );
+      entries.add(
+        _AddressEntry(
+          walletAddress: walletAddress,
+          playlistId: playlist.id,
         ),
       );
+    }
+    return entries;
+  }
+
+  void onDelete(_AddressEntry entry) {
+    UIHelper.showDeleteAccountConfirmation(entry.walletAddress,
+        (address) async {
+      final completer = Completer<void>();
+      try {
+        await _driftDatabaseService.deletePlaylistById(entry.playlistId);
+        await _addressService.deleteAddress(address);
+        _playlistsBloc.add(RefreshPlaylistsEvent());
+        completer.complete();
+      } catch (error) {
+        completer.completeError(error);
+      }
       await completer.future;
     });
   }
@@ -169,7 +204,7 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
       arguments: OnboardingAddAddressInputPagePayload(),
     );
     if (result != null && result is WalletAddress) {
-      _accountsBloc.add(FetchAllAddressesEvent());
+      _playlistsBloc.add(RefreshPlaylistsEvent());
     }
   }
 
@@ -198,30 +233,33 @@ class _AddressList extends StatelessWidget {
 
   final ThemeData theme;
 
-  final void Function(WalletAddress) onDelete;
+  final void Function(_AddressEntry) onDelete;
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AccountsBloc, AccountsState>(
+    return BlocBuilder<PlaylistsBloc, PlaylistsState>(
       builder: (context, state) {
-        final addresses = state.addresses;
-        if (addresses == null) {
+        final addressEntries = _getAddressEntries(context, state);
+        if (state.isLoading && addressEntries.isEmpty) {
           return const Center(
             child: CupertinoActivityIndicator(),
           );
         }
-        if (addresses.isEmpty) {
+        if (addressEntries.isEmpty) {
           return const SizedBox.shrink();
         }
 
         return ListView.builder(
           padding: EdgeInsets.zero,
           shrinkWrap: true,
-          itemCount: addresses.length,
+          itemCount: addressEntries.length,
           itemBuilder: (context, index) {
             return Column(
               children: [
-                _AddressRow(address: addresses[index], onDelete: onDelete),
+                _AddressRow(
+                  entry: addressEntries[index],
+                  onDelete: onDelete,
+                ),
               ],
             );
           },
@@ -229,13 +267,45 @@ class _AddressList extends StatelessWidget {
       },
     );
   }
+
+  List<_AddressEntry> _getAddressEntries(
+    BuildContext context,
+    PlaylistsState state,
+  ) {
+    final addressService = injector<AddressService>();
+    final entries = <_AddressEntry>[];
+    for (final playlistData in state.playlistData) {
+      final playlist = playlistData.playlistReference.playlist;
+      if (!playlist.isAddressPlaylist) {
+        continue;
+      }
+      final owners = playlist.addressOwners;
+      if (owners.isEmpty) {
+        continue;
+      }
+      final ownerAddress = owners.first;
+      final walletAddress = addressService.getWalletAddress(ownerAddress) ??
+          WalletAddress(
+            address: ownerAddress,
+            createdAt: playlist.created,
+            name: playlist.title,
+          );
+      entries.add(
+        _AddressEntry(
+          walletAddress: walletAddress,
+          playlistId: playlist.id,
+        ),
+      );
+    }
+    return entries;
+  }
 }
 
 class _AddressRow extends StatelessWidget {
-  const _AddressRow({required this.address, required this.onDelete});
+  const _AddressRow({required this.entry, required this.onDelete});
 
-  final WalletAddress address;
-  final void Function(WalletAddress) onDelete;
+  final _AddressEntry entry;
+  final void Function(_AddressEntry) onDelete;
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -256,14 +326,14 @@ class _AddressRow extends StatelessWidget {
                 bottom: LayoutConstants.space3,
               ),
               child: Text(
-                address.name,
+                entry.walletAddress.name,
                 style: AppTypography.body(context).grey,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
           ),
           GestureDetector(
-            onTap: () => onDelete(address),
+            onTap: () => onDelete(entry),
             child: Container(
               color: Colors.transparent,
               padding: EdgeInsets.only(
@@ -278,4 +348,14 @@ class _AddressRow extends StatelessWidget {
       ),
     );
   }
+}
+
+class _AddressEntry {
+  const _AddressEntry({
+    required this.walletAddress,
+    required this.playlistId,
+  });
+
+  final WalletAddress walletAddress;
+  final String playlistId;
 }
