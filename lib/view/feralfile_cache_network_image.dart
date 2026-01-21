@@ -1,6 +1,7 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+// ignore: depend_on_referenced_packages
 import 'package:cached_network_image_platform_interface/cached_network_image_platform_interface.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -37,24 +38,13 @@ class FFCacheNetworkImage extends CachedNetworkImage {
     super.maxHeightDiskCache,
     super.errorListener,
     CacheManager? cacheManager,
-    ImageRenderMethodForWeb imageRenderMethodForWeb =
-        ImageRenderMethodForWeb.HtmlImage,
-    double scale = 1.0,
+    this.imageRenderMethodForWeb = ImageRenderMethodForWeb.HtmlImage,
+    this.scale = 1.0,
     this.cacheScale = 3.0,
-  })  : image = CachedNetworkImageProvider(
-          imageUrl,
-          headers: httpHeaders,
-          cacheManager: cacheManager ?? injector.get<CacheManager>(),
-          cacheKey: cacheKey,
-          imageRenderMethodForWeb: imageRenderMethodForWeb,
-          maxWidth: maxWidthDiskCache,
-          maxHeight: maxHeightDiskCache,
-          errorListener: errorListener,
-          scale: scale,
-        ),
-        super(cacheManager: cacheManager ?? injector.get<CacheManager>());
+  }) : super(cacheManager: cacheManager ?? injector.get<CacheManager>());
 
-  final CachedNetworkImageProvider image;
+  final ImageRenderMethodForWeb imageRenderMethodForWeb;
+  final double scale;
   final double cacheScale;
 
   @override
@@ -79,6 +69,20 @@ class FFCacheNetworkImage extends CachedNetworkImage {
 
   @override
   Widget build(BuildContext context) {
+    // Create a single image provider to avoid duplicate provider issues
+    // that can cause "Future already completed" errors during concurrent loads
+    final imageProvider = CachedNetworkImageProvider(
+      imageUrl,
+      headers: httpHeaders,
+      cacheManager: cacheManager ?? injector.get<CacheManager>(),
+      cacheKey: cacheKey,
+      imageRenderMethodForWeb: imageRenderMethodForWeb,
+      maxWidth: maxWidthDiskCache,
+      maxHeight: maxHeightDiskCache,
+      errorListener: errorListener,
+      scale: scale,
+    );
+
     var octoPlaceholderBuilder =
         placeholder != null ? _octoPlaceholderBuilder : null;
     final octoProgressIndicatorBuilder =
@@ -93,8 +97,10 @@ class FFCacheNetworkImage extends CachedNetworkImage {
     }
 
     return OctoImage(
-      image: image,
-      imageBuilder: imageBuilder != null ? _octoImageBuilder : null,
+      image: imageProvider,
+      imageBuilder: imageBuilder != null
+          ? (context, child) => _octoImageBuilder(context, child, imageProvider)
+          : null,
       placeholderBuilder: octoPlaceholderBuilder,
       progressIndicatorBuilder: octoProgressIndicatorBuilder,
       errorBuilder: errorWidget != null ? _octoErrorBuilder : null,
@@ -118,8 +124,12 @@ class FFCacheNetworkImage extends CachedNetworkImage {
     );
   }
 
-  Widget _octoImageBuilder(BuildContext context, Widget child) {
-    return imageBuilder!(context, image);
+  Widget _octoImageBuilder(
+    BuildContext context,
+    Widget child,
+    CachedNetworkImageProvider imageProvider,
+  ) {
+    return imageBuilder!(context, imageProvider);
   }
 
   Widget _octoPlaceholderBuilder(BuildContext context) {
@@ -149,12 +159,15 @@ class FFCacheNetworkImage extends CachedNetworkImage {
     StackTrace? stackTrace,
   ) {
     // Only log non-PathNotFoundException errors to reduce noise
-    // PathNotFoundException can happen during concurrent cache operations and is handled gracefully
+    // PathNotFoundException can happen during concurrent cache operations
+    // and is handled gracefully
     final errorString = error.toString();
     if (!errorString.contains('PathNotFoundException') &&
         !errorString.contains('Cannot open file')) {
       log.info(
-          'FFCacheNetworkImageError: url: $imageUrl, error: $error, stackTrace: $stackTrace');
+        'FFCacheNetworkImageError: url: $imageUrl, '
+        'error: $error, stackTrace: $stackTrace',
+      );
     }
     return errorWidget!(context, imageUrl, error);
   }
