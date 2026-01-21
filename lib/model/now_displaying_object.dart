@@ -15,7 +15,7 @@ class DP1NowDisplayingObject extends NowDisplayingObjectBase {
     required this.index,
     required this.items,
     required this.isSleeping,
-    });
+  });
 
   final int index;
   final List<DP1NowDisplayingItem> items;
