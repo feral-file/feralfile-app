@@ -1,6 +1,6 @@
 
 //
-// /components/NowPlayingBar.dart
+// /components/SleepModeIndicator.dart
 //
 
 // Do not edit directly, this file was auto-generated.
