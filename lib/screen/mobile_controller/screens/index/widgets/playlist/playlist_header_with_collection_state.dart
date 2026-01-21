@@ -107,6 +107,7 @@ class _PlaylistHeaderWithCollectionStateState
           secondaryText: widget.secondaryText,
           collectionState: collectionState,
           total: widget.total,
+          channelVisible: false,
           onTap: isError
               ? () {
                   _bloc!.add(Reindex());

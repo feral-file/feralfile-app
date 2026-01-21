@@ -77,10 +77,8 @@ class AddressService {
       }
       log.info('Check sum address: $checkSumAddress');
       if (checkAddressDuplicated) {
-        final walletAddress =
-            _appDataManager.addressStorageService.getAllAddresses();
-        if (walletAddress
-            .any((element) => element.address == checkSumAddress)) {
+        final driftAddress = await getAllAddressesFromDrift();
+        if (driftAddress.contains(checkSumAddress)) {
           log.info('Address already exists: $checkSumAddress');
           throw AddAddressException(type: AddAddressExceptionType.alreadyAdded);
         }
@@ -119,6 +117,12 @@ class AddressService {
 
   Future<void> insertAddresses(List<WalletAddress> addresses) async {
     await Future.wait(addresses.map(insertAddress));
+  }
+
+  Future<void> deleteAddressFromDrift(String address) async {
+    await injector<DriftDatabaseService>().deletePlaylistById(address);
+    _appDataManager.addressStorageService.deleteAddresses([address]);
+    await _onAddressUpdate();
   }
 
   Future<void> deleteAddress(WalletAddress address) async {

@@ -15,6 +15,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_header_with_collection_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_title.dart';
+import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
@@ -240,6 +241,8 @@ class PlaylistsPageState extends State<PlaylistsPage>
           UIHelper.showDeletePlaylistConfirmation(playlist, (playlist) async {
             await injector<DriftDatabaseService>()
                 .deletePlaylistById(playlist.id);
+            await injector<AddressService>()
+                .deleteAddressFromDrift(playlist.id);
             final isAddressPlaylist = playlist.isAddressPlaylist;
             if (isAddressPlaylist) {
               final address = playlist.addressOwners;

@@ -119,6 +119,7 @@ abstract class DriftDatabaseServiceAbstract {
     String? channelId,
     DriftPlaylistKind? kind,
     String? baseUrl,
+    OrderingMode order = OrderingMode.desc,
   });
 
   Future<db.Playlist?> getPlaylistRowById(String id);
@@ -356,6 +357,7 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
     String? channelId,
     DriftPlaylistKind? kind,
     String? baseUrl,
+    OrderingMode order = OrderingMode.asc,
   }) async {
     final typeFilter = kind?.value;
 
@@ -367,7 +369,7 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
       query.where((p) => p.type.equals(typeFilter));
     }
     query.orderBy([
-      (p) => OrderingTerm(expression: p.createdAtUs, mode: OrderingMode.desc),
+      (p) => OrderingTerm(expression: p.createdAtUs, mode: order),
     ]);
 
     final rows = await query.get();
@@ -521,7 +523,10 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
     String? baseUrl,
   }) async {
     final rows = await getPlaylistRows(
-        channelId: channelId, kind: kind, baseUrl: baseUrl);
+      channelId: channelId,
+      kind: kind,
+      baseUrl: baseUrl,
+    );
     return await Future.wait(rows.map(_addressPlaylistRowToModel));
   }
 
