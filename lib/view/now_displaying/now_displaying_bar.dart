@@ -4,10 +4,10 @@ import 'package:autonomy_flutter/model/error/now_displaying_error.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/now_displaying_manager.dart';
-import 'package:autonomy_flutter/view/expandable_with_option.dart';
 import 'package:autonomy_flutter/view/now_displaying/dragable_sheet_view.dart';
 import 'package:autonomy_flutter/widgets/now_playing_bar/collapsed_now_playing_bar.dart';
 import 'package:autonomy_flutter/widgets/now_playing_bar/expanded_now_playing_bar.dart';
+import 'package:autonomy_flutter/widgets/now_playing_bar/sleep_bar.dart';
 import 'package:autonomy_flutter/widgets/now_playing_bar/status_bar.dart';
 import 'package:flutter/material.dart';
 
@@ -68,6 +68,10 @@ class _NowDisplayingBarState extends State<NowDisplayingBar>
             (nowDisplayingStatus as NowDisplayingSuccess).object;
         if (nowPlayingObject is! DP1NowDisplayingObject) {
           return const SizedBox();
+        }
+
+        if (nowPlayingObject.isSleeping) {
+          return _getSleepingView(context);
         }
 
         const minSize = NowPlayingBarTokens.collapseHeight /
@@ -145,5 +149,9 @@ class _NowDisplayingBarState extends State<NowDisplayingBar>
       status:
           'Pair an FF1 to play your collection and curated art on any screen.',
     );
+  }
+
+  Widget _getSleepingView(BuildContext context) {
+    return const NowPlayingSleepBar();
   }
 }

@@ -13,6 +13,7 @@ class NowPlayingBarTokens {
     NowPlayingBarTokens._();
 
     static const bgColor = Color(0xFF000000);
+    static const bgInactiveColor = Color(0xFF1D1D1D);
     static const bottomDeviceNavActiveColor = Color(0xFFFFFFFF);
     static const bottomDeviceNavGap = 10;
     static const bottomDeviceNavInactiveColor = Color(0xFFA0A0A0);

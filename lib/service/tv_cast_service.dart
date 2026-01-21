@@ -43,6 +43,8 @@ abstract class TvCastService {
 
   Future<RotateReply> rotate(RotateRequest request);
 
+  Future<SetSleepModeReply> setSleepMode(SetSleepModeRequest request);
+
   Future<GetDeviceStatusReply> getDeviceStatus(
     GetDeviceStatusRequest request,
   );
@@ -194,6 +196,12 @@ abstract class BaseTvCastService implements TvCastService {
   Future<RotateReply> rotate(RotateRequest request) async {
     final result = await _sendData(_getBody(request));
     return RotateReply.fromJson(result);
+  }
+
+  @override
+  Future<SetSleepModeReply> setSleepMode(SetSleepModeRequest request) async {
+    final result = await _sendData(_getBody(request));
+    return SetSleepModeReply.fromJson(result);
   }
 
   @override

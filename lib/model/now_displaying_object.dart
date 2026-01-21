@@ -14,10 +14,12 @@ class DP1NowDisplayingObject extends NowDisplayingObjectBase {
     required super.connectedDevice,
     required this.index,
     required this.items,
-  });
+    required this.isSleeping,
+    });
 
   final int index;
   final List<DP1NowDisplayingItem> items;
+  final bool isSleeping;
 
   DP1NowDisplayingItem get currentItem => items[index];
 }

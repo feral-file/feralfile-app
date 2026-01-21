@@ -27,6 +27,7 @@ enum CastCommand {
   disconnect,
   sendKeyboardEvent,
   rotate,
+  setSleepMode,
   getDeviceStatus,
   updateArtFraming,
   updateToLatestVersion,
@@ -67,6 +68,8 @@ enum CastCommand {
         return CastCommand.sendKeyboardEvent;
       case 'rotate':
         return CastCommand.rotate;
+      case 'setSleepMode':
+        return CastCommand.setSleepMode;
       case 'getDeviceStatus':
         return CastCommand.getDeviceStatus;
       case 'updateArtFraming':
@@ -122,6 +125,8 @@ enum CastCommand {
         return CastCommand.sendKeyboardEvent;
       case const (RotateRequest):
         return CastCommand.rotate;
+      case const (SetSleepModeRequest):
+        return CastCommand.setSleepMode;
       case const (GetDeviceStatusRequest):
         return CastCommand.getDeviceStatus;
       case const (UpdateArtFramingRequest):
@@ -401,6 +406,7 @@ class CheckCastingStatusReply extends ReplyWithOK {
     super.error,
     this.items,
     this.castCommand,
+    this.sleepMode,
   }) : isPaused = isPaused ?? false;
 
   factory CheckCastingStatusReply.fromJson(Map<String, dynamic> json) =>
@@ -433,6 +439,7 @@ class CheckCastingStatusReply extends ReplyWithOK {
         error: json['error'] != null
             ? ReplyError.fromString(json['error'] as String)
             : null,
+        sleepMode: json['sleepMode'] as bool?,
       );
 
   int? get currentArtworkIndex {
@@ -445,6 +452,7 @@ class CheckCastingStatusReply extends ReplyWithOK {
   DeviceDisplaySetting? deviceSettings;
   final List<DP1Item>? items;
   final CastCommand? castCommand;
+  bool? sleepMode;
 
   @override
   Map<String, dynamic> toJson() => {
@@ -455,6 +463,7 @@ class CheckCastingStatusReply extends ReplyWithOK {
         'deviceSettings': deviceSettings?.toJson(),
         'castCommand': castCommand?.toString(),
         'error': super.error?.jsonString,
+        'sleepMode': sleepMode,
       };
 
   // copyWith method
@@ -468,6 +477,7 @@ class CheckCastingStatusReply extends ReplyWithOK {
     DeviceDisplaySetting? deviceSettings,
     List<DP1Item>? items,
     CastCommand? castCommand,
+    bool? sleepMode,
     ReplyError? error,
   }) {
     return CheckCastingStatusReply(
@@ -478,6 +488,7 @@ class CheckCastingStatusReply extends ReplyWithOK {
       deviceSettings: deviceSettings ?? this.deviceSettings,
       items: items ?? this.items,
       castCommand: castCommand ?? this.castCommand,
+      sleepMode: sleepMode ?? this.sleepMode,
       error: error ?? super.error,
     );
   }
@@ -743,6 +754,20 @@ class RotateReply extends Reply {
 
   @override
   Map<String, dynamic> toJson() => {'orientation': orientation};
+}
+
+class SetSleepModeRequest implements FF1Request {
+  SetSleepModeRequest({required this.sleepMode});
+  final bool sleepMode;
+
+  @override
+  Map<String, dynamic> toJson() => {'sleepMode': sleepMode};
+}
+
+class SetSleepModeReply extends ReplyWithOK {
+  SetSleepModeReply({required super.ok});
+  factory SetSleepModeReply.fromJson(Map<String, dynamic> json) =>
+      SetSleepModeReply(ok: json['ok'] as bool);
 }
 
 extension OrientationExtension on Orientation {

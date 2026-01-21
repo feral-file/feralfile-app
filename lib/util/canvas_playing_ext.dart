@@ -11,11 +11,26 @@ extension CanvasDeviceStatePlayingExt on CanvasDeviceState {
       return false;
     }
 
+    final isSleeping = this.isSleeping();
+    if (isSleeping) {
+      return false;
+    }
+
     final playingItem = statusOf(playingDevice)?.playingItem;
     if (playingItem == null) {
       return false;
     }
 
     return playingItem.cid == asset.cid;
+  }
+
+  bool isSleeping() {
+    final playingDevice = BluetoothDeviceManager().castingBluetoothDevice;
+    if (playingDevice == null) {
+      return false;
+    }
+
+    final deviceStatus = statusOf(playingDevice);
+    return deviceStatus?.sleepMode ?? deviceStatus?.isPaused ?? false;
   }
 }
