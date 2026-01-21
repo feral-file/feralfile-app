@@ -25,7 +25,8 @@ import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/shared.dart';
 import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
 import 'package:autonomy_flutter/util/log.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:autonomy_flutter/util/thumbnail_disk_cache.dart';
+import 'package:flutter/material.dart';
 
 class ForgetExistBloc extends AuBloc<ForgetExistEvent, ForgetExistState> {
   ForgetExistBloc(
@@ -41,8 +42,12 @@ class ForgetExistBloc extends AuBloc<ForgetExistEvent, ForgetExistState> {
       // remove all local data
       await _indexerDatabase.clearAll();
       await _configurationService.removeAll();
-      await injector<CacheManager>().emptyCache();
-      await DefaultCacheManager().emptyCache();
+      await injector<ThumbnailDiskCache>().clearAll();
+      
+      // Clear Flutter's image cache
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
+      
       await injector<NftTokensService>().purgeCachedGallery();
       memoryValues = MemoryValues();
 

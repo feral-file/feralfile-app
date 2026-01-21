@@ -24,6 +24,7 @@ import 'package:autonomy_flutter/util/error_handler.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/style.dart';
+import 'package:autonomy_flutter/util/thumbnail_disk_cache.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
@@ -31,7 +32,6 @@ import 'package:autonomy_flutter/view/tappable_forward_row.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:sentry/sentry.dart';
 
 class DataManagementPage extends StatefulWidget {
@@ -140,8 +140,11 @@ class _DataManagementPageState extends State<DataManagementPage> {
             await injector<NftTokensService>().purgeCachedGallery();
             await injector<UserDp1PlaylistService>()
                 .setLastUpdateChangeAnchor(addressAnchors: []);
-            await injector<CacheManager>().emptyCache();
-            await DefaultCacheManager().emptyCache();
+            await injector<ThumbnailDiskCache>().clearAll();
+            
+            // Clear Flutter's image cache
+            PaintingBinding.instance.imageCache.clear();
+            PaintingBinding.instance.imageCache.clearLiveImages();
 
             for (final bloc in blocs) {
               bloc.add(ClearDataEvent());

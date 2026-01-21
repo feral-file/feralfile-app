@@ -79,7 +79,6 @@ import 'package:autonomy_flutter/widgetbook/mock/nft_collection/mock_nft_collect
 import 'package:autonomy_flutter/widgetbook/mock/nft_collection/mock_token_service.dart';
 import 'package:autonomy_flutter/widgetbook/mock_data/data/ff_x1.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MockInjector {
@@ -259,8 +258,26 @@ class MockInjector {
       );
     }
 
-    if (!injector.isRegistered<CacheManager>()) {
-      injector.registerLazySingleton<CacheManager>(AUImageCacheManage.new);
+    // Thumbnail cache services for widgetbook
+    if (!injector.isRegistered<ThumbnailDiskCache>()) {
+      final thumbnailCache = ThumbnailDiskCache();
+      // Initialize will be called when needed
+      injector.registerSingleton<ThumbnailDiskCache>(thumbnailCache);
+    }
+
+    if (!injector.isRegistered<DartHttpThumbnailFetcher>()) {
+      injector.registerSingleton<DartHttpThumbnailFetcher>(
+        DartHttpThumbnailFetcher(),
+      );
+    }
+
+    if (!injector.isRegistered<ThumbnailPrefetchService>()) {
+      injector.registerLazySingleton<ThumbnailPrefetchService>(
+        () => ThumbnailPrefetchService(
+          diskCache: injector<ThumbnailDiskCache>(),
+          httpFetcher: injector<DartHttpThumbnailFetcher>(),
+        ),
+      );
     }
 
     // daily bloc

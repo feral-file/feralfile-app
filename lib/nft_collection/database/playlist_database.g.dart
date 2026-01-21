@@ -1399,12 +1399,6 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
   late final GeneratedColumn<String> license = GeneratedColumn<String>(
       'license', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _sourceUrlMeta =
-      const VerificationMeta('sourceUrl');
-  @override
-  late final GeneratedColumn<String> sourceUrl = GeneratedColumn<String>(
-      'source_url', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _reproJsonMeta =
       const VerificationMeta('reproJson');
   @override
@@ -1447,7 +1441,6 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
         sourceUri,
         refUri,
         license,
-        sourceUrl,
         reproJson,
         overrideJson,
         displayJson,
@@ -1513,10 +1506,6 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
       context.handle(_licenseMeta,
           license.isAcceptableOrUnknown(data['license']!, _licenseMeta));
     }
-    if (data.containsKey('source_url')) {
-      context.handle(_sourceUrlMeta,
-          sourceUrl.isAcceptableOrUnknown(data['source_url']!, _sourceUrlMeta));
-    }
     if (data.containsKey('repro_json')) {
       context.handle(_reproJsonMeta,
           reproJson.isAcceptableOrUnknown(data['repro_json']!, _reproJsonMeta));
@@ -1576,8 +1565,6 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
           .read(DriftSqlType.string, data['${effectivePrefix}ref_uri']),
       license: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}license']),
-      sourceUrl: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}source_url']),
       reproJson: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}repro_json']),
       overrideJson: attachedDatabase.typeMapping
@@ -1608,7 +1595,6 @@ class Item extends DataClass implements Insertable<Item> {
   final String? sourceUri;
   final String? refUri;
   final String? license;
-  final String? sourceUrl;
   final String? reproJson;
   final String? overrideJson;
   final String? displayJson;
@@ -1625,7 +1611,6 @@ class Item extends DataClass implements Insertable<Item> {
       this.sourceUri,
       this.refUri,
       this.license,
-      this.sourceUrl,
       this.reproJson,
       this.overrideJson,
       this.displayJson,
@@ -1659,9 +1644,6 @@ class Item extends DataClass implements Insertable<Item> {
     }
     if (!nullToAbsent || license != null) {
       map['license'] = Variable<String>(license);
-    }
-    if (!nullToAbsent || sourceUrl != null) {
-      map['source_url'] = Variable<String>(sourceUrl);
     }
     if (!nullToAbsent || reproJson != null) {
       map['repro_json'] = Variable<String>(reproJson);
@@ -1705,9 +1687,6 @@ class Item extends DataClass implements Insertable<Item> {
       license: license == null && nullToAbsent
           ? const Value.absent()
           : Value(license),
-      sourceUrl: sourceUrl == null && nullToAbsent
-          ? const Value.absent()
-          : Value(sourceUrl),
       reproJson: reproJson == null && nullToAbsent
           ? const Value.absent()
           : Value(reproJson),
@@ -1738,7 +1717,6 @@ class Item extends DataClass implements Insertable<Item> {
       sourceUri: serializer.fromJson<String?>(json['sourceUri']),
       refUri: serializer.fromJson<String?>(json['refUri']),
       license: serializer.fromJson<String?>(json['license']),
-      sourceUrl: serializer.fromJson<String?>(json['sourceUrl']),
       reproJson: serializer.fromJson<String?>(json['reproJson']),
       overrideJson: serializer.fromJson<String?>(json['overrideJson']),
       displayJson: serializer.fromJson<String?>(json['displayJson']),
@@ -1760,7 +1738,6 @@ class Item extends DataClass implements Insertable<Item> {
       'sourceUri': serializer.toJson<String?>(sourceUri),
       'refUri': serializer.toJson<String?>(refUri),
       'license': serializer.toJson<String?>(license),
-      'sourceUrl': serializer.toJson<String?>(sourceUrl),
       'reproJson': serializer.toJson<String?>(reproJson),
       'overrideJson': serializer.toJson<String?>(overrideJson),
       'displayJson': serializer.toJson<String?>(displayJson),
@@ -1780,7 +1757,6 @@ class Item extends DataClass implements Insertable<Item> {
           Value<String?> sourceUri = const Value.absent(),
           Value<String?> refUri = const Value.absent(),
           Value<String?> license = const Value.absent(),
-          Value<String?> sourceUrl = const Value.absent(),
           Value<String?> reproJson = const Value.absent(),
           Value<String?> overrideJson = const Value.absent(),
           Value<String?> displayJson = const Value.absent(),
@@ -1799,7 +1775,6 @@ class Item extends DataClass implements Insertable<Item> {
         sourceUri: sourceUri.present ? sourceUri.value : this.sourceUri,
         refUri: refUri.present ? refUri.value : this.refUri,
         license: license.present ? license.value : this.license,
-        sourceUrl: sourceUrl.present ? sourceUrl.value : this.sourceUrl,
         reproJson: reproJson.present ? reproJson.value : this.reproJson,
         overrideJson:
             overrideJson.present ? overrideJson.value : this.overrideJson,
@@ -1825,7 +1800,6 @@ class Item extends DataClass implements Insertable<Item> {
       sourceUri: data.sourceUri.present ? data.sourceUri.value : this.sourceUri,
       refUri: data.refUri.present ? data.refUri.value : this.refUri,
       license: data.license.present ? data.license.value : this.license,
-      sourceUrl: data.sourceUrl.present ? data.sourceUrl.value : this.sourceUrl,
       reproJson: data.reproJson.present ? data.reproJson.value : this.reproJson,
       overrideJson: data.overrideJson.present
           ? data.overrideJson.value
@@ -1853,7 +1827,6 @@ class Item extends DataClass implements Insertable<Item> {
           ..write('sourceUri: $sourceUri, ')
           ..write('refUri: $refUri, ')
           ..write('license: $license, ')
-          ..write('sourceUrl: $sourceUrl, ')
           ..write('reproJson: $reproJson, ')
           ..write('overrideJson: $overrideJson, ')
           ..write('displayJson: $displayJson, ')
@@ -1875,7 +1848,6 @@ class Item extends DataClass implements Insertable<Item> {
       sourceUri,
       refUri,
       license,
-      sourceUrl,
       reproJson,
       overrideJson,
       displayJson,
@@ -1895,7 +1867,6 @@ class Item extends DataClass implements Insertable<Item> {
           other.sourceUri == this.sourceUri &&
           other.refUri == this.refUri &&
           other.license == this.license &&
-          other.sourceUrl == this.sourceUrl &&
           other.reproJson == this.reproJson &&
           other.overrideJson == this.overrideJson &&
           other.displayJson == this.displayJson &&
@@ -1914,7 +1885,6 @@ class ItemsCompanion extends UpdateCompanion<Item> {
   final Value<String?> sourceUri;
   final Value<String?> refUri;
   final Value<String?> license;
-  final Value<String?> sourceUrl;
   final Value<String?> reproJson;
   final Value<String?> overrideJson;
   final Value<String?> displayJson;
@@ -1932,7 +1902,6 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     this.sourceUri = const Value.absent(),
     this.refUri = const Value.absent(),
     this.license = const Value.absent(),
-    this.sourceUrl = const Value.absent(),
     this.reproJson = const Value.absent(),
     this.overrideJson = const Value.absent(),
     this.displayJson = const Value.absent(),
@@ -1951,7 +1920,6 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     this.sourceUri = const Value.absent(),
     this.refUri = const Value.absent(),
     this.license = const Value.absent(),
-    this.sourceUrl = const Value.absent(),
     this.reproJson = const Value.absent(),
     this.overrideJson = const Value.absent(),
     this.displayJson = const Value.absent(),
@@ -1972,7 +1940,6 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     Expression<String>? sourceUri,
     Expression<String>? refUri,
     Expression<String>? license,
-    Expression<String>? sourceUrl,
     Expression<String>? reproJson,
     Expression<String>? overrideJson,
     Expression<String>? displayJson,
@@ -1991,7 +1958,6 @@ class ItemsCompanion extends UpdateCompanion<Item> {
       if (sourceUri != null) 'source_uri': sourceUri,
       if (refUri != null) 'ref_uri': refUri,
       if (license != null) 'license': license,
-      if (sourceUrl != null) 'source_url': sourceUrl,
       if (reproJson != null) 'repro_json': reproJson,
       if (overrideJson != null) 'override_json': overrideJson,
       if (displayJson != null) 'display_json': displayJson,
@@ -2012,7 +1978,6 @@ class ItemsCompanion extends UpdateCompanion<Item> {
       Value<String?>? sourceUri,
       Value<String?>? refUri,
       Value<String?>? license,
-      Value<String?>? sourceUrl,
       Value<String?>? reproJson,
       Value<String?>? overrideJson,
       Value<String?>? displayJson,
@@ -2030,7 +1995,6 @@ class ItemsCompanion extends UpdateCompanion<Item> {
       sourceUri: sourceUri ?? this.sourceUri,
       refUri: refUri ?? this.refUri,
       license: license ?? this.license,
-      sourceUrl: sourceUrl ?? this.sourceUrl,
       reproJson: reproJson ?? this.reproJson,
       overrideJson: overrideJson ?? this.overrideJson,
       displayJson: displayJson ?? this.displayJson,
@@ -2073,9 +2037,6 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     if (license.present) {
       map['license'] = Variable<String>(license.value);
     }
-    if (sourceUrl.present) {
-      map['source_url'] = Variable<String>(sourceUrl.value);
-    }
     if (reproJson.present) {
       map['repro_json'] = Variable<String>(reproJson.value);
     }
@@ -2110,7 +2071,6 @@ class ItemsCompanion extends UpdateCompanion<Item> {
           ..write('sourceUri: $sourceUri, ')
           ..write('refUri: $refUri, ')
           ..write('license: $license, ')
-          ..write('sourceUrl: $sourceUrl, ')
           ..write('reproJson: $reproJson, ')
           ..write('overrideJson: $overrideJson, ')
           ..write('displayJson: $displayJson, ')
@@ -3061,7 +3021,6 @@ typedef $$ItemsTableCreateCompanionBuilder = ItemsCompanion Function({
   Value<String?> sourceUri,
   Value<String?> refUri,
   Value<String?> license,
-  Value<String?> sourceUrl,
   Value<String?> reproJson,
   Value<String?> overrideJson,
   Value<String?> displayJson,
@@ -3080,7 +3039,6 @@ typedef $$ItemsTableUpdateCompanionBuilder = ItemsCompanion Function({
   Value<String?> sourceUri,
   Value<String?> refUri,
   Value<String?> license,
-  Value<String?> sourceUrl,
   Value<String?> reproJson,
   Value<String?> overrideJson,
   Value<String?> displayJson,
@@ -3128,9 +3086,6 @@ class $$ItemsTableFilterComposer
 
   ColumnFilters<String> get license => $composableBuilder(
       column: $table.license, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get sourceUrl => $composableBuilder(
-      column: $table.sourceUrl, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get reproJson => $composableBuilder(
       column: $table.reproJson, builder: (column) => ColumnFilters(column));
@@ -3189,9 +3144,6 @@ class $$ItemsTableOrderingComposer
   ColumnOrderings<String> get license => $composableBuilder(
       column: $table.license, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get sourceUrl => $composableBuilder(
-      column: $table.sourceUrl, builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<String> get reproJson => $composableBuilder(
       column: $table.reproJson, builder: (column) => ColumnOrderings(column));
 
@@ -3249,9 +3201,6 @@ class $$ItemsTableAnnotationComposer
   GeneratedColumn<String> get license =>
       $composableBuilder(column: $table.license, builder: (column) => column);
 
-  GeneratedColumn<String> get sourceUrl =>
-      $composableBuilder(column: $table.sourceUrl, builder: (column) => column);
-
   GeneratedColumn<String> get reproJson =>
       $composableBuilder(column: $table.reproJson, builder: (column) => column);
 
@@ -3301,7 +3250,6 @@ class $$ItemsTableTableManager extends RootTableManager<
             Value<String?> sourceUri = const Value.absent(),
             Value<String?> refUri = const Value.absent(),
             Value<String?> license = const Value.absent(),
-            Value<String?> sourceUrl = const Value.absent(),
             Value<String?> reproJson = const Value.absent(),
             Value<String?> overrideJson = const Value.absent(),
             Value<String?> displayJson = const Value.absent(),
@@ -3320,7 +3268,6 @@ class $$ItemsTableTableManager extends RootTableManager<
             sourceUri: sourceUri,
             refUri: refUri,
             license: license,
-            sourceUrl: sourceUrl,
             reproJson: reproJson,
             overrideJson: overrideJson,
             displayJson: displayJson,
@@ -3339,7 +3286,6 @@ class $$ItemsTableTableManager extends RootTableManager<
             Value<String?> sourceUri = const Value.absent(),
             Value<String?> refUri = const Value.absent(),
             Value<String?> license = const Value.absent(),
-            Value<String?> sourceUrl = const Value.absent(),
             Value<String?> reproJson = const Value.absent(),
             Value<String?> overrideJson = const Value.absent(),
             Value<String?> displayJson = const Value.absent(),
@@ -3358,7 +3304,6 @@ class $$ItemsTableTableManager extends RootTableManager<
             sourceUri: sourceUri,
             refUri: refUri,
             license: license,
-            sourceUrl: sourceUrl,
             reproJson: reproJson,
             overrideJson: overrideJson,
             displayJson: displayJson,

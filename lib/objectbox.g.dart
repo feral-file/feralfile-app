@@ -14,6 +14,7 @@ import 'package:objectbox/internal.dart'
 import 'package:objectbox/objectbox.dart' as obx;
 import 'package:objectbox_flutter_libs/objectbox_flutter_libs.dart';
 
+import 'model/thumbnail_cache_entry.dart';
 import 'nft_collection/models/objectbox_entities.dart';
 
 export 'package:objectbox/objectbox.dart'; // so that callers only have to import this file
@@ -110,6 +111,133 @@ final _entities = <obx_int.ModelEntity>[
             flags: 0)
       ],
       relations: <obx_int.ModelRelation>[],
+      backlinks: <obx_int.ModelBacklink>[]),
+  obx_int.ModelEntity(
+      id: const obx_int.IdUid(2, 7861436414769255889),
+      name: 'ThumbnailCacheEntry',
+      lastPropertyId: const obx_int.IdUid(22, 3630707431480574051),
+      flags: 0,
+      properties: <obx_int.ModelProperty>[
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(1, 2791951155353511554),
+            name: 'id',
+            type: 6,
+            flags: 1),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(2, 5939605548058902936),
+            name: 'key',
+            type: 9,
+            flags: 2080,
+            indexId: const obx_int.IdUid(4, 4670153191516185877)),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(3, 247416952486051090),
+            name: 'originKey',
+            type: 9,
+            flags: 2048,
+            indexId: const obx_int.IdUid(5, 3376900023862740224)),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(4, 9072200931452616930),
+            name: 'variant',
+            type: 9,
+            flags: 2048,
+            indexId: const obx_int.IdUid(6, 6177530353383520107)),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(5, 3308410198684641517),
+            name: 'variantRank',
+            type: 6,
+            flags: 8,
+            indexId: const obx_int.IdUid(7, 5360090992584945734)),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(6, 2474800326614884468),
+            name: 'url',
+            type: 9,
+            flags: 2048,
+            indexId: const obx_int.IdUid(8, 7610136033337849368)),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(7, 6217593726084282393),
+            name: 'status',
+            type: 6,
+            flags: 8,
+            indexId: const obx_int.IdUid(9, 6066620200344621468)),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(8, 4774855419640716509),
+            name: 'localPath',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(9, 817258846340607966),
+            name: 'sizeBytes',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(10, 3202779448199867080),
+            name: 'createdAtMs',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(11, 3466511823810558856),
+            name: 'lastAccessAtMs',
+            type: 6,
+            flags: 8,
+            indexId: const obx_int.IdUid(10, 6001672008167889447)),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(12, 1543801857338751926),
+            name: 'expiresAtMs',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(13, 2841544016767199851),
+            name: 'etag',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(14, 2922629654276767232),
+            name: 'lastModified',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(15, 8176090446763311699),
+            name: 'lastErrorAtMs',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(16, 2003881546415357900),
+            name: 'errorCount',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(17, 2355541626352352833),
+            name: 'lastError',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(18, 7259193859337633917),
+            name: 'inFlightBackend',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(19, 1527540607866541007),
+            name: 'inFlightTaskId',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(20, 2349856765930198357),
+            name: 'imageWidth',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(21, 4290311085225800645),
+            name: 'imageHeight',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(22, 3630707431480574051),
+            name: 'isOriginal',
+            type: 1,
+            flags: 8,
+            indexId: const obx_int.IdUid(11, 4351727472478292107))
+      ],
+      relations: <obx_int.ModelRelation>[],
       backlinks: <obx_int.ModelBacklink>[])
 ];
 
@@ -148,8 +276,8 @@ Future<obx.Store> openStore(
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
       entities: _entities,
-      lastEntityId: const obx_int.IdUid(1, 1295979521715477654),
-      lastIndexId: const obx_int.IdUid(3, 1384654818372491782),
+      lastEntityId: const obx_int.IdUid(2, 7861436414769255889),
+      lastIndexId: const obx_int.IdUid(11, 4351727472478292107),
       lastRelationId: const obx_int.IdUid(0, 0),
       lastSequenceId: const obx_int.IdUid(0, 0),
       retiredEntityUids: const [],
@@ -281,6 +409,134 @@ obx_int.ModelDefinition getObjectBoxModel() {
                 .vTableGet(buffer, rootOffset, 6, '');
 
           return object;
+        }),
+    ThumbnailCacheEntry: obx_int.EntityDefinition<ThumbnailCacheEntry>(
+        model: _entities[1],
+        toOneRelations: (ThumbnailCacheEntry object) => [],
+        toManyRelations: (ThumbnailCacheEntry object) => {},
+        getId: (ThumbnailCacheEntry object) => object.id,
+        setId: (ThumbnailCacheEntry object, int id) {
+          object.id = id;
+        },
+        objectToFB: (ThumbnailCacheEntry object, fb.Builder fbb) {
+          final keyOffset = fbb.writeString(object.key);
+          final originKeyOffset = fbb.writeString(object.originKey);
+          final variantOffset = fbb.writeString(object.variant);
+          final urlOffset = fbb.writeString(object.url);
+          final localPathOffset = object.localPath == null
+              ? null
+              : fbb.writeString(object.localPath!);
+          final etagOffset =
+              object.etag == null ? null : fbb.writeString(object.etag!);
+          final lastModifiedOffset = object.lastModified == null
+              ? null
+              : fbb.writeString(object.lastModified!);
+          final lastErrorOffset = object.lastError == null
+              ? null
+              : fbb.writeString(object.lastError!);
+          final inFlightTaskIdOffset = object.inFlightTaskId == null
+              ? null
+              : fbb.writeString(object.inFlightTaskId!);
+          fbb.startTable(23);
+          fbb.addInt64(0, object.id);
+          fbb.addOffset(1, keyOffset);
+          fbb.addOffset(2, originKeyOffset);
+          fbb.addOffset(3, variantOffset);
+          fbb.addInt64(4, object.variantRank);
+          fbb.addOffset(5, urlOffset);
+          fbb.addInt64(6, object.status);
+          fbb.addOffset(7, localPathOffset);
+          fbb.addInt64(8, object.sizeBytes);
+          fbb.addInt64(9, object.createdAtMs);
+          fbb.addInt64(10, object.lastAccessAtMs);
+          fbb.addInt64(11, object.expiresAtMs);
+          fbb.addOffset(12, etagOffset);
+          fbb.addOffset(13, lastModifiedOffset);
+          fbb.addInt64(14, object.lastErrorAtMs);
+          fbb.addInt64(15, object.errorCount);
+          fbb.addOffset(16, lastErrorOffset);
+          fbb.addInt64(17, object.inFlightBackend);
+          fbb.addOffset(18, inFlightTaskIdOffset);
+          fbb.addInt64(19, object.imageWidth);
+          fbb.addInt64(20, object.imageHeight);
+          fbb.addBool(21, object.isOriginal);
+          fbb.finish(fbb.endTable());
+          return object.id;
+        },
+        objectFromFB: (obx.Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+          final idParam =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
+          final keyParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 6, '');
+          final originKeyParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 8, '');
+          final variantParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 10, '');
+          final variantRankParam =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 12, 0);
+          final urlParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 14, '');
+          final statusParam =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 16, 0);
+          final localPathParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 18);
+          final sizeBytesParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 20);
+          final imageWidthParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 42);
+          final imageHeightParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 44);
+          final isOriginalParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 46, false);
+          final createdAtMsParam =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 22, 0);
+          final lastAccessAtMsParam =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 24, 0);
+          final expiresAtMsParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 26);
+          final etagParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 28);
+          final lastModifiedParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 30);
+          final lastErrorAtMsParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 32);
+          final errorCountParam =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 34, 0);
+          final lastErrorParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 36);
+          final inFlightBackendParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 38);
+          final inFlightTaskIdParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 40);
+          final object = ThumbnailCacheEntry(
+              id: idParam,
+              key: keyParam,
+              originKey: originKeyParam,
+              variant: variantParam,
+              variantRank: variantRankParam,
+              url: urlParam,
+              status: statusParam,
+              localPath: localPathParam,
+              sizeBytes: sizeBytesParam,
+              imageWidth: imageWidthParam,
+              imageHeight: imageHeightParam,
+              isOriginal: isOriginalParam,
+              createdAtMs: createdAtMsParam,
+              lastAccessAtMs: lastAccessAtMsParam,
+              expiresAtMs: expiresAtMsParam,
+              etag: etagParam,
+              lastModified: lastModifiedParam,
+              lastErrorAtMs: lastErrorAtMsParam,
+              errorCount: errorCountParam,
+              lastError: lastErrorParam,
+              inFlightBackend: inFlightBackendParam,
+              inFlightTaskId: inFlightTaskIdParam);
+
+          return object;
         })
   };
 
@@ -352,4 +608,95 @@ class TokenObject_ {
   /// See [TokenObject.enrichmentSourceMediaAssetsJson].
   static final enrichmentSourceMediaAssetsJson =
       obx.QueryStringProperty<TokenObject>(_entities[0].properties[15]);
+}
+
+/// [ThumbnailCacheEntry] entity fields to define ObjectBox queries.
+class ThumbnailCacheEntry_ {
+  /// See [ThumbnailCacheEntry.id].
+  static final id =
+      obx.QueryIntegerProperty<ThumbnailCacheEntry>(_entities[1].properties[0]);
+
+  /// See [ThumbnailCacheEntry.key].
+  static final key =
+      obx.QueryStringProperty<ThumbnailCacheEntry>(_entities[1].properties[1]);
+
+  /// See [ThumbnailCacheEntry.originKey].
+  static final originKey =
+      obx.QueryStringProperty<ThumbnailCacheEntry>(_entities[1].properties[2]);
+
+  /// See [ThumbnailCacheEntry.variant].
+  static final variant =
+      obx.QueryStringProperty<ThumbnailCacheEntry>(_entities[1].properties[3]);
+
+  /// See [ThumbnailCacheEntry.variantRank].
+  static final variantRank =
+      obx.QueryIntegerProperty<ThumbnailCacheEntry>(_entities[1].properties[4]);
+
+  /// See [ThumbnailCacheEntry.url].
+  static final url =
+      obx.QueryStringProperty<ThumbnailCacheEntry>(_entities[1].properties[5]);
+
+  /// See [ThumbnailCacheEntry.status].
+  static final status =
+      obx.QueryIntegerProperty<ThumbnailCacheEntry>(_entities[1].properties[6]);
+
+  /// See [ThumbnailCacheEntry.localPath].
+  static final localPath =
+      obx.QueryStringProperty<ThumbnailCacheEntry>(_entities[1].properties[7]);
+
+  /// See [ThumbnailCacheEntry.sizeBytes].
+  static final sizeBytes =
+      obx.QueryIntegerProperty<ThumbnailCacheEntry>(_entities[1].properties[8]);
+
+  /// See [ThumbnailCacheEntry.createdAtMs].
+  static final createdAtMs =
+      obx.QueryIntegerProperty<ThumbnailCacheEntry>(_entities[1].properties[9]);
+
+  /// See [ThumbnailCacheEntry.lastAccessAtMs].
+  static final lastAccessAtMs = obx.QueryIntegerProperty<ThumbnailCacheEntry>(
+      _entities[1].properties[10]);
+
+  /// See [ThumbnailCacheEntry.expiresAtMs].
+  static final expiresAtMs = obx.QueryIntegerProperty<ThumbnailCacheEntry>(
+      _entities[1].properties[11]);
+
+  /// See [ThumbnailCacheEntry.etag].
+  static final etag =
+      obx.QueryStringProperty<ThumbnailCacheEntry>(_entities[1].properties[12]);
+
+  /// See [ThumbnailCacheEntry.lastModified].
+  static final lastModified =
+      obx.QueryStringProperty<ThumbnailCacheEntry>(_entities[1].properties[13]);
+
+  /// See [ThumbnailCacheEntry.lastErrorAtMs].
+  static final lastErrorAtMs = obx.QueryIntegerProperty<ThumbnailCacheEntry>(
+      _entities[1].properties[14]);
+
+  /// See [ThumbnailCacheEntry.errorCount].
+  static final errorCount = obx.QueryIntegerProperty<ThumbnailCacheEntry>(
+      _entities[1].properties[15]);
+
+  /// See [ThumbnailCacheEntry.lastError].
+  static final lastError =
+      obx.QueryStringProperty<ThumbnailCacheEntry>(_entities[1].properties[16]);
+
+  /// See [ThumbnailCacheEntry.inFlightBackend].
+  static final inFlightBackend = obx.QueryIntegerProperty<ThumbnailCacheEntry>(
+      _entities[1].properties[17]);
+
+  /// See [ThumbnailCacheEntry.inFlightTaskId].
+  static final inFlightTaskId =
+      obx.QueryStringProperty<ThumbnailCacheEntry>(_entities[1].properties[18]);
+
+  /// See [ThumbnailCacheEntry.imageWidth].
+  static final imageWidth = obx.QueryIntegerProperty<ThumbnailCacheEntry>(
+      _entities[1].properties[19]);
+
+  /// See [ThumbnailCacheEntry.imageHeight].
+  static final imageHeight = obx.QueryIntegerProperty<ThumbnailCacheEntry>(
+      _entities[1].properties[20]);
+
+  /// See [ThumbnailCacheEntry.isOriginal].
+  static final isOriginal = obx.QueryBooleanProperty<ThumbnailCacheEntry>(
+      _entities[1].properties[21]);
 }

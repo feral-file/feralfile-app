@@ -1,13 +1,17 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/model/thumbnail_cache_entry.dart';
+import 'package:autonomy_flutter/service/thumbnail_prefetch_service.dart';
+import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/string_ext.dart';
 import 'package:autonomy_flutter/util/svg_utils.dart';
+import 'package:autonomy_flutter/util/thumbnail_disk_cache.dart';
+import 'package:autonomy_flutter/util/thumbnail_url_parser.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
-import 'package:autonomy_flutter/view/feralfile_cache_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_svg/svg.dart';
 
 class FFArtworkThumbnailView extends StatefulWidget {
@@ -38,6 +42,115 @@ class FFArtworkThumbnailView extends StatefulWidget {
 
 class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
   bool _hasSvgError = false;
+  StreamSubscription<ThumbnailUpdate>? _updateSubscription;
+  ThumbnailCacheEntry? _currentEntry;
+  String? _currentOriginKey;
+  bool _didInitialLoad = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupUpdateListener();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didInitialLoad) {
+      _didInitialLoad = true;
+      _loadThumbnail();
+    }
+  }
+
+  @override
+  void didUpdateWidget(FFArtworkThumbnailView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.url != widget.url ||
+        oldWidget.cacheWidth != widget.cacheWidth ||
+        oldWidget.cacheHeight != widget.cacheHeight) {
+      _loadThumbnail();
+    }
+  }
+
+  @override
+  void dispose() {
+    _updateSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _setupUpdateListener() {
+    try {
+      final prefetchService = injector<ThumbnailPrefetchService>();
+      _updateSubscription = prefetchService.updates.listen((update) {
+        if (mounted && update.originKey == _currentOriginKey) {
+          // Thumbnail updated for our origin - reload
+          setState(() {
+            _loadThumbnail();
+          });
+        }
+      });
+    } catch (e) {
+      log.info('[FFArtworkThumbnailView] Error setting up listener: $e');
+    }
+  }
+
+  void _loadThumbnail() {
+    try {
+      final parsed = ThumbnailUrlParser.parse(widget.url);
+      _currentOriginKey = parsed.originKey;
+
+      // Compute target size from widget constraints and device pixel ratio
+      final dpr = MediaQuery.maybeOf(context)?.devicePixelRatio ?? 1.0;
+      final targetWidthPx =
+          widget.cacheWidth != null ? (widget.cacheWidth! * dpr).toInt() : null;
+      final targetHeightPx = widget.cacheHeight != null
+          ? (widget.cacheHeight! * dpr).toInt()
+          : null;
+
+      // Only select variants for Cloudflare URLs
+      final isCloudflareUrl = widget.url.contains('imagedelivery.net');
+      final selectedVariant =
+          isCloudflareUrl && (targetWidthPx != null && targetHeightPx != null)
+              ? ThumbnailUrlParser.selectVariantForSize(
+                  widthPx: targetWidthPx,
+                  heightPx: targetHeightPx,
+                )
+              : parsed.variant;
+
+      final selectedRank = VariantRank.getRank(selectedVariant);
+
+      // Try to get best available variant from cache
+      final diskCache = injector<ThumbnailDiskCache>();
+      final bestAvailable = diskCache.getBestAvailableVariant(
+        parsed.originKey,
+        selectedRank,
+      );
+
+      _currentEntry = bestAvailable;
+
+      // If we don't have the requested variant, trigger prefetch
+      if (bestAvailable == null || bestAvailable.variantRank < selectedRank) {
+        final requestedUrl =
+            selectedVariant == parsed.variant || !isCloudflareUrl
+                ? widget.url
+                : ThumbnailUrlParser.buildCloudflareUrl(
+                    parsed.originKey,
+                    selectedVariant,
+                  );
+
+        final prefetchService = injector<ThumbnailPrefetchService>();
+        prefetchService.prefetchUrls(
+          urls: [requestedUrl],
+          targetSize: (targetWidthPx != null && targetHeightPx != null)
+              ? ThumbnailSize(widthPx: targetWidthPx, heightPx: targetHeightPx)
+              : null,
+          priority: PrefetchPriority.visible,
+        );
+      }
+    } catch (e) {
+      log.severe('[FFArtworkThumbnailView] Error loading thumbnail: $e');
+    }
+  }
 
   /// Check if the URL is a data URI (e.g., data:image/svg+xml;base64,...)
   bool _isDataUri(String url) {
@@ -82,7 +195,7 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
   }
 
   Widget _buildImageWidget() {
-    // Handle data URI images
+    // Handle data URI images (keep existing logic)
     if (_isDataUri(widget.url)) {
       final imageBytes = _decodeDataUri(widget.url);
       if (imageBytes != null) {
@@ -151,7 +264,7 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
       }
     }
 
-    // Handle regular network images
+    // Handle network SVG images
     if (widget.url.isSvgImage()) {
       return SvgPicture.network(
         widget.url,
@@ -165,28 +278,37 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
       );
     }
 
-    return FFCacheNetworkImage(
-      cacheManager: injector<CacheManager>(),
-      imageUrl: widget.url,
-      memCacheWidth: widget.cacheWidth,
-      memCacheHeight: widget.cacheHeight,
-      maxWidthDiskCache: widget.cacheWidth,
-      maxHeightDiskCache: widget.cacheHeight,
-      fit: widget.fit,
-      placeholder: (context, url) =>
-          widget.placeholder ?? const GalleryThumbnailPlaceholder(),
-      errorWidget: (context, url, error) {
-        // For PathNotFoundException, show placeholder instead of error
-        // This happens during concurrent cache operations and usually resolves on retry
-        final errorString = error.toString();
-        if (errorString.contains('PathNotFoundException') ||
-            errorString.contains('Cannot open file')) {
-          return widget.placeholder ?? const GalleryThumbnailPlaceholder();
+    // Handle regular network images with new cache system
+    return _buildCachedNetworkImage();
+  }
+
+  /// Build cached network image using new pipeline
+  Widget _buildCachedNetworkImage() {
+    // If we have a cached entry, display it
+    if (_currentEntry != null && _currentEntry!.localPath != null) {
+      try {
+        final diskCache = injector<ThumbnailDiskCache>();
+        final file = diskCache.readFile(_currentEntry!.key);
+        if (file != null) {
+          return Image.file(
+            file,
+            width: widget.cacheWidth?.toDouble(),
+            height: widget.cacheHeight?.toDouble(),
+            fit: widget.fit,
+            gaplessPlayback:
+                true, // Smooth upgrade from lower to higher variant
+            errorBuilder: (context, error, stackTrace) =>
+                widget.errorWidget ?? const GalleryThumbnailErrorWidget(),
+          );
         }
-        return widget.errorWidget ?? const GalleryThumbnailErrorWidget();
-      },
-      cacheScale: widget.cacheScale,
-    );
+      } catch (e) {
+        log.info('[FFArtworkThumbnailView] Error reading cached file: $e');
+      }
+    }
+
+    // No cache or cache read failed - show placeholder
+    // The prefetch service is already warming this image in the background
+    return widget.placeholder ?? const GalleryThumbnailPlaceholder();
   }
 
   @override

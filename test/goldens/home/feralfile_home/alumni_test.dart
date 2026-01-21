@@ -1,29 +1,18 @@
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/screen/feralfile_home/list_alumni_view.dart';
 import 'package:autonomy_flutter/view/alumni_widget.dart';
-import 'package:autonomy_flutter/view/feralfile_cache_network_image.dart';
 import 'package:autonomy_flutter/widgetbook/mock/mock_injector.dart';
 import 'package:autonomy_flutter/widgetbook/mock_data/mock_alumni.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
-
-import '../../cache_manager/cache_manager.dart';
 
 void main() {
   setUpAll(() async {
     await loadAppFonts();
-    MockInjector.setup();
+    await MockInjector.setup();
     await EasyLocalization.ensureInitialized();
-
-    final mockCacheManager = MockImageCacheManage();
-
-    injector.unregister<CacheManager>();
-    injector.registerLazySingleton<CacheManager>(
-      () => mockCacheManager,
-    );
   });
 
   group('Golden - AlumniCard', () {
@@ -45,11 +34,6 @@ void main() {
           testWidget,
         );
 
-        Element element = tester.element(find.byType(FFCacheNetworkImage));
-        FFCacheNetworkImage cacheImage = element.widget as FFCacheNetworkImage;
-        final provider = cacheImage.image;
-
-        await precacheImage(provider, element);
         await tester.pumpAndSettle();
       });
 
@@ -82,12 +66,6 @@ void main() {
 
         debugPrint('Pumping widget...');
         await tester.pumpWidget(testWidget);
-
-        Element element = tester.element(find.byType(FFCacheNetworkImage));
-        FFCacheNetworkImage cacheImage = element.widget as FFCacheNetworkImage;
-        final provider = cacheImage.image;
-
-        await precacheImage(provider, element);
 
         await tester.pumpAndSettle();
       });

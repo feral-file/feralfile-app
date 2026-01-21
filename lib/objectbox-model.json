@@ -97,10 +97,145 @@
         }
       ],
       "relations": []
+    },
+    {
+      "id": "2:7861436414769255889",
+      "lastPropertyId": "22:3630707431480574051",
+      "name": "ThumbnailCacheEntry",
+      "properties": [
+        {
+          "id": "1:2791951155353511554",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:5939605548058902936",
+          "name": "key",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "4:4670153191516185877"
+        },
+        {
+          "id": "3:247416952486051090",
+          "name": "originKey",
+          "type": 9,
+          "flags": 2048,
+          "indexId": "5:3376900023862740224"
+        },
+        {
+          "id": "4:9072200931452616930",
+          "name": "variant",
+          "type": 9,
+          "flags": 2048,
+          "indexId": "6:6177530353383520107"
+        },
+        {
+          "id": "5:3308410198684641517",
+          "name": "variantRank",
+          "type": 6,
+          "flags": 8,
+          "indexId": "7:5360090992584945734"
+        },
+        {
+          "id": "6:2474800326614884468",
+          "name": "url",
+          "type": 9,
+          "flags": 2048,
+          "indexId": "8:7610136033337849368"
+        },
+        {
+          "id": "7:6217593726084282393",
+          "name": "status",
+          "type": 6,
+          "flags": 8,
+          "indexId": "9:6066620200344621468"
+        },
+        {
+          "id": "8:4774855419640716509",
+          "name": "localPath",
+          "type": 9
+        },
+        {
+          "id": "9:817258846340607966",
+          "name": "sizeBytes",
+          "type": 6
+        },
+        {
+          "id": "10:3202779448199867080",
+          "name": "createdAtMs",
+          "type": 6
+        },
+        {
+          "id": "11:3466511823810558856",
+          "name": "lastAccessAtMs",
+          "type": 6,
+          "flags": 8,
+          "indexId": "10:6001672008167889447"
+        },
+        {
+          "id": "12:1543801857338751926",
+          "name": "expiresAtMs",
+          "type": 6
+        },
+        {
+          "id": "13:2841544016767199851",
+          "name": "etag",
+          "type": 9
+        },
+        {
+          "id": "14:2922629654276767232",
+          "name": "lastModified",
+          "type": 9
+        },
+        {
+          "id": "15:8176090446763311699",
+          "name": "lastErrorAtMs",
+          "type": 6
+        },
+        {
+          "id": "16:2003881546415357900",
+          "name": "errorCount",
+          "type": 6
+        },
+        {
+          "id": "17:2355541626352352833",
+          "name": "lastError",
+          "type": 9
+        },
+        {
+          "id": "18:7259193859337633917",
+          "name": "inFlightBackend",
+          "type": 6
+        },
+        {
+          "id": "19:1527540607866541007",
+          "name": "inFlightTaskId",
+          "type": 9
+        },
+        {
+          "id": "20:2349856765930198357",
+          "name": "imageWidth",
+          "type": 6
+        },
+        {
+          "id": "21:4290311085225800645",
+          "name": "imageHeight",
+          "type": 6
+        },
+        {
+          "id": "22:3630707431480574051",
+          "name": "isOriginal",
+          "type": 1,
+          "flags": 8,
+          "indexId": "11:4351727472478292107"
+        }
+      ],
+      "relations": []
     }
   ],
-  "lastEntityId": "1:1295979521715477654",
-  "lastIndexId": "3:1384654818372491782",
+  "lastEntityId": "2:7861436414769255889",
+  "lastIndexId": "11:4351727472478292107",
   "lastRelationId": "0:0",
   "lastSequenceId": "0:0",
   "modelVersion": 5,

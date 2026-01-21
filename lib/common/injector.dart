@@ -63,12 +63,13 @@ import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/service/secure_storage_server.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
-import 'package:autonomy_flutter/util/au_file_service.dart';
 import 'package:autonomy_flutter/util/dio_manager.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:autonomy_flutter/util/thumbnail_disk_cache.dart';
+import 'package:autonomy_flutter/util/thumbnail_fetcher.dart';
+import 'package:autonomy_flutter/service/thumbnail_prefetch_service.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
@@ -114,7 +115,6 @@ Future<void> setupInjector() async {
     ConfigurationServiceImpl(sharedPreferences),
   );
   injector.registerLazySingleton(http.Client.new);
-  injector.registerLazySingleton<CacheManager>(AUImageCacheManage.new);
 
   injector.registerLazySingleton<HiveDatabase>(
     HiveDatabase.new,
@@ -410,4 +410,19 @@ Future<void> setupInjector() async {
 
   // Bootstrap Drift database (creates my_collection + address playlists)
   await injector<DriftBootstrapService>().bootstrapIfNeeded();
+
+  // Thumbnail cache and prefetch service
+  final thumbnailDiskCache = ThumbnailDiskCache();
+  await thumbnailDiskCache.initialize();
+  injector.registerSingleton<ThumbnailDiskCache>(thumbnailDiskCache);
+
+  final httpFetcher = DartHttpThumbnailFetcher();
+  injector.registerSingleton<DartHttpThumbnailFetcher>(httpFetcher);
+
+  injector.registerLazySingleton<ThumbnailPrefetchService>(
+    () => ThumbnailPrefetchService(
+      diskCache: injector<ThumbnailDiskCache>(),
+      httpFetcher: injector<DartHttpThumbnailFetcher>(),
+    ),
+  );
 }

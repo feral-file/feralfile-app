@@ -22,7 +22,6 @@ import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/app_theme.dart';
-import 'package:autonomy_flutter/util/au_file_service.dart';
 import 'package:autonomy_flutter/util/custom_route_observer.dart';
 import 'package:autonomy_flutter/util/device.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
@@ -37,7 +36,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
@@ -129,16 +127,8 @@ Future<void> runFeralFileApp() async {
 
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
-  await FlutterDownloader.initialize();
   await Hive.initFlutter();
   _registerHiveAdapter();
-
-  FlutterDownloader.registerCallback(downloadCallback);
-  try {
-    await AuFileService().setup();
-  } catch (e) {
-    log.info('Error in AuFileService setup: $e');
-  }
 
   OneSignal.initialize(Environment.onesignalAppID);
   OneSignal.Debug.setLogLevel(OSLogLevel.error);
@@ -295,11 +285,7 @@ class _AutonomyAppScaffoldState extends State<AutonomyAppScaffold>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.detached) {
-      // App is being terminated - cancel all active download tasks
-      // to prevent crash when download completion handler runs after app terminate
-      unawaited(AuFileService().cancelAllDownloads());
-    }
+    // Lifecycle state changes handled here if needed
   }
 
   void _updateAnimationBasedOnDisplayState() {
@@ -432,9 +418,3 @@ final CustomRouteObserver<ModalRoute<void>> routeObserver =
 // Global key for the top overlay that's above BottomInteractionBar
 // This allows cast button tooltip to overlay the bottom bar
 final GlobalKey<OverlayState> topOverlayKey = GlobalKey<OverlayState>();
-
-@pragma('vm:entry-point')
-void downloadCallback(String id, int status, int progress) {
-  final send = IsolateNameServer.lookupPortByName('downloader_send_port');
-  send?.send([id, status, progress]);
-}

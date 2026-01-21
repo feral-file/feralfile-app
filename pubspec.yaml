@@ -14,7 +14,6 @@ dependencies:
   intl: ^0.19.0
   after_layout: ^1.2.0
   bubble: ^1.2.1
-  cached_network_image: ^3.2.1
   carousel_slider: ^5.0.0
   collection: ^1.15.0
   confetti: ^0.8.0
@@ -28,11 +27,9 @@ dependencies:
   easy_debounce: ^2.0.2+1
   fast_base58: ^0.2.1
   floor: ^1.2.0
-  flutter_cache_manager: ^3.3.0
   flutter_chat_types: ^3.3.1
   flutter_chat_ui: ^1.6.4
   flutter_dotenv: ^5.0.2
-  flutter_downloader: ^1.12.0
   flutter_fgbg: ^0.7.1
 #  flutter_image_compress: ^2.4.0
   flutter_markdown: ^0.7.4+1
@@ -130,7 +127,6 @@ dependencies:
   widgetbook_annotation: ^3.5.0
   golden_toolkit: ^0.15.0
   flutter_sound: ^9.28.0
-  octo_image: ^2.1.0
   rxdart: ^0.28.0
   syncfusion_flutter_core: ^29.1.38
   meilisearch: ^0.17.0
@@ -141,6 +137,10 @@ dependencies:
   super_tooltip: ^2.1.0
   drift: ^2.20.0
   sqlite3_flutter_libs: ^0.5.0
+  libvips_ffi:
+    git:
+      url: https://github.com/fluttercandies/libvips_ffi
+      path: packages/libvips_ffi
 
 dev_dependencies:
   retrofit_generator: ^9.3.0

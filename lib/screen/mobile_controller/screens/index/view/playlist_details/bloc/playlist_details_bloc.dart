@@ -10,6 +10,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_event.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
+import 'package:autonomy_flutter/service/thumbnail_prefetch_service.dart';
 import 'package:autonomy_flutter/util/dp1_now_displaying_item_ext.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
 import 'package:autonomy_flutter/util/log.dart';
@@ -195,6 +196,11 @@ class PlaylistDetailsBloc
           channelReference: channelReference,
         ),
       );
+
+      // Trigger background prefetch for next page
+      if (hasMore) {
+        _prefetchNextPage(nowDisplayingItems.length);
+      }
     } catch (e) {
       emit(
         PlaylistDetailsErrorState(
@@ -271,6 +277,11 @@ class PlaylistDetailsBloc
           total: state.total,
         ),
       );
+
+      // Trigger background prefetch for next page
+      if (hasMore) {
+        _prefetchNextPage(end);
+      }
     } catch (e, stackTrace) {
       log.info(
         '[PlaylistDetailsBloc] [PlaylistDetailsErrorState] error loading more playlist details: $e',
@@ -290,6 +301,36 @@ class PlaylistDetailsBloc
           total: state.total,
         ),
       );
+    }
+  }
+
+  /// Prefetch thumbnails for the next page in the background
+  void _prefetchNextPage(int currentOffset) {
+    try {
+      unawaited(() async {
+        // Build next page items
+        final nextPageItems =
+            await DP1NowDisplayingItemListExt.buildFromPlaylist(
+          playlist: _playlist,
+          offset: currentOffset,
+          size: _pageSize,
+        );
+
+        if (nextPageItems.isNotEmpty) {
+          // Trigger background warm-up prefetch
+          final prefetchService = injector<ThumbnailPrefetchService>();
+          await prefetchService.prefetchNowDisplayingItems(
+            items: nextPageItems,
+            priority: PrefetchPriority.backgroundWarm,
+          );
+          log.info(
+            '[PlaylistDetailsBloc] Prefetched ${nextPageItems.length} thumbnails for next page',
+          );
+        }
+      }());
+    } catch (e) {
+      log.info('[PlaylistDetailsBloc] Error prefetching next page: $e');
+      // Non-critical, don't crash
     }
   }
 

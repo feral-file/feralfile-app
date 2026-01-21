@@ -8,8 +8,11 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/pla
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_event.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_state.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
+import 'package:autonomy_flutter/service/thumbnail_prefetch_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/util/dp1_now_displaying_item_ext.dart';
 import 'package:autonomy_flutter/util/log.dart';
+import 'package:autonomy_flutter/util/thumbnail_url_parser.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
@@ -49,6 +52,11 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
         injector<PlaylistDetailsBlocManager>().getBloc(widget.playlist);
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
+
+    // Prefetch initial visible items
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updatePrefetchWindow();
+    });
   }
 
   @override
@@ -77,6 +85,9 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
   }
 
   void _onScroll() {
+    // Update prefetch window (debounced)
+    _updatePrefetchWindow();
+
     if (_scrollController.position.pixels >=
             _scrollController.position.maxScrollExtent - 200 &&
         !_isLoadingMore) {
@@ -85,6 +96,113 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
         _isLoadingMore = true;
         _playlistDetailsBloc.add(LoadMorePlaylistDetailsEvent());
       }
+    }
+  }
+
+  /// Update prefetch window based on scroll position
+  void _updatePrefetchWindow() {
+    if (!mounted) {
+      return;
+    }
+
+    try {
+      final state = _playlistDetailsBloc.state;
+      final items = state.nowDisplayingItems;
+      if (items.isEmpty) {
+        return;
+      }
+
+      // Calculate grid dimensions
+      const crossAxisCount =
+          2; // From SliverGridDelegateWithFixedCrossAxisCount
+      const childAspectRatio = 188 / 307;
+
+      final scrollOffset = _scrollController.hasClients
+          ? _scrollController.position.pixels
+          : 0.0;
+      final viewportHeight = _scrollController.hasClients
+          ? _scrollController.position.viewportDimension
+          : 0.0;
+
+      // Estimate row height from viewport width
+      final viewportWidth = MediaQuery.of(context).size.width;
+      final itemWidth =
+          (viewportWidth - ResponsiveLayout.paddingHorizontal * 2 - 17) / 2;
+      final itemHeight = itemWidth / childAspectRatio;
+
+      // Calculate visible rows
+      final firstVisibleRow = (scrollOffset / itemHeight).floor();
+      final visibleRows = (viewportHeight / itemHeight).ceil() + 1;
+      final lastVisibleRow = firstVisibleRow + visibleRows;
+
+      // Prefetch window: visible + ahead rows + behind rows
+      const aheadRows = 4; // Prefetch 4 rows ahead
+      const behindRows = 2; // Keep 2 rows behind
+
+      final startRow = (firstVisibleRow - behindRows)
+          .clamp(0, items.length ~/ crossAxisCount);
+      final endRow = (lastVisibleRow + aheadRows)
+          .clamp(0, (items.length + crossAxisCount - 1) ~/ crossAxisCount);
+
+      final startIndex = startRow * crossAxisCount;
+      final endIndex = (endRow * crossAxisCount).clamp(0, items.length);
+
+      // Build set of keys to prefetch
+      final keysToWarm = <String>{};
+      for (var i = startIndex; i < endIndex; i++) {
+        final item = items[i];
+        final thumbnailUri = item.thumbnail?.uri;
+        if (thumbnailUri != null && thumbnailUri.isNotEmpty) {
+          final parsed = ThumbnailUrlParser.parse(thumbnailUri);
+
+          // Only select variants for Cloudflare URLs
+          final isCloudflareUrl = thumbnailUri.contains('imagedelivery.net');
+          
+          String variant;
+          if (isCloudflareUrl) {
+            // For grid thumbnails, determine variant based on item size
+            final targetSize = ThumbnailSize(
+              widthPx:
+                  (itemWidth * MediaQuery.of(context).devicePixelRatio).toInt(),
+              heightPx:
+                  (itemHeight * MediaQuery.of(context).devicePixelRatio).toInt(),
+            );
+
+            variant = ThumbnailUrlParser.selectVariantForSize(
+              widthPx: targetSize.widthPx,
+              heightPx: targetSize.heightPx,
+            );
+          } else {
+            // Non-Cloudflare URLs use 'original' variant
+            variant = parsed.variant;
+          }
+
+          final key = '${parsed.originKey}|$variant';
+          keysToWarm.add(key);
+        }
+      }
+
+      // Determine priority
+      PrefetchPriority priority = PrefetchPriority.ahead;
+      if (startIndex >= firstVisibleRow * crossAxisCount &&
+          endIndex <= lastVisibleRow * crossAxisCount) {
+        priority = PrefetchPriority.visible;
+      }
+
+      // Update prefetch service
+      final prefetchService = injector<ThumbnailPrefetchService>();
+      prefetchService.setDesiredWindow(
+        keysToWarm,
+        priority,
+        targetSize: ThumbnailSize(
+          widthPx:
+              (itemWidth * MediaQuery.of(context).devicePixelRatio).toInt(),
+          heightPx:
+              (itemHeight * MediaQuery.of(context).devicePixelRatio).toInt(),
+        ),
+      );
+    } catch (e) {
+      log.info('[PlaylistAssetGridView] Error updating prefetch window: $e');
     }
   }
 
@@ -97,12 +215,20 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
         if (state is! PlaylistDetailsLoadingMoreState) {
           _isLoadingMore = false;
         }
+
+        // Update prefetch window when items change
+        if (state is PlaylistDetailsLoadedState) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _updatePrefetchWindow();
+          });
+        }
       },
       builder: (context, state) {
         return CustomScrollView(
           controller: _scrollController,
           shrinkWrap: true,
           physics: widget.physics ?? const AlwaysScrollableScrollPhysics(),
+          cacheExtent: 1000, // Build items 1000px ahead for smoother scrolling
           slivers: [
             if (widget.header != null) ...[
               SliverToBoxAdapter(

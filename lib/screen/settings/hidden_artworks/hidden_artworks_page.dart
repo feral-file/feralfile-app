@@ -22,12 +22,11 @@ import 'package:autonomy_flutter/util/style.dart';
 import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:autonomy_flutter/view/back_appbar.dart';
+import 'package:autonomy_flutter/view/ff_artwork_thumbnail_view.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:path/path.dart' as p;
 
 class HiddenArtworksPage extends StatefulWidget {
@@ -165,19 +164,13 @@ class _HiddenArtworksPageState extends State<HiddenArtworksPage> {
                                   unsupportWidgetBuilder: (context) =>
                                       const GalleryUnSupportThumbnailWidget(),
                                 )
-                              : CachedNetworkImage(
-                                  imageUrl: thumbnailUrl,
-                                  width: double.infinity,
-                                  height: double.infinity,
+                              : FFArtworkThumbnailView(
+                                  url: thumbnailUrl,
+                                  cacheWidth: _cachedImageSize,
+                                  cacheHeight: _cachedImageSize,
                                   fit: BoxFit.cover,
-                                  cacheManager: injector<CacheManager>(),
-                                  maxHeightDiskCache: _cachedImageSize,
-                                  maxWidthDiskCache: _cachedImageSize,
-                                  memCacheHeight: _cachedImageSize,
-                                  memCacheWidth: _cachedImageSize,
-                                  placeholder: _loadingBuilder,
-                                  errorWidget: (context, url, error) =>
-                                      const GalleryThumbnailErrorWidget(),
+                                  placeholder: const GalleryThumbnailPlaceholder(),
+                                  errorWidget: const GalleryThumbnailErrorWidget(),
                                 ),
                         ),
                       ClipRRect(
