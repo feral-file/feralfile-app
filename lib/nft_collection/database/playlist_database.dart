@@ -142,6 +142,44 @@ class PlaylistDatabase extends _$PlaylistDatabase {
         .getSingleOrNull();
   }
 
+  Future<Channel?> getChannelByPlaylistId(String playlistId) async {
+    final query = select(playlists).join([
+      innerJoin(
+        channels,
+        channels.id.equalsExp(playlists.channelId),
+      ),
+    ])
+      ..where(playlists.id.equals(playlistId));
+
+    final result = await query.getSingleOrNull();
+    if (result == null) {
+      return null;
+    }
+    return result.readTable(channels);
+  }
+
+  /// Get ChannelReference by playlistId using a single join query
+  /// Returns channel data with baseUrl extracted from the playlist
+  Future<ChannelReferenceData?> getChannelReferenceDataByPlaylistId(
+      String playlistId) async {
+    final query = select(playlists).join([
+      innerJoin(
+        channels,
+        channels.id.equalsExp(playlists.channelId),
+      ),
+    ])
+      ..where(playlists.id.equals(playlistId));
+
+    final result = await query.getSingleOrNull();
+    if (result == null) {
+      return null;
+    }
+
+    final channel = result.readTable(channels);
+    final playlist = result.readTable(playlists);
+    return ChannelReferenceData(channel: channel, baseUrl: playlist.baseUrl);
+  }
+
   // ========== Playlists ==========
 
   Future<void> upsertPlaylist(PlaylistsCompanion playlist) async {
@@ -367,6 +405,15 @@ class PlaylistDatabase extends _$PlaylistDatabase {
     await delete(playlists).go();
     await delete(channels).go();
   }
+}
+
+/// DTO for channel reference data from joined query
+/// Contains raw channel row and baseUrl to build ChannelReference
+class ChannelReferenceData {
+  ChannelReferenceData({required this.channel, required this.baseUrl});
+
+  final Channel channel;
+  final String? baseUrl;
 }
 
 /// Lightweight DTO for playlist item list display

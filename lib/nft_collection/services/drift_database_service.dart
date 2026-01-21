@@ -98,6 +98,8 @@ abstract class DriftDatabaseServiceAbstract {
 
   Future<db.Channel?> getChannelByPlaylistId(String playlistId);
 
+  Future<ChannelReference?> getChannelReferenceByPlaylistId(String playlistId);
+
   Future<db.Channel?> getMyCollectionChannel();
 
   /// Watch channels filtered by kind.
@@ -318,16 +320,45 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
   Future<db.Channel?> getChannelById(String id) => _db.getChannelById(id);
 
   @override
-  Future<db.Channel?> getChannelByPlaylistId(String playlistId) async {
-    final playlist = await getPlaylistRowById(playlistId);
-    if (playlist == null) {
+  Future<db.Channel?> getChannelByPlaylistId(String playlistId) =>
+      _db.getChannelByPlaylistId(playlistId);
+
+  @override
+  Future<ChannelReference?> getChannelReferenceByPlaylistId(
+      String playlistId) async {
+    final data = await _db.getChannelReferenceDataByPlaylistId(playlistId);
+    if (data == null || data.baseUrl == null) {
       return null;
     }
-    final channelId = playlist.channelId;
-    if (channelId == null) {
-      return null;
-    }
-    return await getChannelById(channelId);
+
+    // Get all playlists of this channel as DP1Calls
+    final channelPlaylists = await getPlaylistRowsAsDp1Calls(
+      channelId: data.channel.id,
+      kind: DriftPlaylistKind.dp1,
+      baseUrl: data.baseUrl,
+    );
+
+    final baseUrl = data.baseUrl!;
+
+    // Build playlist URLs using PlaylistReference.fullUrl logic
+    final playlistUrls = channelPlaylists
+        .map((p) => PlaylistReference(playlist: p, url: baseUrl).fullUrl)
+        .whereType<String>()
+        .toList();
+
+    // Convert drift channel to model Channel
+    final channel = dp1Model.Channel(
+      id: data.channel.id,
+      slug: data.channel.slug ?? '',
+      title: data.channel.title,
+      curator: data.channel.curator,
+      summary: data.channel.summary,
+      playlists: playlistUrls,
+      created: DateTime.fromMicrosecondsSinceEpoch(data.channel.createdAtUs),
+      coverImage: data.channel.coverImageUri,
+    );
+
+    return ChannelReference(channel: channel, url: baseUrl);
   }
 
   @override

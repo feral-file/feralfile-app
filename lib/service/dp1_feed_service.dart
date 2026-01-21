@@ -233,15 +233,7 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
 
   @override
   Future<Channel?> getChannelByPlaylistId(String playlistId) async {
-    final playlist = await driftDb.getPlaylistRowById(playlistId);
-    if (playlist == null) {
-      return null;
-    }
-    final channelId = playlist.channelId;
-    if (channelId == null) {
-      return null;
-    }
-    final channel = await driftDb.getChannelById(channelId);
+    final channel = await driftDb.getChannelByPlaylistId(playlistId);
     return channel != null ? ChannelExtension.fromDriftChannel(channel) : null;
   }
 

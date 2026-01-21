@@ -11,6 +11,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/cha
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
+import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/service/base_dp1_feed_service_impl.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
@@ -360,15 +361,8 @@ class FeralFileFeedManager extends FeedManager {
 
   Future<ChannelReference?> getCachedChannelReferenceByPlaylist(
       DP1Call playlist) async {
-    for (final feedService in feedServices) {
-      if (feedService is FeralFileDP1FeedService) {
-        final channel = await feedService.getChannelByPlaylistId(playlist.id);
-        if (channel != null) {
-          return ChannelReference(channel: channel, url: feedService.baseUrl);
-        }
-      }
-    }
-    return null;
+    final driftDb = injector<DriftDatabaseService>();
+    return driftDb.getChannelReferenceByPlaylistId(playlist.id);
   }
 }
 
