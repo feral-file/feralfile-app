@@ -51,16 +51,14 @@ class ForgetExistBloc extends AuBloc<ForgetExistEvent, ForgetExistState> {
       // remove all local settings data
       unawaited(injector<AppDataManager>().deleteAll());
 
-      // await injector<CustomerSupportService>().clear();
       await injector<IdentityBloc>().clear();
       await injector<UserAllOwnCollectionBlocManager>().disposeAll();
       injector<CanvasDeviceBloc>().clear();
+      await injector<PlaylistDetailsBlocManager>().close();
       await BluetoothDeviceManager().resetDevice();
       await CanvasNotificationManager().disconnectAll();
-
       await FileLogger.clear();
       await SentryBreadcrumbLogger.clear();
-      await injector<PlaylistDetailsBlocManager>().close();
 
       emit(ForgetExistState(state.isChecked, false));
     });
