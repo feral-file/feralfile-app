@@ -324,8 +324,14 @@ class _DP1NowDisplayingState extends State<DP1NowDisplaying> {
             child: (thumbnail != null)
                 ? AspectRatio(
                     aspectRatio: 4 / 5,
-                    child: FFArtworkThumbnailView(
-                      url: thumbnail.uri,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return FFArtworkThumbnailView(
+                          url: thumbnail.uri,
+                          cacheWidth: constraints.maxWidth.toInt(),
+                          cacheHeight: constraints.maxHeight.toInt(),
+                        );
+                      },
                     ),
                   )
                 : const GalleryNoThumbnailWidget(),

@@ -855,8 +855,14 @@ class ArtworkThumbnailView extends StatelessWidget {
     return Opacity(
       opacity: 0.5,
       child: (thumbnailUrl != null && thumbnailUrl.isNotEmpty)
-          ? FFArtworkThumbnailView(
-              url: thumbnailUrl,
+          ? LayoutBuilder(
+              builder: (context, constraints) {
+                return FFArtworkThumbnailView(
+                  url: thumbnailUrl,
+                  cacheWidth: constraints.maxWidth.toInt(),
+                  cacheHeight: constraints.maxHeight.toInt(),
+                );
+              },
             )
           : const GalleryNoThumbnailWidget(),
     );

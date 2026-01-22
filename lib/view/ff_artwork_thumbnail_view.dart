@@ -254,6 +254,8 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
           imageBytes,
           width: widget.cacheWidth?.toDouble(),
           height: widget.cacheHeight?.toDouble(),
+          cacheWidth: widget.cacheWidth,
+          cacheHeight: widget.cacheHeight,
           fit: widget.fit,
           errorBuilder: (context, error, stackTrace) =>
               widget.errorWidget ?? const GalleryThumbnailErrorWidget(),
@@ -294,6 +296,8 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
             file,
             width: widget.cacheWidth?.toDouble(),
             height: widget.cacheHeight?.toDouble(),
+            cacheWidth: widget.cacheWidth,
+            cacheHeight: widget.cacheHeight,
             fit: widget.fit,
             gaplessPlayback:
                 true, // Smooth upgrade from lower to higher variant
