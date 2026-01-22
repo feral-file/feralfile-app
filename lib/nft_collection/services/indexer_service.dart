@@ -599,16 +599,16 @@ class AddressIndexingJobResponse {
   final String workflowId;
   final String address;
   final IndexingJobStatus status;
-  final int totalTokensIndexed;
-  final int totalTokensViewable;
+  final int? totalTokensIndexed;
+  final int? totalTokensViewable;
 
   factory AddressIndexingJobResponse.fromJson(Map<String, dynamic> json) =>
       AddressIndexingJobResponse(
         workflowId: json['workflow_id'] as String,
         address: json['address'] as String,
         status: IndexingJobStatus.fromJson(json['status'] as String?),
-        totalTokensIndexed: json['total_tokens_indexed'] as int? ?? 0,
-        totalTokensViewable: json['total_tokens_viewable'] as int? ?? 0,
+        totalTokensIndexed: json['total_tokens_indexed'] as int?,
+        totalTokensViewable: json['total_tokens_viewable'] as int?,
       );
 
   Map<String, dynamic> toJson() => {

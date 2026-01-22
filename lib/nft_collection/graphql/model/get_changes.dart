@@ -10,6 +10,7 @@ enum SubjectType {
   balance,
   metadata,
   enrichmentSource,
+  tokenViewability,
 }
 
 extension SubjectTypeJson on SubjectType {
@@ -25,6 +26,8 @@ extension SubjectTypeJson on SubjectType {
         return 'metadata';
       case SubjectType.enrichmentSource:
         return 'enrich_source';
+      case SubjectType.tokenViewability:
+        return 'token_viewability';
     }
   }
 
@@ -41,6 +44,8 @@ extension SubjectTypeJson on SubjectType {
         return SubjectType.metadata;
       case 'enrich_source':
         return SubjectType.enrichmentSource;
+      case 'token_viewability':
+        return SubjectType.tokenViewability;
       default:
         return null;
     }
@@ -326,6 +331,30 @@ class EnrichmentSourceChangeMeta implements ChangeMeta {
       };
 }
 
+/// TokenViewabilityChangeMeta represents the metadata for token viewability changes
+/// It stores the token information and current viewability state
+class TokenViewabilityChangeMeta implements ChangeMeta {
+  const TokenViewabilityChangeMeta({
+    required this.tokenCid,
+    required this.isViewable,
+  });
+
+  final String tokenCid; // Token CID for convenience
+  final bool isViewable; // Current viewability state
+
+  factory TokenViewabilityChangeMeta.fromJson(Map<String, dynamic> json) =>
+      TokenViewabilityChangeMeta(
+        tokenCid: json['token_cid'] as String,
+        isViewable: json['is_viewable'] as bool,
+      );
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'token_cid': tokenCid,
+        'is_viewable': isViewable,
+      };
+}
+
 /// Change journal entry
 class Change {
   final int id;
@@ -359,6 +388,8 @@ class Change {
           return MetadataChangeMeta.fromJson(_metaRaw);
         case SubjectType.enrichmentSource:
           return EnrichmentSourceChangeMeta.fromJson(_metaRaw);
+        case SubjectType.tokenViewability:
+          return TokenViewabilityChangeMeta.fromJson(_metaRaw);
       }
     } catch (e, _) {
       Sentry.captureEvent(SentryEvent(

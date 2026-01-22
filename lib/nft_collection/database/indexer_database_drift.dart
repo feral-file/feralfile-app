@@ -14,10 +14,6 @@ import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart'
 import 'package:autonomy_flutter/nft_collection/database/token_to_playlist_item_transformer.dart';
 import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/provenance.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
-import 'package:autonomy_flutter/service/address_service.dart';
-import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:drift/drift.dart' as drift;
 
@@ -130,49 +126,15 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
 
   @override
   Future<void> deleteToken(String cid) async {
-    // Delete from items (cascade will delete playlist_entries)
+    // Delete playlist entries first
+    await (_playlistDb.delete(_playlistDb.playlistEntries)
+          ..where((e) => e.itemId.contains(cid)))
+        .go();
+
+    // Then delete the item
     await (_playlistDb.delete(_playlistDb.items)
-          ..where((i) => i.id.equals(cid)))
+          ..where((i) => i.id.contains(cid)))
         .go();
-  }
-
-  @override
-  Future<void> deleteTokens(List<String> cids) async {
-    if (cids.isEmpty) {
-      return;
-    }
-    await (_playlistDb.delete(_playlistDb.items)..where((i) => i.id.isIn(cids)))
-        .go();
-  }
-
-  @override
-  Future<List<AddressAssetTokens>> getGroupAssetTokensByOwnersGroupByAddress({
-    required List<String> owners,
-    IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt,
-  }) async {
-    final groupByAddress = <AddressAssetTokens>[];
-    final addressService = injector<AddressService>();
-
-    for (final owner in owners) {
-      final assetTokens = await getTokensByOwners(owners: [owner]);
-      if (assetTokens.isEmpty) {
-        continue;
-      }
-
-      final walletAddress = addressService.getWalletAddress(owner);
-      if (walletAddress == null) {
-        continue;
-      }
-
-      groupByAddress.add(
-        AddressAssetTokens(
-          address: walletAddress,
-          assetTokens: assetTokens,
-        ),
-      );
-    }
-
-    return groupByAddress;
   }
 
   @override
@@ -184,20 +146,12 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
     }
 
     try {
-      final addressService = injector<AddressService>();
       final playlistIds = <String>[];
 
       // Build playlist IDs for all owners
       for (final owner in owners) {
-        final walletAddress = addressService.getWalletAddress(owner);
-        if (walletAddress == null) continue;
-
-        final chain = walletAddress.cryptoType == CryptoType.ETH
-            ? DP1ProvenanceChain.evm.value
-            : walletAddress.cryptoType == CryptoType.XTZ
-                ? DP1ProvenanceChain.tezos.value
-                : DP1ProvenanceChain.other.value;
-        playlistIds.add('addr:$chain:$owner');
+        final playlistId = DP1CallExtension.generatePlaylistId(owner);
+        playlistIds.add(playlistId);
       }
 
       if (playlistIds.isEmpty) return [];
@@ -364,120 +318,6 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
     } catch (e) {
       log.info('[IndexerDatabaseDrift] Error in getTokensByTokenIds: $e');
       return [];
-    }
-  }
-
-  @override
-  Stream<List<v2.AssetToken>> watchTokensByOwners({
-    required List<String> owners,
-  }) {
-    if (owners.isEmpty) {
-      return Stream.value([]);
-    }
-
-    try {
-      final addressService = injector<AddressService>();
-      final playlistIds = <String>[];
-
-      // Build playlist IDs for all owners
-      for (final owner in owners) {
-        final walletAddress = addressService.getWalletAddress(owner);
-        if (walletAddress == null) continue;
-
-        final playlistId = DP1CallExtension.generatePlaylistId(owner);
-        playlistIds.add(playlistId);
-      }
-
-      if (playlistIds.isEmpty) return Stream.value([]);
-
-      // Query items via playlist_entries join
-      final query = _playlistDb.select(_playlistDb.items).join([
-        drift.innerJoin(
-          _playlistDb.playlistEntries,
-          _playlistDb.playlistEntries.itemId.equalsExp(_playlistDb.items.id),
-        ),
-      ])
-        ..where(_playlistDb.playlistEntries.playlistId.isIn(playlistIds))
-        ..orderBy([
-          drift.OrderingTerm(
-            expression: _playlistDb.playlistEntries.sortKeyUs,
-            mode: drift.OrderingMode.desc,
-          ),
-        ]);
-
-      // Watch the query and map results to AssetTokens
-      return query.watch().map((results) {
-        log.info(
-          '[IndexerDatabaseDrift] watchTokensByOwners: received ${results.length} rows from watch stream',
-        );
-
-        final tokens = <v2.AssetToken>[];
-        var nullJsonCount = 0;
-        var parseErrorCount = 0;
-
-        for (final row in results) {
-          final item = row.readTable(_playlistDb.items);
-          if (item.tokenDataJson == null || item.tokenDataJson!.isEmpty) {
-            nullJsonCount++;
-            continue;
-          }
-
-          try {
-            final tokenMap =
-                json.decode(item.tokenDataJson!) as Map<String, dynamic>;
-            tokens.add(v2.AssetToken.fromRest(tokenMap));
-          } catch (e) {
-            parseErrorCount++;
-            log.info(
-              '[IndexerDatabaseDrift] watchTokensByOwners: Error parsing token JSON for ${item.id}: $e',
-            );
-          }
-        }
-
-        log.info(
-          '[IndexerDatabaseDrift] watchTokensByOwners: emitting ${tokens.length} tokens (nullJson: $nullJsonCount, parseErrors: $parseErrorCount)',
-        );
-        return tokens;
-      });
-    } catch (e) {
-      log.info('[IndexerDatabaseDrift] Error in watchTokensByOwners: $e');
-      return Stream.value([]);
-    }
-  }
-
-  @override
-  Stream<List<v2.AssetToken>> watchTokensByCIDs({
-    required List<String> cids,
-  }) {
-    if (cids.isEmpty) {
-      return Stream.value([]);
-    }
-
-    try {
-      final query = _playlistDb.select(_playlistDb.items)
-        ..where((item) => item.id.isIn(cids) & item.kind.equals(1));
-
-      // Watch the query and map results to AssetTokens
-      return query.watch().map((items) {
-        final tokens = <v2.AssetToken>[];
-        for (final item in items) {
-          if (item.tokenDataJson != null && item.tokenDataJson!.isNotEmpty) {
-            try {
-              final tokenMap =
-                  json.decode(item.tokenDataJson!) as Map<String, dynamic>;
-              tokens.add(v2.AssetToken.fromRest(tokenMap));
-            } catch (e) {
-              log.info(
-                '[IndexerDatabaseDrift] Error parsing token JSON for ${item.id}: $e',
-              );
-            }
-          }
-        }
-        return tokens;
-      });
-    } catch (e) {
-      log.info('[IndexerDatabaseDrift] Error in watchTokensByCIDs: $e');
-      return Stream.value([]);
     }
   }
 }

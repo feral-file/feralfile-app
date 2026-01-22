@@ -1161,6 +1161,12 @@ class NftTokensServiceImpl extends NftTokensService {
           // Apply each change to the token
           for (final change in sortedChanges) {
             try {
+              // Handle token viewability changes
+              if (change.subjectType == SubjectType.tokenViewability) {
+                await _handleTokenViewabilityChange(change);
+                continue; // Skip regular change processing for viewability changes
+              }
+
               if ((change.isMint() || change.isTransfer()) &&
                   change.tokenCid != null) {
                 // if the change is a mint, we need to fetch token from indexer, then insert into database
@@ -1419,7 +1425,6 @@ class NftTokensServiceImpl extends NftTokensService {
     final request = QueryListTokensRequest(
       owners: addresses,
       offset: offset,
-      ownersOffset: 0,
     );
     final tokens = await indexerService.getNftTokens(request);
     Map<String, AssetToken> tokenMap =
@@ -1516,6 +1521,40 @@ class NftTokensServiceImpl extends NftTokensService {
       _isolateSendPort?.send(ReindexTokensDone(uuid, result));
     } catch (e) {
       _isolateSendPort?.send(ReindexTokensFailure(uuid, e));
+    }
+  }
+
+  /// Handle token viewability changes
+  /// If isViewable is false, delete token and playlist entries
+  /// If isViewable is true, fetch token from indexer and insert into database
+  static Future<void> _handleTokenViewabilityChange(Change change) async {
+    final meta = change.metaParsed as TokenViewabilityChangeMeta;
+    final tokenCid = meta.tokenCid;
+    final database = _isolateScopeInjector<IndexerDatabaseAbstract>();
+
+    if (meta.isViewable) {
+      // Fetch token from indexer with full owners and provenances
+      final isolateIndexerService = _isolateScopeInjector<NftIndexerService>();
+      final request = QueryListTokensRequest(
+        tokenCids: [tokenCid],
+        limit: 1,
+      );
+      final tokens = await isolateIndexerService.getNftTokens(request);
+      final token = tokens.firstWhereOrNull((e) => e.cid == tokenCid);
+
+      if (token != null) {
+        // Insert token into database
+        await database.insertTokens([token]);
+        NftCollection.logger.info('Token $tokenCid made viewable and inserted');
+      } else {
+        NftCollection.logger.warning(
+            'Token $tokenCid not found in indexer after viewability change');
+      }
+    } else {
+      // Delete token and all playlist entries
+      await database.deleteToken(tokenCid);
+      NftCollection.logger
+          .info('Token $tokenCid made non-viewable and deleted');
     }
   }
 

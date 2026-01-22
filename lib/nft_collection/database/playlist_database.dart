@@ -24,7 +24,7 @@ class PlaylistDatabase extends _$PlaylistDatabase {
 
   @override
   int get schemaVersion =>
-      3; // Added tokenDataJson field for full token storage
+      1; // Added tokenDataJson field for full token storage
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -52,56 +52,7 @@ class PlaylistDatabase extends _$PlaylistDatabase {
             'CREATE INDEX idx_entries_position ON playlist_entries(playlist_id, position ASC, item_id ASC)',
           );
         },
-        onUpgrade: (Migrator m, int from, int to) async {
-          // Handle upgrade from v1 to v2: Fix indexes with wrong column names
-          if (from == 1 && to >= 2) {
-            // Drop old indexes with incorrect column names (if they exist)
-            await customStatement(
-                'DROP INDEX IF EXISTS idx_channels_type_order');
-            await customStatement('DROP INDEX IF EXISTS idx_playlists_channel');
-            await customStatement('DROP INDEX IF EXISTS idx_playlists_owner');
-            await customStatement(
-                'DROP INDEX IF EXISTS idx_items_kind_updated');
-            await customStatement('DROP INDEX IF EXISTS idx_entries_sort');
-            await customStatement('DROP INDEX IF EXISTS idx_entries_position');
-
-            // Recreate indexes with correct column names
-            await customStatement(
-              'CREATE INDEX idx_channels_type_order ON channels(type, sort_order)',
-            );
-            await customStatement(
-              'CREATE INDEX idx_playlists_channel ON playlists(channel_id, type)',
-            );
-            await customStatement(
-              'CREATE INDEX idx_playlists_owner ON playlists(type, owner_address)',
-            );
-            await customStatement(
-              'CREATE INDEX idx_items_kind_updated ON items(kind, updated_at_us)',
-            );
-            await customStatement(
-              'CREATE INDEX idx_entries_sort ON playlist_entries(playlist_id, sort_key_us DESC, item_id DESC)',
-            );
-            await customStatement(
-              'CREATE INDEX idx_entries_position ON playlist_entries(playlist_id, position ASC, item_id ASC)',
-            );
-          }
-
-          // Handle upgrade from v2 to v3: Add tokenDataJson column
-          if (from <= 2 && to >= 3) {
-            await m.addColumn(items, items.tokenDataJson);
-
-            // Clear existing items since they don't have tokenDataJson
-            // They will be repopulated by reindexing
-            log.info(
-                '[PlaylistDatabase] Migration v2->v3: Clearing items without tokenDataJson');
-            await customStatement(
-                'DELETE FROM items WHERE token_data_json IS NULL');
-            await customStatement(
-                'DELETE FROM playlist_entries WHERE item_id NOT IN (SELECT id FROM items)');
-            log.info(
-                '[PlaylistDatabase] Migration v2->v3: Cleared old items, will repopulate via reindex');
-          }
-        },
+        onUpgrade: (Migrator m, int from, int to) async {},
       );
 
   // ========== Channels ==========

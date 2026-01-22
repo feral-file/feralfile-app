@@ -1097,7 +1097,7 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
       return;
     }
 
-    await _deletePlaylistEntriesAndItems([playlistId]);
+    await _deletePlaylistEntries([playlistId]);
     log.info(
       '[DriftDatabaseService] Deleted entries and items for playlist: '
       '$playlistId',
@@ -1148,7 +1148,7 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
       }
     }
 
-    await _deletePlaylistEntriesAndItems(playlistIds);
+    await _deletePlaylistEntries(playlistIds);
     log.info(
       '[DriftDatabaseService] Deleted entries and items for '
       '${playlistIds.length} playlists${kind != null ? ' of kind: ${kind.name}' : ''}',
@@ -1228,66 +1228,30 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
     await _deletePlaylistsAndRelatedData([playlist.id]);
   }
 
-  /// Helper method to delete playlist entries and items (without deleting playlists).
+  /// Helper method to delete playlist entries (without deleting playlists or items).
   ///
   /// This will:
   /// - Delete PlaylistEntries for the playlists
-  /// - Delete Items that are only used by these playlists
   /// - Does NOT delete the Playlists themselves
-  Future<void> _deletePlaylistEntriesAndItems(List<String> playlistIds) async {
+  /// - Does NOT delete Items
+  Future<void> _deletePlaylistEntries(List<String> playlistIds) async {
     if (playlistIds.isEmpty) {
       return;
     }
 
     try {
-      // Get all item IDs from these playlists
-      final entriesQuery = _db.selectOnly(_db.playlistEntries)
-        ..addColumns([_db.playlistEntries.itemId])
-        ..where(_db.playlistEntries.playlistId.isIn(playlistIds));
-      final entries = await entriesQuery.get();
-      final itemIds = entries
-          .map((e) => e.read(_db.playlistEntries.itemId))
-          .whereType<String>()
-          .toSet()
-          .toList();
-
       // Delete PlaylistEntries for these playlists
       await (_db.delete(_db.playlistEntries)
             ..where((e) => e.playlistId.isIn(playlistIds)))
           .go();
 
-      // Find items that are only used by these playlists
-      // (not used by any other playlists)
-      if (itemIds.isNotEmpty) {
-        final remainingEntriesQuery = _db.selectOnly(_db.playlistEntries)
-          ..addColumns([_db.playlistEntries.itemId])
-          ..where(_db.playlistEntries.itemId.isIn(itemIds));
-        final remainingEntries = await remainingEntriesQuery.get();
-        final itemsStillInUse = remainingEntries
-            .map((e) => e.read(_db.playlistEntries.itemId))
-            .whereType<String>()
-            .toSet();
-
-        // Delete items that are no longer used by any playlist
-        final itemsToDelete =
-            itemIds.where((id) => !itemsStillInUse.contains(id)).toList();
-        if (itemsToDelete.isNotEmpty) {
-          await (_db.delete(_db.items)..where((i) => i.id.isIn(itemsToDelete)))
-              .go();
-          log.info(
-            '[DriftDatabaseService] Deleted ${itemsToDelete.length} items that '
-            'were only used by deleted playlists',
-          );
-        }
-      }
-
       log.info(
-        '[DriftDatabaseService] Deleted entries and items for '
+        '[DriftDatabaseService] Deleted entries for '
         '${playlistIds.length} playlists',
       );
     } catch (e, st) {
       log.info(
-        '[DriftDatabaseService] Error deleting playlist entries and items: $e',
+        '[DriftDatabaseService] Error deleting playlist entries: $e',
       );
       unawaited(Sentry.captureException(e, stackTrace: st));
       rethrow;
@@ -1306,7 +1270,7 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
     }
 
     // First delete entries and items
-    await _deletePlaylistEntriesAndItems(playlistIds);
+    await _deletePlaylistEntries(playlistIds);
 
     try {
       // Delete the playlists themselves
