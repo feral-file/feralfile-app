@@ -974,13 +974,6 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
       final request = QueryListTokensRequest(
         owners: owners,
         limit: 1000, // Fetch up to 1000 tokens per query
-        expands: [
-          ExpandField.provenanceEvents,
-          ExpandField.owners,
-          ExpandField.metadataMediaAsset,
-          ExpandField.enrichmentSourceMediaAsset,
-          ExpandField.enrichmentSource,
-        ],
       );
 
       final tokens = await _indexerService.getNftTokens(request);

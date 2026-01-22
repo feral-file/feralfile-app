@@ -1,4 +1,3 @@
-import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
 import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/util/eth_utils.dart';
 import 'package:sentry/sentry.dart';
@@ -488,28 +487,18 @@ class QueryChangesRequest {
   QueryChangesRequest({
     this.tokenCids = const [],
     this.addresses = const [],
-    this.since,
     this.limit = 20,
-    this.offset = 0,
-    this.order = Order.asc,
-    this.expand = const [],
     this.anchor,
   });
 
   final List<String> tokenCids;
   final List<String> addresses;
-  final String? since;
   final int? anchor;
   final int limit;
-  final int offset;
-  final Order order;
-  final List<String> expand;
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{
       'limit': limit,
-      'offset': offset,
-      'order': order.toJson(),
     };
 
     if (tokenCids.isNotEmpty) {
@@ -520,14 +509,8 @@ class QueryChangesRequest {
       json['addresses'] = addresses;
     }
 
-    if (since != null && since!.isNotEmpty) {
-      json['since'] = since;
-    }
     if (anchor != null) {
       json['anchor'] = anchor;
-    }
-    if (expand.isNotEmpty) {
-      json['expand'] = expand;
     }
 
     return json;
