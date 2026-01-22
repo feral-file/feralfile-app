@@ -96,6 +96,7 @@ class ThumbnailPrefetchService {
 
   // In-flight tracking
   final Map<PrefetchPriority, int> _inFlightCount = {};
+  final Set<String> _inFlightKeys = {}; // Track which keys are being processed
   static const int kMaxInFlightTotal = 8; // Parallel downloads and resizes
 
   // Desired window (set by UI scroll prediction)
@@ -128,6 +129,7 @@ class ThumbnailPrefetchService {
     // Clear any stale in-flight counts from previous sessions
     await _queueLock.synchronized(() {
       _inFlightCount.clear();
+      _inFlightKeys.clear();
       _highQueue.clear();
       _lowQueue.clear();
       _desiredKeys.clear();
@@ -451,6 +453,19 @@ class ThumbnailPrefetchService {
           break;
         }
 
+        // Check if already in-flight
+        final isAlreadyInFlight = await _queueLock.synchronized(() {
+          return _inFlightKeys.contains(nextTask!.key);
+        });
+        
+        if (isAlreadyInFlight) {
+          log.info(
+            '[ThumbnailPrefetchService] Task ${nextTask!.key} already in-flight, skipping',
+          );
+          await _removeFromQueues(nextTask!.key);
+          continue;
+        }
+
         // Check if already in cache
         final entry = diskCache.getByKey(nextTask!.key);
         if (entry != null && entry.status == ThumbnailStatus.ready) {
@@ -462,7 +477,7 @@ class ThumbnailPrefetchService {
         // Start the task
         unawaited(_executeTask(nextTask!));
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       log.severe('[ThumbnailPrefetchService] CRITICAL: _runQueue crashed: $e');
     } finally {
       log.info('[ThumbnailPrefetchService] _runQueue finally block');
@@ -493,10 +508,12 @@ class ThumbnailPrefetchService {
   Future<void> _executeTask(_PrefetchTask task) async {
     task.isInFlight = true;
     task.handle = ThumbnailFetchHandle(Completer<void>());
-    _inFlightCount[task.priority] = (_inFlightCount[task.priority] ?? 0) + 1;
-
-    final totalInFlight =
-        _inFlightCount.values.fold<int>(0, (sum, count) => sum + count);
+    
+    // Mark this key as in-flight
+    await _queueLock.synchronized(() {
+      _inFlightKeys.add(task.key);
+      _inFlightCount[task.priority] = (_inFlightCount[task.priority] ?? 0) + 1;
+    });
 
     try {
       final fetcher = ThumbnailFetcher(
@@ -534,12 +551,12 @@ class ThumbnailPrefetchService {
         ),
       );
     } finally {
-      _inFlightCount[task.priority] = (_inFlightCount[task.priority] ?? 1) - 1;
+      await _queueLock.synchronized(() {
+        _inFlightKeys.remove(task.key);
+        _inFlightCount[task.priority] = (_inFlightCount[task.priority] ?? 1) - 1;
+      });
       await _removeFromQueues(task.key);
       task.isInFlight = false;
-
-      final totalInFlight =
-          _inFlightCount.values.fold<int>(0, (sum, count) => sum + count);
       _processQueue();
     }
   }
@@ -561,6 +578,7 @@ class ThumbnailPrefetchService {
     _highQueue.clear();
     _lowQueue.clear();
     _inFlightCount.clear();
+    _inFlightKeys.clear();
     _desiredKeys.clear();
     _persistentKeys.clear();
   }

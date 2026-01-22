@@ -17,6 +17,7 @@ import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sentry/sentry.dart';
+import 'package:synchronized/synchronized.dart';
 
 /// Custom thumbnail disk cache with LRU + TTL eviction
 /// Manages both file storage and ObjectBox metadata
@@ -29,6 +30,9 @@ class ThumbnailDiskCache {
 
   String? _cacheDir;
   Box<ThumbnailCacheEntry>? _box;
+  
+  // Per-key locks to prevent concurrent writes to the same file
+  final Map<String, Lock> _writeLocks = {};
 
   // Configuration (tunable)
   static const int kMaxDiskSizeBytes = 500 * 1024 * 1024; // 500 MB
@@ -364,7 +368,13 @@ class ThumbnailDiskCache {
     return p.join(_cacheDirOrThrow, localPath);
   }
 
+  /// Get or create lock for a specific key
+  Lock _getLock(String key) {
+    return _writeLocks.putIfAbsent(key, () => Lock());
+  }
+
   /// Write file using atomic temp-then-commit pattern
+  /// Uses per-key locking to prevent race conditions
   Future<void> writeTempThenCommit(
     String key,
     List<int> bytes, {
@@ -374,88 +384,172 @@ class ThumbnailDiskCache {
     int? imageWidth,
     int? imageHeight,
   }) async {
-    try {
-      final fileName = '${md5.convert(key.codeUnits)}.bin';
-      final targetPath = p.join(_cacheDirOrThrow, fileName);
-      final tempPath = '$targetPath.tmp';
-
-      // Write to temp file
-      final tempFile = File(tempPath);
-      await tempFile.writeAsBytes(bytes);
-
-      // Atomic rename
-      await tempFile.rename(targetPath);
-
-      // Update or create ObjectBox entry
-      var entry = getByKey(key);
-      final now = DateTime.now().millisecondsSinceEpoch;
-      
-      if (entry != null) {
-        // Update existing entry
-        entry.status = ThumbnailStatus.ready;
-        entry.localPath = fileName;
-        entry.sizeBytes = bytes.length;
-        entry.imageWidth = imageWidth;
-        entry.imageHeight = imageHeight;
-        entry.isOriginal = isOriginal;
-        entry.variant = isOriginal ? 'original' : 'resized';
-        // Keep existing variantRank or set to high value for resized
-        if (!isOriginal && entry.variantRank == 0) {
-          entry.variantRank = 99; // High rank so it's preferred
+    final lock = _getLock(key);
+    
+    return lock.synchronized(() async {
+      try {
+        // Check if already cached (another task might have written it)
+        final existingEntry = getByKey(key);
+        if (existingEntry != null && existingEntry.status == ThumbnailStatus.ready) {
+          log.info(
+            '[ThumbnailDiskCache] File already cached for key: $key, skipping write',
+          );
+          return;
         }
-        entry.lastAccessAtMs = now;
-        entry.expiresAtMs = now + (kTtlDays * 24 * 60 * 60 * 1000);
-        entry.etag = etag;
-        entry.lastModified = lastModified;
-        entry.inFlightBackend = null;
-        entry.inFlightTaskId = null;
-        entry.errorCount = 0;
-        entry.lastError = null;
-        _boxOrThrow.put(entry);
-      } else {
-        // Create new entry
-        final parsed = ThumbnailCacheKey.parse(key);
-        final url = parsed['url'] as String;
-        
-        // Use ThumbnailUrlParser to get proper originKey for compatibility
-        final urlParsed = ThumbnailUrlParser.parse(url);
-        
-        entry = ThumbnailCacheEntry(
+
+        final fileName = '${md5.convert(key.codeUnits)}.bin';
+        final targetPath = p.join(_cacheDirOrThrow, fileName);
+        final tempPath = '$targetPath.tmp';
+
+        // Check if target file already exists
+        final targetFile = File(targetPath);
+        if (await targetFile.exists()) {
+          log.info(
+            '[ThumbnailDiskCache] Target file already exists for key: $key, '
+            'updating metadata only',
+          );
+          // File exists, just update metadata
+          await _updateMetadata(
+            key: key,
+            fileName: fileName,
+            bytes: bytes,
+            etag: etag,
+            lastModified: lastModified,
+            isOriginal: isOriginal,
+            imageWidth: imageWidth,
+            imageHeight: imageHeight,
+          );
+          return;
+        }
+
+        // Write to temp file
+        final tempFile = File(tempPath);
+        await tempFile.writeAsBytes(bytes);
+
+        // Atomic rename
+        try {
+          await tempFile.rename(targetPath);
+        } catch (e) {
+          // If rename fails, check if target was created by another task
+          if (await targetFile.exists()) {
+            log.info(
+              '[ThumbnailDiskCache] Target file appeared during rename for key: $key, '
+              'cleaning up temp file',
+            );
+            // Clean up temp file
+            if (await tempFile.exists()) {
+              await tempFile.delete();
+            }
+            // Update metadata for existing file
+            await _updateMetadata(
+              key: key,
+              fileName: fileName,
+              bytes: bytes,
+              etag: etag,
+              lastModified: lastModified,
+              isOriginal: isOriginal,
+              imageWidth: imageWidth,
+              imageHeight: imageHeight,
+            );
+            return;
+          }
+          rethrow;
+        }
+
+        // Update or create ObjectBox entry
+        await _updateMetadata(
           key: key,
-          originKey: urlParsed.originKey,
-          variant: isOriginal ? 'original' : 'resized',
-          // Original gets rank 0, resized gets high rank so it's preferred
-          variantRank: isOriginal ? VariantRank.getRank('original') : 99,
-          url: url,
-          status: ThumbnailStatus.ready,
-          localPath: fileName,
-          sizeBytes: bytes.length,
-          imageWidth: imageWidth,
-          imageHeight: imageHeight,
-          isOriginal: isOriginal,
-          createdAtMs: now,
-          lastAccessAtMs: now,
-          expiresAtMs: now + (kTtlDays * 24 * 60 * 60 * 1000),
+          fileName: fileName,
+          bytes: bytes,
           etag: etag,
           lastModified: lastModified,
+          isOriginal: isOriginal,
+          imageWidth: imageWidth,
+          imageHeight: imageHeight,
         );
-        _boxOrThrow.put(entry);
-      }
 
-      log.info(
-        '[ThumbnailDiskCache] Wrote file for key: $key '
-        '(${bytes.length} bytes, original=$isOriginal, '
-        'size=${imageWidth ?? 0}x${imageHeight ?? 0})',
+        log.info(
+          '[ThumbnailDiskCache] Wrote file for key: $key '
+          '(${bytes.length} bytes, original=$isOriginal, '
+          'size=${imageWidth ?? 0}x${imageHeight ?? 0})',
+        );
+      } catch (e, stackTrace) {
+        log.severe('[ThumbnailDiskCache] Error writing file for key $key: $e');
+        unawaited(
+          Sentry.captureException(
+            'ThumbnailDiskCache write error: $e',
+            stackTrace: stackTrace,
+          ),
+        );
+        rethrow;
+      }
+    });
+  }
+
+  /// Update metadata for a cached file
+  Future<void> _updateMetadata({
+    required String key,
+    required String fileName,
+    required List<int> bytes,
+    String? etag,
+    String? lastModified,
+    bool isOriginal = false,
+    int? imageWidth,
+    int? imageHeight,
+  }) async {
+    var entry = getByKey(key);
+    final now = DateTime.now().millisecondsSinceEpoch;
+    
+    if (entry != null) {
+      // Update existing entry
+      entry.status = ThumbnailStatus.ready;
+      entry.localPath = fileName;
+      entry.sizeBytes = bytes.length;
+      entry.imageWidth = imageWidth;
+      entry.imageHeight = imageHeight;
+      entry.isOriginal = isOriginal;
+      entry.variant = isOriginal ? 'original' : 'resized';
+      // Keep existing variantRank or set to high value for resized
+      if (!isOriginal && entry.variantRank == 0) {
+        entry.variantRank = 99; // High rank so it's preferred
+      }
+      entry.lastAccessAtMs = now;
+      entry.expiresAtMs = now + (kTtlDays * 24 * 60 * 60 * 1000);
+      entry.etag = etag;
+      entry.lastModified = lastModified;
+      entry.inFlightBackend = null;
+      entry.inFlightTaskId = null;
+      entry.errorCount = 0;
+      entry.lastError = null;
+      _boxOrThrow.put(entry);
+    } else {
+      // Create new entry
+      final parsed = ThumbnailCacheKey.parse(key);
+      final url = parsed['url'] as String;
+      
+      // Use ThumbnailUrlParser to get proper originKey for compatibility
+      final urlParsed = ThumbnailUrlParser.parse(url);
+      
+      entry = ThumbnailCacheEntry(
+        key: key,
+        originKey: urlParsed.originKey,
+        variant: isOriginal ? 'original' : 'resized',
+        // Original gets rank 0, resized gets high rank so it's preferred
+        variantRank: isOriginal ? VariantRank.getRank('original') : 99,
+        url: url,
+        status: ThumbnailStatus.ready,
+        localPath: fileName,
+        sizeBytes: bytes.length,
+        imageWidth: imageWidth,
+        imageHeight: imageHeight,
+        isOriginal: isOriginal,
+        createdAtMs: now,
+        lastAccessAtMs: now,
+        expiresAtMs: now + (kTtlDays * 24 * 60 * 60 * 1000),
+        etag: etag,
+        lastModified: lastModified,
       );
-    } catch (e, stackTrace) {
-      log.severe('[ThumbnailDiskCache] Error writing file: $e');
-      unawaited(
-        Sentry.captureException(
-          'ThumbnailDiskCache write error: $e',
-          stackTrace: stackTrace,
-        ),
-      );
-      rethrow;
+      _boxOrThrow.put(entry);
     }
   }
 
