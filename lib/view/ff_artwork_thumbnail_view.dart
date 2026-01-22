@@ -195,6 +195,15 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
   }
 
   Widget _buildImageWidget() {
+    // Get device pixel ratio for proper cache sizing
+    final dpr = MediaQuery.maybeOf(context)?.devicePixelRatio ?? 1.0;
+    final physicalCacheWidth = widget.cacheWidth != null 
+        ? (widget.cacheWidth! * dpr).toInt() 
+        : null;
+    final physicalCacheHeight = widget.cacheHeight != null 
+        ? (widget.cacheHeight! * dpr).toInt() 
+        : null;
+
     // Handle data URI images (keep existing logic)
     if (_isDataUri(widget.url)) {
       final imageBytes = _decodeDataUri(widget.url);
@@ -254,8 +263,8 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
           imageBytes,
           width: widget.cacheWidth?.toDouble(),
           height: widget.cacheHeight?.toDouble(),
-          cacheWidth: widget.cacheWidth,
-          cacheHeight: widget.cacheHeight,
+          cacheWidth: physicalCacheWidth,
+          cacheHeight: physicalCacheHeight,
           fit: widget.fit,
           errorBuilder: (context, error, stackTrace) =>
               widget.errorWidget ?? const GalleryThumbnailErrorWidget(),
@@ -286,6 +295,15 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
 
   /// Build cached network image using new pipeline
   Widget _buildCachedNetworkImage() {
+    // Get device pixel ratio for proper cache sizing
+    final dpr = MediaQuery.maybeOf(context)?.devicePixelRatio ?? 1.0;
+    final physicalCacheWidth = widget.cacheWidth != null 
+        ? (widget.cacheWidth! * dpr).toInt() 
+        : null;
+    final physicalCacheHeight = widget.cacheHeight != null 
+        ? (widget.cacheHeight! * dpr).toInt() 
+        : null;
+
     // If we have a cached entry, display it
     if (_currentEntry != null && _currentEntry!.localPath != null) {
       try {
@@ -296,8 +314,8 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
             file,
             width: widget.cacheWidth?.toDouble(),
             height: widget.cacheHeight?.toDouble(),
-            cacheWidth: widget.cacheWidth,
-            cacheHeight: widget.cacheHeight,
+            cacheWidth: physicalCacheWidth,
+            cacheHeight: physicalCacheHeight,
             fit: widget.fit,
             gaplessPlayback:
                 true, // Smooth upgrade from lower to higher variant

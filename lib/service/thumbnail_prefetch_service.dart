@@ -15,6 +15,7 @@ import 'package:autonomy_flutter/util/thumbnail_disk_cache.dart';
 import 'package:autonomy_flutter/util/thumbnail_fetcher.dart';
 import 'package:autonomy_flutter/util/thumbnail_url_parser.dart';
 import 'package:sentry/sentry.dart';
+import 'package:synchronized/synchronized.dart';
 
 /// Priority lanes for thumbnail prefetching
 enum PrefetchPriority {
@@ -88,8 +89,12 @@ class ThumbnailPrefetchService {
   final _updateController = StreamController<ThumbnailUpdate>.broadcast();
   Stream<ThumbnailUpdate> get updates => _updateController.stream;
 
-  // Task management
-  final Map<String, _PrefetchTask> _tasks = {};
+  // Dual queue system: high priority and low priority
+  final Map<String, _PrefetchTask> _highQueue = {};
+  final Map<String, _PrefetchTask> _lowQueue = {};
+  final _queueLock = Lock();
+
+  // In-flight tracking
   final Map<PrefetchPriority, int> _inFlightCount = {};
   static const int kMaxInFlightTotal = 8; // Parallel downloads and resizes
 
@@ -112,7 +117,8 @@ class ThumbnailPrefetchService {
     log.info(
       '[ThumbnailPrefetchService] ===== INITIALIZING =====\n'
       'Stale state before clear:\n'
-      '  - Tasks: ${_tasks.length}\n'
+      '  - High queue: ${_highQueue.length}\n'
+      '  - Low queue: ${_lowQueue.length}\n'
       '  - In-flight counts: $_inFlightCount\n'
       '  - Desired keys: ${_desiredKeys.length}\n'
       '  - Persistent keys: ${_persistentKeys.length}\n'
@@ -120,16 +126,68 @@ class ThumbnailPrefetchService {
     );
 
     // Clear any stale in-flight counts from previous sessions
-    _inFlightCount.clear();
-    _tasks.clear();
-    _desiredKeys.clear();
-    _persistentKeys.clear();
-    _isProcessing = false;
+    await _queueLock.synchronized(() {
+      _inFlightCount.clear();
+      _highQueue.clear();
+      _lowQueue.clear();
+      _desiredKeys.clear();
+      _persistentKeys.clear();
+      _isProcessing = false;
+    });
 
     _initialized = true;
-    log.info(
-      '[ThumbnailPrefetchService] ===== INITIALIZATION COMPLETE =====',
-    );
+  }
+
+  /// Add task to high priority queue
+  /// If task exists in low queue, remove it from there
+  Future<void> _addToHighQueue(_PrefetchTask task) async {
+    await _queueLock.synchronized(() {
+      // Remove from low queue if it exists there
+      if (_lowQueue.containsKey(task.key)) {
+        log.info(
+          '[ThumbnailPrefetchService] Moving ${task.key} from low to high queue',
+        );
+        _lowQueue.remove(task.key);
+      }
+
+      // Add to high queue if not already there
+      if (!_highQueue.containsKey(task.key)) {
+        _highQueue[task.key] = task;
+        log.info(
+          '[ThumbnailPrefetchService] Added ${task.key} to high queue',
+        );
+      }
+    });
+  }
+
+  /// Add task to low priority queue
+  /// Only add if it doesn't exist in high queue
+  Future<void> _addToLowQueue(_PrefetchTask task) async {
+    await _queueLock.synchronized(() {
+      // Don't add if already in high queue
+      if (_highQueue.containsKey(task.key)) {
+        log.info(
+          '[ThumbnailPrefetchService] Skipping ${task.key} - already in high queue',
+        );
+        return;
+      }
+
+      // Add to low queue if not already there
+      if (!_lowQueue.containsKey(task.key)) {
+        _lowQueue[task.key] = task;
+        log.info(
+          '[ThumbnailPrefetchService] Added ${task.key} to low queue',
+        );
+      }
+    });
+  }
+
+  /// Remove task from both queues
+  Future<void> _removeFromQueues(String key) async {
+    await _queueLock.synchronized(() {
+      _highQueue.remove(key);
+      _lowQueue.remove(key);
+    });
   }
 
   /// Set the desired window of keys to prefetch
@@ -147,9 +205,13 @@ class ThumbnailPrefetchService {
       ..clear()
       ..addAll(keys);
 
-    // Add new tasks
+    // Add new tasks to high queue (visible items get high priority)
     for (final key in keys) {
-      if (!_tasks.containsKey(key)) {
+      final alreadyExists = await _queueLock.synchronized(() {
+        return _highQueue.containsKey(key) || _lowQueue.containsKey(key);
+      });
+
+      if (!alreadyExists) {
         // Parse key to get URL info
         // Key format: "originKey|variant"
         final parts = key.split('|');
@@ -160,7 +222,7 @@ class ThumbnailPrefetchService {
               ? originKey
               : ThumbnailUrlParser.buildCloudflareUrl(originKey, variant);
 
-          _tasks[key] = _PrefetchTask(
+          final task = _PrefetchTask(
             url: url,
             key: key,
             originKey: originKey,
@@ -168,6 +230,9 @@ class ThumbnailPrefetchService {
             priority: priority,
             targetSize: targetSize,
           );
+
+          // Add to high queue (visible items)
+          await _addToHighQueue(task);
         }
       }
     }
@@ -178,18 +243,21 @@ class ThumbnailPrefetchService {
 
   /// Prefetch specific URLs (one-shot API)
   /// Adds to persistent set to prevent cancellation by scroll windows
+  /// Use [highPriority] to add to high queue (for immediate display)
   Future<void> prefetchUrls({
     required List<String> urls,
     ThumbnailSize? targetSize,
     PrefetchPriority priority = PrefetchPriority.backgroundWarm,
     bool persistent = true,
+    bool highPriority = false,
   }) async {
     // Ensure initialized
     await initialize();
 
     log.info(
       '[ThumbnailPrefetchService] prefetchUrls called with ${urls.length} URLs, '
-      'priority=${priority.name}, targetSize=${targetSize?.widthPx}x${targetSize?.heightPx}',
+      'priority=${priority.name}, highPriority=$highPriority, '
+      'targetSize=${targetSize?.widthPx}x${targetSize?.heightPx}',
     );
 
     for (final url in urls) {
@@ -209,9 +277,13 @@ class ThumbnailPrefetchService {
         });
       }
 
-      if (!_tasks.containsKey(key)) {
+      final alreadyExists = await _queueLock.synchronized(() {
+        return _highQueue.containsKey(key) || _lowQueue.containsKey(key);
+      });
+
+      if (!alreadyExists) {
         log.info('[ThumbnailPrefetchService] Creating new task for: $key');
-        _tasks[key] = _PrefetchTask(
+        final task = _PrefetchTask(
           url: url,
           key: key,
           originKey: parsed.originKey,
@@ -219,20 +291,37 @@ class ThumbnailPrefetchService {
           priority: priority,
           targetSize: targetSize,
         );
+
+        // Add to appropriate queue based on highPriority flag
+        if (highPriority) {
+          await _addToHighQueue(task);
+        } else {
+          await _addToLowQueue(task);
+        }
       } else {
         log.info('[ThumbnailPrefetchService] Task already exists for: $key');
       }
     }
 
-    log.info('[ThumbnailPrefetchService] Total tasks: ${_tasks.length}');
+    final queueInfo = await _queueLock.synchronized(() {
+      return {
+        'high': _highQueue.length,
+        'low': _lowQueue.length,
+      };
+    });
+    log.info(
+      '[ThumbnailPrefetchService] Total tasks: high=${queueInfo['high']}, low=${queueInfo['low']}',
+    );
     _processQueue();
   }
 
   /// Prefetch thumbnails from DP1NowDisplayingItems
+  /// If [highPriorityCount] is set, first N items go to high queue
   Future<void> prefetchNowDisplayingItems({
     required List<DP1NowDisplayingItem> items,
     ThumbnailSize? targetSize,
     PrefetchPriority priority = PrefetchPriority.backgroundWarm,
+    int? highPriorityCount,
   }) async {
     final urls = <String>[];
     for (final item in items) {
@@ -242,11 +331,41 @@ class ThumbnailPrefetchService {
       }
     }
 
-    await prefetchUrls(
-      urls: urls,
-      targetSize: targetSize,
-      priority: priority,
-    );
+    // If highPriorityCount is specified, split urls into high and low priority
+    if (highPriorityCount != null && highPriorityCount > 0) {
+      final highPriorityUrls = urls.take(highPriorityCount).toList();
+      final lowPriorityUrls = urls.length > highPriorityCount
+          ? urls.skip(highPriorityCount).toList()
+          : <String>[];
+
+      // Prefetch high priority items first
+      if (highPriorityUrls.isNotEmpty) {
+        await prefetchUrls(
+          urls: highPriorityUrls,
+          targetSize: targetSize,
+          priority: priority,
+          highPriority: true,
+        );
+      }
+
+      // Then prefetch low priority items
+      if (lowPriorityUrls.isNotEmpty) {
+        await prefetchUrls(
+          urls: lowPriorityUrls,
+          targetSize: targetSize,
+          priority: priority,
+          highPriority: false,
+        );
+      }
+    } else {
+      // No split, add all to low priority by default
+      await prefetchUrls(
+        urls: urls,
+        targetSize: targetSize,
+        priority: priority,
+        highPriority: false,
+      );
+    }
   }
 
   /// Cancel specific tasks (deprecated - tasks now run to completion)
@@ -257,24 +376,15 @@ class ThumbnailPrefetchService {
 
   /// Process the queue with priority and concurrency control
   void _processQueue() {
-    log.info(
-      '[ThumbnailPrefetchService] _processQueue called, '
-      'isProcessing=$_isProcessing, tasks=${_tasks.length}',
-    );
-
     if (_isProcessing) {
-      log.info('[ThumbnailPrefetchService] Already processing, skipping');
       return; // Already processing
     }
 
     _isProcessing = true;
-    log.info('[ThumbnailPrefetchService] Starting _runQueue...');
     unawaited(_runQueue());
   }
 
   Future<void> _runQueue() async {
-    log.info('[ThumbnailPrefetchService] _runQueue executing...');
-
     try {
       while (true) {
         // Yield to event loop to prevent UI blocking
@@ -285,63 +395,75 @@ class ThumbnailPrefetchService {
             _inFlightCount.values.fold<int>(0, (sum, count) => sum + count);
 
         if (totalInFlight >= kMaxInFlightTotal) {
-          log.info(
-            '[ThumbnailPrefetchService] At capacity ($totalInFlight/$kMaxInFlightTotal), '
-            'exiting queue',
-          );
           break;
         }
 
-        // Find next task to execute (highest priority with available quota)
+        // Find next task to execute
+        // Priority: high queue first, then low queue
         _PrefetchTask? nextTask;
-        for (final priority in PrefetchPriority.values) {
-          final inFlight = _inFlightCount[priority] ?? 0;
-          if (inFlight >= priority.quota) {
-            continue; // This lane is full
+
+        await _queueLock.synchronized(() {
+          // Try to get task from high queue first
+          for (final priority in PrefetchPriority.values) {
+            final inFlight = _inFlightCount[priority] ?? 0;
+            if (inFlight >= priority.quota) {
+              continue; // This lane is full
+            }
+
+            // Find a task in high queue with this priority that's not in flight
+            for (final task in _highQueue.values) {
+              if (task.priority == priority && !task.isInFlight) {
+                nextTask = task;
+                break;
+              }
+            }
+
+            if (nextTask != null) {
+              break; // Found a task in high queue
+            }
           }
 
-          // Find a task in this priority that's not in flight
-          nextTask = _tasks.values.firstWhere(
-            (task) => task.priority == priority && !task.isInFlight,
-            orElse: () => _PrefetchTask(
-              url: '',
-              key: '',
-              originKey: '',
-              variant: '',
-              priority: priority,
-              targetSize: null,
-            ),
-          );
+          // If no task in high queue, try low queue
+          if (nextTask == null) {
+            for (final priority in PrefetchPriority.values) {
+              final inFlight = _inFlightCount[priority] ?? 0;
+              if (inFlight >= priority.quota) {
+                continue; // This lane is full
+              }
 
-          if (nextTask.key.isNotEmpty) {
-            break; // Found a task
+              // Find a task in low queue with this priority that's not in flight
+              for (final task in _lowQueue.values) {
+                if (task.priority == priority && !task.isInFlight) {
+                  nextTask = task;
+                  break;
+                }
+              }
+
+              if (nextTask != null) {
+                break; // Found a task in low queue
+              }
+            }
           }
-        }
+        });
 
-        if (nextTask == null || nextTask.key.isEmpty) {
+        if (nextTask == null) {
           log.info('[ThumbnailPrefetchService] No available tasks, exiting');
           break;
         }
 
         // Check if already in cache
-        final entry = diskCache.getByKey(nextTask.key);
+        final entry = diskCache.getByKey(nextTask!.key);
         if (entry != null && entry.status == ThumbnailStatus.ready) {
           // Already cached, remove from queue
-          _tasks.remove(nextTask.key);
+          await _removeFromQueues(nextTask!.key);
           continue;
         }
 
-        log.info(
-          '[ThumbnailPrefetchService] Starting task: ${nextTask.key} '
-          '(${nextTask.priority.name}, $totalInFlight/$kMaxInFlightTotal in-flight)',
-        );
-
         // Start the task
-        unawaited(_executeTask(nextTask));
+        unawaited(_executeTask(nextTask!));
       }
     } catch (e, stackTrace) {
       log.severe('[ThumbnailPrefetchService] CRITICAL: _runQueue crashed: $e');
-      log.severe('[ThumbnailPrefetchService] Stack trace: $stackTrace');
     } finally {
       log.info('[ThumbnailPrefetchService] _runQueue finally block');
       _isProcessing = false;
@@ -349,12 +471,17 @@ class ThumbnailPrefetchService {
 
       // If there are still tasks, schedule another run
       try {
-        final pendingTasks =
-            _tasks.values.where((task) => !task.isInFlight).length;
-        log.info('[ThumbnailPrefetchService] Pending tasks: $pendingTasks');
+        final queueInfo = await _queueLock.synchronized(() {
+          final highPending =
+              _highQueue.values.where((task) => !task.isInFlight).length;
+          final lowPending =
+              _lowQueue.values.where((task) => !task.isInFlight).length;
+          return {'high': highPending, 'low': lowPending};
+        });
+
+        final pendingTasks = (queueInfo['high'] ?? 0) + (queueInfo['low'] ?? 0);
 
         if (pendingTasks > 0) {
-          log.info('[ThumbnailPrefetchService] Scheduling next queue run...');
           Future.delayed(const Duration(milliseconds: 100), _processQueue);
         }
       } catch (e) {
@@ -364,35 +491,25 @@ class ThumbnailPrefetchService {
   }
 
   Future<void> _executeTask(_PrefetchTask task) async {
-    log.info('[ThumbnailPrefetchService] _executeTask START: ${task.key}');
-
     task.isInFlight = true;
     task.handle = ThumbnailFetchHandle(Completer<void>());
     _inFlightCount[task.priority] = (_inFlightCount[task.priority] ?? 0) + 1;
 
     final totalInFlight =
         _inFlightCount.values.fold<int>(0, (sum, count) => sum + count);
-    log.info(
-        '[ThumbnailPrefetchService] Starting task (${task.priority.name}): $totalInFlight/$kMaxInFlightTotal in-flight');
 
     try {
-      log.info('[ThumbnailPrefetchService] Creating ThumbnailFetcher...');
       final fetcher = ThumbnailFetcher(
         diskCache: diskCache,
         httpFetcher: httpFetcher,
       );
 
-      log.info(
-          '[ThumbnailPrefetchService] Calling fetchThumbnail for: ${task.url}');
       final result = await fetcher.fetchThumbnail(
         url: task.url,
         handle: task.handle!,
         targetWidth: task.targetSize?.widthPx,
         targetHeight: task.targetSize?.heightPx,
       );
-
-      log.info(
-          '[ThumbnailPrefetchService] fetchThumbnail returned, success: ${result.success}');
 
       // Notify listeners if successful (async to prevent Navigator deadlock)
       if (result.success) {
@@ -417,19 +534,12 @@ class ThumbnailPrefetchService {
         ),
       );
     } finally {
-      log.info(
-          '[ThumbnailPrefetchService] _executeTask FINALLY for: ${task.key}');
       _inFlightCount[task.priority] = (_inFlightCount[task.priority] ?? 1) - 1;
-      _tasks.remove(task.key);
+      await _removeFromQueues(task.key);
       task.isInFlight = false;
 
       final totalInFlight =
           _inFlightCount.values.fold<int>(0, (sum, count) => sum + count);
-      log.info(
-          '[ThumbnailPrefetchService] Task completed: $totalInFlight/$kMaxInFlightTotal in-flight');
-
-      // Trigger next batch
-      log.info('[ThumbnailPrefetchService] Triggering next batch...');
       _processQueue();
     }
   }
@@ -437,7 +547,9 @@ class ThumbnailPrefetchService {
   /// Get current queue status for debugging
   Map<String, dynamic> getStatus() {
     return {
-      'total_tasks': _tasks.length,
+      'high_queue_size': _highQueue.length,
+      'low_queue_size': _lowQueue.length,
+      'total_tasks': _highQueue.length + _lowQueue.length,
       'in_flight_by_priority': _inFlightCount,
       'desired_window_size': _desiredKeys.length,
     };
@@ -446,7 +558,8 @@ class ThumbnailPrefetchService {
   /// Dispose resources
   void dispose() {
     _updateController.close();
-    _tasks.clear();
+    _highQueue.clear();
+    _lowQueue.clear();
     _inFlightCount.clear();
     _desiredKeys.clear();
     _persistentKeys.clear();

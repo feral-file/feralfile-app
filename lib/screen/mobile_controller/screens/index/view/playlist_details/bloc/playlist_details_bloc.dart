@@ -318,13 +318,16 @@ class PlaylistDetailsBloc
 
         if (nextPageItems.isNotEmpty) {
           // Trigger background warm-up prefetch
+          // First 10 items go to high priority queue, rest to low priority
           final prefetchService = injector<ThumbnailPrefetchService>();
           await prefetchService.prefetchNowDisplayingItems(
             items: nextPageItems,
             priority: PrefetchPriority.backgroundWarm,
+            highPriorityCount: 8,
           );
           log.info(
-            '[PlaylistDetailsBloc] Prefetched ${nextPageItems.length} thumbnails for next page',
+            '[PlaylistDetailsBloc] Prefetched ${nextPageItems.length} thumbnails for next page '
+            '(first 10 in high priority queue)',
           );
         }
       }());
