@@ -1,4 +1,3 @@
-import 'package:autonomy_flutter/nft_collection/graphql/model/get_list_tokens.dart';
 import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
 import 'package:autonomy_flutter/util/eth_utils.dart';
 import 'package:sentry/sentry.dart';
@@ -11,6 +10,7 @@ enum SubjectType {
   balance,
   metadata,
   enrichmentSource,
+  tokenViewability,
 }
 
 extension SubjectTypeJson on SubjectType {
@@ -26,6 +26,8 @@ extension SubjectTypeJson on SubjectType {
         return 'metadata';
       case SubjectType.enrichmentSource:
         return 'enrich_source';
+      case SubjectType.tokenViewability:
+        return 'token_viewability';
     }
   }
 
@@ -42,6 +44,8 @@ extension SubjectTypeJson on SubjectType {
         return SubjectType.metadata;
       case 'enrich_source':
         return SubjectType.enrichmentSource;
+      case 'token_viewability':
+        return SubjectType.tokenViewability;
       default:
         return null;
     }
@@ -327,6 +331,34 @@ class EnrichmentSourceChangeMeta implements ChangeMeta {
       };
 }
 
+/// TokenViewabilityChangeMeta represents the metadata for token viewability changes
+/// It stores the token information and current viewability state
+class TokenViewabilityChangeMeta implements ChangeMeta {
+  const TokenViewabilityChangeMeta({
+    required this.tokenId,
+    required this.tokenCid,
+    required this.isViewable,
+  });
+
+  final int tokenId; // Token ID
+  final String tokenCid; // Token CID for convenience
+  final bool isViewable; // Current viewability state
+
+  factory TokenViewabilityChangeMeta.fromJson(Map<String, dynamic> json) =>
+      TokenViewabilityChangeMeta(
+        tokenId: int.parse(json['token_id'].toString()),
+        tokenCid: json['token_cid'] as String,
+        isViewable: json['is_viewable'] as bool,
+      );
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'token_id': tokenId,
+        'token_cid': tokenCid,
+        'is_viewable': isViewable,
+      };
+}
+
 /// Change journal entry
 class Change {
   final int id;
@@ -360,6 +392,8 @@ class Change {
           return MetadataChangeMeta.fromJson(_metaRaw);
         case SubjectType.enrichmentSource:
           return EnrichmentSourceChangeMeta.fromJson(_metaRaw);
+        case SubjectType.tokenViewability:
+          return TokenViewabilityChangeMeta.fromJson(_metaRaw);
       }
     } catch (e, _) {
       Sentry.captureEvent(SentryEvent(
@@ -401,6 +435,9 @@ class Change {
     }
     if (metaParsed is EnrichmentSourceChangeMeta) {
       return (metaParsed as EnrichmentSourceChangeMeta).tokenId;
+    } 
+    if (metaParsed is TokenViewabilityChangeMeta) {
+      return (metaParsed as TokenViewabilityChangeMeta).tokenId;
     }
     return null;
   }
@@ -488,28 +525,18 @@ class QueryChangesRequest {
   QueryChangesRequest({
     this.tokenCids = const [],
     this.addresses = const [],
-    this.since,
     this.limit = 20,
-    this.offset = 0,
-    this.order = Order.asc,
-    this.expand = const [],
     this.anchor,
   });
 
   final List<String> tokenCids;
   final List<String> addresses;
-  final String? since;
   final int? anchor;
   final int limit;
-  final int offset;
-  final Order order;
-  final List<String> expand;
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{
       'limit': limit,
-      'offset': offset,
-      'order': order.toJson(),
     };
 
     if (tokenCids.isNotEmpty) {
@@ -520,14 +547,8 @@ class QueryChangesRequest {
       json['addresses'] = addresses;
     }
 
-    if (since != null && since!.isNotEmpty) {
-      json['since'] = since;
-    }
     if (anchor != null) {
       json['anchor'] = anchor;
-    }
-    if (expand.isNotEmpty) {
-      json['expand'] = expand;
     }
 
     return json;

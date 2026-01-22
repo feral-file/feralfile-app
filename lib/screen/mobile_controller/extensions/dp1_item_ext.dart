@@ -63,6 +63,16 @@ extension DP1PlaylistItemExtension on DP1Item {
   }
 }
 
+/// Utility class for DP1Item operations
+class DP1ItemUtils {
+  /// Generate item ID for indexer tokens
+  /// Format: 'indexer_token_{token.cid}'
+  static String generateItemIdFromToken(
+      AssetToken token, String? ownerAddress) {
+    return '${token.cid}_${ownerAddress?.toUpperCase()}';
+  }
+}
+
 /// Extension on [DP1Item] to create from database [db.Item]
 extension DP1ItemExtension on DP1Item {
   /// Create [DP1Item] from [db.Item] row

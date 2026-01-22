@@ -96,12 +96,6 @@ const String getTokens = r'''
     $token_numbers: [String!]
     $limit: Uint8 = 20
     $offset: Uint64 = 0
-    $expands: [String!]
-    $owners_limit: Uint8 = 10
-    $owners_offset: Uint64 = 0
-    $provenance_events_limit: Uint8 = 10
-    $provenance_events_offset: Uint64 = 0
-    $provenance_events_order: Order = desc
   ) {
     tokens(
       owners: $owners
@@ -112,12 +106,6 @@ const String getTokens = r'''
       token_numbers: $token_numbers
       limit: $limit
       offset: $offset
-      expands: $expands
-      owners_limit: $owners_limit
-      owners_offset: $owners_offset
-      provenance_events_limit: $provenance_events_limit
-      provenance_events_offset: $provenance_events_offset
-      provenance_events_order: $provenance_events_order
     ) {
       items {
         id
@@ -194,7 +182,6 @@ const String getTokens = r'''
 const String getTokenByCidQuery = r'''
   query getToken(
     $cid: String!
-    $expands: [String!]
     $owners_limit: Uint8 = 10
     $owners_offset: Uint64 = 0
     $provenance_events_limit: Uint8 = 10
@@ -203,7 +190,6 @@ const String getTokenByCidQuery = r'''
   ) {
     token(
       cid: $cid
-      expands: $expands
       owners_limit: $owners_limit
       owners_offset: $owners_offset
       provenance_events_limit: $provenance_events_limit

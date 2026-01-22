@@ -11,6 +11,7 @@ import 'dart:isolate';
 import 'package:autonomy_flutter/model/token.dart';
 import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart';
 import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:drift/drift.dart';
 
@@ -64,8 +65,9 @@ TokenTransformResult transformTokenToPlaylistItem(TokenTransformInput input) {
   final tokenJson = json.encode(tokenMap);
 
   // Create item companion (unique)
+  final itemId = DP1ItemUtils.generateItemIdFromToken(token, ownerAddress);
   final itemCompanion = ItemsCompanion.insert(
-    id: token.cid,
+    id: itemId,
     kind: DriftItemKind.indexerToken.value,
     title: Value(title),
     subtitle: Value(subtitle.isEmpty ? null : subtitle),
@@ -82,7 +84,7 @@ TokenTransformResult transformTokenToPlaylistItem(TokenTransformInput input) {
   // Create playlist entry companion (per-playlist)
   final entryCompanion = PlaylistEntriesCompanion.insert(
     playlistId: playlistId,
-    itemId: token.cid,
+    itemId: itemCompanion.id.value,
     position: const Value(null), // No fixed position for address playlists
     sortKeyUs: sortKeyUs,
     updatedAtUs: now,
@@ -105,7 +107,6 @@ int _computeSortKeyForOwner(AssetToken token, String normalizedOwner) {
   // Find latest event where owner is involved (from or to)
   int? latestRelevantTs;
   for (final event in events) {
-    final fromAddress = event.fromAddress?.toUpperCase();
     final toAddress = event.toAddress?.toUpperCase();
 
     if (toAddress == normalizedOwner) {
