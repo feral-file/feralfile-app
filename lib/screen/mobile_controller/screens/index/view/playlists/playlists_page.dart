@@ -80,7 +80,7 @@ class PlaylistsPageState extends State<PlaylistsPage>
       physics: const NeverScrollableScrollPhysics(),
       slivers: [
         SliverToBoxAdapter(child: _buildMyPlaylists()),
-        SliverToBoxAdapter(child: _buildCuratedPlaylists()),
+        // SliverToBoxAdapter(child: _buildCuratedPlaylists()),
         // _buildGlobalPlaylists(),
       ],
     );

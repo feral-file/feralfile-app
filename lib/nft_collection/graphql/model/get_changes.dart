@@ -335,21 +335,25 @@ class EnrichmentSourceChangeMeta implements ChangeMeta {
 /// It stores the token information and current viewability state
 class TokenViewabilityChangeMeta implements ChangeMeta {
   const TokenViewabilityChangeMeta({
+    required this.tokenId,
     required this.tokenCid,
     required this.isViewable,
   });
 
+  final int tokenId; // Token ID
   final String tokenCid; // Token CID for convenience
   final bool isViewable; // Current viewability state
 
   factory TokenViewabilityChangeMeta.fromJson(Map<String, dynamic> json) =>
       TokenViewabilityChangeMeta(
+        tokenId: int.parse(json['token_id'].toString()),
         tokenCid: json['token_cid'] as String,
         isViewable: json['is_viewable'] as bool,
       );
 
   @override
   Map<String, dynamic> toJson() => {
+        'token_id': tokenId,
         'token_cid': tokenCid,
         'is_viewable': isViewable,
       };
@@ -431,6 +435,9 @@ class Change {
     }
     if (metaParsed is EnrichmentSourceChangeMeta) {
       return (metaParsed as EnrichmentSourceChangeMeta).tokenId;
+    } 
+    if (metaParsed is TokenViewabilityChangeMeta) {
+      return (metaParsed as TokenViewabilityChangeMeta).tokenId;
     }
     return null;
   }

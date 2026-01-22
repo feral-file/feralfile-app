@@ -1530,7 +1530,7 @@ class NftTokensServiceImpl extends NftTokensService {
   static Future<void> _handleTokenViewabilityChange(Change change) async {
     final meta = change.metaParsed as TokenViewabilityChangeMeta;
     final tokenCid = meta.tokenCid;
-    final database = _isolateScopeInjector<IndexerDatabaseAbstract>();
+    final database = injector<IndexerDatabaseAbstract>();
 
     if (meta.isViewable) {
       // Fetch token from indexer with full owners and provenances
@@ -1541,10 +1541,15 @@ class NftTokensServiceImpl extends NftTokensService {
       );
       final tokens = await isolateIndexerService.getNftTokens(request);
       final token = tokens.firstWhereOrNull((e) => e.cid == tokenCid);
-
+      AssetToken? tokenWithOwnersAndProvenances;
       if (token != null) {
+        tokenWithOwnersAndProvenances = await _loadOwnersAndProvenanceForToken(
+            isolateIndexerService, token);
+      }
+
+      if (tokenWithOwnersAndProvenances != null) {
         // Insert token into database
-        await database.insertTokens([token]);
+        await database.insertTokens([tokenWithOwnersAndProvenances]);
         NftCollection.logger.info('Token $tokenCid made viewable and inserted');
       } else {
         NftCollection.logger.warning(
