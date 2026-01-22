@@ -5,6 +5,7 @@ import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart'
     as db;
+import 'package:autonomy_flutter/nft_collection/services/drift_bootstrap_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_section.dart';
@@ -58,14 +59,14 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     }
 
     // Get current loaded playlists length from next state's playlistData
-    final loadedLength = nextState.playlistData.length;
+    // final loadedLength = nextState.playlistData.length;
 
-    // We only need to observe the visible portion: min(pageSize, loadedLength)
-    final listenSize = loadedLength > pageSize ? pageSize : loadedLength;
+    // final listenSize = loadedLength > pageSize ? loadedLength : pageSize;
 
     log.info(
       '[PlaylistsBloc] Setting up database listener for ${playlistType.name} '
-      'with size $listenSize',
+      // 'with size $listenSize',
+      '',
     );
 
     try {
@@ -76,7 +77,6 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
           // Watch DP1 playlists (type=0)
           watchStream = injector<DriftDatabaseService>().watchPlaylistRows(
             kind: DriftPlaylistKind.dp1,
-            size: listenSize,
           );
           log.info(
             '[PlaylistsBloc] Setting up database listener '
@@ -85,9 +85,8 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
         case PlaylistType.me:
           // Watch address playlists (type=1, channelId='my_collection')
           watchStream = injector<DriftDatabaseService>().watchPlaylistRows(
-            channelId: 'my_collection',
+            channelId: DriftBootstrapService.myCollectionChannelId,
             kind: DriftPlaylistKind.address,
-            size: listenSize,
           );
           log.info(
             '[PlaylistsBloc] Setting up database listener for my playlists',
