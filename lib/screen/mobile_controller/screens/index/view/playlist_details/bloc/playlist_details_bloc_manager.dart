@@ -81,7 +81,7 @@ class PlaylistDetailsBlocManager {
   ///
   /// Decrements the reference count for the bloc. If the reference count
   /// reaches zero, closes the bloc and removes it from the map.
-  void releaseBloc(String playlistId) {
+  void releaseBloc(String playlistId, {bool force = false}) {
     final entry = _blocs[playlistId];
 
     if (entry == null) {
@@ -96,7 +96,7 @@ class PlaylistDetailsBlocManager {
       '[PlaylistDetailsBlocManager] Decremented refCount for playlist $playlistId to ${entry.refCount}',
     );
 
-    if (entry.refCount <= 0) {
+    if (entry.refCount <= 0 || force) {
       log.info(
         '[PlaylistDetailsBlocManager] RefCount reached zero, closing bloc for playlist $playlistId',
       );

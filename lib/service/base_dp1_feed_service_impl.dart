@@ -233,6 +233,8 @@ class BaseDP1FeedServiceImpl extends BaseDP1FeedService {
   }
 
   Future<void> clearCache() async {
+    // Delete last refresh time for this feed service
+    await _configurationService.deleteDp1LastTimeRefreshFeedByUrl(baseUrl);
     // Clear all Drift data
     await driftDb.deleteAllPlaylists(
         kind: DriftPlaylistKind.dp1, baseUrl: baseUrl);

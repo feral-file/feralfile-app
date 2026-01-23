@@ -126,6 +126,9 @@ abstract class ConfigurationService {
   Future<void> setDp1LastTimeRefreshFeedsByUrl(
       Map<String, DateTime> lastRefreshByUrl);
 
+  /// Delete last refresh time for a specific DP1 feed service by URL.
+  Future<void> deleteDp1LastTimeRefreshFeedByUrl(String url);
+
   DateTime? getLastUpdateChangeAt();
 
   Future<void> setLastUpdateChangeAt(DateTime time);
@@ -581,6 +584,13 @@ class ConfigurationServiceImpl implements ConfigurationService {
       KEY_DP1_LAST_TIME_REFRESH_FEEDS_BY_URL,
       jsonEncode(encoded),
     );
+  }
+
+  @override
+  Future<void> deleteDp1LastTimeRefreshFeedByUrl(String url) async {
+    final currentMap = getDp1LastTimeRefreshFeedsByUrl();
+    currentMap.remove(url);
+    await setDp1LastTimeRefreshFeedsByUrl(currentMap);
   }
 
   @override

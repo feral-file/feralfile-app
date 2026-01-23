@@ -15,6 +15,7 @@ import 'package:autonomy_flutter/nft_collection/services/drift_database_service.
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/collection/bloc/user_all_own_collection_bloc_manager.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/bloc/playlist_details_bloc_manager.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
@@ -98,15 +99,11 @@ class AddressService {
         playlistRef,
         DriftBootstrapService.myCollectionChannelId,
       );
-      injector<PlaylistsBloc>(
-              instanceName: PlaylistsBlocInstance.my.instanceName)
-          .add(RefreshPlaylistsEvent());
       if (refreshPlaylist) {
         final manager = injector<UserAllOwnCollectionBlocManager>();
         final bloc = manager.getOrCreateBloc([newAddress.address]);
         bloc.add(Reindex());
       }
-      await _onAddressUpdate();
       log.info('Inserted address: ${newAddress.address}');
       return newAddress;
     } catch (e) {
@@ -115,44 +112,19 @@ class AddressService {
     }
   }
 
-  Future<void> insertAddresses(List<WalletAddress> addresses) async {
-    await Future.wait(addresses.map(insertAddress));
-  }
-
   Future<void> deleteAddressFromDrift(String address) async {
     await injector<DriftDatabaseService>().deletePlaylistById(address);
     _appDataManager.addressStorageService.deleteAddresses([address]);
-    await _onAddressUpdate();
-  }
-
-  Future<void> deleteAddress(WalletAddress address) async {
-    await _appDataManager.addressStorageService.deleteAddress(address);
-    // Clear Address Index Info when address is deleted
     await injector<UserDp1PlaylistService>().clearAddressIndexingInfo(
-      addresses: [address.address],
+      addresses: [address],
     );
-    await _onAddressUpdate();
-    log.info('Deleted address: ${address.address}');
-  }
-
-  Future<void> setHiddenStatus({
-    required List<String> addresses,
-    required bool isHidden,
-  }) async {
-    await Future.wait(
-      addresses.map(
-        (e) => _appDataManager.addressStorageService
-            .setAddressIsHidden(e, isHidden),
-      ),
+    await injector<UserDp1PlaylistService>().clearAddressLastFetchTokenTime(
+      addresses: [address],
     );
-    _onAddressUpdate();
-  }
-
-  Future<WalletAddress> nameAddress(WalletAddress address, String name) async {
-    final newAddress = address.copyWith(name: name);
-    await _appDataManager.addressStorageService.updateAddresses([newAddress]);
-    await _onAddressUpdate();
-    return newAddress;
+    await injector<UserDp1PlaylistService>().removeLastUpdateChangeAnchor(
+      addresses: [address],
+    );
+    injector<PlaylistDetailsBlocManager>().releaseBloc(address, force: true);
   }
 
   /// Check if tokens have been fetched for a list of addresses.
@@ -167,10 +139,5 @@ class AddressService {
 
     // Check if all addresses have been fetched (non-null DateTime)
     return addresses.every((address) => fetchTimes[address] != null);
-  }
-
-  FutureOr<void> _onAddressUpdate() async {
-    injector<PlaylistsBloc>(instanceName: PlaylistsBlocInstance.my.instanceName)
-        .add(RefreshPlaylistsEvent());
   }
 }

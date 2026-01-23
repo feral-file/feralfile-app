@@ -86,8 +86,6 @@ class AppDataManager {
       _appSettingsStorageService;
   StorageService get ffDeviceStorageService => _ffDeviceStorageService;
 
-
-
   Future<void> deleteAll() async {
     await _appSettingsStorageService.deleteAll();
     await _addressStorageService.deleteAll();

@@ -5,18 +5,15 @@
 //  that can be found in the LICENSE file.
 //
 
-import 'dart:async';
 import 'dart:io';
 
 import 'package:autonomy_flutter/au_bloc.dart';
 import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/screen/settings/preferences/preferences_state.dart';
-import 'package:autonomy_flutter/service/local_auth_service.dart';
 import 'package:autonomy_flutter/util/biometrics_util.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class PreferencesBloc extends AuBloc<PreferenceEvent, PreferenceState> {
   PreferencesBloc(this._appDataManager)
@@ -49,29 +46,6 @@ class PreferencesBloc extends AuBloc<PreferenceEvent, PreferenceState> {
 
     on<PreferenceUpdateEvent>((event, emit) async {
       _isOnChanging = true;
-      if (event.newState.isDevicePasscodeEnabled !=
-          state.isDevicePasscodeEnabled) {
-        final canCheckBiometrics = await authenticateIsAvailable();
-        if (canCheckBiometrics) {
-          bool didAuthenticate = false;
-          try {
-            didAuthenticate = await LocalAuthenticationService.authenticate(
-                localizedReason: 'authen_for_autonomy'.tr());
-          } catch (e) {
-            log.info(e);
-          }
-          if (didAuthenticate) {
-            await appSettingsStorageService.setDevicePasscodeEnabled(
-                event.newState.isDevicePasscodeEnabled);
-          } else {
-            event.newState.isDevicePasscodeEnabled =
-                state.isDevicePasscodeEnabled;
-          }
-        } else {
-          event.newState.isDevicePasscodeEnabled = false;
-          unawaited(openAppSettings());
-        }
-      }
 
       if (event.newState.isNotificationEnabled != state.isNotificationEnabled) {
         try {

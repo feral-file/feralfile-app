@@ -112,7 +112,6 @@ class OnboardingAddAddressBloc
       );
       final connection = await _addressService.insertAddress(
         walletAddress,
-        refreshPlaylist: !event.isFromOnboarding,
       );
       emit(OnboardingAddAddressSuccessState(connection));
     } on AddAddressException catch (e) {

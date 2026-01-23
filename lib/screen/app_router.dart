@@ -6,16 +6,13 @@
 //
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/database/app_data_manager.dart';
 import 'package:autonomy_flutter/model/release_note.dart';
 import 'package:autonomy_flutter/model/token.dart';
-import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/onboarding/add_address_input_page.dart';
 import 'package:autonomy_flutter/onboarding/add_address_page.dart';
 import 'package:autonomy_flutter/onboarding/debug_overlay.dart';
 import 'package:autonomy_flutter/onboarding/introduce_page.dart';
 import 'package:autonomy_flutter/onboarding/setup_ff1_page.dart';
-import 'package:autonomy_flutter/screen/autonomy_security_page.dart';
 import 'package:autonomy_flutter/screen/bloc/accounts/accounts_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/identity/identity_bloc.dart';
 import 'package:autonomy_flutter/screen/bloc/subscription/subscription_bloc.dart';
@@ -38,8 +35,6 @@ import 'package:autonomy_flutter/screen/device_setting/scan_wifi_network_page.da
 import 'package:autonomy_flutter/screen/device_setting/start_setup_ff1_page.dart';
 import 'package:autonomy_flutter/screen/github_doc.dart';
 import 'package:autonomy_flutter/screen/home/home_bloc.dart';
-import 'package:autonomy_flutter/screen/local_feed_server/add_local_feed_server.dart';
-import 'package:autonomy_flutter/screen/local_feed_server/custom_feed_servers_page.dart';
 import 'package:autonomy_flutter/screen/meili_search/meili_search_bloc.dart';
 import 'package:autonomy_flutter/screen/search/search_page.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/explore/bloc/record_controller_bloc.dart';
@@ -51,21 +46,14 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/cha
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc_constants.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlist_details/dp1_playlist_details.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
-import 'package:autonomy_flutter/screen/onboarding/view_address/name_view_only_page.dart';
-import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address.dart';
-import 'package:autonomy_flutter/screen/onboarding/view_address/view_existing_address_bloc.dart';
 import 'package:autonomy_flutter/screen/onboarding_page.dart';
 import 'package:autonomy_flutter/screen/release_note_detail_page.dart';
 import 'package:autonomy_flutter/screen/release_notes_page.dart';
 import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
 import 'package:autonomy_flutter/screen/settings/data_management/data_management_page.dart';
-import 'package:autonomy_flutter/screen/settings/data_management/recovery_phrase/recovery_phrase_page.dart';
-import 'package:autonomy_flutter/screen/settings/hidden_artworks/hidden_artworks_bloc.dart';
-import 'package:autonomy_flutter/screen/settings/hidden_artworks/hidden_artworks_page.dart';
 import 'package:autonomy_flutter/screen/settings/preferences/preferences_bloc.dart';
 import 'package:autonomy_flutter/screen/settings/preferences/preferences_page.dart';
 import 'package:autonomy_flutter/screen/settings/settings_page.dart';
-import 'package:autonomy_flutter/screen/wallet/wallet_page.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/view/transparent_router.dart';
 import 'package:flutter/cupertino.dart';
@@ -82,29 +70,19 @@ class AppRouter {
   static const onboardingAddAddressInputPage =
       'onboarding_add_address_input_page';
   static const onboardingSetupFf1Page = 'onboarding_setup_ff1_page';
-  static const nameLinkedAccountPage = 'name_linked_account_page';
   static const homePage = 'home_page';
   static const recordControllerPage = 'record_controller_page';
   static const artworkDetailsPage = 'artwork_details_page';
   static const settingsPage = 'settings_page';
   static const scanQRPage = 'scan_qr_page';
-  static const recoveryPhrasePage = 'recovery_phrase_page';
-  static const autonomySecurityPage = 'security_page';
   static const releaseNotesPage = 'release_notes_page';
   static const releaseNoteDetailPage = 'release_note_detail_page';
-  static const hiddenArtworksPage = 'hidden_artworks_page';
   static const supportCustomerPage = 'support_customer_page';
-  static const supportListPage = 'support_list_page';
-  static const supportThreadPage = 'support_thread_page';
   static const githubDocPage = 'github_doc_page';
   static const preferencesPage = 'preferences_page';
-  static const walletPage = 'wallet_page';
   static const dataManagementPage = 'data_management_page';
   static const keyboardControlPage = 'keyboard_control_page';
   static const touchPadPage = 'touch_pad_page';
-  static const viewExistingAddressPage = 'view_existing_address_page';
-  static const accessMethodPage = 'access_method_page';
-  static const collectionPage = 'collection_page';
   static const startSetupFF1Page = 'start_setup_FF1_page';
   static const scanWifiNetworkPage = 'scan_wifi_network_page';
   static const sendWifiCredentialPage = 'send_wifi_credential_page';
@@ -116,8 +94,6 @@ class AppRouter {
   static const channelDetailPage = 'channel_detail_page';
   static const dp1PlaylistDetailsPage = 'do1_playlist_details_page';
   static const voiceCommandPage = 'voice_command_page';
-  static const addLocalFeedServerPage = 'add_local_feed_server_page';
-  static const customFeedServersPage = 'custom_feed_servers_page';
   static const allPlaylistsPage = 'all_playlists_page';
   static const allChannelsPage = 'all_channels_page';
   static const searchPage = 'search_page';
@@ -212,20 +188,6 @@ class AppRouter {
           ),
         );
 
-      case AppRouter.recoveryPhrasePage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => const RecoveryPhrasePage(),
-        );
-
-      case AppRouter.nameLinkedAccountPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => NameViewOnlyAddressPage(
-            address: settings.arguments! as WalletAddress,
-          ),
-        );
-
       case scanQRPage:
         final payload = settings.arguments! as ScanQRPagePayload;
         return PageTransition(
@@ -247,17 +209,6 @@ class AppRouter {
               BlocProvider.value(value: identityBloc),
             ],
             child: const SettingsPage(),
-          ),
-        );
-
-      case viewExistingAddressPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => BlocProvider(
-            create: (_) => ViewExistingAddressBloc(injector(), injector()),
-            child: ViewExistingAddress(
-              payload: settings.arguments! as ViewExistingAddressPayload,
-            ),
           ),
         );
 
@@ -288,12 +239,6 @@ class AppRouter {
           ),
         );
 
-      case autonomySecurityPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => const AutonomySecurityPage(),
-        );
-
       case releaseNotesPage:
         return CupertinoPageRoute(
           settings: settings,
@@ -314,40 +259,11 @@ class AppRouter {
           builder: (context) => const SupportCustomerPage(),
         );
 
-      case hiddenArtworksPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => MultiBlocProvider(
-            providers: [
-              BlocProvider(
-                create: (_) => HiddenArtworksBloc(
-                  injector<AppDataManager>(),
-                  injector(),
-                ),
-              ),
-            ],
-            child: const HiddenArtworksPage(),
-          ),
-        );
-
       case githubDocPage:
         return CupertinoPageRoute(
           settings: settings,
           builder: (context) => GithubDocPage(
             payload: settings.arguments! as GithubDocPayload,
-          ),
-        );
-
-      case walletPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => MultiBlocProvider(
-            providers: [
-              BlocProvider.value(value: accountsBloc),
-            ],
-            child: WalletPage(
-              payload: settings.arguments as WalletPagePayload?,
-            ),
           ),
         );
       case preferencesPage:
@@ -502,18 +418,6 @@ class AppRouter {
               payload: payload,
             ),
           ),
-        );
-
-      case addLocalFeedServerPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => const AddLocalFeedServerPage(),
-        );
-
-      case customFeedServersPage:
-        return CupertinoPageRoute(
-          settings: settings,
-          builder: (context) => const CustomFeedServersPage(),
         );
 
       case allPlaylistsPage:

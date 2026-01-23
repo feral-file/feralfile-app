@@ -10,7 +10,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/wor
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/home_index_header.dart';
 import 'package:autonomy_flutter/screen/scan_qr/scan_qr_page.dart';
 import 'package:autonomy_flutter/screen/search/search_page.dart';
-import 'package:autonomy_flutter/service/customer_support_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
