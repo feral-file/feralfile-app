@@ -6,6 +6,7 @@
 //
 
 import 'dart:async';
+import 'dart:collection';
 import 'dart:io';
 
 import 'package:autonomy_flutter/common/database.dart';
@@ -18,6 +19,41 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sentry/sentry.dart';
 import 'package:synchronized/synchronized.dart';
+
+/// LRU cache for ThumbnailCacheEntry objects
+/// Reduces database queries by caching frequently accessed entries in memory
+class _LruCache<K, V> {
+  _LruCache({required this.maxSize});
+
+  final int maxSize;
+  final LinkedHashMap<K, V> _cache = LinkedHashMap<K, V>();
+
+  V? get(K key) {
+    final value = _cache.remove(key);
+    if (value != null) {
+      _cache[key] = value; // Move to end (most recent)
+    }
+    return value;
+  }
+
+  void put(K key, V value) {
+    _cache.remove(key); // Remove if exists
+    _cache[key] = value; // Add to end
+    if (_cache.length > maxSize) {
+      _cache.remove(_cache.keys.first); // Remove oldest
+    }
+  }
+
+  void remove(K key) {
+    _cache.remove(key);
+  }
+
+  void clear() {
+    _cache.clear();
+  }
+
+  int get length => _cache.length;
+}
 
 /// Custom thumbnail disk cache with unlimited storage and TTL eviction
 /// Manages both file storage and ObjectBox metadata
@@ -34,6 +70,11 @@ class ThumbnailDiskCache {
 
   // Per-key locks to prevent concurrent writes to the same file
   final Map<String, Lock> _writeLocks = {};
+
+  // In-memory LRU cache for frequently accessed entries
+  // Reduces database queries for hot paths (e.g., scrolling through galleries)
+  final _LruCache<String, ThumbnailCacheEntry?> _memoryCache =
+      _LruCache(maxSize: 500);
 
   // Configuration (tunable)
   static const int kTtlDays = 14; // 14 days
@@ -91,6 +132,9 @@ class ThumbnailDiskCache {
   /// Startup sweep: cleanup stale downloading states and orphaned files
   Future<void> _startupSweep() async {
     try {
+      // Clear memory cache on startup to avoid stale data
+      _memoryCache.clear();
+
       final now = DateTime.now().millisecondsSinceEpoch;
       final staleDownloadThreshold = now - kStaleDownloadMs;
 
@@ -112,6 +156,7 @@ class ThumbnailDiskCache {
           entry.inFlightBackend = null;
           entry.inFlightTaskId = null;
           _boxOrThrow.put(entry);
+          // Note: Memory cache already cleared at start of _startupSweep()
         }
       }
 
@@ -172,13 +217,24 @@ class ThumbnailDiskCache {
     }
   }
 
-  /// Get entry by key
+  /// Get entry by key with in-memory LRU caching
   ThumbnailCacheEntry? getByKey(String key) {
     try {
+      // Check memory cache first
+      final cached = _memoryCache.get(key);
+      if (cached != null) {
+        return cached;
+      }
+
+      // Cache miss - query database
       final query =
           _boxOrThrow.query(ThumbnailCacheEntry_.key.equals(key)).build();
       final entry = query.findFirst();
       query.close();
+
+      // Store in memory cache (including null results to avoid repeated queries)
+      _memoryCache.put(key, entry);
+
       return entry;
     } catch (e) {
       log.severe('[ThumbnailDiskCache] Error getting entry by key: $e');
@@ -216,6 +272,8 @@ class ThumbnailDiskCache {
   void put(ThumbnailCacheEntry entry) {
     try {
       _boxOrThrow.put(entry);
+      // Invalidate memory cache for this key
+      _memoryCache.remove(entry.key);
     } catch (e, stackTrace) {
       log.severe('[ThumbnailDiskCache] Error putting entry: $e');
       unawaited(
@@ -285,6 +343,8 @@ class ThumbnailDiskCache {
         entry.status = ThumbnailStatus.missing;
         entry.localPath = null;
         _boxOrThrow.put(entry);
+        // Invalidate memory cache
+        _memoryCache.remove(key);
         return null;
       }
 
@@ -454,6 +514,8 @@ class ThumbnailDiskCache {
       entry.errorCount = 0;
       entry.lastError = null;
       _boxOrThrow.put(entry);
+      // Invalidate memory cache
+      _memoryCache.remove(key);
     } else {
       // Create new entry
       final parsed = ThumbnailCacheKey.parse(key);
@@ -482,6 +544,8 @@ class ThumbnailDiskCache {
         lastModified: lastModified,
       );
       _boxOrThrow.put(entry);
+      // Invalidate memory cache for new entries too
+      _memoryCache.remove(key);
     }
   }
 
@@ -502,6 +566,8 @@ class ThumbnailDiskCache {
         entry.localPath = null;
         entry.sizeBytes = null;
         _boxOrThrow.put(entry);
+        // Invalidate memory cache
+        _memoryCache.remove(key);
       }
     } catch (e) {
       log.severe('[ThumbnailDiskCache] Error deleting file: $e');
@@ -542,6 +608,9 @@ class ThumbnailDiskCache {
   /// Clear all cache (files + ObjectBox entries)
   Future<void> clearAll() async {
     try {
+      // Clear memory cache
+      _memoryCache.clear();
+
       // Delete all files
       final cacheDir = Directory(_cacheDirOrThrow);
       if (await cacheDir.exists()) {
@@ -561,6 +630,7 @@ class ThumbnailDiskCache {
   /// Dispose resources
   Future<void> dispose() async {
     _writeLocks.clear();
+    _memoryCache.clear();
   }
 
   /// Get statistics for monitoring
@@ -597,6 +667,8 @@ class ThumbnailDiskCache {
         'downloading': downloadingCount,
         'total_bytes': totalBytes,
         'unlimited': true,
+        'memory_cache_size': _memoryCache.length,
+        'memory_cache_max': 500,
       };
     } catch (e) {
       log.severe('[ThumbnailDiskCache] Error getting stats: $e');
