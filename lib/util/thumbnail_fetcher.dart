@@ -279,18 +279,7 @@ class ThumbnailFetcher {
           }
         }
 
-        // Strategy 2: Check for similar size (within 20% margin)
-        final similarMatch =
-            diskCache.getSimilarSize(url, targetWidth, targetHeight);
-        if (similarMatch != null) {
-          final file = diskCache.readFile(similarMatch.key);
-          if (file != null) {
-            final bytes = await file.readAsBytes();
-            return ThumbnailFetchResult(success: true, bytes: bytes);
-          }
-        }
-
-        // Strategy 3: Check if original exists → resize from it
+        // Strategy 2: Check if original exists → resize from it
         final original = diskCache.getOriginal(url);
         if (original != null) {
           final originalFile = diskCache.readFile(original.key);
@@ -316,7 +305,7 @@ class ThumbnailFetcher {
         }
       }
 
-      // Strategy 4: Download original and optionally resize
+      // Strategy 3: Download original and optionally resize
 
       final downloadResult = await httpFetcher.fetch(
         url: url,
@@ -361,7 +350,6 @@ class ThumbnailFetcher {
       }
 
       // No resize needed, return original
-      unawaited(diskCache.evictIfNeeded());
       return downloadResult;
     } catch (e, stackTrace) {
       log.severe('[ThumbnailFetcher] Error in fetchThumbnail: $e');
@@ -434,8 +422,6 @@ class ThumbnailFetcher {
       } catch (e) {
         log.warning('[ThumbnailFetcher] Error cleaning up temp file: $e');
       }
-
-      unawaited(diskCache.evictIfNeeded());
 
       log.info(
         '[ThumbnailFetcher] Created and cached resized version: '

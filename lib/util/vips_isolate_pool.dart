@@ -59,7 +59,7 @@ class _VipsWorker {
   /// Initialize the isolate worker
   Future<void> initialize() async {
     final receivePort = ReceivePort();
-    
+
     _isolate = await Isolate.spawn(
       _isolateEntry,
       receivePort.sendPort,
@@ -134,7 +134,7 @@ class _VipsWorker {
   /// Isolate entry point
   static void _isolateEntry(SendPort mainSendPort) {
     final receivePort = ReceivePort();
-    
+
     // Send our SendPort to the main isolate
     mainSendPort.send(receivePort.sendPort);
 
@@ -168,7 +168,8 @@ class _VipsWorker {
           var scale = 1.0;
 
           if (request.targetWidth != null && request.targetHeight != null) {
-            // Both dimensions specified - fit within bounds
+            // Both dimensions specified - fit within bounds maintaining aspect ratio
+            // Use the smaller scale to ensure image fits within target bounds
             final scaleW = request.targetWidth! / originalWidth;
             final scaleH = request.targetHeight! / originalHeight;
             scale = scaleW < scaleH ? scaleW : scaleH;
@@ -237,7 +238,7 @@ class VipsIsolatePool {
 
     try {
       log.info('[VipsIsolatePool] Initializing pool with $poolSize workers...');
-      
+
       // Initialize libvips in main isolate
       try {
         initVips();
@@ -254,7 +255,8 @@ class VipsIsolatePool {
 
       _initialized = true;
       _initLock.complete();
-      log.info('[VipsIsolatePool] Pool initialized with ${_workers.length} workers');
+      log.info(
+          '[VipsIsolatePool] Pool initialized with ${_workers.length} workers');
     } catch (e, stackTrace) {
       log.severe('[VipsIsolatePool] Failed to initialize: $e\n$stackTrace');
       _isInitializing = false; // Reset flag on error
@@ -335,11 +337,11 @@ class VipsIsolatePool {
   /// Dispose the pool and all workers
   Future<void> dispose() async {
     log.info('[VipsIsolatePool] Disposing pool');
-    
+
     for (final worker in _workers) {
       worker.dispose();
     }
-    
+
     _workers.clear();
     _initialized = false;
 
@@ -348,7 +350,7 @@ class VipsIsolatePool {
     } catch (e) {
       // Ignore errors during shutdown
     }
-    
+
     log.info('[VipsIsolatePool] Pool disposed');
   }
 }

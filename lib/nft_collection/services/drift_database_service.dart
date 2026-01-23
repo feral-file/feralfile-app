@@ -22,6 +22,7 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart'
     as dp1Model;
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
+import 'package:autonomy_flutter/service/thumbnail_prefetch_service.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/feed_manager.dart';
@@ -728,6 +729,10 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
             itemCount: Value(playlist.items.length),
           ),
         );
+
+        // Prefetch thumbnails for playlist items
+        // First 8 items go to high priority queue, rest to low priority
+        await _prefetchPlaylistThumbnails(tokens);
       }
 
       // Handle dynamic queries - fetch tokens from indexer
@@ -1040,11 +1045,77 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
       log.info(
         '[DriftDatabaseService] Stored ${tokens.length} tokens for playlist $playlistId, total count: $count',
       );
+
+      // Prefetch thumbnails for stored tokens
+      // First 8 items go to high priority queue, rest to low priority
+      await _prefetchPlaylistThumbnails(tokens);
     } catch (e, st) {
       log.info(
         '[DriftDatabaseService] Error storing tokens as items: $e',
       );
       unawaited(Sentry.captureException(e, stackTrace: st));
+    }
+  }
+
+  /// Prefetch thumbnails for playlist tokens
+  /// First 8 items go to high priority queue, rest to low priority
+  Future<void> _prefetchPlaylistThumbnails(List<AssetToken> tokens) async {
+    try {
+      if (tokens.isEmpty) {
+        return;
+      }
+
+      // Extract thumbnail URLs from tokens
+      final thumbnailUrls = tokens
+          .map((token) => token.getGalleryThumbnailUrl())
+          .whereType<String>()
+          .where((url) => url.isNotEmpty)
+          .toList();
+
+      if (thumbnailUrls.isEmpty) {
+        return;
+      }
+
+      final prefetchService = injector<ThumbnailPrefetchService>();
+
+      // Split URLs into high priority (first 8) and low priority (rest)
+      final highPriorityUrls = thumbnailUrls.take(8).toList();
+      final lowPriorityUrls = thumbnailUrls.length > 8
+          ? thumbnailUrls.skip(8).toList()
+          : <String>[];
+
+      // Prefetch high priority thumbnails
+      if (highPriorityUrls.isNotEmpty) {
+        await prefetchService.prefetchUrls(
+          urls: highPriorityUrls,
+          priority: PrefetchPriority.backgroundWarm,
+          highPriority: true,
+        );
+        log.info(
+          '[DriftDatabaseService] Prefetched ${highPriorityUrls.length} thumbnails in high priority queue',
+        );
+      }
+
+      // Prefetch low priority thumbnails
+      if (lowPriorityUrls.isNotEmpty) {
+        await prefetchService.prefetchUrls(
+          urls: lowPriorityUrls,
+          priority: PrefetchPriority.backgroundWarm,
+          highPriority: false,
+        );
+        log.info(
+          '[DriftDatabaseService] Prefetched ${lowPriorityUrls.length} thumbnails in low priority queue',
+        );
+      }
+
+      log.info(
+        '[DriftDatabaseService] Total prefetched: ${thumbnailUrls.length} thumbnails '
+        '(${highPriorityUrls.length} high priority, ${lowPriorityUrls.length} low priority)',
+      );
+    } catch (e, st) {
+      log.info('[DriftDatabaseService] Error prefetching thumbnails: $e');
+      unawaited(Sentry.captureException(e, stackTrace: st));
+      // Non-critical, don't rethrow
     }
   }
 

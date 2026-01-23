@@ -19,8 +19,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sentry/sentry.dart';
 import 'package:synchronized/synchronized.dart';
 
-/// Custom thumbnail disk cache with LRU + TTL eviction
+/// Custom thumbnail disk cache with unlimited storage and TTL eviction
 /// Manages both file storage and ObjectBox metadata
+/// Caches all images indefinitely until TTL expires
 class ThumbnailDiskCache {
   factory ThumbnailDiskCache() => _instance;
 
@@ -34,18 +35,9 @@ class ThumbnailDiskCache {
   // Per-key locks to prevent concurrent writes to the same file
   final Map<String, Lock> _writeLocks = {};
 
-  // Batched access time updates (processed in background isolate)
-  final Set<String> _pendingAccessTimeUpdates = {};
-  final Map<String, int> _lastUpdateTime = {};
-  Timer? _accessTimeFlushTimer;
-  final Lock _batchLock = Lock();
-
   // Configuration (tunable)
-  static const int kMaxDiskSizeBytes = 500 * 1024 * 1024; // 500 MB
   static const int kTtlDays = 14; // 14 days
   static const int kStaleDownloadMs = 30 * 60 * 1000; // 30 minutes
-  static const int kAccessTimeUpdateBatchMs = 2000; // 2 seconds
-  static const int kAccessTimeUpdateThresholdMs = 10 * 1000; // 10 seconds
 
   /// Initialize cache directory and ObjectBox box
   Future<void> initialize() async {
@@ -112,7 +104,7 @@ class ThumbnailDiskCache {
 
       for (final entry in staleEntries) {
         // If downloading for too long, mark as missing
-        if (entry.lastAccessAtMs < staleDownloadThreshold) {
+        if (entry.createdAtMs < staleDownloadThreshold) {
           log.info(
             '[ThumbnailDiskCache] Marking stale downloading entry as missing: ${entry.key}',
           );
@@ -211,11 +203,6 @@ class ThumbnailDiskCache {
       final entry = query.findFirst();
       query.close();
 
-      if (entry != null) {
-        // Touch access time for LRU
-        updateAccessTime(entry.key);
-      }
-
       return entry;
     } catch (e) {
       log.severe(
@@ -240,79 +227,9 @@ class ThumbnailDiskCache {
     }
   }
 
-  /// Update access time for LRU (batched for performance)
-  /// This method queues the update and flushes periodically to avoid blocking UI
+  /// No-op: access time tracking disabled (unlimited cache)
   void updateAccessTime(String key) {
-    try {
-      final now = DateTime.now().millisecondsSinceEpoch;
-
-      // Skip if updated recently (within threshold)
-      final lastUpdate = _lastUpdateTime[key];
-      if (lastUpdate != null &&
-          (now - lastUpdate) < kAccessTimeUpdateThresholdMs) {
-        return;
-      }
-
-      // Add to pending batch
-      _pendingAccessTimeUpdates.add(key);
-      _lastUpdateTime[key] = now;
-
-      // Start or reset flush timer
-      _accessTimeFlushTimer?.cancel();
-      _accessTimeFlushTimer = Timer(
-        Duration(milliseconds: kAccessTimeUpdateBatchMs),
-        _flushAccessTimeUpdates,
-      );
-    } catch (e) {
-      log.severe('[ThumbnailDiskCache] Error queuing access time update: $e');
-    }
-  }
-
-  /// Flush batched access time updates to ObjectBox asynchronously
-  /// Uses ObjectBox's putManyAsync which runs on worker isolate internally
-  /// This doesn't block the UI thread
-  Future<void> _flushAccessTimeUpdates() async {
-    return _batchLock.synchronized(() async {
-      if (_pendingAccessTimeUpdates.isEmpty) {
-        return;
-      }
-
-      try {
-        final keys = _pendingAccessTimeUpdates.toList();
-        _pendingAccessTimeUpdates.clear();
-        final now = DateTime.now().millisecondsSinceEpoch;
-
-        // Collect entries to update
-        final updates = <ThumbnailCacheEntry>[];
-        for (final key in keys) {
-          final entry = getByKey(key);
-          if (entry != null) {
-            entry.lastAccessAtMs = now;
-            updates.add(entry);
-          }
-        }
-
-        if (updates.isNotEmpty) {
-          // Use ObjectBox's putManyAsync - it runs on worker isolate internally
-          // No manual isolate management or SendPort overhead
-          await _boxOrThrow.putManyAsync(updates);
-
-          log.info(
-            '[ThumbnailDiskCache] Flushed ${updates.length} access time updates asynchronously',
-          );
-        }
-      } catch (e, stackTrace) {
-        log.severe(
-          '[ThumbnailDiskCache] Error flushing access time updates: $e',
-        );
-        unawaited(
-          Sentry.captureException(
-            'ThumbnailDiskCache flush access time error: $e',
-            stackTrace: stackTrace,
-          ),
-        );
-      }
-    });
+    // Intentionally empty - no LRU tracking needed
   }
 
   /// Find original file entry for a URL
@@ -323,66 +240,11 @@ class ThumbnailDiskCache {
       if (entry != null &&
           entry.status == ThumbnailStatus.ready &&
           entry.isOriginal) {
-        updateAccessTime(key);
         return entry;
       }
       return null;
     } catch (e) {
       log.severe('[ThumbnailDiskCache] Error getting original: $e');
-      return null;
-    }
-  }
-
-  /// Find cached resize with similar dimensions (within 20% margin)
-  ThumbnailCacheEntry? getSimilarSize(String url, int width, int height) {
-    try {
-      // Get all resized entries for this URL
-      final urlPrefix = '$url|';
-      final query = _boxOrThrow
-          .query(ThumbnailCacheEntry_.key
-              .startsWith(urlPrefix)
-              .and(ThumbnailCacheEntry_.status.equals(ThumbnailStatus.ready))
-              .and(ThumbnailCacheEntry_.isOriginal.equals(false)))
-          .build();
-      final entries = query.find();
-      query.close();
-
-      // Find closest match within 20% margin
-      ThumbnailCacheEntry? bestMatch;
-      var bestScore = double.infinity;
-      const margin = 0.2; // 20% margin
-
-      for (final entry in entries) {
-        if (entry.imageWidth == null || entry.imageHeight == null) {
-          continue;
-        }
-
-        final widthDiff = (entry.imageWidth! - width).abs() / width;
-        final heightDiff = (entry.imageHeight! - height).abs() / height;
-        final maxDiff = widthDiff > heightDiff ? widthDiff : heightDiff;
-
-        if (maxDiff <= margin) {
-          // Within margin, calculate score (prefer exact matches)
-          final score = widthDiff + heightDiff;
-          if (score < bestScore) {
-            bestScore = score;
-            bestMatch = entry;
-          }
-        }
-      }
-
-      if (bestMatch != null) {
-        updateAccessTime(bestMatch.key);
-        log.info(
-          '[ThumbnailDiskCache] Found similar size: '
-          '${bestMatch.imageWidth}x${bestMatch.imageHeight} '
-          'for requested ${width}x$height',
-        );
-      }
-
-      return bestMatch;
-    } catch (e) {
-      log.severe('[ThumbnailDiskCache] Error finding similar size: $e');
       return null;
     }
   }
@@ -393,7 +255,6 @@ class ThumbnailDiskCache {
       final key = ThumbnailCacheKey.resized(url, width, height);
       final entry = getByKey(key);
       if (entry != null && entry.status == ThumbnailStatus.ready) {
-        updateAccessTime(key);
         return entry;
       }
       return null;
@@ -427,8 +288,6 @@ class ThumbnailDiskCache {
         return null;
       }
 
-      // Touch access time
-      updateAccessTime(key);
       return file;
     } catch (e) {
       log.severe('[ThumbnailDiskCache] Error reading file: $e');
@@ -587,7 +446,6 @@ class ThumbnailDiskCache {
       if (!isOriginal && entry.variantRank == 0) {
         entry.variantRank = 99; // High rank so it's preferred
       }
-      entry.lastAccessAtMs = now;
       entry.expiresAtMs = now + (kTtlDays * 24 * 60 * 60 * 1000);
       entry.etag = etag;
       entry.lastModified = lastModified;
@@ -618,7 +476,7 @@ class ThumbnailDiskCache {
         imageHeight: imageHeight,
         isOriginal: isOriginal,
         createdAtMs: now,
-        lastAccessAtMs: now,
+        lastAccessAtMs: now, // Required field but not used for eviction
         expiresAtMs: now + (kTtlDays * 24 * 60 * 60 * 1000),
         etag: etag,
         lastModified: lastModified,
@@ -674,74 +532,16 @@ class ThumbnailDiskCache {
     }
   }
 
-  /// Evict entries to stay under max disk size using LRU
+  /// No-op: eviction disabled (unlimited cache)
+  /// Cache will grow indefinitely until TTL expires or manual cleanup
   Future<void> evictIfNeeded() async {
-    try {
-      // Calculate total size of ready entries
-      final query = _boxOrThrow
-          .query(ThumbnailCacheEntry_.status.equals(ThumbnailStatus.ready))
-          .build();
-      final readyEntries = query.find();
-      query.close();
-
-      final totalSize = readyEntries.fold<int>(
-        0,
-        (sum, entry) => sum + (entry.sizeBytes ?? 0),
-      );
-
-      if (totalSize <= kMaxDiskSizeBytes) {
-        return; // Under limit
-      }
-
-      log.info(
-        '[ThumbnailDiskCache] Over limit: $totalSize / $kMaxDiskSizeBytes bytes, evicting...',
-      );
-
-      // Sort by LRU (oldest access first), but prefer evicting higher variants
-      // Strategy: evict high-rank variants first, then by LRU
-      readyEntries.sort((a, b) {
-        // First compare by originKey to group variants together
-        final originCmp = a.originKey.compareTo(b.originKey);
-        if (originCmp != 0) {
-          // Different images, use LRU
-          return a.lastAccessAtMs.compareTo(b.lastAccessAtMs);
-        }
-        // Same origin - evict higher rank first
-        return b.variantRank.compareTo(a.variantRank);
-      });
-
-      var freedBytes = 0;
-      final targetFree = totalSize - kMaxDiskSizeBytes;
-
-      for (final entry in readyEntries) {
-        if (freedBytes >= targetFree) {
-          break;
-        }
-
-        await deleteFile(entry.key);
-        freedBytes += entry.sizeBytes ?? 0;
-      }
-
-      log.info('[ThumbnailDiskCache] Evicted $freedBytes bytes');
-    } catch (e) {
-      log.severe('[ThumbnailDiskCache] Error evicting entries: $e');
-    }
+    // Intentionally empty - no size-based eviction
+    // Only TTL-based cleanup via purgeExpired()
   }
 
   /// Clear all cache (files + ObjectBox entries)
   Future<void> clearAll() async {
     try {
-      // Flush pending updates before clearing
-      await _flushAccessTimeUpdates();
-
-      // Cancel timer
-      _accessTimeFlushTimer?.cancel();
-      _accessTimeFlushTimer = null;
-
-      // Clear tracking maps
-      _pendingAccessTimeUpdates.clear();
-      _lastUpdateTime.clear();
-
       // Delete all files
       final cacheDir = Directory(_cacheDirOrThrow);
       if (await cacheDir.exists()) {
@@ -758,13 +558,8 @@ class ThumbnailDiskCache {
     }
   }
 
-  /// Dispose resources and flush pending updates
+  /// Dispose resources
   Future<void> dispose() async {
-    await _flushAccessTimeUpdates();
-    _accessTimeFlushTimer?.cancel();
-    _accessTimeFlushTimer = null;
-    _pendingAccessTimeUpdates.clear();
-    _lastUpdateTime.clear();
     _writeLocks.clear();
   }
 
@@ -801,9 +596,7 @@ class ThumbnailDiskCache {
         'ready': readyCount,
         'downloading': downloadingCount,
         'total_bytes': totalBytes,
-        'max_bytes': kMaxDiskSizeBytes,
-        'usage_percent':
-            (totalBytes / kMaxDiskSizeBytes * 100).toStringAsFixed(1),
+        'unlimited': true,
       };
     } catch (e) {
       log.severe('[ThumbnailDiskCache] Error getting stats: $e');
