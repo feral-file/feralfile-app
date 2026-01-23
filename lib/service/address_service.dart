@@ -122,6 +122,15 @@ class AddressService {
   Future<void> deleteAddressFromDrift(String address) async {
     await injector<DriftDatabaseService>().deletePlaylistById(address);
     _appDataManager.addressStorageService.deleteAddresses([address]);
+    await injector<UserDp1PlaylistService>().clearAddressIndexingInfo(
+      addresses: [address],
+    );
+    await injector<UserDp1PlaylistService>().clearAddressLastFetchTokenTime(
+      addresses: [address],
+    );
+    await injector<UserDp1PlaylistService>().removeLastUpdateChangeAnchor(
+      addresses: [address],
+    );
     await _onAddressUpdate();
   }
 
