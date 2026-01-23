@@ -22,31 +22,6 @@ class QueryListTokensResponse<T extends AssetToken> {
   List<T> tokens;
 }
 
-enum ExpandField {
-  provenanceEvents,
-  owners,
-  metadataMediaAsset,
-  enrichmentSourceMediaAsset,
-  enrichmentSource,
-}
-
-extension ExpandFieldJson on ExpandField {
-  String toJson() {
-    switch (this) {
-      case ExpandField.provenanceEvents:
-        return 'provenance_events';
-      case ExpandField.owners:
-        return 'owners';
-      case ExpandField.metadataMediaAsset:
-        return 'metadata_media_asset';
-      case ExpandField.enrichmentSourceMediaAsset:
-        return 'enrichment_source_media_asset';
-      case ExpandField.enrichmentSource:
-        return 'enrichment_source';
-    }
-  }
-}
-
 class QueryListTokensRequest {
   QueryListTokensRequest({
     this.owners = const [], // backward-compat; maps to `owner`
@@ -60,18 +35,6 @@ class QueryListTokensRequest {
     this.tokenCids = const [],
     this.tokenNumbers = const [],
     this.limit = indexerTokensPageSize,
-    this.expands = const [
-      ExpandField.provenanceEvents,
-      ExpandField.owners,
-      ExpandField.metadataMediaAsset,
-      ExpandField.enrichmentSourceMediaAsset,
-      ExpandField.enrichmentSource,
-    ],
-    this.ownersLimit = 255,
-    this.ownersOffset = 0,
-    this.provenanceEventsLimit = 50,
-    this.provenanceEventsOffset = 0,
-    this.provenanceEventsOrder = Order.desc,
   });
 
   final List<String> owners;
@@ -83,18 +46,10 @@ class QueryListTokensRequest {
   final List<String> tokenCids;
   final List<String> tokenNumbers;
   final int? limit;
-  final List<ExpandField> expands;
-  final int ownersLimit;
-  final int ownersOffset;
-  final int provenanceEventsLimit;
-  final int provenanceEventsOffset;
-  final Order provenanceEventsOrder;
 
   Map<String, dynamic> toJson() {
-    // Provide both new and legacy keys to maintain compatibility with current queries
     final limitValue = limit;
     return <String, dynamic>{
-      // New API keys
       'owners': owners,
       'chains': chains,
       'contract_addresses': contractAddresses,
@@ -103,13 +58,6 @@ class QueryListTokensRequest {
       'token_numbers': tokenNumbers,
       'limit': limitValue,
       'offset': offset,
-      'expands': expands.map((e) => e.toJson()).toList(),
-      'owners_limit': ownersLimit,
-      'owners_offset': ownersOffset,
-      'provenance_events_limit': provenanceEventsLimit,
-      'provenance_events_offset': provenanceEventsOffset,
-      'provenance_events_order': provenanceEventsOrder.toJson(),
-      // Fields below are not used by the new API but kept for compatibility flags
     };
   }
 }
@@ -117,13 +65,6 @@ class QueryListTokensRequest {
 class QueryGetTokenByCidRequest {
   QueryGetTokenByCidRequest({
     required this.cid,
-    this.expands = const [
-      ExpandField.provenanceEvents,
-      ExpandField.owners,
-      ExpandField.metadataMediaAsset,
-      ExpandField.enrichmentSourceMediaAsset,
-      ExpandField.enrichmentSource,
-    ],
     this.ownersLimit = 10,
     this.ownersOffset = 0,
     this.provenanceEventsLimit = 10,
@@ -132,7 +73,6 @@ class QueryGetTokenByCidRequest {
   });
 
   final String cid;
-  final List<ExpandField> expands;
   final int ownersLimit;
   final int ownersOffset;
   final int provenanceEventsLimit;
@@ -141,7 +81,6 @@ class QueryGetTokenByCidRequest {
 
   Map<String, dynamic> toJson() => <String, dynamic>{
         'cid': cid,
-        'expands': expands.map((e) => e.toJson()).toList(),
         'owners_limit': ownersLimit,
         'owners_offset': ownersOffset,
         'provenance_events_limit': provenanceEventsLimit,

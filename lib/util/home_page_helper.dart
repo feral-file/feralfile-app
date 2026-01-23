@@ -199,22 +199,6 @@ class HomePageHelper {
       log.info('Addresses to refresh: ${addressesToReindex.toList()}');
 
       if (addressesToReindex.isNotEmpty) {
-        log.info('Clearing cached tokens for ${addressesToReindex.toList()}');
-
-        // Clear cached tokens for these addresses before fetching
-        final db = injector<IndexerDatabaseAbstract>();
-        final tokens =
-            await db.getTokensByOwners(owners: addressesToReindex.toList());
-        if (tokens.isNotEmpty) {
-          final cids = tokens.map((v2.AssetToken t) => t.cid).toList();
-          await db.deleteTokens(cids);
-        }
-
-        log.info(
-          '[_refreshAddressesNeedingReindex] Reindexing tokens for '
-          '${addressesToReindex.toList()}',
-        );
-
         final manager = injector<UserAllOwnCollectionBlocManager>();
         final bloc = manager.getOrCreateBloc(addressesToReindex);
         bloc.add(Reindex());
