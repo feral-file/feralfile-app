@@ -71,12 +71,6 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
   }
 
   @override
-  void didPopNext() {
-    super.didPopNext();
-    _playlistsBloc.add(RefreshPlaylistsEvent());
-  }
-
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
@@ -188,8 +182,7 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
       final completer = Completer<void>();
       try {
         await _driftDatabaseService.deletePlaylistById(entry.playlistId);
-        await _addressService.deleteAddress(address);
-        _playlistsBloc.add(RefreshPlaylistsEvent());
+        await _addressService.deleteAddressFromDrift(address.address);
         completer.complete();
       } catch (error) {
         completer.completeError(error);
@@ -203,9 +196,6 @@ class _OnboardingAddAddressPageState extends State<OnboardingAddAddressPage>
       AppRouter.onboardingAddAddressInputPage,
       arguments: OnboardingAddAddressInputPagePayload(),
     );
-    if (result != null && result is WalletAddress) {
-      _playlistsBloc.add(RefreshPlaylistsEvent());
-    }
   }
 
   void onNext(BuildContext context) {

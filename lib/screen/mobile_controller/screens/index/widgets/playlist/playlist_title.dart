@@ -274,7 +274,9 @@ class _PlaylistTitleState extends State<PlaylistTitle> {
           switch (indexingStatus.status) {
             case IndexingJobStatus.running:
               final parts = <String>['Syncing'];
-              parts.add('$cachedTotal ready');
+              if (cachedTotal != null) {
+                parts.add('$cachedTotal ready');
+              }
               if (discoveredTotal != null) {
                 parts.add('$discoveredTotal found');
               }
@@ -282,15 +284,17 @@ class _PlaylistTitleState extends State<PlaylistTitle> {
               break;
             case IndexingJobStatus.paused:
               final parts = <String>['Paused'];
-              parts.add('$cachedTotal ready');
+              if (cachedTotal != null) {
+                parts.add('$cachedTotal ready');
+              }
               parts.add('resumes later');
               statusText = parts.join(' • ');
               break;
             case IndexingJobStatus.completed:
               if (addressState.state == AddressStateType.fetchingArtworksDone) {
                 final parts = <String>['Up to date'];
-                if (readyTotal != null) {
-                  parts.add('$readyTotal works');
+                if (cachedTotal != null) {
+                  parts.add('$cachedTotal works');
                 }
                 statusText = parts.join(' • ');
                 break;

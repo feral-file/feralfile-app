@@ -34,23 +34,23 @@ class AccountsBloc extends AuBloc<AccountsEvent, AccountsState> {
     });
 
     on<ChangeAccountOrderEvent>((event, emit) {
-      var newOrder = event.newOrder;
-      final oldOrder = event.oldOrder;
-      if (oldOrder == newOrder ||
-          state.addresses == null ||
-          oldOrder >= state.addresses!.length ||
-          newOrder > state.addresses!.length) {
-        return;
-      }
+      // var newOrder = event.newOrder;
+      // final oldOrder = event.oldOrder;
+      // if (oldOrder == newOrder ||
+      //     state.addresses == null ||
+      //     oldOrder >= state.addresses!.length ||
+      //     newOrder > state.addresses!.length) {
+      //   return;
+      // }
 
-      if (oldOrder < newOrder) {
-        newOrder -= 1;
-      }
-      final newAddresses = <WalletAddress>[...state.addresses!];
-      final address = newAddresses.removeAt(oldOrder);
-      newAddresses.insert(newOrder, address);
-      emit(state.copyWith(addresses: newAddresses));
-      _addressService.insertAddresses(newAddresses);
+      // if (oldOrder < newOrder) {
+      //   newOrder -= 1;
+      // }
+      // final newAddresses = <WalletAddress>[...state.addresses!];
+      // final address = newAddresses.removeAt(oldOrder);
+      // newAddresses.insert(newOrder, address);
+      // emit(state.copyWith(addresses: newAddresses));
+      // _addressService.insertAddresses(newAddresses);
     });
 
     on<GetAccountBalanceEvent>((event, emit) async {
@@ -91,14 +91,14 @@ class AccountsBloc extends AuBloc<AccountsEvent, AccountsState> {
     });
 
     on<DeleteAddressEvent>((event, emit) async {
-      try {
-        await _addressService.deleteAddress(event.address);
-        final addresses = _addressService.getAllWalletAddresses();
-        emit(state.copyWith(addresses: addresses));
-        await event.onSuccess?.call();
-      } catch (e, s) {
-        await event.onError?.call(e, s);
-      }
+      // try {
+      //   await _addressService.deleteAddressFromDrift(event.address.address);
+      //   final addresses = _addressService.getAllWalletAddresses();
+      //   emit(state.copyWith(addresses: addresses));
+      //   await event.onSuccess?.call();
+      // } catch (e, s) {
+      //   await event.onError?.call(e, s);
+      // }
     });
   }
 }
