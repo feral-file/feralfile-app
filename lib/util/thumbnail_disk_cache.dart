@@ -30,14 +30,22 @@ class ThumbnailDiskCache {
 
   String? _cacheDir;
   Box<ThumbnailCacheEntry>? _box;
-  
+
   // Per-key locks to prevent concurrent writes to the same file
   final Map<String, Lock> _writeLocks = {};
+
+  // Batched access time updates (processed in background isolate)
+  final Set<String> _pendingAccessTimeUpdates = {};
+  final Map<String, int> _lastUpdateTime = {};
+  Timer? _accessTimeFlushTimer;
+  final Lock _batchLock = Lock();
 
   // Configuration (tunable)
   static const int kMaxDiskSizeBytes = 500 * 1024 * 1024; // 500 MB
   static const int kTtlDays = 14; // 14 days
   static const int kStaleDownloadMs = 30 * 60 * 1000; // 30 minutes
+  static const int kAccessTimeUpdateBatchMs = 2000; // 2 seconds
+  static const int kAccessTimeUpdateThresholdMs = 10 * 1000; // 10 seconds
 
   /// Initialize cache directory and ObjectBox box
   Future<void> initialize() async {
@@ -96,7 +104,8 @@ class ThumbnailDiskCache {
 
       // Find stale "downloading" entries (app crashed while downloading)
       final query = _boxOrThrow
-          .query(ThumbnailCacheEntry_.status.equals(ThumbnailStatus.downloading))
+          .query(
+              ThumbnailCacheEntry_.status.equals(ThumbnailStatus.downloading))
           .build();
       final staleEntries = query.find();
       query.close();
@@ -145,8 +154,9 @@ class ThumbnailDiskCache {
         if (file is File) {
           final fileName = p.basename(file.path);
           // Check if this file has a corresponding ObjectBox entry
-          final query =
-              _boxOrThrow.query(ThumbnailCacheEntry_.localPath.equals(fileName)).build();
+          final query = _boxOrThrow
+              .query(ThumbnailCacheEntry_.localPath.equals(fileName))
+              .build();
           final entries = query.find();
           query.close();
 
@@ -173,7 +183,8 @@ class ThumbnailDiskCache {
   /// Get entry by key
   ThumbnailCacheEntry? getByKey(String key) {
     try {
-      final query = _boxOrThrow.query(ThumbnailCacheEntry_.key.equals(key)).build();
+      final query =
+          _boxOrThrow.query(ThumbnailCacheEntry_.key.equals(key)).build();
       final entry = query.findFirst();
       query.close();
       return entry;
@@ -229,17 +240,79 @@ class ThumbnailDiskCache {
     }
   }
 
-  /// Update access time for LRU
+  /// Update access time for LRU (batched for performance)
+  /// This method queues the update and flushes periodically to avoid blocking UI
   void updateAccessTime(String key) {
     try {
-      final entry = getByKey(key);
-      if (entry != null) {
-        entry.lastAccessAtMs = DateTime.now().millisecondsSinceEpoch;
-        _boxOrThrow.put(entry);
+      final now = DateTime.now().millisecondsSinceEpoch;
+
+      // Skip if updated recently (within threshold)
+      final lastUpdate = _lastUpdateTime[key];
+      if (lastUpdate != null &&
+          (now - lastUpdate) < kAccessTimeUpdateThresholdMs) {
+        return;
       }
+
+      // Add to pending batch
+      _pendingAccessTimeUpdates.add(key);
+      _lastUpdateTime[key] = now;
+
+      // Start or reset flush timer
+      _accessTimeFlushTimer?.cancel();
+      _accessTimeFlushTimer = Timer(
+        Duration(milliseconds: kAccessTimeUpdateBatchMs),
+        _flushAccessTimeUpdates,
+      );
     } catch (e) {
-      log.severe('[ThumbnailDiskCache] Error updating access time: $e');
+      log.severe('[ThumbnailDiskCache] Error queuing access time update: $e');
     }
+  }
+
+  /// Flush batched access time updates to ObjectBox asynchronously
+  /// Uses ObjectBox's putManyAsync which runs on worker isolate internally
+  /// This doesn't block the UI thread
+  Future<void> _flushAccessTimeUpdates() async {
+    return _batchLock.synchronized(() async {
+      if (_pendingAccessTimeUpdates.isEmpty) {
+        return;
+      }
+
+      try {
+        final keys = _pendingAccessTimeUpdates.toList();
+        _pendingAccessTimeUpdates.clear();
+        final now = DateTime.now().millisecondsSinceEpoch;
+
+        // Collect entries to update
+        final updates = <ThumbnailCacheEntry>[];
+        for (final key in keys) {
+          final entry = getByKey(key);
+          if (entry != null) {
+            entry.lastAccessAtMs = now;
+            updates.add(entry);
+          }
+        }
+
+        if (updates.isNotEmpty) {
+          // Use ObjectBox's putManyAsync - it runs on worker isolate internally
+          // No manual isolate management or SendPort overhead
+          await _boxOrThrow.putManyAsync(updates);
+
+          log.info(
+            '[ThumbnailDiskCache] Flushed ${updates.length} access time updates asynchronously',
+          );
+        }
+      } catch (e, stackTrace) {
+        log.severe(
+          '[ThumbnailDiskCache] Error flushing access time updates: $e',
+        );
+        unawaited(
+          Sentry.captureException(
+            'ThumbnailDiskCache flush access time error: $e',
+            stackTrace: stackTrace,
+          ),
+        );
+      }
+    });
   }
 
   /// Find original file entry for a URL
@@ -385,12 +458,13 @@ class ThumbnailDiskCache {
     int? imageHeight,
   }) async {
     final lock = _getLock(key);
-    
+
     return lock.synchronized(() async {
       try {
         // Check if already cached (another task might have written it)
         final existingEntry = getByKey(key);
-        if (existingEntry != null && existingEntry.status == ThumbnailStatus.ready) {
+        if (existingEntry != null &&
+            existingEntry.status == ThumbnailStatus.ready) {
           log.info(
             '[ThumbnailDiskCache] File already cached for key: $key, skipping write',
           );
@@ -499,7 +573,7 @@ class ThumbnailDiskCache {
   }) async {
     var entry = getByKey(key);
     final now = DateTime.now().millisecondsSinceEpoch;
-    
+
     if (entry != null) {
       // Update existing entry
       entry.status = ThumbnailStatus.ready;
@@ -526,10 +600,10 @@ class ThumbnailDiskCache {
       // Create new entry
       final parsed = ThumbnailCacheKey.parse(key);
       final url = parsed['url'] as String;
-      
+
       // Use ThumbnailUrlParser to get proper originKey for compatibility
       final urlParsed = ThumbnailUrlParser.parse(url);
-      
+
       entry = ThumbnailCacheEntry(
         key: key,
         originKey: urlParsed.originKey,
@@ -593,7 +667,8 @@ class ThumbnailDiskCache {
         await deleteFile(entry.key);
       }
 
-      log.info('[ThumbnailDiskCache] Purged ${expiredEntries.length} expired entries');
+      log.info(
+          '[ThumbnailDiskCache] Purged ${expiredEntries.length} expired entries');
     } catch (e) {
       log.severe('[ThumbnailDiskCache] Error purging expired entries: $e');
     }
@@ -656,6 +731,17 @@ class ThumbnailDiskCache {
   /// Clear all cache (files + ObjectBox entries)
   Future<void> clearAll() async {
     try {
+      // Flush pending updates before clearing
+      await _flushAccessTimeUpdates();
+
+      // Cancel timer
+      _accessTimeFlushTimer?.cancel();
+      _accessTimeFlushTimer = null;
+
+      // Clear tracking maps
+      _pendingAccessTimeUpdates.clear();
+      _lastUpdateTime.clear();
+
       // Delete all files
       final cacheDir = Directory(_cacheDirOrThrow);
       if (await cacheDir.exists()) {
@@ -672,19 +758,31 @@ class ThumbnailDiskCache {
     }
   }
 
+  /// Dispose resources and flush pending updates
+  Future<void> dispose() async {
+    await _flushAccessTimeUpdates();
+    _accessTimeFlushTimer?.cancel();
+    _accessTimeFlushTimer = null;
+    _pendingAccessTimeUpdates.clear();
+    _lastUpdateTime.clear();
+    _writeLocks.clear();
+  }
+
   /// Get statistics for monitoring
   Future<Map<String, dynamic>> getStats() async {
     try {
       final box = _boxOrThrow;
       final total = box.count();
 
-      final readyQuery =
-          box.query(ThumbnailCacheEntry_.status.equals(ThumbnailStatus.ready)).build();
+      final readyQuery = box
+          .query(ThumbnailCacheEntry_.status.equals(ThumbnailStatus.ready))
+          .build();
       final readyCount = readyQuery.count();
       readyQuery.close();
 
       final downloadingQuery = box
-          .query(ThumbnailCacheEntry_.status.equals(ThumbnailStatus.downloading))
+          .query(
+              ThumbnailCacheEntry_.status.equals(ThumbnailStatus.downloading))
           .build();
       final downloadingCount = downloadingQuery.count();
       downloadingQuery.close();
@@ -704,7 +802,8 @@ class ThumbnailDiskCache {
         'downloading': downloadingCount,
         'total_bytes': totalBytes,
         'max_bytes': kMaxDiskSizeBytes,
-        'usage_percent': (totalBytes / kMaxDiskSizeBytes * 100).toStringAsFixed(1),
+        'usage_percent':
+            (totalBytes / kMaxDiskSizeBytes * 100).toStringAsFixed(1),
       };
     } catch (e) {
       log.severe('[ThumbnailDiskCache] Error getting stats: $e');
