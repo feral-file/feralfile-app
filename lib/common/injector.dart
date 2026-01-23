@@ -53,14 +53,12 @@ import 'package:autonomy_flutter/service/domain_address_service.dart';
 import 'package:autonomy_flutter/service/domain_service.dart';
 import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/ethereum_service.dart';
-import 'package:autonomy_flutter/service/feed_registry_service.dart';
 import 'package:autonomy_flutter/service/meilisearch_service.dart';
 import 'package:autonomy_flutter/service/metric_service.dart';
 import 'package:autonomy_flutter/service/mobile_controller_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/network_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
-import 'package:autonomy_flutter/service/secure_storage_server.dart';
 import 'package:autonomy_flutter/service/user_playlist_service.dart';
 import 'package:autonomy_flutter/service/versions_service.dart';
 import 'package:autonomy_flutter/util/au_file_service.dart';
@@ -124,9 +122,6 @@ Future<void> setupInjector() async {
     () => AddressService(injector()),
   );
 
-  final tzktUrl = Environment.appTestnetConfig
-      ? Environment.tzktTestnetURL
-      : Environment.tzktMainnetURL;
   injector.registerLazySingleton(
     () => PubdocAPI(dio, baseUrl: Environment.pubdocURL),
   );
@@ -223,10 +218,8 @@ Future<void> setupInjector() async {
     DLSServiceImpl(),
   );
 
-  final identityStore = IndexerIdentityStore();
-  await identityStore.init();
   injector.registerLazySingleton<IdentityBloc>(
-    () => IdentityBloc(identityStore, injector()),
+    () => IdentityBloc(injector()),
   );
 
   injector.registerLazySingleton<CanvasDeviceBloc>(
@@ -246,10 +239,6 @@ Future<void> setupInjector() async {
 
   injector.registerLazySingleton<AppDataManager>(AppDataManager.new);
   await injector<AppDataManager>().init();
-
-  injector.registerLazySingleton<FeedRegistryService>(
-    FeedRegistryServiceImpl.new,
-  );
 
   injector.registerLazySingleton<MobileControllerAPI>(
     () => MobileControllerAPI(
@@ -375,10 +364,6 @@ Future<void> setupInjector() async {
   );
 
   injector.registerFactory<MeiliSearchBloc>(() => MeiliSearchBloc(injector()));
-
-  injector.registerLazySingleton<SecureStorageServer>(
-    SecureStorageServerImpl.new,
-  );
 
   injector.registerLazySingleton<MetricService>(
     () => MetricServiceImpl(),

@@ -14,9 +14,6 @@ import 'dart:ui';
 import 'package:autonomy_flutter/common/database.dart';
 import 'package:autonomy_flutter/common/environment.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/model/announcement/announcement_adapter.dart';
-import 'package:autonomy_flutter/model/draft_customer_support.dart';
-import 'package:autonomy_flutter/model/identity.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/service/deeplink_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
@@ -131,7 +128,6 @@ Future<void> runFeralFileApp() async {
 
   await FlutterDownloader.initialize();
   await Hive.initFlutter();
-  _registerHiveAdapter();
 
   FlutterDownloader.registerCallback(downloadCallback);
   try {
@@ -162,10 +158,6 @@ Future<void> runFeralFileApp() async {
   };
 
   await _setupApp();
-}
-
-void _registerHiveAdapter() {
-  Hive..registerAdapter(IndexerIdentityAdapter());
 }
 
 Future<void> _setupApp() async {

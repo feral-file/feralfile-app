@@ -10,29 +10,32 @@
 
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:flutter_svg/flutter_svg.dart'; // import 'package:flutter_vibrate/flutter_vibrate.dart';
+import 'package:jiffy/jiffy.dart';
+import 'package:share_plus/share_plus.dart';
+
 import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
 import 'package:autonomy_flutter/design/layout_constants.dart';
-import 'package:autonomy_flutter/model/ff_account.dart';
 import 'package:autonomy_flutter/model/now_displaying_object.dart';
 import 'package:autonomy_flutter/model/wallet_address.dart';
 import 'package:autonomy_flutter/screen/app_router.dart';
 import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel/channel_list_row.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/channel/channel_list_row.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/load_more_indicator.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_item_card.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/screens/index/widgets/playlist/playlist_list_row.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/service/base_dp1_feed_service_impl.dart';
-import 'package:autonomy_flutter/service/configuration_service.dart';
-import 'package:autonomy_flutter/service/dp1_feed_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/tv_cast_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/color_extension.dart';
-import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/au_icons.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/error_handler.dart';
@@ -48,15 +51,6 @@ import 'package:autonomy_flutter/view/expandable_sticky_headers.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/bottom_spacing.dart';
-import 'package:card_swiper/card_swiper.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:flutter_svg/flutter_svg.dart'; // import 'package:flutter_vibrate/flutter_vibrate.dart';
-import 'package:jiffy/jiffy.dart';
-import 'package:share_plus/share_plus.dart';
 
 enum ActionState { notRequested, loading, error, done }
 
@@ -67,8 +61,7 @@ void nameContinue(BuildContext context) {
   Navigator.of(context).popUntil(
     (route) =>
         route.settings.name == AppRouter.homePage ||
-        route.settings.name == AppRouter.homePage ||
-        route.settings.name == AppRouter.walletPage,
+        route.settings.name == AppRouter.homePage,
   );
 }
 
@@ -308,7 +301,6 @@ class UIHelper {
     FutureOr<T> Function()? onRetry,
     ValueNotifier<bool>? dynamicRetryNotifier,
   }) async {
-    final theme = Theme.of(context);
     final hasRetry = onRetry != null;
     final res = await showDialog<T?>(
       context,
@@ -435,7 +427,6 @@ class UIHelper {
     Widget? descriptionWidget,
   }) async {
     log.info('[UIHelper] showMessageAction: $title, $description');
-    final theme = Theme.of(context);
 
     if (autoDismissAfter > 0) {
       Future.delayed(
@@ -444,7 +435,7 @@ class UIHelper {
       );
     }
 
-    await showDialog(
+    await showDialog<void>(
       context,
       title,
       SizedBox(
@@ -494,7 +485,6 @@ class UIHelper {
     Widget? descriptionWidget,
   }) async {
     log.info('[UIHelper] showMessageActionNew: $title, $description');
-    final theme = Theme.of(context);
 
     if (autoDismissAfter > 0) {
       Future.delayed(
@@ -503,7 +493,7 @@ class UIHelper {
       );
     }
 
-    await showDialog(
+    await showDialog<void>(
       context,
       title,
       SizedBox(
@@ -547,7 +537,9 @@ class UIHelper {
   }) async {
     final theme = Theme.of(context);
 
-    Widget optionRow({required String title, Function()? onTap}) => InkWell(
+    Widget optionRow(
+            {required String title, FutureOr<void> Function()? onTap}) =>
+        InkWell(
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -803,16 +795,16 @@ class UIHelper {
     BuildContext context, {
     required Widget content,
     String? actionButton,
-    Function()? actionButtonOnTap,
+    FutureOr<void> Function()? actionButtonOnTap,
     String? exitButton,
-    Function()? exitButtonOnTap,
+    FutureOr<void> Function()? exitButtonOnTap,
     double horizontalPadding = 20,
     double verticalPadding = 128,
     bool withExitButton = true,
     Color backgroundColor = AppColor.feralFileHighlight,
   }) async {
     UIHelper.hideInfoDialog(context);
-    await showCupertinoModalPopup(
+    await showCupertinoModalPopup<void>(
       context: context,
       builder: (context) => Scaffold(
         backgroundColor: Colors.transparent,
@@ -920,7 +912,7 @@ class UIHelper {
       UIHelper.hideInfoDialog(context);
     }
     final theme = Theme.of(context);
-    return await showCupertinoModalPopup(
+    return await showCupertinoModalPopup<void>(
       context: context,
       builder: (context) => Scaffold(
         backgroundColor: Colors.transparent,
@@ -976,7 +968,7 @@ class UIHelper {
       UIHelper.hideInfoDialog(context);
     }
     final theme = Theme.of(context);
-    return await showCupertinoModalPopup(
+    return await showCupertinoModalPopup<dynamic>(
       context: context,
       builder: (context) => Scaffold(
         backgroundColor: Colors.transparent,
@@ -1089,10 +1081,9 @@ class UIHelper {
     required List<OptionItem> options,
     String? title,
   }) async {
-    final theme = Theme.of(context);
     final bottomSheetKey = GlobalKey();
 
-    await showModalBottomSheet<dynamic>(
+    await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
       enableDrag: false,
@@ -1175,21 +1166,21 @@ class UIHelper {
 
   static Future<void> showAutoDismissDialog(
     BuildContext context, {
-    required Function() showDialog,
+    required FutureOr<void> Function() showDialog,
     required Duration autoDismissAfter,
   }) async {
     Future.delayed(autoDismissAfter, () => hideInfoDialog(context));
-    await showDialog();
+    await showDialog.call();
   }
 
-  static Future showAlreadyDelivered(BuildContext context) async {
+  static Future<dynamic> showAlreadyDelivered(BuildContext context) async {
     final title = 'already_delivered'.tr();
     final description = 'it_seems_that'.tr();
     return showErrorDialog(context, title, description, 'close'.tr());
   }
 
   static Future<void> showInvalidURI(BuildContext context) async {
-    await UIHelper.showDialog(
+    await UIHelper.showDialog<void>(
       context,
       'invalid_uri'.tr(),
       Column(
@@ -1262,7 +1253,6 @@ class UIHelper {
   }
 
   static Future<void> openSnackBarExistFullScreen(BuildContext context) async {
-    final theme = Theme.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Container(
@@ -1348,8 +1338,6 @@ class UIHelper {
         }
 
         final playlist = playlists[index];
-        final service =
-            injector<FeralFileFeedManager>().getFeedServiceByUrl(playlist.url);
         ChannelReference? channelReference;
         // if (service is FeralFileDP1FeedService) {
         //   final channel = service.getChannelByPlaylistId(playlist.playlist.id);

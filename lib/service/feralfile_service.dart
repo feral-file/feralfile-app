@@ -5,11 +5,6 @@
 //  that can be found in the LICENSE file.
 //
 
-import 'dart:async';
-
-import 'package:autonomy_flutter/gateway/feralfile_api.dart';
-import 'package:autonomy_flutter/model/ff_account.dart';
-
 enum ArtworkModel {
   multi,
   single,
@@ -105,19 +100,3 @@ enum GenerativeMediumTypes {
     }
   }
 }
-
-// abstract class FeralFileService {
-//   Future<FeralFileResaleInfo> getResaleInfo(String exhibitionID);
-// }
-
-// class FeralFileServiceImpl extends FeralFileService {
-//   FeralFileServiceImpl(
-//     this._feralFileApi,
-//   );
-//   final FeralFileApi _feralFileApi;
-//   @override
-//   Future<FeralFileResaleInfo> getResaleInfo(String exhibitionID) async {
-//     final resaleInfo = await _feralFileApi.getResaleInfo(exhibitionID);
-//     return resaleInfo.result;
-//   }
-// }
