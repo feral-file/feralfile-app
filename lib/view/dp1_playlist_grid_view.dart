@@ -161,16 +161,13 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
           String variant;
           if (isCloudflareUrl) {
             // For grid thumbnails, determine variant based on item size
-            final targetSize = ThumbnailSize(
-              widthPx:
-                  (itemWidth * MediaQuery.of(context).devicePixelRatio).toInt(),
-              heightPx:
-                  (itemHeight * MediaQuery.of(context).devicePixelRatio).toInt(),
-            );
+            // Use width only for aspect ratio maintenance
+            final targetWidthPx =
+                (itemWidth * MediaQuery.of(context).devicePixelRatio).toInt();
 
             variant = ThumbnailUrlParser.selectVariantForSize(
-              widthPx: targetSize.widthPx,
-              heightPx: targetSize.heightPx,
+              widthPx: targetWidthPx,
+              heightPx: targetWidthPx,
             );
           } else {
             // Non-Cloudflare URLs use 'original' variant
@@ -190,6 +187,7 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
       }
 
       // Update prefetch service
+      // Only pass width - height will be calculated to maintain aspect ratio
       final prefetchService = injector<ThumbnailPrefetchService>();
       prefetchService.setDesiredWindow(
         keysToWarm,
@@ -197,8 +195,7 @@ class _PlaylistAssetGridViewState extends State<PlaylistAssetGridView> {
         targetSize: ThumbnailSize(
           widthPx:
               (itemWidth * MediaQuery.of(context).devicePixelRatio).toInt(),
-          heightPx:
-              (itemHeight * MediaQuery.of(context).devicePixelRatio).toInt(),
+          heightPx: 0, // 0 = maintain aspect ratio
         ),
       );
     } catch (e) {

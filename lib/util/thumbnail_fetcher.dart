@@ -255,6 +255,9 @@ class ThumbnailFetcher {
   /// 2. Check for similar size (within 20% margin)
   /// 3. Check if original exists → resize from original
   /// 4. Download original → save → resize if needed
+  ///
+  /// IMPORTANT: Only targetWidth should be provided to maintain aspect ratio.
+  /// If targetHeight is 0 or null, libvips will calculate it automatically.
   Future<ThumbnailFetchResult> fetchThumbnail({
     required String url,
     required ThumbnailFetchHandle handle,
@@ -264,18 +267,37 @@ class ThumbnailFetcher {
     try {
       await _vipsPool.initialize();
 
+      // Skip resizing for Cloudflare imagedelivery.net URLs
+      // They already provide pre-sized variants, so resizing is inefficient
+      final isCloudflareUrl = url.contains('imagedelivery.net');
+
+      // Normalize height: 0 means auto-calculate (maintain aspect ratio)
+      final effectiveHeight =
+          (targetHeight == null || targetHeight == 0) ? null : targetHeight;
+
       // Determine if resize is needed
-      final needsResize = targetWidth != null && targetHeight != null;
+      // Don't resize Cloudflare URLs - rely on their variant system instead
+      // Only need targetWidth to maintain aspect ratio (height will be calculated)
+      final needsResize = !isCloudflareUrl && targetWidth != null;
+
+      if (isCloudflareUrl && targetWidth != null) {
+        log.info(
+          '[ThumbnailFetcher] Skipping resize for Cloudflare URL, '
+          'using variant system instead: width=$targetWidth',
+        );
+      }
 
       if (needsResize) {
-        // Strategy 1: Check for exact size match
-        final exactMatch =
-            diskCache.getExactSize(url, targetWidth, targetHeight);
-        if (exactMatch != null) {
-          final file = diskCache.readFile(exactMatch.key);
-          if (file != null) {
-            final bytes = await file.readAsBytes();
-            return ThumbnailFetchResult(success: true, bytes: bytes);
+        // Strategy 1: Check for exact size match (only if height was specified)
+        if (effectiveHeight != null) {
+          final exactMatch =
+              diskCache.getExactSize(url, targetWidth, effectiveHeight);
+          if (exactMatch != null) {
+            final file = diskCache.readFile(exactMatch.key);
+            if (file != null) {
+              final bytes = await file.readAsBytes();
+              return ThumbnailFetchResult(success: true, bytes: bytes);
+            }
           }
         }
 
@@ -288,7 +310,7 @@ class ThumbnailFetcher {
               url: url,
               originalPath: originalFile.path,
               targetWidth: targetWidth,
-              targetHeight: targetHeight,
+              targetHeight: effectiveHeight,
               handle: handle,
             );
           }
@@ -343,7 +365,7 @@ class ThumbnailFetcher {
             url: url,
             originalPath: originalFile.path,
             targetWidth: targetWidth,
-            targetHeight: targetHeight,
+            targetHeight: effectiveHeight,
             handle: handle,
           );
         }
@@ -367,11 +389,12 @@ class ThumbnailFetcher {
   }
 
   /// Resize from original file and save to cache
+  /// If targetHeight is null, aspect ratio will be maintained based on targetWidth
   Future<ThumbnailFetchResult> _resizeFromOriginal({
     required String url,
     required String originalPath,
     required int targetWidth,
-    required int targetHeight,
+    int? targetHeight,
     required ThumbnailFetchHandle handle,
   }) async {
     File? resizedFile;
@@ -380,10 +403,11 @@ class ThumbnailFetcher {
       // Create temp file for resized output
       final tempDir = await getTemporaryDirectory();
       final urlHash = md5.convert(utf8.encode(url)).toString();
+      final heightSuffix = targetHeight != null ? 'x$targetHeight' : '';
       resizedFile =
-          File('${tempDir.path}/${urlHash}_${targetWidth}x$targetHeight.tmp');
+          File('${tempDir.path}/${urlHash}_${targetWidth}$heightSuffix.tmp');
 
-      // Resize using libvips
+      // Resize using libvips (aspect ratio maintained if height is null)
       final success = await _vipsPool.resizeFile(
         inputPath: originalPath,
         outputPath: resizedFile.path,
@@ -404,14 +428,18 @@ class ThumbnailFetcher {
       final resizedBytes = await resizedFile.readAsBytes();
 
       // Save to cache with size metadata
-      final resizedKey =
-          ThumbnailCacheKey.resized(url, targetWidth, targetHeight);
+      // For aspect-ratio maintained images, use 0 for height
+      final resizedKey = ThumbnailCacheKey.resized(
+        url,
+        targetWidth,
+        targetHeight ?? 0,
+      );
       await diskCache.writeTempThenCommit(
         resizedKey,
         resizedBytes,
         isOriginal: false,
         imageWidth: targetWidth,
-        imageHeight: targetHeight,
+        imageHeight: targetHeight ?? 0,
       );
 
       // Cleanup temp file
@@ -425,7 +453,7 @@ class ThumbnailFetcher {
 
       log.info(
         '[ThumbnailFetcher] Created and cached resized version: '
-        '${targetWidth}x$targetHeight',
+        'width=$targetWidth${targetHeight != null ? ", height=$targetHeight" : " (aspect ratio maintained)"}',
       );
 
       return ThumbnailFetchResult(success: true, bytes: resizedBytes);

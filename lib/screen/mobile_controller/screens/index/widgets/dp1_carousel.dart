@@ -140,14 +140,12 @@ class _DP1CarouselState extends State<DP1Carousel> {
           String variant;
           if (isCloudflareUrl) {
             // For carousel thumbnails, use appropriate variant based on container size
-            final targetSize = ThumbnailSize(
-              widthPx: ArtworkItemTokens.imageWidth.toInt(),
-              heightPx: ArtworkItemTokens.imageHeight.toInt(),
-            );
+            // Use width for selection, aspect ratio will be maintained
+            final targetWidthPx = ArtworkItemTokens.imageWidth.toInt();
 
             variant = ThumbnailUrlParser.selectVariantForSize(
-              widthPx: targetSize.widthPx,
-              heightPx: targetSize.heightPx,
+              widthPx: targetWidthPx,
+              heightPx: targetWidthPx,
             );
           } else {
             // Non-Cloudflare URLs use 'original' variant
@@ -166,13 +164,14 @@ class _DP1CarouselState extends State<DP1Carousel> {
       }
 
       // Update prefetch service
+      // Only pass width - height will be calculated to maintain aspect ratio
       final prefetchService = injector<ThumbnailPrefetchService>();
       prefetchService.setDesiredWindow(
         keysToWarm,
         priority,
         targetSize: ThumbnailSize(
           widthPx: ArtworkItemTokens.imageWidth.toInt(),
-          heightPx: ArtworkItemTokens.imageHeight.toInt(),
+          heightPx: 0, // 0 = maintain aspect ratio
         ),
       );
     } catch (e) {

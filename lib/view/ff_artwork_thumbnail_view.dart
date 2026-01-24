@@ -99,23 +99,20 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
       final parsed = ThumbnailUrlParser.parse(widget.url);
       _currentOriginKey = parsed.originKey;
 
-      // Compute target size from widget constraints and device pixel ratio
+      // Compute target width from widget constraints and device pixel ratio
+      // IMPORTANT: Only use width to maintain aspect ratio automatically
       final dpr = MediaQuery.maybeOf(context)?.devicePixelRatio ?? 1.0;
       final targetWidthPx =
           widget.cacheWidth != null ? (widget.cacheWidth! * dpr).toInt() : null;
-      final targetHeightPx = widget.cacheHeight != null
-          ? (widget.cacheHeight! * dpr).toInt()
-          : null;
 
       // Only select variants for Cloudflare URLs
       final isCloudflareUrl = widget.url.contains('imagedelivery.net');
-      final selectedVariant =
-          isCloudflareUrl && (targetWidthPx != null && targetHeightPx != null)
-              ? ThumbnailUrlParser.selectVariantForSize(
-                  widthPx: targetWidthPx,
-                  heightPx: targetHeightPx,
-                )
-              : parsed.variant;
+      final selectedVariant = isCloudflareUrl && targetWidthPx != null
+          ? ThumbnailUrlParser.selectVariantForSize(
+              widthPx: targetWidthPx,
+              heightPx: targetWidthPx, // Use same value for variant selection
+            )
+          : parsed.variant;
 
       final selectedRank = VariantRank.getRank(selectedVariant);
 
@@ -141,8 +138,9 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
         final prefetchService = injector<ThumbnailPrefetchService>();
         prefetchService.prefetchUrls(
           urls: [requestedUrl],
-          targetSize: (targetWidthPx != null && targetHeightPx != null)
-              ? ThumbnailSize(widthPx: targetWidthPx, heightPx: targetHeightPx)
+          // Only pass width - libvips will maintain aspect ratio
+          targetSize: targetWidthPx != null
+              ? ThumbnailSize(widthPx: targetWidthPx, heightPx: 0)
               : null,
           priority: PrefetchPriority.visible,
         );
@@ -195,15 +193,6 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
   }
 
   Widget _buildImageWidget() {
-    // Get device pixel ratio for proper cache sizing
-    final dpr = MediaQuery.maybeOf(context)?.devicePixelRatio ?? 1.0;
-    final physicalCacheWidth = widget.cacheWidth != null 
-        ? (widget.cacheWidth! * dpr).toInt() 
-        : null;
-    final physicalCacheHeight = widget.cacheHeight != null 
-        ? (widget.cacheHeight! * dpr).toInt() 
-        : null;
-
     // Handle data URI images (keep existing logic)
     if (_isDataUri(widget.url)) {
       final imageBytes = _decodeDataUri(widget.url);
@@ -261,10 +250,6 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
         // Handle other image data URIs
         return Image.memory(
           imageBytes,
-          width: widget.cacheWidth?.toDouble(),
-          height: widget.cacheHeight?.toDouble(),
-          cacheWidth: physicalCacheWidth,
-          cacheHeight: physicalCacheHeight,
           fit: widget.fit,
           errorBuilder: (context, error, stackTrace) =>
               widget.errorWidget ?? const GalleryThumbnailErrorWidget(),
@@ -295,27 +280,24 @@ class _FFArtworkThumbnailViewState extends State<FFArtworkThumbnailView> {
 
   /// Build cached network image using new pipeline
   Widget _buildCachedNetworkImage() {
-    // Get device pixel ratio for proper cache sizing
-    final dpr = MediaQuery.maybeOf(context)?.devicePixelRatio ?? 1.0;
-    final physicalCacheWidth = widget.cacheWidth != null 
-        ? (widget.cacheWidth! * dpr).toInt() 
-        : null;
-    final physicalCacheHeight = widget.cacheHeight != null 
-        ? (widget.cacheHeight! * dpr).toInt() 
-        : null;
-
     // If we have a cached entry, display it
     if (_currentEntry != null && _currentEntry!.localPath != null) {
       try {
         final diskCache = injector<ThumbnailDiskCache>();
         final file = diskCache.readFile(_currentEntry!.key);
         if (file != null) {
+          // When both are specified, Flutter decodes the image to EXACTLY those dimensions,
+          // which STRETCHES the image if the aspect ratio doesn't match.
+          //
+          // Our flow:
+          // 1. libvips resizes images maintaining aspect ratio
+          // 2. Cached files are already properly sized
+          // 3. Let BoxFit.contain handle display scaling
+          // 4. Parent SizedBox provides layout constraints
+          //
+          // This ensures images always maintain their correct aspect ratio.
           return Image.file(
             file,
-            width: widget.cacheWidth?.toDouble(),
-            height: widget.cacheHeight?.toDouble(),
-            cacheWidth: physicalCacheWidth,
-            cacheHeight: physicalCacheHeight,
             fit: widget.fit,
             gaplessPlayback:
                 true, // Smooth upgrade from lower to higher variant
