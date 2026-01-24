@@ -1,5 +1,3 @@
-import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
-
 abstract class PlaylistDetailsEvent {}
 
 class GetPlaylistDetailsEvent extends PlaylistDetailsEvent {
@@ -8,3 +6,5 @@ class GetPlaylistDetailsEvent extends PlaylistDetailsEvent {
 }
 
 class LoadMorePlaylistDetailsEvent extends PlaylistDetailsEvent {}
+
+class UpdateTotalEvent extends PlaylistDetailsEvent {}

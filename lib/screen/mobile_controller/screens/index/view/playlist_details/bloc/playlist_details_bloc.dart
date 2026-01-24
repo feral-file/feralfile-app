@@ -24,6 +24,7 @@ class PlaylistDetailsBloc
     _setupDatabaseListener();
     on<GetPlaylistDetailsEvent>(_onGetPlaylistDetails);
     on<LoadMorePlaylistDetailsEvent>(_onLoadMorePlaylistDetails);
+    on<UpdateTotalEvent>(_onUpdateTotal);
   }
 
   final DP1Call _playlist;
@@ -90,8 +91,11 @@ class PlaylistDetailsBloc
           } else {
             log.info(
               '[PlaylistDetailsBloc] Paginated items (0 to $loadedCount) '
-              'unchanged, skipping reload',
+              'unchanged, checking if total needs update',
             );
+
+            // Trigger total update check
+            add(UpdateTotalEvent());
           }
         },
         onError: (Object error, StackTrace stackTrace) {
@@ -290,6 +294,42 @@ class PlaylistDetailsBloc
           total: state.total,
         ),
       );
+    }
+  }
+
+  Future<void> _onUpdateTotal(
+    UpdateTotalEvent event,
+    Emitter<PlaylistDetailsState> emit,
+  ) async {
+    log.info('[PlaylistDetailsBloc] UpdateTotalEvent: calculating total');
+
+    try {
+      // Calculate current total count
+      int currentTotal;
+      final isStatic = _playlist.items.isNotEmpty;
+      if (isStatic) {
+        // For static playlists, total is the number of items
+        currentTotal = _playlist.items.length;
+      } else {
+        // For dynamic playlists, get total from database items
+        currentTotal =
+            await injector<DriftDatabaseService>().countItemByPlaylistId(
+          _playlist.id,
+          type: DriftItemKind.indexerToken,
+        );
+      }
+
+      // Only update if we have a loaded state and the total is different
+      if (state is PlaylistDetailsLoadedState && state.total != currentTotal) {
+        emit(state.copyWith(total: currentTotal));
+        log.info(
+            '[PlaylistDetailsBloc] Total updated from ${state.total} to $currentTotal');
+      } else {
+        log.info('[PlaylistDetailsBloc] Total unchanged: $currentTotal');
+      }
+    } catch (e) {
+      log.info('[PlaylistDetailsBloc] Error calculating total: $e');
+      // Don't emit error state, just log the error
     }
   }
 
