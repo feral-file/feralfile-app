@@ -174,7 +174,6 @@ const String getTokens = r'''
         }
       }
       offset
-      total
     }
   }
 ''';
