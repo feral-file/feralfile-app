@@ -548,7 +548,7 @@ class CastDP1UrlPlaylistRequest implements CastDP1PlaylistRequestAbstract {
       };
 }
 
-// Class representing CastListArtworkReply message
+// Class representing CastDP1PlaylistReply message
 class CastDP1PlaylistReply extends ReplyWithOK {
   CastDP1PlaylistReply({required super.ok});
 

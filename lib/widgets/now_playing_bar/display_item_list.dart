@@ -82,7 +82,7 @@ class _DisplayItemListState extends State<DisplayItemList>
   void initState() {
     super.initState();
     _playlistDetailsBloc =
-        injector<PlaylistDetailsBlocManager>().getBloc(widget.playlist);
+        injector<PlaylistDetailsBlocManager>().getBloc(widget.playlist, isFetchMissingItems: true);
     _playlistDetailsBloc
         .add(GetPlaylistDetailsEvent(size: (widget.selectedIndex ?? 0) + 10));
 
