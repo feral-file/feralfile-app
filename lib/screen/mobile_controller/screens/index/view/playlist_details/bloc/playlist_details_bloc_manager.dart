@@ -38,7 +38,10 @@ class PlaylistDetailsBlocManager {
   /// If a bloc already exists for this playlist ID, increments the reference
   /// count and returns the existing bloc. Otherwise, creates a new bloc,
   /// calls [_onBlocCreated], increments the reference count to 1, and returns it.
-  PlaylistDetailsBloc getBloc(DP1Call playlist) {
+  PlaylistDetailsBloc getBloc(
+    DP1Call playlist, {
+    bool isFetchMissingItems = false,
+  }) {
     final playlistId = playlist.id;
     final entry = _blocs[playlistId];
 
@@ -52,7 +55,10 @@ class PlaylistDetailsBlocManager {
     }
 
     // Create new bloc
-    final newBloc = PlaylistDetailsBloc(playlist: playlist);
+    final newBloc = PlaylistDetailsBloc(
+      playlist: playlist,
+      isFetchMissingItems: isFetchMissingItems,
+    );
     log.info(
       '[PlaylistDetailsBlocManager] Created new bloc for playlist $playlistId',
     );

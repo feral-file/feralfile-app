@@ -19,8 +19,11 @@ import 'package:sentry/sentry.dart';
 
 class PlaylistDetailsBloc
     extends AuBloc<PlaylistDetailsEvent, PlaylistDetailsState> {
-  PlaylistDetailsBloc({required DP1Call playlist})
-      : _playlist = playlist,
+  PlaylistDetailsBloc({
+    required DP1Call playlist,
+    required bool isFetchMissingItems,
+  })  : _playlist = playlist,
+        _isFetchMissingItems = isFetchMissingItems,
         super(const PlaylistDetailsInitialState()) {
     _setupDatabaseListener();
     on<GetPlaylistDetailsEvent>(_onGetPlaylistDetails);
@@ -29,6 +32,8 @@ class PlaylistDetailsBloc
   }
 
   final DP1Call _playlist;
+
+  final bool _isFetchMissingItems;
 
   static const int _pageSize = 10;
 
@@ -78,6 +83,7 @@ class PlaylistDetailsBloc
             playlist: _playlist,
             offset: 0,
             size: loadedCount,
+            isFetchMissingItems: _isFetchMissingItems,
           );
 
           // Compare with current state
@@ -163,6 +169,7 @@ class PlaylistDetailsBloc
         playlist: _playlist,
         offset: 0,
         size: event.size,
+        isFetchMissingItems: _isFetchMissingItems,
       );
 
       log.info(
@@ -246,6 +253,7 @@ class PlaylistDetailsBloc
         playlist: _playlist,
         offset: start,
         size: _pageSize,
+        isFetchMissingItems: _isFetchMissingItems,
       ).timeout(
         const Duration(seconds: 30),
         onTimeout: () {
@@ -354,6 +362,7 @@ class PlaylistDetailsBloc
           playlist: _playlist,
           offset: currentOffset,
           size: _pageSize,
+          isFetchMissingItems: _isFetchMissingItems,
         );
 
         if (nextPageItems.isNotEmpty) {

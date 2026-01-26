@@ -135,6 +135,7 @@ extension DP1NowDisplayingItemListExt on List<DP1NowDisplayingItem> {
     required DP1Call playlist,
     required int offset,
     required int size,
+    bool isFetchMissingItems = false,
   }) async {
     final isStatic = playlist.items.isNotEmpty;
     if (isStatic) {
@@ -142,6 +143,7 @@ extension DP1NowDisplayingItemListExt on List<DP1NowDisplayingItem> {
         playlist: playlist,
         offset: offset,
         size: size,
+        isFetchMissingItems: isFetchMissingItems,
       );
     } else {
       return _buildFromDynamicQuery(
@@ -157,6 +159,7 @@ extension DP1NowDisplayingItemListExt on List<DP1NowDisplayingItem> {
     required DP1Call playlist,
     required int offset,
     required int size,
+    bool isFetchMissingItems = false,
   }) async {
     final items = playlist.items;
     final pageItems = items.safeSublist(offset, offset + size);
@@ -171,29 +174,51 @@ extension DP1NowDisplayingItemListExt on List<DP1NowDisplayingItem> {
     try {
       final localDp1Items =
           await injector<DriftDatabaseService>().getItemsByIds(pageIds);
-      final localNowDisplayingItems = localDp1Items
-          .map((item) => DP1NowDisplayingItemExt.fromItemRow(item))
-          .toList();
+      final localNowDisplayingItems =
+          localDp1Items.map(DP1NowDisplayingItemExt.fromItemRow).toList();
       nowDisplayingItems.addAll(localNowDisplayingItems);
     } catch (e) {
       log.info('Error getting tokens: $e');
       unawaited(Sentry.captureException(e));
-      return [];
     }
 
-    // if the items are missing in the database, add them to the list
-    // final missingItems = pageItems
-    //     .where(
-    //         (item) => !nowDisplayingItems.any((e) => e.dp1Item.cid == item.cid))
-    //     .toList();
-    // if (missingItems.isNotEmpty) {
-    //   final missingCid = missingItems.map((item) => item.cid).nonNulls.toList();
-    //   final missingAssetTokens =
-    //       await injector<NftTokensService>().getManualTokens(cids: missingCid);
-    //   final missingNowDisplayingItems =
-    //       buildFromTokens(missingItems, missingAssetTokens);
-    //   nowDisplayingItems.addAll(missingNowDisplayingItems);
-    // }
+    final missingItems = pageItems
+        .where(
+          (item) => !nowDisplayingItems.any((e) => e.dp1Item.cid == item.cid),
+        )
+        .toList();
+
+    // If items are missing in the database, fetch them from indexer
+    // Only do this for temporary playlists (cast from artwork detail)
+    if (isFetchMissingItems && missingItems.isNotEmpty) {
+      log.info(
+        '[_buildFromStaticItems] Found ${missingItems.length} missing items, fetching from indexer',
+      );
+      final missingCid = missingItems.map((item) => item.cid).nonNulls.toList();
+      try {
+        final missingAssetTokens = await injector<NftTokensService>()
+            .getManualTokens(cids: missingCid);
+        final missingNowDisplayingItems =
+            buildFromTokens(missingItems, missingAssetTokens);
+        nowDisplayingItems.addAll(missingNowDisplayingItems);
+        missingItems.clear();
+      } catch (e) {
+        log.info('Error fetching missing items from indexer: $e');
+      }
+    }
+
+    if (missingItems.isNotEmpty) {
+      final items = missingItems
+          .map((item) => DP1NowDisplayingItem(dp1Item: item))
+          .toList();
+      nowDisplayingItems.addAll(items);
+    }
+
+    if (nowDisplayingItems.length < size) {
+      log.info(
+        '[DP1NowDisplayingItemListExt][_buildFromStaticItems] Returning ${nowDisplayingItems.length} items for playlist ${playlist.id} but expected $size',
+      );
+    }
 
     return nowDisplayingItems;
   }
