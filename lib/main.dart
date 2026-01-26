@@ -236,7 +236,7 @@ class AutonomyApp extends StatelessWidget {
         builder: (context, constraints) {
           maxWidth = constraints.maxWidth;
           return MaterialApp(
-            title: 'Autonomy',
+            title: 'Feral File',
             theme: ResponsiveLayout.isMobile
                 ? AppTheme.lightTheme()
                 : AppTheme.tabletLightTheme(),

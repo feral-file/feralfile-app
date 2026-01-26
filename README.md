@@ -1,109 +1,109 @@
-# Feral File: the way to collect art
+# Feral File mobile app
+
+The Feral File mobile app is the controller for the **FF1 art computer**. It helps you discover **channels, playlists, and works**, then **play** them on FF1 using the **DP-1 open display protocol**.
+
+This repo is the Flutter codebase for the mobile app.
+
+- FF1: https://feralfile.com/install
+- DP-1: https://github.com/display-protocol/dp1
+
+---
+
+## What the app does (today)
+
+### Pair and control FF1
+- Pair your phone to an FF1 on your network (QR-based setup flow).
+- Choose where art plays (device selection) and control playback.
+
+### Browse and play DP-1 playlists
+- Browse **Channels**, **Playlists**, and **Works**.
+- Play a playlist or work on FF1 (“Play on FF1 now”).
+
+### Keep a personal collection
+- Save channels/playlists/works to **My Collection**.
+- Optional: add wallet addresses to index on-chain collections into My Collection.
 
 
-## About
+---
 
-### [Feral File](https://feralfile.com/) is the place to experience digital art today.
+## Current focus
 
-Visit curated exhibitions of world-class, software-based art, interact with dynamic digital works, and organize your personal digital art collection directly in the app. You can share and enjoy all artwork found in the app with friends and family by Streaming to any compatible screen.
+We prioritize **Gold Path reliability**: setup → pairing → playback should feel boring and repeatable. If you’re working on a new feature, first check whether it risks pairing/playback regressions.
 
-Co-create a [MoMA Postcard](https://www.moma.org/calendar/exhibitions/5618) and experiment with borderless collaboration and creativity.
+---
+
+## Repo layout (high level)
+
+- `lib/` — Flutter app code (UI + state + API clients)
+- `scripts/` — local helper scripts (coverage, fonts)
+- `assets/` — app assets (git submodule)
+- `auto-test/` — automation tests (optional git submodule)
+- `.env*` — environment config (local dev)
+
+---
+
+## Getting started (dev)
+
+### Prereqs
+1. Install Flutter: https://flutter.dev
+2. Install Android SDK + Xcode (run `flutter doctor` and resolve all warnings)
+
+### Setup
+1. Clone the repo
+2. Initialize submodules:
+
+   ```bash
+   git submodule update --init --recursive
+   ```
+
+   If you want to skip an optional submodule:
+
+   ```bash
+   git -c submodule.auto-test.update=none submodule update --init --recursive
+   ```
+
+3. Create your local env files:
+
+   ```bash
+   cp .env.example .env
+   cp .env.secret.example .env.secret
+   ```
+
+   ` .env.secret` contains credentials. For local dev you can either:
+   - provide your own credentials, or
+   - request access to a team dev environment.
+
+### Run
+```bash
+flutter run --flavor inhouse
+```
+
+---
+
+## Releases
+
+- iPhone: https://apps.apple.com/us/app/feral-file-controller/id6755812386
+- Android: https://play.google.com/store/apps/details?id=com.feralfile.app
 
 
-</br>
-</br>
-
-
-The **Feral File** app enhances the digital experience, increasing the ways people can share, organize, explore, and live with software-based artwork.
-
-
-#### Explore Feral File Exhibitions
-
-- Each exhibition on **Feral File** begins with the curator. World-class artists collaborate with visionary curators to create and exhibit artworks around a single, ambitious theme.
-
-- Exhibitions never close on **[feralfile.com](https://feralfile.com/)**. Soon, all exhibitions will be viewable and streamable on the **Feral File** app. For now, the current exhibition is on view.
-
-
-#### Live with digital art
-
-- Stream digital artwork to any compatible screen. Share and enjoy your favorite pieces with family, friends, and colleagues at home and in the office.
-
-- For interactive works, your mobile device becomes the remote control. Use the keyboard, experiment with the artist’s commands, and dive into the immersive world of software-based art.
-
-
-#### Organize
-
-- Consolidate collected digital art across blockchains (Ethereum and Tezos)
-
-- Create collections within your collection.
-
-- The app classifies artwork into 3 categories: Still, Video, Interactive.
-
-
-#### Share
-
-- Co-create a digital chain letter with [MoMA Postcard](https://www.moma.org/calendar/exhibitions/5618). This experiment in borderless collaboration and creativity explores ways individuals, groups, and institutions can make and own digital goods.
-
-- The “View existing address” feature allows you to see other collections and share yours with friends.
-
-
-</br>
-</br>
-
-
-Bitmark started with the idea of building tools to help individuals and institutions secure digital property rights. Feral File, an online gallery co-founded by Casey Reas, applies this vision to art made with software, helping artists and collectors secure the property rights to their artwork. Visit feralfile.com and experience world-class digital art in-situ. The **Feral File** app goes beyond ownership and provides dynamic ways to engage with digital art on your personal devices, in your home, and across the world.
-
-</br>
-
-![all in one](https://github.com/bitmark-inc/feralfile-app/assets/61187455/a63402ea-3949-4188-b9dd-c26c7457952b)
-
-
-
-## Getting Started
-
-1. Install [Flutter](https://flutter.dev)
-2. Install Android SDK & Xcode (using `flutter doctor` to see all your tools and dependencies are fully installed).
-2. Clone the repo
-3. Initialize submodule by running; `git submodule update --init --recursive`
-- If you don't want to clone the auto-test package, simply run: `git -c submodule.auto-test.update=none submodule update --init --recursive`
-4. Initialize the config file. `cp .env.example .env`
-- Contact with Feral File app development team for development env.
-5. Initialize the secret config file. `cp .env.secret.example .env.secret`
-- There are credentials information. You may need to provide your own credentials.Contact with Feral File app development team for consultation.
-6. Run ./script/encrypt_secrets.sh <-entropy-> to generate the encrypted secrets file.
-- <-entropy-> is a random string. You can type a random string like akhrdsgl4893tynk3iu4y8hf
-- You only need to run this script again when you want to update .env.secret.
-7. Run `flutter run --flavor inhouse` to run **Feral File** app development on the connected device.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-
-## Status - Released
-- [App Store](https://apps.apple.com/us/app/feral-file/id1544022728)
-- [Google Play](https://play.google.com/store/apps/details?id=com.bitmark.autonomy_client&pli=)
-
-[Release Notes](https://github.com/bitmark-inc/feral-file-docs/blob/main/app/release_notes/production/changelog.md)
+---
 
 ## Contributing
 
-We welcome contributions of any kind including new features, bug fixes, and documentation improvements. Please first open an issue describing what you want to build if it is a major change so that we can discuss how to move forward. Otherwise, go ahead and open a pull request for minor changes such as typo fixes and one liners.
+We accept PRs for fixes and documentation improvements.
 
-### Discussions:
-Join us on [Discord](https://discord.gg/3BBkrjS4n7) to give feedback and help us shape new features.
+- For substantial changes, open an issue first so we can agree on scope and testing.
+- For small changes (typos, lint fixes, small bug fixes), feel free to open a PR directly.
+
+
+---
 
 ## License
-```
-//
-//  SPDX-License-Identifier: BSD-2-Clause-Patent
-//  Copyright © 2022 Bitmark. All rights reserved.
-//  Use of this UI/UX is governed by the CC BY-NC 4.0 License.
-//  Use of this source code is governed by the BSD-2-Clause Plus Patent License
-//  that can be found in the LICENSE file.
-//
+
+```text
+SPDX-License-Identifier: BSD-2-Clause-Patent
+Copyright © 2026 Feral File Inc. All rights reserved.
+
+UI/UX: CC BY-NC 4.0
+Source: BSD-2-Clause Plus Patent (see LICENSE)
 ```

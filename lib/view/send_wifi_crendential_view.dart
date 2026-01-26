@@ -17,7 +17,7 @@ class SendWifiCredentialView extends StatefulWidget {
 
 class _SendWifiCredentialViewState extends State<SendWifiCredentialView> {
   final TextEditingController ssidController =
-      TextEditingController(text: kDebugMode ? 'Bitmark' : '');
+      TextEditingController(text: kDebugMode ? 'Feral File' : '');
 
   final TextEditingController passwordController =
       TextEditingController(text: kDebugMode ? r'btmrkrckt@)@$' : '');
