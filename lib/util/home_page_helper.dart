@@ -1,10 +1,7 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/model/token.dart' as v2;
-import 'package:autonomy_flutter/nft_collection/database/indexer_database.dart';
 import 'package:autonomy_flutter/nft_collection/nft_collection.dart';
-import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
 import 'package:autonomy_flutter/screen/detail/preview/canvas_device_bloc.dart';
 import 'package:autonomy_flutter/screen/home/home_bloc.dart';
@@ -200,8 +197,10 @@ class HomePageHelper {
 
       if (addressesToReindex.isNotEmpty) {
         final manager = injector<UserAllOwnCollectionBlocManager>();
-        final bloc = manager.getOrCreateBloc(addressesToReindex);
-        bloc.add(Reindex());
+        for (final address in addressesToReindex) {
+          final bloc = manager.getOrCreateBloc([address]);
+          bloc.add(Reindex());
+        }
       }
     } catch (_) {
       // ignore errors in background refresh

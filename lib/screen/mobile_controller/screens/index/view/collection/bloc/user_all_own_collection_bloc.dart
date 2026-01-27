@@ -468,6 +468,9 @@ class UserAllOwnCollectionBloc
             final shouldForceFetch = await injector<UserDp1PlaylistService>()
                 .shouldForceFetchTokenForAddress(address);
             if (shouldForceFetch) {
+              log.info(
+                '[UserAllOwnCollectionBloc] Address $address should force fetch tokens, start fetching',
+              );
               add(FetchTokens(
                   shouldUpdateLastRefreshedTime: true,
                   shouldUpdateAddressState: true));
