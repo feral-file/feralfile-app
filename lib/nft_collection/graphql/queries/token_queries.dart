@@ -131,6 +131,26 @@ const String getTokens = r'''
             url
           }
         }
+        owners {
+          items {
+            quantity
+            owner_address
+          }
+          total
+          offset
+        }
+        provenance_events {
+          items {
+            event_type
+            from_address
+            to_address
+            tx_hash
+            timestamp
+            chain
+          }
+          total
+          offset
+        }
         enrichment_source {
           name
           description
