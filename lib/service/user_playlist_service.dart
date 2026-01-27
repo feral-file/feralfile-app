@@ -241,6 +241,8 @@ class UserDp1PlaylistService {
     currentAnchor.addAll(addressAnchors);
     await injector<ConfigurationService>()
         .setLastUpdateChangeAnchor(addressAnchors: currentAnchor);
+    log.info(
+        'updateLastUpdateChangeAnchor: ${currentAnchor.map((e) => e.toJson().toString()).join(',')}');
   }
 
   Future<void> removeLastUpdateChangeAnchor(

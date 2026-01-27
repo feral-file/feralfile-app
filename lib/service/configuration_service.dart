@@ -620,7 +620,7 @@ class ConfigurationServiceImpl implements ConfigurationService {
     return addresses
         .map(
           (address) =>
-              // anchors?.firstWhereOrNull((e) => e.address == address) ??
+              anchors?.firstWhereOrNull((e) => e.address == address) ??
               defaultAnchorBuilder?.call(address),
         )
         .nonNulls

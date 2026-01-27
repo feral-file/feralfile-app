@@ -1213,7 +1213,7 @@ class NftTokensServiceImpl extends NftTokensService {
         );
         if (!hasError && result.changesList.nextAnchor != null) {
           NftCollection.logger.info(
-              '[UPDATE_TOKENS_IN_ISOLATE][update ] ${result.changesList.nextAnchor}');
+              '[UPDATE_TOKENS_IN_ISOLATE][update ] addresses: ${result.addresses.join(',')} anchor: ${result.changesList.nextAnchor}');
           final addresses = result.addresses;
           final addressAnchors = addresses
               .map((address) => AddressAnchor(
@@ -1221,6 +1221,9 @@ class NftTokensServiceImpl extends NftTokensService {
               .toList();
           injector<UserDp1PlaylistService>()
               .updateLastUpdateChangeAnchor(addressAnchors: addressAnchors);
+        } else {
+          NftCollection.logger.info(
+              '[UPDATE_TOKENS_IN_ISOLATE][update ] addresses: ${result.addresses.join(',')} anchor: null, hasError: $hasError');
         }
       }
       return;
