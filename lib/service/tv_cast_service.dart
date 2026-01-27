@@ -403,7 +403,8 @@ class TvCastServiceImpl extends BaseTvCastService {
   Future<CastDP1PlaylistReply> castDP1Playlist(
     CastDP1PlaylistRequestAbstract request,
   ) async {
-    await BluetoothDeviceManager().switchDevice(_device);
+    await BluetoothDeviceManager()
+        .switchDevice(_device, shouldCheckCurrentDevice: true);
     return super.castDP1Playlist(request);
   }
 }

@@ -28,12 +28,6 @@ import 'package:flutter_svg/svg.dart';
 /// Home Index Page - Main navigation with playlist sections
 ///
 
-final GlobalKey<PlaylistsPageState> _playlistsPageKey =
-    GlobalKey<PlaylistsPageState>();
-final GlobalKey<ChannelsPageState> _channelsPageKey =
-    GlobalKey<ChannelsPageState>();
-final GlobalKey<WorksPageState> _worksPageKey = GlobalKey<WorksPageState>();
-
 class HomeIndexPage extends StatefulWidget {
   const HomeIndexPage({super.key});
 
@@ -49,6 +43,13 @@ class _HomeIndexPageState extends State<HomeIndexPage> {
   late final PlaylistsPage _playlistsPage;
   late final ChannelsPage _channelsPage;
   late final WorksPage _worksPage;
+
+  // GlobalKeys should be instance variables to avoid duplication
+  final GlobalKey<PlaylistsPageState> _playlistsPageKey =
+      GlobalKey<PlaylistsPageState>();
+  final GlobalKey<ChannelsPageState> _channelsPageKey =
+      GlobalKey<ChannelsPageState>();
+  final GlobalKey<WorksPageState> _worksPageKey = GlobalKey<WorksPageState>();
 
   @override
   void initState() {
