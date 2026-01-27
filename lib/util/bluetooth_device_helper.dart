@@ -61,8 +61,16 @@ class BluetoothDeviceManager {
   }
 
   Future<void> switchDevice(
-    FFBluetoothDevice device,
-  ) async {
+    FFBluetoothDevice device, {
+    bool shouldCheckCurrentDevice = false,
+  }) async {
+    if (shouldCheckCurrentDevice) {
+      final currentDevice = BluetoothDeviceManager().castingBluetoothDevice;
+      if (currentDevice == device) {
+        return;
+      }
+    }
+
     await _setupDevice(device, shouldWriteToDb: false);
     log.info(
       'BluetoothDeviceHelper.switchDevice: switched to ${device.toJson()}',

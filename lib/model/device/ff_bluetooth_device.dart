@@ -118,7 +118,9 @@ class FFBluetoothDevice extends BluetoothDevice
     if (identical(this, other)) {
       return true;
     }
+
     return other is FFBluetoothDevice &&
+        other.deviceId == deviceId &&
         other.remoteID == remoteID &&
         other.topicId == topicId &&
         other.name == name &&
