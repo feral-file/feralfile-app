@@ -23,7 +23,7 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
   PlaylistsBloc({
     required this.playlistType,
     this.total,
-    this.pageSize = 5,
+    this.pageSize = 10,
   }) : super(const PlaylistsState()) {
     // Don't set up listener in constructor - wait for playlists to be loaded
     on<LoadPlaylistsEvent>(_onLoadPlaylists);

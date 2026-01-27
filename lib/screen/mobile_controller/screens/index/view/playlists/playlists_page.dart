@@ -93,7 +93,9 @@ class PlaylistsPageState extends State<PlaylistsPage>
         final previousTop5PlaylistData = previous.top5PlaylistData;
         final currentTop5PlaylistData = current.top5PlaylistData;
         final isEqualTo =
-            previousTop5PlaylistData.isEqualTo(currentTop5PlaylistData);
+            previousTop5PlaylistData.isEqualTo(currentTop5PlaylistData) &&
+                previous.playlistData.length == current.playlistData.length &&
+                previous.hasMore == current.hasMore;
         return !isEqualTo;
       },
       builder: (context, state) => _buildContent(state, _curatedPlaylistsBloc),
@@ -107,7 +109,9 @@ class PlaylistsPageState extends State<PlaylistsPage>
         final previousTop5PlaylistData = previous.top5PlaylistData;
         final currentTop5PlaylistData = current.top5PlaylistData;
         final isEqualTo =
-            previousTop5PlaylistData.isEqualTo(currentTop5PlaylistData);
+            previousTop5PlaylistData.isEqualTo(currentTop5PlaylistData) &&
+                previous.playlistData.length == current.playlistData.length &&
+                previous.hasMore == current.hasMore;
         return !isEqualTo;
       },
       builder: (context, state) => _buildContent(state, _myPlaylistsBloc),
