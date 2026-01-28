@@ -223,26 +223,24 @@ class BluetoothConnectedDeviceConfigState
       appBar: getCustomBackAppBar(
         context,
         canGoBack: !widget.payload.isFromOnboarding,
-        title: name == null
-            ? Text('configure_device'.tr())
-            : FFTextName(
-                title: name,
-                onSubmit: (String newName) async {
-                  final device = selectedDevice!;
-                  final newDevice =
-                      await BluetoothDeviceManager().updateDeviceName(
-                    device,
-                    newName,
-                  );
-                  setState(() {
-                    selectedDevice = newDevice;
-                  });
-                },
-              ),
+        title: FFTextName(
+          title: name,
+          onSubmit: (String newName) async {
+            final device = selectedDevice!;
+            final newDevice = await BluetoothDeviceManager().updateDeviceName(
+              device,
+              newName,
+            );
+            setState(() {
+              selectedDevice = newDevice;
+            });
+          },
+        ),
         actions: widget.payload.isFromOnboarding || selectedDevice.isQEMU
             ? []
             : [
-                _buildDeviceSwitcher(context),
+                if (BluetoothDeviceManager.pairedDevices.length > 1)
+                  _buildDeviceSwitcher(context),
                 BlocBuilder<CanvasDeviceBloc, CanvasDeviceState>(
                   bloc: injector<CanvasDeviceBloc>(),
                   // buildWhen: (previous, current) {
@@ -250,8 +248,8 @@ class BluetoothConnectedDeviceConfigState
                   //       current.isDeviceAlive(selectedDevice);
                   // },
                   builder: (context, state) {
-                    return Container(
-                      padding: const EdgeInsets.all(8).copyWith(left: 14),
+                    return Padding(
+                      padding: EdgeInsets.all(LayoutConstants.space3),
                       child: GestureDetector(
                         onTap: () {
                           _showOption(context, state);
@@ -1403,12 +1401,6 @@ class BluetoothConnectedDeviceConfigState
 
   Widget _buildDeviceSwitcher(BuildContext context) {
     final pairedDevices = BluetoothDeviceManager.pairedDevices;
-
-    // If there are less than 2 devices, don't show the switcher
-    if (pairedDevices.length < 2) {
-      return const SizedBox.shrink();
-    }
-
     return PopupMenuButton<FFBluetoothDevice>(
       tooltip: 'Switch Device',
       offset: const Offset(0, 40),

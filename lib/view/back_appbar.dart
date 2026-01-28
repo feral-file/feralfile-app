@@ -6,9 +6,11 @@
 //
 
 import 'package:autonomy_flutter/design/app_typography.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/util/style.dart';
+import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -371,49 +373,56 @@ AppBar getCustomBackAppBar(
   required Widget title,
   required List<Widget> actions,
   bool canGoBack = true,
-  double adjustLeftTitleWith = 0.0,
-}) =>
-    AppBar(
-      systemOverlayStyle: systemUiOverlayDarkStyle,
-      elevation: 0,
-      shadowColor: Colors.transparent,
-      leading: canGoBack
-          ? Semantics(
-              label: 'BACK',
-              child: Padding(
-                padding: EdgeInsets.only(right: adjustLeftTitleWith),
-                child: IconButton(
-                  constraints: const BoxConstraints(
-                    maxWidth: 44,
-                    maxHeight: 44,
-                    minWidth: 44,
-                    minHeight: 44,
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                  icon: SvgPicture.asset(
-                    'assets/images/ff_back_dark.svg',
-                    width: 28,
-                    height: 28,
+}) {
+  const switchDeviceIconSize = 40.0;
+  final backIconSize =
+      ResponsiveLayout.paddingHorizontal * 2 + LayoutConstants.iconSizeMedium;
+  final leadingWidth =
+      actions.length > 1 ? backIconSize + switchDeviceIconSize : backIconSize;
+  return AppBar(
+    systemOverlayStyle: systemUiOverlayDarkStyle,
+    elevation: 0,
+    shadowColor: Colors.transparent,
+    leading: canGoBack
+        ? Semantics(
+            label: 'Back Button',
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Padding(
+                    padding: EdgeInsets.all(
+                      LayoutConstants.space3,
+                    ),
+                    child: SvgPicture.asset(
+                      'assets/images/icon_back.svg',
+                      height: LayoutConstants.iconSizeMedium,
+                      width: LayoutConstants.iconSizeMedium,
+                    ),
                   ),
                 ),
-              ))
-          : const SizedBox(width: 44),
-      leadingWidth: 70 + adjustLeftTitleWith,
-      titleSpacing: 0,
-      toolbarHeight: 66,
-      backgroundColor: AppColor.auGreyBackground,
-      automaticallyImplyLeading: false,
-      centerTitle: true,
-      title: title,
-      actions: actions
-        ..add(
-          const SizedBox(width: 4),
-        ),
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(0.25),
-        child: addOnlyDivider(color: AppColor.auQuickSilver, border: 0.25),
-      ),
-    );
+              ],
+            ),
+          )
+        : SizedBox(width: leadingWidth),
+    leadingWidth: leadingWidth,
+    titleSpacing: 0,
+    toolbarHeight: 66,
+    backgroundColor: AppColor.auGreyBackground,
+    automaticallyImplyLeading: false,
+    centerTitle: true,
+    title: title,
+    actions: actions.isNotEmpty
+        ? actions
+        : [
+            SizedBox(width: leadingWidth),
+          ],
+    bottom: PreferredSize(
+      preferredSize: const Size.fromHeight(0.25),
+      child: addOnlyDivider(color: AppColor.auQuickSilver, border: 0.25),
+    ),
+  );
+}
 
 AppBar getFFAppBar(
   BuildContext context, {
