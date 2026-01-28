@@ -71,6 +71,10 @@ class DP1ItemUtils {
       AssetToken token, String? ownerAddress) {
     return '${token.cid}_${ownerAddress?.toUpperCase()}';
   }
+
+  static String generateItemIdFromCid(String cid, String? ownerAddress) {
+    return '${cid}_${ownerAddress?.toUpperCase()}';
+  }
 }
 
 /// Extension on [DP1Item] to create from database [db.Item]

@@ -5,6 +5,7 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:autonomy_flutter/common/injector.dart';
@@ -14,8 +15,10 @@ import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart'
 import 'package:autonomy_flutter/nft_collection/database/token_to_playlist_item_transformer.dart';
 import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_call_ext.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:drift/drift.dart' as drift;
+import 'package:sentry/sentry.dart';
 
 /// Drift-backed implementation of IndexerDatabaseAbstract
 /// Stores tokens as items in playlist_entries, supports reactive streams
@@ -126,15 +129,32 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
 
   @override
   Future<void> deleteToken(String cid) async {
+    if (cid.isEmpty) {
+      log.info(
+          '[IndexerDatabaseDrift] deleteToken called with empty cid, skipping');
+      unawaited(Sentry.captureException(
+          Exception('deleteToken called with empty cid')));
+      return;
+    }
+    final itemId = DP1ItemUtils.generateItemIdFromCid(cid, null);
+
+    if (itemId.isEmpty) {
+      log.info(
+          '[IndexerDatabaseDrift] generateItemIdFromCid returned empty itemId for cid $cid, skipping');
+      unawaited(Sentry.captureException(Exception(
+          'generateItemIdFromCid returned empty itemId for cid $cid')));
+      return;
+    }
     // Delete playlist entries first
     await (_playlistDb.delete(_playlistDb.playlistEntries)
-          ..where((e) => e.itemId.contains(cid)))
+          ..where((e) => e.itemId.contains(itemId)))
         .go();
 
     // Then delete the item
     await (_playlistDb.delete(_playlistDb.items)
-          ..where((i) => i.id.contains(cid)))
+          ..where((i) => i.id.contains(itemId)))
         .go();
+    log.info('[IndexerDatabaseDrift] deleted token $cid');
   }
 
   @override
