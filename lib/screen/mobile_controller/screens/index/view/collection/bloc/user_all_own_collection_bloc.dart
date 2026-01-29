@@ -178,7 +178,7 @@ class UserAllOwnCollectionBloc
       error = null;
       try {
         log.info(
-            '[UserAllOwnCollectionBloc][_onFetchTokens] started for addresses: ${addresses.join(',')}');
+            '[UserAllOwnCollectionBloc][_onFetchTokens] started for addresses: ${addresses.join(',')}, offset: ${event.offset}');
         // Use event-specific key so we can run multiple concurrent operations
         // for different address sets, while still deduplicating identical ones.
         final subKey = event.streamKey;
@@ -228,8 +228,8 @@ class UserAllOwnCollectionBloc
         }
 
         // get the stream
-        final stream =
-            await _tokensService.fetchTokensInIsolate(addresses, null, null);
+        final stream = await _tokensService.fetchTokensInIsolate(
+            addresses, event.offset, null);
 
         final List<AssetToken> collected = [];
 
@@ -492,7 +492,14 @@ class UserAllOwnCollectionBloc
             return true;
           } else {
             // Still indexing, fetch tokens periodically
-            add(FetchTokens(shouldUpdateLastRefreshedTime: false));
+            // Calculate offset based on existing tokens
+            final existingCount = await injector<IndexerDatabaseAbstract>()
+                .countTokensByOwners(owners: addresses);
+            log.info(
+              '[UserAllOwnCollectionBloc][PullStatus] Still indexing, fetching with offset: $existingCount',
+            );
+            add(FetchTokens(
+                offset: existingCount, shouldUpdateLastRefreshedTime: false));
             return false;
           }
         },

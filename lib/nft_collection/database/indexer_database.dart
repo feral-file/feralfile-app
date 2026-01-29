@@ -28,4 +28,6 @@ abstract class IndexerDatabaseAbstract {
     required List<String> tokenIds,
     IndexerDatabaseSortBy sortBy = IndexerDatabaseSortBy.updatedAt,
   });
+
+  Future<int> countTokensByOwners({required List<String> owners});
 }

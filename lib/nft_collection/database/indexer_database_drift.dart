@@ -345,4 +345,31 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
       return [];
     }
   }
+
+  @override
+  Future<int> countTokensByOwners({required List<String> owners}) async {
+    if (owners.isEmpty) {
+      return 0;
+    }
+
+    try {
+      int totalCount = 0;
+
+      // Count tokens for each owner's playlist
+      for (final owner in owners) {
+        final playlistId = DP1CallExtension.generatePlaylistId(owner);
+        final count = await _playlistDb.countPlaylistEntries(playlistId);
+        totalCount += count;
+      }
+
+      log.info(
+        '[IndexerDatabaseDrift] countTokensByOwners: ${owners.length} owners have $totalCount total tokens',
+      );
+
+      return totalCount;
+    } catch (e) {
+      log.info('[IndexerDatabaseDrift] Error in countTokensByOwners: $e');
+      return 0;
+    }
+  }
 }

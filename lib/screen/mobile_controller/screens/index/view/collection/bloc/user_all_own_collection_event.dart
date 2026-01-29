@@ -14,12 +14,14 @@ abstract class UserAllOwnCollectionEvent {
 
 class FetchTokens extends UserAllOwnCollectionEvent {
   FetchTokens({
+    this.offset,
     this.shouldUpdateLastRefreshedTime = false,
     this.shouldUpdateAddressState = false,
     this.onDone,
     this.onError,
   });
 
+  final int? offset;
   final bool shouldUpdateLastRefreshedTime;
   final bool shouldUpdateAddressState;
   final void Function()? onDone;
@@ -27,7 +29,7 @@ class FetchTokens extends UserAllOwnCollectionEvent {
 
   @override
   String get streamKey =>
-      'FetchTokens:${shouldUpdateAddressState}_${shouldUpdateLastRefreshedTime}';
+      'FetchTokens:${shouldUpdateAddressState}_${shouldUpdateLastRefreshedTime}_${offset ?? 'null'}';
 }
 
 class ClearDataEvent extends UserAllOwnCollectionEvent {
