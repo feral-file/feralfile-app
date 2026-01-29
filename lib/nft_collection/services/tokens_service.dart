@@ -1420,52 +1420,6 @@ class NftTokensServiceImpl extends NftTokensService {
     }
   }
 
-  /// Handle token viewability changes
-  /// If isViewable is false, delete token and playlist entries
-  /// If isViewable is true, fetch token from indexer and insert into database
-  static Future<void> _handleTokenViewabilityChange(
-      Change change, List<String> addresses) async {
-    final meta = change.metaParsed as TokenViewabilityChangeMeta;
-    final tokenCid = meta.tokenCid;
-    final database = injector<IndexerDatabaseAbstract>();
-
-    if (meta.isViewable) {
-      // Fetch token from indexer with full owners and provenances
-      final isolateIndexerService = injector<NftIndexerService>();
-      final request = QueryListTokensRequest(
-        tokenCids: [tokenCid],
-        limit: 1,
-        owners: addresses,
-      );
-      final tokens = await isolateIndexerService.getNftTokens(request);
-      final token = tokens.firstWhereOrNull((e) => e.cid == tokenCid);
-
-      if (token != null) {
-        // Insert token into database
-        // Extract addresses from token's ownerProvenances
-        if (addresses.isNotEmpty) {
-          await database.insertTokens(
-            [token],
-            addresses: addresses,
-          );
-          NftCollection.logger
-              .info('Token $tokenCid made viewable and inserted');
-        } else {
-          NftCollection.logger.warning(
-              'Token $tokenCid has no owner provenances, not inserted');
-        }
-      } else {
-        NftCollection.logger.warning(
-            'Token $tokenCid not found in indexer after viewability change');
-      }
-    } else {
-      // Delete token and all playlist entries
-      await database.deleteToken(tokenCid);
-      NftCollection.logger
-          .info('Token $tokenCid made non-viewable and deleted');
-    }
-  }
-
   static Future<void> _fetchManualTokensInIsolateStatic(
     String uuid,
     List<String> cids,
