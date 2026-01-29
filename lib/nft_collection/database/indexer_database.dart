@@ -11,7 +11,8 @@ abstract class IndexerDatabaseAbstract {
 
   Future<void> clearAll();
 
-  Future<void> deleteToken(String cid);
+  Future<void> deleteTokens(List<String> cids,
+      {required List<String> addresses});
 
   Future<List<v2.AssetToken>> getTokensByOwners({
     required List<String> owners,

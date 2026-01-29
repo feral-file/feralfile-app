@@ -133,7 +133,20 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
   }
 
   @override
-  Future<void> deleteToken(String cid) async {
+  Future<void> deleteTokens(List<String> cids,
+      {required List<String> addresses}) async {
+    if (cids.isEmpty) {
+      log.info(
+          '[IndexerDatabaseDrift] deleteTokens called with empty cids, skipping');
+      return;
+    }
+    for (final cid in cids) {
+      await _deleteToken(cid, addresses);
+    }
+    log.info('[IndexerDatabaseDrift] Deleted ${cids.length} tokens');
+  }
+
+  Future<void> _deleteToken(String cid, List<String> addresses) async {
     if (cid.isEmpty) {
       log.info(
           '[IndexerDatabaseDrift] deleteToken called with empty cid, skipping');
@@ -141,25 +154,29 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
           Exception('deleteToken called with empty cid')));
       return;
     }
-    final itemId = DP1ItemUtils.generateItemIdFromCid(cid, null);
+    final itemIds = addresses
+        .map((address) => DP1ItemUtils.generateItemIdFromCid(cid, address))
+        .toList();
 
-    if (itemId.isEmpty) {
-      log.info(
-          '[IndexerDatabaseDrift] generateItemIdFromCid returned empty itemId for cid $cid, skipping');
-      unawaited(Sentry.captureException(Exception(
-          'generateItemIdFromCid returned empty itemId for cid $cid')));
-      return;
+    for (final itemId in itemIds) {
+      if (itemId.isEmpty) {
+        log.info(
+            '[IndexerDatabaseDrift] generateItemIdFromCid returned empty itemId for cid $cid, skipping');
+        unawaited(Sentry.captureException(Exception(
+            'generateItemIdFromCid returned empty itemId for cid $cid')));
+        return;
+      }
+      // Delete playlist entries first
+      await (_playlistDb.delete(_playlistDb.playlistEntries)
+            ..where((e) => e.itemId.contains(itemId)))
+          .go();
+
+      // Then delete the item
+      await (_playlistDb.delete(_playlistDb.items)
+            ..where((i) => i.id.contains(itemId)))
+          .go();
+      log.info('[IndexerDatabaseDrift] deleted token $cid');
     }
-    // Delete playlist entries first
-    await (_playlistDb.delete(_playlistDb.playlistEntries)
-          ..where((e) => e.itemId.contains(itemId)))
-        .go();
-
-    // Then delete the item
-    await (_playlistDb.delete(_playlistDb.items)
-          ..where((i) => i.id.contains(itemId)))
-        .go();
-    log.info('[IndexerDatabaseDrift] deleted token $cid');
   }
 
   @override

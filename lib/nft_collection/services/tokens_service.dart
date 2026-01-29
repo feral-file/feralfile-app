@@ -1139,91 +1139,21 @@ class NftTokensServiceImpl extends NftTokensService {
         final tokenIds =
             groupedChanges.keys.toList().where((id) => id.isNotEmpty).toList();
 
-        // Get tokens from database
-        final tokens = await _database.getTokensByTokenIds(tokenIds: tokenIds);
-        final updatedTokens = <AssetToken>[];
-
-        // Apply all changes to each token
-        for (final tokenId in tokenIds) {
-          final changes = groupedChanges[tokenId]!;
-
-          final originalToken = tokens
-              .firstWhereOrNull((token) => token.id.toString() == tokenId);
-
-          // Find current token in database
-          var currentToken = originalToken?.copyWith();
-
-          // Sort changes by changedAt to apply in chronological order
-          final sortedChanges = changes.toList()
-            ..sort((a, b) => a.changedAt.compareTo(b.changedAt));
-
-          // Apply each change to the token
-          for (final change in sortedChanges) {
-            try {
-              // Handle token viewability changes
-              if (change.subjectType == SubjectType.tokenViewability) {
-                await _handleTokenViewabilityChange(change, result.addresses);
-                continue; // Skip regular change processing for viewability changes
-              }
-
-              if ((change.isMint() || change.isTransfer()) &&
-                  change.tokenCid != null) {
-                // if the change is a mint, we need to fetch token from indexer, then insert into database
-                final cid = change.tokenCid;
-                final tokens = await getManualTokens(cids: [cid!]);
-                final token = tokens.firstWhereOrNull((e) => e.cid == cid);
-                if (token != null) {
-                  currentToken = token;
-                }
-              }
-              if (currentToken != null) {
-                currentToken = currentToken.applyChange(change);
-              } else {
-                // NftCollection.logger.info(
-                //     "[UpdateTokensSuccess] token not found in database: $tokenCid, change: ${change.toJson()}");
-              }
-            } catch (e) {
-              NftCollection.logger.info("[UpdateTokensSuccess] error: $e");
-              unawaited(Sentry.captureEvent(SentryEvent(
-                message: SentryMessage("Failed to update token: $e " +
-                    "change: ${change.toJson()}"),
-                level: SentryLevel.error,
-                throwable: e,
-              )));
-              hasError = true;
-            }
-          }
-
-          if (currentToken != null &&
-              (originalToken == null ||
-                  (currentToken.updatedAt?.isAfter(
-                          originalToken.updatedAt ?? DateTime(1971)) ??
-                      false))) {
-            updatedTokens.add(currentToken);
-          }
-        }
-
-        // Emit updated tokens to stream
-        if (!controller.isClosed && !controller.isPaused) {
-          controller.add(updatedTokens);
-        }
-
-        NftCollection.logger.info(
-          '[UPDATE_TOKENS_IN_ISOLATE][end] ${result.uuid} - Updated ${updatedTokens.length} tokens',
-        );
-        if (!hasError && result.changesList.nextAnchor != null) {
-          NftCollection.logger.info(
-              '[UPDATE_TOKENS_IN_ISOLATE][update ] addresses: ${result.addresses.join(',')} anchor: ${result.changesList.nextAnchor}');
-          final addresses = result.addresses;
-          final addressAnchors = addresses
-              .map((address) => AddressAnchor(
-                  address: address, anchor: result.changesList.nextAnchor!))
-              .toList();
-          injector<UserDp1PlaylistService>()
-              .updateLastUpdateChangeAnchor(addressAnchors: addressAnchors);
-        } else {
-          NftCollection.logger.info(
-              '[UPDATE_TOKENS_IN_ISOLATE][update ] addresses: ${result.addresses.join(',')} anchor: null, hasError: $hasError');
+        final isolateIndexerService = injector<NftIndexerService>();
+        final request = QueryListTokensRequest(
+            tokenCids: tokenIds, owners: result.addresses);
+        final tokens = await isolateIndexerService.getNftTokens(request);
+        injector<IndexerDatabaseAbstract>()
+            .insertTokens(tokens, addresses: result.addresses);
+        final missingTokens = tokenIds
+            .where((id) => !tokens.any((t) => t.id.toString() == id))
+            .toList();
+        if (missingTokens.isNotEmpty) {
+          log.info(
+            '[UpdateTokensData] Deleting missing tokens: ${missingTokens.join(',')}',
+          );
+          await injector<IndexerDatabaseAbstract>()
+              .deleteTokens(missingTokens, addresses: result.addresses);
         }
       }
       return;
