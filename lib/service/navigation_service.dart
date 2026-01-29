@@ -1085,8 +1085,8 @@ class NavigationService {
                             context,
                             'Update failed',
                             Text(
-                              'We couldn\'t start the update. '
-                              'Check your connection and try again.',
+                              'The FF1 OS update couldn\'t start. '
+                              'Try again later.',
                               style: AppTypography.body(context).white,
                             ),
                           );
