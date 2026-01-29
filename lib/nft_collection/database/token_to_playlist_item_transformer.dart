@@ -13,6 +13,7 @@ import 'package:autonomy_flutter/nft_collection/database/playlist_database.dart'
 import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/extensions/dp1_item_ext.dart';
 import 'package:autonomy_flutter/util/asset_token_ext.dart';
+import 'package:collection/collection.dart';
 import 'package:drift/drift.dart';
 
 /// Result of transforming a token into database rows
@@ -97,27 +98,28 @@ TokenTransformResult transformTokenToPlaylistItem(TokenTransformInput input) {
 }
 
 /// Compute sortKeyUs for a token based on owner address
-/// Same logic as sortByProvenance(filterAddresses: [owner])
+/// Uses ownerProvenances with last_timestamp and last_tx_index for deterministic sorting
 int _computeSortKeyForOwner(AssetToken token, String normalizedOwner) {
-  final events = token.provenanceEvents?.items;
-  if (events == null || events.isEmpty) {
+  final ownerProvenances = token.ownerProvenances?.items;
+  if (ownerProvenances == null || ownerProvenances.isEmpty) {
     return 0; // Tokens without provenance go last
   }
 
-  // Find latest event where owner is involved (from or to)
-  int? latestRelevantTs;
-  for (final event in events) {
-    final toAddress = event.toAddress?.toUpperCase();
+  final provenance = ownerProvenances.firstWhereOrNull(
+    (p) => p.ownerAddress.toUpperCase() == normalizedOwner.toUpperCase(),
+  );
 
-    if (toAddress == normalizedOwner) {
-      final eventTs = event.timestamp.microsecondsSinceEpoch;
-      if (latestRelevantTs == null || eventTs > latestRelevantTs) {
-        latestRelevantTs = eventTs;
-      }
-    }
+  if (provenance == null) {
+    return 0; // Owner not found in provenances
   }
 
-  return latestRelevantTs ?? 0;
+  // Combine timestamp (microseconds) with tx_index for unique ordering
+  // If timestamps match, tx_index ensures deterministic order
+  final timestampUs = provenance.lastTimestamp.microsecondsSinceEpoch;
+  final txIndex = provenance.lastTxIndex;
+  // timestampUs is already in microseconds, just add txIndex for deterministic ordering
+  // This avoids overflow while maintaining sort order
+  return timestampUs + txIndex;
 }
 
 /// Batch transform tokens in isolate for better performance

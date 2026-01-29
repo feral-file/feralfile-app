@@ -28,48 +28,53 @@ class IndexerDatabaseDrift implements IndexerDatabaseAbstract {
   final PlaylistDatabase _playlistDb;
 
   @override
-  Future<void> insertTokens(List<v2.AssetToken> tokens) async {
+  Future<void> insertTokens(
+    List<v2.AssetToken> tokens, {
+    required List<String> addresses,
+  }) async {
     if (tokens.isEmpty) {
       log.info(
           '[IndexerDatabaseDrift] insertTokens called with 0 tokens, skipping');
       return;
     }
 
+    if (addresses.isEmpty) {
+      log.info(
+          '[IndexerDatabaseDrift] insertTokens called with 0 addresses, skipping');
+      return;
+    }
+
     log.info(
-        '[IndexerDatabaseDrift] insertTokens called with ${tokens.length} tokens');
+        '[IndexerDatabaseDrift] insertTokens: ${tokens.length} tokens for ${addresses.length} addresses');
 
     try {
-      final addressPlaylists =
-          await injector<DriftDatabaseService>().getAddressPlaylistRows();
-      final addresses =
-          addressPlaylists.map((p) => p.ownerAddress).nonNulls.toList();
-
-      // Transform and insert for each address playlist
+      // Transform and insert for each address
       for (final address in addresses) {
         final playlistId = DP1CallExtension.generatePlaylistId(address);
 
-        // Filter tokens to only include ones owned by this address
+        // Filter tokens owned by this address using ownerProvenances
         final normalizedAddress = address.toUpperCase();
         final ownedTokens = tokens.where((token) {
-          final owners = token.owners?.items ?? [];
-          // If owners list is empty, consider checking currentOwner field as fallback
-          if (owners.isEmpty && token.currentOwner != null) {
-            return token.currentOwner!.toUpperCase() == normalizedAddress;
+          final ownerProvenances = token.ownerProvenances?.items ?? [];
+          if (ownerProvenances.isEmpty) {
+            return false; // No provenance data
           }
-          return owners.any(
-              (owner) => owner.ownerAddress.toUpperCase() == normalizedAddress);
+          return ownerProvenances.any(
+            (p) =>
+                p.ownerAddress.toUpperCase() == normalizedAddress.toUpperCase(),
+          );
         }).toList();
-
-        log.info(
-          '[IndexerDatabaseDrift] insertTokens: address $address owns ${ownedTokens.length}/${tokens.length} tokens',
-        );
 
         if (ownedTokens.isEmpty) {
           log.info(
-            '[IndexerDatabaseDrift] insertTokens: No tokens owned by $address, skipping',
+            '[IndexerDatabaseDrift] No tokens owned by $address',
           );
           continue;
         }
+
+        log.info(
+          '[IndexerDatabaseDrift] $address owns ${ownedTokens.length}/${tokens.length} tokens',
+        );
 
         final inputs = createTransformInputs(
           tokens: ownedTokens,

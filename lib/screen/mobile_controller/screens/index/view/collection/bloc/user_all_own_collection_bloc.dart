@@ -238,7 +238,10 @@ class UserAllOwnCollectionBloc
             log.info(
                 '[${event.runtimeType}] Received ${tokens.length} tokens from stream for addresses: ${addresses.join(',')}');
             collected.addAll(tokens);
-            injector<IndexerDatabaseAbstract>().insertTokens(tokens);
+            injector<IndexerDatabaseAbstract>().insertTokens(
+              tokens,
+              addresses: addresses,
+            );
             final updatedAts =
                 tokens.map((token) => token.updatedAt).nonNulls.toList();
             if (updatedAts.isNotEmpty) {
@@ -597,7 +600,10 @@ class UserAllOwnCollectionBloc
         (tokens) {
           log.info(
               '[${event.runtimeType}] Received ${tokens.length} tokens from stream for addresses: ${addresses.join(',')}');
-          injector<IndexerDatabaseAbstract>().insertTokens(tokens);
+          injector<IndexerDatabaseAbstract>().insertTokens(
+            tokens,
+            addresses: addresses,
+          );
         },
         onError: (Object error, StackTrace stackTrace) {
           log.info('[${event.runtimeType}] Stream error: $error');

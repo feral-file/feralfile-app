@@ -786,7 +786,7 @@ class NftTokensServiceImpl extends NftTokensService {
   /// [startProvenanceOffset] - Starting offset for provenance events pagination (default: 0)
   ///
   /// Returns TokenOwnersAndProvenance with all owners and provenance_events combined
-  static Future<TokenOwnersAndProvenance?> getAllOwnerAndProvenanceOfToken({
+  static Future<TokenOwnersAndProvenance?> _getAllOwnerAndProvenanceOfToken({
     required String cid,
     int startOwnerOffset = 0,
     int startProvenanceOffset = 0,
@@ -1162,7 +1162,7 @@ class NftTokensServiceImpl extends NftTokensService {
             try {
               // Handle token viewability changes
               if (change.subjectType == SubjectType.tokenViewability) {
-                await _handleTokenViewabilityChange(change);
+                await _handleTokenViewabilityChange(change, result.addresses);
                 continue; // Skip regular change processing for viewability changes
               }
 
@@ -1429,51 +1429,15 @@ class NftTokensServiceImpl extends NftTokensService {
       offset: offset,
     );
     final tokens = await indexerService.getNftTokens(request);
-    Map<String, AssetToken> tokenMap =
-        Map.fromEntries(tokens.map((token) => MapEntry(token.cid, token)));
 
-    List<AssetToken> tokensToLoad = tokens
-        .where((token) =>
-            (token.owners != null &&
-                token.owners!.items.length < token.owners!.total) ||
-            (token.provenanceEvents != null &&
-                token.provenanceEvents!.items.length <
-                    token.provenanceEvents!.total))
-        .toList();
-
-    final token1155 = tokensToLoad
-        .where((token) => token.standard.contains('erc1155'))
-        .toList();
-
-    // load all owners and provenance events for each token in batches
-    for (final batch in tokensToLoad.toList().batch(10)) {
-      final futures = batch.map((token) async {
-        try {
-          return await _loadOwnersAndProvenanceForToken(indexerService, token);
-        } catch (e) {
-          NftCollection.logger.warning(
-            '[TokensService] _loadOwnersAndProvenanceForToken ${token.cid} error: $e',
-          );
-          unawaited(Sentry.captureException(e));
-          return null;
-        }
-      });
-      final results = await Future.wait(futures);
-      for (final result in results) {
-        if (result != null) {
-          tokenMap[result.cid] = result;
-        }
-      }
-    }
-
-    return tokenMap.values.toList();
+    return tokens;
   }
 
   static Future<AssetToken> _loadOwnersAndProvenanceForToken(
     NftIndexerService indexerService,
     AssetToken token,
   ) async {
-    final result = await getAllOwnerAndProvenanceOfToken(
+    final result = await _getAllOwnerAndProvenanceOfToken(
       cid: token.cid,
       indexerService: indexerService,
       startOwnerOffset: token.owners?.items.length ?? 0,
@@ -1529,30 +1493,37 @@ class NftTokensServiceImpl extends NftTokensService {
   /// Handle token viewability changes
   /// If isViewable is false, delete token and playlist entries
   /// If isViewable is true, fetch token from indexer and insert into database
-  static Future<void> _handleTokenViewabilityChange(Change change) async {
+  static Future<void> _handleTokenViewabilityChange(
+      Change change, List<String> addresses) async {
     final meta = change.metaParsed as TokenViewabilityChangeMeta;
     final tokenCid = meta.tokenCid;
     final database = injector<IndexerDatabaseAbstract>();
 
     if (meta.isViewable) {
       // Fetch token from indexer with full owners and provenances
-      final isolateIndexerService = _isolateScopeInjector<NftIndexerService>();
+      final isolateIndexerService = injector<NftIndexerService>();
       final request = QueryListTokensRequest(
         tokenCids: [tokenCid],
         limit: 1,
+        owners: addresses,
       );
       final tokens = await isolateIndexerService.getNftTokens(request);
       final token = tokens.firstWhereOrNull((e) => e.cid == tokenCid);
-      AssetToken? tokenWithOwnersAndProvenances;
-      if (token != null) {
-        tokenWithOwnersAndProvenances = await _loadOwnersAndProvenanceForToken(
-            isolateIndexerService, token);
-      }
 
-      if (tokenWithOwnersAndProvenances != null) {
+      if (token != null) {
         // Insert token into database
-        await database.insertTokens([tokenWithOwnersAndProvenances]);
-        NftCollection.logger.info('Token $tokenCid made viewable and inserted');
+        // Extract addresses from token's ownerProvenances
+        if (addresses.isNotEmpty) {
+          await database.insertTokens(
+            [token],
+            addresses: addresses,
+          );
+          NftCollection.logger
+              .info('Token $tokenCid made viewable and inserted');
+        } else {
+          NftCollection.logger.warning(
+              'Token $tokenCid has no owner provenances, not inserted');
+        }
       } else {
         NftCollection.logger.warning(
             'Token $tokenCid not found in indexer after viewability change');

@@ -61,9 +61,11 @@ extension DP1NowDisplayingItemExt on DP1NowDisplayingItem {
   static DP1NowDisplayingItem fromItemRow(db.Item itemRow) {
     AssetToken? assetToken;
     try {
-      assetToken = AssetToken.fromRest(
-        jsonDecode(itemRow.tokenDataJson!) as Map<String, dynamic>,
-      );
+      assetToken = itemRow.tokenDataJson != null
+          ? AssetToken.fromRest(
+              jsonDecode(itemRow.tokenDataJson!) as Map<String, dynamic>,
+            )
+          : null;
     } catch (e) {
       log.info('Error in fromItemRow: $e');
       unawaited(Sentry.captureException(e));

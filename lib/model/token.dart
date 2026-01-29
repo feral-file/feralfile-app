@@ -87,6 +87,7 @@ class AssetToken {
     this.metadata,
     this.owners,
     this.provenanceEvents,
+    this.ownerProvenances,
     this.enrichmentSource,
     this.metadataMediaAssets,
     this.enrichmentSourceMediaAssets,
@@ -103,6 +104,7 @@ class AssetToken {
   final TokenMetadata? metadata;
   final PaginatedOwners? owners;
   final PaginatedProvenanceEvents? provenanceEvents;
+  final PaginatedOwnerProvenances? ownerProvenances;
   final EnrichmentSource? enrichmentSource;
   final List<MediaAsset>? metadataMediaAssets;
   final List<MediaAsset>? enrichmentSourceMediaAssets;
@@ -131,6 +133,11 @@ class AssetToken {
         provenanceEvents: json['provenance_events'] != null
             ? PaginatedProvenanceEvents.fromJson(
                 Map<String, dynamic>.from(json['provenance_events'] as Map),
+              )
+            : null,
+        ownerProvenances: json['owner_provenances'] != null
+            ? PaginatedOwnerProvenances.fromJson(
+                Map<String, dynamic>.from(json['owner_provenances'] as Map),
               )
             : null,
         enrichmentSource: json['enrichment_source'] != null
@@ -175,6 +182,11 @@ class AssetToken {
                 Map<String, dynamic>.from(json['provenance_events'] as Map),
               )
             : null,
+        ownerProvenances: json['owner_provenances'] != null
+            ? PaginatedOwnerProvenances.fromJson(
+                Map<String, dynamic>.from(json['owner_provenances'] as Map),
+              )
+            : null,
         enrichmentSource: json['enrichment_source'] != null
             ? EnrichmentSource.fromJson(
                 Map<String, dynamic>.from(json['enrichment_source'] as Map),
@@ -201,6 +213,7 @@ class AssetToken {
         'metadata': metadata?.toJson(),
         'owners': owners?.toJson(),
         'provenance_events': provenanceEvents?.toJson(),
+        'owner_provenances': ownerProvenances?.toJson(),
         'enrichment_source': enrichmentSource?.toJson(),
         'metadata_media_assets':
             metadataMediaAssets?.map((e) => e.toJson()).toList(),
@@ -250,6 +263,13 @@ class AssetToken {
             )
           : null,
 
+      ownerProvenances: displayData?['owner_provenances'] != null
+          ? PaginatedOwnerProvenances.fromJson(
+              Map<String, dynamic>.from(
+                  displayData!['owner_provenances'] as Map),
+            )
+          : null,
+
       enrichmentSource: displayData?['enrichment_source'] != null
           ? EnrichmentSource.fromJson(
               Map<String, dynamic>.from(
@@ -286,6 +306,7 @@ class AssetToken {
     TokenMetadata? metadata,
     PaginatedOwners? owners,
     PaginatedProvenanceEvents? provenanceEvents,
+    PaginatedOwnerProvenances? ownerProvenances,
     EnrichmentSource? enrichmentSource,
     List<MediaAsset>? metadataMediaAssets,
     List<MediaAsset>? enrichmentSourceMediaAssets,
@@ -302,6 +323,7 @@ class AssetToken {
       metadata: metadata ?? this.metadata,
       owners: owners ?? this.owners,
       provenanceEvents: provenanceEvents ?? this.provenanceEvents,
+      ownerProvenances: ownerProvenances ?? this.ownerProvenances,
       enrichmentSource: enrichmentSource ?? this.enrichmentSource,
       metadataMediaAssets: metadataMediaAssets ?? this.metadataMediaAssets,
       enrichmentSourceMediaAssets:
@@ -567,6 +589,71 @@ class PaginatedProvenanceEvents {
       items: items ?? this.items,
       total: total ?? this.total,
       offset: offset ?? this.offset,
+    );
+  }
+}
+
+class OwnerProvenance {
+  OwnerProvenance({
+    required this.ownerAddress,
+    required this.lastTimestamp,
+    required this.lastTxIndex,
+  });
+
+  final String ownerAddress;
+  final DateTime lastTimestamp;
+  final int lastTxIndex;
+
+  factory OwnerProvenance.fromJson(Map<String, dynamic> json) =>
+      OwnerProvenance(
+        ownerAddress: json['owner_address'] as String,
+        lastTimestamp: DateTime.parse(json['last_timestamp'] as String),
+        lastTxIndex: int.parse(json['last_tx_index'].toString()),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'owner_address': ownerAddress,
+        'last_timestamp': lastTimestamp.toIso8601String(),
+        'last_tx_index': lastTxIndex.toString(),
+      };
+
+  OwnerProvenance copyWith({
+    String? ownerAddress,
+    DateTime? lastTimestamp,
+    int? lastTxIndex,
+  }) {
+    return OwnerProvenance(
+      ownerAddress: ownerAddress ?? this.ownerAddress,
+      lastTimestamp: lastTimestamp ?? this.lastTimestamp,
+      lastTxIndex: lastTxIndex ?? this.lastTxIndex,
+    );
+  }
+}
+
+class PaginatedOwnerProvenances {
+  PaginatedOwnerProvenances({
+    required this.items,
+  });
+
+  final List<OwnerProvenance> items;
+
+  factory PaginatedOwnerProvenances.fromJson(Map<String, dynamic> json) =>
+      PaginatedOwnerProvenances(
+        items: (json['items'] as List)
+            .map((e) =>
+                OwnerProvenance.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList(),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'items': items.map((e) => e.toJson()).toList(),
+      };
+
+  PaginatedOwnerProvenances copyWith({
+    List<OwnerProvenance>? items,
+  }) {
+    return PaginatedOwnerProvenances(
+      items: items ?? this.items,
     );
   }
 }

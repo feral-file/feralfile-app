@@ -170,7 +170,7 @@ extension AssetTokenExtension on AssetToken {
           }
         }
       }
-        return thumbnailUrl;
+      return thumbnailUrl;
     }
 
     return null;
@@ -187,13 +187,6 @@ extension AssetTokenExtension on AssetToken {
 
   bool get shouldShowFeralfileRight =>
       isFeralfile && !isWedgwoodActivationToken;
-
-  bool hasLocalAddress() {
-    final owners = this.owners;
-    final collectionAddresses = injector<AddressService>().getAllAddresses();
-    return collectionAddresses.any((element) =>
-        owners?.items.any((owner) => owner.ownerAddress == element) ?? false);
-  }
 
   String get secondaryMarketURL {
     switch (chain) {
@@ -495,6 +488,14 @@ extension AssetTokenExtension on AssetToken {
     return copyWith(
       updatedAt: changedAt ?? updatedAt,
       enrichmentSource: mergedEnrichmentSource,
+    );
+  }
+
+  /// Get owner provenance for a specific address
+  OwnerProvenance? ownerProvenanceForAddress(String address) {
+    final normalizedAddress = address.toUpperCase();
+    return ownerProvenances?.items.firstWhereOrNull(
+      (p) => p.ownerAddress.toUpperCase() == normalizedAddress,
     );
   }
 }

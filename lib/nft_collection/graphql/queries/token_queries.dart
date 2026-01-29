@@ -96,6 +96,8 @@ const String getTokens = r'''
     $token_numbers: [String!]
     $limit: Uint8 = 20
     $offset: Uint64 = 0
+    $sort_by: TokenSortBy = created_at
+    $sort_order: Order = asc
   ) {
     tokens(
       owners: $owners
@@ -106,6 +108,8 @@ const String getTokens = r'''
       token_numbers: $token_numbers
       limit: $limit
       offset: $offset
+      sort_by: $sort_by
+      sort_order: $sort_order
     ) {
       items {
         id
@@ -131,25 +135,12 @@ const String getTokens = r'''
             url
           }
         }
-        owners {
+        owner_provenances {
           items {
-            quantity
             owner_address
+            last_timestamp
+            last_tx_index
           }
-          total
-          offset
-        }
-        provenance_events {
-          items {
-            event_type
-            from_address
-            to_address
-            tx_hash
-            timestamp
-            chain
-          }
-          total
-          offset
         }
         enrichment_source {
           name

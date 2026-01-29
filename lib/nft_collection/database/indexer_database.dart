@@ -4,7 +4,10 @@ enum IndexerDatabaseSortBy { updatedAt }
 
 abstract class IndexerDatabaseAbstract {
   // Write operations (async for Drift compatibility)
-  Future<void> insertTokens(List<v2.AssetToken> tokens);
+  Future<void> insertTokens(
+    List<v2.AssetToken> tokens, {
+    required List<String> addresses,
+  });
 
   Future<void> clearAll();
 
