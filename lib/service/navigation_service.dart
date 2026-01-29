@@ -1007,8 +1007,14 @@ class NavigationService {
       return null;
     }
 
-    final latestVersion = deviceStatus.latestVersion ?? 'latest version';
-    final installedVersion = deviceStatus.installedVersion ?? 'current version';
+    final latestVersion = deviceStatus.latestVersion;
+
+    final firmwareMessageParagraphs = <String>[
+      'A new update is available for your FF1.',
+      if (latestVersion != null && latestVersion.isNotEmpty)
+        'Update to version $latestVersion.',
+      'Your FF1 will restart to complete the update.',
+    ];
 
     final result = await UIHelper.showCenterDialog(
       context,
@@ -1016,15 +1022,12 @@ class NavigationService {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Update available',
+            'FF1 OS update available',
             style: AppTypography.body(context).bold.white,
           ),
           const SizedBox(height: 16),
           Text(
-            'A new firmware version is available for your FF1. '
-            'Current version: $installedVersion. '
-            'Latest version: $latestVersion. '
-            'This update may take 5–10 minutes and your device will restart.',
+            firmwareMessageParagraphs.join('\n\n'),
             style: AppTypography.body(context).white,
           ),
           const SizedBox(height: 36),
@@ -1032,16 +1035,15 @@ class NavigationService {
             children: [
               Expanded(
                 child: PrimaryAsyncButton(
-                  text: 'Cancel',
+                  text: 'Later',
                   textColor: AppColor.white,
                   color: Colors.transparent,
                   borderColor: AppColor.white,
                   onTap: () async {
                     if (saveDismissedOnCancel) {
+                      final nowMillis = DateTime.now().millisecondsSinceEpoch;
                       await injector<ConfigurationService>()
-                          .setDismissedFirmwareUpdateVersion(
-                        deviceStatus.latestVersion,
-                      );
+                          .setDismissedFirmwareUpdateAt(nowMillis);
                     }
                     goBack(result: false);
                   },
@@ -1051,9 +1053,8 @@ class NavigationService {
               Expanded(
                 child: PrimaryAsyncButton(
                   text: 'Update',
-                  textColor: AppColor.white,
-                  borderColor: AppColor.white,
-                  color: Colors.transparent,
+                  textColor: AppColor.primaryBlack,
+                  color: AppColor.feralFileLightBlue,
                   onTap: () async {
                     final device =
                         BluetoothDeviceManager().castingBluetoothDevice;
@@ -1068,12 +1069,14 @@ class NavigationService {
                             context,
                             'Update started',
                             Text(
-                              'Your FF1 is updating to the latest version. '
-                              'This may take 5–10 minutes.',
+                              'Your FF1 is currently updating, and depending on the OS version, the update may run in the background without visible on-screen activity.',
                               style: AppTypography.body(context).white,
                             ),
                           );
                         }
+                        final nowMillis = DateTime.now().millisecondsSinceEpoch;
+                        await injector<ConfigurationService>()
+                            .setLastFf1OsUpdateAt(nowMillis);
                       } catch (e) {
                         log.warning('Failed to update firmware: $e');
                         if (mounted) {

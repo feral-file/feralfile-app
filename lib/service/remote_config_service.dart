@@ -155,7 +155,7 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
     },
     ConfigGroup.support.getString: {
       ConfigKey.supportEmailRecipients.getString: ['support@feralfile.com'],
-      ConfigKey.supportEmailCc.getString: [],
+      ConfigKey.supportEmailCc.getString: <String>[],
     },
     ConfigGroup.dp1Playlist.getString: {
       ConfigKey.dp1PlaylistChannelUrls.getString: [
@@ -173,6 +173,7 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
     },
     ConfigGroup.ff1Config.getString: {
       ConfigKey.ff1LearnMoreUrl.getString: 'https://feralfile.com/install',
+      ConfigKey.ff1OsUpdateRemindAfterSeconds.getString: 864000, // 10 days
     },
     // Token metadata rebuild policy
     'token_metadata_rebuild': {
@@ -182,7 +183,6 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
   };
 
   static Map<String, dynamic>? _configs;
-  bool _isLoading = false;
   Completer<Map<String, dynamic>>? _completer;
 
   @override
@@ -407,6 +407,7 @@ enum ConfigKey {
   cacheValidDuration,
   lastForceUpdateTime,
   ff1LearnMoreUrl,
+  ff1OsUpdateRemindAfterSeconds,
   supportEmailRecipients,
   supportEmailCc,
 }
@@ -509,6 +510,8 @@ extension ConfigKeyExtension on ConfigKey {
         return 'last_force_update_time';
       case ConfigKey.ff1LearnMoreUrl:
         return 'ff1_learn_more_url';
+      case ConfigKey.ff1OsUpdateRemindAfterSeconds:
+        return 'ff1_os_update_remind_after_seconds';
       case ConfigKey.supportEmailRecipients:
         return 'email_recipients';
       case ConfigKey.supportEmailCc:

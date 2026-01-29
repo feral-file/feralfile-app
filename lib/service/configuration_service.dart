@@ -142,9 +142,13 @@ abstract class ConfigurationService {
     required List<AddressAnchor> addressAnchors,
   });
 
-  String? getDismissedFirmwareUpdateVersion();
+  int? getDismissedFirmwareUpdateAt();
 
-  Future<void> setDismissedFirmwareUpdateVersion(String? version);
+  Future<void> setDismissedFirmwareUpdateAt(int? dismissedAt);
+
+  int? getLastFf1OsUpdateAt();
+
+  Future<void> setLastFf1OsUpdateAt(int? startedAt);
 
   /// Address indexing info (per-address workflow and related metadata)
   Future<void> setAddressIndexingInfo(List<AddressIndexingInfo> infos);
@@ -258,8 +262,9 @@ class ConfigurationServiceImpl implements ConfigurationService {
 
   static const String KEY_HAS_SEEN_PLAY_TO_FF1_TOOLTIP =
       'has_seen_play_to_ff1_tooltip';
-  static const String KEY_DISMISSED_FIRMWARE_UPDATE_VERSION =
-      'dismissed_firmware_update_version';
+  static const String KEY_DISMISSED_FIRMWARE_UPDATE_AT =
+      'dismissed_firmware_update_at';
+  static const String KEY_LAST_FF1_OS_UPDATE_AT = 'last_ff1_os_update_at';
 
   static const String KEY_ADDRESS_INDEXING_INFO =
       'address_indexing_info$_version';
@@ -643,17 +648,28 @@ class ConfigurationServiceImpl implements ConfigurationService {
       );
 
   @override
-  String? getDismissedFirmwareUpdateVersion() =>
-      _preferences.getString(KEY_DISMISSED_FIRMWARE_UPDATE_VERSION);
+  int? getDismissedFirmwareUpdateAt() =>
+      _preferences.getInt(KEY_DISMISSED_FIRMWARE_UPDATE_AT);
 
   @override
-  Future<void> setDismissedFirmwareUpdateVersion(String? version) async {
-    if (version == null) {
-      await _preferences.remove(KEY_DISMISSED_FIRMWARE_UPDATE_VERSION);
+  Future<void> setDismissedFirmwareUpdateAt(int? dismissedAt) async {
+    if (dismissedAt == null) {
+      await _preferences.remove(KEY_DISMISSED_FIRMWARE_UPDATE_AT);
       return;
     }
-    await _preferences.setString(
-        KEY_DISMISSED_FIRMWARE_UPDATE_VERSION, version);
+    await _preferences.setInt(KEY_DISMISSED_FIRMWARE_UPDATE_AT, dismissedAt);
+  }
+
+  @override
+  int? getLastFf1OsUpdateAt() => _preferences.getInt(KEY_LAST_FF1_OS_UPDATE_AT);
+
+  @override
+  Future<void> setLastFf1OsUpdateAt(int? startedAt) async {
+    if (startedAt == null) {
+      await _preferences.remove(KEY_LAST_FF1_OS_UPDATE_AT);
+      return;
+    }
+    await _preferences.setInt(KEY_LAST_FF1_OS_UPDATE_AT, startedAt);
   }
 
   @override

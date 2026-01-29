@@ -1022,7 +1022,7 @@ class _DrawerItemState extends State<DrawerItem> {
     final defaultDisabledTextStyle =
         defaultTextStyle.copyWith(color: AppColor.disabledColor);
     final icon = !item.isEnable
-        ? item.iconOnDisable
+        ? item.iconOnDisable ?? item.icon
         : isProcessing
             ? (item.iconOnProcessing ??
                 loadingIndicator(valueColor: AppColor.disabledColor, size: 14))

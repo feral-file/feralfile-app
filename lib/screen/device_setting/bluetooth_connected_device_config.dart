@@ -18,6 +18,7 @@ import 'package:autonomy_flutter/screen/device_setting/scan_wifi_network_page.da
 import 'package:autonomy_flutter/service/bluetooth_notification_service.dart';
 import 'package:autonomy_flutter/service/bluetooth_service.dart';
 import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
+import 'package:autonomy_flutter/service/configuration_service.dart';
 import 'package:autonomy_flutter/service/navigation_service.dart';
 import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/theme/app_color.dart';
@@ -115,6 +116,9 @@ class BluetoothConnectedDeviceConfigState
 
   NotificationCallback? cb;
 
+  bool _isShowingFirmwareUpdateDialog = false;
+  bool _didCheckFirmwareUpdateDialog = false;
+
   // Add performance metrics tracking
   final List<FlSpot> _cpuPoints = [];
   final List<FlSpot> _memoryPoints = [];
@@ -162,6 +166,13 @@ class BluetoothConnectedDeviceConfigState
     _enableMetricsStreaming();
     _fgbgSubscription =
         FGBGEvents.instance.stream.listen(_handleForeBackground);
+
+    unawaited(
+      Future<void>.delayed(
+        const Duration(seconds: 3),
+        _maybeShowFirmwareUpdateDialog,
+      ),
+    );
   }
 
   void _handleForeBackground(FGBGType event) {
@@ -178,6 +189,71 @@ class BluetoothConnectedDeviceConfigState
       setState(() {
         this.deviceStatus = status;
       });
+    }
+
+    if (!widget.payload.isFromOnboarding) {
+      unawaited(_maybeShowFirmwareUpdateDialog());
+    }
+  }
+
+  Future<void> _maybeShowFirmwareUpdateDialog() async {
+    if (!mounted) return;
+    if (_isShowingFirmwareUpdateDialog) return;
+    if (_didCheckFirmwareUpdateDialog) return;
+
+    final status = deviceStatus;
+    if (status == null) return;
+
+    final latestVersion = status.latestVersion;
+    final installedVersion = status.installedVersion;
+
+    if (latestVersion == null || installedVersion == null) return;
+    if (latestVersion == installedVersion) return;
+
+    // check if the last update was less than 15 minutes ago, if so, don't show the dialog
+    final lastUpdateAt =
+        injector<ConfigurationService>().getLastFf1OsUpdateAt();
+    if (lastUpdateAt != null) {
+      final elapsed = DateTime.now()
+          .difference(DateTime.fromMillisecondsSinceEpoch(lastUpdateAt));
+      if (elapsed < const Duration(minutes: 15)) {
+        log.warning(
+            'Last update was less than 15 minutes ago, skipping dialog');
+        return;
+      }
+    }
+
+    final dismissedAt =
+        injector<ConfigurationService>().getDismissedFirmwareUpdateAt();
+
+    if (dismissedAt != null) {
+      final remindAfterSeconds =
+          injector<RemoteConfigService>().getConfig<int?>(
+        ConfigGroup.ff1Config,
+        ConfigKey.ff1OsUpdateRemindAfterSeconds,
+        null,
+        parser: (value) => int.tryParse(value.toString()),
+      );
+      if (remindAfterSeconds == null) {
+        log.warning('RemoteConfigService: getConfig: $remindAfterSeconds');
+        return;
+      }
+      final elapsedSeconds =
+          (DateTime.now().millisecondsSinceEpoch - dismissedAt) ~/ 1000;
+      if (elapsedSeconds < remindAfterSeconds) {
+        return;
+      }
+    }
+
+    _didCheckFirmwareUpdateDialog = true;
+    _isShowingFirmwareUpdateDialog = true;
+    try {
+      await injector<NavigationService>().showFirmwareUpdateDialog(
+        status,
+        saveDismissedOnCancel: true,
+      );
+    } finally {
+      _isShowingFirmwareUpdateDialog = false;
     }
   }
 
@@ -223,23 +299,20 @@ class BluetoothConnectedDeviceConfigState
       appBar: getCustomBackAppBar(
         context,
         canGoBack: !widget.payload.isFromOnboarding,
-        title: name == null
-            ? Text('configure_device'.tr())
-            : FFTextName(
-                title: name,
-                onSubmit: (String newName) async {
-                  final device = selectedDevice!;
-                  final newDevice =
-                      await BluetoothDeviceManager().updateDeviceName(
-                    device,
-                    newName,
-                  );
-                  setState(() {
-                    selectedDevice = newDevice;
-                  });
-                },
-              ),
-        actions: widget.payload.isFromOnboarding || selectedDevice.isQEMU
+        title: FFTextName(
+          title: name,
+          onSubmit: (String newName) async {
+            final device = selectedDevice;
+            final newDevice = await BluetoothDeviceManager().updateDeviceName(
+              device,
+              newName,
+            );
+            setState(() {
+              selectedDevice = newDevice;
+            });
+          },
+        ),
+        actions: widget.payload.isFromOnboarding
             ? []
             : [
                 _buildDeviceSwitcher(context),
@@ -537,11 +610,6 @@ class BluetoothConnectedDeviceConfigState
     final blDevice = selectedDevice!;
     return BlocBuilder<CanvasDeviceBloc, CanvasDeviceState>(
       bloc: injector<CanvasDeviceBloc>(),
-      // buildWhen: (previous, current) {
-      //   return previous.statusOf(blDevice)?.deviceSettings?.scaling !=
-      //           current.statusOf(blDevice)?.deviceSettings?.scaling ||
-      //       previous.isDeviceAlive(blDevice) != current.isDeviceAlive(blDevice);
-      // },
       builder: (context, state) {
         final deviceState = state.statusOf(blDevice);
         final artFramingIndex =
@@ -1473,13 +1541,20 @@ class BluetoothConnectedDeviceConfigState
 
   void _showOption(BuildContext context, CanvasDeviceState state) {
     final isDeviceAlive = selectedDevice.isAlive;
-    final isQEMU = selectedDevice.isQEMU;
+    final latestVersion = deviceStatus?.latestVersion;
     final hasUpdateAvailable = deviceStatus?.latestVersion != null &&
         deviceStatus?.installedVersion != null &&
         deviceStatus!.latestVersion != deviceStatus!.installedVersion;
+    final lastUpdateAt =
+        injector<ConfigurationService>().getLastFf1OsUpdateAt();
+    final isLastUpdateLessThan15MinutesAgo = lastUpdateAt != null &&
+        DateTime.now()
+                .difference(DateTime.fromMillisecondsSinceEpoch(lastUpdateAt))
+                .inMinutes <
+            30;
 
     final options = [
-      if (isDeviceAlive & !isQEMU)
+      if (isDeviceAlive)
         OptionItem(
           title: 'Power Off',
           icon: const Icon(
@@ -1491,7 +1566,7 @@ class BluetoothConnectedDeviceConfigState
           },
         ),
       // reboot
-      if (isDeviceAlive & !isQEMU)
+      if (isDeviceAlive)
         OptionItem(
           title: 'Restart',
           icon: const Icon(
@@ -1503,34 +1578,39 @@ class BluetoothConnectedDeviceConfigState
           },
         ),
       // Update to latest version
-      if (isDeviceAlive & !isQEMU && hasUpdateAvailable)
+      if (isDeviceAlive && hasUpdateAvailable)
         OptionItem(
-          title: 'Update to Latest Version',
+          title: isLastUpdateLessThan15MinutesAgo
+              ? (latestVersion == null || latestVersion.isEmpty
+                  ? 'Updating...'
+                  : 'Updating to version $latestVersion...')
+              : (latestVersion == null || latestVersion.isEmpty
+                  ? 'Update available'
+                  : 'Update to version $latestVersion'),
           icon: const Icon(
             Icons.system_update,
             size: 24,
           ),
+          isEnable: !isLastUpdateLessThan15MinutesAgo,
           onTap: () {
             Navigator.pop(context); // Close drawer first
             _onUpdateToLatestVersionSelected();
           },
         ),
-      if (!isQEMU)
-        OptionItem(
-          title: 'Send Log',
-          icon: Icon(AuIcon.help),
-          onTap: () async {
-            await _onSendLogSelected();
-          },
-        ),
-      if (!isQEMU)
-        OptionItem(
-          title: 'Factory Reset',
-          icon: Icon(Icons.factory),
-          onTap: () {
-            _onFactoryResetSelected();
-          },
-        ),
+      OptionItem(
+        title: 'Send Log',
+        icon: Icon(AuIcon.help),
+        onTap: () async {
+          await _onSendLogSelected();
+        },
+      ),
+      OptionItem(
+        title: 'Factory Reset',
+        icon: Icon(Icons.factory),
+        onTap: () {
+          _onFactoryResetSelected();
+        },
+      ),
       OptionItem(
         title: 'FF1 Guide',
         icon: Icon(Icons.book),
