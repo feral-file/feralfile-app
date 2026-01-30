@@ -9,6 +9,36 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/database/app_data_manager.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
+import 'package:autonomy_flutter/design/layout_constants.dart';
+import 'package:autonomy_flutter/model/device/device_status.dart';
+import 'package:autonomy_flutter/model/pair.dart';
+import 'package:autonomy_flutter/screen/app_router.dart';
+import 'package:autonomy_flutter/screen/github_doc.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
+import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
+import 'package:autonomy_flutter/service/auth_service.dart';
+import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
+import 'package:autonomy_flutter/service/configuration_service.dart';
+import 'package:autonomy_flutter/service/device_info_service.dart';
+import 'package:autonomy_flutter/service/remote_config_service.dart';
+import 'package:autonomy_flutter/service/versions_service.dart';
+import 'package:autonomy_flutter/theme/app_color.dart';
+import 'package:autonomy_flutter/util/bluetooth_device_ext.dart';
+import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
+import 'package:autonomy_flutter/util/constants.dart';
+import 'package:autonomy_flutter/util/custom_route_observer.dart';
+import 'package:autonomy_flutter/util/error_handler.dart';
+import 'package:autonomy_flutter/util/feral_file_custom_tab.dart';
+import 'package:autonomy_flutter/util/log.dart' as log_util;
+import 'package:autonomy_flutter/util/log.dart';
+import 'package:autonomy_flutter/util/native_log_reader.dart';
+import 'package:autonomy_flutter/util/string_ext.dart';
+import 'package:autonomy_flutter/util/ui_helper.dart';
+import 'package:autonomy_flutter/view/now_displaying/now_display_setting.dart';
+import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -19,37 +49,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sentry/sentry.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-
-import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/database/app_data_manager.dart';
-import 'package:autonomy_flutter/design/app_typography.dart';
-import 'package:autonomy_flutter/design/layout_constants.dart';
-import 'package:autonomy_flutter/model/pair.dart';
-import 'package:autonomy_flutter/screen/app_router.dart';
-import 'package:autonomy_flutter/screen/github_doc.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/all_playlists_page.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
-import 'package:autonomy_flutter/service/auth_service.dart';
-import 'package:autonomy_flutter/service/device_info_service.dart';
-import 'package:autonomy_flutter/service/remote_config_service.dart';
-import 'package:autonomy_flutter/service/versions_service.dart';
-import 'package:autonomy_flutter/service/canvas_client_service_v2.dart';
-import 'package:autonomy_flutter/service/configuration_service.dart';
-import 'package:autonomy_flutter/model/device/device_status.dart';
-import 'package:autonomy_flutter/util/bluetooth_device_ext.dart';
-import 'package:autonomy_flutter/util/bluetooth_device_helper.dart';
-import 'package:autonomy_flutter/util/constants.dart';
-import 'package:autonomy_flutter/util/custom_route_observer.dart';
-import 'package:autonomy_flutter/util/error_handler.dart';
-import 'package:autonomy_flutter/util/feral_file_custom_tab.dart';
-import 'package:autonomy_flutter/util/log.dart';
-import 'package:autonomy_flutter/util/log.dart' as log_util;
-import 'package:autonomy_flutter/util/native_log_reader.dart';
-import 'package:autonomy_flutter/util/string_ext.dart';
-import 'package:autonomy_flutter/util/ui_helper.dart';
-import 'package:autonomy_flutter/view/now_displaying/now_display_setting.dart';
-import 'package:autonomy_flutter/view/primary_button.dart';
-import 'package:autonomy_flutter/theme/app_color.dart';
 
 class NavigationService {
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -1022,7 +1021,7 @@ class NavigationService {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'FF1 OS update available',
+            'FFOS update available',
             style: AppTypography.body(context).bold.white,
           ),
           const SizedBox(height: 16),
@@ -1085,7 +1084,7 @@ class NavigationService {
                             context,
                             'Update failed',
                             Text(
-                              'The FF1 OS update couldn\'t start. '
+                              'The FFOS update couldn\'t start. '
                               'Try again later.',
                               style: AppTypography.body(context).white,
                             ),

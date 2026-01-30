@@ -23,12 +23,8 @@ import 'package:autonomy_flutter/nft_collection/services/drift_database_service.
 import 'package:autonomy_flutter/nft_collection/services/indexer_service.dart';
 import 'package:autonomy_flutter/nft_collection/utils/list_extentions.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
-import 'package:autonomy_flutter/service/user_playlist_service.dart';
-import 'package:autonomy_flutter/util/asset_token_ext.dart';
-import 'package:autonomy_flutter/util/list_extension.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'package:autonomy_flutter/util/timer_ext.dart';
-import 'package:collection/collection.dart';
 import 'package:get_it/get_it.dart';
 import 'package:sentry/sentry.dart';
 import 'package:uuid/uuid.dart';
@@ -1131,29 +1127,52 @@ class NftTokensServiceImpl extends NftTokensService {
       );
       final controller = _streamControllers[result.uuid];
       if (controller != null && !controller.isClosed) {
-        bool hasError = false;
-        // Group changes by tokenCid
+        try {
+          // Extract tokenIds and tokenCids from changes
+          final tokenIds = <int>{};
+          final tokenCids = <String>{};
 
-        final groupedChanges = result.changesList.items
-            .groupBy((change) => change.tokenId?.toString() ?? '');
-        final tokenIds =
-            groupedChanges.keys.toList().where((id) => id.isNotEmpty).toList();
+          for (final change in result.changesList.items) {
+            final tokenId = change.tokenId;
+            final tokenCid = change.tokenCid;
+            if (tokenId != null) {
+              tokenIds.add(tokenId);
+            }
+            if (tokenCid != null) {
+              tokenCids.add(tokenCid);
+            }
+          }
 
-        final isolateIndexerService = injector<NftIndexerService>();
-        final request = QueryListTokensRequest(
-            tokenCids: tokenIds, owners: result.addresses);
-        final tokens = await isolateIndexerService.getNftTokens(request);
-        injector<IndexerDatabaseAbstract>()
-            .insertTokens(tokens, addresses: result.addresses);
-        final missingTokens = tokenIds
-            .where((id) => !tokens.any((t) => t.id.toString() == id))
-            .toList();
-        if (missingTokens.isNotEmpty) {
-          log.info(
-            '[UpdateTokensData] Deleting missing tokens: ${missingTokens.join(',')}',
-          );
+          final isolateIndexerService = injector<NftIndexerService>();
+          final request = QueryListTokensRequest(
+              tokenIds: tokenIds.toList(), owners: result.addresses);
+          final tokens = await isolateIndexerService.getNftTokens(request);
           await injector<IndexerDatabaseAbstract>()
-              .deleteTokens(missingTokens, addresses: result.addresses);
+              .insertTokens(tokens, addresses: result.addresses);
+          controller.add(tokens);
+
+          // Find missing tokenCids by comparing with returned tokens
+          final returnedTokenCids = tokens.map((t) => t.cid).toSet();
+          final missingTokenCids = tokenCids
+              .where((cid) => !returnedTokenCids.contains(cid))
+              .toList();
+
+          if (missingTokenCids.isNotEmpty) {
+            log.info(
+              '[UpdateTokensData] Deleting missing tokens: ${missingTokenCids.join(',')}',
+            );
+            await injector<IndexerDatabaseAbstract>()
+                .deleteTokens(missingTokenCids, addresses: result.addresses);
+          }
+        } catch (e) {
+          log.warning(
+            '[UpdateTokensData] Error updating tokens: $e',
+          );
+          unawaited(Sentry.captureEvent(SentryEvent(
+            message: SentryMessage('Error updating tokens: $e'),
+            level: SentryLevel.error,
+            throwable: e,
+          )));
         }
       }
       return;

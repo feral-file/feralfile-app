@@ -435,7 +435,7 @@ class Change {
     }
     if (metaParsed is EnrichmentSourceChangeMeta) {
       return (metaParsed as EnrichmentSourceChangeMeta).tokenId;
-    } 
+    }
     if (metaParsed is TokenViewabilityChangeMeta) {
       return (metaParsed as TokenViewabilityChangeMeta).tokenId;
     }
@@ -446,6 +446,11 @@ class Change {
     if (metaParsed is ProvenanceChangeMeta) {
       return (metaParsed! as ProvenanceChangeMeta).tokenCid;
     }
+
+    if (metaParsed is TokenViewabilityChangeMeta) {
+      return (metaParsed! as TokenViewabilityChangeMeta).tokenCid;
+    }
+
     return null;
   }
 
