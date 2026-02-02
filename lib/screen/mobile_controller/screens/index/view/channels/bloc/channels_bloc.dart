@@ -84,7 +84,7 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
           final loadedLength = state.channels.length;
           final listenSize = loadedLength > pageSize ? loadedLength : pageSize;
 
-          add(RefreshChannelsEvent(offset: listenSize));
+          add(RefreshChannelsEvent(size: listenSize));
         },
         onError: (Object error, StackTrace stackTrace) {
           log.info(
@@ -118,7 +118,7 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
     await _loadChannels(
       emit: emit,
       cursor: null,
-      offset: event.offset ?? pageSize,
+      size: event.size ?? pageSize,
     );
   }
 
@@ -134,7 +134,7 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
     await _loadChannels(
       emit: emit,
       cursor: state.cursor,
-      offset: pageSize,
+      size: pageSize,
       isLoadMore: true,
     );
   }
@@ -146,7 +146,7 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
     await _loadChannels(
       emit: emit,
       cursor: null,
-      offset: event.offset ?? pageSize,
+      size: event.size ?? pageSize,
       isRefresh: true,
     );
   }
@@ -154,16 +154,16 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
   Future<LoadChannelPaginationResponse> _loadCuratedChannels({
     required Emitter<ChannelsState> emit,
     required String? cursor,
-    required int offset,
+    required int size,
   }) async {
     // Get all cached channels
     final allChannels =
         await injector<FeralFileFeedManager>().getAllCachedChannels();
 
     final start = int.tryParse(cursor ?? '0') ?? 0;
-    final end = start + offset;
+    final end = start + size;
 
-    // Get channels based on offset
+    // Get channels based on size
     final topChannels = allChannels.safeSublist(start, end).toList();
 
     final nextCursor = end < allChannels.length ? end.toString() : null;
@@ -179,16 +179,16 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
   Future<LoadChannelPaginationResponse> _loadMyChannels({
     required Emitter<ChannelsState> emit,
     required String? cursor,
-    required int offset,
+    required int size,
   }) async {
     // Get all cached channels
     final allChannels =
         await injector<FeralFileFeedManager>().getAllCachedChannels();
 
     final start = int.tryParse(cursor ?? '0') ?? 0;
-    final end = start + offset;
+    final end = start + size;
 
-    // Get channels based on offset
+    // Get channels based on size
     final topChannels = allChannels.safeSublist(start, end).toList();
 
     final nextCursor = end < allChannels.length ? end.toString() : null;
@@ -204,16 +204,16 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
   Future<LoadChannelPaginationResponse> _loadGlobalChannels({
     required Emitter<ChannelsState> emit,
     required String? cursor,
-    required int offset,
+    required int size,
   }) async {
     // Get all cached channels
     final allChannels =
         await injector<FeralFileFeedManager>().getAllCachedChannels();
 
     final start = int.tryParse(cursor ?? '0') ?? 0;
-    final end = start + offset;
+    final end = start + size;
 
-    // Get channels based on offset
+    // Get channels based on size
     final topChannels = allChannels.safeSublist(start, end).toList();
 
     final nextCursor = end < allChannels.length ? end.toString() : null;
@@ -229,7 +229,7 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
   Future<void> _loadChannels({
     required Emitter<ChannelsState> emit,
     required String? cursor,
-    required int offset,
+    required int size,
     bool isLoadMore = false,
     bool isRefresh = false,
   }) async {
@@ -247,19 +247,19 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
           paginationResponse = await _loadCuratedChannels(
             emit: emit,
             cursor: cursor,
-            offset: offset,
+            size: size,
           );
         case ChannelType.me:
           paginationResponse = await _loadMyChannels(
             emit: emit,
             cursor: cursor,
-            offset: offset,
+            size: size,
           );
         case ChannelType.global:
           paginationResponse = await _loadGlobalChannels(
             emit: emit,
             cursor: cursor,
-            offset: offset,
+            size: size,
           );
       }
 

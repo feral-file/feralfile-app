@@ -33,9 +33,9 @@ abstract class PlaylistsEvent {
 }
 
 class LoadPlaylistsEvent extends PlaylistsEvent {
-  LoadPlaylistsEvent() {
-    log.info("Create LoadPlaylistsEvent");
-  }
+  LoadPlaylistsEvent({this.size});
+
+  final int? size;
 }
 
 class LoadMorePlaylistsEvent extends PlaylistsEvent {
@@ -45,11 +45,7 @@ class LoadMorePlaylistsEvent extends PlaylistsEvent {
 }
 
 class RefreshPlaylistsEvent extends PlaylistsEvent {
-  RefreshPlaylistsEvent({this.size}) {
-    log.info("Create RefreshPlaylistsEvent with size: $size");
-  }
+  RefreshPlaylistsEvent({this.size});
 
-  /// Optional size to specify how many playlists to load
-  /// If null, loads default pageSize
   final int? size;
 }

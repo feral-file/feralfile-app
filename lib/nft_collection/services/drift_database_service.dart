@@ -156,6 +156,22 @@ abstract class DriftDatabaseServiceAbstract {
   /// under the `my_collection` virtual channel as raw Drift rows.
   Future<List<db.Playlist>> getAddressPlaylistRows();
 
+  /// Get playlists from multiple baseUrls with pagination.
+  ///
+  /// Results are ordered by the order of baseUrls (first URL's playlists first),
+  /// then by createdAt DESC within each baseUrl.
+  ///
+  /// - [baseUrls] list of feed service URLs to query (order matters)
+  /// - [kind] filters by playlist type (dp1 vs address)
+  /// - [offset] skip first N results (null = 0)
+  /// - [limit] maximum number of results (null = all)
+  Future<List<PlaylistReference>> getPlaylistRowsByBaseUrls({
+    required List<String> baseUrls,
+    DriftPlaylistKind? kind,
+    int? offset,
+    int? limit,
+  });
+
   // ========= Address playlists as DP1Call =========
 
   /// Get all address playlists as [DP1Call] models.
@@ -584,6 +600,83 @@ class DriftDatabaseService extends DriftDatabaseServiceAbstract {
         channelId: 'my_collection',
         // kind: DriftPlaylistKind.address,
       );
+
+  @override
+  Future<List<PlaylistReference>> getPlaylistRowsByBaseUrls({
+    required List<String> baseUrls,
+    DriftPlaylistKind? kind,
+    int? offset,
+    int? limit,
+  }) async {
+    if (baseUrls.isEmpty) return [];
+
+    // Build IN clause placeholders
+    final inClause = List.filled(baseUrls.length, '?').join(',');
+
+    // Build CASE WHEN statement for ordering by baseUrls order
+    final caseWhen = StringBuffer('CASE base_url ');
+    for (var i = 0; i < baseUrls.length; i++) {
+      // Note: Use bound variables to avoid SQL injection and escaping issues
+      caseWhen.write('WHEN ? THEN $i ');
+    }
+    caseWhen.write('ELSE ${baseUrls.length} END');
+
+    // SQLite requires LIMIT when OFFSET is present. Use LIMIT -1 to mean "no limit".
+    final effectiveLimit = (limit == null && offset != null) ? -1 : limit;
+
+    final sql = StringBuffer()
+      ..writeln('SELECT * FROM playlists')
+      ..writeln('WHERE base_url IN ($inClause)');
+
+    if (kind != null) {
+      sql.writeln('AND type = ?');
+    }
+
+    // Match getPlaylistRows() ordering within the same baseUrl.
+    // getPlaylistRows() orders by createdAtUs ascending by default.
+    sql..writeln('ORDER BY $caseWhen, created_at_us ASC');
+
+    if (effectiveLimit != null) {
+      sql.writeln('LIMIT ?');
+    }
+    if (offset != null) {
+      sql.writeln('OFFSET ?');
+    }
+
+    final variables = <Variable>[
+      // IN clause variables
+      ...baseUrls.map(Variable<String>.new),
+      // Type filter
+      if (kind != null) Variable<int>(kind.value),
+      // CASE WHEN variables (same baseUrls again)
+      ...baseUrls.map(Variable<String>.new),
+      // Pagination
+      if (effectiveLimit != null) Variable<int>(effectiveLimit),
+      if (offset != null) Variable<int>(offset),
+    ];
+
+    final result = await _db.customSelect(
+      sql.toString(),
+      variables: variables,
+      readsFrom: {_db.playlists},
+    ).get();
+
+    // Map raw rows into Drift-generated Playlist data class.
+    final rows = result.map((row) => _db.playlists.map(row.data)).toList();
+
+    // Convert to PlaylistReference while preserving baseUrl per row.
+    final refs = <PlaylistReference>[];
+    for (final row in rows) {
+      final dp1Call = await _addressPlaylistRowToModel(row);
+      refs.add(
+        PlaylistReference(
+          playlist: dp1Call,
+          url: row.baseUrl ?? baseUrls.first,
+        ),
+      );
+    }
+    return refs;
+  }
 
   // ========= Address playlists as DP1Call =========
 

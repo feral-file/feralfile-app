@@ -355,7 +355,6 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
             ),
           )
           .toList();
-      await driftDb.ingestChannels(channelRefs);
       final playlistRefs = playlists
           .map(
             (p) => PlaylistReference(
@@ -366,6 +365,7 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
           .toList();
       // group playlists by channel id
       for (final channel in channelRefs) {
+        await driftDb.ingestChannel(channel);
         final playlists = playlistRefs
             .where((p) => channel.channel.playlists.contains(p.fullUrl))
             .toList();

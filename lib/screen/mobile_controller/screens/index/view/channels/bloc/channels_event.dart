@@ -35,9 +35,9 @@ abstract class ChannelsEvent {
 }
 
 class LoadChannelsEvent extends ChannelsEvent {
-  const LoadChannelsEvent({this.offset});
+  const LoadChannelsEvent({this.size});
 
-  final int? offset;
+  final int? size;
 }
 
 class LoadMoreChannelsEvent extends ChannelsEvent {
@@ -45,7 +45,7 @@ class LoadMoreChannelsEvent extends ChannelsEvent {
 }
 
 class RefreshChannelsEvent extends ChannelsEvent {
-  const RefreshChannelsEvent({this.offset});
+  const RefreshChannelsEvent({this.size});
 
-  final int? offset;
+  final int? size;
 }

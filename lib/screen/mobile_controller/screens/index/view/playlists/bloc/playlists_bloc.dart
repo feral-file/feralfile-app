@@ -15,6 +15,7 @@ import 'package:autonomy_flutter/util/playlist_data_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sentry/sentry.dart';
+import 'package:uuid/uuid.dart';
 
 part 'playlists_event.dart';
 part 'playlists_state.dart';
@@ -111,7 +112,7 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
               '[PlaylistsBloc] No playlists loaded yet, triggering initial '
               'load for ${playlistType.name}',
             );
-            add(RefreshPlaylistsEvent());
+            add(LoadPlaylistsEvent(size: pageSize));
             return;
           }
 
@@ -138,14 +139,19 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
           }
 
           // Compare with current state
-          final hasChanged = !currentPlaylists.isEqualTo(updatedPlaylists);
+          final hasChanged = !currentPlaylists.isEqualTo(updatedPlaylists) ||
+              (currentPlaylists.length < updatedPlaylists.length &&
+                  !state.hasMore);
 
           if (hasChanged) {
             log.info(
               '[PlaylistsBloc] Paginated playlists (0 to $loadedCount) '
               'changed, reloading ${playlistType.name}',
             );
-            add(RefreshPlaylistsEvent(size: loadedCount));
+            final loadedLength = state.playlistData.length;
+            final listenSize =
+                loadedLength > pageSize ? loadedLength : pageSize;
+            add(RefreshPlaylistsEvent(size: listenSize));
           } else {
             log.info(
               '[PlaylistsBloc] Paginated playlists (0 to $loadedCount) '
@@ -186,6 +192,7 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     await _loadPlaylists(
       emit: emit,
       cursor: null,
+      size: event.size ?? pageSize,
     );
     log.info('LoadPlaylistsEvent for ${playlistType.name} done');
   }
@@ -202,6 +209,7 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     await _loadPlaylists(
       emit: emit,
       cursor: state.cursor,
+      size: pageSize,
       isLoadMore: true,
     );
   }
@@ -213,35 +221,58 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
     await _loadPlaylists(
       emit: emit,
       cursor: null,
+      size: event.size ?? pageSize,
       isRefresh: true,
-      loadSize: event.size,
     );
   }
 
   Future<LoadPlaylistPaginationResponse> _loadCuratedPlaylists({
     required Emitter<PlaylistsState> emit,
     required String? cursor,
-    int? loadSize,
+    required int size,
   }) async {
-    // Get all cached playlists
-    final allPlaylists =
-        await injector<FeralFileFeedManager>().getAllCachedPlaylists();
-
     final start = int.tryParse(cursor ?? '0') ?? 0;
-    final size = loadSize ?? pageSize;
-    final end = start + size;
 
-    // Get playlists based on total
-    // If total is null, get all playlists
-    final topPlaylists = total != null
-        ? allPlaylists.take(total!).toList()
-        : allPlaylists.safeSublist(start, end).toList();
+    // Calculate offset and limit for database query
+    final queryOffset = start;
+    // Query 1 extra item to determine if there are more pages
+    final queryLimit = size + 1;
 
-    final nextCursor = end < allPlaylists.length ? end.toString() : null;
-    final hasMore = nextCursor != null;
+    // Get paginated playlists directly from database
+    final startTime = DateTime.now();
+    final queriedPlaylists =
+        await injector<FeralFileFeedManager>().getAllCachedPlaylists(
+      offset: queryOffset,
+      limit: queryLimit,
+    );
+    final endTime = DateTime.now();
+    final duration = endTime.difference(startTime);
+
+    if (duration.inMilliseconds > 3000) {
+      unawaited(Sentry.captureEvent(
+        SentryEvent(
+          message: SentryMessage(
+              'getAllCachedPlaylists took ${duration.inMilliseconds}ms, '
+              'offset: $queryOffset, limit: $queryLimit, returned: ${queriedPlaylists.length}'),
+          level: SentryLevel.error,
+          throwable: Exception(
+              'getAllCachedPlaylists took ${duration.inMilliseconds}ms, '
+              'offset: $queryOffset, limit: $queryLimit, returned: ${queriedPlaylists.length}'),
+        ),
+      ));
+      log.info(
+        '[PlaylistsBloc] getAllCachedPlaylists took ${duration.inMilliseconds}ms, '
+        'offset: $queryOffset, limit: $queryLimit, returned: ${queriedPlaylists.length}',
+      );
+    }
+
+    // If we got more than requested, there are more pages
+    final hasMore = queriedPlaylists.isNotEmpty;
+    final nextCursor =
+        hasMore ? (start + queriedPlaylists.length).toString() : null;
 
     final playlistDataList = await Future.wait(
-      topPlaylists
+      queriedPlaylists
           .map(
             (playlistRef) async => PlaylistData(
               playlistReference: playlistRef,
@@ -261,10 +292,9 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
   Future<LoadPlaylistPaginationResponse> _loadMyPlaylists({
     required Emitter<PlaylistsState> emit,
     required String? cursor,
-    int? loadSize,
+    required int size,
   }) async {
     final start = int.tryParse(cursor ?? '0') ?? 0;
-    final size = loadSize ?? pageSize;
     final end = start + size;
 
     final addressPlaylists =
@@ -312,10 +342,13 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
   Future<void> _loadPlaylists({
     required Emitter<PlaylistsState> emit,
     required String? cursor,
+    required int size,
     bool isLoadMore = false,
     bool isRefresh = false,
-    int? loadSize,
   }) async {
+    final uuid = Uuid().v4();
+    log.info(
+        '[PlaylistsBloc] _loadPlaylists $uuid for ${playlistType.name}, isLoadMore: $isLoadMore, isRefresh: $isRefresh, size: $size, cursor: $cursor');
     try {
       // Emit appropriate loading state
       if (isLoadMore) {
@@ -330,13 +363,13 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
           paginationResponse = await _loadCuratedPlaylists(
             emit: emit,
             cursor: cursor,
-            loadSize: loadSize,
+            size: size,
           );
         case PlaylistType.me:
           paginationResponse = await _loadMyPlaylists(
             emit: emit,
             cursor: cursor,
-            loadSize: loadSize,
+            size: size,
           );
         case PlaylistType.global:
           paginationResponse =
@@ -357,10 +390,21 @@ class PlaylistsBloc extends AuBloc<PlaylistsEvent, PlaylistsState> {
 
       emit(nextState);
       log.info(
-        'LoadPlaylistsEvent for ${playlistType.name}: '
-        '${newPlaylistDataList.length}',
+        '[PlaylistsBloc] LoadPlaylistsEvent $uuid for ${playlistType.name} with ${newPlaylistDataList.length} playlists, hasMore: $paginationResponse.hasMore, cursor: $paginationResponse.cursor',
       );
     } catch (e) {
+      log.info(
+        '[PlaylistsBloc] Error loading playlists: $e',
+      );
+      unawaited(
+        Sentry.captureEvent(
+          SentryEvent(
+            message: SentryMessage('Error loading playlists: $e'),
+            level: SentryLevel.error,
+            throwable: e,
+          ),
+        ),
+      );
       emit(
         state.copyWith(
           status: PlaylistsStateStatus.error,

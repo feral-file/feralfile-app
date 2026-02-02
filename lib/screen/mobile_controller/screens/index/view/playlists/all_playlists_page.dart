@@ -93,7 +93,7 @@ class _AllPlaylistsPageState extends State<AllPlaylistsPage>
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels + 100 >=
+    if (_scrollController.position.pixels + 200 >=
         _scrollController.position.maxScrollExtent) {
       _playlistsBloc.add(LoadMorePlaylistsEvent());
     }

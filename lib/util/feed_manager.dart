@@ -7,10 +7,6 @@ import 'package:autonomy_flutter/screen/mobile_controller/models/channel.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_api_response.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_call.dart';
 import 'package:autonomy_flutter/screen/mobile_controller/models/dp1_item.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/channels/bloc/channels_bloc_constants.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc.dart';
-import 'package:autonomy_flutter/screen/mobile_controller/screens/index/view/playlists/bloc/playlists_bloc_constants.dart';
 import 'package:autonomy_flutter/nft_collection/services/drift_database_service.dart';
 import 'package:autonomy_flutter/service/base_dp1_feed_service_impl.dart';
 import 'package:autonomy_flutter/service/configuration_service.dart';
@@ -78,22 +74,28 @@ class FeedManager {
     }
   }
 
-  Future<List<PlaylistReference>> getAllCachedPlaylists() async {
-    final allPlaylists = <PlaylistReference>[];
+  Future<List<PlaylistReference>> getAllCachedPlaylists({
+    int? offset,
+    int? limit,
+  }) async {
+    // Collect all baseUrls from feed services (maintain order)
+    final baseUrls = feedServices.map((s) => s.baseUrl).toList();
 
-    // 1. DP1 playlists from all feed services (cached via Drift)
-    for (final feedService in feedServices) {
-      final playlists = await feedService.getAllCachedPlaylists();
-      allPlaylists.addAll(
-        playlists.map(
-          (item) => PlaylistReference(
-            playlist: item,
-            url: feedService.baseUrl,
-          ),
-        ),
-      );
+    if (baseUrls.isEmpty) {
+      return [];
     }
-    return allPlaylists;
+
+    // Get playlists from database with pagination
+    // Database will maintain order by baseUrls, then by createdAt
+    final driftDb = injector<DriftDatabaseService>();
+    final playlistRefs = await driftDb.getPlaylistRowsByBaseUrls(
+      baseUrls: baseUrls,
+      kind: DriftPlaylistKind.dp1,
+      offset: offset,
+      limit: limit,
+    );
+
+    return playlistRefs;
   }
 
   Future<void> clearAllCache() async {
