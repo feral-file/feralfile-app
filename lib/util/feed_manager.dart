@@ -76,14 +76,6 @@ class FeedManager {
     for (final feedService in feedServices) {
       await feedService.reloadCacheIfNeeded(force: force);
     }
-
-    await Future<void>.delayed(const Duration(milliseconds: 500));
-    injector<ChannelsBloc>(
-            instanceName: ChannelsBlocInstance.curated.instanceName)
-        .add(const RefreshChannelsEvent());
-    injector<PlaylistsBloc>(
-            instanceName: PlaylistsBlocInstance.curated.instanceName)
-        .add(RefreshPlaylistsEvent());
   }
 
   Future<List<PlaylistReference>> getAllCachedPlaylists() async {

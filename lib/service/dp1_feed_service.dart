@@ -375,8 +375,9 @@ class DP1FeedWithChannelExtensionServiceImpl extends BaseDP1FeedServiceImpl
       log.info('Reloaded cache for FeedService: $baseUrl');
     } catch (e) {
       log.info('Failed to reload cache for FeralFileDP1FeedService: $e');
-      _isReloadingCache = false;
       rethrow;
+    } finally {
+      _isReloadingCache = false;
     }
   }
 
