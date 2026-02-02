@@ -81,7 +81,10 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
             '${channelType.name} channels with ${channels.length} channels',
           );
 
-          add(const RefreshChannelsEvent());
+          final loadedLength = state.channels.length;
+          final listenSize = loadedLength > pageSize ? loadedLength : pageSize;
+
+          add(RefreshChannelsEvent(offset: listenSize));
         },
         onError: (Object error, StackTrace stackTrace) {
           log.info(
@@ -115,6 +118,7 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
     await _loadChannels(
       emit: emit,
       cursor: null,
+      offset: event.offset ?? pageSize,
     );
   }
 
@@ -130,6 +134,7 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
     await _loadChannels(
       emit: emit,
       cursor: state.cursor,
+      offset: pageSize,
       isLoadMore: true,
     );
   }
@@ -141,6 +146,7 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
     await _loadChannels(
       emit: emit,
       cursor: null,
+      offset: event.offset ?? pageSize,
       isRefresh: true,
     );
   }
@@ -148,19 +154,17 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
   Future<LoadChannelPaginationResponse> _loadCuratedChannels({
     required Emitter<ChannelsState> emit,
     required String? cursor,
+    required int offset,
   }) async {
     // Get all cached channels
     final allChannels =
         await injector<FeralFileFeedManager>().getAllCachedChannels();
 
     final start = int.tryParse(cursor ?? '0') ?? 0;
-    final end = start + pageSize;
+    final end = start + offset;
 
-    // Get channels based on total
-    // If total is null, get all channels
-    final topChannels = total != null
-        ? allChannels.take(total!).toList()
-        : allChannels.safeSublist(start, end).toList();
+    // Get channels based on offset
+    final topChannels = allChannels.safeSublist(start, end).toList();
 
     final nextCursor = end < allChannels.length ? end.toString() : null;
     final hasMore = nextCursor != null;
@@ -175,19 +179,17 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
   Future<LoadChannelPaginationResponse> _loadMyChannels({
     required Emitter<ChannelsState> emit,
     required String? cursor,
+    required int offset,
   }) async {
     // Get all cached channels
     final allChannels =
         await injector<FeralFileFeedManager>().getAllCachedChannels();
 
     final start = int.tryParse(cursor ?? '0') ?? 0;
-    final end = start + pageSize;
+    final end = start + offset;
 
-    // Get channels based on total
-    // If total is null, get all channels
-    final topChannels = total != null
-        ? allChannels.take(total!).toList()
-        : allChannels.safeSublist(start, end).toList();
+    // Get channels based on offset
+    final topChannels = allChannels.safeSublist(start, end).toList();
 
     final nextCursor = end < allChannels.length ? end.toString() : null;
     final hasMore = nextCursor != null;
@@ -202,19 +204,17 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
   Future<LoadChannelPaginationResponse> _loadGlobalChannels({
     required Emitter<ChannelsState> emit,
     required String? cursor,
+    required int offset,
   }) async {
     // Get all cached channels
     final allChannels =
         await injector<FeralFileFeedManager>().getAllCachedChannels();
 
     final start = int.tryParse(cursor ?? '0') ?? 0;
-    final end = start + pageSize;
+    final end = start + offset;
 
-    // Get channels based on total
-    // If total is null, get all channels
-    final topChannels = total != null
-        ? allChannels.take(total!).toList()
-        : allChannels.safeSublist(start, end).toList();
+    // Get channels based on offset
+    final topChannels = allChannels.safeSublist(start, end).toList();
 
     final nextCursor = end < allChannels.length ? end.toString() : null;
     final hasMore = nextCursor != null;
@@ -229,6 +229,7 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
   Future<void> _loadChannels({
     required Emitter<ChannelsState> emit,
     required String? cursor,
+    required int offset,
     bool isLoadMore = false,
     bool isRefresh = false,
   }) async {
@@ -246,16 +247,19 @@ class ChannelsBloc extends AuBloc<ChannelsEvent, ChannelsState> {
           paginationResponse = await _loadCuratedChannels(
             emit: emit,
             cursor: cursor,
+            offset: offset,
           );
         case ChannelType.me:
           paginationResponse = await _loadMyChannels(
             emit: emit,
             cursor: cursor,
+            offset: offset,
           );
         case ChannelType.global:
           paginationResponse = await _loadGlobalChannels(
             emit: emit,
             cursor: cursor,
+            offset: offset,
           );
       }
 
