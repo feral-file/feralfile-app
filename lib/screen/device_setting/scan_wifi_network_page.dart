@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/main.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
@@ -13,6 +12,7 @@ import 'package:autonomy_flutter/view/artwork_common_widget.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -20,27 +20,9 @@ import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:wifi_scan/wifi_scan.dart';
 
 class WifiPoint {
-  WifiPoint(this.ssid, {this.isOpenNetwork});
-
-  factory WifiPoint.fromWifiScanResult(String result) {
-    // Backward compatibility: if result doesn't have format "ssid|security",
-    // treat entire result as SSID and assume it's not an open network
-    if (!result.contains('|')) {
-      return WifiPoint(result, isOpenNetwork: false);
-    }
-
-    final parts = result.split('|');
-    final ssid = parts.isNotEmpty ? parts.first : '';
-    final security = parts.length > 1 ? parts[1].trim().toUpperCase() : '';
-    final isOpenNetwork = security == 'OPEN';
-    return WifiPoint(
-      ssid,
-      isOpenNetwork: isOpenNetwork,
-    );
-  }
+  WifiPoint(this.ssid);
 
   final String ssid;
-  final bool? isOpenNetwork;
 }
 
 class ScanWifiNetworkPagePayload {
@@ -110,7 +92,7 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
       device: device,
       timeout: timeout,
       onResultScan: (result) {
-        final accessPoints = result.map(WifiPoint.fromWifiScanResult).toList();
+        final accessPoints = result.map(WifiPoint.new).toList();
         if (mounted) {
           setState(() {
             _accessPoints = _filterUniqueSSIDs(accessPoints);
@@ -346,9 +328,7 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
                   if (ssid.isEmpty) {
                     return;
                   }
-                  await widget.payload.onNetworkSelected(
-                    WifiPoint(ssid),
-                  );
+                  await widget.payload.onNetworkSelected(WifiPoint(ssid));
                 },
                 text: 'Continue',
               ),
@@ -379,20 +359,9 @@ class ScanWifiNetworkPageState extends State<ScanWifiNetworkPage>
                 padding: EdgeInsets.symmetric(
                   vertical: LayoutConstants.space5,
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      wifiAccessPoint.ssid,
-                      style: AppTypography.body(context).white,
-                    ),
-                    if (!(wifiAccessPoint.isOpenNetwork ?? false))
-                      Icon(
-                        Icons.lock,
-                        color: AppColor.white,
-                        size: LayoutConstants.iconSizeMedium,
-                      ),
-                  ],
+                child: Text(
+                  wifiAccessPoint.ssid,
+                  style: AppTypography.body(context).white,
                 ),
               ),
             ),

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:autonomy_flutter/common/injector.dart';
-import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/layout_constants.dart';
 import 'package:autonomy_flutter/model/device/ff_bluetooth_device.dart';
 import 'package:autonomy_flutter/model/error/bluetooth_response_error.dart';
@@ -17,11 +16,11 @@ import 'package:autonomy_flutter/util/ui_helper.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:autonomy_flutter/view/responsive.dart';
 import 'package:autonomy_flutter/widgets/app_bar.dart';
+import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:gif_view/gif_view.dart';
 import 'package:sentry/sentry.dart';
 
 class SendWifiCredentialsPagePayload {
@@ -62,14 +61,9 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
   @override
   void initState() {
     super.initState();
-    final isOpenNetwork = widget.payload.wifiAccessPoint.isOpenNetwork ?? false;
-    _password = isOpenNetwork ? '' : (kDebugMode ? r'btmrkrckt@)@$' : '');
+    _password = kDebugMode ? r'btmrkrckt@)@$' : '';
     passwordController = TextEditingController(text: _password);
     _passwordFocusNode = FocusNode();
-
-    if (isOpenNetwork) {
-      _sendWifiCredentials();
-    }
   }
 
   @override
@@ -98,242 +92,186 @@ class SendWifiCredentialsPageState extends State<SendWifiCredentialsPage>
       body: SafeArea(
         child: Padding(
           padding: ResponsiveLayout.pageEdgeInsets,
-          child: _isProcessing
-              ? _buildProcessingView()
-              : (widget.payload.wifiAccessPoint.isOpenNetwork ?? false)
-                  ? const SizedBox()
-                  : Stack(
+          child: Stack(
+            children: [
+              CustomScrollView(
+                slivers: [
+                  const SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 120,
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        CustomScrollView(
-                          slivers: [
-                            const SliverToBoxAdapter(
-                              child: SizedBox(
-                                height: 120,
-                              ),
-                            ),
-                            SliverToBoxAdapter(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    widget.payload.wifiAccessPoint.ssid,
-                                    style: AppTypography.body(context).white,
-                                  ),
-                                  SizedBox(
-                                    height: LayoutConstants.space4,
-                                  ),
-                                  PasswordTextField(
-                                    controller: passwordController,
-                                    focusNode: _passwordFocusNode,
-                                    style: AppTypography.body(context).white,
-                                    hintText: widget.payload.wifiAccessPoint
-                                                .isOpenNetwork ==
-                                            null
-                                        ? 'Password (optional)'
-                                        : 'Password',
-                                    defaultObscure: false,
-                                    isEnabled: !_isProcessing,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _password = value;
-                                      });
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                        Text(
+                          widget.payload.wifiAccessPoint.ssid,
+                          style: AppTypography.body(context).white,
                         ),
-                        Positioned(
-                          bottom: LayoutConstants.space4,
-                          left: 0,
-                          right: 0,
-                          child: PrimaryAsyncButton(
-                            padding: const EdgeInsets.only(top: 13, bottom: 10),
-                            enabled: true,
-                            onTap: _sendWifiCredentials,
-                            color: AppColor.white,
-                            text: 'submit'.tr(),
-                          ),
+                        const SizedBox(
+                          height: 16,
+                        ),
+                        PasswordTextField(
+                          controller: passwordController,
+                          focusNode: _passwordFocusNode,
+                          style: AppTypography.body(context).white,
+                          hintText: 'password'.tr(),
+                          defaultObscure: false,
+                          isEnabled: !_isProcessing,
+                          onChanged: (value) {
+                            setState(() {
+                              _password = value;
+                            });
+                          },
                         ),
                       ],
                     ),
+                  ),
+                ],
+              ),
+              Positioned(
+                bottom: LayoutConstants.space4,
+                left: 0,
+                right: 0,
+                child: PrimaryAsyncButton(
+                  padding: const EdgeInsets.only(top: 13, bottom: 10),
+                  enabled: true,
+                  onTap: () async {
+                    final ssid = widget.payload.wifiAccessPoint.ssid;
+                    final password = passwordController.text.trim();
+                    var bleDevice = widget.payload.device;
+                    setState(() {
+                      _isProcessing = true;
+                    });
+                    try {
+                      // Check if the device is connected
+                      if (!bleDevice.isConnected) {
+                        if (bleDevice is FFBluetoothDevice &&
+                            bleDevice.remoteID.isEmpty) {
+                          bleDevice = await injector<FFBluetoothService>()
+                              .scanAndConnect(bleDevice);
+                        } else {
+                          await injector<FFBluetoothService>()
+                              .connectToDevice(bleDevice);
+                        }
+                      }
+                      final topicId = await injector<FFBluetoothService>()
+                          .sendWifiCredentials(
+                        device: bleDevice,
+                        ssid: ssid,
+                        password: password,
+                      );
+                      if (topicId == null) {
+                        throw FailedToConnectToWifiException(ssid, bleDevice);
+                      }
+                      await widget.payload.onSubmitted?.call(topicId, null);
+                    } on FailedToConnectToWifiException catch (e) {
+                      log.info('Failed to connect to wifi: $e');
+                      unawaited(
+                        Sentry.captureException(
+                          e,
+                        ),
+                      );
+                      unawaited(
+                        UIHelper.showInfoDialog(
+                          context,
+                          'Couldn\'t connect to Wi‑Fi',
+                          'FF1 couldn\'t connect to ${e.ssid}. Check the password and signal strength, then try again.',
+                        ),
+                      );
+                    } on FFBluetoothResponseError catch (e) {
+                      log.info('Failed to send wifi credentials: $e');
+                      unawaited(
+                        Sentry.captureException(
+                          'SendWifiCredentialError: ${e.title}: ${e.message} ($e)',
+                        ),
+                      );
+                      if (e is DeviceVersionCheckFailedError) {
+                        unawaited(
+                          UIHelper.showInfoDialog(
+                            context,
+                            e.title,
+                            e.message,
+                            closeButton: 'Contact support',
+                            onClose: () async {
+                              injector<NavigationService>()
+                                  .showCustomerSupport();
+                              injector<NavigationService>().goBack();
+                            },
+                          ).then((_) {
+                            widget.payload.onSubmitted?.call(null, e);
+                          }),
+                        );
+                        return;
+                      } else if (e is DeviceUpdatingError) {
+                        unawaited(
+                          injector<NavigationService>().navigateTo(
+                            AppRouter.ff1Updating,
+                          ),
+                        );
+                        return;
+                      } else {
+                        unawaited(UIHelper.showInfoDialog(
+                          context,
+                          e.title,
+                          e.message,
+                        ));
+                      }
+                    } on TimeoutException catch (e) {
+                      log.info('Failed to send wifi credentials: $e');
+                      unawaited(
+                        Sentry.captureException(
+                          'Failed to send wifi credentials: $e',
+                        ),
+                      );
+                      unawaited(
+                        UIHelper.showInfoDialog(
+                          context,
+                          'Can\'t reach FF1',
+                          'FF1 didn\'t respond in time. Make sure FF1 is nearby and try again.',
+                        ).then((_) {
+                          widget.payload.onSubmitted?.call(null, e);
+                        }),
+                      );
+                    } catch (e) {
+                      log.info('Failed to send wifi credentials: $e');
+                      unawaited(
+                        Sentry.captureException(
+                          'Failed to send wifi credentials: $e',
+                        ),
+                      );
+                      unawaited(
+                        UIHelper.showInfoDialog(
+                          context,
+                          'Wi‑Fi setup failed',
+                          'FF1 couldn\'t complete Wi‑Fi setup because of an unexpected issue. Contact support for help.',
+                          closeButton: 'Contact support',
+                          onClose: () async {
+                            injector<NavigationService>().showCustomerSupport();
+                          },
+                        ).then((_) {
+                          widget.payload.onSubmitted?.call(null, e);
+                        }),
+                      );
+                    } finally {
+                      if (!mounted) {
+                        return;
+                      }
+                      setState(() {
+                        _isProcessing = false;
+                      });
+                    }
+                  },
+                  color: AppColor.white,
+                  text: 'submit'.tr(),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
-  }
-
-  Widget _buildProcessingView() {
-    return SizedBox(
-      width: double.infinity,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          GifView.asset(
-            'assets/images/loading.gif',
-            width: 139,
-            height: 92.67,
-            frameRate: 12,
-          ),
-          SizedBox(height: LayoutConstants.space16),
-          Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: 'Connecting to ',
-                  style: AppTypography.h2(context).white.regular,
-                ),
-                TextSpan(
-                  text: widget.payload.wifiAccessPoint.ssid,
-                  style: AppTypography.h2(context).white.bold,
-                ),
-                TextSpan(
-                  text: '...',
-                  style: AppTypography.h2(context).white.regular,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _sendWifiCredentials() async {
-    final ssid = widget.payload.wifiAccessPoint.ssid;
-    final isOpenNetwork = widget.payload.wifiAccessPoint.isOpenNetwork ?? false;
-    final password = isOpenNetwork ? '' : passwordController.text.trim();
-    var bleDevice = widget.payload.device;
-    setState(() {
-      _isProcessing = true;
-    });
-    try {
-      // Check if the device is connected
-      if (!bleDevice.isConnected) {
-        if (bleDevice is FFBluetoothDevice && bleDevice.remoteID.isEmpty) {
-          bleDevice =
-              await injector<FFBluetoothService>().scanAndConnect(bleDevice);
-        } else {
-          await injector<FFBluetoothService>().connectToDevice(bleDevice);
-        }
-      }
-      final topicId = await injector<FFBluetoothService>().sendWifiCredentials(
-        device: bleDevice,
-        ssid: ssid,
-        password: password,
-      );
-
-      if (topicId == null) {
-        throw FailedToConnectToWifiException(ssid, bleDevice);
-      }
-      await widget.payload.onSubmitted?.call(topicId, null);
-    } on FailedToConnectToWifiException catch (e) {
-      log.info('Failed to connect to wifi: $e');
-      unawaited(
-        Sentry.captureException(
-          e,
-        ),
-      );
-      unawaited(
-        UIHelper.showInfoDialog(
-          context,
-          'Couldn\'t connect to Wi‑Fi',
-          'FF1 couldn\'t connect to ${e.ssid}. Check the password and signal strength, then try again.',
-        ).then((_) {
-          if (isOpenNetwork) {
-            injector<NavigationService>().goBack();
-          }
-        }),
-      );
-    } on FFBluetoothResponseError catch (e) {
-      log.info('Failed to send wifi credentials: $e');
-      unawaited(
-        Sentry.captureException(
-          'SendWifiCredentialError: ${e.title}: ${e.message} ($e)',
-        ),
-      );
-      if (e is DeviceVersionCheckFailedError) {
-        unawaited(
-          UIHelper.showInfoDialog(
-            context,
-            e.title,
-            e.message,
-            closeButton: 'Contact support',
-            onClose: () async {
-              injector<NavigationService>().showCustomerSupport();
-              injector<NavigationService>().goBack();
-            },
-          ).then((_) {
-            widget.payload.onSubmitted?.call(null, e);
-          }),
-        );
-        return;
-      } else if (e is DeviceUpdatingError) {
-        unawaited(
-          injector<NavigationService>().navigateTo(
-            AppRouter.ff1Updating,
-          ),
-        );
-        return;
-      } else {
-        unawaited(
-          UIHelper.showInfoDialog(
-            context,
-            e.title,
-            e.message,
-          ).then(
-            (_) {
-              if (isOpenNetwork) {
-                injector<NavigationService>().goBack();
-              }
-            },
-          ),
-        );
-      }
-    } on TimeoutException catch (e) {
-      log.info('Failed to send wifi credentials: $e');
-      unawaited(
-        Sentry.captureException(
-          'Failed to send wifi credentials: $e',
-        ),
-      );
-      unawaited(
-        UIHelper.showInfoDialog(
-          context,
-          'Can\'t reach FF1',
-          'FF1 didn\'t respond in time. Make sure FF1 is nearby and try again.',
-        ).then((_) {
-          widget.payload.onSubmitted?.call(null, e);
-        }),
-      );
-    } catch (e) {
-      log.info('Failed to send wifi credentials: $e');
-      unawaited(
-        Sentry.captureException(
-          'Failed to send wifi credentials: $e',
-        ),
-      );
-      unawaited(
-        UIHelper.showInfoDialog(
-          context,
-          'Wi‑Fi setup failed',
-          'FF1 couldn\'t complete Wi‑Fi setup because of an unexpected issue. Contact support for help.',
-          closeButton: 'Contact support',
-          onClose: () async {
-            injector<NavigationService>().showCustomerSupport();
-          },
-        ).then((_) {
-          widget.payload.onSubmitted?.call(null, e);
-        }),
-      );
-    } finally {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _isProcessing = false;
-      });
-    }
   }
 }
 
