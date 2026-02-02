@@ -314,24 +314,20 @@ extension FF1DeviceExtension on String {
     final data = encodedPath.split('|');
     if (data.length <= 1) {
       return FF1DeviceInfo(
-        deviceId: '',
-        topicId: data.firstOrNull ?? '',
+        deviceId: 'FF1',
+        topicId: data.atIndexOrNull(0) ?? '',
         isConnectedToInternet: false,
-        branchName: '',
-        version: '',
+        branchName: DeviceReleaseBranch.release.name,
+        version: '1.0.0', // default version
       );
     }
 
     return FF1DeviceInfo(
-      deviceId: data.firstOrNull ?? 'FF1',
+      deviceId: data.atIndexOrNull(0) ?? 'FF1',
       topicId: data.atIndexOrNull(1) ?? '',
       isConnectedToInternet: data.atIndexOrNull(2) == 'true',
       branchName: data.atIndexOrNull(3) ?? DeviceReleaseBranch.release.name,
       version: data.atIndexOrNull(4) ?? '',
     );
-  }
-
-  bool get isFF1DeviceNamePattern {
-    return isNotEmpty && toLowerCase().contains('ff1');
   }
 }

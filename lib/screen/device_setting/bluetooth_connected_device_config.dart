@@ -712,7 +712,7 @@ class BluetoothConnectedDeviceConfigState
   }
 
   Widget _deviceInfo(BuildContext context) {
-    final device = selectedDevice!;
+    final device = selectedDevice;
     final version = deviceStatus?.installedVersion;
     final installedVersion = deviceStatus?.installedVersion ?? version;
     final branchName = device.isReleaseBranch ? '' : ' (${device.branchName})';
@@ -727,9 +727,6 @@ class BluetoothConnectedDeviceConfigState
     return BlocConsumer<CanvasDeviceBloc, CanvasDeviceState>(
       bloc: injector<CanvasDeviceBloc>(),
       listener: (context, state) {},
-      // buildWhen: (previous, current) {
-      //   return previous.isDeviceAlive(device) != current.isDeviceAlive(device);
-      // },
       builder: (context, state) {
         final isBLEDeviceConnected = state.isDeviceAlive(device);
         final isSleeping = state.isSleeping();

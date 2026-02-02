@@ -209,11 +209,10 @@ class _ConnectFF1PageState extends State<ConnectFF1Page> {
     }
 
     if (topicId.isNotEmpty) {
-      final ffBluetoothDevice = FFBluetoothDevice(
-        name: ff1Device.name,
-        remoteID: device.remoteId.str,
+      final ffBluetoothDevice = device.toFFBluetoothDevice(
         topicId: topicId,
-        deviceId: ff1Device.deviceId,
+        deviceId: device.advName,
+        // device id is the same as the advertised name, we will use ff1Device.deviceId when force update version 1.0.3
         branchName: branchName,
       );
       // add device to canvas

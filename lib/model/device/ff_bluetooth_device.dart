@@ -150,18 +150,11 @@ extension FFBluetoothDeviceExt on FFBluetoothDevice {
   }
 
   bool get isReleaseBranch {
-    return branchName == DeviceReleaseBranch.release.name;
+    return branchName == DeviceReleaseBranch.release.name ||
+        branchName.isEmpty; // default to release if not specified
   }
 
   bool get isDemoBranch {
     return branchName == DeviceReleaseBranch.demo.name;
-  }
-
-  bool get isOtherBranch {
-    return branchName == DeviceReleaseBranch.other.name;
-  }
-
-  bool get isQEMU {
-    return branchName.toLowerCase().contains('qemu');
   }
 }
