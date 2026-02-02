@@ -1076,6 +1076,10 @@ class NavigationService {
                         final nowMillis = DateTime.now().millisecondsSinceEpoch;
                         await injector<ConfigurationService>()
                             .setLastFf1OsUpdateAt(nowMillis);
+                        if (saveDismissedOnCancel) {
+                          await injector<ConfigurationService>()
+                              .setDismissedFirmwareUpdateAt(nowMillis);
+                        }
                       } catch (e) {
                         log.warning('Failed to update firmware: $e');
                         if (mounted) {

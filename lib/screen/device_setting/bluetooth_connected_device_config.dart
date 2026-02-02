@@ -210,19 +210,6 @@ class BluetoothConnectedDeviceConfigState
     if (latestVersion == null || installedVersion == null) return;
     if (latestVersion == installedVersion) return;
 
-    // check if the last update was less than 15 minutes ago, if so, don't show the dialog
-    final lastUpdateAt =
-        injector<ConfigurationService>().getLastFf1OsUpdateAt();
-    if (lastUpdateAt != null) {
-      final elapsed = DateTime.now()
-          .difference(DateTime.fromMillisecondsSinceEpoch(lastUpdateAt));
-      if (elapsed < const Duration(minutes: 15)) {
-        log.warning(
-            'Last update was less than 15 minutes ago, skipping dialog');
-        return;
-      }
-    }
-
     final dismissedAt =
         injector<ConfigurationService>().getDismissedFirmwareUpdateAt();
 

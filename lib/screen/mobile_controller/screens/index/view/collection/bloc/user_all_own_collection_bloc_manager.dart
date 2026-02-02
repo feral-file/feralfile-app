@@ -1,8 +1,6 @@
 import 'dart:async';
 
-import 'package:autonomy_flutter/common/injector.dart';
 import 'package:autonomy_flutter/nft_collection/services/tokens_service.dart';
-import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/util/log.dart';
 import 'user_all_own_collection_bloc.dart';
 

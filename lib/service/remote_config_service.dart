@@ -173,7 +173,7 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
     },
     ConfigGroup.ff1Config.getString: {
       ConfigKey.ff1LearnMoreUrl.getString: 'https://feralfile.com/install',
-      ConfigKey.ff1OsUpdateRemindAfterSeconds.getString: 864000, // 10 days
+      ConfigKey.ff1OsUpdateRemindAfterSeconds.getString: null, // never remind
     },
     // Token metadata rebuild policy
     'token_metadata_rebuild': {
