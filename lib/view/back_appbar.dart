@@ -390,7 +390,8 @@ AppBar getCustomBackAppBar(
               children: [
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
-                  child: Padding(
+                  child: Container(
+                    color: Colors.transparent,
                     padding: EdgeInsets.all(
                       LayoutConstants.space3,
                     ),
