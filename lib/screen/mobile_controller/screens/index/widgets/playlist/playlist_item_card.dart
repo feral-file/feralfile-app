@@ -38,13 +38,9 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
 
   void _fetchIdentity() {
     final listIdentities = <String>[];
-    final primaryArtistName = widget.nowDisplayingItem.artists.isNotEmpty
-        ? widget.nowDisplayingItem.artists.first.name
-        : null;
-
-    listIdentities.addAll([
-      primaryArtistName ?? '',
-    ]);
+    final artistNames =
+        widget.nowDisplayingItem.artists.map((e) => e.name).toList();
+    listIdentities.addAll(artistNames);
     identityBloc.add(GetIdentityEvent(listIdentities));
   }
 
@@ -93,20 +89,14 @@ class _PlaylistItemCardState extends State<PlaylistItemCard> {
               BlocBuilder<IdentityBloc, IdentityState>(
                 bloc: identityBloc,
                 builder: (context, identityState) {
-                  final artist = widget.nowDisplayingItem.artists.isNotEmpty
-                      ? widget.nowDisplayingItem.artists.first
-                      : null;
-                  final artistName = (artist?.name ?? '')
-                      .toIdentityOrMask(identityState.identityMap);
-                  final displayArtist = (artistName?.isNotEmpty ?? false)
-                      ? artistName!
-                      : 'Unknown Artist';
+                  final artistName = widget.nowDisplayingItem
+                      .displayArtists(identityState.identityMap);
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        displayArtist,
+                        artistName,
                         style: AppTypography.body(context).white.italic,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

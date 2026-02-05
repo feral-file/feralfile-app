@@ -240,8 +240,7 @@ class _DP1NowDisplayingState extends State<DP1NowDisplaying> {
   Widget build(BuildContext context) {
     final assetToken = widget.nowDisplayingItem.assetToken;
     final identityState = context.watch<IdentityBloc>().state;
-    final artistName = assetToken?.getArtists.firstOrNull?.name
-        .toIdentityOrMask(identityState.identityMap);
+    final artistName = assetToken?.displayArtists(identityState.identityMap);
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(

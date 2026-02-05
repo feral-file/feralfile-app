@@ -54,6 +54,15 @@ extension DP1NowDisplayingItemExt on DP1NowDisplayingItem {
     return artists ?? [];
   }
 
+  String displayArtists(Map<String, String>? identityMap,
+      {String defaultArtistName = 'Unknown Artist'}) {
+    final artistName = assetToken?.displayArtists(identityMap);
+    if (artistName == null || artistName.isEmpty) {
+      return defaultArtistName;
+    }
+    return artistName;
+  }
+
   bool get canInteract {
     return assetToken != null && assetToken!.canInteract;
   }

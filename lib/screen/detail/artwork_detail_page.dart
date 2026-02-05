@@ -219,8 +219,8 @@ class _ArtworkDetailPageState extends State<ArtworkDetailPage>
           final isLoading = state.assetToken == null;
           final identityState = context.watch<IdentityBloc>().state;
           final assetToken = state.assetToken;
-          final artistName = assetToken?.getArtists.firstOrNull?.name
-              .toIdentityOrMask(identityState.identityMap);
+          final artistName =
+              assetToken?.displayArtists(identityState.identityMap);
           return BlocBuilder<CanvasDeviceBloc, CanvasDeviceState>(
             bloc: _canvasDeviceBloc,
             builder: (context, canvasState) => Stack(

@@ -52,9 +52,7 @@ TokenTransformResult transformTokenToPlaylistItem(TokenTransformInput input) {
 
   // Extract lite fields using existing priority (enrichment → metadata)
   final title = token.displayTitle; // enrichmentSource.name → metadata.name
-  final artists =
-      token.getArtists; // enrichmentSource.artists → metadata.artists
-  final subtitle = artists.map((a) => a.name).join(', ');
+  final subtitle = token.displayArtists(null);
   final thumbnailUri = token.getGalleryThumbnailUrl(
     size: 'xs',
   ); // enrichmentSource media variants → metadata variants

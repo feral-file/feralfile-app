@@ -93,10 +93,9 @@ class DisplayItem extends StatelessWidget {
                           bloc: _identityBloc,
                           builder: (context, state) {
                             final artistTitle = nowDisplayingItem
-                                .artists.firstOrNull?.name
-                                .toIdentityOrMask(state.identityMap);
+                                .displayArtists(state.identityMap);
                             return Text(
-                              artistTitle ?? 'Unknown Artist',
+                              artistTitle,
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
                               style: AppTypography.body(context).white,
@@ -113,10 +112,7 @@ class DisplayItem extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
                             style: isInExpandedView
-                                ? AppTypography.body(context)
-                                    .white
-                                    .bold
-                                    .italic
+                                ? AppTypography.body(context).white.bold.italic
                                 : AppTypography.body(context).white,
                           ),
                         ),

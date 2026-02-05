@@ -10,6 +10,8 @@ import 'package:autonomy_flutter/screen/detail/artwork_detail_page.dart';
 import 'package:autonomy_flutter/service/address_service.dart';
 import 'package:autonomy_flutter/util/constants.dart';
 import 'package:autonomy_flutter/util/john_gerrard_helper.dart';
+import 'package:autonomy_flutter/util/string_ext.dart';
+import 'package:autonomy_flutter/util/wallet_storage_ext.dart';
 import 'package:collection/collection.dart';
 import 'package:sentry/sentry.dart';
 
@@ -180,6 +182,14 @@ extension AssetTokenExtension on AssetToken {
 
   List<Artist> get getArtists {
     return enrichmentSource?.artists ?? metadata?.artists ?? [];
+  }
+
+  String displayArtists(Map<String, String>? identityMap) {
+    final artists = getArtists
+        .map((e) => e.name.toIdentityOrMask(identityMap))
+        .nonNulls
+        .join(', ');
+    return artists;
   }
 
   bool get isWedgwoodActivationToken =>
