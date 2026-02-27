@@ -174,6 +174,7 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
     ConfigGroup.ff1Config.getString: {
       ConfigKey.ff1LearnMoreUrl.getString: 'https://feralfile.com/install',
       ConfigKey.ff1OsUpdateRemindAfterSeconds.getString: null, // never remind
+      ConfigKey.ff1Price.getString: null, // hide price by default
     },
     // Token metadata rebuild policy
     'token_metadata_rebuild': {
@@ -408,6 +409,7 @@ enum ConfigKey {
   lastForceUpdateTime,
   ff1LearnMoreUrl,
   ff1OsUpdateRemindAfterSeconds,
+  ff1Price,
   supportEmailRecipients,
   supportEmailCc,
 }
@@ -512,6 +514,8 @@ extension ConfigKeyExtension on ConfigKey {
         return 'ff1_learn_more_url';
       case ConfigKey.ff1OsUpdateRemindAfterSeconds:
         return 'ff1_os_update_remind_after_seconds';
+      case ConfigKey.ff1Price:
+        return 'ff1_price';
       case ConfigKey.supportEmailRecipients:
         return 'email_recipients';
       case ConfigKey.supportEmailCc:

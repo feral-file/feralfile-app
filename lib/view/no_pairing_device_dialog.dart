@@ -1,5 +1,7 @@
 import 'package:autonomy_flutter/design/app_typography.dart';
 import 'package:autonomy_flutter/design/build/primitives.dart';
+import 'package:autonomy_flutter/common/injector.dart';
+import 'package:autonomy_flutter/service/remote_config_service.dart';
 import 'package:autonomy_flutter/theme/extensions/theme_extension.dart';
 import 'package:autonomy_flutter/view/primary_button.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +14,14 @@ class NoPairingDeviceDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final remoteConfigService = injector<RemoteConfigService>();
+    final ff1Price = remoteConfigService.getConfig<int?>(
+      ConfigGroup.ff1Config,
+      ConfigKey.ff1Price,
+      null,
+    );
+    final ctaText =
+        ff1Price == null ? 'Get your FF1' : 'Get your FF1, \$$ff1Price';
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -60,7 +70,7 @@ class NoPairingDeviceDialog extends StatelessWidget {
                               horizontal: 11,
                             ),
                             padding: EdgeInsets.zero,
-                            text: r'Get your FF1, $450',
+                            text: ctaText,
                             textStyle: AppTypography.body(context).black,
                             rightIcon: SvgPicture.asset(
                               'assets/images/arrow_right.svg',
