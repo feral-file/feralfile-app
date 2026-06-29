@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> This repository is no longer maintained. For further Feral File app development, use [feral-file/ff-app](https://github.com/feral-file/ff-app).
+
 # Feral File: the way to collect art
 
 
